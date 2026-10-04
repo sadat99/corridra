@@ -35,11 +35,12 @@ jobs:
         run: pnpm typecheck
       - name: Source document integrity
         run: pnpm test
-      - name: Isolated PostgreSQL and real malware scanner
-        run: |
-          pnpm db:local
-          pnpm db:prepare-local
-          pnpm scanner:local
+      - name: Isolated PostgreSQL
+        run: pnpm db:local
+      - name: Reviewed database migrations and roles
+        run: pnpm db:prepare-local
+      - name: Real malware scanner readiness
+        run: pnpm scanner:local
       - name: Database, identity, adapter and recovery integration tests
         run: pnpm test:integration
       - name: Production build

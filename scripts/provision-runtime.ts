@@ -18,10 +18,12 @@ if (
   url.pathname !== '/corridra'
 )
   throw new Error('An approved synthetic child database is required');
-const roles = [
-  ['corridra_app_login', 'corridra_runtime', 'RUNTIME_DATABASE_URL'],
-  ['corridra_identity_login', 'corridra_auth', 'AUTH_DATABASE_URL'],
-].map(([role, group, key]) => {
+const roles = (
+  [
+    ['corridra_app_login', 'corridra_runtime', 'RUNTIME_DATABASE_URL'],
+    ['corridra_identity_login', 'corridra_auth', 'AUTH_DATABASE_URL'],
+  ] as const
+).map(([role, group, key]) => {
   const password = randomBytes(32).toString('hex'),
     connection = new URL(url);
   connection.username = role;

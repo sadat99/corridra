@@ -103,6 +103,7 @@ export class ClamAvScanner implements MalwareScanner {
           );
       });
       socket.on('end', () => finish('ERROR'));
+      socket.on('close', () => finish('ERROR'));
     });
   }
 }

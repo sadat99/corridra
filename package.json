@@ -21,7 +21,7 @@
     "test:integration": "vitest run",
     "db:local": "node scripts/local-database.mjs",
     "db:prepare-local": "tsx scripts/prepare-local.ts",
-    "scanner:local": "node scripts/local-scanner.mjs",
+    "scanner:local": "tsx scripts/local-scanner.ts",
     "test:operator": "playwright test --config playwright.operator.config.ts"
   },
   "devDependencies": {

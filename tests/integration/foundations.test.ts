@@ -1,5 +1,5 @@
 import { beforeAll, afterAll, test, expect } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { writeFile, readFile } from 'node:fs/promises';
 import { fixture, rawContext, freshDatabase, connection, sandbox } from './support';
@@ -71,6 +71,25 @@ test('fresh and repeat migrations preserve hashes and create a restricted runtim
   await expect(assertRestrictedPool(f.owner)).rejects.toThrow('not restricted');
   const r = await f.owner.query('SELECT count(*)::int AS n FROM migrations.applied');
   expect(r.rows[0].n).toBe(5);
+});
+test('startup rejects login roles that cross the identity boundary or can create roles', async () => {
+  const password = randomBytes(32).toString('hex');
+  await f.owner.query('DROP ROLE IF EXISTS corridra_combined_test');
+  await f.owner.query(
+    `CREATE ROLE corridra_combined_test LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '${password}'`,
+  );
+  await f.owner.query('GRANT corridra_runtime,corridra_auth TO corridra_combined_test');
+  const pool = new Pool(connection('corridra_integration', 'corridra_combined_test', password));
+  try {
+    await expect(assertRestrictedPool(pool)).rejects.toThrow('not restricted');
+    await expect(assertRestrictedPool(pool, 'corridra_auth')).rejects.toThrow('not restricted');
+    await f.owner.query('REVOKE corridra_auth FROM corridra_combined_test');
+    await f.owner.query('ALTER ROLE corridra_combined_test CREATEROLE');
+    await expect(assertRestrictedPool(pool)).rejects.toThrow('not restricted');
+  } finally {
+    await pool.end();
+    await f.owner.query('DROP ROLE corridra_combined_test');
+  }
 });
 test('upgrade from identity schema preserves existing primitives', async () => {
   const p = await freshDatabase('corridra_upgrade');

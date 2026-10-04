@@ -21,16 +21,30 @@ export type TenantTransaction = {
 export function sessionHash(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
-export async function assertRestrictedPool(pool: Pool, group = 'corridra_runtime') {
+export async function assertRestrictedPool(
+  pool: Pool,
+  group: 'corridra_runtime' | 'corridra_auth' = 'corridra_runtime',
+) {
   const {
     rows: [r],
   } = await pool.query(
-    `SELECT r.rolsuper,r.rolbypassrls,pg_has_role(current_user,$1,'member') AS member,
+    `SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,pg_has_role(current_user,$1,'member') AS member,
+ pg_has_role(current_user,CASE WHEN $1='corridra_runtime' THEN 'corridra_auth' ELSE 'corridra_runtime' END,'member') AS crosses_boundary,
  EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('app','identity') AND pg_has_role(current_user,c.relowner,'MEMBER')) AS owns_tables
  FROM pg_roles r WHERE r.rolname=current_user`,
     [group],
   );
-  if (!r || r.rolsuper || r.rolbypassrls || r.owns_tables || !r.member)
+  if (
+    !r ||
+    r.rolsuper ||
+    r.rolbypassrls ||
+    r.rolcreaterole ||
+    r.rolcreatedb ||
+    r.rolreplication ||
+    r.crosses_boundary ||
+    r.owns_tables ||
+    !r.member
+  )
     throw new Error('Runtime database identity is not restricted');
 }
 export async function withTenant<T>(

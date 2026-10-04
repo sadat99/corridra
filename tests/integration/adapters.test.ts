@@ -101,3 +101,22 @@ test('S3 adapter sends encrypted create-only uploads and bounded binary download
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+
+test('a scanner connection closed during startup fails closed without leaving readiness pending', async () => {
+  const { createServer } = await import('node:net');
+  const server = createServer((socket) => socket.destroy());
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Test server address unavailable');
+  try {
+    expect(
+      (
+        await new ClamAvScanner('127.0.0.1', address.port, 1000).scan(
+          Buffer.from('Synthetic readiness probe'),
+        )
+      ).verdict,
+    ).toBe('ERROR');
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
