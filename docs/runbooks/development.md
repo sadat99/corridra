@@ -31,7 +31,7 @@ pnpm build
 pnpm start
 ```
 
-Keep the service in a managed shell session. A saved filesystem does not retain the process. Check the actual response locally, including status, title, headline and coming soon status; an open port alone is insufficient. The browser suite starts a production server automatically when none is running.
+Keep the service in a managed shell session. A saved filesystem does not retain the process. Check the actual response locally, including status, title, headline and coming soon status; an open port alone is insufficient. The browser suite starts its own production server on port 3100 and refuses to reuse a development process. It can run while `pnpm dev` serves port 3000.
 
 ## Validation in this cloud machine
 

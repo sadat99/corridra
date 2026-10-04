@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 2,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3100',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     proxy: process.env.PLAYWRIGHT_PROXY_SERVER
@@ -28,9 +28,9 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'pnpm start',
-        url: 'http://127.0.0.1:3000',
-        reuseExistingServer: !process.env.CI,
+        command: 'pnpm --filter @corridra/web start --port 3100',
+        url: 'http://127.0.0.1:3100',
+        reuseExistingServer: false,
         timeout: 60_000,
       },
 });
