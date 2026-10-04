@@ -1,189 +1,212 @@
-const stages = [
+import { Arrow } from '../components/arrow';
+import Link from 'next/link';
+import { Corridor } from '../components/corridor';
+
+const jobs = [
   {
-    number: '01',
-    title: 'Define the objective',
-    description: 'Start with what you want to achieve.',
+    href: '/sell',
+    title: 'Sell in a new market',
+    text: 'Find buyers, distributors and partners who fit what you offer.',
   },
-  { number: '02', title: 'Find the right fit', description: 'Focus on companies worth pursuing.' },
-  { number: '03', title: 'Create access', description: 'Work towards a relevant conversation.' },
   {
-    number: '04',
-    title: 'Follow it through',
-    description: 'Keep the next commercial step in view.',
+    href: '/source',
+    title: 'Source suppliers',
+    text: 'Build a short list worth investigating and visiting.',
+  },
+  {
+    href: '/enter-market',
+    title: 'Enter a new market',
+    text: 'Find the customers, distributors and local relationships you need.',
+  },
+  {
+    href: '/trade-missions',
+    title: 'Run a trade mission',
+    text: 'Build commercial agendas and keep the next step in view.',
   },
 ];
-
-function BrandMark() {
-  return (
-    <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path d="M25 5H14a11 11 0 0 0 0 22h11" stroke="currentColor" strokeWidth="3" />
-      <path d="M25 12H15a4 4 0 0 0 0 8h10" stroke="currentColor" strokeWidth="3" />
-    </svg>
-  );
-}
-
-function Arrow({ diagonal = false }: { diagonal?: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      {diagonal ? (
-        <path d="M5 15 15 5M5 5h10v10" stroke="currentColor" strokeWidth="1.5" />
-      ) : (
-        <path d="M3 10h13m-5-5 5 5-5 5" stroke="currentColor" strokeWidth="1.5" />
-      )}
-    </svg>
-  );
-}
-
-function Corridor() {
-  return (
-    <div className="corridor" aria-label="Initial corridor: Bangladesh and Spain/EU">
-      <div className="corridor-heading">
-        <span className="label">WHERE WE ARE STARTING</span>
-        <span className="corridor-index">01 / CORRIDOR</span>
-      </div>
-      <div className="corridor-path" aria-hidden="true">
-        <svg viewBox="0 0 430 260" fill="none">
-          <path d="M38 205h83c54 0 68-150 122-150h149" className="path-ghost" />
-          <path d="M38 205h83c54 0 68-150 122-150h149" className="path-main" />
-          <path d="M38 222h80c69 0 70-150 128-150h146" className="path-companion" />
-          <path d="M38 188h86c41 0 68-150 116-150h152" className="path-companion" />
-          <circle cx="38" cy="205" r="7" fill="var(--ink)" />
-          <circle
-            cx="392"
-            cy="55"
-            r="12"
-            fill="var(--paper)"
-            stroke="var(--accent)"
-            strokeWidth="2"
-          />
-          <circle cx="392" cy="55" r="4" fill="var(--accent)" />
-          <path d="m278 50 5 5-5 5" stroke="var(--accent)" strokeWidth="2" />
-          <path d="M38 229v16M392 79v16" stroke="var(--line)" />
-        </svg>
-        <span className="path-note">A clear path forward.</span>
-      </div>
-      <div className="corridor-locations">
-        <div>
-          <span className="location-code">BD</span>
-          <strong>Bangladesh</strong>
-        </div>
-        <span className="location-connection" aria-hidden="true">
-          ↔
-        </span>
-        <div>
-          <span className="location-code">ES / EU</span>
-          <strong>Spain & Europe</strong>
-        </div>
-      </div>
-      <p className="corridor-caption">Starting with one corridor. Building for what comes next.</p>
-    </div>
-  );
-}
+const steps = [
+  ['Define the objective', 'Start with what you need to achieve, where and when.'],
+  ['Find the right counterparties', 'Research beyond an attendee list or an existing database.'],
+  ['Qualify the fit', 'Record relevance, supporting evidence and open questions.'],
+  ['Create access', 'Prepare outreach, introductions and scoped local work.'],
+  ['Track what happens next', 'Follow the relationship through commercial decisions.'],
+];
 
 export default function Home() {
   return (
-    <>
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
-      <div className="site-shell">
-        <header className="site-header">
-          <a className="brand" href="#main" aria-label="Corridra home">
-            <BrandMark />
-            <span>corridra</span>
-          </a>
-          <a className="header-link" href="#approach">
-            The approach <Arrow diagonal />
-          </a>
-        </header>
-
-        <main id="main" tabIndex={-1}>
-          <section className="hero" aria-labelledby="hero-title">
-            <div className="hero-copy">
-              <p className="label hero-label">CROSS-BORDER MARKET ACCESS</p>
-              <h1 id="hero-title">
-                Going into a<br className="desktop-break" /> new market?
-                <br />
-                <span>
-                  Know who is
-                  <br className="desktop-break" /> worth meeting.
+    <main id="main" tabIndex={-1}>
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero-copy">
+          <p className="label hero-label">CROSS-BORDER MARKET ACCESS</p>
+          <h1 id="hero-title">
+            Going into a<br className="desktop-break" /> new market?
+            <br />
+            <span>
+              Know who is
+              <br className="desktop-break" /> worth meeting.
+            </span>
+          </h1>
+          <p className="hero-description">
+            We’re building Corridra to help you identify, qualify and reach the companies that fit
+            your commercial objective. Then keep track of what happens next.
+          </p>
+          <div className="hero-actions">
+            <Link prefetch={false} className="primary-link" href="/plan">
+              Plan a mission{' '}
+              <span aria-hidden="true">
+                <Arrow />
+              </span>
+              <span className="sr-only">(coming soon)</span>
+            </Link>
+            <span className="launch-status">
+              <span aria-hidden="true" />
+              Coming soon
+            </span>
+          </div>
+          <Link prefetch={false} className="text-link hero-secondary" href="/how-it-works">
+            See how Corridra works <Arrow />
+          </Link>
+          <p className="hero-reassurance">
+            For companies selling, sourcing or entering a new market.
+          </p>
+        </div>
+        <Corridor />
+      </section>
+      <section className="jobs-section" aria-labelledby="jobs-title">
+        <div className="section-heading">
+          <p className="label">START WITH YOUR OBJECTIVE</p>
+          <h2 id="jobs-title">What are you trying to make happen?</h2>
+        </div>
+        <div className="jobs-grid">
+          {jobs.map((job, index) => (
+            <Link prefetch={false} className="job-card" href={job.href} key={job.href}>
+              <span className="label">
+                0{index + 1}{' '}
+                <span aria-hidden="true">
+                  <Arrow />
                 </span>
-              </h1>
-              <p className="hero-description">
-                We’re building Corridra to help you identify, qualify and reach the companies that
-                fit your commercial objective. Then keep track of what happens next.
-              </p>
-              <div className="hero-actions">
-                <a className="primary-link" href="#approach">
-                  See what’s taking shape <Arrow />
-                </a>
-                <span className="launch-status">
-                  <span aria-hidden="true" />
-                  Coming soon
-                </span>
+              </span>
+              <h3>{job.title}</h3>
+              <p>{job.text}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="editorial-intro">
+        <h2>A foreign trip is too expensive to leave to chance.</h2>
+        <div>
+          <p>
+            You can book the flight, attend the fair and still come home with a list of contacts you
+            do not know how to use.
+          </p>
+          <p>
+            The work starts before the meeting: why this company, why now and what would make the
+            conversation useful?
+          </p>
+          <Link prefetch={false} className="text-link" href="/sell">
+            Already travelling for business? <Arrow />
+          </Link>
+        </div>
+      </section>
+      <section className="process-section" aria-labelledby="process-title">
+        <div className="section-heading">
+          <p className="label">THE PROCESS WE’RE BUILDING</p>
+          <h2 id="process-title">More than a list of companies.</h2>
+        </div>
+        <ol className="process-list">
+          {steps.map(([title, text], index) => (
+            <li key={title}>
+              <span className="stage-number">0{index + 1}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{text}</p>
               </div>
-              <p className="hero-reassurance">
-                For companies selling, sourcing or entering a new market.
-              </p>
-            </div>
-            <Corridor />
-          </section>
-
-          <section className="approach" id="approach" aria-labelledby="approach-title">
-            <div className="section-intro">
-              <p className="label">THE APPROACH</p>
-              <h2 id="approach-title">
-                A meeting is a start.
-                <br />
-                What follows matters.
-              </h2>
-              <p>
-                From the first commercial objective to the next useful step. This is the process
-                we’re building around.
-              </p>
-            </div>
-            <ol className="stages">
-              {stages.map((stage) => (
-                <li key={stage.number}>
-                  <span className="stage-number">{stage.number}</span>
-                  <h3>{stage.title}</h3>
-                  <p>{stage.description}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section className="closing" aria-labelledby="closing-title">
-            <p className="label">TAKING SHAPE</p>
-            <div className="closing-content">
-              <h2 id="closing-title">
-                Make market entry
-                <br />
-                <em>deliberate.</em>
-              </h2>
-              <div className="closing-note">
-                <span className="launch-status">
-                  <span aria-hidden="true" />
-                  Coming soon
-                </span>
-                <p>
-                  We’re getting the first corridor ready.
-                  <br />
-                  Mission planning will open here.
-                </p>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        <footer className="site-footer">
-          <span>© 2026 Corridra</span>
-          <span>Bangladesh ↔ Spain / EU</span>
-          <a href="#main">
-            Back to top <Arrow diagonal />
-          </a>
-        </footer>
-      </div>
-    </>
+            </li>
+          ))}
+        </ol>
+        <Link prefetch={false} className="text-link" href="/how-it-works">
+          Follow the full process <Arrow />
+        </Link>
+      </section>
+      <section className="feature-grid" aria-label="Evidence and local execution">
+        <article>
+          <p className="label">TRUST & EVIDENCE</p>
+          <h2>Claims are not the same as evidence.</h2>
+          <p>
+            The planned record distinguishes what a company has declared, what supporting evidence
+            exists and what has been checked.
+          </p>
+          <Link prefetch={false} className="text-link" href="/trust">
+            Understand the evidence labels <Arrow />
+          </Link>
+        </article>
+        <article>
+          <p className="label">CORRIDRA NETWORK</p>
+          <h2>Some questions need someone on the ground.</h2>
+          <p>
+            We’re building scoped local work around clear tasks, evidence requirements and
+            contribution terms. Participation is not open yet.
+          </p>
+          <Link prefetch={false} className="text-link" href="/network">
+            See how participation will work <Arrow />
+          </Link>
+        </article>
+      </section>
+      <section className="editorial-intro">
+        <h2>A trade mission should produce more than attendance.</h2>
+        <div>
+          <p>
+            We’re building a way for institutions to connect participant objectives to qualified
+            agendas, then follow commercial progression after the delegation returns.
+          </p>
+          <Link prefetch={false} className="text-link" href="/institutions">
+            Explore the institutional approach <Arrow />
+          </Link>
+        </div>
+      </section>
+      <section className="outcomes-section" aria-labelledby="outcomes-title">
+        <p className="label">WHAT COUNTS AS PROGRESS</p>
+        <h2 id="outcomes-title">
+          A meeting is not a sale.
+          <br />A contract is not cash.
+        </h2>
+        <p>
+          The planned record follows distinct commercial events. Each step needs its own evidence.
+        </p>
+        <ol className="outcome-path">
+          {[
+            'Identified',
+            'Qualified',
+            'Engaged',
+            'Meeting held',
+            'Opportunity',
+            'Quotation / sample',
+            'Proposal',
+            'Commitment',
+            'Contract',
+            'Invoice',
+            'Cash collected',
+          ].map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <Link prefetch={false} className="text-link" href="/trust">
+          See what an observed outcome means <Arrow />
+        </Link>
+      </section>
+      <section className="closing public-closing">
+        <p className="label">STARTING WITH BANGLADESH ↔ SPAIN / EU</p>
+        <h2>
+          Make market entry <em>deliberate.</em>
+        </h2>
+        <p>
+          We’re getting the first corridor ready. Mission planning will open here as the delivery
+          process and data safeguards are ready.
+        </p>
+        <Link prefetch={false} className="text-link" href="/plan">
+          See the launch status <Arrow />
+        </Link>
+      </section>
+    </main>
   );
 }
