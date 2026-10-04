@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Parts 01 and 02 delivered and publicly deployed. See their release records for validation and deployment evidence. Parts 03 to 12 are planned, not implemented.
+Status: Parts 01 and 02 delivered and publicly deployed. See their release records for validation and deployment evidence. Part 03 is implemented for local validation and awaiting cloud acceptance; see [its release record](part-03-release.md). Parts 04 to 12 are planned, not implemented.
 
 ## Outcome and delivery method
 

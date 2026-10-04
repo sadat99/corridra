@@ -2,6 +2,13 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  transpilePackages: [
+    '@corridra/domain',
+    '@corridra/db',
+    '@corridra/auth',
+    '@corridra/evidence',
+    '@corridra/config',
+  ],
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const csp = [

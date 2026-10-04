@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Corridra synthetic preview evidence, private EU storage. Deploy only after the Part 03 infrastructure gate.
+Parameters:
+  BucketName:
+    Type: String
+    AllowedPattern: 'corridra-synthetic-[a-z0-9-]+'
+Rules:
+  EURegion:
+    Assertions:
+      - Assert:
+          Fn::Contains:
+            - [eu-central-1, eu-west-1, eu-west-3]
+            - Ref: AWS::Region
+        AssertDescription: Deploy evidence storage in an approved EU region.
+Resources:
+  Evidence:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: { Ref: BucketName }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ ObjectOwnership: BucketOwnerEnforced }]
+      VersioningConfiguration: { Status: Enabled }
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: synthetic-evidence-retention
+            Status: Enabled
+            Prefix: quarantine/
+            ExpirationInDays: 35
+            NoncurrentVersionExpiration: { NoncurrentDays: 7 }
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 1 }
+      Tags:
+        - { Key: application, Value: corridra }
+        - { Key: data-environment, Value: synthetic }
+  Policy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: { Ref: Evidence }
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RequireTLS
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - { Fn::GetAtt: [Evidence, Arn] }
+              - { Fn::Sub: '${Evidence.Arn}/*' }
+            Condition: { Bool: { 'aws:SecureTransport': 'false' } }
+          - Sid: RequireCreateOnlyWrites
+            Effect: Deny
+            Principal: '*'
+            Action: s3:PutObject
+            Resource: { Fn::Sub: '${Evidence.Arn}/*' }
+            Condition: { Null: { 's3:if-none-match': 'true' } }
+          - Sid: RequireEncryption
+            Effect: Deny
+            Principal: '*'
+            Action: s3:PutObject
+            Resource: { Fn::Sub: '${Evidence.Arn}/*' }
+            Condition: { StringNotEquals: { 's3:x-amz-server-side-encryption': AES256 } }
+Outputs:
+  Bucket:
+    Value: { Ref: Evidence }
+  Region:
+    Value: { Ref: AWS::Region }

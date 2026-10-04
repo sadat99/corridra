@@ -1,0 +1,53 @@
+{
+  "validatedAt": "2026-10-04T17:02:15.255861+00:00",
+  "baseCommit": "6969fb5e2550932aaa1fb7aae0b7ebfc4ac76cb7",
+  "branch": "feat/part-03-foundations",
+  "scope": "Local synthetic foundation; cloud acceptance pending",
+  "checks": {
+    "frozenInstall": true,
+    "format": true,
+    "lint": true,
+    "typecheck": true,
+    "productionBuild": true,
+    "documentTests": 7,
+    "postgresIdentityAdapterTests": 25,
+    "publicBrowserTests": 44,
+    "operatorBrowserTests": 1,
+    "productionDependencyAuditKnownVulnerabilities": 0
+  },
+  "runtime": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0",
+    "postgresql": "17.11",
+    "clamav": "1.5.4",
+    "postgresImage": "postgres@sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+    "scannerImage": "clamav/clamav@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0"
+  },
+  "localRestore": {
+    "completedAt": "2026-10-04T17:00:06.820Z",
+    "eventsRestored": 38,
+    "rlsRetained": true
+  },
+  "publicProductionHealth": {
+    "checkedAt": "2026-10-04T16:59:11.809031+00:00",
+    "url": "https://corridra.vercel.app",
+    "results": [
+      {
+        "path": "/",
+        "status": 200,
+        "publicComingSoon": true
+      },
+      {
+        "path": "/trust",
+        "status": 200,
+        "publicComingSoon": null
+      },
+      {
+        "path": "/operator",
+        "status": 404
+      }
+    ]
+  },
+  "cloudPreview": null,
+  "cloudAcceptance": "Blocked: EU resources, credential isolation, private scanner/storage, recovery and account protection verification"
+}

@@ -15,7 +15,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +25,8 @@ jobs:
         run: npm install --global pnpm@11.19.0
       - name: Install workspace
         run: pnpm install --frozen-lockfile
+      - name: Dependency vulnerability gate
+        run: pnpm audit --prod --audit-level high
       - name: Formatting
         run: pnpm format:check
       - name: Lint
@@ -33,6 +35,13 @@ jobs:
         run: pnpm typecheck
       - name: Source document integrity
         run: pnpm test
+      - name: Isolated PostgreSQL and real malware scanner
+        run: |
+          pnpm db:local
+          pnpm db:prepare-local
+          pnpm scanner:local
+      - name: Database, identity, adapter and recovery integration tests
+        run: pnpm test:integration
       - name: Production build
         run: pnpm build
         env:
@@ -41,9 +50,13 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
+      - name: Protected operator browser tests
+        run: pnpm test:operator
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-failure-evidence
-          path: test-results/
+          path: |
+            test-results/
+            !test-results/workspace-*/**
           retention-days: 7

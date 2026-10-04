@@ -10,19 +10,32 @@
     "dev": "pnpm --filter @corridra/web dev",
     "build": "pnpm --filter @corridra/web build",
     "start": "pnpm --filter @corridra/web start",
-    "lint": "pnpm --filter @corridra/web lint",
-    "typecheck": "pnpm --filter @corridra/web typecheck",
+    "lint": "eslint apps/web packages scripts tests/integration tests/operator *.ts --max-warnings 0",
+    "typecheck": "pnpm --filter @corridra/web typecheck && tsc -p tsconfig.packages.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm test:docs",
     "test:docs": "node --test tests/documents.test.mjs",
     "test:e2e": "playwright test",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm build && pnpm test:e2e && pnpm test:operator",
+    "test:integration": "vitest run",
+    "db:local": "node scripts/local-database.mjs",
+    "db:prepare-local": "tsx scripts/prepare-local.ts",
+    "scanner:local": "node scripts/local-scanner.mjs",
+    "test:operator": "playwright test --config playwright.operator.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
     "@types/node": "24.10.1",
-    "prettier": "3.9.9"
-  }
+    "@types/pg": "8.23.1",
+    "esbuild": "0.28.1",
+    "eslint": "9.39.1",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3",
+    "zod": "4.6.5"
+  },
+  "type": "module"
 }

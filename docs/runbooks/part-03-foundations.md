@@ -1,0 +1,42 @@
+# Part 03 development and release runbook
+
+## Local verification
+
+Use Node 24, pnpm 11.19.0 and a local Docker daemon. Start services with `pnpm db:local`, `pnpm db:prepare-local` and `pnpm scanner:local`. Both images are digest pinned, listen on loopback and hold synthetic data only. The scanner uses bundled signatures for repeatable tests. Never point the local commands at `DATABASE_URL` or another remote database.
+
+Run `pnpm check`. This checks formatting, lint, TypeScript, source-document integrity, real PostgreSQL/identity/scanner/storage contracts, the production build, public browser flows and the protected operator browser flow. Browser tests create their own production server and sterile local database, then enroll a real test authenticator. Keep traces/screenshots/video disabled for the operator flow so credentials cannot enter CI artifacts.
+
+Local credentials, test passwords and restore dumps are in ignored `.cache` files with owner-only permissions. Do not upload them. Live containers must be restarted after a new environment session. Database fixtures deliberately reset only the fixed local integration, upgrade, restore and browser databases. Source-document originals and their integrity tests remain unchanged.
+
+## EU project and preview lifecycle
+
+These commands are implemented but have not been executed against Neon. Current missing access is recorded in the release record. HTTPS API access uses `NEON_API_KEY` scoped to `console.neon.tech`; PostgreSQL needs a direct secret and a network route for its exact EU host on port 5432. A saved HTTPS allowlist alone does not grant raw TCP access.
+
+1. Save a Neon API key through secure environment settings. Run `python scripts/neon-projects.py` to create or verify separate `corridra-prod` and `corridra-nonprod` projects. Default region is Frankfurt and PostgreSQL 17. The default six-hour history window follows the documented free-plan limit; choose and verify a larger window only under the approved plan. Record project IDs/region/window, never returned owner credentials.
+2. Create the sterile non-production template using its direct TLS `MIGRATION_DATABASE_URL`, exact `MIGRATION_DATABASE_HOST`, and `MIGRATION_ENVIRONMENT=nonprod-template`. Run `pnpm exec tsx scripts/migrate-environment.ts`. The script accepts only the Frankfurt `corridra` database with the named migrator. Leave template app/identity tables empty. Do not seed accounts into the parent.
+3. Set non-secret `NEON_NONPROD_PROJECT_ID`, `NEON_PRODUCTION_PROJECT_ID`, `NEON_SYNTHETIC_PARENT_ID` and secret `NEON_NONPROD_DATABASE_URL`. Run `pnpm exec tsx scripts/neon-preview.ts create <PR-number>`. It validates project/parent identities and a sterile parent before cloning. Read `.cache/neon-pr-<number>.json` for non-secret evidence.
+4. Set the child migration target, `MIGRATION_ENVIRONMENT=synthetic-preview`, and run migrations separately. Run `scripts/provision-runtime.ts` with `pnpm exec tsx` to create separate restricted login roles. Import the resulting owner-only ignored secret file into that branch's Vercel settings, then remove the local copy. Do not use schema-owner credentials in a build or runtime. Existing roles require deliberate rotation; the tool refuses silent overwrite.
+5. Optionally run the migration command with `SEED_SYNTHETIC=true`, `SYNTHETIC_OPERATOR_EMAIL` under `example.invalid`, and a secure `SYNTHETIC_OPERATOR_PASSWORD`. The synthetic account has no session or MFA grant. Enroll a real authenticator after deployment. A repeated seed for the same address fails atomically rather than duplicating access.
+6. Bind branch-only `CORRIDRA_FOUNDATIONS_ENABLED=true`, exact HTTPS `APP_ORIGIN`, `DATA_ENVIRONMENT=synthetic`, `DATABASE_REGION=aws-eu-central-1`, restricted `RUNTIME_DATABASE_URL`, separate `AUTH_DATABASE_URL`, and a unique `AUTH_SECRET` with at least 32 random characters. Remote DB URLs require `sslmode=verify-full`. Verify no production credential or `VERCEL_TOKEN` is included in preview runtime. Keep the public production flag absent/false.
+7. Remove the exact-branch deployment hold in `apps/web/vercel.json` only after isolation is verified. Deploy the exact PR SHA as a protected Vercel preview. If Git integration cannot deploy because the author lacks team access, use the already authorized authenticated deployment API and record the actual SHA/URL. Do not change commit authors or bypass CI. Test the deployed authentication, tenant denial, uploads, revocation and headers before acceptance.
+8. Close/recreate with `pnpm exec tsx scripts/neon-preview.ts delete <PR-number>` and remove that branch's Vercel credentials/deployment. It can only delete the named child of the verified non-production parent. Inventory and clean stale PR branches regularly. Automatic expiry is not assumed.
+
+## Evidence storage
+
+Deploy `infrastructure/evidence-storage.yaml` in the same approved EU region after reviewing account costs. It retains the bucket on stack deletion, blocks public access, disables ACL ownership, enforces TLS/encryption, enables versioning, and applies a synthetic-only lifecycle. Replace the bucket placeholder in the runtime IAM policy; grant only GetObject/PutObject under `quarantine/`, with no delete, list or bucket administration. Use branch/environment-specific credentials, never the deployment token.
+
+Verify actual bucket region, encryption, public blocks, versioning, lifecycle and anonymous denial. Configure `EVIDENCE_BUCKET`, `EVIDENCE_REGION`, and secure AWS runtime credentials using the SDK chain. Cloud scanner deployment must provide a private `CLAMAV_HOST`/port reachable by Vercel, current signatures, health monitoring and timeout behavior. TCP ClamAV is not authenticated or encrypted itself; do not expose it publicly. A private tunnel or an authenticated scanner adapter/deployment must be in place before cloud uploads are enabled.
+
+Only after storage/scanner checks may a tenant owner enable `evidence.uploads` and `evidence.verification`, with fresh MFA. An app flag without the adapters fails closed. Keep production personal data out of the synthetic bucket. Its expiry policy is unsuitable for legal-hold records.
+
+## Recovery, rollback and access incidents
+
+The integration suite dumps the synthetic database, restores to a separate local database, reconciles event counts and checks same-tenant access, cross-tenant denial and revoked membership through a restricted login after restore. It writes a non-secret evidence summary and keeps the dump private. This verifies logical recovery locally, not Neon PITR or S3 version recovery.
+
+Before preview acceptance, restore a non-production Neon point in time into a separate non-production branch and repeat those checks. Restore an overwritten/deleted synthetic S3 version separately. Record start/end time, source/target IDs, expected/actual record counts, authorization checks and measured recovery duration. Never test restore by overwriting a live database. Production RPO/RTO and retention remain explicit operational decisions.
+
+Rollback by disabling the foundation flag and restoring the previous compatible application deployment. Revoke the new branch identities if compromised; retain evidence/events and prefer reviewed forward migrations over destructive down migrations. To revoke an identity, disable its principal and delete its sessions using the offline identity administrator. Session deletion cascades assurance removal and records an audit event. Membership revocation takes effect on the next request. Recover MFA only through a verified, audited administrator procedure; no unaudited reset endpoint exists.
+
+## Account gates
+
+Protect `main` with required CI and review as available. Enable secret scanning/push protection. CODEOWNERS, Dependabot and CodeQL workflows are included, but account activation must be independently verified. This repository is private; CodeQL runs only after the account has the necessary Code Security entitlement and `CODEQL_ENABLED=true` repository variable. A skipped scan is not security evidence. The current GitHub integration cannot inspect branch protection. Existing Vercel integration secrets span preview and production, so separate them before any data preview. Keep `VERCEL_TOKEN` only in deployment tooling, not the application. These settings require account-level access; a green local suite does not close them.
