@@ -22,7 +22,7 @@ The initial static page needs no application environment variables. Vercel authe
 3. Verify the correct Vercel project with the settings above. A raw token/login can use CLI 62.2.0. Proxy placeholders may fail the CLI's local token-character validation; use the documented REST API with the existing binding in the Authorization header instead of changing or exposing the credential. `GET /v9/projects/corridra` verifies repository association. `PATCH /v9/projects/{id}` updates this project's framework/root settings. `POST /v13/deployments` with the pushed Git source creates a deployment when Git integration has not already done so. Include the project's team ID when required. Inspect current API schemas before changing project fields.
 4. Deploy to production only for a release the user has authorized. Record the returned deployment URL and project alias. Confirm Vercel reports the deployment as ready.
 5. Make an unauthenticated HTTPS request to the public URL. Verify HTTP 200, the Corridra title/headline and Coming soon status. Run browser checks against that URL if accessible from the task's network policy.
-6. Record commit, URL, timestamp, checks and any limits in `docs/implementation/part-01-release.md`.
+6. Record commit, URL, timestamp, checks and any limits in the current part’s release record under `docs/implementation/`. Check every newly introduced public route, not just the homepage.
 
 Never put a token in a command-line argument or a log. The CLI reads `VERCEL_TOKEN` from its environment. If there is no usable binding/login, finish the deployable work and request secure configuration rather than fabricating a deployment URL. Network settings need `api.vercel.com`, `vercel.com` and the actual deployment hostname under `vercel.app`.
 

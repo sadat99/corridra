@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Part 01 delivered and publicly deployed. See the release record for validation and deployment evidence. Parts 02 to 12 are planned, not implemented.
+Status: Parts 01 and 02 delivered and publicly deployed. See their release records for validation and deployment evidence. Parts 03 to 12 are planned, not implemented.
 
 ## Outcome and delivery method
 
@@ -248,10 +248,10 @@ Keep match weights, prices, commissions, reputation weights, expansion markets, 
 
 ## Next task packet
 
-**Outcome:** Part 02 public experience and design system, after Part 01 public deployment is verified.
+**Outcome:** Part 03 data, identity, tenancy and trust foundations, only when requested. Part 02 is live; see [the release record](part-02-release.md).
 
-**Read:** Constitution section 21 amendment; public-experience sections 1 to 23 and 26 to 35; canvas sections 0, 4, 16, 19 and 21; ADR-001.
+**Read:** Constitution evidence and AI authority rules; canvas sections 0 to 11, 15 to 18, 21, 23 and 25; relevant trust/access requirements in the public-experience document; ADR-001 and Part 03 above.
 
-**Acceptance:** Public routes, copy accuracy, accessible mobile navigation, no fabricated proof, previews and production continuity. Intake stays visibly upcoming until Part 04. No database, auth or AI implementation in this packet.
+**Acceptance:** Approved EU region and production/non-production isolation; reviewed migrations and canonical evidence/event contracts; restricted runtime identities; real cross-tenant RLS denial tests; protected synthetic operator workspace. Verify GitHub branch protection and preview controls before introducing data. No production customer import or public intake in this packet.
 
-**Validation:** Document integrity, format, lint, typecheck, production build, route/keyboard/mobile Playwright and accessibility checks. Record preview and rollback evidence in the release record.
+**Validation:** Document integrity, format, lint, typecheck, real PostgreSQL migration/integration/RLS tests, production build, protected-workspace browser tests and a non-production restore drill. Keep the public site available. Record actual region, identity choices, preview isolation, deployment/rollback evidence and unresolved account prerequisites.

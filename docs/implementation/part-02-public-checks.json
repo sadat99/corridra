@@ -1,0 +1,72 @@
+{
+  "verifiedAt": "2026-10-04T12:48:52.898814+00:00",
+  "site": "https://corridra.vercel.app",
+  "tlsVerification": true,
+  "checks": [
+    {
+      "route": "/",
+      "status": 200,
+      "heading": "Going into a new market?Know who is worth meeting."
+    },
+    {
+      "route": "/sell",
+      "status": 200,
+      "heading": "You are already paying to be in the market. Make the trip commercially useful."
+    },
+    {
+      "route": "/source",
+      "status": 200,
+      "heading": "Visit fewer suppliers. Visit the ones that fit."
+    },
+    {
+      "route": "/enter-market",
+      "status": 200,
+      "heading": "Enter an unfamiliar market without entering it blind."
+    },
+    {
+      "route": "/trade-missions",
+      "status": 200,
+      "heading": "Give every participant a reason to be in the room."
+    },
+    {
+      "route": "/how-it-works",
+      "status": 200,
+      "heading": "One commercial objective. One mission. A clear record of what happens next."
+    },
+    {
+      "route": "/network",
+      "status": 200,
+      "heading": "Your local knowledge can have commercial value."
+    },
+    {
+      "route": "/institutions",
+      "status": 200,
+      "heading": "Stop measuring trade missions by attendance."
+    },
+    {
+      "route": "/trust",
+      "status": 200,
+      "heading": "Know what is claimed. Know what is evidenced. Know the difference."
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "heading": "Make market entry deliberate."
+    },
+    {
+      "route": "/plan",
+      "status": 200,
+      "heading": "Mission planning is coming soon."
+    },
+    {
+      "route": "/signin",
+      "status": 200,
+      "heading": "Sign-in is coming soon."
+    },
+    {
+      "route": "/coming-soon",
+      "status": 200,
+      "heading": "Going into a new market?Know who is worth meeting."
+    }
+  ]
+}
