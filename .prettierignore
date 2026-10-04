@@ -1,0 +1,11 @@
+docs/source/
+docs/brand/positioning-messaging-constitution-v1.0.md
+docs/product/public-experience-v1.0.md
+docs/architecture/implementation-canvas-v1.0.md
+pnpm-lock.yaml
+.next/
+node_modules/
+.vercel/
+playwright-report/
+test-results/
+apps/web/next-env.d.ts

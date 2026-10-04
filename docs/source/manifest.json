@@ -1,0 +1,26 @@
+[
+  {
+    "id": "implementation-canvas",
+    "source": "docs/source/Corridra_Implementation_Canvas_v1.0.md",
+    "sha256": "2ac7b827f2cc50dfa332d7e076d9b542217bcc7fd4cf62f279795d3f937d76f4",
+    "bytes": 40011,
+    "working_copy": "docs/architecture/implementation-canvas-v1.0.md",
+    "transformation": "CRLF to LF only"
+  },
+  {
+    "id": "positioning-constitution",
+    "source": "docs/source/Corridra_Positioning_Messaging_Constitution_v1.0.md",
+    "sha256": "c725f822f0a01ccefdcd0321e26efcc146eeae1915077c9fc8b4a06f590e132b",
+    "bytes": 38968,
+    "working_copy": "docs/brand/positioning-messaging-constitution-v1.0.md",
+    "transformation": "CRLF to LF; add user-requested rule under section 21"
+  },
+  {
+    "id": "public-experience",
+    "source": "docs/source/Corridra_Public_Experience_v1.0.md",
+    "sha256": "43681a0116e990bb7f90c54459306c3452b0415bb533541b3e2e04c085cb6d17",
+    "bytes": 27756,
+    "working_copy": "docs/product/public-experience-v1.0.md",
+    "transformation": "CRLF to LF only"
+  }
+]

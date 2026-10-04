@@ -1,0 +1,28 @@
+{
+  "name": "corridra",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @corridra/web dev",
+    "build": "pnpm --filter @corridra/web build",
+    "start": "pnpm --filter @corridra/web start",
+    "lint": "pnpm --filter @corridra/web lint",
+    "typecheck": "pnpm --filter @corridra/web typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm test:docs",
+    "test:docs": "node --test tests/documents.test.mjs",
+    "test:e2e": "playwright test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.10.1",
+    "prettier": "3.9.9"
+  }
+}
