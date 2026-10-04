@@ -11,6 +11,9 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    proxy: process.env.PLAYWRIGHT_PROXY_SERVER
+      ? { server: process.env.PLAYWRIGHT_PROXY_SERVER }
+      : undefined,
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
       : {},

@@ -62,6 +62,7 @@ test('page passes relevant WCAG accessibility checks', async ({ page }) => {
 test('security headers and local assets are served', async ({ request }) => {
   const response = await request.get('/');
   expect(response.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(response.headers()['content-security-policy']).not.toContain("'unsafe-eval'");
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
   expect(response.headers()['x-frame-options']).toBe('DENY');
   expect(response.headers()['x-powered-by']).toBeUndefined();

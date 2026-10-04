@@ -28,6 +28,8 @@ Never put a token in a command-line argument or a log. The CLI reads `VERCEL_TOK
 
 Connecting the repository in Vercel enables Git-driven previews and releases; a standalone CLI deployment does not establish that integration. Verify it separately. Configure protected `main`, required checks and preview isolation before Part 03 introduces data. A successful build or saved cloud environment draft does not prove publication to Vercel.
 
+The initial authenticated REST deployment succeeded. Git-triggered deployment currently encounters Vercel's commit-author/team collaboration check; resolve that association before relying on automatic releases. Do not disable the check or rewrite shared history. Explicitly authorized releases can use an authenticated deployment of the exact pushed Git revision.
+
 ## Rollback
 
 Use the actual Vercel project to promote the last known-good deployment or redeploy its Git revision. Confirm the public alias serves that revision. Part 01 has no data migrations or user submissions. Later releases follow their part's database/event compatibility and forward-fix notes.

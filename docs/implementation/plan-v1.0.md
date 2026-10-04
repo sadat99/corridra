@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Part 01 implementation prepared. Remote push and public deployment must be verified before Part 01 is marked complete. Parts 02 to 12 are planned, not implemented.
+Status: Part 01 delivered and publicly deployed. See the release record for validation and deployment evidence. Parts 02 to 12 are planned, not implemented.
 
 ## Outcome and delivery method
 

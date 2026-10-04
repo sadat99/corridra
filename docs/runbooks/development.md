@@ -44,6 +44,8 @@ pnpm check
 
 On machines without Chromium, use `pnpm exec playwright install --with-deps chromium`, preserving TLS and download verification. The browser tests support `PLAYWRIGHT_BASE_URL` for an existing deployment. Use it only against the intended public release, not a protected preview that requires additional auth.
 
+For networked checks, `PLAYWRIGHT_PROXY_SERVER` can select the configured HTTPS proxy. Chromium may still lack usable cloud-proxy CA trust even while Python and Node HTTP clients validate the public site. Do not set `ignoreHTTPSErrors`, disable certificate checks or modify a global trust store solely to force a passing result. Verify public HTTPS responses with the configured trust, keep local production browser evidence and report the remote-browser limitation separately.
+
 Original source documents are excluded from formatting and Git line-ending conversion. Do not regenerate the manifest hashes to conceal an unintended source edit. `pnpm test:docs` compares the working copies to the preserved originals and permits only the requested constitution addition.
 
 ## Current services

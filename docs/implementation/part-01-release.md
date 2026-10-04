@@ -2,7 +2,7 @@
 
 Date: 4 October 2026
 
-Status: local validation passed. Remote push and Vercel publication are being completed.
+Status: Part 01 delivered. The source is pushed to `main` and the coming soon page is live on Vercel.
 
 ## Scope
 
@@ -22,8 +22,23 @@ Verified in this cloud machine:
 
 Checks use the pinned toolchain and the installed Chromium. No database or main-system feature is claimed as implemented. The source-document suite permits only line-ending normalization and the requested constitution amendment in working copies.
 
-## Current external prerequisites
+The optional live browser run passed 2 HTTP header/asset checks; 10 browser flows failed at HTTPS navigation with `ERR_CERT_AUTHORITY_INVALID` before their assertions ran. This is the cloud Chromium/proxy trust path, not a failing application assertion. The same 12 flows pass against the local production build, and Python/Playwright HTTP requests verify the public alias with TLS validation enabled. Automatic approval review rejected a global CA import because it would broaden persistent future trust beyond this task. No trust change or certificate-verification bypass was applied. The release uses the verified HTTP checks and local browser evidence; live browser flows are not claimed as passed.
 
-Vercel's existing proxy-backed authentication can access the `corridra` project associated with `sadat99/corridra`. The CLI rejects proxy placeholder syntax before making a request, so release operations use the supported HTTPS REST API. No credential value is printed or committed. The project uses Node 24.x; monorepo root settings are being verified before release.
+## Initial public release
 
-Git reads work through the existing HTTPS proxy. GitHub API requests currently return Forbidden, so repository protection, remote CI status and Vercel Git integration cannot be inferred from CLI API queries. Test Git push separately before claiming write access.
+- Source commit: `9da4f71ffe86de6255fa3c1b4cde4be5d46174e2`, verified against remote `main`.
+- Production site: https://corridra.vercel.app
+- Initial deployment: `dpl_23xVs1Zjf4BDtB3eDhMxU8ywsWDi`.
+- Immutable deployment URL: https://corridra-rnl5ql4er-sadat-os.vercel.app (Vercel login protected; use the production alias for public visits).
+- Vercel reported `READY`, `PROMOTED` and assigned the production aliases.
+- An unauthenticated HTTPS request to the production alias verified the actual Corridra title, intended headline and Coming soon status with HTTP 200. The deployment-specific URL is protected and redirects to Vercel authentication.
+
+The release follow-up keeps the same public experience and permits the development-only React debugging requirement in CSP. Production never enables `unsafe-eval`. Current source and deployment revisions remain available in Git history and Vercel deployment metadata.
+
+## Deployment route and remaining account controls
+
+Vercel's existing proxy-backed authentication can access the `corridra` project associated with `sadat99/corridra`. The CLI rejects proxy placeholder syntax before making a request, so release operations use the supported HTTPS REST API. No credential value is printed or committed. Verified project settings: Next.js, Node 24.x, Root Directory `apps/web`, workspace files included, frozen pnpm install and web-package build.
+
+Git reads and pushes work through the existing HTTPS proxy. GitHub API requests currently return Forbidden, so branch protection and remote CI outcomes are unverified. The Vercel project confirms the Git integration exists, but the automatic Git-triggered deployment was `BLOCKED` by its team-collaboration check. An authenticated API deployment of the exact pushed commit succeeded and was promoted. Before relying on automatic Git releases, resolve the commit-author/team association in Vercel's project collaboration settings. No check was disabled or account access control changed.
+
+Cloud environment `install_script` and `start_skill` were saved with tested installation, startup and readiness steps. The draft also records the Vercel authentication binding and required network hosts. Saving that cloud configuration is separate from the verified Vercel application deployment; review, save and publish the cloud environment settings to retain the reusable environment configuration.
