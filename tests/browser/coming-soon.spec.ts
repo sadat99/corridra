@@ -6,9 +6,9 @@ test('public page states the proposition and launch status without making up pro
 }) => {
   const failures: string[] = [];
   page.on('pageerror', (error) => failures.push(error.message));
-  const response = await page.goto('/');
+  const response = await page.goto('/coming-soon');
   expect(response?.status()).toBe(200);
-  await expect(page).toHaveTitle('Corridra | Cross-border market access');
+  await expect(page).toHaveTitle('Coming soon | Corridra');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'Going into a new market?Know who is worth meeting.',
   );
@@ -24,7 +24,7 @@ test('public page states the proposition and launch status without making up pro
 });
 
 test('navigation leads to real content and supports keyboard access', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/coming-soon');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   await page.keyboard.press('Enter');
@@ -40,7 +40,7 @@ test('navigation leads to real content and supports keyboard access', async ({ p
 
 test('layout fits the viewport and respects reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/coming-soon');
   const size = await page.evaluate(() => ({
     content: document.documentElement.scrollWidth,
     viewport: document.documentElement.clientWidth,
@@ -52,7 +52,7 @@ test('layout fits the viewport and respects reduced motion', async ({ page }) =>
 });
 
 test('page passes relevant WCAG accessibility checks', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/coming-soon');
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
