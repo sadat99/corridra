@@ -50,4 +50,4 @@ Original source documents are excluded from formatting and Git line-ending conve
 
 ## Current services
 
-Part 01 requires only the Next.js process. No database, AI, email, object storage or payment service is needed. Vercel authentication is required only for remote deployment. Add further runtime bindings and readiness checks when their implementation part begins.
+Parts 01 and 02 require only the Next.js process. No database, AI, email, object storage or payment service is needed. Vercel authentication is required only for remote deployment. Add further runtime bindings and readiness checks when their implementation part begins.

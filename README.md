@@ -2,7 +2,7 @@
 
 Cross-border market access, starting with Bangladesh and Spain/EU.
 
-This repository contains the complete supplied product documents, a 12-part implementation plan and Part 01's coming soon website. The main system will be built one requested part at a time.
+This repository contains the complete supplied product documents, a 12-part implementation plan and Part 02's public website, with the original coming soon page retained. The main system will be built one requested part at a time.
 
 ## Documents
 
@@ -17,7 +17,7 @@ Original uploads are preserved byte for byte in `docs/source/`. The constitution
 
 ## Development
 
-Use Node 24.19.0 and pnpm 11.19.0. The current public page needs no application secrets or external services.
+Use Node 24.19.0 and pnpm 11.19.0. The current public site needs no application secrets or external services.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -42,6 +42,6 @@ Browser tests run against the production build and cover public content, navigat
 
 ## Release
 
-Deploy on Vercel with project Root Directory `apps/web`, Node 24.x and workspace files outside the root included. See [the deployment runbook](docs/runbooks/deployment.md) for authentication, build, public verification and rollback. See [Part 01's release record](docs/implementation/part-01-release.md) for actual outcomes and blockers.
+Deploy on Vercel with project Root Directory `apps/web`, Node 24.x and workspace files outside the root included. See [the deployment runbook](docs/runbooks/deployment.md) for authentication, build, public verification and rollback. See [Part 02's release record](docs/implementation/part-02-release.md) for current validation, deployment and limitations.
 
 GitHub Actions runs the checks on PRs and pushes to `main`. Repository protection and Vercel Git integration are separate account-level settings that must be verified before the main-system work begins.
