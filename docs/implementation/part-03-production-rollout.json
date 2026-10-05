@@ -67,5 +67,15 @@
     "codeQL": "Skipped; entitlement deferred"
   },
   "regions": ["fra1"],
-  "deferredControls": "docs/implementation/deferred-controls.md"
+  "deferredControls": "docs/implementation/deferred-controls.md",
+  "databaseLifecycle": {
+    "checkedAt": "2026-10-05T02:54:09.462Z",
+    "projectId": "odd-pond-26265871",
+    "branchId": "br-lucky-darkness-b1ppj8en",
+    "name": "corridra-live-synthetic",
+    "renamedFrom": "corridra-pr-3",
+    "prCleanupNameExcluded": true,
+    "providerProtected": false,
+    "connectionHostChanged": false
+  }
 }
