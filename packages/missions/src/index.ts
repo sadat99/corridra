@@ -46,7 +46,7 @@ export class MissionService {
       const missions = (
         await db.query(
           `SELECT m.*,i.brief,i.notice_version,i.acknowledged_at,i.source_kind,i.claim_status,i.retention_until,
-      mk.country_code,(SELECT description FROM app.target_profile tp WHERE tp.tenant_id=m.tenant_id AND tp.mission_id=m.id ORDER BY tp.created_at DESC,tp.id DESC LIMIT 1) AS target_profile
+      mk.country_code,(SELECT description FROM app.target_profile tp WHERE tp.tenant_id=m.tenant_id AND tp.mission_id=m.id ORDER BY tp.version DESC LIMIT 1) AS target_profile
       FROM app.mission m JOIN app.mission_intake i ON i.tenant_id=m.tenant_id AND i.id=m.id JOIN app.mission_market mk ON mk.tenant_id=m.tenant_id AND mk.mission_id=m.id
       WHERE ${where} ORDER BY CASE WHEN m.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,m.due_at,m.id LIMIT 100 OFFSET $3`,
           [ctx.tenantId, filter, offset],
@@ -65,7 +65,7 @@ export class MissionService {
         owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
         history: (
           await db.query(
-            'SELECT id,mission_id,action,reason,actor_id,resulting_version,created_at FROM app.mission_command WHERE tenant_id=$1 AND mission_id=ANY($2::uuid[]) ORDER BY created_at DESC',
+            'SELECT id,mission_id,action,reason,details,actor_id,resulting_version,created_at FROM app.mission_command WHERE tenant_id=$1 AND mission_id=ANY($2::uuid[]) ORDER BY created_at DESC',
             [ctx.tenantId, ids],
           )
         ).rows,
@@ -166,16 +166,26 @@ export class MissionService {
         [ctx.tenantId, v.id, v.marketCode],
       );
       await db.query(
-        'INSERT INTO app.target_profile(tenant_id,mission_id,description) VALUES($1,$2,$3)',
-        [ctx.tenantId, v.id, v.targetProfile],
+        'INSERT INTO app.target_profile(tenant_id,mission_id,description,version) VALUES($1,$2,$3,$4)',
+        [ctx.tenantId, v.id, v.targetProfile, m.version + 1],
       );
       await db.query(
         'UPDATE app.mission SET status=$3,held_from=$4,version=version+1,owner_id=$5,next_action=$6,due_at=$7,reason=$8 WHERE tenant_id=$1 AND id=$2',
         [ctx.tenantId, v.id, status, held, v.ownerId, v.nextAction, v.dueAt, v.reason],
       );
       await db.query(
-        'INSERT INTO app.mission_command(id,tenant_id,mission_id,input_hash,reason,action,actor_id,resulting_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
-        [v.commandId, ctx.tenantId, v.id, h, v.reason, v.action, actorId, m.version + 1],
+        'INSERT INTO app.mission_command(id,tenant_id,mission_id,input_hash,reason,action,actor_id,resulting_version,details) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)',
+        [
+          v.commandId,
+          ctx.tenantId,
+          v.id,
+          h,
+          v.reason,
+          v.action,
+          actorId,
+          m.version + 1,
+          JSON.stringify(v),
+        ],
       );
       return { version: m.version + 1 };
     });

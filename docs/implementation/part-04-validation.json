@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-05T04:21:19.799541+00:00",
+  "checkedAt": "2026-10-05T04:28:01.160893+00:00",
   "environment": "local isolated synthetic PostgreSQL and production Next.js build",
   "implementationBranch": "feat/part-04-missions",
   "checks": {
@@ -21,7 +21,7 @@
   },
   "migration": {
     "name": "0007_mission_core.sql",
-    "sha256": "04b36ae96b0e336ae31835b9c3a30e45159f22795a2d15b64619114bcf24abf0",
+    "sha256": "2111b9bee212802813f9ad1a26f4e8096cb45c12fb80ddad5f1c1bee28d34107",
     "freshAndUpgradeVerified": true
   },
   "verifiedBehaviors": [
@@ -40,7 +40,8 @@
     "database ingress structure and synthetic-only destination guards",
     "shared abuse budgets",
     "pagination above 100 missions and overdue filtering",
-    "desktop/mobile responsive and axe accessibility checks"
+    "desktop/mobile responsive and axe accessibility checks",
+    "version-ordered target profiles and append-only action detail snapshots"
   ],
   "customerDataAccepted": false,
   "emailDeliveryEnabled": false,

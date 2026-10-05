@@ -26,6 +26,13 @@ type Queue = {
     id: string;
     mission_id: string;
     action: string;
+    details: {
+      ownerId: string;
+      nextAction: string;
+      dueAt: string;
+      marketCode: string;
+      targetProfile: string;
+    };
     reason: string;
     resulting_version: number;
     created_at: string;
@@ -312,6 +319,21 @@ export function Missions({ tenant }: { tenant: string }) {
                   <li key={h.id}>
                     {h.action} · version {h.resulting_version} · {h.reason} ·{' '}
                     {new Date(h.created_at).toLocaleString()}
+                    <details>
+                      <summary>Recorded action details</summary>
+                      <p>
+                        Owner:{' '}
+                        {queue.owners.find((o) => o.user_id === h.details.ownerId)?.name ??
+                          h.details.ownerId}
+                      </p>
+                      <p>
+                        Next action: {h.details.nextAction} · due{' '}
+                        {new Date(h.details.dueAt).toLocaleString()}
+                      </p>
+                      <p>
+                        Market: {h.details.marketCode} · target profile: {h.details.targetProfile}
+                      </p>
+                    </details>
                   </li>
                 ))}
             </ul>

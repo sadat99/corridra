@@ -126,7 +126,18 @@ test('operator commands enforce state, source provenance, idempotency and atomic
   await expect(s.command(f.users.operator.ctx, command(id!, 1, 'activate'))).rejects.toThrow(
     'changed',
   );
-  await s.command(f.users.operator.ctx, command(id!, 2, 'activate'));
+  await s.command(f.users.operator.ctx, {
+    ...command(id!, 2, 'activate'),
+    targetProfile: 'Revised distributor profile after qualification',
+  });
+  const afterActivation = await s.queue(f.users.operator.ctx);
+  expect(afterActivation.missions.find((m) => m.id === id)?.target_profile).toBe(
+    'Revised distributor profile after qualification',
+  );
+  expect(
+    afterActivation.history.find((h) => h.mission_id === id && h.resulting_version === 3)?.details
+      .targetProfile,
+  ).toBe('Revised distributor profile after qualification');
   await s.command(f.users.operator.ctx, command(id!, 3, 'pause'));
   expect((await s.queue(f.users.operator.ctx)).missions.find((m) => m.id === id)?.status).toBe(
     'ON_HOLD',
@@ -167,6 +178,14 @@ test('tenant isolation, viewer/reviewer restrictions and SQL guards reject unaut
       [id],
     ),
   ).rejects.toThrow('Invalid mission transition');
+  await expect(
+    rawContext(
+      f.runtime,
+      f.users.operator.ctx,
+      'INSERT INTO app.target_profile(tenant_id,mission_id,description,version) VALUES($1,$2,$3,999)',
+      [f.tenantA, id, 'Forged future profile'],
+    ),
+  ).rejects.toThrow('Target profile version mismatch');
   await expect(f.runtime.query('SELECT * FROM app.intake_destination')).rejects.toThrow(
     'permission denied',
   );

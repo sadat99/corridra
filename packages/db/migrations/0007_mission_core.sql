@@ -55,11 +55,11 @@ CREATE TABLE app.commercial_intent (
  FOREIGN KEY(tenant_id,mission_id) REFERENCES app.mission(tenant_id,id), FOREIGN KEY(tenant_id,claim_id) REFERENCES app.claim(tenant_id,id), UNIQUE(tenant_id,mission_id)
 );
 CREATE TABLE app.target_profile (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid NOT NULL,mission_id uuid NOT NULL,description text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),
- FOREIGN KEY(tenant_id,mission_id) REFERENCES app.mission(tenant_id,id)
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid NOT NULL,mission_id uuid NOT NULL,description text NOT NULL,version integer NOT NULL CHECK(version>0),created_at timestamptz NOT NULL DEFAULT now(),
+ FOREIGN KEY(tenant_id,mission_id) REFERENCES app.mission(tenant_id,id),UNIQUE(tenant_id,mission_id,version)
 );
 CREATE TABLE app.mission_command (
- id uuid PRIMARY KEY,tenant_id uuid NOT NULL,mission_id uuid NOT NULL,input_hash text NOT NULL,reason text NOT NULL,action text NOT NULL,actor_id uuid NOT NULL,
+ id uuid PRIMARY KEY,tenant_id uuid NOT NULL,mission_id uuid NOT NULL,input_hash text NOT NULL,details jsonb NOT NULL CHECK(jsonb_typeof(details)='object'),reason text NOT NULL,action text NOT NULL,actor_id uuid NOT NULL,
  resulting_version integer NOT NULL,created_at timestamptz NOT NULL DEFAULT now(), FOREIGN KEY(tenant_id,mission_id) REFERENCES app.mission(tenant_id,id)
 );
 CREATE TABLE app.mission_reply (
@@ -168,6 +168,7 @@ BEGIN
  IF TG_TABLE_NAME='commercial_intent' THEN IF NEW.original_text<>OLD.original_text OR OLD.claim_id IS NOT NULL THEN RAISE EXCEPTION 'Original intent is immutable' USING ERRCODE='23514'; END IF; END IF;
  IF TG_TABLE_NAME='mission_reply' THEN IF NEW.created_by<>app.actor_id() THEN RAISE EXCEPTION 'Actor mismatch' USING ERRCODE='42501'; END IF; END IF;
  IF TG_TABLE_NAME='mission_command' THEN IF NEW.actor_id<>app.actor_id() THEN RAISE EXCEPTION 'Actor mismatch' USING ERRCODE='42501'; END IF; END IF;
+ IF TG_TABLE_NAME='target_profile' THEN IF NEW.version<>(SELECT version+1 FROM app.mission WHERE tenant_id=NEW.tenant_id AND id=NEW.mission_id) THEN RAISE EXCEPTION 'Target profile version mismatch' USING ERRCODE='23514'; END IF; END IF;
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION app.guard_mission_child() FROM PUBLIC;
@@ -175,4 +176,5 @@ CREATE TRIGGER guard BEFORE UPDATE ON app.mission_market FOR EACH ROW EXECUTE FU
 CREATE TRIGGER guard BEFORE UPDATE ON app.commercial_intent FOR EACH ROW EXECUTE FUNCTION app.guard_mission_child();
 CREATE TRIGGER guard BEFORE INSERT ON app.mission_reply FOR EACH ROW EXECUTE FUNCTION app.guard_mission_child();
 CREATE TRIGGER guard BEFORE INSERT ON app.mission_command FOR EACH ROW EXECUTE FUNCTION app.guard_mission_child();
+CREATE TRIGGER guard BEFORE INSERT ON app.target_profile FOR EACH ROW EXECUTE FUNCTION app.guard_mission_child();
 CREATE INDEX mission_queue ON app.mission(tenant_id,status,due_at);
