@@ -1,0 +1,125 @@
+{
+  "checkedAt": "2026-10-05T06:31:10.976799+00:00",
+  "domain": "https://corridra.vercel.app",
+  "scope": "Part 05 live manual research and transparent mission qualification using invented records only",
+  "implementation": {
+    "pr": 16,
+    "url": "https://github.com/sadat99/corridra/pull/16",
+    "candidate": "1540e7f765a6a673dbd7b394b708161477938a9a",
+    "merge": "ed7ca1facdae87028f3c0be72bfe02896ff68a58",
+    "ci": {
+      "id": 37271056334,
+      "url": "https://github.com/sadat99/corridra/actions/runs/37271056334",
+      "sha": "1540e7f765a6a673dbd7b394b708161477938a9a",
+      "conclusion": "success"
+    }
+  },
+  "mainCI": {
+    "id": 37272022143,
+    "url": "https://github.com/sadat99/corridra/actions/runs/37272022143",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "deployment": {
+    "checkedAt": "2026-10-05T06:26:57.831Z",
+    "id": "dpl_EDkXyfgSxyfDvVm1BQNsX8Xvph6A",
+    "sha": "ed7ca1facdae87028f3c0be72bfe02896ff68a58",
+    "state": "READY",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "source": "git",
+    "domain": "https://corridra.vercel.app",
+    "target": "production",
+    "projectProductionTargetMatches": true
+  },
+  "database": {
+    "checkedAt": "2026-10-05T06:19:26.235Z",
+    "project": "odd-pond-26265871",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "region": "aws-eu-central-1",
+    "migrationCount": 8,
+    "migrationHash": "21b59b26cfac0f7cce96163fe3b210796c53fa9777fe17a14188ed16aef7ca35",
+    "destination": "existing owner synthetic workspace",
+    "temporaryAcceptanceMembership": "temporary admin used for fresh-MFA acceptance, subsequently revoked",
+    "productionCandidateUntouched": true,
+    "existingOwnerIdentityAndMFAUnchanged": true,
+    "storageUnchanged": true,
+    "branchName": "corridra-live-synthetic"
+  },
+  "browser": {
+    "checkedAt": "2026-10-05T06:29:11.642Z",
+    "origin": "https://corridra.vercel.app",
+    "deploymentId": "dpl_EDkXyfgSxyfDvVm1BQNsX8Xvph6A",
+    "sha": "ed7ca1facdae87028f3c0be72bfe02896ff68a58",
+    "checks": [
+      "TLS and public health",
+      "synthetic intake on live endpoint",
+      "real operator password and TOTP",
+      "qualified active targeting mission retains original owner",
+      "manual public source and source-reported company identity",
+      "explicit relationship ownership and scoped contacts and notes",
+      "sourced capability remains self-declared and unverified",
+      "fresh-MFA deterministic ambiguity review and reversible attribution",
+      "transparent mission shortlist and append-only revised assessment",
+      "private contacts denied across tenant detail, search and export",
+      "mobile viewport, accessibility and persisted reload",
+      "targeting hold restoration and cancellation preserve research",
+      "signout denies protected research"
+    ],
+    "passed": 13,
+    "failed": 0,
+    "missionStatus": "CANCELLED",
+    "retainedOwner": "existing owner",
+    "records": "invented identities and @example.invalid contact only",
+    "customerDataImported": false,
+    "emailSent": false,
+    "aiUsed": false,
+    "storageChanged": false,
+    "screenshots": false,
+    "traces": false,
+    "video": false,
+    "privateNoteExcludedFromExport": true,
+    "temporaryAcceptanceMembership": "revoked after acceptance; prior revoked role restored"
+  },
+  "cleanupAndRuntime": {
+    "checkedAt": "2026-10-05T06:29:26.005Z",
+    "temporaryMembershipRevoked": true,
+    "previousRevokedRoleRestored": true,
+    "testerSessionsRemaining": 0,
+    "retainedMissionOwner": "existing owner",
+    "retainedRelationshipOwner": "existing owner",
+    "retainedMissionStatus": "CANCELLED",
+    "originalIntakeStillEnabled": true,
+    "restrictedRuntimeAndAuth": true,
+    "identitySecretsDenied": true,
+    "contextFreePrivateContactRows": 0,
+    "sharedPublicDirectInsertDenied": true,
+    "tenantIdTables": 36,
+    "allTenantIdTablesRLS": true,
+    "migrationHash": "21b59b26cfac0f7cce96163fe3b210796c53fa9777fe17a14188ed16aef7ca35",
+    "managementAndSchemaOwnerVariablesAbsent": true,
+    "productionCandidateUntouched": true,
+    "storageUnchanged": true,
+    "customerDataImported": false
+  },
+  "retainedAcceptanceRecords": "Cancelled invented mission, two source-reported companies, original owner relationships and versioned shortlist in the existing synthetic workspace",
+  "controls": {
+    "scanner": "Owner-authorized BYPASSED mode retained; not scanned, never CLEAN",
+    "accountControls": "Deferred register remains open; no protection bypass used for this release",
+    "CodeQL": "Skipped, not passed",
+    "customerActivation": "Not open; legal entity, monitored contact and approved retention/operational prerequisites pending under D08",
+    "emailDelivery": "Not implemented or claimed",
+    "aiResearch": "Not enabled",
+    "automaticRetentionCleanup": "Not implemented; disclosed in the existing notice",
+    "publicFactPublication": "Independent explicit PUBLIC fact promotion proven by real local/CI integration; not newly exercised through a live file upload"
+  },
+  "environmentGuidance": {
+    "startSkillSaved": true,
+    "requiresPublish": true,
+    "configurationPublishedByAgent": false
+  }
+}
