@@ -7,5 +7,6 @@
     "deploymentEnabled": {
       "feat/part-03-foundations": false
     }
-  }
+  },
+  "regions": ["fra1"]
 }

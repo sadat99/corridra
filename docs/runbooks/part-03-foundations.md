@@ -8,6 +8,10 @@ Run `pnpm check`. This checks formatting, lint, TypeScript, source-document inte
 
 Local credentials, test passwords and restore dumps are in ignored `.cache` files with owner-only permissions. Do not upload them. Live containers must be restarted after a new environment session. Database fixtures deliberately reset only the fixed local integration, upgrade, restore and browser databases. Source-document originals and their integrity tests remain unchanged.
 
+## Authorized limited live preview
+
+The owner authorized deployment with cloud scanning and unverified account controls deferred under [ADR-014](../adr/0014-live-synthetic-preview-with-deferred-controls.md). Retain Vercel preview authentication, native verified DB TLS, real MFA and RLS. Keep uploads disabled and production foundations off. Use an authenticated exact-SHA manual preview deployment while the Git hold remains. Keep [the deferred register](../implementation/deferred-controls.md) current. The original full-acceptance checklist below applies when closing those controls.
+
 ## EU project and preview lifecycle
 
 Project inspection, sterile-parent migrations, PR child creation, restricted-role provisioning and cloud acceptance ran successfully on 2026-10-05. See the release record for remaining gates. HTTPS API access uses `NEON_API_KEY` scoped to `console.neon.tech`. In this managed environment, set `NODE_USE_ENV_PROXY=1` for Node REST calls and `MIGRATION_TRANSPORT=neon-websocket` for sessionful offline SQL through the inherited HTTPS proxy with verified WSS. Native PostgreSQL tooling elsewhere requires an exact-host TCP route and verified TLS; an HTTPS allowlist alone does not grant raw TCP access. No credential values belong in commands or output.
