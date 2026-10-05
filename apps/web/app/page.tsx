@@ -56,7 +56,7 @@ export default function Home() {
               <span aria-hidden="true">
                 <Arrow />
               </span>
-              <span className="sr-only">(coming soon)</span>
+              <span className="sr-only">(test intake)</span>
             </Link>
             <span className="launch-status">
               <span aria-hidden="true" />

@@ -12,8 +12,9 @@ const routes = [
   ['/institutions', 'Stop measuring trade missions by attendance.'],
   ['/trust', 'Know what is claimed.'],
   ['/about', 'Make market entry deliberate.'],
-  ['/plan', 'Mission planning is coming soon.'],
+  ['/plan', 'What needs to happen?'],
   ['/signin', 'Sign-in is coming soon.'],
+  ['/privacy', 'Use test details for now.'],
 ];
 
 for (const [route, heading] of routes) {
@@ -26,10 +27,11 @@ for (const [route, heading] of routes) {
     await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
     await expect(page).toHaveTitle(/Corridra/);
     await expect(
-      page.getByText('Mission planning is coming soon. Explore the approach below.'),
+      page.getByText('Mission intake is open for test briefs. Customer missions are not open yet.'),
     ).toBeVisible();
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
-    await expect(page.locator('input, textarea, form')).toHaveCount(0);
+    if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
+    else await expect(page.getByText('Test intake is open.', { exact: true })).toBeVisible();
     await page.emulateMedia({ reducedMotion: 'reduce' });
     expect(
       await page.evaluate(
@@ -109,9 +111,7 @@ test('open navigation passes accessibility checks and remains usable at narrow w
     .getByRole('link', { name: 'Plan a mission' })
     .click();
   await expect(page).toHaveURL('/plan');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Mission planning is coming soon.',
-  );
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What needs to happen?');
 });
 
 test('every public link resolves and assets stay on the site', async ({

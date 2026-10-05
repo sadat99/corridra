@@ -91,10 +91,10 @@ export function SiteHeader() {
           Trust & Evidence
         </Link>
         <Link prefetch={false} href="/signin" onClick={close}>
-          Sign in <span className="sr-only">(coming soon)</span>
+          Sign in <span className="sr-only">(operator access)</span>
         </Link>
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
-          Plan a mission <span className="sr-only">(coming soon)</span>
+          Plan a mission <span className="sr-only">(test intake)</span>
           <span aria-hidden="true">
             <Arrow />
           </span>

@@ -2,7 +2,7 @@
 
 Cross-border market access, starting with Bangladesh and Spain/EU.
 
-This repository contains the complete supplied product documents, a 12-part implementation plan and Part 02's public website, with the original coming soon page retained. Part 03's data, identity and trust foundations are implemented and locally validated, with cloud acceptance pending. The system is built one requested part at a time.
+This repository contains the complete supplied product documents, a 12-part implementation plan and Part 02's public website, with the original coming soon page retained. Part 03's data, identity and trust foundations are live on the production domain with synthetic records and explicit unscanned evidence. Part 04 adds test mission intake and the operator review workflow; see its release record for validation and activation limits. The system is built one requested part at a time.
 
 ## Documents
 

@@ -6,6 +6,7 @@ import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
 import { createEvidenceStorage } from '@corridra/evidence/storage';
 import { readFoundationConfig } from '@corridra/config';
+import { MissionService } from '@corridra/missions';
 let singleton: ReturnType<typeof createServices> | undefined;
 function createServices() {
   const config = readFoundationConfig();
@@ -49,6 +50,7 @@ function createServices() {
     config,
     ...identity,
     access: new AccessService(runtimePool),
+    missions: new MissionService(runtimePool, config.AUTH_SECRET),
     evidence: new EvidenceService(
       runtimePool,
       storage,
