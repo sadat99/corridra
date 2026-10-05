@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import type { Pool } from 'pg';
-export async function migrate(pool: Pool, through?: string) {
+import type { DatabasePool } from './index';
+export async function migrate(pool: DatabasePool, through?: string) {
   const dir = fileURLToPath(new URL('../migrations/', import.meta.url));
   const db = await pool.connect();
   try {

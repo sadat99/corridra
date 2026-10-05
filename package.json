@@ -14,7 +14,7 @@
     "typecheck": "pnpm --filter @corridra/web typecheck && tsc -p tsconfig.packages.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm test:docs",
+    "test": "pnpm test:docs && pnpm test:infrastructure",
     "test:docs": "node --test tests/documents.test.mjs",
     "test:e2e": "playwright test",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm build && pnpm test:e2e && pnpm test:operator",
@@ -22,19 +22,24 @@
     "db:local": "node scripts/local-database.mjs",
     "db:prepare-local": "tsx scripts/prepare-local.ts",
     "scanner:local": "tsx scripts/local-scanner.ts",
-    "test:operator": "playwright test --config playwright.operator.config.ts"
+    "test:operator": "playwright test --config playwright.operator.config.ts",
+    "test:infrastructure": "python -B -m unittest discover -s tests -p neon_projects_test.py"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
+    "@neondatabase/serverless": "1.2.0",
     "@playwright/test": "1.63.0",
     "@types/node": "24.10.1",
     "@types/pg": "8.23.1",
+    "@types/ws": "8.18.2",
     "esbuild": "0.28.1",
     "eslint": "9.39.1",
+    "https-proxy-agent": "9.1.0",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.0.3",
+    "ws": "8.22.0",
     "zod": "4.6.5"
   },
   "type": "module"

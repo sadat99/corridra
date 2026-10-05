@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
-import type { Pool } from '@corridra/db';
+import type { DatabasePool } from '@corridra/db';
 import { z } from 'zod';
 // Offline provisioning only. Never expose the schema-owner connection to a request handler.
-export async function seedSyntheticWorkspace(pool: Pool, input: unknown) {
+export async function seedSyntheticWorkspace(pool: DatabasePool, input: unknown) {
   const v = z
     .object({
       email: z.email().refine((s) => s.endsWith('@example.invalid')),

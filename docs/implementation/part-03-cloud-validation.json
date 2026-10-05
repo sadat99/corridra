@@ -1,0 +1,90 @@
+{
+  "checkedAt": "2026-10-05T00:52:00.950Z",
+  "projectId": "odd-pond-26265871",
+  "productionProjectId": "icy-math-12467795",
+  "region": "aws-eu-central-1",
+  "postgresVersion": "18.6 (4e955f5)",
+  "branchId": "br-lucky-darkness-b1ppj8en",
+  "checks": [
+    "Migration hashes and repeat application",
+    "Separate restricted runtime and identity logins",
+    "Public signup, cross-origin and password-only access denied",
+    "Real TOTP, same-tenant access, cross-tenant and non-member denial",
+    "Mutation, event and outbox atomicity",
+    "Separate cloud point-in-time restore and restricted-role reconciliation",
+    "Revoked sessions lose tenant access",
+    "Tenant tables enforce RLS; context-free reads and identity secret access denied"
+  ],
+  "recovery": {
+    "sourceBranchId": "br-lucky-darkness-b1ppj8en",
+    "restoredBranchId": "br-wandering-cherry-b1yjj9w3",
+    "point": "0/1B136C8",
+    "durationMs": 4737,
+    "sourceCount": 1,
+    "deletedAfterVerificationAt": "2026-10-05T00:54:31.430997+00:00"
+  },
+  "unverified": [
+    "Deployed operator flow",
+    "EU object storage",
+    "Cloud malware scanner",
+    "Account protection controls"
+  ],
+  "projects": {
+    "production": {
+      "id": "icy-math-12467795",
+      "name": "neon-corridra",
+      "org_id": "org-shy-shape-81369420",
+      "region_id": "aws-eu-central-1",
+      "pg_version": 18,
+      "history_retention_seconds": 21600
+    },
+    "nonprod": {
+      "id": "odd-pond-26265871",
+      "name": "corridra-nonprod",
+      "org_id": "org-aged-glade-84844437",
+      "region_id": "aws-eu-central-1",
+      "pg_version": 18,
+      "history_retention_seconds": 21600
+    }
+  },
+  "previewParent": {
+    "id": "br-lingering-sea-b1eob57e",
+    "name": "synthetic",
+    "accounts": 0,
+    "sessions": 0
+  },
+  "vercelScopeVerification": {
+    "checkedAt": "2026-10-05T00:54:50Z",
+    "productionOnlyVariables": 22,
+    "previewVariables": 0,
+    "managementTokensInAppEnvironment": 0,
+    "appliesTo": "Future deployments. Existing deployment snapshots are not rewritten."
+  },
+  "storageInspection": {
+    "storeId": "store_T7H99p4za6CJCZyx",
+    "region": null,
+    "access": null,
+    "getStoreStatus": 404,
+    "listStoresStatus": 403
+  },
+  "directRlsVerification": {
+    "checkedAt": "2026-10-05T00:59:20.209Z",
+    "tenantTablesWithRls": 15,
+    "contextFreeSourceRows": 0,
+    "identitySecretAccessDenied": true
+  },
+  "localFollowUpValidation": {
+    "completedAt": "2026-10-05T01:00:18.927415+00:00",
+    "baseCommit": "5316b0eb4e942196643372d95b97fd6494130ed3",
+    "format": true,
+    "lint": true,
+    "typecheck": true,
+    "productionBuild": true,
+    "documentTests": 7,
+    "infrastructureRegressionTests": 7,
+    "integrationTests": 27,
+    "publicBrowserTests": 44,
+    "operatorBrowserTests": 1,
+    "productionDependencyAuditKnownVulnerabilities": 0
+  }
+}

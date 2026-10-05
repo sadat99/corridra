@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { Pool, assertRestrictedPool } from '../packages/db/src/index';
+import { assertRestrictedPool } from '../packages/db/src/index';
+import { databasePool } from './database-pool';
 import { z } from 'zod';
 const v = z
   .object({
@@ -38,7 +39,7 @@ await writeFile(
   JSON.stringify(Object.fromEntries(roles.map((r) => [r.key, r.connection]))),
   { mode: 0o600, flag: 'wx' },
 );
-const pool = new Pool({ connectionString: url.toString(), connectionTimeoutMillis: 10000 });
+const pool = databasePool(url.toString());
 const db = await pool.connect();
 try {
   await db.query('BEGIN');
@@ -53,7 +54,7 @@ try {
   }
   await db.query('COMMIT');
   for (const r of roles) {
-    const check = new Pool({ connectionString: r.connection, connectionTimeoutMillis: 10000 });
+    const check = databasePool(r.connection);
     try {
       await assertRestrictedPool(check, r.group);
     } finally {

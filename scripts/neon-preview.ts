@@ -1,4 +1,4 @@
-import { Pool } from '../packages/db/src/index';
+import { databasePool } from './database-pool';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { z } from 'zod';
 // Official REST schema: https://neon.com/api_spec/release/v2.json (checked 2026-10-04).
@@ -7,8 +7,9 @@ const c = z
     NEON_API_KEY: z.string().min(1),
     NEON_NONPROD_PROJECT_ID: z.string().regex(/^[a-z0-9-]+$/),
     NEON_PRODUCTION_PROJECT_ID: z.string().regex(/^[a-z0-9-]+$/),
+    NEON_PRODUCTION_PROJECT_NAME: z.string().min(1),
     NEON_SYNTHETIC_PARENT_ID: z.string().regex(/^br-[a-z0-9-]+$/),
-    NEON_NONPROD_DATABASE_URL: z.url(),
+    NEON_NONPROD_DATABASE_URL: z.url().optional(),
   })
   .parse(process.env);
 if (c.NEON_NONPROD_PROJECT_ID === c.NEON_PRODUCTION_PROJECT_ID)
@@ -33,7 +34,11 @@ if (
 )
   throw new Error('Expected the approved EU non-production project');
 const { project: production } = await api(`/projects/${c.NEON_PRODUCTION_PROJECT_ID}`);
-if (production.name !== 'corridra-prod' || production.region_id !== project.region_id)
+if (
+  production.name !== c.NEON_PRODUCTION_PROJECT_NAME ||
+  production.region_id !== project.region_id ||
+  production.pg_version !== project.pg_version
+)
   throw new Error('Production project identity/region mismatch');
 const { branches } = await api(base + '/branches');
 const parent = branches.find((b: { id: string }) => b.id === c.NEON_SYNTHETIC_PARENT_ID);
@@ -43,10 +48,12 @@ let branch = branches.find((b: { name: string }) => b.name === name);
 if (branch && (branch.parent_id !== parent.id || branch.id === parent.id || branch.protected))
   throw new Error('Existing preview is outside the managed lifecycle');
 if (action === 'create' && !branch) {
+  if (!c.NEON_NONPROD_DATABASE_URL) throw new Error('Parent connection required for creation');
   const url = new URL(c.NEON_NONPROD_DATABASE_URL);
   const { endpoints } = await api(base + '/endpoints');
   if (
     url.searchParams.get('sslmode') !== 'verify-full' ||
+    url.username !== 'corridra_migrator' ||
     url.pathname !== '/corridra' ||
     !endpoints.some(
       (e: { branch_id: string; host: string }) =>
@@ -54,10 +61,7 @@ if (action === 'create' && !branch) {
     )
   )
     throw new Error('Direct TLS database must belong to the verified non-production parent');
-  const pool = new Pool({
-    connectionString: c.NEON_NONPROD_DATABASE_URL,
-    connectionTimeoutMillis: 10000,
-  });
+  const pool = databasePool(c.NEON_NONPROD_DATABASE_URL);
   try {
     // The parent is a sterile template: only schemas, migration hashes and factual country primitives.
     // Synthetic accounts are seeded independently on each child, never cloned with sessions/passwords.

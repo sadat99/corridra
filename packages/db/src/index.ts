@@ -3,6 +3,10 @@ import { Pool, type PoolClient } from 'pg';
 import { authorize, DomainError, type Permission, type Role } from '@corridra/domain';
 export { Pool };
 export type { PoolClient };
+export type DatabaseClient = Pick<PoolClient, 'query' | 'release'>;
+export type DatabasePool = Pick<Pool, 'query' | 'end'> & {
+  connect(): Promise<DatabaseClient>;
+};
 export type RequestContext = {
   token: string;
   tenantId: string;
@@ -11,7 +15,7 @@ export type RequestContext = {
   causationId?: string;
 };
 export type TenantTransaction = {
-  db: PoolClient;
+  db: DatabaseClient;
   actorId: string;
   tenantId: string;
   role: Role;
@@ -22,7 +26,7 @@ export function sessionHash(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
 export async function assertRestrictedPool(
-  pool: Pool,
+  pool: DatabasePool,
   group: 'corridra_runtime' | 'corridra_auth' = 'corridra_runtime',
 ) {
   const {
@@ -48,7 +52,7 @@ export async function assertRestrictedPool(
     throw new Error('Runtime database identity is not restricted');
 }
 export async function withTenant<T>(
-  pool: Pool,
+  pool: DatabasePool,
   ctx: RequestContext,
   permission: Permission,
   work: (tx: TenantTransaction) => Promise<T>,

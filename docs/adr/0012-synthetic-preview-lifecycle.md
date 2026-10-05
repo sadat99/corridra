@@ -1,6 +1,6 @@
 # ADR-012: Preview branches only from a sterile non-production parent
 
-Status: lifecycle tooling implemented; live account execution pending.
+Status: sterile parent and isolated PR child provisioned in Frankfurt; cloud database acceptance verified. Protected deployment and storage acceptance pending.
 
 Production and non-production must have distinct Neon project IDs. Preview creation validates both names/regions, an explicitly selected non-production parent named `synthetic`, and the database host against that parent's API endpoint. It reads all app/identity tables and refuses a parent containing any rows other than factual country/corridor primitives. The sterile parent contains reviewed schema and migration hashes. Accounts are seeded separately on each child; password/session records are never inherited.
 
@@ -8,4 +8,6 @@ One branch named `corridra-pr-<number>` is created per PR. The script is repeata
 
 Preview runtime receives only restricted branch credentials. A separate migration job receives the child schema-owner credential. Vercel builds have no migration hook. Bind the exact preview origin and a unique auth secret to that branch. Test authentication, RLS, uploads and revocation against the deployed URL before acceptance. The app's `DATA_ENVIRONMENT=synthetic` flag is a guard, not independent proof of isolation.
 
-Current account findings: the supplied database host is US East; Vercel contains Neon integration variables scoped to both preview and production, plus a deployment token in app environments. No credential values were disclosed and those resources were not modified. These shared scopes must be reviewed and separated before enabling a data preview. The current Vercel token cannot query integration-owned resource metadata (HTTP 403). GitHub branch-protection inspection also returned HTTP 403. Config files and API scripts do not prove those account controls are active.
+Current account findings on 2026-10-05: the user replaced the prior database with a Frankfurt project and corrected the API key destination to `console.neon.tech`. Project identities, PostgreSQL version, history window, endpoint membership, restricted roles, real TOTP, RLS and a separate point-in-time restore are verified. Vercel environment metadata now shows 22 production-only database/storage variables and no preview variables. The app copies of `NEON_API_KEY` and `VERCEL_TOKEN` were removed; Codex tooling bindings remain usable. These scope changes apply to future deployments and do not rewrite existing deployment snapshots.
+
+Blob store administration remains unavailable: the specific store returns 404 and listing stores returns 403. The connected store's EU region and private access are not proven. No cloud scanner is configured. GitHub branch-protection inspection returned 403. Keep the deployment hold and production foundation flag disabled until the remaining account and storage gates close. An isolated database or a green local suite does not prove those controls.

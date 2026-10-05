@@ -1,4 +1,4 @@
-import { Pool } from '../packages/db/src/index';
+import { databasePool } from './database-pool';
 import { migrate } from '../packages/db/src/migrate';
 import { seedSyntheticWorkspace } from '../packages/auth/src/bootstrap';
 import { z } from 'zod';
@@ -19,10 +19,7 @@ if (
 )
   throw new Error('Migration target does not match the approved Frankfurt database');
 // Separate release job only. No build hook or production mode exists in Part 03.
-const pool = new Pool({
-  connectionString: v.MIGRATION_DATABASE_URL,
-  connectionTimeoutMillis: 10000,
-});
+const pool = databasePool(v.MIGRATION_DATABASE_URL);
 try {
   await migrate(pool);
   if (process.env.SEED_SYNTHETIC === 'true') {
