@@ -61,7 +61,10 @@ export class AccessService {
   }
   appendConfig(ctx: RequestContext, input: unknown) {
     const v = z
-      .object({ key: z.enum(['evidence.uploads', 'evidence.verification']), enabled: z.boolean() })
+      .object({
+        key: z.enum(['evidence.uploads', 'evidence.verification', 'evidence.scan_bypass']),
+        enabled: z.boolean(),
+      })
       .parse(input);
     return withTenant(this.pool, ctx, 'config.manage', async (t) => {
       await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [

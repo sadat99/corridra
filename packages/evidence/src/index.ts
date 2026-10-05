@@ -32,6 +32,7 @@ export class EvidenceService {
     private pool: Pool,
     private storage: ObjectStorage,
     private scanner: MalwareScanner,
+    private allowUnscannedEvidence = false,
   ) {}
   async workspace(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'trust.read', async (t) => ({
@@ -146,14 +147,22 @@ export class EvidenceService {
   async scan(ctx: RequestContext, id: string) {
     const e = await withTenant(this.pool, ctx, 'trust.write', async (t) => {
       const r = await t.db.query(
-        'SELECT e.*,s.status FROM app.evidence_object e JOIN app.evidence_state s USING(tenant_id,id) WHERE e.tenant_id=$1 AND e.id=$2',
+        'SELECT e.*,s.status,s.scan_status,s.version AS state_version,app.scan_bypass_allowed(e.tenant_id) AS bypass_allowed FROM app.evidence_object e JOIN app.evidence_state s USING(tenant_id,id) WHERE e.tenant_id=$1 AND e.id=$2',
         [t.tenantId, id],
       );
-      if (!r.rowCount || r.rows[0].status !== 'SUBMITTED')
+      if (
+        !r.rowCount ||
+        (r.rows[0].status !== 'SUBMITTED' &&
+          !(
+            r.rows[0].scan_status === 'BYPASSED' &&
+            ['UNDER_REVIEW', 'VERIFIED'].includes(r.rows[0].status) &&
+            !this.allowUnscannedEvidence
+          ))
+      )
         throw new DomainError('Evidence unavailable for scanning', 409);
       return r.rows[0];
     });
-    let verdict: { verdict: 'CLEAN' | 'INFECTED' | 'ERROR'; engine: string } = {
+    let verdict: { verdict: 'CLEAN' | 'INFECTED' | 'ERROR' | 'BYPASSED'; engine: string } = {
       verdict: 'ERROR',
       engine: 'unavailable',
     };
@@ -163,7 +172,10 @@ export class EvidenceService {
       const checked = inspectFile(body, e.mime);
       hash = checked.sha256;
       if (hash === e.sha256 && body.length === Number(e.size_bytes))
-        verdict = await this.scanner.scan(body);
+        verdict =
+          this.allowUnscannedEvidence && e.bypass_allowed
+            ? { verdict: 'BYPASSED', engine: 'owner-authorized-bypass' }
+            : await this.scanner.scan(body);
       else verdict = { verdict: 'INFECTED', engine: 'integrity-check' };
     } catch {
       /* Fail closed. No scanner/storage details reach the caller. */
@@ -173,18 +185,28 @@ export class EvidenceService {
         'SELECT * FROM app.evidence_state WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
         [t.tenantId, id],
       );
-      if (state.rows[0]?.status !== 'SUBMITTED')
+      if (
+        state.rows[0]?.status !== e.status ||
+        state.rows[0]?.scan_status !== e.scan_status ||
+        state.rows[0]?.version !== e.state_version
+      )
         throw new DomainError('Evidence changed during scanning', 409);
       await t.db.query(
         'INSERT INTO app.scan_report(tenant_id,evidence_id,verdict,engine,scanned_sha256,classification,purpose) VALUES($1,$2,$3,$4,$5,$6,$7)',
         [t.tenantId, id, verdict.verdict, verdict.engine, hash, e.classification, e.purpose],
       );
       const next =
-        verdict.verdict === 'CLEAN'
-          ? 'UNDER_REVIEW'
+        verdict.verdict === 'CLEAN' || verdict.verdict === 'BYPASSED'
+          ? e.status === 'VERIFIED'
+            ? 'VERIFIED'
+            : 'UNDER_REVIEW'
           : verdict.verdict === 'INFECTED'
-            ? 'REJECTED'
+            ? e.status === 'VERIFIED'
+              ? 'EXPIRED'
+              : 'REJECTED'
             : 'SUBMITTED';
+      if (verdict.verdict === 'ERROR' && e.status !== 'SUBMITTED')
+        return { id, status: e.status, scanStatus: e.scan_status, attemptedScan: 'ERROR' };
       await t.db.query(
         'UPDATE app.evidence_state SET status=$3,scan_status=$4,version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2',
         [t.tenantId, id, next, verdict.verdict],
@@ -216,7 +238,16 @@ export class EvidenceService {
       if (e.created_by === t.actorId)
         throw new DomainError('A different reviewer must verify the evidence');
       assertTransition(e.status as EvidenceStatus, input.decision);
-      if (e.scan_status !== 'CLEAN') throw new DomainError('Evidence is quarantined', 409);
+      if (
+        e.scan_status !== 'CLEAN' &&
+        !(
+          e.scan_status === 'BYPASSED' &&
+          this.allowUnscannedEvidence &&
+          (await t.db.query('SELECT app.scan_bypass_allowed($1) AS allowed', [t.tenantId])).rows[0]
+            .allowed
+        )
+      )
+        throw new DomainError('Evidence is quarantined', 409);
       const verificationId = randomUUID();
       await t.db.query(
         `INSERT INTO app.verification(id,tenant_id,evidence_id,decision,method,scope,valid_until,reviewer_id,classification,purpose) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
@@ -248,8 +279,8 @@ export class EvidenceService {
   async download(ctx: RequestContext, id: string) {
     const e = await withTenant(this.pool, ctx, 'trust.read', async (t) => {
       const r = await t.db.query(
-        `SELECT e.* FROM app.evidence_object e JOIN app.evidence_state s USING(tenant_id,id) WHERE e.tenant_id=$1 AND e.id=$2 AND s.scan_status='CLEAN' AND s.status IN ('UNDER_REVIEW','VERIFIED') AND e.retention_until>now()`,
-        [t.tenantId, id],
+        `SELECT e.*,s.scan_status FROM app.evidence_object e JOIN app.evidence_state s USING(tenant_id,id) WHERE e.tenant_id=$1 AND e.id=$2 AND (s.scan_status='CLEAN' OR ($3::boolean AND s.scan_status='BYPASSED' AND app.scan_bypass_allowed(e.tenant_id))) AND s.status IN ('UNDER_REVIEW','VERIFIED') AND e.retention_until>now()`,
+        [t.tenantId, id, this.allowUnscannedEvidence],
       );
       if (!r.rowCount) throw new DomainError('Evidence unavailable', 404);
       return r.rows[0];
@@ -257,6 +288,6 @@ export class EvidenceService {
     const body = await this.storage.get(e.object_key);
     if (createHash('sha256').update(body).digest('hex') !== e.sha256)
       throw new DomainError('Evidence integrity check failed', 409);
-    return { body, mime: e.mime };
+    return { body, mime: e.mime, scanStatus: e.scan_status as string };
   }
 }

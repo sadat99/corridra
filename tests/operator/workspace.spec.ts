@@ -19,7 +19,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   page,
 }) => {
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
-  await page.goto('/operator');
+  await page.goto('/signin');
   await expect(page).toHaveURL(/operator\/signin/);
   expect((await page.request.get('/api/workspace/tenants')).status()).toBe(401);
   await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');

@@ -1,6 +1,6 @@
 # ADR-014: Live synthetic preview with deferred operational controls
 
-Status: accepted by the user's explicit instruction on 2026-10-05. Implementation and deployment evidence are recorded separately.
+Status: superseded by ADR-015 after the user requested the production domain and explicit scan bypass. Originally accepted by the user's explicit instruction on 2026-10-05. Implementation and deployment evidence are recorded separately.
 
 The user requested a live functional preview while deferring cloud malware scanning and unverified account controls. This supersedes the requirement to close those operational gates before deploying Part 03, within the limited synthetic scope below. It does not declare the controls complete or change the supplied originals.
 

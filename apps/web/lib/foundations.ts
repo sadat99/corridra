@@ -49,9 +49,16 @@ function createServices() {
     config,
     ...identity,
     access: new AccessService(runtimePool),
-    evidence: new EvidenceService(runtimePool, storage, scanner),
+    evidence: new EvidenceService(
+      runtimePool,
+      storage,
+      scanner,
+      config.EVIDENCE_SCAN_MODE === 'bypass',
+    ),
     ready,
-    uploadsConfigured: !!configuredStorage && !!process.env.CLAMAV_HOST,
+    scanMode: config.EVIDENCE_SCAN_MODE,
+    uploadsConfigured:
+      !!configuredStorage && (config.EVIDENCE_SCAN_MODE === 'bypass' || !!process.env.CLAMAV_HOST),
   };
 }
 export function foundations() {

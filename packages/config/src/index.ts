@@ -5,8 +5,8 @@ const databaseUrl = z.url().refine((value) => {
 }, 'PostgreSQL URL required');
 export function readFoundationConfig(env: NodeJS.ProcessEnv = process.env) {
   if (env.CORRIDRA_FOUNDATIONS_ENABLED !== 'true') return null;
-  if (env.VERCEL_ENV === 'production')
-    throw new Error('Part 03 operator preview cannot be enabled in production');
+  if (env.VERCEL_ENV === 'production' && env.CORRIDRA_LIVE_ROLLOUT_ENABLED !== 'true')
+    throw new Error('Explicit live rollout authorization is required in production');
   const c = z
     .object({
       APP_ORIGIN: z.url(),
@@ -14,6 +14,7 @@ export function readFoundationConfig(env: NodeJS.ProcessEnv = process.env) {
       AUTH_DATABASE_URL: databaseUrl,
       AUTH_SECRET: z.string().min(32),
       DATA_ENVIRONMENT: z.literal('synthetic'),
+      EVIDENCE_SCAN_MODE: z.enum(['required', 'bypass']).default('required'),
       DATABASE_REGION: z.enum(['aws-eu-central-1', 'aws-eu-west-1', 'aws-eu-west-3', 'local']),
     })
     .parse(env);

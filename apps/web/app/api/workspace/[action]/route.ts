@@ -10,7 +10,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
   try {
     const s = foundations();
     if (!s)
-      return Response.json({ error: 'Operator preview is unavailable' }, { status: 503, headers });
+      return Response.json(
+        { error: 'Operator workspace is unavailable' },
+        { status: 503, headers },
+      );
     await s.ready;
     if (
       request.method === 'POST' &&
@@ -29,6 +32,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         workspace: async () => ({
           ...(await s.evidence.workspace(ctx)),
           uploadsConfigured: s.uploadsConfigured,
+          scanMode: s.scanMode,
         }),
         members: () => s.access.members(ctx),
         audit: () => s.access.audit(ctx),
@@ -45,6 +49,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
             'Content-Type': e.mime,
             'Content-Disposition': 'attachment; filename="evidence"',
             'X-Content-Type-Options': 'nosniff',
+            'X-Corridra-Malware-Scan': e.scanStatus,
           },
         });
       }

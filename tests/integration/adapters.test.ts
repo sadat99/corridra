@@ -27,6 +27,23 @@ test('production activation, shared roles and non-EU data fail configuration val
   };
   expect(readFoundationConfig(env)).not.toBeNull();
   expect(() => readFoundationConfig({ ...env, VERCEL_ENV: 'production' })).toThrow('production');
+  expect(
+    readFoundationConfig({
+      ...env,
+      VERCEL_ENV: 'production',
+      CORRIDRA_LIVE_ROLLOUT_ENABLED: 'true',
+      EVIDENCE_SCAN_MODE: 'bypass',
+    })?.EVIDENCE_SCAN_MODE,
+  ).toBe('bypass');
+  expect(() => readFoundationConfig({ ...env, EVIDENCE_SCAN_MODE: 'clean' })).toThrow();
+  expect(() =>
+    readFoundationConfig({
+      ...env,
+      VERCEL_ENV: 'production',
+      CORRIDRA_LIVE_ROLLOUT_ENABLED: 'true',
+      DATA_ENVIRONMENT: 'production',
+    }),
+  ).toThrow();
   expect(() =>
     readFoundationConfig({ ...env, AUTH_DATABASE_URL: env.RUNTIME_DATABASE_URL }),
   ).toThrow('separate');

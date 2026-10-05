@@ -56,7 +56,10 @@ export function OperatorSignin() {
             ? 'Set up your authenticator'
             : 'Verify your authenticator'}
       </h2>
-      <p>Access is limited to invited operators. This preview contains synthetic records.</p>
+      <p>
+        Access is limited to invited operators. Use test records until customer data controls are
+        complete.
+      </p>
       {stage === 'password' && (
         <label className="field">
           Email

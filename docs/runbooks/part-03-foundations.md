@@ -8,9 +8,11 @@ Run `pnpm check`. This checks formatting, lint, TypeScript, source-document inte
 
 Local credentials, test passwords and restore dumps are in ignored `.cache` files with owner-only permissions. Do not upload them. Live containers must be restarted after a new environment session. Database fixtures deliberately reset only the fixed local integration, upgrade, restore and browser databases. Source-document originals and their integrity tests remain unchanged.
 
-## Authorized limited live preview
+## Authorized production-domain rollout
 
-The owner authorized deployment with cloud scanning and unverified account controls deferred under [ADR-014](../adr/0014-live-synthetic-preview-with-deferred-controls.md). Retain Vercel preview authentication, native verified DB TLS, real MFA and RLS. Keep uploads disabled and production foundations off. Use an authenticated exact-SHA manual preview deployment while the Git hold remains. Keep [the deferred register](../implementation/deferred-controls.md) current. The original full-acceptance checklist below applies when closing those controls.
+The owner superseded the preview-only hold with [ADR-015](../adr/0015-production-domain-and-explicit-unscanned-evidence.md). The current Part 03 system can run at https://corridra.vercel.app using the isolated Frankfurt synthetic database. Set CORRIDRA_FOUNDATIONS_ENABLED=true, CORRIDRA_LIVE_ROLLOUT_ENABLED=true, DATA_ENVIRONMENT=synthetic and the exact production APP_ORIGIN. Keep restricted DB roles, real MFA and RLS. Set EVIDENCE_SCAN_MODE=bypass only for the authorized exception and enable the tenant owner's evidence.scan_bypass, uploads and verification flags. BYPASSED files are never called clean. Use an authenticated exact-SHA production deployment; leave Git auto-deployment held while account controls remain deferred. Keep the deferred register current. The original full-acceptance checklist below applies when closing those controls.
+
+For later scanner activation, configure its private/authenticated connection, change EVIDENCE_SCAN_MODE to required and rescan retained BYPASSED evidence. Errors do not restore file access. Keep the original audit history, and do not relabel bypass reports as real scans.
 
 ## EU project and preview lifecycle
 

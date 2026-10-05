@@ -18,6 +18,7 @@ type RecordRow = {
 };
 type Snapshot = {
   uploadsConfigured: boolean;
+  scanMode: 'required' | 'bypass';
   role: string;
   sources: RecordRow[];
   claims: RecordRow[];
@@ -141,7 +142,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
           Sign out
         </button>
       </div>
-      <p>Synthetic records only. Never enter customer information in this preview.</p>
+      <p>Use test records while customer data controls are completed.</p>
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -213,27 +214,41 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
           <section className="operator-section">
             <h2>Evidence review</h2>
             <p>
-              Files remain quarantined until validation completes. Verification requires a different
-              reviewer and a fresh authenticator check.
+              {data.scanMode === 'bypass'
+                ? 'Malware scanning is temporarily disabled. Validated files are marked unscanned. Verification still requires a different reviewer and a fresh authenticator check.'
+                : 'Files remain quarantined until validation completes. Verification requires a different reviewer and a fresh authenticator check.'}
             </p>
             {data.evidence.map((r) => (
               <div className="evidence-row" key={r.id}>
                 <span>
-                  {r.mime} · {r.status} · Scan: {r.scan_status}
+                  {r.mime} · {r.status} · Scan:{' '}
+                  {r.scan_status === 'BYPASSED' ? 'Not scanned' : r.scan_status}
                 </span>
-                {r.scan_status === 'CLEAN' && (
+                {(r.scan_status === 'CLEAN' ||
+                  (r.scan_status === 'BYPASSED' &&
+                    data.scanMode === 'bypass' &&
+                    flags.some((f) => f.key === 'evidence.scan_bypass' && f.value?.enabled))) && (
                   <a
                     className="text-link"
                     href={`/api/workspace/download?tenant=${tenant}&id=${r.id}`}
                   >
-                    Download evidence
+                    {r.scan_status === 'BYPASSED'
+                      ? 'Download unscanned evidence'
+                      : 'Download evidence'}
                   </a>
                 )}
-                {r.status === 'SUBMITTED' && data.role !== 'viewer' && (
-                  <button onClick={() => act(() => request('scan', { id: r.id }))} disabled={busy}>
-                    Run validation
-                  </button>
-                )}
+                {(r.status === 'SUBMITTED' ||
+                  (r.scan_status === 'BYPASSED' &&
+                    ['UNDER_REVIEW', 'VERIFIED'].includes(r.status ?? '') &&
+                    data.scanMode === 'required')) &&
+                  data.role !== 'viewer' && (
+                    <button
+                      onClick={() => act(() => request('scan', { id: r.id }))}
+                      disabled={busy}
+                    >
+                      Run validation
+                    </button>
+                  )}
               </div>
             ))}
             {data.role !== 'viewer' && (
@@ -274,8 +289,11 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
                   />
                 </label>
                 <p>
-                  PDF, PNG or JPEG. Maximum 4 MiB. Uploads require configured private storage and a
-                  scanner.
+                  PDF, PNG or JPEG. Maximum 4 MiB. Private storage, file type, size and integrity
+                  checks apply.
+                  {data.scanMode === 'bypass'
+                    ? ' Malware scanning is temporarily disabled.'
+                    : ' A configured scanner is required.'}
                 </p>
                 <button
                   className="primary-link"
@@ -334,7 +352,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
                   Scope and limits
                   <textarea name="scope" minLength={3} maxLength={1000} required />
                 </label>
-                <p>This preview sets a 30-day validity window.</p>
+                <p>Recorded decisions have a 30-day validity window.</p>
                 <button
                   className="primary-link"
                   disabled={
@@ -444,7 +462,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
               <p>
                 Feature changes append a new version. Disabling a feature preserves its records.
               </p>
-              {['evidence.uploads', 'evidence.verification'].map((key) => (
+              {['evidence.uploads', 'evidence.verification', 'evidence.scan_bypass'].map((key) => (
                 <div key={key}>
                   <span>
                     {key}:{' '}

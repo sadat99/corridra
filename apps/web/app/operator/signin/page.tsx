@@ -10,7 +10,7 @@ export default function Page() {
   if (!foundations()) notFound();
   return (
     <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">OPERATOR PREVIEW</p>
+      <p className="label">OPERATOR ACCESS</p>
       <h1>Sign in to your workspace.</h1>
       <OperatorSignin />
     </main>

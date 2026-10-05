@@ -1,8 +1,8 @@
 {
-  "validatedAt": "2026-10-05T01:56:35.661375+00:00",
-  "baseCommit": "ce2475558c59b62f59b2a319726826577be89c11",
+  "validatedAt": "2026-10-05T02:30:10.048605+00:00",
+  "baseCommit": "e734770a1325a97564e2ed814175b5d1774e8148",
   "branch": "feat/part-03-foundations",
-  "scope": "Local synthetic foundation; cloud database and private Blob SDK acceptance separately verified; protected deployment pending",
+  "scope": "Local synthetic foundation and explicit BYPASSED policy; production-domain rollout authorized separately",
   "checks": {
     "frozenInstall": true,
     "format": true,
@@ -10,12 +10,12 @@
     "typecheck": true,
     "productionBuild": true,
     "documentTests": 7,
-    "postgresIdentityAdapterTests": 39,
+    "postgresIdentityAdapterTests": 41,
     "publicBrowserTests": 44,
     "operatorBrowserTests": 1,
     "productionDependencyAuditKnownVulnerabilities": 0,
     "infrastructureRegressionTests": 7,
-    "totalTests": 98
+    "totalTests": 100
   },
   "runtime": {
     "node": "v24.19.0",
@@ -26,7 +26,7 @@
     "scannerImage": "clamav/clamav@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0"
   },
   "localRestore": {
-    "completedAt": "2026-10-05T01:54:54.293Z",
+    "completedAt": "2026-10-05T02:27:13.197Z",
     "eventsRestored": 38,
     "rlsRetained": true
   },

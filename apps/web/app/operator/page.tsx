@@ -27,7 +27,7 @@ export default async function Page() {
     );
   return (
     <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">SYNTHETIC OPERATOR PREVIEW</p>
+      <p className="label">OPERATOR WORKSPACE</p>
       <h1>Your workspace.</h1>
       <Workspace tenants={tenants} />
     </main>

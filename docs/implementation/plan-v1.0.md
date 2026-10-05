@@ -74,7 +74,7 @@ Create source, claim, immutable evidence metadata, verification and canonical-fa
 
 **Gate:** Fresh and upgrade migrations pass. Real PostgreSQL tests demonstrate cross-tenant denial, non-member denial, revoked-session denial and correct same-tenant access. Tests use the restricted runtime role so owner/superuser bypass cannot mask RLS failures. Domain mutation, event and outbox commit together or all roll back. Evidence remains quarantined until validation completes. Preview cannot access production credentials or clone production data. Restore one non-production backup and record recovery evidence.
 
-**Live result:** Protected operator workspace with synthetic tenants in preview; public site remains on production. No production customer import yet.
+**Live result:** Operator workspace with synthetic tenants. The owner subsequently authorized the production domain and temporary explicit unscanned-file handling in [ADR-015](../adr/0015-production-domain-and-explicit-unscanned-evidence.md). Deferred controls remain tracked; no customer import is added by this rollout.
 
 **Rollback:** Prefer expand/contract migrations and compatible forward fixes. Revoke newly introduced identities and disable protected features; do not drop retained evidence or events.
 
