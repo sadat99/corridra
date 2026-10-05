@@ -121,5 +121,111 @@
     "startSkillSaved": true,
     "requiresPublish": true,
     "configurationPublishedByAgent": false
+  },
+  "queueReadFollowUp": {
+    "checkedAt": "2026-10-05T06:58:49.387996+00:00",
+    "problem": "Protected joins were repeatedly evaluated across 100-record mission pages; the 105-fixture test reproduced a 30-second timeout",
+    "failedCIRun": "https://github.com/sadat99/corridra/actions/runs/37272934225",
+    "change": "Materialize scoped mission/intake/market reads and batch latest profiles for the displayed page; preserve RLS, original source snapshots, joined-record pagination, ordering and filters",
+    "pr": 17,
+    "url": "https://github.com/sadat99/corridra/pull/17",
+    "candidate": "2d3e2f628d40a351b24bab19795b3eb20489629f",
+    "merge": "49c42448e8b0bf0ac00166744ba4c945313e960f",
+    "ci": {
+      "id": 37274145400,
+      "url": "https://github.com/sadat99/corridra/actions/runs/37274145400",
+      "conclusion": "success"
+    },
+    "localTests": {
+      "documents": 7,
+      "infrastructure": 7,
+      "integration": 62,
+      "publicBrowser": 46,
+      "operatorBrowser": 2,
+      "total": 124,
+      "failed": 0
+    },
+    "localFocusedMissionFile": {
+      "passed": 8,
+      "durationSeconds": 8.77
+    },
+    "queueRegressionGate": "105 real fixtures, all original assertions and 30-second timeout retained; combined queue reads below ten seconds",
+    "schemaChange": false,
+    "additionalMigration": false,
+    "deployment": {
+      "checkedAt": "2026-10-05T06:59:24.290Z",
+      "sha": "49c42448e8b0bf0ac00166744ba4c945313e960f",
+      "deploymentId": "dpl_ASkpCZ5Aw6yBvbeKTny2oGyhMA5n",
+      "state": "READY",
+      "regions": ["fra1"],
+      "aliases": [
+        "corridra.vercel.app",
+        "corridra-sadat-os.vercel.app",
+        "corridra-git-main-sadat-os.vercel.app"
+      ],
+      "source": "git",
+      "productionTargetMatches": true,
+      "mainCI": {
+        "url": "https://github.com/sadat99/corridra/actions/runs/37274726961",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    },
+    "browser": {
+      "checkedAt": "2026-10-05T06:56:31.337Z",
+      "origin": "https://corridra.vercel.app",
+      "deploymentId": "dpl_ASkpCZ5Aw6yBvbeKTny2oGyhMA5n",
+      "sha": "49c42448e8b0bf0ac00166744ba4c945313e960f",
+      "checks": [
+        "TLS and public health",
+        "synthetic intake on live endpoint",
+        "real operator password and TOTP",
+        "qualified active targeting mission retains original owner",
+        "manual public source and source-reported company identity",
+        "explicit relationship ownership and scoped contacts and notes",
+        "sourced capability remains self-declared and unverified",
+        "fresh-MFA deterministic ambiguity review and reversible attribution",
+        "transparent mission shortlist and append-only revised assessment",
+        "private contacts denied across tenant detail, search and export",
+        "mobile viewport, accessibility and persisted reload",
+        "targeting hold restoration and cancellation preserve research",
+        "signout denies protected research"
+      ],
+      "passed": 13,
+      "failed": 0,
+      "missionStatus": "CANCELLED",
+      "retainedOwner": "existing owner",
+      "records": "invented identities and @example.invalid contact only",
+      "customerDataImported": false,
+      "emailSent": false,
+      "aiUsed": false,
+      "storageChanged": false,
+      "screenshots": false,
+      "traces": false,
+      "video": false,
+      "privateNoteExcludedFromExport": true,
+      "temporaryAcceptanceMembership": "revoked after repeated live acceptance; prior revoked role restored"
+    },
+    "cleanupAndRuntime": {
+      "checkedAt": "2026-10-05T06:57:22.405Z",
+      "temporaryMembershipRevoked": true,
+      "previousRevokedRoleRestored": true,
+      "testerSessionsRemaining": 0,
+      "retainedMissionOwner": "existing owner",
+      "retainedRelationshipOwner": "existing owner",
+      "retainedMissionStatus": "CANCELLED",
+      "originalIntakeStillEnabled": true,
+      "restrictedRuntimeAndAuth": true,
+      "identitySecretsDenied": true,
+      "contextFreePrivateContactRows": 0,
+      "sharedPublicDirectInsertDenied": true,
+      "tenantIdTables": 36,
+      "allTenantIdTablesRLS": true,
+      "migrationHash": "21b59b26cfac0f7cce96163fe3b210796c53fa9777fe17a14188ed16aef7ca35",
+      "managementAndSchemaOwnerVariablesAbsent": true,
+      "productionCandidateUntouched": true,
+      "storageUnchanged": true,
+      "customerDataImported": false
+    }
   }
 }
