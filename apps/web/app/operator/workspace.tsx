@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
+import { Missions } from './missions';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -150,6 +151,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
         <p>Loading workspace…</p>
       ) : (
         <>
+          <Missions key={tenant} tenant={tenant} />
           <div className="detail-grid">
             <section className="detail-card">
               <h2>Sources</h2>

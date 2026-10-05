@@ -45,6 +45,9 @@ export function SiteFooter() {
       </div>
       <div className="footer-bottom">
         <span>© 2026 Corridra</span>
+        <Link prefetch={false} href="/privacy">
+          Test intake notice
+        </Link>
         <Link prefetch={false} href="/coming-soon">
           The original launch page
         </Link>

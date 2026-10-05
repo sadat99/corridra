@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-05T04:21:19.799541+00:00",
+  "environment": "local isolated synthetic PostgreSQL and production Next.js build",
+  "implementationBranch": "feat/part-04-missions",
+  "checks": {
+    "format": true,
+    "lint": true,
+    "typecheck": true,
+    "productionBuild": true,
+    "dependencyAudit": "no known vulnerabilities"
+  },
+  "tests": {
+    "documents": 7,
+    "infrastructure": 7,
+    "integration": 49,
+    "publicBrowser": 46,
+    "operatorBrowser": 2,
+    "total": 111,
+    "failed": 0,
+    "skipped": 0
+  },
+  "migration": {
+    "name": "0007_mission_core.sql",
+    "sha256": "04b36ae96b0e336ae31835b9c3a30e45159f22795a2d15b64619114bcf24abf0",
+    "freshAndUpgradeVerified": true
+  },
+  "verifiedBehaviors": [
+    "anonymous five-step intake",
+    "step-specific errors and valid timezone/date windows",
+    "empty optional website and malformed URL validation",
+    "draft reload and failed request preserve input",
+    "parallel retry-key and content deduplication",
+    "receipt status and idempotent operator replies",
+    "real TOTP operator access",
+    "self-declared provenance and notice version",
+    "qualify, activate, pause, resume, cancel with reasons",
+    "stale command rejection and idempotent command retry",
+    "atomic mission event, audit and outbox",
+    "cross-tenant and viewer/reviewer write denial",
+    "database ingress structure and synthetic-only destination guards",
+    "shared abuse budgets",
+    "pagination above 100 missions and overdue filtering",
+    "desktop/mobile responsive and axe accessibility checks"
+  ],
+  "customerDataAccepted": false,
+  "emailDeliveryEnabled": false,
+  "automaticRetentionCleanupImplemented": false,
+  "cloudDeploymentVerified": false
+}

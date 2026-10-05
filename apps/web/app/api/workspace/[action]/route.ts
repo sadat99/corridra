@@ -29,6 +29,19 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        missions: () => {
+          const query = new URL(request.url).searchParams;
+          return s.missions.queue(
+            ctx,
+            z.enum(['all', 'open', 'overdue']).parse(query.get('filter') ?? 'all'),
+            z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100000)
+              .parse(query.get('offset') ?? 0),
+          );
+        },
         workspace: async () => ({
           ...(await s.evidence.workspace(ctx)),
           uploadsConfigured: s.uploadsConfigured,
@@ -104,6 +117,13 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      mission: () => s.missions.command(ctx, input),
+      'mission-reply': () => {
+        const v = z
+          .object({ id: z.uuid(), replyId: z.uuid(), body: z.string().trim().min(3).max(2000) })
+          .parse(input);
+        return s.missions.reply(ctx, v.id, v.body, v.replyId);
+      },
       source: () => s.evidence.createSource(ctx, input),
       claim: () => s.evidence.createClaim(ctx, input),
       member: () => s.access.changeMember(ctx, input),

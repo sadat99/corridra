@@ -1140,3 +1140,73 @@ summary:hover {
   overflow-wrap: anywhere;
   margin-bottom: 8px;
 }
+.intake-page {
+  max-width: 900px;
+}
+.intake-notice {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  margin: 2rem 0;
+  line-height: 1.7;
+}
+.intake-form {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 660px;
+}
+.intake-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.intake-form legend {
+  margin-bottom: 1rem;
+}
+.intake-form progress {
+  width: 100%;
+  accent-color: #086c50;
+}
+.choice {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.7rem 0;
+  line-height: 1.5;
+}
+.choice input {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+  accent-color: #086c50;
+}
+.receipt-panel {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+.missions-home {
+  margin: 2rem 0 4rem;
+}
+.mission-card {
+  margin-top: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.mission-card dl {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 3fr;
+  gap: 0.75rem;
+}
+.mission-card dt {
+  font-weight: 600;
+}
+.mission-card dd {
+  margin: 0;
+}
+.mission-card .operator-form {
+  max-width: 660px;
+  margin: 2rem 0;
+}
+@media (max-width: 600px) {
+  .mission-card dl {
+    grid-template-columns: 1fr;
+  }
+}

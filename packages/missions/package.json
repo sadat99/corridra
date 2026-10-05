@@ -1,0 +1,14 @@
+{
+  "name": "@corridra/missions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./bootstrap": "./src/bootstrap.ts"
+  },
+  "dependencies": {
+    "@corridra/db": "workspace:*",
+    "@corridra/domain": "workspace:*"
+  }
+}

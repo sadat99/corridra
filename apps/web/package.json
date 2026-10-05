@@ -18,7 +18,8 @@
     "@corridra/domain": "workspace:*",
     "@corridra/evidence": "workspace:*",
     "@corridra/config": "workspace:*",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "@corridra/missions": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

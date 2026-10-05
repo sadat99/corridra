@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { Pool } from '../packages/db/src/index';
 import { migrate } from '../packages/db/src/migrate';
 import { seedSyntheticWorkspace } from '../packages/auth/src/bootstrap';
+import { configureSyntheticIntake } from '../packages/missions/src/bootstrap';
 const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
 const owner = new Pool({
   host: '127.0.0.1',
@@ -30,6 +31,7 @@ const seed = await seedSyntheticWorkspace(db, {
   password,
   name: 'Synthetic Browser Operator',
 });
+await configureSyntheticIntake(db, seed.tenantId, seed.principalId);
 await db.end();
 await writeFile('.cache/part03-browser.json', JSON.stringify({ password, ...seed }), {
   mode: 0o600,

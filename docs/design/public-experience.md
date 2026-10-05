@@ -24,8 +24,8 @@ Evidence labels are explained as statuses, without applying them to invented com
 | `/institutions`   | Programme objectives, agendas and distinct commercial outcomes; relationships retained                  |
 | `/trust`          | Five evidence statuses and the limits of AI authority                                                   |
 | `/about`          | Purpose, initial corridor and current availability without invented company history                     |
-| `/plan`           | Intake is not available; no information is submitted or collected                                       |
-| `/signin`         | Accounts are not available; no credentials are collected                                                |
+| `/plan`           | Five-step test intake with private status/reply receipts; real customer briefs remain gated             |
+| `/signin`         | Live operator sign-in with invite-only identities and real MFA when foundations are enabled             |
 | `/coming-soon`    | Original Part 01 launch content remains accessible with the shared public navigation                    |
 
 Every route has one main landmark and heading, meaningful metadata, a skip link and real navigation destinations. No legal pages or legal contact details are fabricated; approved notices must ship before the corresponding data workflow.
@@ -37,3 +37,5 @@ Desktop solutions use a native disclosure. Narrow screens use an expanded-state 
 Browser acceptance checks cover desktop and mobile routes, keyboard skip links, Escape, touch activation, a 320px menu, reduced motion, horizontal overflow, JavaScript errors, internal link resolution, no external assets and axe WCAG A/AA rules through 2.2. Automated checks do not establish complete WCAG conformance; manual keyboard and visual checks supplement them.
 
 Performance budgets are mobile Lighthouse >=90 and accessibility >=95. Field targets, once real traffic permits measurement, are p75 LCP <=2.5s, INP <=200ms and CLS <=0.1. Lab scores cannot establish field performance or INP.
+
+Part 04 adds /privacy with the dated test intake notice. Public availability copy distinguishes operational test intake from customer mission delivery. Anonymous files and phone numbers are not collected; optional catalogue links are recorded without fetching.
