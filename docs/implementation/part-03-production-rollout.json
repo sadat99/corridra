@@ -1,0 +1,81 @@
+{
+  "deployment": {
+    "checkedAt": "2026-10-05T02:37:52.520Z",
+    "id": "dpl_3drqqgN3jsThNmPpnx9Aeeppuod1",
+    "url": "corridra-ettbcnst0-sadat-os.vercel.app",
+    "sha": "3a322a2ffea56faee286604c4d4618c4af598ba0",
+    "origin": "https://corridra.vercel.app",
+    "state": "READY",
+    "source": "Git integration"
+  },
+  "runtime": {
+    "checkedAt": "2026-10-05T02:30:29.539Z",
+    "origin": "https://corridra.vercel.app",
+    "productionOnlyKeys": [
+      "RUNTIME_DATABASE_URL",
+      "AUTH_DATABASE_URL",
+      "AUTH_SECRET",
+      "APP_ORIGIN",
+      "DATA_ENVIRONMENT",
+      "DATABASE_REGION",
+      "CORRIDRA_FOUNDATIONS_ENABLED",
+      "CORRIDRA_LIVE_ROLLOUT_ENABLED",
+      "EVIDENCE_SCAN_MODE",
+      "EVIDENCE_STORAGE_PROVIDER",
+      "BLOB_STORE_ID",
+      "BLOB_READ_WRITE_TOKEN",
+      "EVIDENCE_BLOB_REGION"
+    ],
+    "schemaOwnerVariablesRemoved": true,
+    "managementTokensAbsent": true,
+    "branchBindingsRetired": true,
+    "syntheticDatabase": true
+  },
+  "browserAcceptance": {
+    "checkedAt": "2026-10-05T02:48:25.461Z",
+    "origin": "https://corridra.vercel.app",
+    "checks": [
+      "public domain and anonymous application denial",
+      "owner sign-in and actual TOTP",
+      "source and claim persistence",
+      "private upload initially quarantined",
+      "honest bypass and authenticated download",
+      "cross-tenant and CSRF denial",
+      "self-verification denied",
+      "reviewer actual TOTP and independent content review",
+      "atomic audit history",
+      "owner flag revocation blocks unscanned files",
+      "real signout revokes access"
+    ],
+    "actualTOTP": true,
+    "privateBlobRoundTrip": true,
+    "malwareScan": "BYPASSED",
+    "independentContentReview": true,
+    "customerDataImported": false,
+    "screenshotsTracesVideo": false
+  },
+  "cleanup": {
+    "checkedAt": "2026-10-05T02:50:50.395Z",
+    "automationBypassRevoked": true,
+    "temporaryPreviewDeleted": true,
+    "operatorAccountRequiresOwnMFAEnrollment": true
+  },
+  "checks": {
+    "localTests": 100,
+    "candidateCI": "https://github.com/sadat99/corridra/actions/runs/37255814841",
+    "mergeCI": "https://github.com/sadat99/corridra/actions/runs/37256114383",
+    "codeQL": "Skipped; entitlement deferred"
+  },
+  "regions": ["fra1"],
+  "deferredControls": "docs/implementation/deferred-controls.md",
+  "databaseLifecycle": {
+    "checkedAt": "2026-10-05T02:54:09.462Z",
+    "projectId": "odd-pond-26265871",
+    "branchId": "br-lucky-darkness-b1ppj8en",
+    "name": "corridra-live-synthetic",
+    "renamedFrom": "corridra-pr-3",
+    "prCleanupNameExcluded": true,
+    "providerProtected": false,
+    "connectionHostChanged": false
+  }
+}

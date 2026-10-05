@@ -2,7 +2,7 @@
 
 ## Current synthetic Blob configuration
 
-The Part 03 branch uses the empty dedicated `store_C84BIU3MhR34CyTX`, confirmed by the owner as `fra1, Private`. Bind these only to `feat/part-03-foundations`:
+The live Part 03 rollout uses the dedicated `store_C84BIU3MhR34CyTX`, confirmed by the owner as `fra1, Private`. Following ADR-015, these are bound only to production for corridra.vercel.app; the obsolete PR bindings and temporary preview were retired:
 
 | Setting                     | Value/source                        |
 | --------------------------- | ----------------------------------- |
@@ -11,13 +11,13 @@ The Part 03 branch uses the empty dedicated `store_C84BIU3MhR34CyTX`, confirmed 
 | `BLOB_STORE_ID`             | The explicit dedicated store ID     |
 | `BLOB_READ_WRITE_TOKEN`     | Secure server-only store credential |
 
-The provider uses private access and refuses public or wrong-store confirmations. Never use `NEXT_PUBLIC_` for its credential. The SDK chooses its actual store from the token; the adapter verifies the token's store selector and the returned object identity. Region must match reviewed account settings. Do not share a store/token with production or other previews.
+The provider uses private access and refuses public or wrong-store confirmations. Never use `NEXT_PUBLIC_` for its credential. The SDK chooses its actual store from the token; the adapter verifies the token's store selector and the returned object identity. Region must match reviewed account settings. Do not share this runtime store/token with other environments or preview branches.
 
 For Codex checks, the SDK needs the direct secure runtime token because it extracts the store selector locally. Use the configured HTTPS proxy and `NODE_USE_ENV_PROXY=1`, with `vercel.com` and `*.private.blob.vercel-storage.com` allowed. Do not unset the proxy or disable TLS. `node --import tsx scripts/blob-storage-check.mjs` requires an empty store, writes a unique harmless synthetic PDF, checks private read, duplicate-write denial and anonymous denial, and deletes only its own probe. It writes non-secret evidence in ignored `.cache`.
 
-The actual cloud probe passed. The adapter integration test uses the real SDK against a local HTTP contract server and the real local ClamAV engine to verify quarantine and authenticated tenant access. Neither the local scanner nor an installed adapter establishes a deployed scanner. Keep upload flags off until private cloud scanning and the remaining Part 03 deployment gates pass.
+The empty-store cloud probe passed before uploads were enabled. The store now contains retained synthetic evidence from live acceptance; do not rerun the empty-store probe against it. The adapter integration test uses the real SDK against a local HTTP contract server and the real local ClamAV engine to verify quarantine and authenticated tenant access. Neither the local scanner nor an installed adapter establishes a deployed scanner. The owner explicitly authorized temporary EVIDENCE_SCAN_MODE=bypass under ADR-015. Uploads are enabled with the owner flag; reports remain BYPASSED and downloads say Not scanned. Default/required mode still blocks bypassed files until a real scan.
 
-Blob has no S3 lifecycle policy. Before any synthetic upload trial, review orphan and expiry cleanup with an offline administrator: reconcile `quarantine/` object metadata with database references, inspect retained/pending records and delete only explicitly approved expired synthetic/orphan objects. Never infer a legal-hold deletion policy from this temporary preview. No automatic Blob cleanup or object-version recovery is claimed.
+Blob has no S3 lifecycle policy. Orphan/expiry cleanup remains explicitly deferred. Before deleting retained objects, review cleanup with an offline administrator: reconcile `quarantine/` object metadata with database references, inspect retained/pending records and delete only explicitly approved expired synthetic/orphan objects. Never infer a legal-hold deletion policy from this temporary rollout. No automatic Blob cleanup or object-version recovery is claimed.
 
 ## Switch new uploads to S3
 
