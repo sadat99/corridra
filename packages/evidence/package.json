@@ -1,0 +1,16 @@
+{
+  "name": "@corridra/evidence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts",
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1146.0",
+    "@corridra/db": "workspace:*",
+    "@corridra/domain": "workspace:*",
+    "@vercel/blob": "2.8.0"
+  }
+}

@@ -1,10 +1,13 @@
 import { Arrow } from '../../components/arrow';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'Sign-in is coming soon. | Corridra',
+  title: 'Sign in | Corridra',
   robots: { index: false, follow: true },
 };
 export default function Page() {
+  if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
   return (
     <main id="main" tabIndex={-1}>
       <section className="page-hero status-page">

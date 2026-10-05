@@ -15,7 +15,7 @@ export NEXT_TELEMETRY_DISABLED=1
 pnpm install --frozen-lockfile
 ```
 
-These exports affect only the task shell and its children. They contain no credentials and do not change a system home directory. Normal developer machines and Vercel can use their default caches. The workspace permits build scripts only for `sharp` and `unrs-resolver`.
+These exports affect only the task shell and its children. They contain no credentials and do not change a system home directory. Normal developer machines and Vercel can use their default caches. The workspace permits build scripts only for `sharp`, `unrs-resolver` and the pinned `esbuild` binary.
 
 ## Startup and readiness
 
@@ -39,6 +39,9 @@ The installed Chromium is available at `/usr/bin/chromium`:
 
 ```sh
 export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+pnpm db:local
+pnpm db:prepare-local
+pnpm scanner:local
 pnpm check
 ```
 
@@ -51,3 +54,5 @@ Original source documents are excluded from formatting and Git line-ending conve
 ## Current services
 
 Parts 01 and 02 require only the Next.js process. No database, AI, email, object storage or payment service is needed. Vercel authentication is required only for remote deployment. Add further runtime bindings and readiness checks when their implementation part begins.
+
+Part 03 tests also require the local Docker PostgreSQL and ClamAV services above. They use generated, ignored credentials and synthetic loopback databases; the existing remote `DATABASE_URL` is never used. The operator browser suite starts a separate production server on port 3200. Follow [the foundation runbook](part-03-foundations.md) for EU infrastructure and the unresolved preview acceptance gates.

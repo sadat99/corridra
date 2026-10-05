@@ -27,9 +27,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <div className="site-shell">
           <SiteHeader />
-          <div className="availability-note">
+          <aside className="availability-note" aria-label="Service availability">
             Mission planning is coming soon. Explore the approach below.
-          </div>
+          </aside>
           {children}
           <SiteFooter />
         </div>

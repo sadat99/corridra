@@ -1,0 +1,6 @@
+# Current repository maintainer. Required review is an account-level setting.
+* @sadat99
+/packages/db/ @sadat99
+/packages/auth/ @sadat99
+/infrastructure/ @sadat99
+/.github/ @sadat99
