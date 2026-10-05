@@ -1,0 +1,95 @@
+{
+  "checkedAt": "2026-10-05T04:46:17.069111+00:00",
+  "domain": "https://corridra.vercel.app",
+  "scope": "Live synthetic mission intake and operator workflow; customer activation pending",
+  "implementation": {
+    "pr": 14,
+    "url": "https://github.com/sadat99/corridra/pull/14",
+    "candidate": "4c9dbfd4ae4a7bf5cc1e821bee792b5b3e92e602",
+    "merge": "fbee2836109ca79969d23c57eccd2ddc6bda000f",
+    "ci": "https://github.com/sadat99/corridra/actions/runs/37263684069",
+    "mergedAt": "2026-10-05T04:34:33.998Z"
+  },
+  "mainCI": {
+    "url": "https://github.com/sadat99/corridra/actions/runs/37264123490",
+    "conclusion": "success"
+  },
+  "deployment": {
+    "checkedAt": "2026-10-05T04:36:35.623Z",
+    "id": "dpl_ts9uHU7ysNUAVAjMusQWguCmx8Ae",
+    "state": "READY",
+    "sha": "fbee2836109ca79969d23c57eccd2ddc6bda000f",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "target": "production",
+    "source": "git"
+  },
+  "database": {
+    "checkedAt": "2026-10-05T04:34:11.871Z",
+    "project": "odd-pond-26265871",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "branchName": "corridra-live-synthetic",
+    "region": "aws-eu-central-1",
+    "migrationCount": 7,
+    "destination": "existing owner synthetic workspace",
+    "temporaryAcceptanceMembership": true,
+    "productionCandidateUntouched": true,
+    "credentialsPrinted": false
+  },
+  "browser": {
+    "checkedAt": "2026-10-05T04:37:02.925Z",
+    "origin": "https://corridra.vercel.app",
+    "checks": [
+      "TLS and public page",
+      "anonymous form and reload preservation",
+      "live mission persistence and duplicate retry",
+      "real customer address and cross-origin denial",
+      "operator password and real TOTP",
+      "protected review queue and original provenance",
+      "qualify activate hold resume with audited action details",
+      "self-declared claim retained and restricted permissions",
+      "private receipt reply and reload",
+      "cancel retains history and updates receipt",
+      "session signout and denial"
+    ],
+    "actualTOTP": true,
+    "anonymousIntake": true,
+    "emailDelivery": false,
+    "customerDataAccepted": false,
+    "screenshotsTracesVideo": false
+  },
+  "cleanupAndRuntime": {
+    "checkedAt": "2026-10-05T04:40:30.511Z",
+    "temporaryMembershipRevoked": true,
+    "testerSessionsRemaining": 0,
+    "retainedMissionOwner": "existing owner",
+    "intakeStillEnabled": true,
+    "restrictedRuntimeAndAuth": true,
+    "contextFreeMissionRows": 0,
+    "identitySecretsDenied": true,
+    "tenantIdTables": 25,
+    "allTenantIdTablesRLS": true,
+    "migrationHash": "2111b9bee212802813f9ad1a26f4e8096cb45c12fb80ddad5f1c1bee28d34107",
+    "managementAndSchemaOwnerVariablesAbsent": true,
+    "customerDataImported": false,
+    "revocationReadBackVerified": true
+  },
+  "retainedAcceptanceRecord": "Cancelled invented mission with history in the existing owner workspace",
+  "controls": {
+    "scanner": "Explicit owner-authorized BYPASSED mode retained from ADR-015",
+    "accountControls": "Deferred register remains open; no protection bypass used for this release",
+    "CodeQL": "Skipped, not passed",
+    "customerIntake": "Test-only email and notice enforced; controller/contact/approved retention prerequisites pending",
+    "emailDelivery": "Not implemented or claimed",
+    "automaticRetentionCleanup": "Not implemented; notice discloses this limit"
+  },
+  "environmentGuidance": {
+    "startSkillSaved": true,
+    "requiresPublish": true,
+    "configurationPublishedByAgent": false
+  }
+}
