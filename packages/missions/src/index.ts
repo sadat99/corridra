@@ -45,10 +45,26 @@ export class MissionService {
         "m.tenant_id=$1 AND ($2='all' OR (m.status NOT IN ('CANCELLED','CLOSED') AND ($2<>'overdue' OR m.due_at<now())))";
       const missions = (
         await db.query(
-          `SELECT m.*,i.brief,i.notice_version,i.acknowledged_at,i.source_kind,i.claim_status,i.retention_until,
-      mk.country_code,(SELECT description FROM app.target_profile tp WHERE tp.tenant_id=m.tenant_id AND tp.mission_id=m.id ORDER BY tp.version DESC LIMIT 1) AS target_profile
-      FROM app.mission m JOIN app.mission_intake i ON i.tenant_id=m.tenant_id AND i.id=m.id JOIN app.mission_market mk ON mk.tenant_id=m.tenant_id AND mk.mission_id=m.id
-      WHERE ${where} ORDER BY CASE WHEN m.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,m.due_at,m.id LIMIT 100 OFFSET $3`,
+          `WITH scoped_missions AS MATERIALIZED (
+        SELECT m.* FROM app.mission m WHERE ${where}
+      ), scoped_intakes AS MATERIALIZED (
+        SELECT i.* FROM app.mission_intake i WHERE i.tenant_id=$1
+          AND i.id IN (SELECT id FROM scoped_missions)
+      ), scoped_markets AS MATERIALIZED (
+        SELECT mk.* FROM app.mission_market mk WHERE mk.tenant_id=$1
+          AND mk.mission_id IN (SELECT id FROM scoped_missions)
+      ), page AS MATERIALIZED (
+        SELECT m.*,i.brief,i.notice_version,i.acknowledged_at,i.source_kind,i.claim_status,i.retention_until,mk.country_code
+        FROM scoped_missions m JOIN scoped_intakes i ON i.tenant_id=m.tenant_id AND i.id=m.id
+        JOIN scoped_markets mk ON mk.tenant_id=m.tenant_id AND mk.mission_id=m.id
+        ORDER BY CASE WHEN m.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,m.due_at,m.id LIMIT 100 OFFSET $3
+      ), profiles AS MATERIALIZED (
+        SELECT DISTINCT ON (tp.mission_id) tp.mission_id,tp.description
+        FROM app.target_profile tp WHERE tp.tenant_id=$1 AND tp.mission_id IN (SELECT id FROM page)
+        ORDER BY tp.mission_id,tp.version DESC
+      )
+      SELECT p.*,tp.description AS target_profile FROM page p LEFT JOIN profiles tp ON tp.mission_id=p.id
+      ORDER BY CASE WHEN p.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,p.due_at,p.id`,
           [ctx.tenantId, filter, offset],
         )
       ).rows;
