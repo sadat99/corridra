@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-05T01:40:26.863Z",
+  "storeId": "store_C84BIU3MhR34CyTX",
+  "region": "fra1",
+  "regionEvidence": "Owner confirmed the store dashboard setting; administration API remains unavailable",
+  "privateReadWrite": true,
+  "anonymousStatus": 403,
+  "createOnly": true,
+  "hashAndLengthRoundTrip": true,
+  "probeObjectDeleted": true,
+  "scopeVerification": {
+    "checkedAt": "2026-10-05T01:50:06.182873+00:00",
+    "gitBranch": "feat/part-03-foundations",
+    "previewOnlyVariables": [
+      "BLOB_READ_WRITE_TOKEN",
+      "BLOB_STORE_ID",
+      "BLOB_WEBHOOK_PUBLIC_KEY",
+      "EVIDENCE_STORAGE_PROVIDER",
+      "EVIDENCE_BLOB_REGION"
+    ],
+    "dedicatedSyntheticStore": true,
+    "productionDataImported": false
+  },
+  "s3Migration": {
+    "implementation": "Copy with SHA-256/size reconciliation, no metadata rewrite or source deletion",
+    "localContractTestPassed": true,
+    "realS3MigrationExecuted": false
+  },
+  "remaining": [
+    "Private deployed malware scanner",
+    "Protected deployed browser acceptance",
+    "Account protection verification",
+    "Production retention and object recovery"
+  ]
+}

@@ -8,6 +8,7 @@ import {
 } from '@corridra/domain';
 import { withTenant, type Pool, type RequestContext } from '@corridra/db';
 export interface ObjectStorage {
+  objectKey?(path: string): string;
   put(key: string, body: Uint8Array, mime: string): Promise<void>;
   get(key: string): Promise<Uint8Array>;
 }
@@ -105,7 +106,7 @@ export class EvidenceService {
   async upload(ctx: RequestContext, claimId: string, body: Uint8Array, mime: string) {
     const info = inspectFile(body, mime),
       id = randomUUID();
-    // Authorization precedes storage. An abandoned put stays private; synthetic bucket lifecycle removes it after 35 days.
+    // Authorization precedes storage. Orphans remain private and require the provider's cleanup policy.
     const metadata = await withTenant(this.pool, ctx, 'trust.write', async (t) => {
       const r = await t.db.query(
         `SELECT c.classification,c.purpose,s.retention_until,s.ai_policy FROM app.claim c JOIN app.source_record s ON s.tenant_id=c.tenant_id AND s.id=c.source_id WHERE c.tenant_id=$1 AND c.id=$2 AND s.retention_until>now()`,
@@ -114,7 +115,8 @@ export class EvidenceService {
       if (!r.rowCount) throw new DomainError('Claim unavailable', 404);
       return r.rows[0];
     });
-    const key = `quarantine/${ctx.tenantId}/${id}`;
+    const path = `quarantine/${ctx.tenantId}/${id}`;
+    const key = this.storage.objectKey?.(path) ?? path;
     await this.storage.put(key, body, info.mime);
     await withTenant(this.pool, ctx, 'trust.write', async (t) => {
       await t.db.query(

@@ -1,8 +1,8 @@
 {
-  "validatedAt": "2026-10-04T23:15:58.596160+00:00",
-  "baseCommit": "6969fb5e2550932aaa1fb7aae0b7ebfc4ac76cb7",
+  "validatedAt": "2026-10-05T01:56:35.661375+00:00",
+  "baseCommit": "ce2475558c59b62f59b2a319726826577be89c11",
   "branch": "feat/part-03-foundations",
-  "scope": "Local synthetic foundation; cloud acceptance pending",
+  "scope": "Local synthetic foundation; cloud database and private Blob SDK acceptance separately verified; protected deployment pending",
   "checks": {
     "frozenInstall": true,
     "format": true,
@@ -10,10 +10,12 @@
     "typecheck": true,
     "productionBuild": true,
     "documentTests": 7,
-    "postgresIdentityAdapterTests": 27,
+    "postgresIdentityAdapterTests": 39,
     "publicBrowserTests": 44,
     "operatorBrowserTests": 1,
-    "productionDependencyAuditKnownVulnerabilities": 0
+    "productionDependencyAuditKnownVulnerabilities": 0,
+    "infrastructureRegressionTests": 7,
+    "totalTests": 98
   },
   "runtime": {
     "node": "v24.19.0",
@@ -24,7 +26,7 @@
     "scannerImage": "clamav/clamav@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0"
   },
   "localRestore": {
-    "completedAt": "2026-10-04T23:14:58.911Z",
+    "completedAt": "2026-10-05T01:54:54.293Z",
     "eventsRestored": 38,
     "rlsRetained": true
   },
@@ -49,5 +51,5 @@
     ]
   },
   "cloudPreview": null,
-  "cloudAcceptance": "Blocked: EU resources, credential isolation, private scanner/storage, recovery and account protection verification"
+  "cloudAcceptance": "Database and private Blob SDK acceptance verified in separate evidence records; private scanner, protected deployment and account gates remain"
 }

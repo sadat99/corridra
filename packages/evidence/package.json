@@ -10,6 +10,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.1146.0",
     "@corridra/db": "workspace:*",
-    "@corridra/domain": "workspace:*"
+    "@corridra/domain": "workspace:*",
+    "@vercel/blob": "2.8.0"
   }
 }

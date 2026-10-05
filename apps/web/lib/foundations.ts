@@ -2,8 +2,9 @@ import 'server-only';
 import { Pool, assertRestrictedPool } from '@corridra/db';
 import { createIdentity } from '@corridra/auth';
 import { AccessService } from '@corridra/auth/access';
-import { EvidenceService, type MalwareScanner, type ObjectStorage } from '@corridra/evidence';
-import { S3Client, S3EvidenceStorage, ClamAvScanner } from '@corridra/evidence/adapters';
+import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
+import { ClamAvScanner } from '@corridra/evidence/adapters';
+import { createEvidenceStorage } from '@corridra/evidence/storage';
 import { readFoundationConfig } from '@corridra/config';
 let singleton: ReturnType<typeof createServices> | undefined;
 function createServices() {
@@ -24,7 +25,8 @@ function createServices() {
     secret: config.AUTH_SECRET,
     baseURL: config.APP_ORIGIN,
   });
-  let storage: ObjectStorage = {
+  const configuredStorage = createEvidenceStorage();
+  const storage = configuredStorage ?? {
     async put() {
       throw new Error('Evidence storage is not configured');
     },
@@ -37,13 +39,6 @@ function createServices() {
       return { verdict: 'ERROR', engine: 'unconfigured' };
     },
   };
-  if (process.env.EVIDENCE_BUCKET && process.env.EVIDENCE_REGION) {
-    storage = new S3EvidenceStorage(
-      new S3Client({ region: process.env.EVIDENCE_REGION }),
-      process.env.EVIDENCE_BUCKET,
-      process.env.EVIDENCE_REGION,
-    );
-  }
   if (process.env.CLAMAV_HOST)
     scanner = new ClamAvScanner(process.env.CLAMAV_HOST, Number(process.env.CLAMAV_PORT ?? 3310));
   const ready = Promise.all([
@@ -56,8 +51,7 @@ function createServices() {
     access: new AccessService(runtimePool),
     evidence: new EvidenceService(runtimePool, storage, scanner),
     ready,
-    uploadsConfigured:
-      !!process.env.EVIDENCE_BUCKET && !!process.env.EVIDENCE_REGION && !!process.env.CLAMAV_HOST,
+    uploadsConfigured: !!configuredStorage && !!process.env.CLAMAV_HOST,
   };
 }
 export function foundations() {
