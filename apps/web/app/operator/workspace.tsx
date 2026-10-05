@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
+import { Counterparties } from './counterparties';
 import { Missions } from './missions';
 type RecordRow = {
   id: string;
@@ -31,10 +32,14 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
   const [tenant, setTenant] = useState(tenants[0].id),
     [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [missionRevision, setMissionRevision] = useState(0);
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
     [flags, setFlags] = useState<RecordRow[]>([]);
+  const enabled = (key: string) =>
+    flags.find((f) => f.key === key)?.value?.enabled ??
+    ['research.ingestion', 'research.resolution'].includes(key);
   async function request(action: string, body?: unknown) {
     const r = await fetch(
       `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`,
@@ -144,14 +149,23 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
         </button>
       </div>
       <p>Use test records while customer data controls are completed.</p>
-      <p role="status" aria-live="polite">
+      <p role="status" aria-live="polite" aria-label="Workspace status">
         {message}
       </p>
       {!data ? (
         <p>Loading workspace…</p>
       ) : (
         <>
-          <Missions key={tenant} tenant={tenant} />
+          <Missions
+            key={tenant}
+            tenant={tenant}
+            onChanged={() => setMissionRevision((v) => v + 1)}
+          />
+          <Counterparties
+            key={`research-${tenant}`}
+            tenant={tenant}
+            missionRevision={missionRevision}
+          />
           <div className="detail-grid">
             <section className="detail-card">
               <h2>Sources</h2>
@@ -464,11 +478,16 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
               <p>
                 Feature changes append a new version. Disabling a feature preserves its records.
               </p>
-              {['evidence.uploads', 'evidence.verification', 'evidence.scan_bypass'].map((key) => (
+              {[
+                'evidence.uploads',
+                'evidence.verification',
+                'evidence.scan_bypass',
+                'research.ingestion',
+                'research.resolution',
+              ].map((key) => (
                 <div key={key}>
                   <span>
-                    {key}:{' '}
-                    {flags.find((f) => f.key === key)?.value?.enabled ? 'enabled' : 'disabled'}
+                    {key}: {enabled(key) ? 'enabled' : 'disabled'}
                   </span>
                   <button
                     className="text-link"
@@ -477,7 +496,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
                       act(() =>
                         request('config', {
                           key,
-                          enabled: !flags.find((f) => f.key === key)?.value?.enabled,
+                          enabled: !enabled(key),
                         }),
                       )
                     }

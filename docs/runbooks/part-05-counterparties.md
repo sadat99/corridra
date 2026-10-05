@@ -1,0 +1,29 @@
+# Part 05 counterparty research
+
+## Operator workflow
+
+Sign in at /operator with the invited account and real TOTP. Work in the intended workspace. Use invented company/contact records while customer-data readiness is pending.
+
+1. In Counterparty research, record a PUBLIC public-record source with an invented https://example.invalid locator, observation time and retention deadline. Times in input fields are UTC. Observation must already have occurred; retention is at most 30 days. Nothing is fetched from the locator.
+2. Add the source-reported company identity, country, invented company.example.invalid domain, public business address and country-scoped registry/tax/source identifier. Search company words or an exact domain/identifier. There are 50 company records per page.
+3. Select the company. Record sourced claims and attach them as products, capabilities, certifications, requirements or markets with a validity deadline no later than source retention. Source-reported claims remain self-declared. Evidence review uses the established separate upload, independent reviewer and fresh-MFA process. Public fact publication is available only to the actual independent reviewer of a current PUBLIC public-record fact. It preserves review scope and scan status.
+4. Add a private relationship, active owner and explicit OWNER or TEAM visibility. Add invented contacts with @example.invalid emails and sourced private notes. OWNER keeps the relationship private to the owner and authorized oversight; TEAM shares it with permitted workspace members. Another tenant receives no private rows.
+5. Find deterministic candidates. Read each collision reason. An authorized owner/admin/reviewer with fresh MFA records DISTINCT or chooses a survivor for MERGE attribution. Reverse the current decision before changing it or chaining another merge. Original source and commercial records keep their original IDs.
+6. Qualify and activate a mission in Ops Home. Begin counterparty targeting with an audited mission command when appropriate. Add its relationship to a shortlist, choose a contact from that relationship if needed, select current attributable evidence and record fit, rationale, uncertainty, gaps, next action and due date. Empty evidence, expired claims and unrelated contacts are rejected atomically.
+7. Select the mission shortlist. Review sources, uncertainty, next action and expiry. Revise the assessment with retained version history. Export the displayed page as JSON when needed; it has the same access rules and excludes private negotiation notes. The export is a page, not a claim that all targets were exported.
+
+Refresh after a conflicting version. A failed form request retains its fields; retrying the same research payload retains its command ID in that mounted workspace. The server persists idempotency and rejects changed reuse. A fresh authenticator check is required for entity decisions and public fact publication. A fit judgment never replaces evidence verification.
+
+## Setup, migration and release
+
+Use the pinned Node 24/pnpm 11.19.0 toolchain and frozen install. Read the cloud runtime Docker instructions before restarting local PostgreSQL/ClamAV. Run the standard checks and public/operator browser suites sequentially. The operator suite resets only the disposable loopback corridra_browser database and applies all eight migrations. Never point it at a cloud URL.
+
+Migration 0008_counterparty_research.sql adds the research tables, policies, scoped helpers and indexes. It replaces the mission guard with backward-compatible TARGETING support. Earlier migration files remain immutable. Review the exact migration hash and apply it separately from application builds using the approved offline migrator on the verified existing Frankfurt synthetic branch. Runtime remains restricted and cannot insert into shared organisation/identifier/fact tables directly; controlled functions explicitly validate their source and review authority. Management credentials do not belong in Vercel runtime. The separate production candidate and retained private Blob store must remain untouched.
+
+Merge through the normal PR process after actual CI success. Verify the Git-triggered production SHA, READY state, corridra.vercel.app alias and fra1 metadata, then exercise the real deployed research workflow. Record actual tests, migration, deployment and cleanup evidence. Preview authentication remains enabled; no protection bypass is introduced.
+
+## Rollback and retention
+
+An owner can disable research.ingestion and research.resolution in Workspace controls. Historical reads, sources, attribution and assessment history remain available. Roll back to a compatible application deployment if needed; keep the additive schema and use a forward migration for database corrections. Do not drop or rewrite historical attribution to roll back a decision; append a reversal. If resolution is disabled, an owner must temporarily re-enable it for the authorized reviewer to record that reversal.
+
+Sources have explicit retention and attributes/contact/public facts have bounded validity. UI expiry does not mean automatic deletion occurred. Manual retained-object/data review and the later retention executor remain open. No real customer data, personal contact import, email sending or AI processing is authorized by this test rollout. Review the deferred controls register before customer activation.

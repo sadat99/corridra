@@ -112,8 +112,13 @@ export class MissionService {
           throw new DomainError('Qualify the mission before activating', 409);
         status = 'ACTIVE';
       }
+      if (v.action === 'targeting') {
+        if (status !== 'ACTIVE')
+          throw new DomainError('Activate the mission before targeting', 409);
+        status = 'TARGETING';
+      }
       if (v.action === 'pause') {
-        if (!['QUALIFICATION', 'ACTIVE'].includes(status))
+        if (!['QUALIFICATION', 'ACTIVE', 'TARGETING'].includes(status))
           throw new DomainError('Only a qualified or active mission can be paused', 409);
         held = status;
         status = 'ON_HOLD';

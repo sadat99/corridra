@@ -62,7 +62,13 @@ export class AccessService {
   appendConfig(ctx: RequestContext, input: unknown) {
     const v = z
       .object({
-        key: z.enum(['evidence.uploads', 'evidence.verification', 'evidence.scan_bypass']),
+        key: z.enum([
+          'evidence.uploads',
+          'evidence.verification',
+          'evidence.scan_bypass',
+          'research.ingestion',
+          'research.resolution',
+        ]),
         enabled: z.boolean(),
       })
       .parse(input);

@@ -6,6 +6,7 @@ import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
 import { createEvidenceStorage } from '@corridra/evidence/storage';
 import { readFoundationConfig } from '@corridra/config';
+import { CounterpartyService } from '@corridra/counterparties';
 import { MissionService } from '@corridra/missions';
 let singleton: ReturnType<typeof createServices> | undefined;
 function createServices() {
@@ -50,6 +51,7 @@ function createServices() {
     config,
     ...identity,
     access: new AccessService(runtimePool),
+    counterparties: new CounterpartyService(runtimePool),
     missions: new MissionService(runtimePool, config.AUTH_SECRET),
     evidence: new EvidenceService(
       runtimePool,
