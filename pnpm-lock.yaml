@@ -71,6 +71,9 @@ importers:
       '@corridra/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@corridra/counterparties':
+        specifier: workspace:*
+        version: link:../../packages/counterparties
       '@corridra/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -141,6 +144,15 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+
+  packages/counterparties:
+    dependencies:
+      '@corridra/db':
+        specifier: workspace:*
+        version: link:../db
+      '@corridra/domain':
+        specifier: workspace:*
+        version: link:../domain
 
   packages/db:
     dependencies:

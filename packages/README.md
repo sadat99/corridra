@@ -11,3 +11,5 @@
 `config` rejects unsafe preview activation, database locations, role sharing and weak TLS before services are created. Configuration does not replace live account verification.
 
 App Router handlers compose these modules. Secrets and pools stay in server-only `apps/web/lib/foundations.ts`. `missions` owns Part 04 intake, mission commands, review queues and receipt replies. Its offline bootstrap helper configures one synthetic ingress destination; it must never be imported into a route. Money, DCG and AI workflows remain future parts. See the [architecture decisions](../docs/adr/) and [security contracts](../docs/security/part-03-foundations.md).
+
+`counterparties` owns Part 05 research and targets. It uses domain validation and restricted tenant transactions; it does not call AI, fetch supplied URLs or send outreach.

@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-10-05T06:08:36.410014+00:00",
+  "environment": "isolated local synthetic PostgreSQL and production Next.js build",
+  "implementationBranch": "feat/part-05-counterparties",
+  "checks": {
+    "format": true,
+    "lint": true,
+    "typecheck": true,
+    "productionBuild": true,
+    "dependencyAudit": "no known vulnerabilities"
+  },
+  "tests": {
+    "documents": 7,
+    "infrastructure": 7,
+    "integration": 62,
+    "publicBrowser": 46,
+    "operatorBrowser": 2,
+    "total": 124,
+    "failed": 0
+  },
+  "integrationExecution": {
+    "fullExistingSuitePassed": 61,
+    "additionalPopulatedUpgradePassed": 1,
+    "additionalUpgradeSelectionNonselected": 12,
+    "allInventoryTestsExecuted": true
+  },
+  "migration": {
+    "name": "0008_counterparty_research.sql",
+    "sha256": "21b59b26cfac0f7cce96163fe3b210796c53fa9777fe17a14188ed16aef7ca35",
+    "freshRepeatAndPopulatedPart04UpgradeVerified": true
+  },
+  "verifiedBehaviors": [
+    "manual source-reported public identity ingestion",
+    "idempotent research command retries and changed-key rejection",
+    "private relationship ownership and explicit team visibility",
+    "cross-tenant contact, note, search, join and shortlist denial",
+    "all five sourced company detail families with original claim labels",
+    "independent fresh-MFA public fact publication; internal facts stay private",
+    "deterministic ambiguous entity candidates and human decisions",
+    "reversible merge with original source and relationship preservation",
+    "fresh MFA, conflict and chained-merge rejection",
+    "original assessment source attribution retained after merge reversal",
+    "active mission targets with scoped contacts and attributable evidence",
+    "versioned fit rationale, uncertainty, gaps, next action and audit history",
+    "unrelated/expired evidence and contact rejection with transactional rollback",
+    "50-record company and shortlist pagination above one page",
+    "batched shortlist evidence/history reads with unchanged permissions",
+    "TARGETING, hold, resume and cancellation; outreach remains unavailable",
+    "real TOTP protected browser workflow and authenticated no-store export",
+    "mobile viewport and axe accessibility",
+    "research feature default/toggle and disabled-command read preservation",
+    "populated Part04 migration preserves original data and prior hashes"
+  ],
+  "customerDataAccepted": false,
+  "emailDeliveryEnabled": false,
+  "aiResearchEnabled": false,
+  "cloudDeploymentVerified": false
+}

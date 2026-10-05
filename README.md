@@ -45,3 +45,5 @@ Deploy on Vercel with project Root Directory `apps/web`, Node 24.x and workspace
 See [Part 03’s release record](docs/implementation/part-03-release.md) for local results and unresolved EU infrastructure, preview isolation and account gates. This branch does not activate the operator workspace in production.
 
 GitHub Actions runs the checks on PRs and pushes to `main`. Repository protection and Vercel Git integration are separate account-level settings that must be verified before the main-system work begins.
+
+Part 05 adds protected counterparty research, reversible entity attribution and evidence-aware mission shortlists. Read [the operator runbook](docs/runbooks/part-05-counterparties.md). The live system remains for invented test records while customer-data readiness is pending.

@@ -1210,3 +1210,87 @@ summary:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.research-workspace {
+  scroll-margin-top: 6rem;
+}
+.research-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.research-result {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.research-result[aria-pressed='true'] {
+  border: 2px solid var(--ink);
+}
+.research-result span {
+  font-size: 0.85rem;
+}
+.research-panel {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  margin: 1rem 0;
+  overflow-wrap: anywhere;
+}
+.research-panel summary {
+  cursor: pointer;
+  padding: 0.75rem 0;
+  font-weight: 600;
+}
+.research-evidence {
+  border-top: 1px solid var(--line);
+  padding: 1rem 0;
+}
+.research-evidence p {
+  margin: 0.5rem 0;
+}
+.research-panel fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+.research-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.research-panel h4 {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.operator-toolbar {
+  flex-wrap: wrap;
+}
+.operator-toolbar > .field {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.operator-page .field {
+  min-width: 0;
+}
+.operator-page .field input,
+.operator-page .field select,
+.operator-page .field textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.operator-page .operator-form {
+  min-width: 0;
+}
+.operator-page fieldset {
+  min-width: 0;
+}

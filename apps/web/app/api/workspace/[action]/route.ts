@@ -29,6 +29,21 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        research: () =>
+          s.counterparties.catalogue(ctx, Object.fromEntries(new URL(request.url).searchParams)),
+        counterparty: () =>
+          s.counterparties.detail(ctx, z.uuid().parse(new URL(request.url).searchParams.get('id'))),
+        shortlist: () =>
+          s.counterparties.shortlist(
+            ctx,
+            z.uuid().parse(new URL(request.url).searchParams.get('mission')),
+            z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100000)
+              .parse(new URL(request.url).searchParams.get('offset') ?? 0),
+          ),
         missions: () => {
           const query = new URL(request.url).searchParams;
           return s.missions.queue(
@@ -51,6 +66,25 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         audit: () => s.access.audit(ctx),
         config: () => s.access.config(ctx),
       };
+      if (action === 'shortlist-export') {
+        const list = await s.counterparties.shortlist(
+          ctx,
+          z.uuid().parse(new URL(request.url).searchParams.get('mission')),
+          z.coerce
+            .number()
+            .int()
+            .min(0)
+            .max(100000)
+            .parse(new URL(request.url).searchParams.get('offset') ?? 0),
+        );
+        return Response.json(list, {
+          headers: {
+            ...headers,
+            'Content-Disposition': 'attachment; filename="shortlist-page.json"',
+            'X-Content-Type-Options': 'nosniff',
+          },
+        });
+      }
       if (action === 'download') {
         const e = await s.evidence.download(
           ctx,
@@ -117,6 +151,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      research: () => s.counterparties.command(ctx, input),
       mission: () => s.missions.command(ctx, input),
       'mission-reply': () => {
         const v = z

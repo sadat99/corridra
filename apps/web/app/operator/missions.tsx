@@ -39,7 +39,7 @@ type Queue = {
   }[];
   replies: { id: string; mission_id: string; body: string }[];
 };
-export function Missions({ tenant }: { tenant: string }) {
+export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: () => void }) {
   const [queue, setQueue] = useState<Queue | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -84,6 +84,7 @@ export function Missions({ tenant }: { tenant: string }) {
       await request(action, body);
       setQueue(await request('missions'));
       setMessage('Mission saved.');
+      onChanged?.();
       return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Unable to save');
@@ -247,7 +248,10 @@ export function Missions({ tenant }: { tenant: string }) {
                     {m.status === 'QUALIFICATION' && (
                       <option value="activate">Activate mission</option>
                     )}
-                    {['QUALIFICATION', 'ACTIVE'].includes(m.status) && (
+                    {m.status === 'ACTIVE' && (
+                      <option value="targeting">Begin counterparty targeting</option>
+                    )}
+                    {['QUALIFICATION', 'ACTIVE', 'TARGETING'].includes(m.status) && (
                       <option value="pause">Pause mission</option>
                     )}
                     {m.status === 'ON_HOLD' && <option value="resume">Resume mission</option>}

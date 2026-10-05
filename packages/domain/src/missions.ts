@@ -126,7 +126,7 @@ export const missionCommand = z.object({
   id: z.uuid(),
   version: z.int().positive(),
   commandId: z.uuid(),
-  action: z.enum(['assign', 'qualify', 'activate', 'pause', 'resume', 'cancel']),
+  action: z.enum(['assign', 'qualify', 'activate', 'targeting', 'pause', 'resume', 'cancel']),
   reason: z.string().trim().min(3).max(500),
   ownerId: z.uuid(),
   nextAction: z.string().trim().min(3).max(300),

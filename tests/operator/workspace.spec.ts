@@ -87,6 +87,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
 test('invited operator enrolls MFA, records provenance, manages flags and signs out', async ({
   page,
 }) => {
+  test.setTimeout(120000);
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   await page.goto('/signin');
   await expect(page).toHaveURL(/operator\/signin/);
@@ -104,7 +105,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await page.getByLabel('Source description').fill('Synthetic browser inspection');
   await page.getByRole('button', { name: 'Record source', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Saved.');
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await page
     .getByRole('combobox', { name: 'Source', exact: true })
     .selectOption({ label: 'Synthetic browser inspection' });
@@ -145,6 +146,169 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     status: 'ACTIVE',
     replies: [{ body: 'Please confirm the synthetic target requirements.' }],
   });
+  const research = page.locator('.research-workspace');
+  await research.getByText('Record a research source and company', { exact: true }).click();
+  await research
+    .getByLabel('Research source locator')
+    .fill('https://example.invalid/browser-registry');
+  await research.getByRole('button', { name: 'Save research source', exact: true }).click();
+  await expect(research.getByRole('status')).toHaveText('Research saved.');
+  await research
+    .getByLabel('Public identity source')
+    .selectOption({ label: 'https://example.invalid/browser-registry' });
+  await research
+    .getByLabel('Company name', { exact: true })
+    .fill('Synthetic Browser Distributor A');
+  await research.getByLabel('Company country').selectOption('ES');
+  await research.getByLabel('Invented company domain').fill('browser.example.invalid');
+  await research.getByLabel('Public business address').fill('Synthetic Browser Business Park');
+  await research.getByLabel('Country-scoped identifier').fill('BROWSER-A');
+  await research.getByRole('button', { name: 'Add company record', exact: true }).click();
+  await expect(
+    research.getByRole('button', { name: /Synthetic Browser Distributor A/ }),
+  ).toBeVisible();
+  await research
+    .getByLabel('Company name', { exact: true })
+    .fill('Synthetic Browser Distributor B');
+  await research.getByLabel('Country-scoped identifier').fill('BROWSER-B');
+  await research.getByRole('button', { name: 'Add company record', exact: true }).click();
+  await expect(
+    research.getByRole('button', { name: /Synthetic Browser Distributor B/ }),
+  ).toBeVisible();
+  await research.getByRole('button', { name: /Synthetic Browser Distributor A/ }).click();
+  await expect(
+    research.getByRole('heading', { name: 'Synthetic Browser Distributor A', exact: true }),
+  ).toBeVisible();
+  await research.getByText('Add a private relationship, contact or note', { exact: true }).click();
+  await research
+    .getByLabel('Relationship owner', { exact: true })
+    .selectOption({ label: 'Synthetic Browser Operator' });
+  await research.getByLabel('Relationship visibility').selectOption('TEAM');
+  await research
+    .getByLabel('Relationship context')
+    .fill('Synthetic hospitality buying relationship');
+  await research.getByRole('button', { name: 'Add private relationship', exact: true }).click();
+  await expect(research.getByText('Shared with this workspace', { exact: true })).toBeVisible();
+  await research
+    .getByLabel('Contact relationship')
+    .selectOption({ label: 'Synthetic hospitality buying relationship' });
+  await research
+    .getByLabel('Contact source')
+    .selectOption({ label: 'https://example.invalid/browser-registry' });
+  await research.getByLabel('Contact name', { exact: true }).fill('Synthetic Buyer');
+  await research.getByLabel('Contact job title').fill('Synthetic procurement manager');
+  await research.getByLabel('Invented contact email').fill('buyer@example.invalid');
+  await research.getByRole('button', { name: 'Add private contact', exact: true }).click();
+  await expect(research.getByText(/Synthetic Buyer.*buyer@example.invalid/)).toBeVisible();
+  await research
+    .getByLabel('Note relationship')
+    .selectOption({ label: 'Synthetic hospitality buying relationship' });
+  await research
+    .getByLabel('Private note source')
+    .selectOption({ label: 'https://example.invalid/browser-registry' });
+  await research.getByLabel('Private research note').fill('Synthetic private procurement context');
+  await research.getByRole('button', { name: 'Add private note', exact: true }).click();
+  await expect(
+    research.getByText(/Private note: Synthetic private procurement context/),
+  ).toBeVisible();
+  await research
+    .getByText('Add sourced product, capability, certificate, requirement or market', {
+      exact: true,
+    })
+    .click();
+  await research
+    .getByLabel('Research claim source')
+    .selectOption({ label: 'https://example.invalid/browser-registry' });
+  await research
+    .getByLabel('Research claim statement')
+    .fill('Synthetic distributor supplies hotel towels');
+  await research.getByRole('button', { name: 'Record research claim', exact: true }).click();
+  await expect(research.getByRole('status')).toHaveText('Research saved.');
+  await research.getByLabel('Company detail type').selectOption('capability');
+  await research
+    .getByLabel('Attach original claim')
+    .selectOption({ label: 'Synthetic distributor supplies hotel towels' });
+  await research.getByRole('button', { name: 'Attach company detail', exact: true }).click();
+  await expect(
+    research.getByText('SELF_DECLARED · Original claim: self_declared', { exact: true }),
+  ).toBeVisible();
+  await research
+    .getByRole('button', { name: 'Find deterministic candidates', exact: true })
+    .click();
+  await expect(research.getByText(/Exact domain; may be shared by a group/)).toBeVisible();
+  await research.getByLabel('Entity decision').selectOption('MERGE');
+  await research
+    .getByLabel('Canonical survivor')
+    .selectOption({ label: 'Synthetic Browser Distributor A' });
+  await research
+    .getByLabel('Entity review reason')
+    .fill('Synthetic source review confirms duplicate attribution');
+  await research.getByRole('button', { name: 'Record entity decision', exact: true }).click();
+  await expect(research.getByText(/MERGE: Synthetic source review/)).toBeVisible();
+  page.once('dialog', (dialog) =>
+    dialog.accept('Synthetic new evidence confirms distinct entities'),
+  );
+  await research.getByRole('button', { name: 'Reverse entity decision', exact: true }).click();
+  await expect(research.getByText(/REVERSE: Synthetic new evidence/)).toBeVisible();
+  await research.getByText('Add this relationship to a mission shortlist', { exact: true }).click();
+  await research
+    .getByLabel('Target mission', { exact: true })
+    .selectOption({ label: 'Browser Mission Test Company' });
+  await research
+    .getByLabel('Target relationship', { exact: true })
+    .selectOption({ label: 'Synthetic hospitality buying relationship' });
+  await research.getByLabel('Optional target contact').selectOption({ label: 'Synthetic Buyer' });
+  await research
+    .getByLabel('Synthetic distributor supplies hotel towels · SELF_DECLARED', { exact: true })
+    .check();
+  await research.getByLabel('Fit judgment', { exact: true }).selectOption('POSSIBLE');
+  await research
+    .getByLabel('Fit rationale', { exact: true })
+    .fill('Declared distribution capability fits hospitality targets');
+  await research
+    .getByLabel('Remaining uncertainty', { exact: true })
+    .fill('Buyer interest and volume are unconfirmed');
+  await research
+    .getByLabel('Evidence gaps', { exact: true })
+    .fill('Independent distribution evidence still needed');
+  await research
+    .getByLabel('Target next action', { exact: true })
+    .fill('Request evidence and confirm synthetic interest');
+  await research.getByRole('button', { name: 'Add mission target', exact: true }).click();
+  await expect(research.getByRole('status')).toHaveText('Research saved.');
+  await research
+    .getByLabel('Shortlist mission')
+    .selectOption({ label: 'Browser Mission Test Company · ACTIVE' });
+  const targetCard = research.locator('.research-evidence').filter({
+    has: page.getByRole('heading', { name: 'Synthetic Browser Distributor A', exact: true }),
+  });
+  await expect(targetCard.getByText(/Why: Declared distribution capability/)).toBeVisible();
+  await expect(targetCard.getByText(/Uncertainty: Buyer interest/)).toBeVisible();
+  await targetCard.getByText('Revise fit assessment', { exact: true }).click();
+  await targetCard.getByLabel('Fit judgment', { exact: true }).selectOption('STRONG');
+  await targetCard.getByRole('button', { name: 'Save fit assessment', exact: true }).click();
+  await expect(
+    targetCard.getByText('Fit: STRONG · Assessment version 2', { exact: true }),
+  ).toBeVisible();
+  const exported = await page.request.get(
+    `/api/workspace/shortlist-export?tenant=${seed.tenantId}&mission=${mission.id}`,
+  );
+  expect(exported.ok()).toBe(true);
+  expect(exported.headers()['cache-control']).toBe('no-store');
+  expect((await exported.json()).targets[0]).toMatchObject({
+    fit: 'STRONG',
+    version: 2,
+    contacts: [{ email: 'buyer@example.invalid' }],
+  });
+  expect((await page.request.get(`/api/workspace/research?tenant=${randomUUID()}`)).status()).toBe(
+    403,
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.reload();
   await expect(card).toHaveCount(1);
   await page.getByLabel('Show missions').selectOption('all');
@@ -180,10 +344,12 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await db.end();
   }
   await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Verify your authenticator again to continue');
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
+    'Verify your authenticator again to continue',
+  );
   await page.getByLabel('Current authenticator code').fill(totp(secret));
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Saved.');
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
   await expect(page.getByText('evidence.verification: enabled', { exact: true })).toBeVisible();
   await page.reload();
@@ -191,6 +357,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
+  await expect(page.getByText('research.ingestion: enabled', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Change research.ingestion', exact: true }).click();
+  await expect(page.getByText('research.ingestion: disabled', { exact: true })).toBeVisible();
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
