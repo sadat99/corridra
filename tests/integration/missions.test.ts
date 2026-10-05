@@ -236,6 +236,7 @@ test('public abuse budgets survive replicas and reject the seventh request', asy
 });
 test('queue pagination retains every mission and server filters include overdue work', async () => {
   for (let n = 0; n < 105; n++) await create();
+  const readStarted = performance.now();
   const first = await s.queue(f.users.operator.ctx, 'all', 0);
   const next = await s.queue(f.users.operator.ctx, 'all', 100);
   expect(first.missions).toHaveLength(100);
@@ -251,6 +252,7 @@ test('queue pagination retains every mission and server filters include overdue 
   const overdue = await s.queue(f.users.operator.ctx, 'overdue');
   expect(overdue.missions.some((m) => m.id === id)).toBe(true);
   expect((await s.queue(f.users.other.ctx)).total).toBe(0);
+  expect(performance.now() - readStarted).toBeLessThan(10000);
 });
 test('ingress rejects malformed database calls and cannot activate a non-synthetic destination', async () => {
   await expect(
