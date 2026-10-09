@@ -1071,7 +1071,9 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
   await panel.getByRole('button', { name: 'Revoke link', exact: true }).first().click();
   await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
-  await expect(client.getByRole('alert')).toContainText('unavailable');
+  await expect(client.getByRole('alert').filter({ hasText: 'Access denied' })).toContainText(
+    'unavailable',
+  );
   await clientContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   expect((await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status()).toBe(
