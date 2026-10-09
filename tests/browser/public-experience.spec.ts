@@ -130,6 +130,7 @@ test('every public link resolves and assets stay on the site', async ({
       .locator('a')
       .evaluateAll((elements) => elements.map((el) => el.getAttribute('href') ?? ''))) {
       if (href.startsWith('/')) links.add(href);
+      else if (href.startsWith('mailto:')) expect(href).toBe('mailto:sadat@obsidianglobal.studio');
       else expect(href.startsWith('#')).toBe(true);
     }
   }
