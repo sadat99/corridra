@@ -1,6 +1,6 @@
 # Part 07 handoff: commercial follow-through
 
-Status: implementation and validation in progress following the owner's 9 October 2026 instruction to proceed. See [the requirement baseline](part-07-scope.md), [runbook](../runbooks/part-07-commercial-followthrough.md) and [release status](part-07-release.md). Customer signup remains deferred.
+Status: implemented following the owner's 9 October 2026 instruction to proceed. See [the requirement baseline](part-07-scope.md), [runbook](../runbooks/part-07-commercial-followthrough.md) and [release status](part-07-release.md). Customer signup remains deferred.
 
 ## Objective and existing journey
 

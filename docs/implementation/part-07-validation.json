@@ -1,0 +1,50 @@
+{
+  "checkedAt": "2026-10-09T08:08:46.798Z",
+  "scope": "Local and isolated preview validation; current production release evidence is recorded in PR #22",
+  "featureCodeSha": "fc55c4407baf48a93fbd5a9e5c97724f571cb57d",
+  "releaseRecord": "https://github.com/sadat99/corridra/pull/22",
+  "local": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "documentTests": 7,
+    "infrastructureTests": 7,
+    "integrationTests": 108,
+    "publicBrowserTests": 46,
+    "protectedBrowserTests": 4,
+    "totalTests": 172,
+    "productionBuild": "passed",
+    "productionDependencyAudit": "No known vulnerabilities found"
+  },
+  "database": {
+    "freshMigrationCount": 13,
+    "populatedPart06UpgradePreserved": true,
+    "tenantPurposeCountryAndRelationshipDenials": true,
+    "restrictedSourceDowngradeDenied": true,
+    "operatorAndStaleMfaCashDenied": true,
+    "overpaymentsDenied": true,
+    "minorUnitsExactBeyondJavaScriptSafeInteger": true,
+    "mixedCurrenciesSeparate": true,
+    "compensationsAppendOnly": true,
+    "rebuildsIdempotentAndAudited": true,
+    "unqualifiedLossCannotEstablishQualification": true,
+    "privateUnresolvedOpportunityBlocksMissionClosure": true
+  },
+  "preview": {
+    "deploymentId": "dpl_7r4Zm6HenXSuhQxaHLx2DyFT9XTR",
+    "sha": "fc55c4407baf48a93fbd5a9e5c97724f571cb57d",
+    "state": "READY",
+    "branch": "br-noisy-wind-b1jq5faw",
+    "migrationCount": 13,
+    "existingRowsAndEventsPreserved": true,
+    "productionCredentialsNotBound": true,
+    "realAuthenticatorEnrollment": true,
+    "completeIntakeBuyerHeldMeetingCashRecurrenceCompensationReplayJourney": true,
+    "missionAttributionChecked": true,
+    "mobileAndAccessibilityPassed": true,
+    "signOutAndStaleSessionDenied": true,
+    "signupDisabled": true,
+    "productionChangedDuringPreviewValidation": false
+  },
+  "deferredControls": ["D01", "D02", "D03", "D04", "D05", "D06", "D08", "D09"]
+}

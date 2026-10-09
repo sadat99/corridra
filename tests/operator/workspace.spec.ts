@@ -585,6 +585,9 @@ test('controlled buyer response progresses through durable delivery, a held meet
   ).toBe(403);
   await page.getByRole('button', { name: 'Refresh access and meetings' }).click();
   const proposal = page.getByRole('form', { name: 'Propose meeting' });
+  await proposal
+    .getByRole('combobox', { name: 'Meeting introduction', exact: true })
+    .selectOption({ label: 'Part Six Supplier (INTERESTED)' });
   await proposal.getByLabel('Meeting title').fill('Part Six buyer discussion');
   await proposal
     .getByLabel('Meeting brief', { exact: true })
@@ -644,6 +647,10 @@ test('controlled buyer response progresses through durable delivery, a held meet
   const heldSnapshot = await (
     await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)
   ).json();
+  expect(
+    heldSnapshot.meetings.find((m: { title: string }) => m.title === 'Part Six buyer discussion')
+      .mission_id,
+  ).toBe(mission.id);
   await writeFile(
     '.cache/part07-browser-origin.json',
     JSON.stringify({
