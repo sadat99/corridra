@@ -17,3 +17,13 @@ Neon's production checklist requires custom SMTP. The live branch is prepared wi
 These account flows do not remove synthetic mission restrictions, supply a malware scanner, authorize outreach or implement later commercial opportunities. Review [the deferred controls](../implementation/deferred-controls.md) before claiming a regular paid-customer journey.
 
 Rollback disables `CORRIDRA_NEON_AUTH_ENABLED` and redeploys, preserving existing identities and operator MFA. Do not delete the auth schema, users or branch as a rollback. Rotate signing material only with an explicit recovery plan.
+
+## Deferred signup release, 9 October 2026
+
+The owner requested release of completed work with signup deferred so Part 07 can proceed. Production account routes retain their unavailable state; operator password/TOTP and no-account buyer responses remain usable. Keep `CORRIDRA_NEON_AUTH_ENABLED=false`, production readiness unset and Neon provider signup disabled. No account identities, memberships or schema need deleting.
+
+Neon custom SMTP is configured with `smtp.resend.com`, port 465, user `resend`, sender name Corridra and sender `sadat@c.obsidianglobal.studio`. Its password stays in secure provider settings. Sadat's accessible inbox is `sadat@obsidianglobal.studio`; the sending address does not require a separate inbox. Resend uses Ireland (`eu-west-1`) and the TXT/MX format shown by its dashboard.
+
+The owner supplied a Resend support check confirming DKIM, SPF TXT, sending MX and receiving MX match public Vercel DNS. That support report says the domain is partially verified, with both SPF records pending and no verified date. The current verification pass started at 12:03 PM Asia/Dhaka on 9 October 2026. The last SMTP test, at 12:11 PM, still returned 550 because the stored key's associated domain was not verified. This is provider-reported DNS evidence, not an independent Resend API inspection by this release.
+
+Leave the verification pass running. Restarting it resets the pass. If it becomes Failed despite the matching DNS, escalate through Resend support. After Sending verifies, confirm the stored SMTP key has full access or access to `c.obsidianglobal.studio`; another domain's key can produce the same 550 error. Then test delivery to the accessible inbox and consume the actual received verification code and password-reset link. Only activate production accounts after D09 and the applicable activation gates above pass. See [the deferred controls register](../implementation/deferred-controls.md).
