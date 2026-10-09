@@ -9,4 +9,6 @@ test-results/
 *.tsbuildinfo
 .DS_Store
 .cache/
+apps/web/app/.well-known/workflow/
+apps/web/.workflow-data/
 apps/web/next-env.d.ts

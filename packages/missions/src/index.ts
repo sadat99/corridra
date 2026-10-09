@@ -133,8 +133,25 @@ export class MissionService {
           throw new DomainError('Activate the mission before targeting', 409);
         status = 'TARGETING';
       }
+      if (v.action === 'outreach') {
+        if (status !== 'TARGETING') throw new DomainError('Begin targeting before outreach', 409);
+        status = 'OUTREACH';
+      }
+      if (v.action === 'meetings') {
+        if (status !== 'OUTREACH') throw new DomainError('Begin outreach before meetings', 409);
+        status = 'MEETINGS';
+      }
+      if (v.action === 'followup') {
+        if (status !== 'MEETINGS')
+          throw new DomainError('Complete a meeting before follow-up', 409);
+        status = 'FOLLOW_UP';
+      }
       if (v.action === 'pause') {
-        if (!['QUALIFICATION', 'ACTIVE', 'TARGETING'].includes(status))
+        if (
+          !['QUALIFICATION', 'ACTIVE', 'TARGETING', 'OUTREACH', 'MEETINGS', 'FOLLOW_UP'].includes(
+            status,
+          )
+        )
           throw new DomainError('Only a qualified or active mission can be paused', 409);
         held = status;
         status = 'ON_HOLD';

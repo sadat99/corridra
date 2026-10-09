@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { Missions } from './missions';
+import { ControlledAccess } from './access';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -166,6 +167,7 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
             tenant={tenant}
             missionRevision={missionRevision}
           />
+          <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
           <div className="detail-grid">
             <section className="detail-card">
               <h2>Sources</h2>
@@ -484,6 +486,8 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
                 'evidence.scan_bypass',
                 'research.ingestion',
                 'research.resolution',
+                'communications.introductions',
+                'communications.dispatch',
               ].map((key) => (
                 <div key={key}>
                   <span>

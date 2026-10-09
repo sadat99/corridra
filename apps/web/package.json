@@ -10,17 +10,20 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.8",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
     "@corridra/auth": "workspace:*",
+    "@corridra/config": "workspace:*",
+    "@corridra/counterparties": "workspace:*",
+    "@corridra/communications": "workspace:*",
+    "@corridra/workflows": "workspace:*",
     "@corridra/db": "workspace:*",
     "@corridra/domain": "workspace:*",
     "@corridra/evidence": "workspace:*",
-    "@corridra/config": "workspace:*",
-    "zod": "4.6.5",
     "@corridra/missions": "workspace:*",
-    "@corridra/counterparties": "workspace:*"
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "workflow": "5.2.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

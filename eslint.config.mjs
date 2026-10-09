@@ -10,5 +10,7 @@ export default defineConfig([
     'test-results/**',
     'playwright-report/**',
     'apps/web/next-env.d.ts',
+    'apps/web/app/.well-known/workflow/**',
+    'apps/web/.workflow-data/**',
   ]),
 ]);

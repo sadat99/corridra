@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../../lib/foundations';
+import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -29,6 +30,8 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        communications: () => s.communications.workspace(ctx),
+        meetings: () => s.meetings.workspace(ctx),
         research: () =>
           s.counterparties.catalogue(ctx, Object.fromEntries(new URL(request.url).searchParams)),
         counterparty: () =>
@@ -151,6 +154,17 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      communication: () => s.communications.command(ctx, input),
+      meeting: () => s.meetings.command(ctx, input),
+      dispatch: async () => {
+        const started: string[] = [];
+        for (const job of await s.communications.pending(ctx)) {
+          const runId = await communicationOrchestrator.start(job.id);
+          await s.communications.started(ctx, job.id, runId);
+          started.push(job.id);
+        }
+        return { started };
+      },
       research: () => s.counterparties.command(ctx, input),
       mission: () => s.missions.command(ctx, input),
       'mission-reply': () => {
@@ -187,13 +201,21 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         ? error.status
         : error instanceof z.ZodError || error instanceof SyntaxError
           ? 400
-          : 500;
+          : ['23514', '23503', '23505'].includes((error as { code?: string }).code ?? '')
+            ? 409
+            : (error as { code?: string }).code === '42501'
+              ? 403
+              : 500;
     const message =
       error instanceof DomainError
         ? error.message
         : status === 400
           ? 'Check the submitted values'
-          : 'The request could not be completed';
+          : status === 409
+            ? 'The record or policy changed. Check its status and refresh before retrying.'
+            : status === 403
+              ? 'Access denied'
+              : 'The request could not be completed';
     if (status === 500)
       console.error(JSON.stringify({ event: 'foundation_request_failed', correlationId }));
     return Response.json({ error: message, correlationId }, { status, headers });

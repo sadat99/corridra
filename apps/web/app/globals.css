@@ -1,4 +1,28 @@
 @import 'tailwindcss';
+/* Private introductions keep their content readable on narrow screens. */
+.buyer-card {
+  max-width: 48rem;
+}
+.buyer-details > div {
+  margin-block: 1.2rem;
+}
+.buyer-details dt {
+  font-weight: 650;
+}
+.buyer-details dd {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}
+.buyer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1.5rem;
+}
+.introduction-card,
+.meeting-card {
+  margin-block: 1.25rem;
+}
 
 :root {
   --paper: #f5f3ec;

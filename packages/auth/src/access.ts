@@ -68,6 +68,8 @@ export class AccessService {
           'evidence.scan_bypass',
           'research.ingestion',
           'research.resolution',
+          'communications.introductions',
+          'communications.dispatch',
         ]),
         enabled: z.boolean(),
       })

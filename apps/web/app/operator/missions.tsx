@@ -251,9 +251,23 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
                     {m.status === 'ACTIVE' && (
                       <option value="targeting">Begin counterparty targeting</option>
                     )}
-                    {['QUALIFICATION', 'ACTIVE', 'TARGETING'].includes(m.status) && (
-                      <option value="pause">Pause mission</option>
+                    {m.status === 'TARGETING' && (
+                      <option value="outreach">Begin controlled outreach</option>
                     )}
+                    {m.status === 'OUTREACH' && (
+                      <option value="meetings">Begin meeting delivery</option>
+                    )}
+                    {m.status === 'MEETINGS' && (
+                      <option value="followup">Begin owned follow-up</option>
+                    )}
+                    {[
+                      'QUALIFICATION',
+                      'ACTIVE',
+                      'TARGETING',
+                      'OUTREACH',
+                      'MEETINGS',
+                      'FOLLOW_UP',
+                    ].includes(m.status) && <option value="pause">Pause mission</option>}
                     {m.status === 'ON_HOLD' && <option value="resume">Resume mission</option>}
                     <option value="cancel">Cancel mission</option>
                   </select>

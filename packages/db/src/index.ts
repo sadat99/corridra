@@ -79,9 +79,13 @@ export async function withTenant<T>(
     if (!a?.actor_id || !a.role) throw new DomainError('Access denied');
     authorize(a.role, permission);
     if (
-      ['trust.verify', 'members.manage', 'config.manage', 'research.resolve'].includes(
-        permission,
-      ) &&
+      [
+        'trust.verify',
+        'members.manage',
+        'config.manage',
+        'research.resolve',
+        'communications.approve',
+      ].includes(permission) &&
       !a.fresh
     )
       throw new DomainError('Verify your authenticator again to continue', 401);

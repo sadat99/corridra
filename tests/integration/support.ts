@@ -17,9 +17,9 @@ export async function freshDatabase(name: string) {
   await admin.end();
   return new Pool(connection(name));
 }
-export async function fixture(database = 'corridra_integration') {
+export async function fixture(database = 'corridra_integration', through?: string) {
   const owner = await freshDatabase(database);
-  await migrate(owner);
+  await migrate(owner, through);
   const runtime = new Pool(connection(database, 'corridra_runtime_local', sandbox.runtimePassword));
   const auth = new Pool(connection(database, 'corridra_auth_local', sandbox.authPassword));
   const tenantA = randomUUID(),

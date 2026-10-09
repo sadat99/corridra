@@ -114,6 +114,8 @@ Build proposed/accepted/scheduled/held meeting commands plus decline, cancellati
 
 **Rollback:** Revoke affected links, stop dispatch, retain communication history and route pending work to operators. Never resend a side effect solely because a deployment was retried.
 
+**Implementation status:** Part 06 is the requested packet. The [requirements map](part-06-scope.md), [ADR-018](../adr/0018-controlled-introductions-and-meeting-truth.md), [operations runbook](../runbooks/part-06-access-and-meetings.md) and [release record](part-06-release.md) distinguish local/CI implementation evidence from authorized production acceptance. Real outreach and D08 remain gated.
+
 ## Part 07: Follow-through, opportunity and outcome projection
 
 **Deliver:** Qualified opportunity, RFQ, sample, proposal, commitment, contract, invoice, cash receipt and recurrence records with the canonical funnel. Enforce server transitions, loss reasons, attribution, owners and follow-up. Signed contract, invoiced amount and received cash have separate dates, evidence and currencies. Accounting confirmation is distinct from a sales claim. Start append-only outcome events and relational Outcome Graph projections, with replay/rebuild tooling.
@@ -248,9 +250,9 @@ Keep match weights, prices, commissions, reputation weights, expansion markets, 
 
 ## Next task packet
 
-**Outcome:** Part 06 controlled access, buyer response and meetings, only when requested. Parts 03 to 05 are live on the production domain using invented data; see [Part 05 release](part-05-release.md) and [deployment evidence](part-05-production-rollout.json).
+**Outcome:** Complete the requested Part 06 controlled access, buyer response and meetings packet, with review and separately authorized release verification. Parts 03 to 05 are live on the production domain using invented data; see [Part 05 release](part-05-release.md) and [deployment evidence](part-05-production-rollout.json). Do not proceed to Part 07 without a new instruction.
 
-**Read:** Constitution claims/evidence and AI authority rules; canvas communications, privacy, tenancy, canonical meeting/event/outbox and durable orchestration contracts; public-experience buyer-response requirements; Part 06 above; ADR-015, ADR-016, ADR-017 and the deferred controls register.
+**Read:** Constitution claims/evidence and AI authority rules; canvas communications, privacy, tenancy, canonical meeting/event/outbox and durable orchestration contracts; public-experience buyer-response requirements; Part 06 above; ADR-015, ADR-016, ADR-017, ADR-018 and the deferred controls register.
 
 **Acceptance:** Implement explicit communication purpose/policy, opt-outs and human-approved templates; scoped, expiring, revocable hashed buyer links with no GET/prefetch side effects; idempotent buyer responses; meeting proposal/acceptance/scheduling/held outcomes plus decline/cancel/no-show/reschedule; timezone-aware itinerary, brief and owned follow-up. External dispatch must use the transactional outbox through an adapter with retry, idempotency and dead-letter triage. Synthetic flows come first. Confirm email permission, legal-policy basis and sender-domain readiness before real outreach. Do not fabricate legal/contact details or close D08 without evidence.
 

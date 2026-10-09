@@ -70,7 +70,7 @@ test('fresh and repeat migrations preserve hashes and create a restricted runtim
   await assertRestrictedPool(f.auth, 'corridra_auth');
   await expect(assertRestrictedPool(f.owner)).rejects.toThrow('not restricted');
   const r = await f.owner.query('SELECT count(*)::int AS n FROM migrations.applied');
-  expect(r.rows[0].n).toBe(8);
+  expect(r.rows[0].n).toBe(10);
 });
 test('startup rejects login roles that cross the identity boundary or can create roles', async () => {
   const password = randomBytes(32).toString('hex');
