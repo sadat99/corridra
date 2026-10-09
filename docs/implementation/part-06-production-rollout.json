@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-10-09T03:22:20.993Z",
+  "release": {
+    "pullRequest": "https://github.com/sadat99/corridra/pull/19",
+    "sha": "27eefd64d9a29dda6015cb254cb48e3f1489c496",
+    "origin": "https://corridra.vercel.app",
+    "preview": {
+      "id": "dpl_9ZinjTnLfNNDT9vhxP3iHQBVvZR1",
+      "state": "READY",
+      "source": "git"
+    },
+    "production": {
+      "id": "dpl_2MQEuc8XMQs1qvjMpdkEnV55STDU",
+      "state": "READY",
+      "source": "git"
+    },
+    "prCi": "https://github.com/sadat99/corridra/actions/runs/37876258055",
+    "mainCi": "https://github.com/sadat99/corridra/actions/runs/37877030887",
+    "commitAuthorAssociation": "genuine repository and Vercel owner; no bypass or rewritten history"
+  },
+  "migration": {
+    "checkedAt": "2026-10-09T02:57:02.046Z",
+    "project": "odd-pond-26265871",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "region": "aws-eu-central-1",
+    "migrationCount": 10,
+    "migrations": {
+      "0009_controlled_communications.sql": "ec422f9912c8b26bdac14c5f42b0ffa41f7d3cf1a7cfbf0ca5c19ff4819582b3",
+      "0010_meetings_and_followup.sql": "440607b20f6a2910de5e7ad79bfd8b7e96a78e318c366a1213f6cac58c14f36a"
+    },
+    "existingMissionsAndIdentityPreserved": true,
+    "productionCandidateUntouched": true,
+    "storageUnchanged": true
+  },
+  "browser": {
+    "checkedAt": "2026-10-09T03:10:21.716Z",
+    "origin": "https://corridra.vercel.app",
+    "deploymentId": "dpl_2MQEuc8XMQs1qvjMpdkEnV55STDU",
+    "sha": "27eefd64d9a29dda6015cb254cb48e3f1489c496",
+    "checks": [
+      "actual Vercel Workflow dispatch",
+      "anonymous mobile buyer response and isolation",
+      "accepted scheduled held meeting and owned follow-up",
+      "persistent reload, opt-out and protected sign-out"
+    ],
+    "passed": 4,
+    "failed": 0,
+    "missionId": "7f350a92-eb3a-4603-8507-3c47db7c198f",
+    "records": "invented identities and @example.invalid only",
+    "actualCloudWorkflow": true,
+    "customerDataImported": false,
+    "emailSent": false,
+    "existingOwnerRetained": true,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  },
+  "cleanup": {
+    "checkedAt": "2026-10-09T03:22:20.993Z",
+    "temporaryMembershipRevoked": true,
+    "previousRevokedRoleRestored": true,
+    "testerSessionsRemaining": 0,
+    "acceptanceFlagsRestored": true,
+    "testMissionsCancelled": 4,
+    "testLinksRevoked": 1,
+    "retainedHeldOutcome": {
+      "status": "HELD",
+      "outcomes": 1,
+      "followups": 1
+    },
+    "actualCloudWorkflowRunId": "wrun_41M4FA73VY50QZK9TMTPV3XY29",
+    "deliveryStatus": "DELIVERED",
+    "deliveryReceipts": 1,
+    "buyerResponses": 1,
+    "restrictedRuntimeAndAuth": true,
+    "existingOwnerRetained": true,
+    "productionCandidateUntouched": true,
+    "storageUnchanged": true
+  },
+  "customerActivation": false,
+  "limitations": [
+    "Synthetic records only",
+    "No email or customer outreach delivered",
+    "Scanner and customer privacy/retention/recovery readiness remain open",
+    "Commercial opportunities and money remain Part 07"
+  ]
+}

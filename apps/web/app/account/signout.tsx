@@ -1,0 +1,31 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { accountClient } from '../../lib/neon-auth-client';
+export function AccountSignout() {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  async function signout() {
+    setBusy(true);
+    setMessage('');
+    try {
+      const result = await accountClient.signOut();
+      if (result.error) throw new Error();
+      router.replace('/signin');
+      router.refresh();
+    } catch {
+      setMessage('Sign-out could not be completed. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <button className="primary-link" disabled={busy} onClick={signout}>
+        {busy ? 'Signing out…' : 'Sign out'}
+      </button>
+      {message && <p role="alert">{message}</p>}
+    </>
+  );
+}

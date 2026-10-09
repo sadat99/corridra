@@ -8,13 +8,19 @@ export const metadata = {
   title: 'Operator workspace | Corridra',
   robots: { index: false, follow: false },
 };
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ workspace?: string }>;
+}) {
   const s = foundations();
   if (!s) notFound();
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   if (!identity) redirect('/operator/signin');
   const tenants = await s.access.tenants(identity.token);
+  const requested = (await searchParams).workspace;
+  const selected = tenants.find((t) => t.id === requested)?.id ?? tenants[0]?.id;
   if (tenants.length === 0)
     return (
       <main id="main" tabIndex={-1} className="operator-page">
@@ -29,7 +35,7 @@ export default async function Page() {
     <main id="main" tabIndex={-1} className="operator-page">
       <p className="label">OPERATOR WORKSPACE</p>
       <h1>Your workspace.</h1>
-      <Workspace tenants={tenants} />
+      <Workspace tenants={tenants} initialTenant={selected!} />
     </main>
   );
 }

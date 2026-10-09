@@ -1,12 +1,15 @@
 import { Arrow } from '../../components/arrow';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { readNeonAuthConfig } from '@corridra/config';
+import { AccountAccess } from '../../components/account-access';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Sign in | Corridra',
   robots: { index: false, follow: true },
 };
 export default function Page() {
+  if (readNeonAuthConfig()) return <AccountAccess title="Sign in to Corridra." mode="signin" />;
   if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
   return (
     <main id="main" tabIndex={-1}>

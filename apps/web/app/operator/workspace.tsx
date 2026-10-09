@@ -28,9 +28,15 @@ type Snapshot = {
   evidence: RecordRow[];
   facts: RecordRow[];
 };
-export function Workspace({ tenants }: { tenants: { id: string; name: string; role: string }[] }) {
+export function Workspace({
+  tenants,
+  initialTenant,
+}: {
+  tenants: { id: string; name: string; role: string }[];
+  initialTenant: string;
+}) {
   const router = useRouter();
-  const [tenant, setTenant] = useState(tenants[0].id),
+  const [tenant, setTenant] = useState(initialTenant),
     [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -131,6 +137,9 @@ export function Workspace({ tenants }: { tenants: { id: string; name: string; ro
             value={tenant}
             onChange={(e) => {
               setTenant(e.target.value);
+              router.replace('/operator?workspace=' + encodeURIComponent(e.target.value), {
+                scroll: false,
+              });
               setData(null);
               setMembers([]);
               setAudit([]);

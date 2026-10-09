@@ -1,3 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 import { twoFactorClient } from 'better-auth/client/plugins';
-export const identityClient = createAuthClient({ plugins: [twoFactorClient()] });
+export const identityClient = createAuthClient({
+  basePath: '/api/operator-auth',
+  plugins: [twoFactorClient()],
+});

@@ -10,7 +10,12 @@ export interface IdentityProvider {
   getSession(headers: Headers): Promise<{ token: string; userId: string; name: string } | null>;
   revokeSession(headers: Headers, token: string): Promise<void>;
 }
-export function createIdentity(options: { pool: Pool; secret: string; baseURL: string }) {
+export function createIdentity(options: {
+  pool: Pool;
+  secret: string;
+  baseURL: string;
+  basePath?: string;
+}) {
   if (options.secret.length < 32)
     throw new Error('Identity secret must contain at least 32 characters');
   const db = drizzle(options.pool, { schema });
@@ -18,6 +23,7 @@ export function createIdentity(options: { pool: Pool; secret: string; baseURL: s
     logger: { disabled: true },
     appName: 'Corridra',
     baseURL: options.baseURL,
+    basePath: options.basePath ?? '/api/auth',
     secret: options.secret,
     trustedOrigins: [new URL(options.baseURL).origin],
     database: drizzleAdapter(db, { provider: 'pg', schema }),

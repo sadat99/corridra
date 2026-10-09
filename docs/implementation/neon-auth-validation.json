@@ -1,0 +1,152 @@
+{
+  "checkedAt": "2026-10-09T03:46:51.536Z",
+  "implementation": "Neon Auth customer accounts; preserved operator MFA",
+  "development": {
+    "project": "odd-pond-26265871",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "region": "aws-eu-central-1",
+    "isolatedFromLiveData": true
+  },
+  "initial": {
+    "checkedAt": "2026-10-09T03:26:52.745Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "realManagedNeonAuth": true,
+    "checks": [
+      "anonymous account and workspace denial",
+      "real Neon signup and unverified account protection",
+      "real managed verification-code request"
+    ],
+    "passed": 3,
+    "productionUntouched": true,
+    "emailInboxDeliveryVerified": false,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  },
+  "session": {
+    "checkedAt": "2026-10-09T03:46:51.536Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "realManagedNeonAuth": true,
+    "checks": [
+      "real managed sign-in",
+      "reload, mobile layout and accessibility",
+      "origin, request size and administrative path protection",
+      "real sign-out and provider denial with stale cookies",
+      "actual managed password recovery request",
+      "reset token referrer protection"
+    ],
+    "passed": 6,
+    "productionUntouched": true,
+    "emailVerified": false,
+    "emailInboxDeliveryVerified": false,
+    "providerSessionRevocationVerified": true,
+    "operatorAccessDenied": true,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  },
+  "localChecks": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "documentIntegrity": "passed",
+    "infrastructureTests": 7,
+    "databaseIntegrationTests": 81,
+    "publicBrowserTests": 46,
+    "operatorBrowserTests": 3,
+    "build": "passed",
+    "productionDependencyAudit": "No known vulnerabilities found"
+  },
+  "unverified": [
+    "Inbox delivery",
+    "Actual email verification code consumption",
+    "Successful reset using the received email link",
+    "Verified customer profile",
+    "Production SMTP and account activation",
+    "Real customer mission intake and outreach readiness"
+  ],
+  "productionAccountActivation": false,
+  "productionPreparation": {
+    "checkedAt": "2026-10-09T03:54:07.463Z",
+    "project": "odd-pond-26265871",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "region": "aws-eu-central-1",
+    "managedBetterAuthPrepared": true,
+    "trustedOrigin": "https://corridra.vercel.app",
+    "productionSigningSecretSeparate": true,
+    "productionBindingsPrepared": true,
+    "publicAccountActivation": false,
+    "customSmtpConfigured": false,
+    "verifiedEmailJourney": false,
+    "existingOperatorMfaStorePreserved": true,
+    "providerSignupDisabled": true,
+    "providerRequiresEmailVerification": true,
+    "localhostDisabled": true,
+    "applicationName": "Corridra",
+    "managedUserDirectoryEmpty": true,
+    "unusedDefaultSocialProviderRemoved": true,
+    "oauthProvidersRemaining": 0
+  },
+  "previewConfiguration": {
+    "checkedAt": "2026-10-09T03:51:22.580Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "gitBranch": "feat/neon-auth-account-flows",
+    "origin": "https://corridra-git-feat-neon-auth-account-flows-sadat-os.vercel.app",
+    "domainStatus": "previously registered",
+    "environmentStatus": 201,
+    "configuredKeys": [
+      "CORRIDRA_NEON_AUTH_ENABLED",
+      "CORRIDRA_FOUNDATIONS_ENABLED",
+      "APP_ORIGIN",
+      "NEON_AUTH_BASE_URL",
+      "NEON_AUTH_COOKIE_SECRET"
+    ],
+    "productionEnvironmentChanged": false,
+    "separatePreviewCookieSecret": true,
+    "productionDatabaseNotBound": true
+  },
+  "previewResourceReuse": {
+    "checkedAt": "2026-10-09T04:03:01.889Z",
+    "project": "icy-math-12467795",
+    "branch": "br-wild-moon-b23og8us",
+    "oldName": "preview/feat/part-06-controlled-access",
+    "newName": "preview/feat/neon-auth-account-flows",
+    "change": "non-default completed-release preview name only",
+    "branchIdPreserved": true,
+    "parentPreserved": true,
+    "noDataDeleted": true,
+    "defaultBranchUntouched": true,
+    "liveApplicationBranchUntouched": true,
+    "authDevelopmentBranchUntouched": true,
+    "paidUpgrade": false
+  },
+  "remoteCi": {
+    "url": "https://github.com/sadat99/corridra/actions/runs/37881145025",
+    "status": "success",
+    "pullRequest": "https://github.com/sadat99/corridra/pull/20"
+  },
+  "previewAcceptance": {
+    "checkedAt": "2026-10-09T04:08:15.451Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "realManagedNeonAuth": true,
+    "origin": "https://corridra-git-feat-neon-auth-account-flows-sadat-os.vercel.app",
+    "deploymentId": "dpl_2Zx57j2zPVSi2Mr5gsE7AZFWh4Md",
+    "checks": [
+      "real managed sign-in",
+      "reload, mobile layout and accessibility",
+      "origin, request size and administrative path protection",
+      "real sign-out and provider denial with stale cookies",
+      "actual managed password recovery request",
+      "reset token referrer protection"
+    ],
+    "passed": 6,
+    "productionUntouched": true,
+    "emailVerified": false,
+    "emailInboxDeliveryVerified": false,
+    "providerSessionRevocationVerified": true,
+    "operatorAccessDenied": true,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  }
+}

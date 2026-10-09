@@ -1,4 +1,37 @@
 import { z } from 'zod';
+export function readNeonAuthConfig(env: NodeJS.ProcessEnv = process.env) {
+  if (env.CORRIDRA_NEON_AUTH_ENABLED !== 'true') return null;
+  const config = z
+    .object({
+      NEON_AUTH_BASE_URL: z.url(),
+      NEON_AUTH_COOKIE_SECRET: z.string().min(32),
+      APP_ORIGIN: z.url(),
+    })
+    .parse(env);
+  const url = new URL(config.NEON_AUTH_BASE_URL);
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    !url.hostname.includes('.neonauth.') ||
+    !url.hostname.endsWith('.eu-central-1.aws.neon.tech') ||
+    !/^\/[^/]+\/auth$/.test(url.pathname)
+  )
+    throw new Error('An approved Frankfurt Neon Auth branch URL is required');
+  const origin = new URL(config.APP_ORIGIN);
+  const loopback = ['localhost', '127.0.0.1'].includes(origin.hostname);
+  if (
+    origin.origin !== config.APP_ORIGIN ||
+    !(origin.protocol === 'https:' || (origin.protocol === 'http:' && loopback)) ||
+    (env.VERCEL_ENV === 'production' && loopback)
+  )
+    throw new Error('An exact application origin is required');
+  if (env.VERCEL_ENV === 'production' && env.CORRIDRA_NEON_AUTH_PRODUCTION_READY !== 'true')
+    throw new Error('Neon Auth production configuration must be verified before activation');
+  return config;
+}
 const databaseUrl = z.url().refine((value) => {
   const u = new URL(value);
   return u.protocol === 'postgresql:' || u.protocol === 'postgres:';
