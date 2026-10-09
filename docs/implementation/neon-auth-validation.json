@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-10-09T03:46:51.536Z",
+  "implementation": "Neon Auth customer accounts; preserved operator MFA",
+  "development": {
+    "project": "odd-pond-26265871",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "region": "aws-eu-central-1",
+    "isolatedFromLiveData": true
+  },
+  "initial": {
+    "checkedAt": "2026-10-09T03:26:52.745Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "realManagedNeonAuth": true,
+    "checks": [
+      "anonymous account and workspace denial",
+      "real Neon signup and unverified account protection",
+      "real managed verification-code request"
+    ],
+    "passed": 3,
+    "productionUntouched": true,
+    "emailInboxDeliveryVerified": false,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  },
+  "session": {
+    "checkedAt": "2026-10-09T03:46:51.536Z",
+    "branch": "br-sparkling-bar-b1i9azmw",
+    "realManagedNeonAuth": true,
+    "checks": [
+      "real managed sign-in",
+      "reload, mobile layout and accessibility",
+      "origin, request size and administrative path protection",
+      "real sign-out and provider denial with stale cookies",
+      "actual managed password recovery request",
+      "reset token referrer protection"
+    ],
+    "passed": 6,
+    "productionUntouched": true,
+    "emailVerified": false,
+    "emailInboxDeliveryVerified": false,
+    "providerSessionRevocationVerified": true,
+    "operatorAccessDenied": true,
+    "screenshots": false,
+    "traces": false,
+    "video": false
+  },
+  "localChecks": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "documentIntegrity": "passed",
+    "infrastructureTests": 7,
+    "databaseIntegrationTests": 81,
+    "publicBrowserTests": 46,
+    "operatorBrowserTests": 3,
+    "build": "passed",
+    "productionDependencyAudit": "No known vulnerabilities found"
+  },
+  "unverified": [
+    "Inbox delivery",
+    "Actual email verification code consumption",
+    "Successful reset using the received email link",
+    "Verified customer profile",
+    "Production SMTP and account activation",
+    "Real customer mission intake and outreach readiness"
+  ],
+  "productionAccountActivation": false
+}

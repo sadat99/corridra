@@ -1,6 +1,34 @@
 import { test, expect } from 'vitest';
 import { ClamAvScanner, S3EvidenceStorage, S3Client } from '../../packages/evidence/src/adapters';
-import { readFoundationConfig } from '../../packages/config/src/index';
+import { readFoundationConfig, readNeonAuthConfig } from '../../packages/config/src/index';
+test('managed accounts require an exact EU branch, strong signing secret and reviewed production configuration', () => {
+  const env = {
+    CORRIDRA_NEON_AUTH_ENABLED: 'true',
+    NEON_AUTH_BASE_URL: 'https://ep-example.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+    NEON_AUTH_COOKIE_SECRET: 'x'.repeat(48),
+    APP_ORIGIN: 'https://corridra.example.invalid',
+  };
+  expect(readNeonAuthConfig({})).toBeNull();
+  expect(readNeonAuthConfig(env)).not.toBeNull();
+  expect(() => readNeonAuthConfig({ ...env, VERCEL_ENV: 'production' })).toThrow('verified');
+  expect(
+    readNeonAuthConfig({
+      ...env,
+      VERCEL_ENV: 'production',
+      CORRIDRA_NEON_AUTH_PRODUCTION_READY: 'true',
+    }),
+  ).not.toBeNull();
+  for (const url of [
+    env.NEON_AUTH_BASE_URL.replace('eu-central-1', 'us-east-1'),
+    env.NEON_AUTH_BASE_URL.replace('https://', 'http://'),
+    env.NEON_AUTH_BASE_URL.replace('https://', 'https://user:password@'),
+    env.NEON_AUTH_BASE_URL + '?secret=invalid',
+    env.NEON_AUTH_BASE_URL.replace('/auth', '/admin'),
+  ])
+    expect(() => readNeonAuthConfig({ ...env, NEON_AUTH_BASE_URL: url })).toThrow();
+  expect(() => readNeonAuthConfig({ ...env, NEON_AUTH_COOKIE_SECRET: 'short' })).toThrow();
+  expect(() => readNeonAuthConfig({ ...env, APP_ORIGIN: env.APP_ORIGIN + '/signin' })).toThrow();
+});
 test('actual ClamAV accepts harmless bytes and quarantines the EICAR test signature', async () => {
   const scanner = new ClamAvScanner('127.0.0.1', 33129);
   expect((await scanner.scan(Buffer.from('%PDF-1.7\nSynthetic harmless document'))).verdict).toBe(

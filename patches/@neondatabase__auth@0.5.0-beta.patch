@@ -1,0 +1,13 @@
+diff --git a/dist/server-b0OzGjXl.mjs b/dist/server-b0OzGjXl.mjs
+index f9a8ab87b7f03dc5594d9d71f1cbcd276c6ce319..926a0a32493099e95ca2ea1b2b5f290ba5a747d6 100644
+--- a/dist/server-b0OzGjXl.mjs
++++ b/dist/server-b0OzGjXl.mjs
+@@ -1051,7 +1051,7 @@ function createAuthServer(config) {
+ 	const originalGetSession = baseServer.getSession;
+ 	baseServer.getSession = async (...args) => {
+ 		const [data] = args;
+-		if (!(data?.query?.disableCookieCache === "true")) try {
++		if (!(data?.query?.disableCookieCache === "true" || data?.query?.disableCookieCache === true)) try {
+ 			const cookiesString = await (await getContext()).getCookies();
+ 			const hasSessionToken = cookiesString.includes(NEON_AUTH_SESSION_COOKIE_NAME);
+ 			const sessionDataCookie = parseCookieValue(cookiesString, NEON_AUTH_SESSION_DATA_COOKIE_NAME);

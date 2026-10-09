@@ -8,6 +8,7 @@ allowBuilds:
   esbuild: true
   '@swc/core': false
   cbor-extract: false
+  core-js: false
 
 minimumReleaseAgeExclude:
   - '@workflow/astro@5.0.3'
@@ -33,3 +34,6 @@ overrides:
   esbuild: 0.28.1
   'nanoid@>=5.0.0 <6.0.0': 5.1.16
   'devalue@>=5.0.0 <6.0.0': 5.9.3
+
+patchedDependencies:
+  '@neondatabase/auth@0.5.0-beta': patches/@neondatabase__auth@0.5.0-beta.patch

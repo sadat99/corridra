@@ -66,6 +66,10 @@ for (const key of [
   'AWS_SECRET_ACCESS_KEY',
   'AWS_SESSION_TOKEN',
   'CLAMAV_HOST',
+  'CORRIDRA_NEON_AUTH_ENABLED',
+  'CORRIDRA_NEON_AUTH_PRODUCTION_READY',
+  'NEON_AUTH_BASE_URL',
+  'NEON_AUTH_COOKIE_SECRET',
 ])
   delete (env as NodeJS.ProcessEnv)[key];
 const server = spawn('pnpm', ['--filter', '@corridra/web', 'start', '--port', '3200'], {

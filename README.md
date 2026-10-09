@@ -49,3 +49,5 @@ GitHub Actions runs the checks on PRs and pushes to `main`. Repository protectio
 Part 05 adds protected counterparty research, reversible entity attribution and evidence-aware mission shortlists. Read [the operator runbook](docs/runbooks/part-05-counterparties.md). The live system remains for invented test records while customer-data readiness is pending.
 
 Part 06 adds approved synthetic introductions, no-account buyer responses, canonical meetings, owned follow-up and durable outbox dispatch. Read [the operations runbook](docs/runbooks/part-06-access-and-meetings.md) and [release status](docs/implementation/part-06-release.md). Real email remains disabled pending the documented readiness gates.
+
+Part 06 is deployed through PR #19; [the production rollout record](docs/implementation/part-06-production-rollout.json) records the live migration, cloud Workflow, buyer/meeting journey and completed cleanup. Customer account flows use Neon Auth with a separate development branch; see [the account runbook](docs/runbooks/neon-auth-accounts.md). Production account activation still requires verified SMTP and customer privacy/retention configuration.

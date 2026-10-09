@@ -30,6 +30,7 @@ function createServices() {
     pool: authPool,
     secret: config.AUTH_SECRET,
     baseURL: config.APP_ORIGIN,
+    basePath: '/api/operator-auth',
   });
   const configuredStorage = createEvidenceStorage();
   const storage = configuredStorage ?? {
