@@ -1025,11 +1025,12 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await client.getByRole('button', { name: 'Send response', exact: true }).click();
   await expect(client.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
   await page.reload();
-  await expect(panel.getByText('Self-declared response:', { exact: false })).toBeVisible();
-  await panel.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
+  const evidenceRequest = panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' });
   await expect(
-    panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' }),
-  ).toContainText('completed');
+    evidenceRequest.getByText('Self-declared response:', { exact: false }),
+  ).toBeVisible();
+  await evidenceRequest.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
+  await expect(evidenceRequest).toContainText('completed');
   await panel
     .getByRole('combobox', { name: 'Programme', exact: true })
     .selectOption({ label: 'Part Eight Browser Programme' });
