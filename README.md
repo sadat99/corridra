@@ -47,3 +47,5 @@ See [Part 03’s release record](docs/implementation/part-03-release.md) for loc
 GitHub Actions runs the checks on PRs and pushes to `main`. Repository protection and Vercel Git integration are separate account-level settings that must be verified before the main-system work begins.
 
 Part 05 adds protected counterparty research, reversible entity attribution and evidence-aware mission shortlists. Read [the operator runbook](docs/runbooks/part-05-counterparties.md). The live system remains for invented test records while customer-data readiness is pending.
+
+Part 06 adds approved synthetic introductions, no-account buyer responses, canonical meetings, owned follow-up and durable outbox dispatch. Read [the operations runbook](docs/runbooks/part-06-access-and-meetings.md) and [release status](docs/implementation/part-06-release.md). Real email remains disabled pending the documented readiness gates.

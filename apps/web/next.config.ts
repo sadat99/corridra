@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withWorkflow } from 'workflow/next';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -8,6 +9,10 @@ const nextConfig: NextConfig = {
     '@corridra/auth',
     '@corridra/evidence',
     '@corridra/config',
+    '@corridra/missions',
+    '@corridra/counterparties',
+    '@corridra/communications',
+    '@corridra/workflows',
   ],
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
@@ -41,4 +46,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withWorkflow(nextConfig);

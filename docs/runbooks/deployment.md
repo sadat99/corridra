@@ -30,6 +30,8 @@ Connecting the repository in Vercel enables Git-driven previews and releases; a 
 
 The initial authenticated REST deployment succeeded. Git-triggered deployment currently encounters Vercel's commit-author/team collaboration check; resolve that association before relying on automatic releases. Do not disable the check or rewrite shared history. Explicitly authorized releases can use an authenticated deployment of the exact pushed Git revision.
 
+For new commits in this checkout, verify the authenticated GitHub identity against the actual Vercel team owner's GitHub association and use that owner's matching Git commit email. The Part 06 review exposed stale local author configuration mapped to another GitHub account. Correcting local configuration applies to future commits and preserves prior history. Verify a real Git-triggered preview before recording the association issue as resolved.
+
 ## Rollback
 
 Use the actual Vercel project to promote the last known-good deployment or redeploy its Git revision. Confirm the public alias serves that revision. Part 01 has no data migrations or user submissions. Later releases follow their part's database/event compatibility and forward-fix notes.

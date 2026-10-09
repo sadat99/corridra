@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./meetings": "./src/meetings.ts",
     "./bootstrap": "./src/bootstrap.ts"
   },
   "dependencies": {

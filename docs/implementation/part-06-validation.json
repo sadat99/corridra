@@ -1,0 +1,51 @@
+{
+  "recordedAt": "2026-10-09T02:29:00Z",
+  "scope": "Part 06 implementation on feat/part-06-controlled-access",
+  "baseRevision": "8dc8d548939662b24d14f61efdecd22e1345f7e0",
+  "dataEnvironment": "Invented loopback fixtures only",
+  "toolchain": { "node": "24.19.0", "pnpm": "11.19.0", "workflow": "5.2.0" },
+  "checks": [
+    { "command": "pnpm format:check", "status": "passed" },
+    { "command": "pnpm lint", "status": "passed" },
+    { "command": "pnpm typecheck", "status": "passed" },
+    { "command": "pnpm test", "status": "passed", "documentTests": 7, "infrastructureTests": 7 },
+    { "command": "pnpm test:integration", "status": "passed", "tests": 80, "files": 9 },
+    {
+      "command": "pnpm audit --prod --audit-level high",
+      "status": "passed",
+      "result": "No known vulnerabilities found"
+    },
+    { "command": "pnpm build", "status": "passed" },
+    { "command": "pnpm test:e2e", "status": "passed", "tests": 46 },
+    { "command": "pnpm test:operator", "status": "passed", "tests": 3 }
+  ],
+  "totalLocalTests": 143,
+  "database": {
+    "migrations": 10,
+    "freshSetup": "passed",
+    "populatedPart05Upgrade": "passed: missions, targets, contacts, membership, events and outbox unchanged",
+    "restrictedRolesAndRls": "passed against PostgreSQL, including negative cross-tenant and relationship access",
+    "cloudMigration": "not performed"
+  },
+  "acceptance": [
+    "Approved least-data introduction, hashed capability, immediate expiry/revocation and GET/HEAD decision denial",
+    "Parallel buyer response replay creates one immutable service-attributed event; changed replay fails",
+    "Recipient opt-out suppresses contact, and current policy/permissions/mission/rollback flags are rechecked",
+    "Duplicate workflow starts, lost acknowledgement and crash after persisted receipt preserve one delivery",
+    "Delivery-time rollback after claim prevents an effect; bounded failures and explicit dead-letter retry retain history",
+    "All canonical meeting states, source-attributed acceptance, DST gap/overlap and explicit-offset validation",
+    "Held outcome and owned follow-up commit atomically; optimistic versions, history and paused-mission denial",
+    "Actual local Workflow dispatch from browser, anonymous mobile buyer response, accepted/scheduled/held meeting and persisted follow-up",
+    "Public and operator accessibility, no private negotiation disclosure, opt-out and sign-out denial"
+  ],
+  "ci": "Local evidence only at this timestamp; consult the associated PR for actual remote checks",
+  "deployment": "Not performed; production acceptance and cloud Workflow execution remain separate authorized release gates",
+  "limits": [
+    "EMAIL blocked; no real sender/provider configured or message sent",
+    "Real outreach requires email permission, reviewed legal/jurisdiction basis, sender-domain and provider readiness",
+    "Operators explicitly start/recover pending jobs; no unattended scheduler",
+    "D08 and existing scanner, account and retention deferrals remain open",
+    "No credentials, tokens, traces, screenshots or videos are published",
+    "Part 07 opportunities, contracts, invoices and cash remain outside scope"
+  ]
+}

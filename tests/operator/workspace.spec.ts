@@ -100,6 +100,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
   await expect(page.getByLabel('Authenticator setup key')).toBeVisible();
   const secret = await page.getByLabel('Authenticator setup key').inputValue();
+  await writeFile('.cache/part06-browser-authenticator.json', JSON.stringify({ secret }), {
+    mode: 0o600,
+  });
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
@@ -367,4 +370,283 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   expect(
     (await page.request.get(`/api/workspace/workspace?tenant=${seed.tenantId}`)).status(),
   ).toBe(401);
+});
+test('controlled buyer response progresses through durable delivery, a held meeting and owned follow-up', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  expect((await verification).ok()).toBe(true);
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  const cookieMetadata = (await page.context().cookies()).map(
+    ({ name, domain, path, expires }) => ({ name, domain, path, expires }),
+  );
+  expect(
+    (await page.request.get('/api/workspace/tenants')).status(),
+    JSON.stringify(cookieMetadata),
+  ).toBe(200);
+  const headers = { Origin: 'http://127.0.0.1:3200' };
+  async function post(action: string, input: Record<string, unknown>) {
+    const r = await page.request.post(`/api/workspace/${action}?tenant=${seed.tenantId}`, {
+      headers,
+      data: input,
+    });
+    const result = await r.json();
+    expect(r.ok(), `Command ${action} failed (${r.status()}): ${result.error ?? ''}`).toBe(true);
+    return result;
+  }
+  const tomorrow = new Date(Date.now() + 86400000).toISOString();
+  for (const key of [
+    'research.ingestion',
+    'communications.introductions',
+    'communications.dispatch',
+  ])
+    await post('config', { key, enabled: true });
+  const intake = await page.request.post('/api/intake', {
+    headers,
+    data: {
+      key: randomUUID(),
+      websiteCheck: '',
+      brief: {
+        objective: 'Sell in a new market',
+        market: 'Spain',
+        attendance: 'No',
+        startDate: '',
+        endDate: '',
+        timezone: 'Europe/Madrid',
+        offer: 'Synthetic Part 06 hospitality textiles',
+        website: '',
+        outcomes: ['Relevant meetings'],
+        notes: 'Private synthetic negotiation notes',
+        name: 'Synthetic Part Six Person',
+        company: 'Part Six Supplier',
+        email: 'part06@example.invalid',
+        acknowledged: true,
+      },
+    },
+  });
+  expect(intake.ok()).toBe(true);
+  const mission = await intake.json();
+  for (const [i, action] of ['qualify', 'activate', 'targeting'].entries())
+    await post('mission', {
+      id: mission.id,
+      version: i + 1,
+      commandId: randomUUID(),
+      action,
+      reason: 'Synthetic controlled access',
+      ownerId: seed.principalId,
+      nextAction: 'Prepare an approved introduction',
+      dueAt: tomorrow,
+      marketCode: 'ES',
+      targetProfile: 'Synthetic hospitality distributor',
+    });
+  const catalogue = await (
+    await page.request.get(
+      `/api/workspace/research?tenant=${seed.tenantId}&q=Synthetic%20Browser%20Distributor%20A`,
+    )
+  ).json();
+  const detail = await (
+    await page.request.get(
+      `/api/workspace/counterparty?tenant=${seed.tenantId}&id=${catalogue.organisations.find((o: { name: string }) => o.name === 'Synthetic Browser Distributor A').id}`,
+    )
+  ).json();
+  const target = await post('research', {
+    action: 'target',
+    commandId: randomUUID(),
+    missionId: mission.id,
+    relationshipId: detail.relationships[0].id,
+    contactId: detail.contacts[0].id,
+    claimIds: [detail.attributes[0].claim_id],
+    fit: 'POSSIBLE',
+    rationale: 'Declared distribution fits the invented offer',
+    uncertainty: 'Buyer demand remains unconfirmed',
+    gaps: 'Need an actual response',
+    nextAction: 'Review introduction',
+    dueAt: tomorrow,
+  });
+  await page.reload();
+  await page.getByText('Approved communication policy and templates', { exact: true }).click();
+  const policy = page.getByRole('form', { name: 'Approve communication policy' });
+  await policy
+    .getByLabel('Policy basis', { exact: true })
+    .fill('Approved invented demonstration only. No real legal basis asserted.');
+  await policy.getByRole('button', { name: 'Approve policy', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
+  const template = page.getByRole('form', { name: 'Approve communication template' });
+  await template.getByLabel('Template name').fill('Part Six introduction');
+  await template
+    .getByLabel('Approved introduction text')
+    .fill('Would a short conversation about hospitality requirements be useful?');
+  await template.getByRole('button', { name: 'Approve template', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
+  const form = page.getByRole('form', { name: 'Create private introduction' });
+  await form.getByLabel('Introduction target').selectOption(target.id);
+  await form.getByLabel('Introduction recipient').selectOption(detail.contacts[0].id);
+  await form
+    .getByRole('combobox', { name: 'Approved policy', exact: true })
+    .selectOption({ index: 1 });
+  await form
+    .getByRole('combobox', { name: 'Approved template', exact: true })
+    .selectOption({ index: 1 });
+  for (const [label, value] of [
+    ['Relevant capability', 'Synthetic hotel towels'],
+    ['Reason there may be a fit', 'Declared hospitality distribution requirement'],
+    [
+      'Evidence highlights for the buyer',
+      'Supplier offer is self-declared. No independently verified capacity evidence.',
+    ],
+    ['What remains unverified for the buyer', 'Capacity and buyer demand are unverified.'],
+    ['Proposed conversation purpose', 'Compare declared requirements'],
+    ['Available conversation dates', 'Dates by agreement'],
+  ])
+    await form.getByLabel(label, { exact: true }).fill(value);
+  await form.getByLabel('I reviewed this introduction', { exact: false }).check();
+  await form.getByRole('button', { name: 'Create private introduction', exact: true }).click();
+  await expect(page.getByLabel('New private buyer link')).toBeVisible();
+  const buyerLink = await page.getByLabel('New private buyer link').inputValue();
+  await page.getByRole('button', { name: 'Dispatch pending introductions', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Access status' })).toContainText(
+    'Delivery work started',
+  );
+  await expect
+    .poll(
+      async () => {
+        const c = await (
+          await page.request.get(`/api/workspace/communications?tenant=${seed.tenantId}`)
+        ).json();
+        return c.messages.find(
+          (m: { presentation: { company: string } }) =>
+            m.presentation.company === 'Part Six Supplier',
+        ).delivery_status;
+      },
+      { timeout: 30000 },
+    )
+    .toBe('DELIVERED');
+  const buyerContext = await browser.newContext({
+      baseURL: 'http://127.0.0.1:3200',
+      viewport: { width: 390, height: 844 },
+    }),
+    buyer = await buyerContext.newPage();
+  const token = new URL(buyerLink).hash.slice(1);
+  expect((await buyer.request.get('/api/buyer?token=' + token)).status()).toBe(405);
+  expect(
+    (await buyer.request.get(`/api/workspace/communications?tenant=${seed.tenantId}`)).status(),
+  ).toBe(401);
+  await buyer.goto(buyerLink);
+  await expect(
+    buyer.getByRole('heading', { name: 'Would this company be relevant to you?' }),
+  ).toBeVisible();
+  await expect(buyer.getByText('Part Six Supplier', { exact: true })).toBeVisible();
+  await expect(
+    buyer.getByText('You will not be added to a mailing list by responding.'),
+  ).toBeVisible();
+  expect(await buyer.locator('body').innerText()).not.toContain('Private synthetic negotiation');
+  expect(
+    await buyer.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true);
+  expect((await new AxeBuilder({ page: buyer }).analyze()).violations).toEqual([]);
+  await buyer.reload();
+  await expect(buyer.getByRole('button', { name: 'Interested', exact: true })).toBeEnabled();
+  await buyer.getByRole('button', { name: 'Interested', exact: true }).click();
+  await expect(buyer.getByRole('status')).toContainText('response has been recorded');
+  const duplicate = await buyer.request.post('/api/buyer', {
+    headers,
+    data: {
+      action: 'respond',
+      token,
+      responseId: randomUUID(),
+      decision: 'INTERESTED',
+      optOut: false,
+    },
+  });
+  expect(duplicate.ok()).toBe(true);
+  expect(
+    (
+      await buyer.request.post('/api/buyer', {
+        headers: { Origin: 'https://untrusted.invalid' },
+        data: {
+          action: 'respond',
+          token,
+          responseId: randomUUID(),
+          decision: 'NOT_RELEVANT',
+          optOut: false,
+        },
+      })
+    ).status(),
+  ).toBe(403);
+  await page.getByRole('button', { name: 'Refresh access and meetings' }).click();
+  const proposal = page.getByRole('form', { name: 'Propose meeting' });
+  await proposal.getByLabel('Meeting title').fill('Part Six buyer discussion');
+  await proposal
+    .getByLabel('Meeting brief', { exact: true })
+    .fill('Compare requirements and remaining evidence gaps.');
+  await proposal
+    .getByLabel('Meeting participants, one per line')
+    .fill('Synthetic supplier person\nSynthetic buyer person');
+  await proposal
+    .getByLabel('Meeting next action', { exact: true })
+    .fill('Confirm the conversation');
+  await proposal
+    .getByLabel('Meeting command reason')
+    .fill('Buyer expressed interest in the synthetic introduction');
+  await proposal.getByRole('button', { name: 'Propose meeting', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
+  const card = page
+    .locator('.meeting-card')
+    .filter({ has: page.getByRole('heading', { name: 'Part Six buyer discussion', exact: true }) });
+  await card
+    .getByLabel('Meeting command reason')
+    .fill('Attribute acceptance to the recorded buyer response');
+  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await expect(card.getByText(/State: ACCEPTED/)).toBeVisible();
+  const start = new Date(Date.now() - 3600000);
+  start.setUTCSeconds(0, 0);
+  const end = new Date(start.getTime() + 1800000);
+  await card.getByLabel('Next meeting state').selectOption('SCHEDULED');
+  await card.getByLabel('Meeting timezone', { exact: true }).fill('Etc/UTC');
+  await card
+    .getByLabel('Local meeting start', { exact: true })
+    .fill(start.toISOString().slice(0, 16));
+  await card.getByLabel('Local meeting end', { exact: true }).fill(end.toISOString().slice(0, 16));
+  await card.getByLabel('Meeting start with UTC offset').fill(start.toISOString());
+  await card.getByLabel('Meeting end with UTC offset').fill(end.toISOString());
+  await card.getByLabel('Meeting location').fill('Synthetic meeting room');
+  await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
+  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await expect(card.getByText(/State: SCHEDULED/)).toBeVisible();
+  await card.getByLabel('Next meeting state').selectOption('HELD');
+  await card
+    .getByLabel('Observed meeting outcome')
+    .fill('Both synthetic participants attended and agreed to share requirements.');
+  await card
+    .getByLabel('Meeting next action', { exact: true })
+    .fill('Send the agreed requirement summary');
+  await card
+    .getByLabel('Meeting command reason')
+    .fill('Record observed attendance and owned follow-up');
+  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Send the agreed requirement summary', exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await buyer.getByRole('button', { name: 'Stop further introductions' }).click();
+  await expect(buyer.getByRole('status')).toContainText('Further introductions');
+  await buyerContext.close();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin/);
+  expect((await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)).status()).toBe(
+    401,
+  );
 });
