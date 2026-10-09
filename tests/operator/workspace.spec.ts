@@ -3,6 +3,7 @@ import { Pool } from '../../packages/db/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
+import { intakeTemplate } from '../../packages/delivery/src/import';
 function totp(secret: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   let bits = '';
@@ -928,4 +929,152 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     ).status(),
   ).toBe(401);
   await stale.close();
+});
+
+test('scoped delivery imports every row, serves client requests and downloads complete programme reports', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(180000);
+  // This test runs after the established operator enrollment journey below.
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  const panel = page.locator('.delivery-ops');
+  await panel.locator('summary').filter({ hasText: 'Create programme' }).click();
+  await panel.getByLabel('Programme name', { exact: true }).fill('Part Eight Browser Programme');
+  await panel
+    .getByLabel('Reporting purpose', { exact: true })
+    .fill('Synthetic programme outcome review');
+  await panel.getByRole('button', { name: 'Create programme', exact: true }).click();
+  await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).not.toHaveValue('');
+  const template = intakeTemplate().split('\r\n');
+  await panel.getByLabel('CSV or Excel intake').setInputFiles({
+    name: 'synthetic.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(`${template[0]}\r\n${template[1]}\r\n\r\n${template[1]}\r\n`),
+  });
+  await panel.getByRole('button', { name: 'Preview intake', exact: true }).click();
+  await expect(panel.getByRole('table')).toBeVisible();
+  await expect(panel.getByRole('table').locator('tbody tr')).toHaveCount(3);
+  await panel.getByLabel('I reviewed every row', { exact: false }).check();
+  await panel.getByRole('button', { name: 'Confirm intake', exact: true }).click();
+  await expect(panel.getByLabel('Confirmed intake results').locator('li')).toHaveCount(3);
+  await panel
+    .getByLabel('Confirmed intake results')
+    .getByRole('button', { name: 'Review imported mission' })
+    .first()
+    .click();
+  await panel.locator('summary').filter({ hasText: 'Review client publication' }).click();
+  await panel.getByLabel('Client title', { exact: true }).fill('Reviewed delivery progress');
+  await panel.getByLabel('Approved company name').fill('Synthetic Browser Cohort');
+  await panel.getByLabel('Approved objective').fill('Review suitable market conversations');
+  await panel
+    .getByLabel('Approved brief', { exact: true })
+    .fill('Approved synthetic brief. Private intake contacts and negotiation notes are withheld.');
+  await panel.getByLabel('Client next action').fill('Respond to the approved requirement request');
+  const deadline = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
+  await panel.getByLabel('Next action deadline').fill(deadline);
+  await panel.getByLabel('I reviewed this copy', { exact: false }).check();
+  await panel.getByRole('button', { name: 'Approve publication', exact: true }).click();
+  await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await panel.locator('summary').filter({ hasText: 'Create evidence request' }).click();
+  await panel.getByLabel('Request title', { exact: true }).fill('Confirm synthetic requirements');
+  await panel
+    .getByLabel('Approved instructions')
+    .fill('Describe the synthetic requirement. Documents follow operator collection and review.');
+  await panel.getByLabel('Response deadline').fill(deadline);
+  await panel.getByRole('button', { name: 'Create request', exact: true }).click();
+  await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
+  await panel
+    .getByRole('group', { name: 'Approved publications' })
+    .getByRole('checkbox')
+    .first()
+    .check();
+  await panel.getByLabel('Approved sharing purpose').fill('Synthetic client mission progress');
+  await panel.getByLabel('Link expiry', { exact: false }).fill(deadline);
+  await panel.getByLabel('I approve this audience', { exact: false }).check();
+  await panel.getByRole('button', { name: 'Create private link', exact: true }).click();
+  const clientLink = await panel.getByLabel('Private link', { exact: true }).inputValue();
+  const clientContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const client = await clientContext.newPage();
+  expect((await client.request.get('/api/delivery')).status()).toBe(405);
+  expect(
+    (await client.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status(),
+  ).toBe(401);
+  await client.goto(clientLink);
+  await expect(
+    client.getByRole('heading', { name: 'Synthetic Browser Cohort: Reviewed delivery progress' }),
+  ).toBeVisible();
+  expect(await client.locator('body').innerText()).not.toContain('participant@example.invalid');
+  expect(
+    await client.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true);
+  expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
+  await client
+    .getByLabel('Response', { exact: true })
+    .fill('Invented requirement supplied as a declaration.');
+  await client.getByLabel('This response is my declaration', { exact: false }).check();
+  await client.getByRole('button', { name: 'Send response', exact: true }).click();
+  await expect(client.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
+  await page.reload();
+  await expect(panel.getByText('Self-declared response:', { exact: false })).toBeVisible();
+  await panel.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
+  await expect(
+    panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' }),
+  ).toContainText('completed');
+  await panel
+    .getByRole('combobox', { name: 'Programme', exact: true })
+    .selectOption({ label: 'Part Eight Browser Programme' });
+  await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
+  await panel
+    .getByRole('group', { name: 'Approved publications' })
+    .getByRole('checkbox')
+    .first()
+    .check();
+  await panel
+    .getByRole('combobox', { name: 'Audience', exact: true })
+    .selectOption('INSTITUTION_REPORT');
+  await panel.getByLabel('Approved sharing purpose').fill('Synthetic programme outcome review');
+  await panel.getByLabel('Link expiry', { exact: false }).fill(deadline);
+  await panel.getByLabel('Allow CSV and PDF reports', { exact: false }).check();
+  await panel.getByLabel('I approve this audience', { exact: false }).check();
+  await panel.getByRole('button', { name: 'Create private link', exact: true }).click();
+  const institutionLink = await panel.getByLabel('Private link', { exact: true }).inputValue();
+  await client.goto(institutionLink);
+  await expect(client.getByRole('button', { name: 'Download CSV', exact: true })).toBeVisible();
+  expect(await client.locator('body').innerText()).not.toContain('Invented requirement supplied');
+  for (const format of ['CSV', 'PDF']) {
+    const response = client.waitForResponse(
+      (r) => r.url().endsWith('/api/delivery') && r.request().postDataJSON().action === 'export',
+    );
+    const download = client.waitForEvent('download');
+    await client.getByRole('button', { name: `Download ${format}`, exact: true }).click();
+    const r = await response;
+    expect(r.status()).toBe(200);
+    const downloaded = await download;
+    const downloadPath = await downloaded.path();
+    expect(downloadPath).toBeTruthy();
+    const bytes = await readFile(downloadPath!);
+    expect(bytes.length).toBeGreaterThan(100);
+    if (format === 'CSV') expect(bytes.toString()).toContain('Reviewed delivery progress');
+    else expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(downloaded.suggestedFilename()).toBe(`corridra-programme.${format.toLowerCase()}`);
+  }
+  expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
+  await panel.getByRole('button', { name: 'Revoke link', exact: true }).first().click();
+  await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
+  await expect(client.getByRole('alert')).toContainText('unavailable');
+  await clientContext.close();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  expect((await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status()).toBe(
+    401,
+  );
 });

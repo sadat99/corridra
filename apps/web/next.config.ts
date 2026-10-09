@@ -3,9 +3,11 @@ import { withWorkflow } from 'workflow/next';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  serverExternalPackages: ['pdfkit', 'fontkit'],
   transpilePackages: [
     '@corridra/domain',
     '@corridra/db',
+    '@corridra/delivery',
     '@corridra/auth',
     '@corridra/evidence',
     '@corridra/config',
@@ -14,6 +16,7 @@ const nextConfig: NextConfig = {
     '@corridra/communications',
     '@corridra/workflows',
   ],
+  outputFileTracingIncludes: { '/api/delivery': ['../../packages/delivery/assets/*.ttf'] },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const csp = [
@@ -43,7 +46,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/:page(signin|signup|forgot-password|reset-password|verify-email|account)',
+        source:
+          '/:page(signin|signup|forgot-password|reset-password|verify-email|account|client|programme)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

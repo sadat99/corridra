@@ -8,6 +8,7 @@ import { createEvidenceStorage } from '@corridra/evidence/storage';
 import { readFoundationConfig } from '@corridra/config';
 import { CounterpartyService } from '@corridra/counterparties';
 import { MissionService } from '@corridra/missions';
+import { DeliveryService } from '@corridra/delivery';
 import { OpportunityService } from '@corridra/opportunities';
 import { MeetingService } from '@corridra/missions/meetings';
 import { CommunicationService } from '@corridra/communications';
@@ -59,6 +60,11 @@ function createServices() {
     access: new AccessService(runtimePool),
     counterparties: new CounterpartyService(runtimePool),
     missions: new MissionService(runtimePool, config.AUTH_SECRET),
+    delivery: new DeliveryService(
+      runtimePool,
+      new MissionService(runtimePool, config.AUTH_SECRET),
+      config.AUTH_SECRET,
+    ),
     meetings: new MeetingService(runtimePool),
     opportunities: new OpportunityService(runtimePool),
     communications: new CommunicationService(runtimePool, config.AUTH_SECRET),

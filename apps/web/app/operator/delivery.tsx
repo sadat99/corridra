@@ -1,0 +1,785 @@
+'use client';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import type { ImportRow } from '@corridra/delivery/import';
+type Publication = {
+  id: string;
+  mission_id: string;
+  copy: { title: string; company: string };
+  revoked: boolean;
+};
+type Snapshot = {
+  role: string;
+  programmes: { id: string; name: string; reporting_purpose: string }[];
+  programmeTotal: number;
+  participants: {
+    id: string;
+    reference: string;
+    mission_id: string;
+    company: string;
+    status: string;
+  }[];
+  publications: Publication[];
+  links: {
+    id: string;
+    audience: string;
+    reporting_purpose: string;
+    expires_at: string;
+    revoked: boolean;
+  }[];
+  requests: {
+    id: string;
+    title: string;
+    instructions: string;
+    status: string;
+    response?: string;
+  }[];
+  owners: { user_id: string; name: string }[];
+};
+type Meeting = {
+  id: string;
+  mission_id: string;
+  title: string;
+  version: number;
+  starts_at?: string;
+  location?: string;
+  status: string;
+};
+type Opportunity = { id: string; title: string; status: string };
+type Preview = {
+  id: string;
+  rows: ImportRow[];
+  counts: { ready: number; duplicates: number; empty: number; errors: number; total: number };
+  expiresAt: string;
+};
+function values(form: HTMLFormElement) {
+  return Object.fromEntries(new FormData(form)) as Record<string, string>;
+}
+function date(value: string) {
+  return new Date(value).toISOString();
+}
+export function Delivery({ tenant, revision }: { tenant: string; revision: number }) {
+  const [data, setData] = useState<Snapshot | null>(null),
+    [programme, setProgramme] = useState(''),
+    [offset, setOffset] = useState(0),
+    [message, setMessage] = useState(''),
+    [busy, setBusy] = useState(false),
+    [unavailable, setUnavailable] = useState(false);
+  const [preview, setPreview] = useState<Preview | null>(null),
+    [result, setResult] = useState<
+      { row: number; reference: string; result: string; missionId?: string }[] | null
+    >(null),
+    [privateLink, setPrivateLink] = useState('');
+  const [missions, setMissions] = useState<{ id: string; company: string }[]>([]),
+    [missionId, setMissionId] = useState(''),
+    [missionOffset, setMissionOffset] = useState(0),
+    [missionTotal, setMissionTotal] = useState(0),
+    [meetings, setMeetings] = useState<Meeting[]>([]),
+    [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [selected, setSelected] = useState<string[]>([]),
+    [audience, setAudience] = useState('CLIENT_PROGRESS');
+  const [optionsMission, setOptionsMission] = useState('');
+  const pending = useRef(new Map<string, string>()),
+    uploadKey = useRef('');
+  const endpoint = `/api/workspace/delivery?tenant=${encodeURIComponent(tenant)}`;
+  async function request(url: string, options?: RequestInit) {
+    const r = await fetch(url, options),
+      value = await r.json();
+    if (!r.ok) throw new Error(value.error ?? 'Request failed');
+    return value;
+  }
+  async function load() {
+    setData(
+      await request(`${endpoint}&offset=${offset}${programme ? `&programme=${programme}` : ''}`),
+    );
+  }
+  useEffect(() => {
+    let active = true;
+    request(`${endpoint}&offset=${offset}${programme ? `&programme=${programme}` : ''}`)
+      .then((value) => {
+        if (active) {
+          setData(value);
+          setUnavailable(false);
+        }
+      })
+      .catch((e) => {
+        if (active) {
+          setMessage(e.message);
+          setUnavailable(true);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [endpoint, offset, programme, revision]);
+  useEffect(() => {
+    let active = true;
+    request(`/api/workspace/missions?tenant=${tenant}&offset=${missionOffset}`)
+      .then((value) => {
+        if (active) {
+          setMissions(
+            value.missions.map((m: { id: string; brief: { company: string } }) => ({
+              id: m.id,
+              company: m.brief.company,
+            })),
+          );
+          setMissionTotal(value.total);
+        }
+      })
+      .catch((e) => {
+        if (active) setMessage(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [tenant, missionOffset, revision]);
+  useEffect(() => {
+    let active = true;
+    if (missionId)
+      request(`${endpoint}&action=options&mission=${missionId}`)
+        .then((options) => {
+          if (active) {
+            setMeetings(options.meetings);
+            setOpportunities(options.opportunities);
+            setOptionsMission(missionId);
+          }
+        })
+        .catch((e) => {
+          if (active) setMessage(e.message);
+        });
+    return () => {
+      active = false;
+    };
+  }, [endpoint, missionId, revision]);
+  async function action(action: string, input: Record<string, unknown>) {
+    const key = `${action}:${JSON.stringify(input)}`;
+    let commandId = pending.current.get(key);
+    if (!commandId) {
+      commandId = crypto.randomUUID();
+      pending.current.set(key, commandId);
+    }
+    const value = await request(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, input: { ...input, commandId } }),
+    });
+    pending.current.delete(key);
+    return value;
+  }
+  async function act(work: () => Promise<void>) {
+    setBusy(true);
+    setMessage('');
+    try {
+      await work();
+      await load();
+      setMessage('Saved.');
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Request failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  function createProgramme(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const input = values(e.currentTarget);
+    void act(async () => {
+      const p = await action('programme', input);
+      setProgramme(p.id);
+    });
+  }
+  function upload(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget),
+      file = f.get('file') as File;
+    if (!programme || !file?.size) {
+      setMessage('Choose a programme and an intake file.');
+      return;
+    }
+    void act(async () => {
+      uploadKey.current ||= crypto.randomUUID();
+      const format = file.name.toLowerCase().endsWith('.xlsx') ? 'XLSX' : 'CSV';
+      const next = await request(
+        `${endpoint}&action=preview&programme=${programme}&format=${format}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Idempotency-Key': uploadKey.current,
+          },
+          body: file,
+        },
+      );
+      setPreview(next);
+      setResult(null);
+    });
+  }
+  function confirm(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!preview) return;
+    const f = values(e.currentTarget);
+    void act(async () => {
+      const r = await action('confirm', {
+        importId: preview.id,
+        ownerId: f.ownerId,
+        counts: preview.counts,
+        acknowledged: f.acknowledged === 'on',
+      });
+      setResult(r.rows);
+    });
+  }
+  function publish(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget,
+      f = new FormData(form),
+      input = values(form);
+    const selectedMeetings = meetings
+      .filter((m) => f.getAll('meeting').includes(m.id))
+      .map((m) => ({
+        id: m.id,
+        version: m.version,
+        label: String(f.get(`meeting-label-${m.id}`)),
+      }));
+    void act(async () => {
+      await action('publication', {
+        missionId,
+        title: input.title,
+        company: input.company,
+        objective: input.objective,
+        brief: input.brief,
+        nextAction: input.nextAction,
+        dueAt: date(input.dueAt),
+        meetings: selectedMeetings,
+        opportunityIds: f.getAll('opportunity'),
+        includeFinancials: input.includeFinancials === 'on',
+        approved: input.approved === 'on',
+      });
+    });
+  }
+  function share(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = values(e.currentTarget);
+    void act(async () => {
+      const link = await action('share', {
+        programmeId: audience === 'INSTITUTION_REPORT' ? programme : null,
+        publicationIds: selected,
+        audience,
+        purpose: f.purpose,
+        expiresAt: date(f.expiresAt),
+        allowExport: audience === 'INSTITUTION_REPORT' && f.allowExport === 'on',
+        approved: f.approved === 'on',
+      });
+      setPrivateLink(`${window.location.origin}${link.path}#${link.token}`);
+    });
+  }
+  function evidenceRequest(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = values(e.currentTarget);
+    void act(async () => {
+      await action('request', { ...f, dueAt: date(f.dueAt) });
+    });
+  }
+  if (unavailable)
+    return (
+      <section className="detail-card">
+        <h2>Client and programme delivery</h2>
+        <p>{message}</p>
+      </section>
+    );
+  if (!data)
+    return (
+      <section className="detail-card">
+        <h2>Client and programme delivery</h2>
+        <p>Loading…</p>
+      </section>
+    );
+  const manages = ['owner', 'admin', 'operator'].includes(data.role),
+    shares = ['owner', 'admin'].includes(data.role);
+  const publications = data.publications.filter((p) => !p.revoked);
+  return (
+    <section className="delivery-ops detail-card">
+      <h2>Client and programme delivery</h2>
+      <p>
+        Create a synthetic programme, review every intake row, then share only approved mission
+        information. Use invented participant addresses ending in example.invalid.
+      </p>
+      <p role="status" aria-label="Delivery status">
+        {message}
+      </p>
+      <button disabled={busy} onClick={() => void act(async () => {})}>
+        Refresh delivery
+      </button>
+      <label>
+        Programme
+        <select
+          aria-label="Programme"
+          value={programme}
+          onChange={(e) => {
+            setProgramme(e.target.value);
+            setSelected([]);
+            setPreview(null);
+            setResult(null);
+            setPrivateLink('');
+          }}
+        >
+          <option value="">All programmes / independent client missions</option>
+          {data.programmes.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p>
+        Programmes {Math.min(offset + 1, data.programmeTotal)} to{' '}
+        {Math.min(offset + 100, data.programmeTotal)} of {data.programmeTotal}{' '}
+        <button
+          disabled={offset === 0 || busy}
+          onClick={() => setOffset((v) => Math.max(0, v - 100))}
+        >
+          Previous programmes
+        </button>{' '}
+        <button
+          disabled={offset + 100 >= data.programmeTotal || busy}
+          onClick={() => setOffset((v) => v + 100)}
+        >
+          Next programmes
+        </button>
+      </p>
+      {manages && (
+        <details>
+          <summary>Create programme</summary>
+          <form className="operator-form" onSubmit={createProgramme}>
+            <label>
+              Programme name
+              <input name="name" minLength={3} maxLength={160} required />
+            </label>
+            <label>
+              Reporting purpose
+              <textarea name="reportingPurpose" minLength={10} maxLength={500} required />
+            </label>
+            <button disabled={busy}>Create programme</button>
+          </form>
+        </details>
+      )}
+      {programme && (
+        <>
+          <h3>Participants</h3>
+          <p>{data.participants.length} participants in this programme</p>
+          <ul>
+            {data.participants.map((p) => (
+              <li key={p.id}>
+                {p.reference}: {p.company} · {p.status.toLowerCase().replaceAll('_', ' ')}{' '}
+                <button onClick={() => setMissionId(p.mission_id)}>Review mission</button>
+              </li>
+            ))}
+          </ul>
+          {manages && (
+            <details open>
+              <summary>Import participants</summary>
+              <p>
+                Maximum 100 rows and 1 MiB per file, 1000 participants per programme. XLSX must have
+                one visible worksheet with text cells, no formulas or macros. Missing optional
+                fields default to attendance “Not decided”, timezone “Asia/Dhaka”, outcome “Relevant
+                meetings”, and empty dates, website and notes. Multiple outcomes use a | separator.
+              </p>
+              <a href={`${endpoint}&template=true`}>Download intake template</a>
+              <form className="operator-form" onSubmit={upload}>
+                <label>
+                  CSV or Excel intake
+                  <input
+                    name="file"
+                    type="file"
+                    accept=".csv,.xlsx"
+                    required
+                    onChange={() => {
+                      uploadKey.current = '';
+                      setPreview(null);
+                      setResult(null);
+                    }}
+                  />
+                </label>
+                <button disabled={busy}>Preview intake</button>
+              </form>
+              {preview && (
+                <>
+                  <p>
+                    Preview expires {new Date(preview.expiresAt).toLocaleString()}. Ready{' '}
+                    {preview.counts.ready}, duplicates {preview.counts.duplicates}, empty{' '}
+                    {preview.counts.empty}, errors {preview.counts.errors}. All{' '}
+                    {preview.counts.total} rows are shown below.
+                  </p>
+                  <div className="delivery-table">
+                    <table>
+                      <caption>Intake preview: every row</caption>
+                      <thead>
+                        <tr>
+                          <th>Row</th>
+                          <th>Reference</th>
+                          <th>Company</th>
+                          <th>Result</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {preview.rows.map((r) => (
+                          <tr key={r.row}>
+                            <td>{r.row}</td>
+                            <td>{r.reference || 'Empty'}</td>
+                            <td>{r.brief?.company ?? ''}</td>
+                            <td>{r.status.toLowerCase().replaceAll('_', ' ')}</td>
+                            <td>{r.errors.join('; ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {!result && (
+                    <form className="operator-form" onSubmit={confirm}>
+                      <label>
+                        Mission owner
+                        <select name="ownerId" required>
+                          {data.owners.map((o) => (
+                            <option key={o.user_id} value={o.user_id}>
+                              {o.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <input name="acknowledged" type="checkbox" required /> I reviewed every row
+                        and the exact ready, duplicate and empty counts. The accepted briefs are
+                        synthetic self-declarations.
+                      </label>
+                      <button disabled={busy || !!preview.counts.errors}>Confirm intake</button>
+                    </form>
+                  )}
+                  {result && (
+                    <ul aria-label="Confirmed intake results">
+                      {result.map((r) => (
+                        <li key={r.row}>
+                          Row {r.row}: {r.reference || 'Empty'} · {r.result.toLowerCase()}{' '}
+                          {r.missionId && (
+                            <button onClick={() => setMissionId(r.missionId!)}>
+                              Review imported mission
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </details>
+          )}
+        </>
+      )}
+      {shares && (
+        <details>
+          <summary>Review client publication</summary>
+          <label>
+            Mission
+            <select value={missionId} onChange={(e) => setMissionId(e.target.value)}>
+              <option value="">Choose mission</option>
+              {[
+                ...data.participants.map((p) => ({ id: p.mission_id, company: p.company })),
+                ...missions.filter((m) => !data.participants.some((p) => p.mission_id === m.id)),
+              ].map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.company} · {m.id.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>
+            <button
+              disabled={missionOffset === 0 || busy}
+              onClick={() => setMissionOffset((v) => Math.max(0, v - 100))}
+            >
+              Previous missions
+            </button>{' '}
+            <button
+              disabled={missionOffset + 100 >= missionTotal || busy}
+              onClick={() => setMissionOffset((v) => v + 100)}
+            >
+              Next missions
+            </button>
+          </p>
+          {missionId && (
+            <form key={missionId} className="operator-form" onSubmit={publish}>
+              <label>
+                Client title
+                <input name="title" minLength={3} maxLength={160} required />
+              </label>
+              <label>
+                Approved company name
+                <input name="company" minLength={2} maxLength={160} required />
+              </label>
+              <label>
+                Approved objective
+                <textarea name="objective" minLength={3} maxLength={500} required />
+              </label>
+              <label>
+                Approved brief
+                <textarea name="brief" minLength={10} maxLength={2000} required />
+              </label>
+              <label>
+                Client next action
+                <textarea name="nextAction" minLength={3} maxLength={300} required />
+              </label>
+              <label>
+                Next action deadline
+                <input name="dueAt" type="datetime-local" required />
+              </label>
+              <fieldset>
+                <legend>Approve itinerary meetings</legend>
+                {meetings.length === 0 && <p>No available meetings for this mission.</p>}
+                {meetings.map((m) => (
+                  <div key={m.id}>
+                    <label>
+                      <input type="checkbox" name="meeting" value={m.id} /> {m.title} · {m.status} ·{' '}
+                      {m.starts_at ?? 'Unscheduled'} · {m.location ?? 'Location not set'}
+                    </label>
+                    <label>
+                      Client meeting label
+                      <input
+                        name={`meeting-label-${m.id}`}
+                        defaultValue={m.title}
+                        minLength={3}
+                        maxLength={160}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>Approve outcome scope</legend>
+                {opportunities.map((o) => (
+                  <label key={o.id}>
+                    <input type="checkbox" name="opportunity" value={o.id} /> {o.title} · {o.status}
+                  </label>
+                ))}
+                <label>
+                  <input type="checkbox" name="includeFinancials" /> Approve aggregate contracts,
+                  invoices and confirmed cash in the selected scope, by currency
+                </label>
+              </fieldset>
+              <label>
+                <input name="approved" type="checkbox" required /> I reviewed this copy and scope
+                for external delivery. It excludes private contacts, notes, margins and
+                negotiations.
+              </label>
+              <button disabled={busy || optionsMission !== missionId}>Approve publication</button>
+            </form>
+          )}
+        </details>
+      )}
+      {shares && (
+        <details>
+          <summary>Share approved view</summary>
+          <p>
+            Sharing and evidence requests require a fresh authenticator check. Links are private
+            bearer access: share them only with their intended recipients.
+          </p>
+          <fieldset>
+            <legend>Approved publications</legend>
+            {publications.map((p) => (
+              <label key={p.id}>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(p.id)}
+                  onChange={(e) =>
+                    setSelected((v) =>
+                      e.target.checked ? [...v, p.id] : v.filter((id) => id !== p.id),
+                    )
+                  }
+                />{' '}
+                {p.copy.company}: {p.copy.title}
+              </label>
+            ))}
+          </fieldset>
+          <form className="operator-form" onSubmit={share}>
+            <label>
+              Audience
+              <select value={audience} onChange={(e) => setAudience(e.target.value)}>
+                <option value="CLIENT_PROGRESS">Client: one mission</option>
+                <option value="INSTITUTION_REPORT">Institution: selected programme scope</option>
+              </select>
+            </label>
+            <label>
+              Approved sharing purpose
+              <textarea
+                key={programme}
+                name="purpose"
+                defaultValue={data.programmes.find((p) => p.id === programme)?.reporting_purpose}
+                minLength={10}
+                maxLength={500}
+                required
+              />
+            </label>
+            <label>
+              Link expiry (within 30 days)
+              <input name="expiresAt" type="datetime-local" required />
+            </label>
+            {audience === 'INSTITUTION_REPORT' && (
+              <label>
+                <input name="allowExport" type="checkbox" /> Allow CSV and PDF reports for this
+                reporting purpose
+              </label>
+            )}
+            <label>
+              <input name="approved" type="checkbox" required /> I approve this audience, purpose
+              and exact publication scope.
+            </label>
+            <button
+              disabled={
+                busy || selected.length === 0 || (audience === 'INSTITUTION_REPORT' && !programme)
+              }
+            >
+              Create private link
+            </button>
+          </form>
+          {privateLink && (
+            <p>
+              Share this reviewed link:{' '}
+              <a href={privateLink} target="_blank" rel="noopener noreferrer">
+                Open approved view
+              </a>
+              <label>
+                Private link
+                <input readOnly value={privateLink} onFocus={(e) => e.currentTarget.select()} />
+              </label>
+            </p>
+          )}
+        </details>
+      )}
+      <h3>Access and requests</h3>
+      <ul>
+        {data.links.map((l) => (
+          <li key={l.id}>
+            {l.audience.toLowerCase().replaceAll('_', ' ')} · {l.reporting_purpose} · Expires{' '}
+            {new Date(l.expires_at).toLocaleString()} · {l.revoked ? 'Revoked' : 'Issued'}
+            {manages && !l.revoked && (
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void act(async () => {
+                    await action('revoke', {
+                      linkId: l.id,
+                      publicationId: null,
+                      reason: 'Operator withdrew delivery access',
+                    });
+                  })
+                }
+              >
+                Revoke link
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {manages && (
+        <ul>
+          {publications.map((p) => (
+            <li key={p.id}>
+              {p.copy.company}: {p.copy.title}{' '}
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void act(async () => {
+                    await action('revoke', {
+                      linkId: null,
+                      publicationId: p.id,
+                      reason: 'Operator withdrew reviewed publication',
+                    });
+                  })
+                }
+              >
+                Withdraw publication
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {shares && (
+        <details>
+          <summary>Create evidence request</summary>
+          <form className="operator-form" onSubmit={evidenceRequest}>
+            <label>
+              Publication
+              <select name="publicationId" required>
+                {publications.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.copy.company}: {p.copy.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Request owner
+              <select name="ownerId" required>
+                {data.owners.map((o) => (
+                  <option key={o.user_id} value={o.user_id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Request title
+              <input name="title" minLength={3} maxLength={160} required />
+            </label>
+            <label>
+              Approved instructions
+              <textarea name="instructions" minLength={10} maxLength={1000} required />
+            </label>
+            <label>
+              Response deadline
+              <input name="dueAt" type="datetime-local" required />
+            </label>
+            <button disabled={busy}>Create request</button>
+          </form>
+        </details>
+      )}
+      <ul>
+        {data.requests.map((r) => (
+          <li key={r.id}>
+            <strong>{r.title}</strong> · {r.status.toLowerCase()}
+            <p>{r.instructions}</p>
+            {r.response && <p>Self-declared response: {r.response}</p>}
+            {manages && !['COMPLETED', 'CANCELLED'].includes(r.status) && (
+              <>
+                <button
+                  disabled={busy || r.status !== 'RESPONDED'}
+                  onClick={() =>
+                    void act(async () => {
+                      await action('closeRequest', {
+                        requestId: r.id,
+                        status: 'COMPLETED',
+                        reason: 'Declaration received; evidence verification remains separate',
+                      });
+                    })
+                  }
+                >
+                  Mark fulfilled
+                </button>{' '}
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    void act(async () => {
+                      await action('closeRequest', {
+                        requestId: r.id,
+                        status: 'CANCELLED',
+                        reason: 'Operator cancelled evidence request',
+                      });
+                    })
+                  }
+                >
+                  Cancel request
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}

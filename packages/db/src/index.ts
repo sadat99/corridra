@@ -86,6 +86,7 @@ export async function withTenant<T>(
         'research.resolve',
         'communications.approve',
         'opportunities.accounting',
+        'delivery.share',
       ].includes(permission) &&
       !a.fresh
     )

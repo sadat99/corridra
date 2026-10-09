@@ -11,7 +11,7 @@ test('Part 05 populated upgrade preserves missions, shortlist, contacts, permiss
     expect(upgraded.afterUpgrade).toEqual(upgraded.beforeUpgrade);
     expect(
       (await upgraded.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n,
-    ).toBe(13);
+    ).toBe(18);
     const i = await upgraded.introduction(upgraded.preUpgradeTarget);
     expect(await upgraded.communications.buyer({ action: 'read', token: i.token })).toMatchObject({
       introduction: upgraded.presentation,

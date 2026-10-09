@@ -3,10 +3,10 @@ import { accessFixture, command, future } from './access-fixture';
 import { OpportunityService } from '../../packages/opportunities/src/index';
 import { EvidenceService } from '../../packages/evidence/src/index';
 import { migrate } from '../../packages/db/src/migrate';
-export async function commercialFixture(upgrade = false) {
+export async function commercialFixture(upgrade = false, through?: string) {
   const f = await accessFixture(
     false,
-    upgrade ? '0010_meetings_and_followup.sql' : undefined,
+    upgrade ? '0010_meetings_and_followup.sql' : through,
     upgrade ? 'corridra_upgrade' : undefined,
   );
   const service = new OpportunityService(f.runtime);
