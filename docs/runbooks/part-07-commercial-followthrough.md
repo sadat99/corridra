@@ -24,6 +24,6 @@ An owner/admin with fresh MFA can rebuild commercial reports with an explicit re
 
 ## Release and rollback
 
-Run every repository check and protected browser journey against real isolated PostgreSQL. Apply only the reviewed additive 0011/0012 migrations using the migrator credential outside the build. Check populated-upgrade preservation, exact migration hashes, runtime RLS, CI and exact deployment SHA. Verify production and remove any temporary synthetic test access/sessions; restore prior flags and retain immutable proof.
+Run every repository check and protected browser journey against real isolated PostgreSQL. Apply only the reviewed additive 0011 to 0013 migrations using the migrator credential outside the build. Check populated-upgrade preservation, exact migration hashes, runtime RLS, CI and exact deployment SHA. Verify production and remove any temporary synthetic test access/sessions; restore prior flags and retain immutable proof.
 
 Rollback disables `opportunities.commands`, restores a compatible application deployment and retains the additive schema, original events and financial records. Rebuild derived projections after a reviewed forward correction. Do not drop tables, rewrite migrations already applied or remove accounting history. Keep customer signup disabled and real outreach/customer-data gates unchanged.

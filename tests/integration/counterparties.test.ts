@@ -821,7 +821,7 @@ test('populated Part 04 upgrade preserves the mission brief, owner, legacy relat
     ).toBe(previousHash);
     expect((await runtime.query('SELECT * FROM app.mission')).rowCount).toBe(0);
     expect((await owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n).toBe(
-      12,
+      13,
     );
   } finally {
     await runtime.end();

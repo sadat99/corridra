@@ -46,7 +46,7 @@ test('populated Part 06 upgrade preserves meetings, followups, owners and immuta
     expect(upgraded.after).toEqual(upgraded.before);
     expect(
       (await upgraded.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n,
-    ).toBe(12);
+    ).toBe(13);
     expect(upgraded.previous).not.toBeNull();
   } finally {
     await upgraded.close();
@@ -735,7 +735,7 @@ test('mission pipeline and closure enforce commercial outcomes and completed mee
   await expect(mission('pipeline', 7)).rejects.toThrow('Qualified opportunity');
   await f.transition(o.opportunityId, 'QUALIFIED_OPPORTUNITY');
   await mission('pipeline', 7);
-  await expect(mission('close', 8)).rejects.toThrow('Resolve commercial outcomes');
+  await expect(mission('close', 8)).rejects.toThrow('before closing');
   await f.service.command(
     f.ctx,
     command('transition', {
@@ -746,7 +746,7 @@ test('mission pipeline and closure enforce commercial outcomes and completed mee
       ...f.next(),
     }),
   );
-  await expect(mission('close', 8)).rejects.toThrow('follow-ups');
+  await expect(mission('close', 8)).rejects.toThrow('follow-up');
   await f.meetings.command(
     f.ctx,
     command('followup', {
@@ -761,4 +761,246 @@ test('mission pipeline and closure enforce commercial outcomes and completed mee
     (await f.owner.query('SELECT status FROM app.mission WHERE id=$1', [o.missionId])).rows[0]
       .status,
   ).toBe('CLOSED');
+});
+test('a lost unqualified lead does not count as a qualified commercial mission', async () => {
+  const o = await f.lead();
+  await f.service.command(
+    f.ctx,
+    command('transition', {
+      id: o.opportunityId,
+      version: 1,
+      status: 'LOST',
+      lossReason: 'Invented lead did not qualify',
+      ...f.next(),
+    }),
+  );
+  await expect(
+    f.mission.command(f.ctx, {
+      id: o.missionId,
+      version: 7,
+      commandId: randomUUID(),
+      action: 'pipeline',
+      marketCode: 'ES',
+      targetProfile: 'Synthetic distributor',
+      ...f.next(),
+    }),
+  ).rejects.toThrow('Qualified opportunity history');
+  await expect(
+    rawContext(
+      f.runtime,
+      f.ctx,
+      "UPDATE app.mission SET status='COMMERCIAL_PIPELINE',version=version+1 WHERE id=$1",
+      [o.missionId],
+    ),
+  ).rejects.toThrow('Qualified opportunity history');
+  const qualified = await f.lead();
+  await f.transition(qualified.opportunityId, 'QUALIFIED_OPPORTUNITY');
+  await f.service.command(
+    f.ctx,
+    command('transition', {
+      id: qualified.opportunityId,
+      version: 2,
+      status: 'LOST',
+      lossReason: 'Invented qualified opportunity was lost',
+      ...f.next(),
+    }),
+  );
+  await expect(
+    f.mission.command(f.ctx, {
+      id: qualified.missionId,
+      version: 7,
+      commandId: randomUUID(),
+      action: 'pipeline',
+      marketCode: 'ES',
+      targetProfile: 'Synthetic distributor',
+      ...f.next(),
+    }),
+  ).resolves.toMatchObject({ version: 8 });
+});
+test('mission closure cannot overlook another operator private opportunity', async () => {
+  let hidden: Awaited<ReturnType<typeof f.introduction>> | undefined;
+  const first = await f.held(async (origin) => {
+    const original = (
+      await f.owner.query('SELECT organisation_id FROM app.relationship WHERE id=$1', [
+        origin.relationshipId,
+      ])
+    ).rows[0];
+    const source = (
+      await f.owner.query('SELECT source_id FROM app.private_contact_data WHERE id=$1', [
+        origin.contactId,
+      ])
+    ).rows[0];
+    const rel = await f.research.command(
+      f.ctx,
+      command('relationship', {
+        organisationId: original.organisation_id,
+        ownerId: f.users.operator.id,
+        visibility: 'OWNER',
+        note: 'Private invented second negotiation',
+      }),
+    );
+    const contact = await f.research.command(
+      f.ctx,
+      command('contact', {
+        relationshipId: rel.id,
+        sourceId: source.source_id,
+        name: 'Invented second contact',
+        jobTitle: 'Procurement',
+        email: randomUUID() + '@example.invalid',
+        validUntil: future(6),
+      }),
+    );
+    const claim = await f.evidence.createClaim(f.ctx, {
+      sourceId: source.source_id,
+      statement: 'Invented second requirement',
+    });
+    await f.research.command(
+      f.ctx,
+      command('attribute', {
+        organisationId: original.organisation_id,
+        kind: 'requirement',
+        claimId: claim.id,
+        validUntil: future(6),
+      }),
+    );
+    const target = await f.research.command(
+      f.ctx,
+      command('target', {
+        missionId: origin.missionId,
+        relationshipId: rel.id,
+        contactId: contact.id,
+        claimIds: [claim.id],
+        fit: 'POSSIBLE',
+        rationale: 'Invented matching requirement',
+        uncertainty: 'No verified demand',
+        gaps: 'Await buyer evidence',
+        nextAction: 'Review invented introduction',
+        dueAt: future(),
+      }),
+    );
+    hidden = await f.introduction({
+      missionId: origin.missionId,
+      targetId: target.id,
+      relationshipId: rel.id,
+      contactId: contact.id,
+    });
+  });
+  if (!hidden) throw new Error('Second controlled introduction required');
+  const meeting = await f.meetings.command(
+    f.ctx,
+    command('propose', {
+      messageId: hidden.id,
+      title: 'Invented second commercial meeting',
+      brief: 'Review invented second requirement',
+      participants: ['Invented buyer', 'Invented seller'],
+      ...f.next(),
+    }),
+  );
+  await f.meetings.command(
+    f.ctx,
+    command('transition', {
+      id: meeting.id,
+      version: 1,
+      status: 'ACCEPTED',
+      acceptance: 'Observed invented acceptance',
+      ...f.next(),
+    }),
+  );
+  const start = new Date(Date.now() - 3600000);
+  start.setUTCSeconds(0, 0);
+  const end = new Date(start.getTime() + 1800000);
+  await f.meetings.command(
+    f.ctx,
+    command('transition', {
+      id: meeting.id,
+      version: 2,
+      status: 'SCHEDULED',
+      schedule: {
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+        timezone: 'Etc/UTC',
+        localStart: start.toISOString().slice(0, 16),
+        localEnd: end.toISOString().slice(0, 16),
+        location: 'Invented meeting room',
+      },
+      ...f.next(),
+    }),
+  );
+  await f.meetings.command(
+    f.ctx,
+    command('transition', {
+      id: meeting.id,
+      version: 3,
+      status: 'HELD',
+      outcome: 'Observed invented participants and requirement',
+      ...f.next(),
+    }),
+  );
+  const create = (meetingId: string) =>
+    f.service.command(
+      f.ctx,
+      command('create', {
+        meetingId,
+        title: 'Invented bounded opportunity',
+        attribution: 'Mission arranged meeting; closing causation not established',
+        ...f.next(),
+      }),
+    );
+  const visible = await create(first.meetingId),
+    privateLead = await create(meeting.id);
+  await f.transition(visible.id, 'QUALIFIED_OPPORTUNITY');
+  await f.service.command(
+    f.ctx,
+    command('transition', {
+      id: visible.id,
+      version: 2,
+      status: 'LOST',
+      lossReason: 'Invented qualified opportunity was lost',
+      ...f.next(),
+    }),
+  );
+  for (const id of [first.meetingId, meeting.id])
+    await f.meetings.command(
+      f.ctx,
+      command('followup', {
+        id,
+        version: 1,
+        status: 'COMPLETED',
+        reason: 'Resolve invented meeting follow-up',
+      }),
+    );
+  const mission = (action: string, version: number) =>
+    f.mission.command(f.ctx, {
+      id: first.missionId,
+      version,
+      commandId: randomUUID(),
+      action,
+      marketCode: 'ES',
+      targetProfile: 'Invented distributor',
+      ...f.next(),
+    });
+  await mission('pipeline', 7);
+  await rawContext(
+    f.runtime,
+    f.users.owner.ctx,
+    'UPDATE app.relationship SET owner_id=$2 WHERE id=$1',
+    [hidden.relationshipId, f.users.owner.id],
+  );
+  const ws = await f.service.workspace(f.ctx, first.missionId);
+  expect(ws.opportunities.map((o) => o.id)).toEqual([visible.id]);
+  await expect(mission('close', 8)).rejects.toThrow('Complete every mission outcome');
+  await f.service.command(
+    f.users.owner.ctx,
+    command('transition', {
+      id: privateLead.id,
+      version: 1,
+      status: 'LOST',
+      lossReason: 'Private invented lead did not qualify',
+      ...f.next(),
+    }),
+  );
+  await expect(mission('close', 8)).resolves.toMatchObject({ version: 9 });
+  expect(
+    (await f.service.workspace(f.ctx, first.missionId)).opportunities.map((o) => o.id),
+  ).toEqual([visible.id]);
 });

@@ -30,8 +30,9 @@ export async function commercialFixture(upgrade = false) {
     dueAt: future(),
     reason: 'Record invented commercial progression',
   });
-  async function held() {
+  async function held(before?: (i: Awaited<ReturnType<typeof f.introduction>>) => Promise<void>) {
     const i = await f.introduction();
+    await before?.(i);
     const m = await f.meetings.command(
       f.ctx,
       command('propose', {
