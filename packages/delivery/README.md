@@ -1,0 +1,5 @@
+# Client and institutional delivery
+
+Owns institutional programmes, reviewed cohort imports, approved client publications, scoped delivery capabilities, evidence requests/responses and purpose-scoped exports. Read ADR-022 and the Part 08 scope before changing permissions, reporting or intake. Canonical mission creation uses the mission service within the same transaction. Canonical commercial totals are shared with Ops; this module never edits a financial record or verifies a claim.
+
+External views return only reviewed presentation fields and approved canonical outcomes. Capability functions expose no arbitrary SQL or tenant selection. Tokens stay in fragments and POST bodies; only digests are stored. Sharing requires fresh-MFA owner/admin authority. Exports record their purpose, scope, content hash and immutable events. Preview/confirmation preserves every row outcome and rejects malformed or conflicting batches atomically. Runtime remains synthetic; client replies do not bypass the existing evidence quarantine, scanning or independent review workflow.

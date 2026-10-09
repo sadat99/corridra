@@ -6,6 +6,7 @@ import { Counterparties } from './counterparties';
 import { Missions } from './missions';
 import { CommercialProgress } from './opportunities';
 import { ControlledAccess } from './access';
+import { Delivery } from './delivery';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -183,6 +184,7 @@ export function Workspace({
             tenant={tenant}
             revision={missionRevision}
           />
+          <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
           <div className="detail-grid">
             <section className="detail-card">
               <h2>Sources</h2>

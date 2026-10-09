@@ -41,6 +41,7 @@ const connection = (role: string, secret: string) =>
 const env = {
   ...process.env,
   CORRIDRA_FOUNDATIONS_ENABLED: 'true',
+  CORRIDRA_DELIVERY_ENABLED: 'true',
   APP_ORIGIN: 'http://127.0.0.1:3200',
   DATA_ENVIRONMENT: 'synthetic',
   DATABASE_REGION: 'local',

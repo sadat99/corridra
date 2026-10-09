@@ -15,6 +15,7 @@
     "@corridra/config": "workspace:*",
     "@corridra/counterparties": "workspace:*",
     "@corridra/db": "workspace:*",
+    "@corridra/delivery": "workspace:*",
     "@corridra/domain": "workspace:*",
     "@corridra/evidence": "workspace:*",
     "@corridra/missions": "workspace:*",

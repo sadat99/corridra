@@ -1327,3 +1327,59 @@ summary:hover {
   min-width: 0;
   width: 100%;
 }
+/* Scoped client delivery and bounded programme intake. */
+.delivery-view,
+.delivery-ops {
+  overflow-wrap: anywhere;
+}
+.delivery-card {
+  margin-block: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line, #d4d4d4);
+  border-radius: 1rem;
+}
+.delivery-view label,
+.delivery-ops label {
+  display: block;
+  margin-block: 0.75rem;
+}
+.delivery-view textarea,
+.delivery-ops input:not([type='checkbox']),
+.delivery-ops textarea,
+.delivery-ops select {
+  width: 100%;
+  max-width: 100%;
+}
+.delivery-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-block: 2rem;
+}
+.delivery-metrics dd {
+  font-size: 2rem;
+  margin-inline-start: 0;
+}
+.delivery-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.delivery-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.delivery-table th,
+.delivery-table td {
+  padding: 0.75rem;
+  text-align: start;
+  border-bottom: 1px solid #d4d4d4;
+}
+.delivery-ops details {
+  margin-block: 1.5rem;
+}
+.delivery-ops fieldset {
+  min-width: 0;
+}
+.delivery-attribution {
+  font-size: 0.9rem;
+}

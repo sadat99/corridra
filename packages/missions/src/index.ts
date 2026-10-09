@@ -1,5 +1,10 @@
 import { createHash, createHmac } from 'node:crypto';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+  type TenantTransaction,
+} from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { briefSchema, missionCommand, noticeVersion } from '@corridra/domain/missions';
 export const digest = (v: string) => createHash('sha256').update(v).digest('hex');
@@ -10,6 +15,16 @@ export class MissionService {
   ) {}
   private hash(value: string) {
     return createHmac('sha256', this.secret).update(value).digest('hex');
+  }
+  async importBrief(tx: TenantTransaction, commandId: string, ownerId: string, input: unknown) {
+    const brief = briefSchema.parse(input);
+    const result = await tx.db.query('SELECT app.import_mission_brief($1,$2,$3,$4::jsonb) AS id', [
+      tx.tenantId,
+      commandId,
+      ownerId,
+      JSON.stringify(brief),
+    ]);
+    return result.rows[0].id as string;
   }
   async budget(client: string) {
     // All replicas share PostgreSQL budgets; no raw addresses are retained.
