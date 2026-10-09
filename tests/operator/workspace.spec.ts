@@ -954,6 +954,9 @@ test('scoped delivery imports every row, serves client requests and downloads co
     .fill('Synthetic programme outcome review');
   await panel.getByRole('button', { name: 'Create programme', exact: true }).click();
   await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).not.toHaveValue('');
+  const programmeId = await panel
+    .getByRole('combobox', { name: 'Programme', exact: true })
+    .inputValue();
   const template = intakeTemplate().split('\r\n');
   await panel.getByLabel('CSV or Excel intake').setInputFiles({
     name: 'synthetic.csv',
@@ -1031,9 +1034,35 @@ test('scoped delivery imports every row, serves client requests and downloads co
   ).toBeVisible();
   await evidenceRequest.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
   await expect(evidenceRequest).toContainText('completed');
-  await panel
-    .getByRole('combobox', { name: 'Programme', exact: true })
-    .selectOption({ label: 'Part Eight Browser Programme' });
+  let releaseScope!: () => void;
+  const scopeGate = new Promise<void>((resolve) => {
+    releaseScope = resolve;
+  });
+  const scopeRoute = '**/api/workspace/delivery?*';
+  await page.route(scopeRoute, async (route) => {
+    if (
+      route.request().method() === 'GET' &&
+      new URL(route.request().url()).searchParams.get('programme') === programmeId
+    ) {
+      const response = await route.fetch();
+      await scopeGate;
+      await route.fulfill({ response });
+    } else await route.continue();
+  });
+  const scopedRequest = page.waitForRequest(
+    (r) => r.method() === 'GET' && new URL(r.url()).searchParams.get('programme') === programmeId,
+  );
+  await panel.getByRole('combobox', { name: 'Programme', exact: true }).selectOption(programmeId);
+  await scopedRequest;
+  try {
+    await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).toBeHidden();
+  } finally {
+    releaseScope();
+  }
+  await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).toHaveValue(
+    programmeId,
+  );
+  await page.unroute(scopeRoute);
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
   await panel
     .getByRole('group', { name: 'Approved publications' })

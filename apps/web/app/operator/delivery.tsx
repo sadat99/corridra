@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { ImportRow } from '@corridra/delivery/import';
 type Publication = {
   id: string;
@@ -78,9 +78,16 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   const [selected, setSelected] = useState<string[]>([]),
     [audience, setAudience] = useState('CLIENT_PROGRESS');
   const [optionsMission, setOptionsMission] = useState('');
+  const [dataScope, setDataScope] = useState('');
   const pending = useRef(new Map<string, string>()),
-    uploadKey = useRef('');
+    uploadKey = useRef(''),
+    currentScope = useRef(''),
+    dataRequest = useRef(0);
   const endpoint = `/api/workspace/delivery?tenant=${encodeURIComponent(tenant)}`;
+  const scope = `${endpoint}:${programme}:${offset}`;
+  useLayoutEffect(() => {
+    currentScope.current = scope;
+  }, [scope]);
   async function request(url: string, options?: RequestInit) {
     const r = await fetch(url, options),
       value = await r.json();
@@ -88,21 +95,29 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     return value;
   }
   async function load() {
-    setData(
-      await request(`${endpoint}&offset=${offset}${programme ? `&programme=${programme}` : ''}`),
+    if (currentScope.current !== scope) return;
+    const sequence = ++dataRequest.current;
+    const value = await request(
+      `${endpoint}&offset=${offset}${programme ? `&programme=${programme}` : ''}`,
     );
+    if (currentScope.current === scope && dataRequest.current === sequence) {
+      setData(value);
+      setDataScope(scope);
+    }
   }
   useEffect(() => {
     let active = true;
+    const sequence = ++dataRequest.current;
     request(`${endpoint}&offset=${offset}${programme ? `&programme=${programme}` : ''}`)
       .then((value) => {
-        if (active) {
+        if (active && dataRequest.current === sequence) {
           setData(value);
+          setDataScope(scope);
           setUnavailable(false);
         }
       })
       .catch((e) => {
-        if (active) {
+        if (active && dataRequest.current === sequence) {
           setMessage(e.message);
           setUnavailable(true);
         }
@@ -110,7 +125,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     return () => {
       active = false;
     };
-  }, [endpoint, offset, programme, revision]);
+  }, [endpoint, offset, programme, revision, scope]);
   useEffect(() => {
     let active = true;
     request(`/api/workspace/missions?tenant=${tenant}&offset=${missionOffset}`)
@@ -284,7 +299,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         <p>{message}</p>
       </section>
     );
-  if (!data)
+  if (!data || dataScope !== scope)
     return (
       <section className="detail-card">
         <h2>Client and programme delivery</h2>
