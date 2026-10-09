@@ -1076,6 +1076,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   );
   await clientContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin/);
   expect((await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status()).toBe(
     401,
   );
