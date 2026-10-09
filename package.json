@@ -34,7 +34,7 @@
     "@types/ws": "8.18.2",
     "@vercel/blob": "2.8.1",
     "esbuild": "0.28.2",
-    "eslint": "9.39.1",
+    "eslint": "10.12.0",
     "https-proxy-agent": "9.1.0",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
