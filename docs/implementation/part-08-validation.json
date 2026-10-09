@@ -1,0 +1,78 @@
+{
+  "recordedAt": "2026-10-09T12:05:45.668745+00:00",
+  "applicationRevision": "3123a6d20f7914239bc05ee9e96357cf00f00f0c",
+  "review": "https://github.com/sadat99/corridra/pull/24",
+  "migrationCount": 18,
+  "localChecks": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "documentIntegrityTests": 7,
+    "infrastructureTests": 7,
+    "build": "passed",
+    "productionDependencyAudit": "no known vulnerabilities",
+    "publicBrowserTests": 46,
+    "protectedBrowserTests": 5,
+    "delayedProgrammeScopeRegression": "passed"
+  },
+  "databaseIntegration": {
+    "tests": 118,
+    "migrations": 18,
+    "result": "passed",
+    "evidence": "CI database-integration step for 36ed11e48db67ea149f555dbaa61af361c6bcdb9; final CI reruns all gates",
+    "run": "https://github.com/sadat99/corridra/actions/runs/37919138387",
+    "finalHelperAndCommercialTargetedTests": 10,
+    "populatedUpgradeFromMigration": 13,
+    "existingMigrationHashesAndRecordsPreserved": true
+  },
+  "isolatedPreview": {
+    "at": "2026-10-09T12:03:56.384Z",
+    "sha": "3123a6d20f7914239bc05ee9e96357cf00f00f0c",
+    "deploymentId": "dpl_9NDS8xYt3y5vzJ7wAn5Sb2KxJ3La",
+    "origin": "https://corridra-part08-preview-sadat-os.vercel.app",
+    "state": "READY",
+    "branchId": "br-flat-unit-b1z709on",
+    "migrationCount": 18,
+    "functionalAcceptance": true,
+    "realMfaVerified": true,
+    "canonicalMissionToCashAndCompensationPassed": true,
+    "commercialBrowserApplicationRevision": "36ed11e48db67ea149f555dbaa61af361c6bcdb9",
+    "deliveryBrowserApplicationRevision": "3123a6d20f7914239bc05ee9e96357cf00f00f0c",
+    "delayedProgrammeScopeRegressionPassed": true,
+    "everyImportRowPreviewAndAtomicConfirmationPassed": true,
+    "clientDeclarationAndOwnedFulfilmentPassed": true,
+    "mobileAccessibilityAndPrivateDataExclusionPassed": true,
+    "actualCsvAndPdfDownloadsPassed": true,
+    "revocationAndCompletedSignoutPassed": true,
+    "exportArtifactHashesAndAuditOutboxVerified": true,
+    "exportArtifactsVerified": 4,
+    "restrictedRuntimeRoles": true,
+    "signupDisabled": true,
+    "syntheticOnly": true,
+    "productionMembershipsAndFlagsNotChanged": true
+  },
+  "pdfVisualInspection": {
+    "at": "2026-10-09T10:18:18.539Z",
+    "latinSpanishBengaliGlyphsAndPagination": "passed",
+    "licensedEmbeddedFonts": true,
+    "unsupportedGlyphsReturnExplicitError": true,
+    "completeUtf8CsvAlternative": true
+  },
+  "buildTracing": {
+    "at": "2026-10-09T12:01:46.736Z",
+    "tracedFiles": 772,
+    "fontsBundled": true,
+    "privateFilesTraced": 0
+  },
+  "production": {
+    "evidence": "PR #24 release evidence after gated production migration and READY deployment",
+    "commercialWriteAcceptance": "deferred by user",
+    "personalAdminNotUsedForAutomation": true
+  },
+  "remainingControls": [
+    "Customer signup/email verification under D09",
+    "Real customer-data admission and approved retention",
+    "Existing scanner, outreach and pilot/legal controls"
+  ],
+  "noPart09AiActivated": true
+}
