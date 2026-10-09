@@ -1,6 +1,6 @@
 # ADR-020: Neon Auth accounts and preserved operator MFA
 
-Status: accepted for implementation; production account activation awaits configuration.
+Status: accepted and implemented; customer identity accounts activated after [received-email and production acceptance](../implementation/neon-auth-production-activation.json) on 9 October 2026.
 
 The owner selected Neon Auth for customer signup, email verification, sign-in, sign-out and password recovery. These flows use Managed Better Auth through the pinned official `@neondatabase/auth` Next.js SDK and a same-origin proxy. Operator identities continue to use the established Better Auth password/TOTP flow at `/api/operator-auth`: managed Neon MFA remains on the provider roadmap. Customer signup grants no tenant membership or operator access. Email equality never links these identity stores automatically. No-account buyer capabilities remain unchanged.
 
@@ -8,6 +8,6 @@ Only required account API paths are exposed. Mutation origins must match the app
 
 Development uses an isolated Frankfurt Neon branch and separate cookie signing material. Production needs custom SMTP, tested inbox delivery, exact trusted origins, email verification and disabled localhost access. Shared Neon SMTP is for development. Neon Auth sends identity mail; it does not provide customer outreach or general transactional email. Credentials belong in Neon and deployment settings.
 
-Sadat and Gulshan, Dhaka were supplied as owner and location. A monitored privacy/support contact and approved customer retention remain to be confirmed. The existing synthetic-only mission, source and outreach rules remain in force until the customer activation requirements are actually met. Production account activation must not imply paid-customer readiness.
+Sadat and Gulshan, Dhaka were supplied as owner and location. The monitored support address is sadat@obsidianglobal.studio. The account notice explains manual account deletion; approved customer-brief retention and the remaining customer-data gates are still unresolved. The existing synthetic-only mission, source and outreach rules remain in force until the customer activation requirements are actually met. Production account activation must not imply paid-customer readiness.
 
 The operator workspace now retains its selected tenant in a validated URL parameter. Selection is accepted only from the authenticated user's accessible tenants; PostgreSQL isolation remains authoritative.

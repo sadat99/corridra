@@ -14,10 +14,14 @@ The owner explicitly approved migrations and full test access. Migrations 0009/0
 
 EMAIL is blocked by the current runtime and SQL. Synthetic receipts send no email; manual receipts record human handoff only. Real outreach requires explicit email permission, reviewed jurisdiction/legal basis, sender-domain readiness, provider regional/data review and applicable D08 controls. Existing scanner/account/retention deferrals remain open. The live deployment is a verified synthetic release, not paid-customer activation. Rollback disables introductions/dispatch, revokes affected links and keeps immutable history and additive schema.
 
-## Release closeout and Part 07 handoff
+## Historical release closeout and Part 07 handoff
 
 [PR #20](https://github.com/sadat99/corridra/pull/20) added Neon Auth customer account flows and preserved operator MFA. Its merged revision `e1a4a4240695ce888719410f1c27770f497fa964` is deployed in READY production deployment `dpl_6ur1wyirb4vSeQ1ng9tmmKVC6QGS`. [Main CI](https://github.com/sadat99/corridra/actions/runs/37883619593) succeeded. The account runbook and validation distinguish tested provider requests from actual inbox delivery.
 
 On 9 October 2026 the owner explicitly requested release of completed work with signup deferred so Part 07 can proceed. Customer signup remains disabled in both the app and provider. Resend SMTP is configured, but Sending verification and received verification/recovery journeys remain open under D09. Existing operator and no-account buyer flows do not depend on customer signup. Preserve the original production acceptance and cleanup evidence above; no temporary administrator access is restored for this closeout.
 
 [The Part 07 handoff](part-07-handoff.md) is the next authorized implementation packet. This release exception permits development and synthetic acceptance, not paid-customer activation. Real outreach, customer-data processing and the other deferred controls retain their stated gates.
+
+## Subsequent verified account activation
+
+Later on 9 October 2026, [PR #26](https://github.com/sadat99/corridra/pull/26) activated customer identity signup after actual SMTP receipt, received OTP verification and recovery-link consumption passed. Production revision `00417313fb401e0d44099583a712fa8de7d2a60f` reached READY and passed all six live customer browser phases plus the read-only operator/password/TOTP checks. The exact temporary managed test identity and sessions were removed; the owner's personal admin/MFA and original owner were preserved. [The account production record](neon-auth-production-activation.json) supersedes the earlier signup hold without changing the Part 06 synthetic/outreach boundary. Parts 07 and 08 are now implemented and deployed under their own release records.
