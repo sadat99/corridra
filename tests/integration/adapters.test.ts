@@ -28,6 +28,15 @@ test('managed accounts require an exact EU branch, strong signing secret and rev
     expect(() => readNeonAuthConfig({ ...env, NEON_AUTH_BASE_URL: url })).toThrow();
   expect(() => readNeonAuthConfig({ ...env, NEON_AUTH_COOKIE_SECRET: 'short' })).toThrow();
   expect(() => readNeonAuthConfig({ ...env, APP_ORIGIN: env.APP_ORIGIN + '/signin' })).toThrow();
+  expect(() => readNeonAuthConfig({ ...env, APP_ORIGIN: 'ftp://localhost' })).toThrow();
+  expect(() =>
+    readNeonAuthConfig({
+      ...env,
+      APP_ORIGIN: 'https://localhost',
+      VERCEL_ENV: 'production',
+      CORRIDRA_NEON_AUTH_PRODUCTION_READY: 'true',
+    }),
+  ).toThrow();
 });
 test('actual ClamAV accepts harmless bytes and quarantines the EICAR test signature', async () => {
   const scanner = new ClamAvScanner('127.0.0.1', 33129);

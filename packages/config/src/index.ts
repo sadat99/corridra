@@ -21,9 +21,11 @@ export function readNeonAuthConfig(env: NodeJS.ProcessEnv = process.env) {
   )
     throw new Error('An approved Frankfurt Neon Auth branch URL is required');
   const origin = new URL(config.APP_ORIGIN);
+  const loopback = ['localhost', '127.0.0.1'].includes(origin.hostname);
   if (
     origin.origin !== config.APP_ORIGIN ||
-    (origin.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(origin.hostname))
+    !(origin.protocol === 'https:' || (origin.protocol === 'http:' && loopback)) ||
+    (env.VERCEL_ENV === 'production' && loopback)
   )
     throw new Error('An exact application origin is required');
   if (env.VERCEL_ENV === 'production' && env.CORRIDRA_NEON_AUTH_PRODUCTION_READY !== 'true')
