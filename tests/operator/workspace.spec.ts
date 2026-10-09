@@ -1069,7 +1069,18 @@ test('scoped delivery imports every row, serves client requests and downloads co
     expect(downloaded.suggestedFilename()).toBe(`corridra-programme.${format.toLowerCase()}`);
   }
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
-  await panel.getByRole('button', { name: 'Revoke link', exact: true }).first().click();
+  const institutionalAccess = panel.locator('li').filter({
+    hasText: 'institution report · Synthetic programme outcome review',
+  });
+  const revocation = page.waitForResponse(
+    (r) =>
+      r.url().includes('/api/workspace/delivery') &&
+      r.request().method() === 'POST' &&
+      r.request().postDataJSON().action === 'revoke',
+  );
+  await institutionalAccess.getByRole('button', { name: 'Revoke link', exact: true }).click();
+  expect((await revocation).ok()).toBe(true);
+  await expect(institutionalAccess).toContainText('Revoked');
   await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
   await expect(client.getByRole('alert').filter({ hasText: 'Access denied' })).toContainText(
     'unavailable',
