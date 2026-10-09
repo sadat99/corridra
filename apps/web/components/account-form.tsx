@@ -184,6 +184,9 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           <Link className="text-link" href="/signup">
             Create an account
           </Link>
+          <Link className="text-link" href="/verify-email">
+            Verify your email
+          </Link>
           <Link className="text-link" href="/operator/signin">
             Invited operator sign-in
           </Link>
