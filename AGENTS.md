@@ -10,6 +10,8 @@ Never print credentials or production personal information. Use secure settings 
 
 Use the existing isolated checkout. Do not create a Git worktree unless explicitly requested. Following the explicitly authorized public bootstrap, use short-lived PR branches and the release gates in the plan. Do not bypass existing branch protection or force-push shared history.
 
+The owner authorizes routine deletion of completed temporary Neon branches after required checks and sanitized evidence are preserved. Inspect exact project/branch IDs, parents, children, current PR status and environment bindings first. Remove only retired preview settings, verify deletion and production health, and preserve production/default branches, sterile parents, open-PR environments and branches needed for unfinished work. Clean up at the end of each task; this is not a background scheduler. Never infer disposal from age or a name alone.
+
 Run `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` and `pnpm test:e2e` for this public release. Add meaningful behavior tests when changing flows. Real database integration/RLS tests become mandatory when Part 03 introduces a database; do not add empty passing suites to imply readiness.
 
 Report implemented behavior, actual test results, deployment evidence and concrete blockers. A built bundle is not a public deployment. Do not proceed to the next product part unless the user requests it.
