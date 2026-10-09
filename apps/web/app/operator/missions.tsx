@@ -257,6 +257,12 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
                     {m.status === 'OUTREACH' && (
                       <option value="meetings">Begin meeting delivery</option>
                     )}
+                    {m.status === 'FOLLOW_UP' && (
+                      <option value="pipeline">Begin commercial pipeline</option>
+                    )}
+                    {m.status === 'COMMERCIAL_PIPELINE' && (
+                      <option value="close">Close resolved mission</option>
+                    )}
                     {m.status === 'MEETINGS' && (
                       <option value="followup">Begin owned follow-up</option>
                     )}
@@ -267,6 +273,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
                       'OUTREACH',
                       'MEETINGS',
                       'FOLLOW_UP',
+                      'COMMERCIAL_PIPELINE',
                     ].includes(m.status) && <option value="pause">Pause mission</option>}
                     {m.status === 'ON_HOLD' && <option value="resume">Resume mission</option>}
                     <option value="cancel">Cancel mission</option>

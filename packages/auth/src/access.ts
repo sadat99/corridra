@@ -70,6 +70,7 @@ export class AccessService {
           'research.resolution',
           'communications.introductions',
           'communications.dispatch',
+          'opportunities.commands',
         ]),
         enabled: z.boolean(),
       })

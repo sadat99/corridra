@@ -134,6 +134,8 @@ export const missionCommand = z.object({
     'outreach',
     'meetings',
     'followup',
+    'pipeline',
+    'close',
     'pause',
     'resume',
     'cancel',

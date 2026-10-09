@@ -14,10 +14,14 @@ export const command = (action: string, data: Record<string, unknown>) => ({
   commandId: randomUUID(),
   ...data,
 });
-export async function accessFixture(upgradeFromPart05 = false) {
+export async function accessFixture(
+  upgradeFromPart05 = false,
+  through?: string,
+  database?: string,
+) {
   const f = await fixture(
-      upgradeFromPart05 ? 'corridra_upgrade' : 'corridra_integration',
-      upgradeFromPart05 ? '0008_counterparty_research.sql' : undefined,
+      database ?? (upgradeFromPart05 ? 'corridra_upgrade' : 'corridra_integration'),
+      upgradeFromPart05 ? '0008_counterparty_research.sql' : through,
     ),
     a = new AccessService(f.runtime),
     mission = new MissionService(f.runtime, 'part06-integration-secret'),

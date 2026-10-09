@@ -63,6 +63,9 @@ export const claimInput = z.object({
   statement: z.string().trim().min(1).max(2000),
 });
 export const permissions = {
+  'opportunities.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
+  'opportunities.manage': ['owner', 'admin', 'operator'],
+  'opportunities.accounting': ['owner', 'admin'],
   'communications.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
   'communications.manage': ['owner', 'admin', 'operator'],
   'communications.approve': ['owner', 'admin'],

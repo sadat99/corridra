@@ -146,11 +146,27 @@ export class MissionService {
           throw new DomainError('Complete a meeting before follow-up', 409);
         status = 'FOLLOW_UP';
       }
+      if (v.action === 'pipeline') {
+        if (status !== 'FOLLOW_UP')
+          throw new DomainError('Complete meeting follow-up before commercial progression', 409);
+        status = 'COMMERCIAL_PIPELINE';
+      }
+      if (v.action === 'close') {
+        if (status !== 'COMMERCIAL_PIPELINE')
+          throw new DomainError('Resolve the commercial pipeline before closing', 409);
+        status = 'CLOSED';
+      }
       if (v.action === 'pause') {
         if (
-          !['QUALIFICATION', 'ACTIVE', 'TARGETING', 'OUTREACH', 'MEETINGS', 'FOLLOW_UP'].includes(
-            status,
-          )
+          ![
+            'QUALIFICATION',
+            'ACTIVE',
+            'TARGETING',
+            'OUTREACH',
+            'MEETINGS',
+            'FOLLOW_UP',
+            'COMMERCIAL_PIPELINE',
+          ].includes(status)
         )
           throw new DomainError('Only a qualified or active mission can be paused', 409);
         held = status;
