@@ -641,6 +641,19 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await page.reload();
   await expect(card.getByText(/State: HELD/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  const heldSnapshot = await (
+    await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)
+  ).json();
+  await writeFile(
+    '.cache/part07-browser-origin.json',
+    JSON.stringify({
+      missionId: mission.id,
+      meetingId: heldSnapshot.meetings.find(
+        (m: { title: string }) => m.title === 'Part Six buyer discussion',
+      ).id,
+    }),
+    { mode: 0o600 },
+  );
   await buyer.getByRole('button', { name: 'Stop further introductions' }).click();
   await expect(buyer.getByRole('status')).toContainText('Further introductions');
   await buyerContext.close();
@@ -649,4 +662,263 @@ test('controlled buyer response progresses through durable delivery, a held meet
   expect((await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)).status()).toBe(
     401,
   );
+});
+test('operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(180000);
+  page.setDefaultTimeout(15000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8')),
+    { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8')),
+    origin = JSON.parse(await readFile('.cache/part07-browser-origin.json', 'utf8'));
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  expect((await verification).ok()).toBe(true);
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  expect((await page.request.get('/api/workspace/tenants')).status()).toBe(200);
+  const headers = { Origin: 'http://127.0.0.1:3200' };
+  async function post(action: string, input: Record<string, unknown>) {
+    const r = await page.request.post(`/api/workspace/${action}?tenant=${seed.tenantId}`, {
+      headers,
+      data: input,
+    });
+    const d = await r.json();
+    expect(r.ok(), `${action}: ${r.status()} ${d.error ?? ''}`).toBe(true);
+    return d;
+  }
+  await post('config', { key: 'opportunities.commands', enabled: true });
+  for (const [i, action] of ['outreach', 'meetings', 'followup'].entries())
+    await post('mission', {
+      id: origin.missionId,
+      version: 4 + i,
+      commandId: randomUUID(),
+      action,
+      ownerId: seed.principalId,
+      nextAction: 'Follow the invented opportunity',
+      dueAt: new Date(Date.now() + 86400000).toISOString(),
+      reason: 'Connect held meeting and commercial progression',
+      marketCode: 'ES',
+      targetProfile: 'Synthetic hospitality distributor',
+    });
+  const source = await post('source', {
+    kind: 'observation',
+    locator: 'Synthetic Part Seven accounting statement',
+    observedAt: new Date().toISOString(),
+    classification: 'INTERNAL',
+    purpose: 'synthetic_validation',
+    retentionUntil: new Date(Date.now() + 86400000).toISOString(),
+    aiPolicy: 'DENY',
+  });
+  const section = page.getByRole('region', { name: 'Commercial progress' }),
+    status = page.getByRole('status', { name: 'Commercial status' });
+  await page.getByRole('button', { name: 'Refresh commercial progress', exact: true }).click();
+  await expect(
+    section.getByText('Commercial commands are disabled.', { exact: false }),
+  ).toHaveCount(0);
+  await section.getByText('Create an opportunity from a held meeting', { exact: true }).click();
+  const create = section.getByRole('form', { name: 'Create commercial opportunity' });
+  await create.getByLabel('Opportunity origin meeting').selectOption(origin.meetingId);
+  await create.getByLabel('Opportunity title').fill('Part Seven buyer opportunity');
+  await create
+    .getByLabel('Mission attribution and limits')
+    .fill(
+      'Corridra arranged the invented meeting. Sales causation is not independently established.',
+    );
+  await create.getByLabel('Commercial next action').fill('Qualify the observed requirement');
+  await create
+    .getByLabel('Commercial command reason')
+    .fill('Record commercial follow-through from the held meeting');
+  await create.getByRole('button', { name: 'Create commercial opportunity', exact: true }).click();
+  await expect(status).toHaveText('Commercial progress saved.');
+  const card = section.getByRole('article', { name: 'Part Seven buyer opportunity' });
+  await expect(card.getByText(/Opportunity state: LEAD/)).toBeVisible();
+  await section.getByLabel('Commercial report mission').selectOption(origin.missionId);
+  await card.getByText('Change opportunity or follow-up', { exact: true }).click();
+  async function advance(state: string) {
+    const form = card.getByRole('form', {
+      name: 'Change opportunity Part Seven buyer opportunity',
+    });
+    await form.getByLabel('Next opportunity action').selectOption(state);
+    await form
+      .getByLabel('Commercial command reason')
+      .fill('Progress using the recorded commercial evidence');
+    await form.getByRole('button', { name: 'Save opportunity change' }).click();
+    await expect(card.getByText(`Opportunity state: ${state}`, { exact: false })).toBeVisible();
+  }
+  await advance('QUALIFIED_OPPORTUNITY');
+  await card.getByText('Record RFQ, sample or commercial evidence', { exact: true }).click();
+  const record = card.getByRole('form', {
+    name: 'Record commercial evidence for Part Seven buyer opportunity',
+  });
+  const older = new Date(Date.now() - 180000).toISOString().slice(0, 16),
+    later = new Date(Date.now() - 60000).toISOString().slice(0, 16);
+  async function evidence(
+    kind: string,
+    reference: string,
+    parent?: string,
+    amount?: string,
+    date = older,
+    prior?: string,
+  ) {
+    await record.getByLabel('Commercial record type').selectOption(kind);
+    if (parent)
+      await record.getByLabel('Related commercial record').selectOption({ label: parent });
+    if (prior) await record.getByLabel('Earlier confirmed receipt').selectOption({ label: prior });
+    if (amount) {
+      await record.getByLabel('Commercial currency').selectOption('EUR');
+      await record.getByLabel('Commercial amount').fill(amount);
+    }
+    await record
+      .getByRole('combobox', { name: 'Observation source', exact: true })
+      .selectOption(source.id);
+    await record.getByLabel('Observed date (UTC)').fill(date);
+    await record
+      .getByLabel('Commercial observation')
+      .fill('Observed invented ' + kind.toLowerCase().replaceAll('_', ' '));
+    await record.getByLabel('Commercial external reference').fill(reference);
+    await record
+      .getByLabel('Commercial command reason')
+      .fill('Record invented evidence with source and date');
+    await record.getByRole('button', { name: 'Record commercial evidence', exact: true }).click();
+    await expect(card.getByLabel(reference, { exact: true })).toBeVisible();
+    await expect(status).toHaveText('Commercial progress saved.');
+  }
+  await evidence('RFQ', 'part07-rfq');
+  await evidence('SAMPLE', 'part07-sample');
+  await evidence('PROPOSAL', 'part07-proposal', undefined, '250.00');
+  await advance('PROPOSAL');
+  await evidence('COMMITMENT', 'part07-commitment', 'part07-proposal · EUR 250.00', '250.00');
+  await advance('COMMITMENT');
+  await evidence('CONTRACT', 'part07-contract', 'part07-commitment · EUR 250.00', '250.00');
+  await advance('CONTRACT');
+  await evidence('INVOICE', 'part07-invoice', 'part07-contract · EUR 250.00', '125.00');
+  await advance('INVOICE');
+  await evidence('CASH_RECEIPT', 'part07-cash', 'part07-invoice · EUR 125.00', '125.00');
+  const totals = section.getByLabel('EUR commercial totals');
+  await expect(totals.getByText('Confirmed cash: EUR 0.00', { exact: true })).toBeVisible();
+  const first = card.getByLabel('part07-cash', { exact: true });
+  await expect(first.getByText('Reported receipt; accounting confirmation pending')).toBeVisible();
+  async function confirm(reference: string) {
+    const row = card.getByLabel(reference, { exact: true });
+    await row.getByText('Confirm this cash observation', { exact: true }).click();
+    const form = row.getByRole('form', { name: `Confirm cash ${reference}` });
+    await form.getByLabel('Observation source').selectOption(source.id);
+    await form
+      .getByLabel('Accounting confirmation basis')
+      .fill(
+        'Human checked the invented accounting statement against the invoice and receipt reference.',
+      );
+    await form
+      .getByLabel('Commercial command reason')
+      .fill('Confirm the separately observed accounting record');
+    await form.getByRole('button', { name: 'Confirm observed cash' }).click();
+    await expect(row.getByText(/Accounting confirmed:/)).toBeVisible();
+  }
+  await confirm('part07-cash');
+  await advance('CASH_COLLECTED');
+  await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
+  await evidence(
+    'INVOICE',
+    'part07-repeat-invoice',
+    'part07-contract · EUR 250.00',
+    '125.00',
+    later,
+  );
+  await evidence(
+    'CASH_RECEIPT',
+    'part07-repeat-cash',
+    'part07-repeat-invoice · EUR 125.00',
+    '125.00',
+    later,
+  );
+  await confirm('part07-repeat-cash');
+  await evidence(
+    'REPEAT_ORDER',
+    'part07-repeat-order',
+    'part07-repeat-cash · EUR 125.00',
+    undefined,
+    later,
+    'part07-cash',
+  );
+  await advance('RECURRING_REVENUE');
+  await expect(totals.getByText('Confirmed cash: EUR 250.00', { exact: true })).toBeVisible();
+  await expect(totals.getByText('Repeat cash within confirmed cash: EUR 125.00')).toBeVisible();
+  const before = await (
+    await page.request.get(
+      `/api/workspace/opportunities?tenant=${seed.tenantId}&mission=${origin.missionId}`,
+    )
+  ).json();
+  await section
+    .getByText('Rebuild commercial reports from retained events', { exact: true })
+    .click();
+  const rebuild = section.getByRole('form', { name: 'Rebuild commercial projections' });
+  await rebuild
+    .getByLabel('Commercial command reason')
+    .fill('Check deterministic replay of recorded outcomes');
+  await rebuild.getByRole('button', { name: 'Rebuild commercial reports', exact: true }).click();
+  await expect(status).toHaveText('Commercial progress saved.');
+  const after = await (
+    await page.request.get(
+      `/api/workspace/opportunities?tenant=${seed.tenantId}&mission=${origin.missionId}`,
+    )
+  ).json();
+  expect(after.totals).toEqual(before.totals);
+  expect(after.metrics).toEqual(before.metrics);
+  const second = card.getByLabel('part07-repeat-cash', { exact: true });
+  await second.getByText('Correct this amount with full compensation', { exact: true }).click();
+  const reverse = second.getByRole('form', { name: 'Compensate part07-repeat-cash' });
+  await reverse.getByLabel('Observation source').selectOption(source.id);
+  await reverse
+    .getByLabel('Commercial command reason')
+    .fill('Correct the invented repeat receipt in full');
+  await reverse.getByRole('button', { name: 'Record full compensation' }).click();
+  await expect(second.getByText(/Compensation recorded/)).toBeVisible();
+  await expect(totals.getByText('Confirmed cash: EUR 250.00', { exact: true })).toBeVisible();
+  const report = await (
+    await page.request.get(
+      `/api/workspace/opportunities?tenant=${seed.tenantId}&mission=${origin.missionId}`,
+    )
+  ).json();
+  const negative = report.records.find(
+    (r: { reverse_of: string | null }) =>
+      r.reverse_of ===
+      before.records.find(
+        (r: { external_reference: string }) => r.external_reference === 'part07-repeat-cash',
+      ).id,
+  );
+  await confirm(negative.external_reference);
+  await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
+  await expect(totals.getByText('Repeat cash within confirmed cash: EUR 0.00')).toBeVisible();
+  await page.reload();
+  await expect(card.getByText(/Opportunity state: RECURRING_REVENUE/)).toBeVisible();
+  await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  const oldState = await page.context().storageState();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin/);
+  const stale = await browser.newContext({ storageState: oldState });
+  expect(
+    (
+      await stale.request.get(
+        `http://127.0.0.1:3200/api/workspace/opportunities?tenant=${seed.tenantId}`,
+      )
+    ).status(),
+  ).toBe(401);
+  expect(
+    (
+      await stale.request.post(
+        `http://127.0.0.1:3200/api/workspace/opportunity?tenant=${seed.tenantId}`,
+        { headers, data: { action: 'confirm' } },
+      )
+    ).status(),
+  ).toBe(401);
+  await stale.close();
 });

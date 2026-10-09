@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { Missions } from './missions';
+import { CommercialProgress } from './opportunities';
 import { ControlledAccess } from './access';
 type RecordRow = {
   id: string;
@@ -177,6 +178,11 @@ export function Workspace({
             missionRevision={missionRevision}
           />
           <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
+          <CommercialProgress
+            key={`commercial-${tenant}`}
+            tenant={tenant}
+            revision={missionRevision}
+          />
           <div className="detail-grid">
             <section className="detail-card">
               <h2>Sources</h2>
@@ -497,6 +503,7 @@ export function Workspace({
                 'research.resolution',
                 'communications.introductions',
                 'communications.dispatch',
+                'opportunities.commands',
               ].map((key) => (
                 <div key={key}>
                   <span>

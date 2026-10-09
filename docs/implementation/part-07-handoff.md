@@ -1,6 +1,6 @@
 # Part 07 handoff: commercial follow-through
 
-Status: next authorized implementation packet, following the owner's 9 October 2026 instruction to close out completed Part 06 work with signup deferred. Part 07 is not implemented by this handoff.
+Status: implementation and validation in progress following the owner's 9 October 2026 instruction to proceed. See [the requirement baseline](part-07-scope.md), [runbook](../runbooks/part-07-commercial-followthrough.md) and [release status](part-07-release.md). Customer signup remains deferred.
 
 ## Objective and existing journey
 

@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Parts 01 to 06 are implemented and deployed. Parts 03 to 06 retain their documented synthetic-data and deferred-control boundaries. Neon Auth account code is deployed with customer signup disabled. On 9 October 2026 the owner requested release closeout with signup deferred so work can move to Part 07. Part 07 is the next authorized packet; Parts 08 to 12 remain planned. See [Part 06 release](part-06-release.md), [the account runbook](../runbooks/neon-auth-accounts.md) and [deferred controls](deferred-controls.md).
+Status: Parts 01 to 06 are implemented and deployed. Parts 03 to 06 retain their documented synthetic-data and deferred-control boundaries. Neon Auth account code is deployed with customer signup disabled. On 9 October 2026 the owner requested release closeout with signup deferred so work can move to Part 07. Part 07 implementation and validation is in progress; Parts 08 to 12 remain planned. See [Part 07 release status](part-07-release.md). See [Part 06 release](part-06-release.md), [the account runbook](../runbooks/neon-auth-accounts.md) and [deferred controls](deferred-controls.md).
 
 ## Outcome and delivery method
 

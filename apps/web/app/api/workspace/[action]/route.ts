@@ -30,6 +30,31 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        'commercial-records': () =>
+          s.opportunities.records(
+            ctx,
+            z.uuid().parse(new URL(request.url).searchParams.get('id')),
+            z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100000)
+              .parse(new URL(request.url).searchParams.get('offset') ?? 0),
+          ),
+        opportunities: () =>
+          s.opportunities.workspace(
+            ctx,
+            z
+              .uuid()
+              .optional()
+              .parse(new URL(request.url).searchParams.get('mission') ?? undefined),
+            z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100000)
+              .parse(new URL(request.url).searchParams.get('offset') ?? 0),
+          ),
         communications: () => s.communications.workspace(ctx),
         meetings: () => s.meetings.workspace(ctx),
         research: () =>
@@ -154,6 +179,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      opportunity: () => s.opportunities.command(ctx, input),
       communication: () => s.communications.command(ctx, input),
       meeting: () => s.meetings.command(ctx, input),
       dispatch: async () => {
