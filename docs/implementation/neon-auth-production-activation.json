@@ -1,0 +1,113 @@
+{
+  "recordedAt": "2026-10-09T15:21:42.447286+00:00",
+  "timezone": "Asia/Dhaka",
+  "scope": "Customer identity accounts and identity email only; real mission/customer-data and outreach gates remain open",
+  "release": {
+    "pr": "https://github.com/sadat99/corridra/pull/26",
+    "reviewedHeadSha": "bbc17bd641f8acdd18ceebf055e8bff6900ae246",
+    "reviewedCi": "https://github.com/sadat99/corridra/actions/runs/37948344668",
+    "reviewedCiConclusion": "success",
+    "productionSha": "00417313fb401e0d44099583a712fa8de7d2a60f",
+    "deploymentId": "dpl_HctN3G5Q3JojBPqCH4XVFFCWTS6H",
+    "deploymentState": "READY",
+    "canonicalOrigin": "https://corridra.vercel.app",
+    "productionAcceptanceAt": "2026-10-09T15:15:48.778Z",
+    "mainCi": "https://github.com/sadat99/corridra/actions/runs/37949731714",
+    "mainCiConclusion": "success"
+  },
+  "emailAcceptance": {
+    "smtpSavedProviderSendTestPassed": true,
+    "smtpInboxReceiptConfirmedByOwner": true,
+    "resendDomainAndSendingVerificationReportedByOwner": true,
+    "resendDomainApiIndependentlyInspected": false,
+    "receivedVerificationCodeConsumed": true,
+    "verifiedPasswordSignInPassed": true,
+    "receivedResetLinkConsumed": true,
+    "oldPasswordRejected": true,
+    "newPasswordSignInPassed": true,
+    "resetTokenReuseRejected": true,
+    "recoveryAcceptanceAt": "2026-10-09T14:34:02.448Z"
+  },
+  "configuration": {
+    "exactLiveAuthBranchBinding": true,
+    "separateStrongSigningSecret": true,
+    "mandatoryVerification": true,
+    "localhostDisabled": true
+  },
+  "productionActivation": {
+    "productionAccountFlagsEnabled": true,
+    "providerSignupEnabled": true,
+    "unrelatedProductionSettingsUnchanged": true,
+    "operatorCredentialsAndMfaNotChanged": true
+  },
+  "liveBrowser": {
+    "passedPhases": 6,
+    "checks": [
+      "live signup notice and anonymous denial",
+      "real verified customer password sign-in and isolated account access",
+      "restored customer session, mobile layout and accessibility",
+      "origin, administration and request-size protections",
+      "live sign-out and stale-cookie rejection",
+      "live recovery page referrer protection and invalid-token rejection"
+    ],
+    "customerIdentityCannotAccessOperatorWorkspace": true,
+    "actualSessionReloadAndSignoutPassed": true,
+    "staleCookieRejected": true,
+    "noMissionOrCommercialWrites": true
+  },
+  "operatorAcceptance": {
+    "actualPasswordAndMfaPassed": true,
+    "existingSecondaryWorkspaceDeliveryAndTemplateReadPassed": true,
+    "primaryWorkspaceDenialPassed": true,
+    "signoutAndStaleSessionDenialPassed": true,
+    "noMembershipOrFlagChanges": true,
+    "productionCommercialWriteAcceptance": "deferred by user"
+  },
+  "ownerAccess": {
+    "adminMembershipActive": true,
+    "originalOwnerRetained": true,
+    "ownMfaEnrolled": true,
+    "personalAdminSessionsPreserved": true,
+    "temporarySetupVariableRemoved": true
+  },
+  "cleanup": {
+    "exactTemporaryManagedIdentityRemoved": true,
+    "temporaryManagedSessionsRemoved": true,
+    "otherManagedIdentitiesPreserved": true,
+    "operatorIdentityCountUnchanged": true,
+    "noMembershipChanges": true,
+    "at": "2026-10-09T15:20:42.930Z",
+    "deletedBranches": [
+      {
+        "project": "icy-math-12467795",
+        "id": "br-icy-glade-b20v6hst",
+        "name": "preview/fix/neon-auth-production-activation",
+        "parent": "br-misty-tree-b25lpa7e"
+      },
+      {
+        "project": "odd-pond-26265871",
+        "id": "br-sparkling-bar-b1i9azmw",
+        "name": "dev-part06-neon-auth",
+        "parent": "br-lingering-sea-b1eob57e"
+      }
+    ],
+    "retiredPreviewSettingCount": 10,
+    "productionSettingsUnchanged": true,
+    "allOtherBranchesPreserved": true,
+    "ownTemporaryBypassRevoked": true,
+    "previewProtectionPreserved": true,
+    "temporaryPreviewAliasRemoved": true,
+    "liveBranchPreserved": true,
+    "sterileParentsPreserved": true,
+    "openPrEnvironmentsPreserved": true,
+    "temporaryPasswordAndReceivedTokenFilesRemoved": true
+  },
+  "remainingLimits": [
+    "Real customer mission/data admission and approved customer-brief retention remain gated under D08",
+    "Real outreach email is disabled",
+    "Scanner bypass, evidence storage and other deferred infrastructure controls remain open",
+    "Part 07 production commercial write acceptance remains deferred by the owner",
+    "Parts 09 through 12 are planned"
+  ],
+  "secretsScreenshotsAndAuthenticationArtifactsIncluded": false
+}

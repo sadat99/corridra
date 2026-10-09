@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Parts 01 to 06 are implemented and deployed. Parts 03 to 06 retain their documented synthetic-data and deferred-control boundaries. Neon Auth email verification and recovery have passed received-email acceptance; production activation follows the account release runbook. On 9 October 2026 the owner requested release closeout with signup deferred so work can move to Part 07. Parts 07 and 08 are implemented, with deployment and acceptance tracked in their release records; Parts 09 to 12 remain planned. See [Part 08 release status](part-08-release.md). See [Part 07 release status](part-07-release.md). See [Part 06 release](part-06-release.md), [the account runbook](../runbooks/neon-auth-accounts.md) and [deferred controls](deferred-controls.md).
+Status: Parts 01 through 08 are implemented and deployed. Their release records retain the synthetic-data boundaries and distinguish isolated complete journeys from production acceptance. Neon Auth customer identity signup, received-email verification and recovery are live; D09 is closed. Part 07's production commercial write check remains deferred by the owner. Real customer mission/data activation, outreach and the remaining controls are still gated. Parts 09 through 12 remain planned. See [Part 08 release status](part-08-release.md), [Part 07 release status](part-07-release.md), [account production acceptance](neon-auth-production-activation.json) and [deferred controls](deferred-controls.md).
 
 ## Outcome and delivery method
 
@@ -200,7 +200,7 @@ Every behavior-changing PR includes lint, typecheck, focused tests, build and ch
 
 Vercel PR previews must use non-production credentials and synthetic/sanitized Neon branches. Verify the actual preview before promotion. Production migrations are reviewed, gated and backward compatible, run separately from application builds. Keep the previous compatible release and documented forward-fix path. No irreversible historical-data rewriting on deployment.
 
-For each PR record: outcome, scope, acceptance criteria, non-goals, APIs/schema/events, permissions/data classes, test results, preview URL, migration/rollback and limitations. Each part ends with a release record and remaining decisions. Continue to the next part only when requested; this task builds Part 01, not the main system.
+For each PR record: outcome, scope, acceptance criteria, non-goals, APIs/schema/events, permissions/data classes, test results, preview URL, migration/rollback and limitations. Each part ends with a release record and remaining decisions. Continue to the next product part only when requested; completion of release documentation does not authorize the next part.
 
 ## Source coverage
 
@@ -248,12 +248,8 @@ Required by integration, not invented now: Vercel project/team access; EU Neon/s
 
 Keep match weights, prices, commissions, reputation weights, expansion markets, channels, model routes and automation thresholds versioned and evidence-led. No Kubernetes, Kafka, dedicated graph database, native app, autonomous outbound agent or automated global payout system in the initial scope.
 
-## Next task packet
+## Next planned part
 
-**Outcome:** Implement Part 07 follow-through, opportunity and outcome projection in reviewable PRs. The owner authorized proceeding after closing out the completed Part 06 release with customer signup deferred. The [Part 07 handoff](part-07-handoff.md) records scope and acceptance. This authorization does not activate customer signup, real outreach or customer-data processing.
+Part 09, governed AI assistance, is next in the sequence. It remains planned and requires an explicit implementation request. Read the Part 09 requirements above, the original constitution/canvas, current ADRs and deferred controls before preparing its task packet. Do not enable speculative AI integrations or advance to later parts as part of documentation closeout.
 
-**Read:** Constitution claims/evidence rules; public-experience mission progress and reporting requirements; canvas commercial truth, canonical funnel, tenancy, money and ordinary-event Outcome Graph contracts; Part 07 above; ADR-015 to ADR-020; the Part 06 release/runbook and deferred controls register.
-
-**Acceptance:** Operate an existing mission from held meeting and owned follow-up through qualified opportunity, RFQ/sample, proposal, commitment, contract, invoice, confirmed cash and recurrence. Enforce canonical transitions, required loss reasons and tenant/actor permissions. Keep signed contract, invoice and cash evidence distinct. Record integer minor units, currency, dates, accounting confirmation and attribution scope. Use append-only events and rebuildable, versioned relational projections; corrections require compensating records. Ship mission-yield and overdue follow-up views without guessed revenue, FX or causal claims.
-
-**Validation:** Document integrity, format, lint, typecheck, real PostgreSQL/RLS integration, build and public/protected browser checks. Demonstrate invalid-transition denial, unauthorized cash denial, idempotent commands, projection replay with no duplicate totals and separate mixed-currency totals. Exercise a synthetic intake-to-cash journey. Keep existing public, buyer and operator flows working; record migration, CI, exact deployment SHA, functional acceptance and rollback evidence. D01 to D06, D08 and D09 retain their explicit activation boundaries.
+The historical [Part 07 handoff](part-07-handoff.md) remains available as a record of its original authorization. Parts 07 and 08 now have their own implemented scope and release records. D09's account-email gate is closed; the remaining customer-data, outreach, scanner, retention and pilot boundaries are unchanged.
