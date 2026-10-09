@@ -14,6 +14,19 @@ export default function Page() {
           documents or personal information.
         </p>
         <div className="detail-card">
+          <h2>Account details</h2>
+          <p>
+            Corridra is operated by Sadat in Gulshan, Dhaka. Customer account names, email
+            addresses, password hashes and sessions are stored through Neon Auth in Frankfurt,
+            Germany. Verification and password recovery emails use Resend, with sending configured
+            in Ireland. Account creation does not grant workspace access.
+          </p>
+          <p>
+            Account records remain until an administrator removes them. Automatic account deletion
+            is not available. For account help or a deletion request, contact{' '}
+            <a href="mailto:sadat@obsidianglobal.studio">sadat@obsidianglobal.studio</a>. The test
+            intake restrictions and retention details below apply separately to mission briefs.
+          </p>
           <h2>What is saved</h2>
           <p>
             Your brief, test response details, visit dates and acknowledgement of notice version
@@ -24,8 +37,8 @@ export default function Page() {
           <h2>Your receipt and replies</h2>
           <p>
             Keep your private receipt code to check the mission status and read operator replies at
-            /plan. No account is required. Email delivery is not enabled. A receipt expires after 30
-            days.
+            /plan. No account is required. Mission reply emails are not sent. A receipt expires
+            after 30 days.
           </p>
           <h2>Retention and customer opening</h2>
           <p>

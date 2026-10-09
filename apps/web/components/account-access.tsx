@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountForm, type AccountFormMode } from './account-form';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
@@ -14,6 +15,13 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           </Suspense>
         ) : (
           <p>Account access is not available yet.</p>
+        )}
+        {config && mode === 'signup' && (
+          <p>
+            Your name and email are used for account access, verification and recovery. Read the{' '}
+            <Link href="/privacy">account and test intake notice</Link> before creating an account.
+            Workspace access requires a separate invitation.
+          </p>
         )}
       </section>
     </main>
