@@ -1,6 +1,6 @@
 # Corridra implementation plan v1.0
 
-Status: Parts 01 and 02 delivered and publicly deployed. See their release records for validation and deployment evidence. Part 03 is implemented for local validation and awaiting cloud acceptance; see [its release record](part-03-release.md). Parts 04 to 12 are planned, not implemented.
+Status: Parts 01 to 06 are implemented and deployed. Parts 03 to 06 retain their documented synthetic-data and deferred-control boundaries. Neon Auth account code is deployed with customer signup disabled. On 9 October 2026 the owner requested release closeout with signup deferred so work can move to Part 07. Part 07 is the next authorized packet; Parts 08 to 12 remain planned. See [Part 06 release](part-06-release.md), [the account runbook](../runbooks/neon-auth-accounts.md) and [deferred controls](deferred-controls.md).
 
 ## Outcome and delivery method
 
@@ -114,7 +114,7 @@ Build proposed/accepted/scheduled/held meeting commands plus decline, cancellati
 
 **Rollback:** Revoke affected links, stop dispatch, retain communication history and route pending work to operators. Never resend a side effect solely because a deployment was retried.
 
-**Implementation status:** Part 06 is the requested packet. The [requirements map](part-06-scope.md), [ADR-018](../adr/0018-controlled-introductions-and-meeting-truth.md), [operations runbook](../runbooks/part-06-access-and-meetings.md) and [release record](part-06-release.md) distinguish local/CI implementation evidence from authorized production acceptance. Real outreach and D08 remain gated.
+**Implementation status:** Part 06 is implemented and has passed authorized production acceptance. The [requirements map](part-06-scope.md), [ADR-018](../adr/0018-controlled-introductions-and-meeting-truth.md), [operations runbook](../runbooks/part-06-access-and-meetings.md) and [release record](part-06-release.md) distinguish local/CI implementation evidence from authorized production acceptance. Real outreach and D08 remain gated.
 
 ## Part 07: Follow-through, opportunity and outcome projection
 
@@ -250,10 +250,10 @@ Keep match weights, prices, commissions, reputation weights, expansion markets, 
 
 ## Next task packet
 
-**Outcome:** Complete the requested Part 06 controlled access, buyer response and meetings packet, with review and separately authorized release verification. Parts 03 to 05 are live on the production domain using invented data; see [Part 05 release](part-05-release.md) and [deployment evidence](part-05-production-rollout.json). Do not proceed to Part 07 without a new instruction.
+**Outcome:** Implement Part 07 follow-through, opportunity and outcome projection in reviewable PRs. The owner authorized proceeding after closing out the completed Part 06 release with customer signup deferred. The [Part 07 handoff](part-07-handoff.md) records scope and acceptance. This authorization does not activate customer signup, real outreach or customer-data processing.
 
-**Read:** Constitution claims/evidence and AI authority rules; canvas communications, privacy, tenancy, canonical meeting/event/outbox and durable orchestration contracts; public-experience buyer-response requirements; Part 06 above; ADR-015, ADR-016, ADR-017, ADR-018 and the deferred controls register.
+**Read:** Constitution claims/evidence rules; public-experience mission progress and reporting requirements; canvas commercial truth, canonical funnel, tenancy, money and ordinary-event Outcome Graph contracts; Part 07 above; ADR-015 to ADR-020; the Part 06 release/runbook and deferred controls register.
 
-**Acceptance:** Implement explicit communication purpose/policy, opt-outs and human-approved templates; scoped, expiring, revocable hashed buyer links with no GET/prefetch side effects; idempotent buyer responses; meeting proposal/acceptance/scheduling/held outcomes plus decline/cancel/no-show/reschedule; timezone-aware itinerary, brief and owned follow-up. External dispatch must use the transactional outbox through an adapter with retry, idempotency and dead-letter triage. Synthetic flows come first. Confirm email permission, legal-policy basis and sender-domain readiness before real outreach. Do not fabricate legal/contact details or close D08 without evidence.
+**Acceptance:** Operate an existing mission from held meeting and owned follow-up through qualified opportunity, RFQ/sample, proposal, commitment, contract, invoice, confirmed cash and recurrence. Enforce canonical transitions, required loss reasons and tenant/actor permissions. Keep signed contract, invoice and cash evidence distinct. Record integer minor units, currency, dates, accounting confirmation and attribution scope. Use append-only events and rebuildable, versioned relational projections; corrections require compensating records. Ship mission-yield and overdue follow-up views without guessed revenue, FX or causal claims.
 
-**Validation:** Document integrity, format, lint, typecheck, real PostgreSQL/RLS integration, build and public/protected browser checks. Test token expiry/revocation/replay, cross-tenant access, GET scanner denial, duplicate concurrent responses, timezone/DST transitions and side-effect retry. Exercise a synthetic introduction through an accepted and held meeting with follow-up. Keep the existing site and research usable; record actual CI, migration, production alias/SHA, functional deployment and rollback evidence. Scanner/account deferrals remain explicit.
+**Validation:** Document integrity, format, lint, typecheck, real PostgreSQL/RLS integration, build and public/protected browser checks. Demonstrate invalid-transition denial, unauthorized cash denial, idempotent commands, projection replay with no duplicate totals and separate mixed-currency totals. Exercise a synthetic intake-to-cash journey. Keep existing public, buyer and operator flows working; record migration, CI, exact deployment SHA, functional acceptance and rollback evidence. D01 to D06, D08 and D09 retain their explicit activation boundaries.
