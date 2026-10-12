@@ -1,3 +1,4 @@
+import { commercialOrigin } from '@corridra/domain/opportunities';
 import { createHash } from 'node:crypto';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
@@ -186,6 +187,28 @@ export class OpportunityService {
       };
     });
   }
+  registerOrigin(ctx: RequestContext, input: unknown) {
+    const v = commercialOrigin.parse(input);
+    return withTenant(this.pool, ctx, 'opportunities.manage', async ({ db, actorId }) => {
+      await db.query(
+        'INSERT INTO app.commercial_origin(id,tenant_id,mission_id,target_id,kind,source_id,claim_id,message_id,summary,created_by,reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+        [
+          v.id,
+          ctx.tenantId,
+          v.missionId,
+          v.targetId,
+          v.kind,
+          v.sourceId,
+          v.claimId,
+          v.messageId ?? null,
+          v.summary,
+          actorId,
+          v.reason,
+        ],
+      );
+      return { id: v.id };
+    });
+  }
   command(ctx: RequestContext, input: unknown) {
     const v = commercialCommand.parse(input),
       hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
@@ -216,21 +239,29 @@ export class OpportunityService {
         }
         let opportunityId: string | null = null;
         let result: { id: string; version?: number; events?: number };
-        if (v.action === 'create') {
+        if (v.action === 'create' || v.action === 'createFromOrigin') {
           const m = (
             await db.query(
-              `SELECT mt.*,c.target_id FROM app.meeting mt JOIN app.communication c ON c.tenant_id=mt.tenant_id AND c.id=mt.message_id WHERE mt.tenant_id=$1 AND mt.id=$2 AND mt.status='HELD'`,
-              [ctx.tenantId, v.meetingId],
+              v.action === 'create'
+                ? `SELECT mt.*,c.target_id FROM app.meeting mt JOIN app.communication c ON c.tenant_id=mt.tenant_id AND c.id=mt.message_id WHERE mt.tenant_id=$1 AND mt.id=$2 AND mt.status='HELD'`
+                : 'SELECT * FROM app.commercial_origin WHERE tenant_id=$1 AND id=$2',
+              [ctx.tenantId, v.action === 'create' ? v.meetingId : v.originId],
             )
           ).rows[0];
-          if (!m) throw new DomainError('Held meeting unavailable', 404);
+          if (!m)
+            throw new DomainError(
+              v.action === 'create' ? 'Held meeting unavailable' : 'Commercial origin unavailable',
+              404,
+            );
           opportunityId = v.commandId;
           await db.query(
-            'INSERT INTO app.opportunity(id,tenant_id,meeting_id,mission_id,target_id,title,attribution,owner_id,next_action,due_at,reason,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+            v.action === 'create'
+              ? 'INSERT INTO app.opportunity(id,tenant_id,meeting_id,mission_id,target_id,title,attribution,owner_id,next_action,due_at,reason,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)'
+              : 'INSERT INTO app.opportunity(id,tenant_id,meeting_id,mission_id,target_id,title,attribution,owner_id,next_action,due_at,reason,created_by,origin_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
             [
               opportunityId,
               ctx.tenantId,
-              m.id,
+              v.action === 'create' ? m.id : null,
               m.mission_id,
               m.target_id,
               v.title,
@@ -240,6 +271,7 @@ export class OpportunityService {
               v.dueAt,
               v.reason,
               actorId,
+              ...(v.action === 'createFromOrigin' ? [m.id] : []),
             ],
           );
           result = { id: opportunityId, version: 1 };

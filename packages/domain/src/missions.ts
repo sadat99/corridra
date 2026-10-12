@@ -1,3 +1,4 @@
+import { legacyMarketCode } from './geography';
 import { z } from 'zod';
 export const objectiveOptions = [
   'Sell in a new market',
@@ -144,6 +145,6 @@ export const missionCommand = z.object({
   ownerId: z.uuid(),
   nextAction: z.string().trim().min(3).max(300),
   dueAt: z.iso.datetime({ offset: true }),
-  marketCode: z.enum(['BD', 'ES', 'DE', 'OTHER']),
+  marketCode: legacyMarketCode,
   targetProfile: z.string().trim().min(3).max(1000),
 });

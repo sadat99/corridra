@@ -162,8 +162,8 @@ export class MissionService {
         status = 'FOLLOW_UP';
       }
       if (v.action === 'pipeline') {
-        if (status !== 'FOLLOW_UP')
-          throw new DomainError('Complete meeting follow-up before commercial progression', 409);
+        if (!['ACTIVE', 'TARGETING', 'FOLLOW_UP'].includes(status))
+          throw new DomainError('An active qualified commercial mission is required', 409);
         status = 'COMMERCIAL_PIPELINE';
       }
       if (v.action === 'close') {

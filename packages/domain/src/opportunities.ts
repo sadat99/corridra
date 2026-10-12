@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import { DomainError } from './index';
-export const currencies = { BDT: 2, EUR: 2, USD: 2, GBP: 2, JPY: 0 } as const;
-export const currency = z.enum(['BDT', 'EUR', 'USD', 'GBP', 'JPY']);
+import { currencies } from './currencies';
+export { currencies } from './currencies';
+export const currency = z.enum(
+  Object.keys(currencies) as [keyof typeof currencies, ...(keyof typeof currencies)[]],
+);
 export const opportunityStatus = z.enum([
   'LEAD',
   'QUALIFIED_OPPORTUNITY',
@@ -58,6 +61,14 @@ export const commercialCommand = z.discriminatedUnion('action', [
     ...owned,
     action: z.literal('create'),
     meetingId: z.uuid(),
+    title: z.string().trim().min(3).max(160),
+    attribution: z.string().trim().min(3).max(1000),
+  }),
+  z.object({
+    ...base,
+    ...owned,
+    action: z.literal('createFromOrigin'),
+    originId: z.uuid(),
     title: z.string().trim().min(3).max(160),
     attribution: z.string().trim().min(3).max(1000),
   }),
@@ -131,3 +142,23 @@ export function parseMoney(value: string, code: keyof typeof currencies) {
     ).toString(),
   );
 }
+
+export const commercialOrigin = z
+  .object({
+    id: z.uuid(),
+    missionId: z.uuid(),
+    targetId: z.uuid(),
+    kind: z.enum([
+      'QUALIFIED_SOURCING_REQUIREMENT',
+      'DOCUMENTED_RFQ',
+      'SUPPLIER_RESPONSE',
+      'ACCEPTED_INTRODUCTION',
+    ]),
+    sourceId: z.uuid(),
+    claimId: z.uuid(),
+    messageId: z.uuid().optional(),
+    summary: z.string().trim().min(3).max(1000),
+    reason: z.string().trim().min(3).max(500),
+  })
+  .strict()
+  .refine((v) => (v.kind === 'ACCEPTED_INTRODUCTION') === Boolean(v.messageId));
