@@ -6,10 +6,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./meetings": "./src/meetings.ts",
-    "./bootstrap": "./src/bootstrap.ts"
+    "./bootstrap": "./src/bootstrap.ts",
+    "./corridors": "./src/corridors.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",
-    "@corridra/domain": "workspace:*"
+    "@corridra/domain": "workspace:*",
+    "zod": "4.6.5"
   }
 }

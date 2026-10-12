@@ -1,3 +1,4 @@
+import { legacyMarketCode } from './geography';
 import { z } from 'zod';
 import { DomainError } from './index';
 
@@ -35,7 +36,7 @@ const timestamp = z.iso.datetime({ offset: true });
 export const introduction = z
   .object({
     company: words(160),
-    country: z.enum(['BD', 'ES', 'DE', 'OTHER']),
+    country: legacyMarketCode,
     capability: words(600),
     fit: words(1000),
     evidence: words(1000),
@@ -51,7 +52,7 @@ export const communicationCommand = z.discriminatedUnion('action', [
     .object({
       ...command,
       action: z.literal('policy'),
-      jurisdiction: z.enum(['BD', 'ES', 'DE', 'OTHER']),
+      jurisdiction: legacyMarketCode,
       channel,
       contactPurpose,
       basis: words(1000),

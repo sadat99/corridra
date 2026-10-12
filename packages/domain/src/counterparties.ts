@@ -1,3 +1,4 @@
+import { countryCode } from './geography';
 import { z } from 'zod';
 const text = (max: number, min = 1) => z.string().trim().min(min).max(max);
 const uuid = z.uuid();
@@ -12,7 +13,7 @@ export const ingestOrganisation = z.object({
   action: z.literal('ingest'),
   sourceId: uuid,
   name: text(160),
-  country: z.enum(['BD', 'ES', 'DE']),
+  country: countryCode,
   domain: z
     .string()
     .trim()
