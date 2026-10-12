@@ -25,7 +25,11 @@
       "passed": 5
     },
     "productionBuild": "passed",
-    "dependencyAudit": "no known vulnerabilities"
+    "dependencyAudit": "no known vulnerabilities",
+    "foundationFinal": {
+      "passed": 10,
+      "directSqlPermissionDenials": 44
+    }
   },
   "isolatedNeonMigration": {
     "recordedAt": "2026-10-12T17:40:10.287Z",

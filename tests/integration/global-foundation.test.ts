@@ -533,3 +533,37 @@ test('derived FX keeps exact rational provenance and refuses mixed-currency aggr
     ]).amountMinor,
   ).toBe('200');
 });
+
+test('every new sensitive SQL write denies viewer, outsider and cross-tenant actors before business validation', async () => {
+  const tables = [
+    'corridor_definition',
+    'corridor_route',
+    'mission_type_definition',
+    'requirement_definition',
+    'assessment_definition',
+    'corridor_pack_version',
+    'mission_route_assignment',
+    'commercial_origin',
+    'data_rights_policy',
+    'reward_rule_version',
+    'contribution',
+    'service_ledger',
+    'reward_reconciliation',
+  ];
+  for (const label of ['viewer', 'outsider', 'other']) {
+    const actor = f.users[label];
+    for (const table of tables) {
+      await expect(
+        write(
+          `INSERT INTO app.${table}(id,tenant_id,created_by) VALUES($1,$2,$3)`,
+          [randomUUID(), f.tenantA, actor.id],
+          actor.ctx,
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+    }
+  }
+  for (const table of ['country', 'currency', 'market_scope', 'market_alias', 'market_member'])
+    await expect(write(`INSERT INTO app.${table} DEFAULT VALUES`, [])).rejects.toMatchObject({
+      code: '42501',
+    });
+});
