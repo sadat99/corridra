@@ -46,7 +46,7 @@ test('populated Part 06 upgrade preserves meetings, followups, owners and immuta
     expect(upgraded.after).toEqual(upgraded.before);
     expect(
       (await upgraded.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n,
-    ).toBe(18);
+    ).toBe(22);
     expect(upgraded.previous).not.toBeNull();
   } finally {
     await upgraded.close();
