@@ -992,6 +992,46 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
             ]}
           />
           <Table
+            label="Recent service ledger and compensation references, first 100"
+            rows={controls?.ledger ?? []}
+            columns={[
+              ['id', 'Ledger ID'],
+              ['mission_id', 'Mission'],
+              ['kind', 'Kind'],
+              ['amount_minor', 'Original minor units'],
+              ['currency', 'Currency'],
+              ['source_id', 'Evidence source'],
+              ['reverse_of', 'Compensates'],
+              ['external_reference', 'Reference'],
+            ]}
+          />
+          <Table
+            label="Recent effort history, first 100"
+            rows={controls?.effort ?? []}
+            columns={[
+              ['id', 'Effort ID'],
+              ['mission_id', 'Mission'],
+              ['operator_id', 'Operator'],
+              ['minutes', 'Recorded minutes'],
+              ['source_id', 'Evidence source'],
+              ['reverse_of', 'Compensates'],
+            ]}
+          />
+          <Table
+            label="Current mission operations context"
+            rows={controls?.contexts ?? []}
+            columns={[
+              ['id', 'Version ID'],
+              ['mission_id', 'Mission'],
+              ['customer_reference', 'Customer reference'],
+              ['industry', 'Industry'],
+              ['paying_status', 'Paying classification'],
+              ['revenue_complete', 'Fee coverage attested'],
+              ['cost_complete', 'Cost coverage attested'],
+              ['source_id', 'Evidence source'],
+            ]}
+          />
+          <Table
             label="Privacy policy versions"
             rows={controls?.privacy ?? []}
             columns={[
