@@ -1,5 +1,7 @@
 # Corridra documentation
 
+V2 Part 01 foundation: [architecture contract](architecture/multi-corridor-v2.md), [scope](implementation/v2-part-01-scope.md), [release evidence](implementation/v2-part-01-release.md), and [five-part master plan](implementation/v2-master-plan.md). The owner’s V2 decision supersedes the old geographic sequencing; existing security/data gates remain.
+
 Parts 01 through 08 are deployed. Customer identity signup, received-email verification and recovery are live through Neon Auth; operator/admin access retains password/TOTP and existing tenant roles. See [the project README](../README.md) for entry points and [the current account production record](implementation/neon-auth-production-activation.json) for acceptance. Mission intake and operational records remain synthetic; [the deferred controls](implementation/deferred-controls.md) still govern real customer data, outreach, evidence infrastructure and pilot readiness. Parts 09 through 12 remain planned.
 
 The three supplied documents are preserved in full. Originals in [source](source/) are byte-for-byte copies of the uploads, including their line endings. [The manifest](source/manifest.json) records their size, SHA-256 digest and working-copy transformation. Run `pnpm test:docs` to check preservation.

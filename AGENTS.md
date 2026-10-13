@@ -1,5 +1,7 @@
 # Working on Corridra
 
+For V2 work, read `docs/architecture/multi-corridor-v2.md` first. Reuse existing domain services and versioned data; never add country-specific forks, infer compliance approval, weaken RLS or historical money/evidence rules, or activate unapproved real customer-data flows.
+
 Read `docs/README.md`, the relevant supplied documents, `docs/implementation/plan-v1.0.md`, relevant ADRs and module documentation before editing. The source uploads are reference material; follow the user's explicit task when it conflicts with them. Keep originals in `docs/source/` immutable. Working-copy edits require a documented amendment and corresponding integrity checks.
 
 Build only the requested part or PR-sized task packet. Follow the canvas module boundaries, evidence distinctions, canonical states, tenant isolation, event/outbox and append-only money rules. Material changes to these contracts require an ADR. Do not infer a different architecture from nearby code.
