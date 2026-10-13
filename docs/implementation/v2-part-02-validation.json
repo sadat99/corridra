@@ -169,5 +169,6 @@
   "part2PR": null,
   "part2MergedSha": null,
   "part2CI": null,
-  "blocker": "Publishing a new branch conflicts with fewer than ten total GitHub branches while preserving nine dependency PRs."
+  "blocker": "Release pending fresh exact-head checks, completion of compatible dependency PR #28 to free one slot, live synthetic migration and production deployment.",
+  "branchLimit": 10
 }
