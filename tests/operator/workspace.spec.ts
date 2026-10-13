@@ -1764,13 +1764,18 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
   const operatorContext = await browser.newContext(),
     contributorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {
-    const session = (
-      await db.query(
-        'SELECT s.token FROM identity.session s JOIN identity.assurance a ON a.session_id=s.id JOIN identity.principal p ON p.identity_id=s."userId" WHERE p.id=$1 ORDER BY a.verified_at DESC LIMIT 1',
-        [seed.principalId],
-      )
-    ).rows[0];
-    const ctx = { token: session.token, tenantId: seed.tenantId, purpose: 'synthetic_validation' };
+    // Use the session that actually completed this browser's MFA flow, rather
+    // than guessing the latest session for a fixture principal in another pool.
+    await expect(page.getByRole('navigation', { name: 'Workspace sections' })).toBeVisible();
+    const sessionResponse = await page.request.get('/api/operator-auth/get-session');
+    expect(sessionResponse.ok()).toBe(true);
+    const session = await sessionResponse.json();
+    expect(session?.session?.token).toBeTruthy();
+    const ctx = {
+      token: session.session.token,
+      tenantId: seed.tenantId,
+      purpose: 'synthetic_validation',
+    };
     const { provisionSyntheticContributor } = await import('../../packages/auth/src/bootstrap');
     const { withTenant } = await import('../../packages/db/src/index');
     const contributorPassword = 'synthetic-browser-contributor-strong-password',
