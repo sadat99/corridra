@@ -39,12 +39,13 @@ export const shareInput = z
     purpose: z.string().trim().min(10).max(500),
     expiresAt: z.iso.datetime({ offset: true }),
     allowExport: z.boolean(),
+    includeDelegation: z.boolean().default(false),
     approved: z.literal(true),
   })
   .superRefine((v, ctx) => {
     if (
       v.audience === 'CLIENT_PROGRESS' &&
-      (v.programmeId || v.publicationIds.length !== 1 || v.allowExport)
+      (v.programmeId || v.publicationIds.length !== 1 || v.allowExport || v.includeDelegation)
     )
       ctx.addIssue({
         code: 'custom',

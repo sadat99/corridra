@@ -13,7 +13,11 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
         <h1>{content.title}</h1>
         <p className="page-description">{content.description}</p>
         <div className="hero-actions">
-          <Link prefetch={false} className="primary-link" href="/plan">
+          <Link
+            prefetch={false}
+            className="primary-link"
+            href={content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan'}
+          >
             {content.cta ?? 'Mission planning status'}{' '}
             <span aria-hidden="true">
               <Arrow />

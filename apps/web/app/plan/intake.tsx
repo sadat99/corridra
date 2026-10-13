@@ -1,5 +1,10 @@
 'use client';
 import Link from 'next/link';
+import { missionCatalogue } from '@corridra/domain/commercial-missions';
+import { countryCodes } from '@corridra/domain/countries';
+import { currencies } from '@corridra/domain/currencies';
+import { intakeExperience } from '@corridra/domain/experience';
+import { originalAmountToMinor } from '@corridra/domain/locale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   briefSchema,
@@ -8,6 +13,21 @@ import {
   outcomeOptions,
 } from '@corridra/domain/missions';
 type Draft = {
+  companyCountry: string;
+  marketCode: string;
+  job: string;
+  technicalPurpose: string;
+  parameters: string;
+  quantity: string;
+  unit: string;
+  preferences: string;
+  budgetAmount: string;
+  currency: string;
+  budgetBasis: string;
+  whenNeeded: string;
+  worthwhile: string;
+  organiser: string;
+  participants: string;
   objective: string;
   market: string;
   attendance: string;
@@ -24,12 +44,27 @@ type Draft = {
   acknowledged: boolean;
 };
 const empty: Draft = {
+  companyCountry: '',
+  marketCode: '',
+  job: '',
+  technicalPurpose: '',
+  parameters: '',
+  quantity: '',
+  unit: '',
+  preferences: '',
+  budgetAmount: '',
+  currency: '',
+  budgetBasis: '',
+  whenNeeded: '',
+  worthwhile: '',
+  organiser: '',
+  participants: '',
   objective: '',
-  market: 'Spain',
+  market: '',
   attendance: 'Not decided',
   startDate: '',
   endDate: '',
-  timezone: 'Europe/Madrid',
+  timezone: 'UTC',
   offer: '',
   website: '',
   outcomes: [],
@@ -47,16 +82,26 @@ const groups = [
   ['name', 'company', 'email', 'acknowledged'],
 ];
 const titles = [
-  'What are you trying to do?',
+  'What are you trying to achieve?',
   'Where?',
   'What are you offering or looking for?',
   'What would make this worthwhile?',
   'Where should we respond?',
 ];
+function objectiveForJob(job: string) {
+  if (['sourcing', 'machinery_procurement', 'supplier_evaluation'].includes(job))
+    return 'Source suppliers';
+  if (job === 'delegations') return 'Run a multi-company mission';
+  if (['business_trips', 'factory_visits', 'trade_fairs', 'meetings'].includes(job))
+    return 'Make an upcoming business trip more productive';
+  if (['customers', 'distributors', 'partners'].includes(job))
+    return 'Find customers or distributors';
+  return 'Sell in a new market';
+}
 function saveDraft(draft: Draft, step: number, key: string) {
   sessionStorage.setItem(
     'corridra-mission-draft',
-    JSON.stringify({ draft, step, key, at: Date.now() }),
+    JSON.stringify({ version: 2, draft, step, key, at: Date.now() }),
   );
 }
 export function Intake() {
@@ -89,7 +134,34 @@ export function Intake() {
         ) {
           key.current = saved.key;
           setDraft({ ...empty, ...saved.draft });
-          setStep(Math.max(0, Math.min(4, Number(saved.step) || 0)));
+          setStep(saved.version === 2 ? Math.max(0, Math.min(4, Number(saved.step) || 0)) : 0);
+        }
+        const query = new URLSearchParams(window.location.search);
+        const suggestedJob = query.get('job');
+        if (suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
+          setDraft((current) => ({
+            ...current,
+            job: suggestedJob,
+            objective: objectiveForJob(suggestedJob),
+          }));
+        const companyCountry = query.get('companyCountry'),
+          marketCode = query.get('marketCode');
+        if (
+          companyCountry &&
+          countryCodes.includes(companyCountry as (typeof countryCodes)[number]) &&
+          marketCode &&
+          (marketCode === 'EU' ||
+            countryCodes.includes(marketCode as (typeof countryCodes)[number]))
+        ) {
+          setDraft((current) => ({
+            ...current,
+            companyCountry,
+            marketCode,
+            market:
+              marketCode === 'EU'
+                ? 'European Union'
+                : (new Intl.DisplayNames(['en'], { type: 'region' }).of(marketCode) ?? marketCode),
+          }));
         }
         const token = sessionStorage.getItem('corridra-mission-receipt');
         if (token) {
@@ -113,6 +185,38 @@ export function Intake() {
   }
   function change(field: keyof Draft, value: string | boolean | string[]) {
     const v = { ...draft, [field]: value };
+    if (field === 'job' && value) v.objective = objectiveForJob(String(value));
+    if (field === 'objective')
+      v.job = (
+        {
+          'Sell in a new market': 'buyers',
+          'Find customers or distributors': 'distributors',
+          'Source suppliers': 'sourcing',
+          'Make an upcoming business trip more productive': 'business_trips',
+          'Run a multi-company mission': 'delegations',
+          'Something else': 'market_validation',
+        } as Record<string, string>
+      )[String(value)];
+    if (v.job !== draft.job)
+      for (const k of [
+        'technicalPurpose',
+        'parameters',
+        'quantity',
+        'unit',
+        'preferences',
+        'budgetAmount',
+        'currency',
+        'budgetBasis',
+        'organiser',
+        'participants',
+      ] as const)
+        v[k] = '';
+    if (field === 'marketCode')
+      v.market =
+        String(value) === 'EU'
+          ? 'European Union'
+          : (new Intl.DisplayNames(['en'], { type: 'region' }).of(String(value)) ?? String(value));
+
     if (field === 'attendance' && value !== 'Yes') {
       v.startDate = '';
       v.endDate = '';
@@ -131,6 +235,30 @@ export function Intake() {
         const f = String(e.path[0]);
         if (fields.includes(f)) next[f] = [e.message];
       }
+    if (step === 0 || fields.length === groups.flat().length) {
+      if (!draft.job) next.job = ['Choose the commercial job'];
+    }
+    if (step === 1 || fields.length === groups.flat().length) {
+      if (!countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number]))
+        next.companyCountry = ['Choose the company country'];
+      if (
+        draft.marketCode !== 'EU' &&
+        !countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+      )
+        next.marketCode = ['Choose the target market'];
+    }
+    if (step === 2 || fields.length === groups.flat().length) {
+      let structured;
+      try {
+        structured = intakeExperience.safeParse(experience());
+      } catch (err) {
+        next.requirements = [
+          err instanceof Error ? err.message : 'Check the original amount and currency.',
+        ];
+      }
+      if (structured && !structured.success)
+        next.requirements = [structured.error.issues.map((e) => e.message).join('. ')];
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -139,6 +267,46 @@ export function Intake() {
     setErrors({});
     persist(draft, n);
     queueMicrotask(() => heading.current?.focus());
+  }
+  function experience() {
+    const sourcing = ['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job);
+    const machinery = draft.job === 'machinery_procurement';
+    const optional = (value: string) => value.trim() || undefined;
+    return {
+      schemaVersion: 1,
+      companyCountry: draft.companyCountry,
+      marketCode: draft.marketCode,
+      job: draft.job,
+      requirements: {
+        objective: missionCatalogue.find((t) => t.key === draft.job)?.label ?? draft.objective,
+        role:
+          draft.job === 'delegations'
+            ? 'INSTITUTION'
+            : machinery
+              ? 'BUYER'
+              : sourcing
+                ? 'IMPORTER'
+                : 'EXPORTER',
+        product: draft.offer,
+        specifications: optional(draft.parameters),
+        quantity: optional(draft.quantity),
+        unit: optional(draft.unit),
+        technicalConstraints: optional(draft.preferences),
+        budgetMinor: optional(draft.budgetAmount)
+          ? originalAmountToMinor(draft.budgetAmount, draft.currency)
+          : undefined,
+        currency: optional(draft.currency),
+        budgetBasis: optional(draft.budgetBasis),
+        travelDates: optional(draft.whenNeeded),
+        decisionCriteria: optional(draft.worthwhile) ? [draft.worthwhile] : undefined,
+        machinery:
+          machinery && optional(draft.technicalPurpose)
+            ? { application: draft.technicalPurpose }
+            : undefined,
+      },
+      organiser: draft.job === 'delegations' ? optional(draft.organiser) : undefined,
+      participants: draft.job === 'delegations' ? optional(draft.participants) : undefined,
+    };
   }
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -155,7 +323,11 @@ export function Intake() {
       const r = await fetch('/api/intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key.current, brief: draft, websiteCheck: '' }),
+        body: JSON.stringify({
+          key: key.current,
+          brief: briefSchema.parse({ ...draft, experience: experience() }),
+          websiteCheck: '',
+        }),
       });
       const data = await r.json();
       if (!r.ok) {
@@ -166,8 +338,8 @@ export function Intake() {
       setFinished(true);
       setMessage(
         data.duplicate
-          ? 'This brief has already been received.'
-          : 'Your mission brief has been received.',
+          ? 'This invented test brief has already been recorded.'
+          : 'Your invented test brief has been recorded. No real customer mission has been accepted.',
       );
       if (data.receipt) {
         setReceipt(data.receipt);
@@ -222,17 +394,30 @@ export function Intake() {
   );
   const error = (name: string) =>
     errors[name]?.length ? (
-      <p className="field-error" id={`${name}-error`}>
+      <p role="alert" className="field-error" id={`${name}-error`}>
         {errors[name][0]}
       </p>
     ) : null;
   return (
     <>
       <aside className="intake-notice">
-        <strong>Test intake is open.</strong> Use invented details and an email ending in
-        @example.invalid. Keep your receipt to read operator replies here. Email delivery is not
-        enabled. <Link href="/privacy">Read the test intake notice</Link>.
+        <strong>Test intake is open. Real customer mission admission is unavailable.</strong> Use
+        invented details and an email ending in @example.invalid. Keep your receipt to read operator
+        replies here. Email delivery is not enabled.{' '}
+        <Link href="/privacy">Read the test intake notice</Link>.
       </aside>
+      <details lang="bn">
+        <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
+        <p>
+          আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
+          যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও গোপন
+          তথ্য আলাদা রাখা হয়।
+        </p>
+        <p>
+          শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের
+          কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।
+        </p>
+      </details>
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -259,11 +444,65 @@ export function Intake() {
                 </label>
               ))}
               {error('objective')}
+              <label className="field">
+                Commercial job
+                <select value={draft.job} onChange={(e) => change('job', e.target.value)} required>
+                  <option value="">Choose the job</option>
+                  {missionCatalogue.map((job) => (
+                    <option key={job.key} value={job.key}>
+                      {job.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {error('job')}
             </fieldset>
           )}
           {step === 1 && (
             <>
-              {field('market', 'Target country / market')}
+              <label className="field">
+                Where is the company based?
+                <select
+                  value={draft.companyCountry}
+                  onChange={(e) => change('companyCountry', e.target.value)}
+                  required
+                >
+                  <option value="">Choose a country</option>
+                  {countryCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {error('companyCountry')}
+              <label className="field">
+                Which market is involved?
+                <select
+                  value={draft.marketCode}
+                  onChange={(e) => change('marketCode', e.target.value)}
+                  required
+                >
+                  <option value="">Choose a market</option>
+                  <option value="EU">European Union (trade bloc)</option>
+                  {countryCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {error('marketCode')}
+              <p>
+                Company country and target market do not define shipment or meeting location.{' '}
+                {draft.companyCountry &&
+                  draft.marketCode &&
+                  !(
+                    draft.companyCountry === 'BD' && ['CN', 'ES', 'EU'].includes(draft.marketCode)
+                  ) &&
+                  'No operating offer is announced for this direction. You can still describe an invented test mission.'}
+              </p>
+              {field('whenNeeded', 'When is the activity needed? (optional)', 'date')}
               <fieldset>
                 <legend>Will you be there in person?</legend>
                 {['Yes', 'No', 'Not decided'].map((v) => (
@@ -294,7 +533,7 @@ export function Intake() {
                 Your offer or requirement
                 <textarea
                   rows={6}
-                  maxLength={2000}
+                  maxLength={1000}
                   value={draft.offer}
                   onChange={(e) => change('offer', e.target.value)}
                   placeholder="Example: We manufacture hotel towels in Bangladesh and want to meet Spanish hospitality distributors buying private-label products."
@@ -303,6 +542,72 @@ export function Intake() {
                 />
                 {error('offer')}
               </label>
+              {draft.job === 'machinery_procurement' && (
+                <>
+                  {field('technicalPurpose', 'Technical purpose (optional)')}
+                  {field('parameters', 'Key technical parameters (optional)')}
+                  {field('preferences', 'Site, integration or after-sales constraints (optional)')}
+                </>
+              )}
+              {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) && (
+                <>
+                  {field('parameters', 'Product specifications (optional)')}
+                  {field('quantity', 'Required quantity (optional)')}
+                  {field('unit', 'Quantity unit (required with quantity)')}
+                  {field('preferences', 'Supplier preferences and constraints (optional)')}
+                </>
+              )}
+              {[
+                'buyers',
+                'distributors',
+                'customers',
+                'market_entry',
+                'export_market_access',
+              ].includes(draft.job) && (
+                <>
+                  {field('parameters', 'Target buyer or distributor (optional)')}
+                  {field('preferences', 'Commercial readiness and constraints (optional)')}
+                </>
+              )}
+              {draft.job === 'delegations' && (
+                <>
+                  {field('organiser', 'Delegation organiser (optional)')}
+                  {field(
+                    'participants',
+                    'Participating organisations and individual needs (optional)',
+                  )}
+                  <p>
+                    Each participant receives an independent mission. Private offers and contacts
+                    are not shared with the organiser automatically.
+                  </p>
+                </>
+              )}
+              {['sourcing', 'machinery_procurement'].includes(draft.job) && (
+                <details>
+                  <summary>Budget context (optional)</summary>
+                  {field('budgetAmount', 'Budget in original currency (optional)')}
+                  <label className="field">
+                    Original currency
+                    <select
+                      value={draft.currency}
+                      onChange={(e) => change('currency', e.target.value)}
+                    >
+                      <option value="">No budget supplied</option>
+                      {Object.entries(currencies).map(([code, places]) => (
+                        <option value={code} key={code}>
+                          {code} ({places} decimal places)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {field('budgetBasis', 'Budget basis, such as total equipment budget')}
+                  <p>
+                    Enter the amount as quoted, such as CNY 12.00 or BHD 1.234. Use the selected
+                    currency’s decimal places. No currency conversion is performed.
+                  </p>
+                </details>
+              )}
+              {error('requirements')}
               {field('website', 'Website or catalogue URL (optional)', 'url')}
               <p>
                 Share a public link if it helps explain the brief. We do not fetch it automatically.
@@ -312,6 +617,7 @@ export function Intake() {
           )}
           {step === 3 && (
             <>
+              {field('worthwhile', 'What outcome would make the engagement worthwhile? (optional)')}
               <fieldset>
                 <legend>Desired outcomes</legend>
                 {outcomeOptions.map((v) => (

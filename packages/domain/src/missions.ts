@@ -1,4 +1,5 @@
 import { legacyMarketCode } from './geography';
+import { intakeExperience } from './experience';
 import { z } from 'zod';
 export const objectiveOptions = [
   'Sell in a new market',
@@ -26,6 +27,7 @@ const date = z
     'Enter a valid date',
   );
 const briefFields = z.object({
+  experience: intakeExperience.optional(),
   objective: z.enum(objectiveOptions, { error: 'Choose what you want to do' }),
   market: z
     .string()

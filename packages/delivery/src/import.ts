@@ -7,7 +7,7 @@ import { briefSchema, type MissionBrief } from '@corridra/domain/missions';
 export const importLimits = {
   bytes: 1048576,
   rows: 100,
-  columns: 16,
+  columns: 17,
   expandedBytes: 8388608,
   entryBytes: 4194304,
   entries: 100,
@@ -27,6 +27,9 @@ export const importColumns = [
   'website',
   'outcomes',
   'notes',
+  'companyCountry',
+  'marketCode',
+  'missionJob',
 ] as const;
 const required = importColumns.slice(0, 7);
 export type ImportRow = {
@@ -351,6 +354,27 @@ export async function parseImport(bytes: Buffer, format: 'CSV' | 'XLSX'): Promis
         ? input.outcomes.split('|').map((v) => v.trim())
         : ['Relevant meetings'],
       acknowledged: true,
+      experience:
+        input.companyCountry || input.marketCode || input.missionJob
+          ? {
+              schemaVersion: 1,
+              companyCountry: input.companyCountry,
+              marketCode: input.marketCode,
+              job: input.missionJob,
+              requirements: {
+                objective: input.objective,
+                role:
+                  input.missionJob === 'delegations'
+                    ? 'INSTITUTION'
+                    : ['sourcing', 'machinery_procurement', 'supplier_evaluation'].includes(
+                          input.missionJob,
+                        )
+                      ? 'IMPORTER'
+                      : 'EXPORTER',
+                product: input.offer,
+              },
+            }
+          : undefined,
     });
     if (!parsed.success)
       return {

@@ -31,7 +31,12 @@ for (const [route, heading] of routes) {
     ).toBeVisible();
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
     if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
-    else await expect(page.getByText('Test intake is open.', { exact: true })).toBeVisible();
+    else
+      await expect(
+        page.getByText('Test intake is open. Real customer mission admission is unavailable.', {
+          exact: true,
+        }),
+      ).toBeVisible();
     await page.emulateMedia({ reducedMotion: 'reduce' });
     expect(
       await page.evaluate(
@@ -77,7 +82,7 @@ test('navigation opens, closes with Escape and takes visitors to a solution', as
   await solutions.click();
   await page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Source suppliers' })
+    .getByRole('link', { name: 'Source products/suppliers' })
     .click();
   await expect(page).toHaveURL('/source');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Visit fewer suppliers.');

@@ -1,13 +1,17 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
-function amount(value: string, currency: string) {
-  const places = currency === 'JPY' ? 0 : 2,
-    negative = value.startsWith('-'),
-    digits = value.replace(/^-/, '').padStart(places + 1, '0');
-  return `${currency} ${negative ? '-' : ''}${places ? `${digits.slice(0, -places)}.${digits.slice(-places)}` : digits}`;
-}
-export function DeliveryView({ audience }: { audience: DeliveryReport['audience'] }) {
+import { displayMoney as amount, displayDate } from '@corridra/domain/locale';
+import { MissionExperienceView, AgendaView } from './mission-experience-view';
+export function DeliveryView({
+  audience,
+  capability,
+  endpoint = '/api/delivery',
+}: {
+  audience: DeliveryReport['audience'];
+  capability?: string;
+  endpoint?: string;
+}) {
   const [report, setReport] = useState<DeliveryReport | null>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
@@ -15,7 +19,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
   const token = useRef(''),
     commands = useRef(new Map<string, string>());
   async function post(input: Record<string, unknown>) {
-    const r = await fetch('/api/delivery', {
+    const r = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...input, audience, token: token.current }),
@@ -28,7 +32,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
     setReport(next);
   }
   useEffect(() => {
-    token.current = window.location.hash.slice(1);
+    token.current = capability ?? window.location.hash.slice(1);
     let active = true;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
@@ -38,7 +42,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
         active = false;
       };
     }
-    fetch('/api/delivery', {
+    fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'view', audience, token: token.current }),
@@ -54,7 +58,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
     return () => {
       active = false;
     };
-  }, [audience]);
+  }, [audience, capability, endpoint]);
   function command(key: string) {
     let id = commands.current.get(key);
     if (!id) {
@@ -129,14 +133,16 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
     <div className="delivery-view">
       {error && <p role="alert">{error}</p>}
       <p role="status">{notice}</p>
+      <p className="evidence-label">
+        Invented test mission data. Real customer mission admission is not enabled.
+      </p>
       <p>
         {report.programme || 'Your approved mission'} · {report.approvedParticipants} approved{' '}
         {report.approvedParticipants === 1 ? 'participant' : 'participants'}
       </p>
       <p>Purpose: {report.purpose}</p>
       <p>
-        Updated {new Date(report.generatedAt).toLocaleString()} · Link expires{' '}
-        {new Date(report.expiresAt).toLocaleString()}
+        Updated {displayDate(report.generatedAt)} · Link expires {displayDate(report.expiresAt)}
       </p>
       <button
         disabled={busy}
@@ -169,7 +175,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
             </div>
             <div>
               <dt>Held meetings</dt>
-              <dd>{count.held}</dd>
+              <dd>{report.heldMeetingsDistinct ?? count.held}</dd>
             </div>
             <div>
               <dt>Proposals reached</dt>
@@ -180,6 +186,12 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
               <dd>{count.contracts}</dd>
             </div>
           </dl>
+          {report.companyCountBasis && (
+            <p>
+              {report.companyCountBasis} Shared agenda activities count once; participant
+              engagements remain separate.
+            </p>
+          )}
           {report.totals.length > 0 && (
             <>
               <h2>Approved programme totals</h2>
@@ -207,6 +219,26 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
           )}
         </>
       )}
+      {report.delegation && (
+        <section>
+          <h2>Approved delegation agenda</h2>
+          {report.delegation.context && (
+            <>
+              <p>Organiser: {report.delegation.context.organiser}</p>
+              <p>{report.delegation.context.purpose}</p>
+              <p>
+                {displayDate(
+                  report.delegation.context.startsAt,
+                  report.delegation.context.timezone,
+                )}{' '}
+                to{' '}
+                {displayDate(report.delegation.context.endsAt, report.delegation.context.timezone)}
+              </p>
+            </>
+          )}
+          <AgendaView agenda={report.delegation.agenda} />
+        </section>
+      )}
       {report.missions.map((m) => (
         <article key={m.publicationId} className="delivery-card">
           <h2>
@@ -218,9 +250,10 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
           <p>{m.brief}</p>
           <h3>Next action</h3>
           <p>
-            {m.nextAction} · Due {new Date(m.dueAt).toLocaleString()}
+            {m.nextAction} · Due {displayDate(m.dueAt)}
           </p>
-          <p>Reviewed {new Date(m.reviewedAt).toLocaleString()}</p>
+          <p>Reviewed {displayDate(m.reviewedAt)}</p>
+          {m.experience && <MissionExperienceView experience={m.experience} />}
           <h3>Itinerary</h3>
           {m.itinerary.length ? (
             <ul>
@@ -264,7 +297,7 @@ export function DeliveryView({ audience }: { audience: DeliveryReport['audience'
                   <h4>{r.title}</h4>
                   <p>{r.instructions}</p>
                   <p>
-                    {r.status.toLowerCase()} · Due {new Date(r.dueAt).toLocaleString()}
+                    {r.status.toLowerCase()} · Due {displayDate(r.dueAt)}
                   </p>
                   {r.response && <p>Your declaration: {r.response}</p>}
                   {r.status === 'OPEN' && (

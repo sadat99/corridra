@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > 2048) {
+      if (size > 32768) {
         await reader.cancel();
         throw new DomainError('Request is too large', 413);
       }
@@ -46,17 +46,21 @@ export async function POST(request: Request) {
           ? 400
           : (e as { code?: string }).code === '23514'
             ? 409
-            : 500;
+            : (e as { code?: string }).code === '42501'
+              ? 404
+              : 500;
     return Response.json(
       {
         error:
           e instanceof DomainError
             ? e.message
-            : status === 409
-              ? 'A response was already recorded for this link.'
-              : status === 400
-                ? 'Check the submitted values'
-                : 'The response could not be completed. Please try again.',
+            : status === 404
+              ? 'This private link is unavailable or expired'
+              : status === 409
+                ? 'A response was already recorded for this link.'
+                : status === 400
+                  ? 'Check the submitted values'
+                  : 'The response could not be completed. Please try again.',
       },
       { status, headers },
     );

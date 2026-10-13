@@ -14,7 +14,7 @@ test('public page states the proposition and launch status without making up pro
   );
   await expect(page.getByText('Coming soon', { exact: true })).toHaveCount(2);
   await expect(page.getByText('Bangladesh', { exact: true })).toBeVisible();
-  await expect(page.getByText('Spain & Europe', { exact: true })).toBeVisible();
+  await expect(page.getByText('China, Spain & EU', { exact: true })).toBeVisible();
   expect(await page.locator('body').innerText()).not.toContain('\u2014');
   expect(await page.locator('body').innerText()).not.toMatch(
     /trusted by|guaranteed orders|global coverage/i,

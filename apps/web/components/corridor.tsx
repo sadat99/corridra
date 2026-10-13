@@ -1,9 +1,13 @@
+import Link from 'next/link';
 export function Corridor() {
   return (
-    <div className="corridor" aria-label="Initial corridor: Bangladesh and Spain/EU">
+    <div
+      className="corridor"
+      aria-label="Initial directions: Bangladesh–China, Bangladesh–Spain and Bangladesh–EU"
+    >
       <div className="corridor-heading">
-        <span className="label">WHERE WE ARE STARTING</span>
-        <span className="corridor-index">01 / CORRIDOR</span>
+        <span className="label">INITIAL COMMERCIAL DIRECTIONS</span>
+        <span className="corridor-index">03 / DIRECTIONS</span>
       </div>
       <div className="corridor-path" aria-hidden="true">
         <svg viewBox="0 0 430 260" fill="none">
@@ -35,11 +39,16 @@ export function Corridor() {
           ↔
         </span>
         <div>
-          <span className="location-code">ES / EU</span>
-          <strong>Spain & Europe</strong>
+          <span className="location-code">CN / ES / EU</span>
+          <strong>China, Spain & EU</strong>
         </div>
       </div>
-      <p className="corridor-caption">Starting with one corridor. Building for what comes next.</p>
+      <p className="corridor-caption">
+        Shared mission workflows. Each direction requires its own reviewed scope.
+      </p>
+      <p>
+        <Link href="/corridors">Explore the initial directions</Link>
+      </p>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { legacyMarketCode } from './geography';
 import { z } from 'zod';
 import { DomainError } from './index';
+import { recipientReply } from './experience';
 
 const words = (max: number) =>
   z
@@ -92,6 +93,7 @@ export const communicationCommand = z.discriminatedUnion('action', [
     .strict(),
 ]);
 export const buyerRequest = z.discriminatedUnion('action', [
+  recipientReply,
   z.object({ action: z.literal('read'), token: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
   z
     .object({

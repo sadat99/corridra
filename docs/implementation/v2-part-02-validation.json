@@ -160,15 +160,159 @@
     "preCreationLimit": 9
   },
   "production": {
-    "part2Released": false,
-    "currentDeployment": "dpl_2dQDGFKLQpHhPHjo3yTiTvdc4b9s",
+    "recordedAt": "2026-10-13T04:54:26.439Z",
+    "projectId": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+    "teamId": "team_Ke1aOfRssz8q4iYSlr7mJY3m",
+    "deploymentId": "dpl_6kQRRnWjDtgcyuG8Y6beEp92Vi26",
+    "url": "corridra-jlcfnpqk8-sadat-os.vercel.app",
+    "alias": "https://corridra.vercel.app",
+    "sha": "2da05f6d523f7303cf5492b10b62d7abae456ed0",
     "state": "READY",
-    "commit": "a872c057e202217cdadbc235a58e43896fb2ac2c",
-    "publicStatus": 200
+    "target": "production",
+    "checks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/operator",
+        "status": 200
+      },
+      {
+        "path": "/api/operator-auth/get-session",
+        "status": 200
+      },
+      {
+        "path": "/api/workspace/mission-catalogue",
+        "status": 401
+      },
+      {
+        "path": "/api/workspace/commercial-mission",
+        "status": 401
+      }
+    ]
   },
   "part2PR": null,
   "part2MergedSha": null,
   "part2CI": null,
-  "blocker": "Release pending fresh exact-head checks, completion of compatible dependency PR #28 to free one slot, live synthetic migration and production deployment.",
-  "branchLimit": 10
+  "blocker": null,
+  "branchLimit": 10,
+  "liveMigration": {
+    "recordedAt": "2026-10-13T04:51:02.383Z",
+    "projectId": "odd-pond-26265871",
+    "branchId": "br-lucky-darkness-b1ppj8en",
+    "beforeMigrations": 22,
+    "retainedTableCount": 105,
+    "afterMigrations": 24,
+    "migrations": [
+      {
+        "name": "0001_identity_tenancy.sql",
+        "sha256": "5a4ff2d73229fc60078e204515aaa6504e261364ee8f216d821fe2e17e8a772e"
+      },
+      {
+        "name": "0002_trust_events.sql",
+        "sha256": "c3cf6dd82359f4193507dc2a9170374dc4451153fdf8068846c7d1b9b743cbfd"
+      },
+      {
+        "name": "0003_guards.sql",
+        "sha256": "dd1892e69c2fbfd4739bbc29283189978c652b151d4ccb5a2d42f05ab5f8c0e9"
+      },
+      {
+        "name": "0004_bootstrap_security.sql",
+        "sha256": "914eb4e89f58ddfc39075f86c9adcef530c38288a97ec570e97b57d95537b389"
+      },
+      {
+        "name": "0005_integrity_versions.sql",
+        "sha256": "d26dc3640d938f8a7565e894e399e4fac63748b97a17929dfd5ce67e12497ff0"
+      },
+      {
+        "name": "0006_explicit_scan_bypass.sql",
+        "sha256": "5df24423ce031416a816172b86f9476b4eed4c1d75a42539d4ace40694ffc194"
+      },
+      {
+        "name": "0007_mission_core.sql",
+        "sha256": "2111b9bee212802813f9ad1a26f4e8096cb45c12fb80ddad5f1c1bee28d34107"
+      },
+      {
+        "name": "0008_counterparty_research.sql",
+        "sha256": "21b59b26cfac0f7cce96163fe3b210796c53fa9777fe17a14188ed16aef7ca35"
+      },
+      {
+        "name": "0009_controlled_communications.sql",
+        "sha256": "ec422f9912c8b26bdac14c5f42b0ffa41f7d3cf1a7cfbf0ca5c19ff4819582b3"
+      },
+      {
+        "name": "0010_meetings_and_followup.sql",
+        "sha256": "440607b20f6a2910de5e7ad79bfd8b7e96a78e318c366a1213f6cac58c14f36a"
+      },
+      {
+        "name": "0011_commercial_followthrough.sql",
+        "sha256": "3b0077316a8a2c3814f2c251bfc30e81ac5883586eaa9ceb16573a8728ff4cf6"
+      },
+      {
+        "name": "0012_outcome_projections.sql",
+        "sha256": "a9097524504924013f2c6bd7ff218ea8b5d8d0a61e02800b2be7f9a92111a3ab"
+      },
+      {
+        "name": "0013_commercial_qualification_history.sql",
+        "sha256": "9a916b61eb1dcd1551fd5a04f9a986cb0a8a9821f0fc213b60d7635004e19fec"
+      },
+      {
+        "name": "0014_scoped_mission_import.sql",
+        "sha256": "16d4667fe48c379f918ab0552248fe6aa0761dce5da6464623e6aeea2774be86"
+      },
+      {
+        "name": "0015_shared_commercial_totals.sql",
+        "sha256": "ee863cad10488414f4f9662120c328deb92f4a29b15ebd0e0253807fb1d58413"
+      },
+      {
+        "name": "0016_scoped_delivery.sql",
+        "sha256": "14d6777b4ae2207433759c709d168bf7a186071ab525f38fd707a6526c869521"
+      },
+      {
+        "name": "0017_private_delivery_permission_helper.sql",
+        "sha256": "7a1a73cb75a95b961d073a4032fb09afca7078db53d58b6f49d5eeec75daad05"
+      },
+      {
+        "name": "0018_private_publication_guard.sql",
+        "sha256": "e7bcf1c26f8e867c3059eabe435b2f7bb20a0bd6a454638058a3277421808fbe"
+      },
+      {
+        "name": "0019_global_identifiers.sql",
+        "sha256": "a6a215b4badb6537e77b0bfb5668a27bed2945cd2772ae2857c0619f3c33224d"
+      },
+      {
+        "name": "0020_versioned_corridors.sql",
+        "sha256": "26fda10010f2a53ef740d6b065ea481794fe5690262cc424a28988873067bcb0"
+      },
+      {
+        "name": "0021_commercial_origins.sql",
+        "sha256": "75b9dd7253bf7180a72ac6bd4739767fefe69fdf53cff8f0da75caa41ecf07d8"
+      },
+      {
+        "name": "0022_policy_and_service_economics.sql",
+        "sha256": "b5be9bf74cb276d6832ff60dd08f34344606e4e06b821f48afe58d5ee454bee7"
+      },
+      {
+        "name": "0023_commercial_mission_execution.sql",
+        "sha256": "0d1c1d979da405fec189b64890ad8fcd7cbc6c00bd850141afda6cc4b72c0ae4"
+      },
+      {
+        "name": "0024_typed_meeting_activities.sql",
+        "sha256": "343c8a92450b4ac6643097a4c14620c2af5ea9c60191d990be7d0815b83342a2"
+      }
+    ],
+    "retainedHistoricalRows": "all original application and identity columns match",
+    "status": "passed",
+    "branchCount": 2
+  },
+  "acceptedPR": 31,
+  "finalCI": "https://github.com/sadat99/corridra/actions/runs/38347516847",
+  "finalBranchCount": 9,
+  "finalComposition": {
+    "integrationPassed": 141,
+    "publicBrowserPassed": 46,
+    "operatorBrowserPassed": 6,
+    "dependencyPR": 28
+  }
 }

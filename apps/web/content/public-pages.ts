@@ -6,6 +6,7 @@ export type PublicPageContent = {
   sections: { title: string; text: string }[];
   closing: { title: string; text: string };
   cta?: string;
+  intakeJob?: string;
   related: { href: string; label: string };
 };
 
@@ -95,7 +96,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     ],
     closing: {
       title: 'Bangladesh without the usual black box.',
-      text: 'The first corridor is being prepared around Bangladesh and Spain/EU. The aim is to show why a company was selected, what is known, what is uncertain and what happens next.',
+      text: 'Reverse market-entry directions can be configured selectively. Define the actual country and commercial objective. Each operating offer needs its own reviewed scope.',
     },
     cta: 'Plan a market-entry mission',
     related: { href: '/about', label: 'See where Corridra is starting' },
@@ -292,7 +293,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
       {
         title: 'Earn depth before claiming breadth',
-        text: 'The initial corridor is Bangladesh ↔ Spain/EU. It is being prepared now. Corridra does not claim operational global coverage.',
+        text: 'Initial directions include Bangladesh–China, Bangladesh–Spain and Bangladesh–EU. Each requires its own reviewed scope. No operational global coverage is claimed.',
       },
       {
         title: 'Keep the evidence close',
@@ -306,3 +307,71 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/how-it-works', label: 'See how it will work' },
   },
 };
+
+publicPages.machinery = {
+  label: 'PROCURE MACHINERY',
+  title: 'A machine is useful only if it fits the work.',
+  description:
+    'Define the application, capacity, site constraints and acceptance questions before comparing suppliers or planning a technical visit.',
+  introduction: {
+    title: 'Specification before price.',
+    text: 'Original offers remain separate from derived comparisons. Installation, training, spares, warranty and unanswered technical questions stay visible.',
+  },
+  sections: [
+    {
+      title: 'Define the requirement',
+      text: 'Start with purpose, key parameters, budget and timing. Add utilities, integration and acceptance criteria as the discussion develops.',
+    },
+    {
+      title: 'Compare the actual offers',
+      text: 'Retain the original currency and terms. Missing quantities, specifications or shipping scope make a comparison incomplete.',
+    },
+    {
+      title: 'Use visits to resolve questions',
+      text: 'A factory or technical discussion needs a named owner, an agreed purpose and an actual confirmed meeting. Interest alone does not confirm a visit.',
+    },
+  ],
+  closing: {
+    title: 'A documented decision, with its limits.',
+    text: 'Record the evidence behind a selection and what is still unknown. Corridra does not certify a machine or place an order for you.',
+  },
+  intakeJob: 'machinery_procurement',
+  cta: 'Prepare a machinery test brief',
+  related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh–China sourcing' },
+};
+publicPages['business-trips'] = {
+  label: 'PLAN A BUSINESS TRIP',
+  title: 'Give each day a commercial purpose.',
+  description:
+    'Work backwards from the conversations, evidence and decisions the trip should produce.',
+  introduction: {
+    title: 'An itinerary is part of a mission.',
+    text: 'Company location, target market, meeting venue and shipment route are different facts. Keep each in its proper context.',
+  },
+  sections: [
+    {
+      title: 'Before departure',
+      text: 'Define the objective, shortlist relevant counterparties and identify the questions that need a conversation or site visit.',
+    },
+    {
+      title: 'During the visit',
+      text: 'Separate proposed engagements from confirmed meetings. Record what happened and the person responsible for the next action.',
+    },
+    {
+      title: 'After the trip',
+      text: 'Follow the relationship through requests, offers and observed outcomes. Attendance alone is not commercial progress.',
+    },
+  ],
+  closing: {
+    title: 'Plan the work around the journey.',
+    text: 'No travel booking or guaranteed meeting service is available. The current test flow lets you describe the commercial mission using invented details.',
+  },
+  intakeJob: 'business_trips',
+  cta: 'Prepare a business-trip test brief',
+  related: { href: '/how-it-works', label: 'See the mission process' },
+};
+
+publicPages.source.intakeJob = 'sourcing';
+publicPages.sell.intakeJob = 'buyers';
+publicPages['enter-market'].intakeJob = 'market_entry';
+publicPages['trade-missions'].intakeJob = 'delegations';
