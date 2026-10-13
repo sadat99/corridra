@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > 16000) {
+      if (size > 32768) {
         await reader.cancel();
         throw new DomainError('Brief is too large', 413);
       }

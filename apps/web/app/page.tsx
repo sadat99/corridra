@@ -195,13 +195,13 @@ export default function Home() {
         </Link>
       </section>
       <section className="closing public-closing">
-        <p className="label">STARTING WITH BANGLADESH ↔ SPAIN / EU</p>
+        <p className="label">INITIAL COMMERCIAL DIRECTIONS</p>
         <h2>
           Make market entry <em>deliberate.</em>
         </h2>
         <p>
-          We’re getting the first corridor ready. Mission planning will open here as the delivery
-          process and data safeguards are ready.
+          We’re validating the shared mission workflow with invented records. Real mission delivery
+          will open only after the operating and data controls are approved.
         </p>
         <Link prefetch={false} className="text-link" href="/plan">
           See the launch status <Arrow />

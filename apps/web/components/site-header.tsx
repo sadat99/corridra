@@ -7,7 +7,9 @@ import { useRef, useState } from 'react';
 
 export const solutions = [
   { href: '/sell', label: 'Sell in a new market' },
-  { href: '/source', label: 'Source suppliers' },
+  { href: '/source', label: 'Source products/suppliers' },
+  { href: '/machinery', label: 'Procure machinery' },
+  { href: '/business-trips', label: 'Plan a business trip' },
   { href: '/enter-market', label: 'Enter a new market' },
   { href: '/trade-missions', label: 'Run a trade mission' },
 ];
@@ -81,8 +83,8 @@ export function SiteHeader() {
         <Link prefetch={false} href="/how-it-works" onClick={close}>
           How it works
         </Link>
-        <Link prefetch={false} href="/network" onClick={close}>
-          Corridra Network
+        <Link prefetch={false} href="/corridors" onClick={close}>
+          Corridors
         </Link>
         <Link prefetch={false} href="/institutions" onClick={close}>
           For Institutions
@@ -91,7 +93,7 @@ export function SiteHeader() {
           Trust & Evidence
         </Link>
         <Link prefetch={false} href="/signin" onClick={close}>
-          Sign in <span className="sr-only">(operator access)</span>
+          Sign in
         </Link>
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
           Plan a mission <span className="sr-only">(test intake)</span>

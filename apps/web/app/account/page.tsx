@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
+import { CustomerMissions } from './customer-missions';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -40,6 +41,7 @@ export default async function Page() {
         Start a mission brief
       </Link>
       <p>Keep the private receipt supplied with your brief to check its status and replies.</p>
+      <CustomerMissions />
       <AccountSignout />
     </main>
   );

@@ -71,7 +71,7 @@ export const requirementFields = z
     category: text.optional(),
     specifications: text.optional(),
     quantity: quantity.optional(),
-    unit: text.optional(),
+    unit: z.string().trim().min(1).max(80).optional(),
     targetMarkets: z.array(z.string().min(2).max(80)).max(30).optional(),
     budgetMinor: amount.optional(),
     currency: currency.optional(),
@@ -115,12 +115,13 @@ export const requirementFields = z
     if ((v.quantity || v.moq) && !v.unit)
       ctx.addIssue({ code: 'custom', message: 'Quantity needs a unit' });
   });
+export type RequirementFields = z.infer<typeof requirementFields>;
 export const offerTerms = z
   .object({
     specification: text.optional(),
     quantity: quantity.optional(),
     moq: quantity.optional(),
-    unit: text.optional(),
+    unit: z.string().trim().min(1).max(80).optional(),
     unitPriceMinor: amount.optional(),
     totalPriceMinor: amount.optional(),
     toolingMinor: amount.optional(),

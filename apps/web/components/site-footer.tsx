@@ -9,7 +9,7 @@ export function SiteFooter() {
             corridra
           </Link>
           <p>Make market entry deliberate.</p>
-          <span>Starting with Bangladesh ↔ Spain / EU</span>
+          <span>Initial directions: Bangladesh ↔ China / Spain / EU</span>
         </div>
         <nav aria-label="Footer solutions">
           <Link prefetch={false} href="/sell">

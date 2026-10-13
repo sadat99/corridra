@@ -1,6 +1,6 @@
 # V2 Part 02 release record
 
-Status: implementation and local acceptance complete. Publication is pending resolution of the GitHub branch-count constraint. No Part 2 PR, merge or production deployment is claimed.
+Status: released in PR #31 and verified in production at `2da05f6d523f7303cf5492b10b62d7abae456ed0`. The preparation history below is followed by the final production acceptance record.
 
 Accepted baseline: `a872c057e202217cdadbc235a58e43896fb2ac2c`, V2 Part 1 PR #30. The requested local branch is `feat/v2-02-commercial-missions`. Part 1's architecture, source documents, migration hashes, identity/MFA, tenant permissions, evidence distinctions, immutable commercial origins and accounting contracts remain intact.
 
@@ -44,3 +44,7 @@ The existing Vercel production deployment `dpl_2dQDGFKLQpHhPHjo3yTiTvdc4b9s` rem
 ## Part 3 integration requirements
 
 Build owner configuration administration over the same immutable type/requirement/assessment definitions and route packs, including explicit review/capability/jurisdiction readiness. Preserve schemaVersion 0 as undeclared legacy, exact pinned versions and reclassification history. Respect the new nullable meeting introduction and exclusive target origin, activity kinds, existing follow-up contracts and Part 1's version-2 alternate-origin snapshots. Add richer paginated history and client/institutional publications only through existing scoped delivery and sharing approval. Never expose raw supplier negotiations or private targets in public/cohort outputs. Keep quotation schema versions, original prices, calculation provenance, source expiry and revision chains. Integrate service effort/cost through the separate ledger, not customer cash. Customer activation and all deferred legal/security/pilot controls remain independent gates.
+
+## Production acceptance, 13 October 2026
+
+PR #31 merged as `2da05f6d523f7303cf5492b10b62d7abae456ed0` after final-head CI passed on `160ecab57be7c3cdf0430fbe9c6189dad7880008`. Final composition with accepted dependency PR #28 passed 141 integration, 46 public browser and six protected operator tests. Live synthetic migration 22→24 and replay preserved all original rows/columns in 105 application and identity tables. Vercel production `dpl_6kQRRnWjDtgcyuG8Y6beEp92Vi26` is READY at the merged SHA. The production alias returned HTTP 200, anonymous operator session null and protected commercial/catalogue HTTP 401. Post-release error/fatal log counts returned no groups. Completed product branch cleanup left nine remote branches, retaining all eight unfinished dependency PRs; Neon retains its two required branches. Earlier pending-release paragraphs are preparation history. CodeQL remains deferred under D04.

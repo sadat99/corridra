@@ -3,7 +3,62 @@ import { resolve } from 'node:path';
 import PDFDocument from 'pdfkit';
 import * as fontkit from 'fontkit';
 import { DomainError } from '@corridra/domain';
+import type { OfferTerms, RequirementFields } from '@corridra/domain/commercial-missions';
+export type AgendaItem = {
+  id: string;
+  itemId: string;
+  version: number;
+  label: string;
+  state: string;
+  nextAction: string;
+  dueAt: string;
+  responsibility: string;
+  meetings: {
+    id: string;
+    status: string;
+    scheduleChanged: boolean;
+    startsAt?: string;
+    endsAt?: string;
+    timezone?: string;
+    location?: string;
+  }[];
+};
+export type MissionExperience = {
+  schemaVersion: 1;
+  requirements: null | {
+    version: number;
+    fields: RequirementFields;
+    sourceKind: string;
+    claimStatus: string;
+    current: boolean;
+  };
+  shortlist: {
+    id: string;
+    company: string;
+    country: string;
+    fit: string;
+    rationale: string;
+    uncertainty: string;
+    gaps: string;
+    verification: string;
+  }[];
+  quotations: {
+    id: string;
+    targetId: string;
+    currency: string;
+    terms: OfferTerms;
+    revision: number;
+    uncertainties: string;
+    sourceKind: string;
+    claimStatus: string;
+    superseded: boolean;
+    assignmentCurrent: boolean;
+  }[];
+  agenda: AgendaItem[];
+  documentAccess: string;
+};
 export type DeliveryMission = {
+  experience?: MissionExperience;
   publicationId: string;
   title: string;
   company: string;
@@ -51,6 +106,19 @@ export type DeliveryMission = {
   }[];
 };
 export type DeliveryReport = {
+  heldMeetingsDistinct?: number;
+  companyCountBasis?: string;
+  delegation?: {
+    context: null | {
+      organiser: string;
+      marketCode: string;
+      purpose: string;
+      startsAt: string;
+      endsAt: string;
+      timezone: string;
+    };
+    agenda: AgendaItem[];
+  };
   schemaVersion: 1;
   scopeId: string;
   audience: 'CLIENT_PROGRESS' | 'INSTITUTION_REPORT';
@@ -74,7 +142,16 @@ export function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 export function reportCsv(report: DeliveryReport): Buffer {
-  const currencies = ['BDT', 'USD', 'EUR', 'GBP', 'JPY'];
+  const currencies = [
+    'BDT',
+    'USD',
+    'EUR',
+    'GBP',
+    'JPY',
+    ...Array.from(new Set(report.missions.flatMap((m) => m.totals.map((t) => t.currency))))
+      .filter((c) => !['BDT', 'USD', 'EUR', 'GBP', 'JPY'].includes(c))
+      .sort(),
+  ];
   const header = [
     'scope_id',
     'schema_version',
@@ -157,10 +234,14 @@ async function fonts() {
     ? Promise.all([
         readFile(resolve(process.cwd(), '../../packages/delivery/assets/NotoSans.ttf')),
         readFile(resolve(process.cwd(), '../../packages/delivery/assets/NotoSansBengali.ttf')),
+        readFile(
+          resolve(process.cwd(), '../../packages/delivery/assets/NotoSansCJKsc-Regular.otf'),
+        ),
       ])
     : Promise.all([
         readFile(resolve(process.cwd(), 'packages/delivery/assets/NotoSans.ttf')),
         readFile(resolve(process.cwd(), 'packages/delivery/assets/NotoSansBengali.ttf')),
+        readFile(resolve(process.cwd(), 'packages/delivery/assets/NotoSansCJKsc-Regular.otf')),
       ]);
   return fontFiles;
 }
@@ -178,7 +259,7 @@ export async function reportPdf(report: DeliveryReport): Promise<Buffer> {
         'The PDF font cannot represent this text. Download the complete CSV report instead.',
         422,
       );
-    return index === 0 ? 'Latin' : 'Bengali';
+    return ['Latin', 'Bengali', 'Chinese'][index];
   };
   const doc = new PDFDocument({
     size: 'A4',
@@ -194,6 +275,7 @@ export async function reportPdf(report: DeliveryReport): Promise<Buffer> {
   });
   doc.registerFont('Latin', bytes[0]);
   doc.registerFont('Bengali', bytes[1]);
+  doc.registerFont('Chinese', bytes[2]);
   const output = new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
     let total = 0;
@@ -242,15 +324,26 @@ export async function reportPdf(report: DeliveryReport): Promise<Buffer> {
     write(`Purpose: ${report.purpose}`);
     write(`Approved participants: ${report.approvedParticipants}`);
     write(
-      `Approved company names: ${report.approvedCompanies}; qualified counterparties: ${report.qualifiedCounterparties}`,
+      `Approved companies: ${report.approvedCompanies}; qualified counterparties: ${report.qualifiedCounterparties}`,
     );
     for (const t of report.totals)
       write(
         `Programme total ${t.currency}: contract ${t.contractMinor}; invoice ${t.invoiceMinor}; confirmed cash ${t.confirmedCashMinor}; repeat cash ${t.repeatCashMinor} (included).`,
       );
+    if (report.companyCountBasis) write(report.companyCountBasis);
+    if (report.heldMeetingsDistinct !== undefined)
+      write(
+        `Distinct held meetings: ${report.heldMeetingsDistinct}. Shared agenda activities count once; participant engagements are separate.`,
+      );
+    if (report.delegation?.context)
+      write(
+        `Delegation organiser: ${report.delegation.context.organiser}; shared purpose: ${report.delegation.context.purpose}`,
+      );
+    for (const a of report.delegation?.agenda ?? [])
+      write(`Agenda: ${a.label}; ${a.state}; next: ${a.nextAction}; due: ${a.dueAt}`);
     write(report.attribution);
     write(
-      'Amounts use integer minor currency units: BDT/USD/EUR/GBP 100 units per currency unit; JPY 1. Repeat cash is a subset of confirmed cash.',
+      'Amounts use registered integer minor currency units in their original currency. Precision varies by currency. No FX conversion or cross-currency total is implied. Repeat cash is a subset of confirmed cash.',
     );
     for (const m of report.missions) {
       doc.moveDown(0.7);

@@ -1,7 +1,16 @@
 'use client';
+import { displayDate } from '@corridra/domain/locale';
 import { useEffect, useRef, useState } from 'react';
 import type { Introduction } from '@corridra/domain/access';
+import { RecipientResponse } from './recipient-response';
 type View = {
+  capability?: string;
+  role?: string;
+  sharedRequirements?: string;
+  sharedUncertainty?: string;
+  allowQuotation?: boolean;
+  allowMeetingInterest?: boolean;
+  detailResponse?: { body: Record<string, unknown>; sourceKind: string };
   introduction: Introduction;
   template: string;
   expiresAt: string;
@@ -44,7 +53,7 @@ export function BuyerIntroduction() {
       })
       .then((v) => {
         if (active) {
-          setData(v);
+          setData({ ...v, capability: token.current });
           setMessage('');
         }
       })
@@ -114,6 +123,20 @@ export function BuyerIntroduction() {
         <>
           <p className="evidence-label">Invented demonstration. No real outreach.</p>
           <p>{data.template}</p>
+          {data.sharedRequirements && (
+            <section>
+              <h2>{data.role?.toLowerCase()} request</h2>
+              <h3>Explicitly shared requirements</h3>
+              <p>{data.sharedRequirements}</p>
+              <p>Uncertainty: {data.sharedUncertainty}</p>
+              <RecipientResponse
+                token={data.capability ?? ''}
+                allowQuotation={!!data.allowQuotation}
+                allowMeetingInterest={!!data.allowMeetingInterest}
+                response={data.detailResponse}
+              />
+            </section>
+          )}
           <dl className="buyer-details">
             {(
               [
@@ -176,7 +199,7 @@ export function BuyerIntroduction() {
             </button>
           )}
           <p>You will not be added to a mailing list by responding.</p>
-          <p>Private link expires {new Date(data.expiresAt).toLocaleString()}.</p>
+          <p>Private link expires {displayDate(data.expiresAt)}.</p>
         </>
       )}
     </section>

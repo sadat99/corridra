@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { ImportRow } from '@corridra/delivery/import';
+import { DeliveryExperience } from './delivery-experience';
 type Publication = {
   id: string;
   mission_id: string;
@@ -280,6 +281,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         purpose: f.purpose,
         expiresAt: date(f.expiresAt),
         allowExport: audience === 'INSTITUTION_REPORT' && f.allowExport === 'on',
+        includeDelegation: audience === 'INSTITUTION_REPORT' && f.includeDelegation === 'on',
         approved: f.approved === 'on',
       });
       setPrivateLink(`${window.location.origin}${link.path}#${link.token}`);
@@ -640,6 +642,13 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                 reporting purpose
               </label>
             )}
+            {audience === 'INSTITUTION_REPORT' && (
+              <label className="check-field">
+                <input type="checkbox" name="includeDelegation" />
+                Include the reviewed delegation context and agenda. Every disclosed meeting must
+                already be explicitly approved in the selected participant publications.
+              </label>
+            )}
             <label>
               <input name="approved" type="checkbox" required /> I approve this audience, purpose
               and exact publication scope.
@@ -795,6 +804,16 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           </li>
         ))}
       </ul>
+      <DeliveryExperience
+        role={data?.role ?? ''}
+        key={`${tenant}:${programme}:${missionId}`}
+        tenant={tenant}
+        programme={programme}
+        mission={missionId}
+        participants={data?.participants ?? []}
+        publications={data?.publications ?? []}
+        owners={data?.owners ?? []}
+      />
     </section>
   );
 }

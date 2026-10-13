@@ -27,6 +27,21 @@ async function handle(request: Request) {
       purpose: 'synthetic_validation',
     };
     if (request.method === 'GET') {
+      if (query.get('action') === 'experience')
+        return Response.json(
+          await s.deliveryExperience.workspace(
+            ctx,
+            z
+              .uuid()
+              .optional()
+              .parse(query.get('programme') ?? undefined),
+            z
+              .uuid()
+              .optional()
+              .parse(query.get('mission') ?? undefined),
+          ),
+          { headers: deliveryHeaders },
+        );
       if (query.get('action') === 'options')
         return Response.json(await s.delivery.options(ctx, z.uuid().parse(query.get('mission'))), {
           headers: deliveryHeaders,
@@ -70,6 +85,11 @@ async function handle(request: Request) {
     const { action, input } = z
       .object({
         action: z.enum([
+          'context',
+          'agenda',
+          'experience-publication',
+          'participant-identity',
+          'recipient-disclosure',
           'programme',
           'confirm',
           'publication',
@@ -81,7 +101,21 @@ async function handle(request: Request) {
         input: z.unknown(),
       })
       .parse(JSON.parse((await boundedBody(request, 65536)).toString('utf8')));
-    return Response.json(await s.delivery[action](ctx, input), { headers: deliveryHeaders });
+    const extended = {
+      context: () => s.deliveryExperience.context(ctx, input),
+      agenda: () => s.deliveryExperience.agenda(ctx, input),
+      'experience-publication': () => s.deliveryExperience.publication(ctx, input),
+      'participant-identity': () => s.deliveryExperience.identity(ctx, input),
+      'recipient-disclosure': () => s.deliveryExperience.disclosure(ctx, input),
+    };
+    if (action in extended)
+      return Response.json(await extended[action as keyof typeof extended](), {
+        headers: deliveryHeaders,
+      });
+    return Response.json(
+      await s.delivery[action as Exclude<typeof action, keyof typeof extended>](ctx, input),
+      { headers: deliveryHeaders },
+    );
   } catch (error) {
     return deliveryError(error);
   }

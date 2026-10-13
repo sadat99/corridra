@@ -9,6 +9,7 @@ import { readFoundationConfig } from '@corridra/config';
 import { CounterpartyService } from '@corridra/counterparties';
 import { MissionService } from '@corridra/missions';
 import { DeliveryService } from '@corridra/delivery';
+import { DeliveryExperienceService } from '@corridra/delivery/experience';
 import { OpportunityService } from '@corridra/opportunities';
 import { MeetingService } from '@corridra/missions/meetings';
 import { CommercialMissionService } from '@corridra/missions/commercial';
@@ -67,6 +68,7 @@ function createServices() {
       new MissionService(runtimePool, config.AUTH_SECRET),
       config.AUTH_SECRET,
     ),
+    deliveryExperience: new DeliveryExperienceService(runtimePool),
     meetings: new MeetingService(runtimePool),
     commercialMissions: new CommercialMissionService(runtimePool),
     corridors: new CorridorService(runtimePool),

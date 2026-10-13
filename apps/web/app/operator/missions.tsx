@@ -210,6 +210,38 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
           Refresh missions
         </button>
       </div>
+      <div className="hero-actions" aria-label="Mission focus views">
+        {[
+          { label: 'Awaiting qualification', stage: 'QUALIFICATION', job: '', direction: '' },
+          { label: 'China sourcing', stage: '', job: 'sourcing', direction: 'BD → CN' },
+          {
+            label: 'China machinery',
+            stage: '',
+            job: 'machinery_procurement',
+            direction: 'BD → CN',
+          },
+          { label: 'Spain buyer access', stage: '', job: 'buyers', direction: 'BD → ES' },
+          { label: 'Delegation portfolio', stage: '', job: 'delegations', direction: '' },
+        ].map((view) => (
+          <button
+            key={view.label}
+            disabled={!!view.direction && !routes.some((r) => r.label === view.direction)}
+            type="button"
+            onClick={() => {
+              setOffset(0);
+              setFilter('open');
+              setSelected({
+                owner: '',
+                stage: view.stage,
+                job: view.job,
+                route: routes.find((r) => r.label === view.direction)?.id ?? '',
+              });
+            }}
+          >
+            {view.label}
+          </button>
+        ))}
+      </div>
       {queue && (
         <div className="hero-actions">
           <p>

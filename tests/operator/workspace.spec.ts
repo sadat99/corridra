@@ -27,6 +27,12 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await expect(page.getByText('Choose what you want to do', { exact: true })).toBeVisible();
   await page.getByLabel('Sell in a new market', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
+    .selectOption('BD');
+  await page
+    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
+    .selectOption('ES');
   await page.getByLabel('Yes', { exact: true }).check();
   await page.getByLabel('From', { exact: true }).fill('2026-11-01');
   await page.getByLabel('To', { exact: true }).fill('2026-10-01');
@@ -1044,7 +1050,8 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await page.route(scopeRoute, async (route) => {
     if (
       route.request().method() === 'GET' &&
-      new URL(route.request().url()).searchParams.get('programme') === programmeId
+      new URL(route.request().url()).searchParams.get('programme') === programmeId &&
+      !new URL(route.request().url()).searchParams.has('action')
     ) {
       const response = await route.fetch();
       await scopeGate;
@@ -1052,7 +1059,10 @@ test('scoped delivery imports every row, serves client requests and downloads co
     } else await route.continue();
   });
   const scopedRequest = page.waitForRequest(
-    (r) => r.method() === 'GET' && new URL(r.url()).searchParams.get('programme') === programmeId,
+    (r) =>
+      r.method() === 'GET' &&
+      new URL(r.url()).searchParams.get('programme') === programmeId &&
+      !new URL(r.url()).searchParams.has('action'),
   );
   await panel.getByRole('combobox', { name: 'Programme', exact: true }).selectOption(programmeId);
   await scopedRequest;
@@ -1128,7 +1138,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
 test('route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace', async ({
   page,
 }) => {
-  test.setTimeout(180000);
+  test.setTimeout(240000);
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
   // Preserve the shared-IP five-per-minute MFA budget after the preceding journeys.
@@ -1264,7 +1274,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     action: 'ingest',
     commandId: randomUUID(),
     sourceId: source.id,
-    name: 'Synthetic Machinery Supplier',
+    name: 'Synthetic Machinery Supplier 原始机械',
     country: 'CN',
     domain: 'machinery.example.invalid',
     address: 'Synthetic factory site',
@@ -1287,12 +1297,22 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     visibility: 'OWNER',
     note: 'Synthetic supplier relationship',
   });
+  const recipientContact = await post('research', {
+    action: 'contact',
+    commandId: randomUUID(),
+    relationshipId: relationship.id,
+    sourceId: source.id,
+    name: 'Invented Supplier Representative',
+    jobTitle: 'Equipment coordinator',
+    email: 'supplier-role@example.invalid',
+    validUntil: new Date(Date.now() + 518400000).toISOString(),
+  });
   const target = await post('research', {
     action: 'target',
     commandId: randomUUID(),
     missionId,
     relationshipId: relationship.id,
-    contactId: null,
+    contactId: recipientContact.id,
     claimIds: [claim.id],
     fit: 'POSSIBLE',
     rationale: 'Declared capacity may fit',
@@ -1420,6 +1440,178 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
       })
     ).status(),
   ).toBe(403);
+  // Part 3 uses the same actual MFA session and its scoped recipient/publication services.
+  async function deliveryAction(action: string, input: Record<string, unknown>) {
+    return post('delivery', { action, input: { commandId: randomUUID(), ...input } });
+  }
+  const commercialData = await (
+    await page.request.get(
+      `/api/workspace/commercial-mission?tenant=${seed.tenantId}&mission=${missionId}`,
+    )
+  ).json();
+  const publication = await deliveryAction('publication', {
+    missionId,
+    title: 'Approved machinery participant detail',
+    company: 'Synthetic Machinery Browser',
+    objective: 'Review original machinery requirements',
+    brief:
+      'Only explicitly approved synthetic requirements and the original offer for this participant.',
+    nextAction: 'Review missing supplier terms',
+    dueAt,
+    meetings: [],
+    opportunityIds: [],
+    includeFinancials: false,
+    approved: true,
+  });
+  await deliveryAction('experience-publication', {
+    publicationId: publication.id,
+    requirementId,
+    targetIds: [target.id],
+    quotationIds: [commercialData.quotations[0].id],
+    agendaItemIds: [],
+    approved: true,
+    reason,
+  });
+  const client = await deliveryAction('share', {
+    programmeId: null,
+    publicationIds: [publication.id],
+    audience: 'CLIENT_PROGRESS',
+    purpose: reason,
+    expiresAt: dueAt,
+    allowExport: false,
+    approved: true,
+  });
+  const guestContext = await page
+    .context()
+    .browser()!
+    .newContext({ baseURL: 'http://127.0.0.1:3200' });
+  const clientPage = await guestContext.newPage();
+  expect((await clientPage.request.get('/api/workspace/tenants')).status()).toBe(401);
+  await clientPage.goto(`/client#${client.token}`);
+  await expect(
+    clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole('heading', { name: 'Target shortlist and fit', exact: true }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByRole('heading', { name: /Synthetic Machinery Supplier 原始机械/ }),
+  ).toBeVisible();
+  await expect(
+    clientPage.getByText('Original unit price: CNY 1,200.00', { exact: true }),
+  ).toBeVisible();
+  await expect(clientPage.getByText('NOT COMPARABLE.', { exact: false })).toBeVisible();
+  expect(await clientPage.locator('body').innerText()).not.toContain(
+    'supplier-role@example.invalid',
+  );
+  expect(
+    (await new AxeBuilder({ page: clientPage }).include('.delivery-view').analyze()).violations,
+  ).toEqual([]);
+  await mkdir('.cache/v2-part-03', { recursive: true });
+  await clientPage.screenshot({
+    path: '.cache/v2-part-03/client-machinery-detail.png',
+    fullPage: true,
+  });
+  const policy = await post('communication', {
+    action: 'policy',
+    commandId: randomUUID(),
+    jurisdiction: 'CN',
+    channel: 'SYNTHETIC',
+    contactPurpose: 'official_company_channel',
+    basis: 'Invented policy for scoped supplier browser acceptance only',
+    validUntil: new Date(Date.now() + 432000000).toISOString(),
+    enabled: true,
+  });
+  const template = await post('communication', {
+    action: 'template',
+    commandId: randomUUID(),
+    name: 'Approved synthetic supplier request',
+    contactPurpose: 'official_company_channel',
+    body: 'Please review only the explicitly shared requirement for this invented request.',
+  });
+  const intro = await post('communication', {
+    action: 'introduce',
+    commandId: randomUUID(),
+    targetId: target.id,
+    contactId: recipientContact.id,
+    policyId: policy.id,
+    templateId: template.id,
+    expiresAt: dueAt,
+    introduction: {
+      company: 'Synthetic Machinery Browser',
+      country: 'BD',
+      capability: 'Invented machinery procurement requirement',
+      fit: 'Technical suitability needs supplier clarification',
+      evidence: 'The buyer context is self-declared; no independent verification',
+      uncertainty: 'Installation and shipping conditions remain unresolved',
+      conversationPurpose: 'Clarify the original technical request',
+      availableDates: 'Dates require actual confirmation',
+    },
+  });
+  await deliveryAction('recipient-disclosure', {
+    linkId: intro.id,
+    role: 'SUPPLIER',
+    sharedRequirements:
+      'Only the invented machinery requirement is shareable; no private contact or other supplier quotation is included.',
+    uncertainty: 'Technical suitability remains unverified',
+    rfqId: rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: true,
+    approved: true,
+    reason,
+  });
+  const recipientPage = await guestContext.newPage();
+  await recipientPage.goto(intro.buyerPath);
+  await expect(
+    recipientPage.getByRole('heading', { name: 'Explicitly shared requirements', exact: true }),
+  ).toBeVisible();
+  await recipientPage
+    .getByLabel('Your response', { exact: true })
+    .fill('供应商原文答复：请确认技术参数。');
+  await recipientPage.getByLabel('Include a supplier-declared quotation', { exact: true }).check();
+  await recipientPage
+    .getByRole('combobox', { name: 'Original currency', exact: true })
+    .selectOption('CNY');
+  await recipientPage
+    .getByLabel('Unit price (original currency amount) (optional)', { exact: true })
+    .fill('123.45');
+  await recipientPage
+    .getByLabel('Missing information and uncertainties', { exact: true })
+    .fill('Shipping and installation are not supplied');
+  await recipientPage
+    .getByLabel('This is my declaration for this request.', { exact: false })
+    .check();
+  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await expect(
+    recipientPage.getByRole('heading', { name: 'Your recorded response', exact: true }),
+  ).toBeVisible();
+  await expect(
+    recipientPage.getByText('Original quoted unit price: CNY 123.45', { exact: true }),
+  ).toBeVisible();
+  expect(await recipientPage.locator('body').innerText()).not.toContain(
+    'supplier-role@example.invalid',
+  );
+  expect((await new AxeBuilder({ page: recipientPage }).analyze()).violations).toEqual([]);
+  await recipientPage.screenshot({
+    path: '.cache/v2-part-03/supplier-declared-response.png',
+    fullPage: true,
+  });
+  await deliveryAction('revoke', { linkId: client.id, publicationId: null, reason });
+  await clientPage.reload();
+  await expect(
+    clientPage.getByRole('alert').filter({ hasText: 'Access denied or link unavailable' }),
+  ).toBeVisible();
+  await post('communication', {
+    action: 'revoke',
+    commandId: randomUUID(),
+    linkId: intro.id,
+    reason,
+  });
+  await recipientPage.reload();
+  await expect(recipientPage.getByRole('status')).toContainText('unavailable or expired');
+  await clientPage.close();
+  await recipientPage.close();
+  await guestContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(

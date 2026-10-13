@@ -315,6 +315,7 @@ export class DeliveryService {
       token_hash: digest(token),
       expires_at: v.expiresAt,
       allow_export: v.allowExport,
+      include_delegation: v.includeDelegation,
     });
     return {
       id: v.commandId,
@@ -375,11 +376,10 @@ export class DeliveryService {
       await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [commandId]);
       const entries = Object.entries(values);
       const old = (
-        await db.query(
-          `SELECT id,created_by,${entries.map(([k]) => `to_jsonb(${k}) AS ${k}`).join(',')} FROM app.${table} WHERE id=$1`,
-          [commandId],
-        )
-      ).rows[0];
+        await db.query(`SELECT to_jsonb(entry) record FROM app.${table} entry WHERE id=$1`, [
+          commandId,
+        ])
+      ).rows[0]?.record;
       if (old) {
         const equal = (a: unknown, b: unknown): boolean => {
           if (a === b) return true;
@@ -397,17 +397,28 @@ export class DeliveryService {
             return Date.parse(a) === Date.parse(b);
           return false;
         };
-        if (old.created_by !== actorId || entries.some(([key, value]) => !equal(old[key], value)))
+        if (
+          old.created_by !== actorId ||
+          entries.some(
+            ([key, value]) =>
+              !equal(key === 'include_delegation' ? (old[key] ?? false) : old[key], value),
+          )
+        )
           throw new DomainError('Command key reused', 409);
         return { id: old.id };
       }
+      // Legacy calls omit the new opt-in column, preserving pre-upgrade operation.
+      // Its default still participates in the locked idempotency comparison above.
+      const inserted = entries.filter(
+        ([key, value]) => key !== 'include_delegation' || value !== false,
+      );
       await db.query(
-        `INSERT INTO app.${table}(id,tenant_id,created_by,${entries.map(([k]) => k).join(',')}) VALUES($1,$2,$3,${entries.map(([k], i) => `$${i + 4}${k === 'copy' ? '::jsonb' : ''}`).join(',')})`,
+        `INSERT INTO app.${table}(id,tenant_id,created_by,${inserted.map(([k]) => k).join(',')}) VALUES($1,$2,$3,${inserted.map(([k], i) => `$${i + 4}${k === 'copy' ? '::jsonb' : ''}`).join(',')})`,
         [
           commandId,
           ctx.tenantId,
           actorId,
-          ...entries.map(([k, v]) => (k === 'copy' ? JSON.stringify(v) : v)),
+          ...inserted.map(([k, v]) => (k === 'copy' ? JSON.stringify(v) : v)),
         ],
       );
       return { id: commandId };
