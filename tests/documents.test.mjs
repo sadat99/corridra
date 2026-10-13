@@ -52,3 +52,17 @@ test('implementation plan contains 12 ordered parts and a complete canvas-packet
   assert.ok(plan.includes('production-readiness'));
   assert.ok(!plan.includes('\u2014'), 'new plan copy contains no em dashes');
 });
+for (const part of ['04', '05']) {
+  test(`revised V2 Part ${part} owner packet retains its recorded integrity`, async () => {
+    const record = JSON.parse(
+      await readFile(
+        new URL(`docs/implementation/v2-part-${part}-request-integrity.json`, root),
+        'utf8',
+      ),
+    );
+    const source = await readFile(new URL(record.source, root));
+    assert.equal(source.length, record.bytes);
+    assert.equal(createHash('sha256').update(source).digest('hex'), record.sha256);
+    assert.equal(record.originalsModified, false);
+  });
+}
