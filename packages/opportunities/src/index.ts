@@ -133,6 +133,12 @@ export class OpportunityService {
         confirmations,
         history,
         meetings,
+        origins: (
+          await db.query(
+            "SELECT c.id,c.mission_id,c.kind,c.summary FROM app.commercial_origin c JOIN app.mission m ON m.tenant_id=c.tenant_id AND m.id=c.mission_id WHERE c.tenant_id=$1 AND m.status IN ('ACTIVE','TARGETING','FOLLOW_UP','COMMERCIAL_PIPELINE') ORDER BY c.created_at DESC LIMIT 100",
+            [ctx.tenantId],
+          )
+        ).rows,
         missions,
         sources,
         evidence,

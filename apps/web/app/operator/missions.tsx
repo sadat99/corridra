@@ -1,6 +1,10 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { MissionBrief } from '@corridra/domain/missions';
+import { CommercialMission } from './commercial-mission';
+import { CountryOptions } from './country-options';
+import { missionCatalogue } from '@corridra/domain/commercial-missions';
+import { missionStatus } from '@corridra/domain/missions';
 type Mission = {
   id: string;
   status: string;
@@ -44,10 +48,18 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [filter, setFilter] = useState('open'),
-    [offset, setOffset] = useState(0);
+    [offset, setOffset] = useState(0),
+    [selected, setSelected] = useState({ route: '', job: '', owner: '', stage: '' }),
+    [routes, setRoutes] = useState<{ id: string; label: string }[]>([]);
+  const query = new URLSearchParams({
+    tenant,
+    filter,
+    offset: String(offset),
+    ...selected,
+  }).toString();
   async function request(action: string, body?: unknown) {
     const r = await fetch(
-      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}&filter=${filter}&offset=${offset}`,
+      `/api/workspace/${action}?${query}`,
       body === undefined
         ? {}
         : {
@@ -62,9 +74,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
   }
   useEffect(() => {
     let active = true;
-    fetch(
-      `/api/workspace/missions?tenant=${encodeURIComponent(tenant)}&filter=${filter}&offset=${offset}`,
-    )
+    fetch(`/api/workspace/missions?${query}`)
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error);
@@ -76,7 +86,28 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
     return () => {
       active = false;
     };
-  }, [tenant, filter, offset]);
+  }, [query]);
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/workspace/mission-catalogue?tenant=${encodeURIComponent(tenant)}`)
+      .then(async (r) => {
+        if (!r.ok) return;
+        const v = await r.json();
+        if (active)
+          setRoutes(
+            v.packs.map(
+              (p: { route_id: string; origin_market: string; destination_market: string }) => ({
+                id: p.route_id,
+                label: `${p.origin_market} → ${p.destination_market}`,
+              }),
+            ),
+          );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [tenant]);
   async function act(action: string, body: unknown) {
     setBusy(true);
     setMessage('');
@@ -126,6 +157,32 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
       </div>
       <p aria-live="polite">{message}</p>
       <div className="hero-actions">
+        {(['route', 'job', 'owner', 'stage'] as const).map((key) => (
+          <label className="field" key={key}>
+            Filter by {key}
+            <select
+              value={selected[key]}
+              onChange={(e) => {
+                setSelected((v) => ({ ...v, [key]: e.target.value }));
+                setOffset(0);
+              }}
+            >
+              <option value="">All {key}s</option>
+              {(key === 'route'
+                ? routes
+                : key === 'job'
+                  ? missionCatalogue.map((t) => ({ id: t.key, label: t.label }))
+                  : key === 'owner'
+                    ? (queue?.owners.map((o) => ({ id: o.user_id, label: o.name })) ?? [])
+                    : missionStatus.options.map((s) => ({ id: s, label: s.replaceAll('_', ' ') }))
+              ).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
         <label className="field">
           Show missions
           <select
@@ -194,6 +251,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
               </p>
               <span className="evidence-label">Self-declared</span>
             </header>
+            <CommercialMission tenant={tenant} missionId={m.id} onChanged={onChanged} />
             <dl>
               <dt>Owner</dt>
               <dd>{queue.owners.find((o) => o.user_id === m.owner_id)?.name ?? m.owner_id}</dd>
@@ -311,9 +369,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
                 <label className="field">
                   Structured market
                   <select name="marketCode" defaultValue={m.country_code ?? 'OTHER'}>
-                    <option value="BD">Bangladesh</option>
-                    <option value="ES">Spain</option>
-                    <option value="DE">Germany</option>
+                    <CountryOptions />
                     <option value="OTHER">Other / needs classification</option>
                   </select>
                 </label>

@@ -1,6 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { Pool } from '../packages/db/src/index';
 import { migrate } from '../packages/db/src/migrate';
 import { seedSyntheticWorkspace } from '../packages/auth/src/bootstrap';
@@ -73,9 +75,18 @@ for (const key of [
   'NEON_AUTH_COOKIE_SECRET',
 ])
   delete (env as NodeJS.ProcessEnv)[key];
-const server = spawn('pnpm', ['--filter', '@corridra/web', 'start', '--port', '3200'], {
-  env,
-  stdio: 'inherit',
+// Signal the actual server, not a package-manager wrapper that can leave an orphan.
+const nextCli = createRequire(import.meta.url).resolve('next/dist/bin/next', {
+  paths: [resolve('apps/web')],
 });
+const server = spawn(
+  process.execPath,
+  [nextCli, 'start', '--hostname', '127.0.0.1', '--port', '3200'],
+  {
+    env,
+    cwd: resolve('apps/web'),
+    stdio: 'inherit',
+  },
+);
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => server.kill(signal));
 server.on('exit', (code) => process.exit(code ?? 1));

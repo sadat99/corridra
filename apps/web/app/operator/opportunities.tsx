@@ -10,7 +10,8 @@ import {
 type Owner = { user_id: string; name: string };
 type Opportunity = {
   id: string;
-  meeting_id: string;
+  meeting_id: string | null;
+  origin_id: string | null;
   mission_id: string;
   title: string;
   status: OpportunityStatus;
@@ -56,6 +57,7 @@ type Data = {
   confirmations: Confirmation[];
   owners: Owner[];
   meetings: { id: string; title: string; mission_id: string }[];
+  origins: { id: string; mission_id: string; kind: string; summary: string }[];
   missions: { id: string; label: string }[];
   sources: Source[];
   evidence: { id: string; source_id: string; status: string; scan_status: string }[];
@@ -613,6 +615,49 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
           <a href="/operator/signin">Sign in and verify your authenticator again</a> before
           confirming cash, correcting money or rebuilding reports.
         </p>
+      )}
+      {manage && (
+        <details>
+          <summary>Create an opportunity from a sourcing observation</summary>
+          <form
+            className="operator-form"
+            aria-label="Create sourcing opportunity"
+            onSubmit={(e) =>
+              submit(e, (f) => ({
+                action: 'createFromOrigin',
+                originId: f.get('originId'),
+                title: f.get('title'),
+                attribution: f.get('attribution'),
+                ...own(f),
+              }))
+            }
+          >
+            <label className="field">
+              Opportunity origin observation
+              <select name="originId" required>
+                <option value="">Choose a documented observation</option>
+                {data.origins.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.kind.replaceAll('_', ' ')}: {o.summary}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Sourcing opportunity title
+              <input name="title" required minLength={3} maxLength={160} />
+            </label>
+            <label className="field">
+              Sourcing attribution and limits
+              <textarea name="attribution" required minLength={3} maxLength={1000} />
+            </label>
+            <Ownership owners={data.owners} defaultDue={defaults.due} />
+            <Reason />
+            <button className="primary-link" disabled={busy}>
+              Create sourcing opportunity
+            </button>
+          </form>
+        </details>
       )}
       {manage && (
         <details>

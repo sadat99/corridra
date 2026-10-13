@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { routePack, initialRoutes, type RouteConfiguration } from '@corridra/domain/corridors';
+import {
+  missionCatalogue,
+  machineryFields,
+  requirementFields,
+} from '@corridra/domain/commercial-missions';
 const endpoints = z
   .object({
     id: z.uuid(),
@@ -13,6 +18,81 @@ const endpoints = z
   .refine((v) => v.origin !== v.destination);
 export class CorridorService {
   constructor(private pool: DatabasePool) {}
+  catalogue(ctx: RequestContext) {
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => ({
+      packs: (
+        await db.query(
+          `SELECT p.*,r.origin_market,r.destination_market FROM app.corridor_pack_version p JOIN app.corridor_route r ON r.tenant_id=p.tenant_id AND r.id=p.route_id WHERE p.tenant_id=$1 AND p.effective_from<=now() AND p.version=(SELECT max(version) FROM app.corridor_pack_version n WHERE n.tenant_id=p.tenant_id AND n.route_id=p.route_id AND n.effective_from<=now()) ORDER BY r.origin_market,r.destination_market`,
+          [ctx.tenantId],
+        )
+      ).rows,
+      types: (
+        await db.query(
+          'SELECT * FROM app.mission_type_definition WHERE tenant_id=$1 ORDER BY key,version DESC',
+          [ctx.tenantId],
+        )
+      ).rows,
+      requirements: (
+        await db.query(
+          'SELECT * FROM app.requirement_definition WHERE tenant_id=$1 ORDER BY key,version DESC',
+          [ctx.tenantId],
+        )
+      ).rows,
+      assessments: (
+        await db.query(
+          'SELECT * FROM app.assessment_definition WHERE tenant_id=$1 ORDER BY key,version DESC',
+          [ctx.tenantId],
+        )
+      ).rows,
+    }));
+  }
+  installTemplates(ctx: RequestContext) {
+    return withTenant(this.pool, ctx, 'config.manage', async ({ db, actorId }) => {
+      await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+        ctx.tenantId + ':corridor',
+      ]);
+      for (const template of missionCatalogue) {
+        for (const table of [
+          'mission_type_definition',
+          'requirement_definition',
+          'assessment_definition',
+        ]) {
+          const key =
+            table === 'mission_type_definition' ? template.key : template.key + '.commercial';
+          if (
+            (
+              await db.query(
+                `SELECT id FROM app.${table} WHERE tenant_id=$1 AND key=$2 AND version=1`,
+                [ctx.tenantId, key],
+              )
+            ).rowCount
+          )
+            continue;
+          const schema = {
+            schemaVersion: 1,
+            typeKey: template.key,
+            fields: Object.keys(requirementFields.shape),
+            machineryFields: template.key === 'machinery_procurement' ? [...machineryFields] : [],
+            criteria: [...template.criteria, 'evidence_completeness'],
+          };
+          const columns = table === 'mission_type_definition' ? '' : ',schema';
+          await db.query(
+            `INSERT INTO app.${table}(id,tenant_id,key,version,description,created_by,reason${columns}) VALUES($1,$2,$3,1,$4,$5,$6${columns ? ',$7' : ''})`,
+            [
+              randomUUID(),
+              ctx.tenantId,
+              key,
+              template.label,
+              actorId,
+              'Install generic commercial mission template',
+              ...(columns ? [schema] : []),
+            ],
+          );
+        }
+      }
+      return { installed: true };
+    });
+  }
   seedInitialRoutes(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'config.manage', async ({ db, actorId }) => {
       await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [

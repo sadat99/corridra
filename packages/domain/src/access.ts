@@ -185,6 +185,34 @@ export const meetingCommand = z.discriminatedUnion('action', [
     .object({
       ...command,
       ...ownership,
+      action: z.literal('proposeActivity'),
+      targetId: z.uuid(),
+      activityKind: z.enum([
+        'BUYER_MEETING',
+        'SUPPLIER_MEETING',
+        'FACTORY_VISIT',
+        'SHOWROOM_VISIT',
+        'TECHNICAL_EVALUATION',
+        'INSTITUTIONAL_MEETING',
+        'TRADE_FAIR_MEETING',
+      ]),
+      context: z
+        .object({
+          purpose: words(1000),
+          checklist: z.array(words(160)).max(15),
+          evidenceRequests: z.array(words(160)).max(15),
+        })
+        .strict(),
+      title: words(160),
+      brief: words(2000),
+      participants: z.array(words(160)).min(2).max(8),
+      reason: words(500),
+    })
+    .strict(),
+  z
+    .object({
+      ...command,
+      ...ownership,
       action: z.literal('propose'),
       messageId: z.uuid(),
       title: words(160),

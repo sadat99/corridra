@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { queueFilters } from '@corridra/missions';
 import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
 export const runtime = 'nodejs';
@@ -30,6 +31,12 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        'mission-catalogue': () => s.corridors.catalogue(ctx),
+        'commercial-mission': () =>
+          s.commercialMissions.workspace(
+            ctx,
+            z.uuid().parse(new URL(request.url).searchParams.get('mission')),
+          ),
         'commercial-records': () =>
           s.opportunities.records(
             ctx,
@@ -83,6 +90,12 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
               .min(0)
               .max(100000)
               .parse(query.get('offset') ?? 0),
+            queueFilters.parse({
+              owner: query.get('owner') || undefined,
+              stage: query.get('stage') || undefined,
+              route: query.get('route') || undefined,
+              job: query.get('job') || undefined,
+            }),
           );
         },
         workspace: async () => ({
@@ -170,7 +183,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       const chunk = await stream.read();
       if (chunk.done) break;
       size += chunk.value.length;
-      if (size > 8192) {
+      if (size > (action === 'commercial-mission' ? 32768 : 8192)) {
         await stream.cancel();
         throw new DomainError('Request is too large', 413);
       }
@@ -179,6 +192,12 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      'commercial-mission': () => s.commercialMissions.command(ctx, input),
+      'commercial-origin': () => s.opportunities.registerOrigin(ctx, input),
+      'mission-route': () => s.corridors.assign(ctx, input),
+      'mission-templates': () => s.corridors.installTemplates(ctx),
+      'corridor-route': () => s.corridors.createRoute(ctx, input),
+      'corridor-pack': () => s.corridors.appendPack(ctx, input),
       opportunity: () => s.opportunities.command(ctx, input),
       communication: () => s.communications.command(ctx, input),
       meeting: () => s.meetings.command(ctx, input),

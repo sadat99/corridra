@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
 import AxeBuilder from '@axe-core/playwright';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
 import { intakeTemplate } from '../../packages/delivery/src/import';
+import { initialRouteConfiguration } from '../../packages/missions/src/corridors';
+import { initialRoutes } from '../../packages/domain/src/corridors';
 function totp(secret: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   let bits = '';
@@ -1121,4 +1123,310 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status()).toBe(
     401,
   );
+});
+
+test('route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  // Preserve the shared-IP five-per-minute MFA budget after the preceding journeys.
+  const rateWindowEnd = Date.now() + 60000;
+  await expect
+    .poll(() => Date.now(), { timeout: 65000, intervals: [1000] })
+    .toBeGreaterThanOrEqual(rateWindowEnd);
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const counter = Math.floor(Date.now() / 30000);
+  await expect
+    .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [500] })
+    .not.toBe(counter);
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  const verified = await verification;
+  const verificationResult = await verified.json();
+  expect(
+    verified.ok(),
+    JSON.stringify({
+      status: verified.status(),
+      errorCode: verificationResult.code,
+      error: verificationResult.message,
+    }),
+  ).toBe(true);
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  expect((await page.request.get('/api/workspace/tenants')).status()).toBe(200);
+  const headers = { Origin: 'http://127.0.0.1:3200' },
+    reason = 'Explicit invented machinery browser acceptance';
+  async function post(action: string, data: Record<string, unknown>) {
+    const r = await page.request.post(`/api/workspace/${action}?tenant=${seed.tenantId}`, {
+      headers,
+      data,
+    });
+    const result = await r.json();
+    expect(r.ok(), `${action}: ${result.error ?? r.status()}`).toBe(true);
+    return result;
+  }
+  const intake = await page.request.post('/api/intake', {
+    headers,
+    data: {
+      key: randomUUID(),
+      websiteCheck: '',
+      brief: {
+        objective: 'Source suppliers',
+        market: 'China',
+        attendance: 'No',
+        startDate: '',
+        endDate: '',
+        timezone: 'Asia/Dhaka',
+        offer: 'Invented machinery procurement for browser validation',
+        website: '',
+        outcomes: ['Supplier visits'],
+        notes: 'Synthetic only',
+        name: 'Synthetic Importer',
+        company: 'Synthetic Machinery Browser',
+        email: 'machinery@example.invalid',
+        acknowledged: true,
+      },
+    },
+  });
+  expect(intake.ok()).toBe(true);
+  const missionId = (await intake.json()).id;
+  const dueAt = new Date(Date.now() + 86400000).toISOString();
+  for (const [i, action] of ['qualify', 'activate', 'targeting'].entries())
+    await post('mission', {
+      id: missionId,
+      version: i + 1,
+      commandId: randomUUID(),
+      action,
+      ownerId: seed.principalId,
+      nextAction: 'Request supplier documentation',
+      dueAt,
+      marketCode: 'CN',
+      targetProfile: 'Declared machinery technical needs',
+      reason,
+    });
+  await post('mission-templates', {});
+  const catalogue = await (
+    await page.request.get(`/api/workspace/mission-catalogue?tenant=${seed.tenantId}`)
+  ).json();
+  const requirementDefinition = catalogue.requirements.find(
+      (r: { schema: { typeKey: string } }) => r.schema.typeKey === 'machinery_procurement',
+    ),
+    assessmentDefinition = catalogue.assessments.find(
+      (r: { schema: { typeKey: string } }) => r.schema.typeKey === 'machinery_procurement',
+    );
+  const routeId = randomUUID(),
+    packId = randomUUID(),
+    assignmentId = randomUUID();
+  await post('corridor-route', { id: routeId, origin: 'BD', destination: 'CN', reason });
+  await post('corridor-pack', {
+    id: packId,
+    routeId,
+    version: 1,
+    status: 'TESTING',
+    effectiveFrom: new Date().toISOString(),
+    reason,
+    configuration: {
+      ...initialRouteConfiguration(initialRoutes[2]),
+      currencies: ['CNY'],
+      missionTypes: ['machinery_procurement'],
+      requirements: [requirementDefinition.id],
+      assessments: [assessmentDefinition.id],
+    },
+  });
+  await post('mission-route', {
+    id: assignmentId,
+    missionId,
+    packId,
+    missionTypeId: catalogue.types.find((t: { key: string }) => t.key === 'machinery_procurement')
+      .id,
+    version: 1,
+    reason,
+  });
+  const source = await post('source', {
+    kind: 'public_record',
+    locator: 'https://example.invalid/machinery-browser',
+    observedAt: new Date().toISOString(),
+    classification: 'PUBLIC',
+    purpose: 'synthetic_validation',
+    retentionUntil: new Date(Date.now() + 604800000).toISOString(),
+    aiPolicy: 'DENY',
+  });
+  const claim = await post('claim', {
+    sourceId: source.id,
+    statement: 'Invented supplier machine capacity declaration, unverified',
+  });
+  const company = await post('research', {
+    action: 'ingest',
+    commandId: randomUUID(),
+    sourceId: source.id,
+    name: 'Synthetic Machinery Supplier',
+    country: 'CN',
+    domain: 'machinery.example.invalid',
+    address: 'Synthetic factory site',
+    identifierType: 'registry',
+    identifier: randomUUID(),
+  });
+  await post('research', {
+    action: 'attribute',
+    commandId: randomUUID(),
+    organisationId: company.id,
+    kind: 'capability',
+    claimId: claim.id,
+    validUntil: new Date(Date.now() + 518400000).toISOString(),
+  });
+  const relationship = await post('research', {
+    action: 'relationship',
+    commandId: randomUUID(),
+    organisationId: company.id,
+    ownerId: seed.principalId,
+    visibility: 'OWNER',
+    note: 'Synthetic supplier relationship',
+  });
+  const target = await post('research', {
+    action: 'target',
+    commandId: randomUUID(),
+    missionId,
+    relationshipId: relationship.id,
+    contactId: null,
+    claimIds: [claim.id],
+    fit: 'POSSIBLE',
+    rationale: 'Declared capacity may fit',
+    uncertainty: 'No independent engineering assessment',
+    gaps: 'Need technical documents',
+    nextAction: 'Request supplier documents',
+    dueAt,
+  });
+  await page.reload();
+  const card = page.locator('.mission-card').filter({
+    has: page.getByRole('heading', { name: 'Synthetic Machinery Browser', exact: true }),
+  });
+  await expect(card.getByRole('combobox', { name: 'Structured market', exact: true })).toHaveValue(
+    'CN',
+  );
+  await page.getByText('Record a research source and company', { exact: true }).click();
+  await page.getByRole('combobox', { name: 'Company country', exact: true }).selectOption('CN');
+  await page.getByText('Record a research source and company', { exact: true }).click();
+  await card.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+  await expect(card.getByText('BD → CN', { exact: false })).toBeVisible();
+  await card
+    .getByRole('combobox', { name: 'Declared source', exact: true })
+    .selectOption(source.id);
+  await card
+    .getByRole('combobox', { name: 'Source declaration', exact: true })
+    .selectOption(claim.id);
+  await card
+    .getByLabel('Commercial objective', { exact: true })
+    .fill('Procure a machine against declared requirements');
+  await card
+    .getByRole('combobox', { name: 'Commercial role', exact: true })
+    .selectOption('IMPORTER');
+  await card.getByLabel('Product or service', { exact: true }).fill('Synthetic production machine');
+  await card.getByText('Machine technical requirements', { exact: true }).click();
+  await card
+    .getByLabel('Throughput and capacity', { exact: true })
+    .fill('One hundred pieces per hour');
+  await card.getByLabel('Reason for recording this change', { exact: true }).fill(reason);
+  await card.getByRole('button', { name: 'Save requirements', exact: true }).click();
+  await expect(card.getByRole('status').filter({ hasText: 'Saved with source' })).toBeVisible();
+  const snapshot = await (
+    await page.request.get(
+      `/api/workspace/commercial-mission?tenant=${seed.tenantId}&mission=${missionId}`,
+    )
+  ).json();
+  const requirementId = snapshot.requirements[0].id;
+  await card.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('assessment');
+  await card
+    .getByRole('combobox', { name: 'Declared source', exact: true })
+    .selectOption(source.id);
+  await card
+    .getByRole('combobox', { name: 'Source declaration', exact: true })
+    .selectOption(claim.id);
+  await card.getByRole('combobox', { name: 'Counterparty', exact: true }).selectOption(target.id);
+  for (let i = 0; i < 3; i++) {
+    await card
+      .getByLabel('Requirement assessed', { exact: true })
+      .nth(i)
+      .fill('Declared machine capacity and supplier fit');
+    await card
+      .getByLabel('Evidence or declared basis', { exact: true })
+      .nth(i)
+      .fill('Supplier declaration only; independent documentation not reviewed');
+  }
+  await card
+    .getByLabel('unknowns', { exact: true })
+    .fill('Utilities and installation remain unknown');
+  await card
+    .getByLabel('gaps', { exact: true })
+    .fill('Request technical documentation and references');
+  await card
+    .getByLabel('rationale', { exact: true })
+    .fill('Discuss requirements before any supplier selection');
+  await card.getByLabel('Reason for recording this change', { exact: true }).fill(reason);
+  await card.getByRole('button', { name: 'Save assessment', exact: true }).click();
+  await expect(card.getByRole('status').filter({ hasText: 'Saved with source' })).toBeVisible();
+  const technicalTable = card.getByRole('table', {
+    name: 'Machinery observations against the current requirements',
+    exact: true,
+  });
+  await expect(technicalTable).toContainText('UNKNOWN');
+  const base = { missionId, reason, sourceId: source.id, claimId: claim.id };
+  const rfq = await post('commercial-mission', {
+    ...base,
+    action: 'rfq',
+    commandId: randomUUID(),
+    requirementId,
+    targetIds: [target.id],
+    buyerContext: 'Synthetic importer machinery request',
+    requestedTerms: 'Capacity, installation and shipping scope',
+    dueAt,
+  });
+  await card.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('quotation');
+  await card
+    .getByRole('combobox', { name: 'Declared source', exact: true })
+    .selectOption(source.id);
+  await card
+    .getByRole('combobox', { name: 'Source declaration', exact: true })
+    .selectOption(claim.id);
+  await card.getByRole('combobox', { name: 'Counterparty', exact: true }).selectOption(target.id);
+  // The RFQ was appended through the same authenticated API; refresh the panel before selection.
+  await card.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+  await card.getByRole('combobox', { name: 'RFQ', exact: true }).selectOption(rfq.id);
+  await card.getByLabel('unitPrice (original currency amount)', { exact: true }).fill('1200.00');
+  await card
+    .getByLabel('Explicit uncertainties', { exact: true })
+    .fill('Quantity, Incoterm and installation not supplied');
+  await card.getByLabel('Reason for recording this change', { exact: true }).fill(reason);
+  await card.getByRole('button', { name: 'Save quotation', exact: true }).click();
+  await expect(card.getByRole('status').filter({ hasText: 'Saved with source' })).toBeVisible();
+  await expect(card.getByRole('cell', { name: 'NOT COMPARABLE', exact: false })).toBeVisible();
+  await expect(card.getByRole('cell', { name: 'CNY 1200.00', exact: true })).toBeVisible();
+  await card.getByText('Terms and calculation basis', { exact: true }).click();
+  await expect(card.getByText('NOT SUPPLIED', { exact: true }).first()).toBeVisible();
+  expect((await new AxeBuilder({ page }).include('.mission-card').analyze()).violations).toEqual(
+    [],
+  );
+  await mkdir('.cache/v2-part-02', { recursive: true });
+  await card.screenshot({ path: '.cache/v2-part-02/machinery-requirements-and-comparison.png' });
+  expect(
+    (
+      await page.request.post(`/api/workspace/commercial-mission?tenant=${seed.tenantId}`, {
+        headers: { Origin: 'https://untrusted.example.invalid' },
+        data: { action: 'quotation' },
+      })
+    ).status(),
+  ).toBe(403);
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin/);
+  expect(
+    (
+      await page.request.get(
+        `/api/workspace/commercial-mission?tenant=${seed.tenantId}&mission=${missionId}`,
+      )
+    ).status(),
+  ).toBe(401);
 });

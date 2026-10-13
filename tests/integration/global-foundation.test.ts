@@ -309,7 +309,7 @@ test('populated 0018 upgrade retains commercial history, contacts, identities, s
         async (t) =>
           (
             await f.owner.query(
-              `SELECT to_jsonb(t) data FROM app.${t} t ORDER BY to_jsonb(t)::text`,
+              `SELECT ${t === 'meeting' ? "to_jsonb(t)-'target_id'-'activity_kind'-'activity_context'" : 'to_jsonb(t)'} data FROM app.${t} t ORDER BY to_jsonb(t)::text`,
             )
           ).rows,
       ),

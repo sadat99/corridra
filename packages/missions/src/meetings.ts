@@ -74,22 +74,30 @@ export class MeetingService {
       let id: string,
         version: number,
         previous: unknown = null;
-      if (v.action === 'propose') {
-        const c = (
-          await db.query(
-            `SELECT c.id,t.mission_id FROM app.communication c JOIN app.target_account t ON t.tenant_id=c.tenant_id AND t.id=c.target_id WHERE c.tenant_id=$1 AND c.id=$2`,
-            [ctx.tenantId, v.messageId],
-          )
-        ).rows[0];
+      if (v.action === 'propose' || v.action === 'proposeActivity') {
+        const c =
+          v.action === 'propose'
+            ? (
+                await db.query(
+                  `SELECT c.id,t.mission_id FROM app.communication c JOIN app.target_account t ON t.tenant_id=c.tenant_id AND t.id=c.target_id WHERE c.tenant_id=$1 AND c.id=$2`,
+                  [ctx.tenantId, v.messageId],
+                )
+              ).rows[0]
+            : (
+                await db.query(
+                  'SELECT id,mission_id FROM app.target_account WHERE tenant_id=$1 AND id=$2',
+                  [ctx.tenantId, v.targetId],
+                )
+              ).rows[0];
         if (!c) throw new DomainError('Introduction unavailable', 404);
         id = v.commandId;
         version = 1;
         await db.query(
-          'INSERT INTO app.meeting(id,tenant_id,message_id,mission_id,title,owner_id,next_action,due_at,reason,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
+          `INSERT INTO app.meeting(id,tenant_id,message_id,mission_id,title,owner_id,next_action,due_at,reason,created_by${v.action === 'proposeActivity' ? ',target_id,activity_kind,activity_context' : ''}) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10${v.action === 'proposeActivity' ? ',$11,$12,$13' : ''})`,
           [
             id,
             ctx.tenantId,
-            c.id,
+            v.action === 'propose' ? c.id : null,
             c.mission_id,
             v.title,
             v.ownerId,
@@ -97,6 +105,7 @@ export class MeetingService {
             v.dueAt,
             v.reason,
             actorId,
+            ...(v.action === 'proposeActivity' ? [v.targetId, v.activityKind, v.context] : []),
           ],
         );
         await db.query(
