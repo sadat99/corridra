@@ -561,8 +561,8 @@ test('comparison preserves missing values, mixed currencies, exact large totals 
   expect(result.every((r) => r.status === 'NOT COMPARABLE')).toBe(true);
   expect(result[0].derivedTotal?.amountMinor).toBe('900719925474099300');
   expect(result[0].missing).toContain('shipping');
-  expect(() => assertBranchBudget(8)).not.toThrow();
-  for (const n of [9, 10, -1, NaN]) expect(() => assertBranchBudget(n)).toThrow();
+  expect(() => assertBranchBudget(9)).not.toThrow();
+  for (const n of [10, 11, -1, NaN]) expect(() => assertBranchBudget(n)).toThrow();
 });
 
 test('quotation corrections retain originals and reject stale decisions, unsupported routes and private reads', async () => {

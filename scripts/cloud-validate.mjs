@@ -229,7 +229,10 @@ try {
     'Existing recovery branch requires inspection',
   );
   const currentInventory = await api(base + '/branches');
-  assert(currentInventory.branches.length < 9, 'Retire completed branches before creating a tenth');
+  assert(
+    currentInventory.branches.length < 10,
+    'Retire completed branches before creating an eleventh',
+  );
   ({ branch: restore } = await api(base + '/branches', {
     branch: {
       parent_id: branch.id,
