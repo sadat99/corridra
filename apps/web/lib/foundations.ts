@@ -1,4 +1,7 @@
 import 'server-only';
+import { localFixtureAdapter } from '@corridra/intelligence/local-fixture';
+import { IntelligenceService } from '@corridra/intelligence/service';
+import { NetworkService } from '@corridra/network';
 import { Pool, assertRestrictedPool } from '@corridra/db';
 import { createIdentity } from '@corridra/auth';
 import { AccessService } from '@corridra/auth/access';
@@ -53,6 +56,17 @@ function createServices() {
   };
   if (process.env.CLAMAV_HOST)
     scanner = new ClamAvScanner(process.env.CLAMAV_HOST, Number(process.env.CLAMAV_PORT ?? 3310));
+  let inferenceAdapter;
+  let aiEnabled = process.env.CORRIDRA_AI_ENABLED === 'true';
+  try {
+    inferenceAdapter = localFixtureAdapter(
+      config.DATABASE_REGION,
+      process.env.VERCEL_ENV,
+      process.env.CORRIDRA_AI_FIXTURE_URL,
+    );
+  } catch {
+    aiEnabled = false;
+  }
   const ready = Promise.all([
     assertRestrictedPool(runtimePool),
     assertRestrictedPool(authPool, 'corridra_auth'),
@@ -61,6 +75,8 @@ function createServices() {
     config,
     ...identity,
     access: new AccessService(runtimePool),
+    intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
+    network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
     counterparties: new CounterpartyService(runtimePool),
     missions: new MissionService(runtimePool, config.AUTH_SECRET),
     delivery: new DeliveryService(

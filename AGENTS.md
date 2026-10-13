@@ -1,5 +1,7 @@
 # Working on Corridra
 
+Unqualified Part 1, Part 2 and subsequent part numbers refer to the revised five-part V2 roadmap. The original twelve-part V1 plan is historical: V1 Parts 1–8 remain the accepted baseline. Follow the latest explicit V2 packet; do not resume V1 Parts 9–12 automatically. Revised V2 Part 4 combines governed AI and the Commercial Execution Network. Part 5 requires a separate owner request.
+
 For V2 work, read `docs/architecture/multi-corridor-v2.md` first. Reuse existing domain services and versioned data; never add country-specific forks, infer compliance approval, weaken RLS or historical money/evidence rules, or activate unapproved real customer-data flows.
 
 Read `docs/README.md`, the relevant supplied documents, `docs/implementation/plan-v1.0.md`, relevant ADRs and module documentation before editing. The source uploads are reference material; follow the user's explicit task when it conflicts with them. Keep originals in `docs/source/` immutable. Working-copy edits require a documented amendment and corresponding integrity checks.

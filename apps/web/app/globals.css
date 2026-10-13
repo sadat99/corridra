@@ -1399,3 +1399,14 @@ summary:hover {
   background: var(--paper);
   font: inherit;
 }
+
+.ai-draft-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  max-height: 30rem;
+  overflow: auto;
+}
+.operator-page dd {
+  overflow-wrap: anywhere;
+}

@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -44,6 +45,9 @@ const env = {
   ...process.env,
   CORRIDRA_FOUNDATIONS_ENABLED: 'true',
   CORRIDRA_DELIVERY_ENABLED: 'true',
+  CORRIDRA_AI_ENABLED: 'true',
+  CORRIDRA_NETWORK_ENABLED: 'true',
+  CORRIDRA_AI_FIXTURE_URL: 'http://127.0.0.1:3201',
   APP_ORIGIN: 'http://127.0.0.1:3200',
   DATA_ENVIRONMENT: 'synthetic',
   DATABASE_REGION: 'local',
@@ -75,6 +79,48 @@ for (const key of [
   'NEON_AUTH_COOKIE_SECRET',
 ])
   delete (env as NodeJS.ProcessEnv)[key];
+// Explicit synthetic provider protocol fixture. No model inference or outbound provider traffic.
+const providerFixture = createServer(async (req, res) => {
+  try {
+    const chunks: Buffer[] = [];
+    let bytes = 0;
+    for await (const chunk of req) {
+      bytes += chunk.length;
+      if (bytes > 40000) throw new Error('fixture size limit');
+      chunks.push(chunk);
+    }
+    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const user = body.messages.find((m: { role: string }) => m.role === 'user');
+    const prompt = JSON.parse(user.content);
+    if (prompt.task !== 'commercial_intent') throw new Error('Fixture task unsupported');
+    const source = prompt.untrustedSources[0];
+    const content = JSON.stringify({
+      authority: 'UNVERIFIED_DRAFT',
+      facts: [source],
+      unknowns: ['Synthetic provider fixture only; acceptance unknown'],
+      data: { proposedIntent: 'Review synthetic machinery', fields: [] },
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        id: 'synthetic-fixture',
+        object: 'chat.completion',
+        created: 0,
+        model: body.model,
+        choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 },
+      }),
+    );
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        error: { message: 'Synthetic fixture rejected request', type: 'fixture_error' },
+      }),
+    );
+  }
+});
+await new Promise<void>((resolve) => providerFixture.listen(3201, '127.0.0.1', resolve));
 // Signal the actual server, not a package-manager wrapper that can leave an orphan.
 const nextCli = createRequire(import.meta.url).resolve('next/dist/bin/next', {
   paths: [resolve('apps/web')],
@@ -86,7 +132,28 @@ const server = spawn(
     env,
     cwd: resolve('apps/web'),
     stdio: 'inherit',
+    detached: true,
   },
 );
-for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => server.kill(signal));
-server.on('exit', (code) => process.exit(code ?? 1));
+for (const signal of ['SIGINT', 'SIGTERM'] as const)
+  process.on(signal, () => {
+    providerFixture.close();
+    if (server.pid) {
+      try {
+        process.kill(-server.pid, signal);
+      } catch {
+        /* Already stopped. */
+      }
+    }
+  });
+server.on('exit', (code) => {
+  if (server.pid) {
+    try {
+      process.kill(-server.pid, 'SIGTERM');
+    } catch {
+      /* Own process group already stopped. */
+    }
+  }
+  providerFixture.close();
+  process.exit(code ?? 1);
+});

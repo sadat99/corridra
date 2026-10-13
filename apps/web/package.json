@@ -26,7 +26,9 @@
     "react-dom": "19.3.0",
     "workflow": "5.2.0",
     "zod": "4.6.5",
-    "@corridra/opportunities": "workspace:*"
+    "@corridra/opportunities": "workspace:*",
+    "@corridra/intelligence": "workspace:*",
+    "@corridra/network": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

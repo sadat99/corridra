@@ -1,6 +1,6 @@
 # V2 Part 3 release record
 
-Status at PR preparation: implementation and local acceptance complete. The accepted PR records final-head CI, live migration, exact production deployment and cleanup. Those later release steps are not implied by this preparation record. Accepted baseline is Part 2 merge `2da05f6d523f7303cf5492b10b62d7abae456ed0`, PR #31. This bounded Part 3 uses `feat/v2-03-customer-experience`; Part 4 has not started.
+Status at PR preparation: implementation and local acceptance complete. The accepted PR records final-head CI, live migration, exact production deployment and cleanup. Those later release steps are not implied by this preparation record. Accepted baseline is Part 2 merge `2da05f6d523f7303cf5492b10b62d7abae456ed0`, PR #31. This bounded Part 3 used `feat/v2-03-customer-experience`. It was subsequently accepted in PR #33 at main `ca7894301cf4c1b69a2718d6b6cf55ecfca2042d`, with exact-SHA production acceptance recorded in that PR. Revised Part 4 is now separately authorized and in progress; original V1 numbering is not resumed.
 
 ## Actor journeys
 

@@ -71,6 +71,8 @@ export class AccessService {
           'communications.introductions',
           'communications.dispatch',
           'opportunities.commands',
+          'ai.enabled',
+          'network.enabled',
         ]),
         enabled: z.boolean(),
       })

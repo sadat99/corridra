@@ -1622,3 +1622,520 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     ).status(),
   ).toBe(401);
 });
+
+test('governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(300000);
+  page.setDefaultTimeout(10000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  let { secret } = JSON.parse(
+    await readFile('.cache/part06-browser-authenticator.json', 'utf8').catch(() => '{"secret":""}'),
+  );
+  const budgetAfter = Date.now() + 60000;
+  await expect
+    .poll(() => Date.now(), { timeout: 65000, intervals: [1000] })
+    .toBeGreaterThanOrEqual(budgetAfter);
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: /Set up your authenticator|Verify your authenticator/ }),
+  ).toBeVisible();
+  const firstEnrollment = await page
+    .getByRole('heading', { name: 'Set up your authenticator' })
+    .isVisible();
+  if (firstEnrollment) {
+    await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+    secret = await page.getByLabel('Authenticator setup key').inputValue();
+  }
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  const headers = { Origin: 'http://127.0.0.1:3200' },
+    reason = 'Synthetic governed AI and network browser validation';
+  async function post(action: string, input: Record<string, unknown>) {
+    const r = await page.request.post(`/api/workspace/${action}?tenant=${seed.tenantId}`, {
+      headers,
+      data: input,
+    });
+    const data = await r.json();
+    expect(r.ok(), `${action}: ${data.error ?? r.status()}`).toBe(true);
+    return data;
+  }
+  const db = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    database: 'corridra_browser',
+    user: 'postgres',
+    password: local.ownerPassword,
+  });
+  const runtime = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    database: 'corridra_browser',
+    user: 'corridra_runtime_local',
+    password: local.runtimePassword,
+  });
+  const operatorContext = await browser.newContext(),
+    contributorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    const session = (
+      await db.query(
+        'SELECT s.token FROM identity.session s JOIN identity.assurance a ON a.session_id=s.id JOIN identity.principal p ON p.identity_id=s."userId" WHERE p.id=$1 ORDER BY a.verified_at DESC LIMIT 1',
+        [seed.principalId],
+      )
+    ).rows[0];
+    const ctx = { token: session.token, tenantId: seed.tenantId, purpose: 'synthetic_validation' };
+    const { provisionSyntheticContributor } = await import('../../packages/auth/src/bootstrap');
+    const { withTenant } = await import('../../packages/db/src/index');
+    const contributorPassword = 'synthetic-browser-contributor-strong-password',
+      reviewerPassword = 'synthetic-browser-reviewer-strong-password';
+    const contributor = await provisionSyntheticContributor(db, ctx, {
+      email: 'contributor@example.invalid',
+      name: 'Synthetic contributor',
+      password: contributorPassword,
+      operatingCountry: 'BD',
+    });
+    const reviewer = await provisionSyntheticContributor(db, ctx, {
+      email: 'taskreviewer@example.invalid',
+      name: 'Synthetic task reviewer',
+      password: reviewerPassword,
+      operatingCountry: 'BD',
+    });
+    await withTenant(runtime, ctx, 'members.manage', async (t) =>
+      t.db.query(
+        "INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries) VALUES($1,$2,'operator',ARRAY['BD'])",
+        [seed.tenantId, reviewer.principalId],
+      ),
+    );
+    await post('config', { key: 'ai.enabled', enabled: true });
+    await post('config', { key: 'network.enabled', enabled: true });
+    const until = new Date(Date.now() + 10 * 86400000).toISOString(),
+      soon = new Date(Date.now() + 86400000).toISOString();
+    const source = (
+      await post('source', {
+        kind: 'public_record',
+        locator: 'Synthetic public machine capacity protocol fixture',
+        observedAt: new Date().toISOString(),
+        classification: 'PUBLIC',
+        purpose: 'synthetic_validation',
+        retentionUntil: until,
+        aiPolicy: 'REVIEW_REQUIRED',
+      })
+    ).id;
+    const claim = (
+      await post('claim', {
+        sourceId: source,
+        statement: 'Synthetic machine capacity is 100 units per hour.',
+      })
+    ).id;
+    await post('ai-rights', {
+      id: randomUUID(),
+      version: 1,
+      policy: {
+        sourceId: source,
+        licence: 'Synthetic fixture-only review',
+        permittedReuse: ['AI_REVIEW'],
+        role: 'CONTROLLER',
+        purpose: 'synthetic_validation',
+        classification: 'PUBLIC',
+        jurisdictions: ['DE'],
+        subjectLocations: [],
+        processingLocations: ['DE'],
+        retentionUntil: until,
+        legalHold: false,
+        aiPermission: 'REVIEW_REQUIRED',
+        transferStatus: 'APPROVED',
+        transferMechanism: 'Synthetic protocol fixture',
+      },
+      effectiveFrom: new Date().toISOString(),
+      reason,
+    });
+    const policyId = randomUUID();
+    await post('ai-policy', {
+      policy: {
+        id: policyId,
+        version: 1,
+        adapter: 'openai',
+        model: 'synthetic-golden-v1',
+        secretRef: 'CORRIDRA_OPENAI_API_KEY',
+        approved: true,
+        evaluationStatus: 'SYNTHETIC_ONLY',
+        evaluationSourceId: source,
+        processingLocations: ['DE'],
+        tasks: ['commercial_intent'],
+        inputRateMinorPerMillion: '100',
+        outputRateMinorPerMillion: '200',
+        maxCostMinor: '100',
+        currency: 'USD',
+        effectiveUntil: until,
+      },
+      key: 'browser-protocol-fixture',
+      termsSourceId: source,
+      dailyBudgetMinor: '1000',
+      effectiveFrom: new Date().toISOString(),
+      reason,
+    });
+    const intake = await page.request.post('/api/intake', {
+      headers,
+      data: {
+        key: randomUUID(),
+        websiteCheck: '',
+        brief: {
+          objective: 'Source suppliers',
+          market: 'China',
+          attendance: 'No',
+          startDate: '',
+          endDate: '',
+          timezone: 'Asia/Dhaka',
+          offer: 'Synthetic governed machinery and contributor journey',
+          website: '',
+          outcomes: ['Supplier visits'],
+          notes: 'Invented records only',
+          name: 'Synthetic machine buyer',
+          company: 'Synthetic Part 4 Browser',
+          email: 'part4@example.invalid',
+          acknowledged: true,
+        },
+      },
+    });
+    expect(intake.ok()).toBe(true);
+    const missionId = (await intake.json()).id;
+    for (const [i, action] of ['qualify', 'activate', 'targeting'].entries())
+      await post('mission', {
+        id: missionId,
+        version: i + 1,
+        commandId: randomUUID(),
+        action,
+        ownerId: seed.principalId,
+        nextAction: 'Review synthetic machine evidence',
+        dueAt: soon,
+        marketCode: 'CN',
+        targetProfile: 'Synthetic technical supplier needs',
+        reason,
+      });
+    await post('mission-templates', {});
+    const catalogue = await (
+      await page.request.get(`/api/workspace/mission-catalogue?tenant=${seed.tenantId}`)
+    ).json();
+    let route = (
+      await db.query(
+        "SELECT id FROM app.corridor_route WHERE tenant_id=$1 AND origin_market='BD' AND destination_market='CN'",
+        [seed.tenantId],
+      )
+    ).rows[0];
+    if (!route) {
+      route = { id: randomUUID() };
+      await post('corridor-route', { id: route.id, origin: 'BD', destination: 'CN', reason });
+    }
+    const version =
+      (
+        await db.query(
+          'SELECT coalesce(max(version),0)::int n FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2',
+          [seed.tenantId, route.id],
+        )
+      ).rows[0].n + 1;
+    const packId = randomUUID(),
+      assignmentId = randomUUID();
+    await post('corridor-pack', {
+      id: packId,
+      routeId: route.id,
+      version,
+      status: 'TESTING',
+      effectiveFrom: new Date().toISOString(),
+      reason,
+      configuration: {
+        ...initialRouteConfiguration(initialRoutes[2]),
+        missionTypes: ['machinery_procurement'],
+        requiredCapabilities: ['supplier_research'],
+        aiPolicyRef: policyId,
+      },
+    });
+    await post('mission-route', {
+      id: assignmentId,
+      missionId,
+      packId,
+      missionTypeId: catalogue.types.find((x: { key: string }) => x.key === 'machinery_procurement')
+        .id,
+      version: 1,
+      reason,
+    });
+    await page.reload();
+    const aiPanel = page.getByRole('region', { name: 'Governed AI review' });
+    await aiPanel.getByLabel('Mission reference', { exact: true }).fill(missionId);
+    await aiPanel.getByLabel('Reviewed model policy').selectOption(policyId);
+    await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
+    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await expect(
+      aiPanel
+        .getByText('Synthetic provider fixture only; acceptance unknown', { exact: false })
+        .first(),
+    ).toBeVisible();
+    await aiPanel.getByRole('button', { name: 'Inspect original sources' }).click();
+    await expect(
+      aiPanel.getByText('Authorized original source quotations and rights'),
+    ).toBeVisible();
+    await aiPanel.getByRole('button', { name: 'Close source inspection' }).click();
+    await aiPanel.getByLabel('Review reason', { exact: true }).fill(reason);
+    await aiPanel.getByRole('button', { name: 'Save human review' }).click();
+    await expect(aiPanel.getByText('SUCCEEDED · ACCEPT', { exact: false })).toBeVisible();
+    const profileId = randomUUID();
+    await post('network-profile', {
+      id: profileId,
+      principalId: contributor.principalId,
+      version: 1,
+      alias: 'Synthetic remote engineer',
+      categories: ['technical_adviser'],
+      capabilities: ['supplier_research'],
+      markets: ['CN'],
+      languages: ['en'],
+      sectors: ['machinery'],
+      workCountries: ['BD'],
+      available: true,
+      status: 'ACTIVE',
+      eligibilitySourceId: source,
+      expiresAt: until,
+      reason,
+    });
+    const ruleId = randomUUID();
+    await post('network-rule', {
+      id: ruleId,
+      key: 'browser-reward',
+      version: 1,
+      amountMinor: '1000',
+      currency: 'CNY',
+      effectiveFrom: new Date(Date.now() - 1000).toISOString(),
+      effectiveUntil: until,
+      reason,
+    });
+    const taskId = randomUUID();
+    await post('network-task', {
+      id: taskId,
+      missionId,
+      routeAssignmentId: assignmentId,
+      kind: 'supplier_research',
+      market: 'CN',
+      workCountry: 'BD',
+      location: 'Declared remote synthetic work location',
+      language: 'en',
+      sector: 'machinery',
+      capabilities: ['supplier_research'],
+      instructions: 'Review only the disclosed synthetic machine capacity statement.',
+      deadline: soon,
+      expiresAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+      evidenceRequired: 'Original source-reported machine capacity statement',
+      effort: 'Two hours of synthetic review; no guaranteed earnings',
+      dataHandling: 'Synthetic disclosed information only; no private contacts',
+      cancellationTerms: 'Owner reviews cancellation with a recorded reason',
+      disputeTerms: 'Independent reviewer assesses original evidence and dispute',
+      reviewerId: reviewer.principalId,
+      rewardRuleId: ruleId,
+      reason,
+    });
+    await post('network-event', {
+      commandId: randomUUID(),
+      taskId,
+      version: 0,
+      action: 'ASSIGN',
+      details: {
+        kind: 'assignment',
+        profileId,
+        relationshipDisclosure: 'Synthetic invited engineer; no counterparty relationship',
+      },
+      reason,
+    });
+    async function enrolled(
+      p: import('@playwright/test').Page,
+      email: string,
+      password: string,
+      path: string,
+    ) {
+      p.setDefaultTimeout(10000);
+      await p.goto(path);
+      await p.getByLabel('Email', { exact: true }).fill(email);
+      await p.getByLabel('Password', { exact: true }).fill(password);
+      await p.getByRole('button', { name: 'Continue', exact: true }).click();
+      await p.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+      const secret = await p.getByLabel('Authenticator setup key').inputValue();
+      await p.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+      await p.getByRole('button', { name: 'Verify and open workspace' }).click();
+    }
+    const contributorPage = await contributorContext.newPage();
+    await enrolled(
+      contributorPage,
+      'contributor@example.invalid',
+      contributorPassword,
+      `/contributor?workspace=${seed.tenantId}`,
+    );
+    await expect(
+      contributorPage.getByRole('heading', { name: 'Your assigned tasks.' }),
+    ).toBeVisible();
+    await expect(
+      contributorPage.getByText('Review only the disclosed synthetic machine capacity statement.'),
+    ).toBeVisible();
+    expect(
+      (
+        await contributorPage.request.get(`/api/workspace/missions?tenant=${seed.tenantId}`)
+      ).status(),
+    ).toBe(403);
+    expect(await (await contributorPage.request.get('/api/workspace/tenants')).json()).toEqual([]);
+    expect(
+      (await db.query('SELECT * FROM app.membership WHERE user_id=$1', [contributor.principalId]))
+        .rowCount,
+    ).toBe(0);
+    await contributorPage
+      .getByLabel('Acceptance and relationship confirmation')
+      .fill('I accept the disclosed synthetic task and relationship limits');
+    await contributorPage.getByRole('button', { name: 'Accept the disclosed task' }).click();
+    await expect(contributorPage.getByLabel('Original work and evidence statement')).toBeVisible();
+    await contributorPage
+      .getByLabel('Original work and evidence statement')
+      .fill('Original synthetic work: declared machine capacity remains unverified.');
+    await contributorPage
+      .getByLabel('Submission context')
+      .fill('Synthetic evidence submission, no independent verification');
+    await contributorContext.setOffline(true);
+    await contributorPage.getByRole('button', { name: 'Submit for evidence review' }).click();
+    await expect(contributorPage.getByRole('status')).toContainText('Not received');
+    expect(
+      (await db.query('SELECT count(*)::int n FROM app.network_event WHERE task_id=$1', [taskId]))
+        .rows[0].n,
+    ).toBe(2);
+    await contributorContext.setOffline(false);
+    await contributorPage.getByRole('button', { name: 'Retry the same request' }).click();
+    await expect(contributorPage.getByRole('status')).toContainText('Received and saved');
+    expect(
+      (
+        await db.query(
+          "SELECT count(*)::int n FROM app.network_event WHERE task_id=$1 AND action='SUBMIT'",
+          [taskId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    if (firstEnrollment) {
+      const resetAt = Date.now() + 60000;
+      await expect
+        .poll(() => Date.now(), { timeout: 65000, intervals: [1000] })
+        .toBeGreaterThanOrEqual(resetAt);
+    }
+    const reviewerPage = await operatorContext.newPage();
+    await enrolled(
+      reviewerPage,
+      'taskreviewer@example.invalid',
+      reviewerPassword,
+      '/operator/signin',
+    );
+    await expect(reviewerPage.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+    const networkPanel = reviewerPage
+      .getByRole('region', { name: 'Execution network' })
+      .locator('article')
+      .filter({ hasText: 'Review only the disclosed synthetic machine capacity statement.' });
+    await networkPanel.getByText('Original work and review history').click();
+    await expect(
+      networkPanel.getByText(
+        'Original synthetic work: declared machine capacity remains unverified.',
+      ),
+    ).toBeVisible();
+    await networkPanel.getByLabel('Evidence quality (0–4)').fill('3');
+    await networkPanel.getByLabel('Timeliness (0–4)').fill('4');
+    await networkPanel
+      .getByLabel('Review rationale')
+      .fill('Original source-reported work preserved; no independent verification');
+    await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
+    await networkPanel
+      .getByRole('button', { name: 'Review original submitted declaration' })
+      .click();
+    await expect(
+      networkPanel.getByRole('button', { name: 'Save independent decision' }),
+    ).toBeVisible();
+    await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
+    await networkPanel.getByLabel('Evidence decision').selectOption('COMPLETE');
+    await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    await expect(
+      networkPanel.getByRole('button', { name: 'Assess contribution once' }),
+    ).toBeVisible();
+    await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
+    await networkPanel.getByRole('button', { name: 'Assess contribution once' }).click();
+    const contribution = (
+      await db.query('SELECT * FROM app.contribution WHERE tenant_id=$1 AND task_key=$2', [
+        seed.tenantId,
+        'network:' + taskId,
+      ])
+    ).rows[0];
+    const reward = await post('network-reward', {
+      commandId: randomUUID(),
+      contributionId: contribution.id,
+      sourceId: contribution.source_id,
+      reason,
+    });
+    await post('network-reward', {
+      commandId: randomUUID(),
+      contributionId: contribution.id,
+      sourceId: contribution.source_id,
+      reason,
+    });
+    expect(
+      (
+        await db.query(
+          'SELECT count(*)::int n FROM app.service_ledger WHERE contribution_id=$1 AND reverse_of IS NULL',
+          [contribution.id],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await expect(
+      contributorPage.getByRole('heading', { name: 'Reviewed reward obligations' }),
+    ).toBeVisible();
+    expect((await new AxeBuilder({ page: contributorPage }).analyze()).violations).toEqual([]);
+    expect(
+      await contributorPage.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await mkdir('docs/implementation/evidence/v2-part-04', { recursive: true });
+    await contributorPage.screenshot({
+      path: 'docs/implementation/evidence/v2-part-04/contributor-mobile.png',
+      fullPage: true,
+    });
+    await post('network-reverse', {
+      commandId: randomUUID(),
+      ledgerId: reward.id,
+      sourceId: contribution.source_id,
+      reason: 'Synthetic compensating reversal acceptance',
+    });
+    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await expect(
+      contributorPage.getByText('compensating reversal', { exact: false }),
+    ).toBeVisible();
+    await post('network-profile', {
+      id: randomUUID(),
+      principalId: contributor.principalId,
+      version: 2,
+      alias: 'Synthetic remote engineer',
+      categories: ['technical_adviser'],
+      capabilities: ['supplier_research'],
+      markets: ['CN'],
+      languages: ['en'],
+      sectors: ['machinery'],
+      workCountries: ['BD'],
+      available: false,
+      status: 'SUSPENDED',
+      eligibilitySourceId: source,
+      expiresAt: until,
+      reason: 'Synthetic access suspension after acceptance',
+    });
+    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await expect(
+      contributorPage.getByText('No current reviewed assignment is available.'),
+    ).toBeVisible();
+  } finally {
+    await operatorContext.close();
+    await contributorContext.close();
+    await db.end();
+    await runtime.end();
+  }
+});

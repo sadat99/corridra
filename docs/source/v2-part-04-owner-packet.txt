@@ -1,0 +1,271 @@
+# CODEX IMPLEMENTATION — CORRIDRA V2 / PART 4 OF 5
+## Governed AI and global Commercial Execution Network
+
+**Model:** GPT-6.1 Sol, Medium effort  
+**Repository:** `sadat99/corridra`  
+**Branch:** `feat/v2-04-intelligence-network` from accepted Part 3 `main`.
+
+### 0. Mission
+
+Implement two reusable capabilities on the approved v2 foundation:
+
+**A. Corridra AI Gateway:** provider-neutral, policy-bound intelligence assistance.
+
+**B. Corridra Commercial Execution Network:** capability-based local operators and contributors, including the Diaspora Commerce Grid use case.
+
+Read Part 1's security, rights and financial contracts and all accepted Part 2–3 APIs. Build against them rather than redesigning them.
+
+Both features must remain usable across arbitrary approved corridors. Neither may become a country-specific subsystem.
+
+### 1. AI Gateway
+
+Implement a single governed AI interface supporting configured providers such as OpenAI, Google/Gemini and Anthropic, where their current APIs and terms are compatible.
+
+Do not import provider SDKs directly into business-domain services.
+
+Provider adapter interface should handle relevant combinations of:
+- Structured generation.
+- Text generation.
+- Streaming when necessary.
+- Document/vision extraction where approved.
+- Embedding/retrieval when justified.
+- Health, timeouts, retries and cost metadata.
+- Provider/model eligibility.
+
+Business logic calls a registered Corridra task, not a brand-name model.
+
+A provider/model route must be switchable through approved versioned configuration without modifying business code or redeploying solely to change an already supported model identifier. New provider integrations may require an adapter release.
+
+Never expose or log API keys. Store secret references, not retrievable plaintext.
+
+### 2. AI Task Registry
+
+Implement narrow, typed, versioned tasks:
+
+1. Commercial-intent extraction.
+2. Requirement structuring.
+3. Company/counterparty research summary.
+4. Entity-duplicate suggestion.
+5. Buyer/supplier fit explanation.
+6. Machinery-specification extraction.
+7. Supplier quotation extraction and comparison assistance.
+8. Meeting preparation.
+9. Translation assistance.
+10. Document/evidence gap identification.
+11. Post-meeting follow-up suggestion.
+12. Opportunity/outcome summarisation.
+
+For each task define:
+- Input and output schema.
+- Allowed data classes.
+- Retrieval permissions.
+- Approved providers/models.
+- Tool allowlist.
+- Model/prompt version.
+- Token/time/cost ceilings.
+- Evaluation set.
+- Human approval requirement.
+- Fallback behaviour.
+- Audit/lineage metadata.
+
+AI-generated explanations must point to underlying source/claim/evidence records when making factual claims.
+
+Unknowns must remain unknown. A generated score is not verification.
+
+### 3. Human authority and safety
+
+AI must never autonomously:
+- Change verified canonical facts.
+- Send outbound commercial messages.
+- Grant access or membership.
+- Approve legal eligibility.
+- Make purchase/contract commitments.
+- Settle or confirm money.
+- Approve contributor payments.
+- Delete protected records.
+- Override route compliance restrictions.
+
+All consequential changes go through existing deterministic, authorized command handlers after required human review.
+
+Enforce retrieval authorization before content reaches the model.
+
+Treat supplier documents, imported webpages, email content and retrieved text as untrusted inputs that may contain prompt-injection attempts.
+
+Never provide a model unrestricted SQL, filesystem secrets or arbitrary tool access.
+
+### 4. Cost and provider resilience
+
+Record task-level:
+- Provider/model.
+- Token/usage amount where reported.
+- Estimated/actual cost.
+- Mission/tenant attribution when permitted.
+- Latency.
+- Outcome/error status.
+- Prompt/policy version.
+- Evaluation results.
+
+Add approved fallback routes and circuit breakers.
+
+A provider outage must not prevent manual Mission operations.
+
+Synthetic/public data can be used for initial development. Do not route real personal/confidential data to free AI tiers merely because they cost nothing; verify provider terms and allowed regions before activation.
+
+### 5. Commercial Execution Network
+
+Implement one capability-driven network. Diaspora is a source of participants, not the only identity type.
+
+Participant categories may include:
+- Local market operator.
+- Sourcing expert.
+- Commercial connector.
+- Interpreter/translator.
+- Technical adviser.
+- Factory visit coordinator.
+- Field researcher.
+- Verification professional.
+- Institutional programme operator.
+- Private trusted connector.
+
+Capability, market coverage, language, sector, availability, legal eligibility and performance determine task suitability.
+
+Do not create public personal contact directories or allow sensitive relationship information to become searchable.
+
+Support private contributor profiles for high-value connectors.
+
+### 6. Real mission-linked task lifecycle
+
+Implement a clear workflow:
+
+**Task created → eligibility check → reviewed assignment → accepted → work submitted → evidence reviewed → completed/rejected/disputed → contribution assessed → reward obligation recorded.**
+
+Tasks may include:
+- Supplier research.
+- Decision-maker introduction.
+- Factory coordination.
+- Market price checks.
+- Interpreting a meeting.
+- Commercial translation.
+- Sample coordination.
+- Local follow-up.
+- Site visit support.
+- Category intelligence.
+- Delegation assistance.
+
+Before accepting a task, a contributor sees:
+- Expected action.
+- Market/location scope.
+- Deadline.
+- Evidence requirement.
+- Eligibility rules.
+- Time/effort expectation if available.
+- Reward amount or calculation rule if applicable.
+- Data handling conditions.
+- Who can review.
+- Cancellation/dispute terms.
+
+No misleading claim of guaranteed earnings or automatic payment.
+
+### 7. Contribution, reputation and rewards
+
+Use the approved Part 1 contribution/reward ledger. Do not implement a second balance system.
+
+Support:
+- Immutable task/result provenance.
+- Evidence-linked contribution.
+- Explicit reviewer.
+- Dispute/correction.
+- Effective-dated reward rules.
+- Preventing duplicate credit.
+- Reversals via compensating records.
+- Task-level and capability-level reputation.
+- Transparent reasons for ratings/decisions.
+- Relationship-owner attribution.
+
+Reputation must distinguish timeliness, evidence quality, task category and verified success. A single opaque universal score is insufficient.
+
+Do not implement automated international payouts until task-country work eligibility, tax, contract and payment-provider reviews are satisfied.
+
+### 8. Corridor-aware execution
+
+Use the same task engine for:
+- China sourcing expert in Guangzhou.
+- Bangladesh machinery engineer.
+- Spanish market connector.
+- Bangladesh export-market researcher.
+- Institution-appointed programme operator.
+- Future Turkey/UAE/Vietnam corridor participants.
+
+The corridor pack determines eligible task capability and localization.
+
+Do not continuously track personal geolocation.
+
+Use only proportionate, task-specific location data.
+
+### 9. Combined intelligence/field workflow
+
+Test an actual synthetic lifecycle:
+
+China sourcing requirement
+→ AI extracts and structures supplier criteria
+→ operator approves
+→ candidates evaluated with source evidence
+→ local operator receives scoped task
+→ field information submitted
+→ reviewer approves/rejects
+→ qualification updated through authorized domain command
+→ outcome recorded
+→ contributor reward ledger updated once
+→ future mission can use allowed, permission-scoped historical learning.
+
+Also test Spain buyer-access scenarios and one additional configured country pair.
+
+The Commercial Outcome Graph should capture real events. Do not claim trained proprietary models or predictive accuracy without measured data.
+
+### 10. Required tests
+
+Include:
+- Prompt-injection cases.
+- Model hallucination/unsupported claims.
+- Schema failure/retry.
+- Provider outage.
+- Cost caps.
+- Cross-tenant retrieval denial.
+- Disallowed model/data-class combination.
+- Unauthorized tool invocation.
+- Private contributor relationship leakage.
+- Duplicate task acceptance.
+- Duplicate reward or webhook event.
+- Reward reversal.
+- Late/offline submission and clear recovery status.
+- Contributor suspension/dispute authorization.
+- Old mission/buyer/client functionality regression.
+
+Run golden datasets and report measured pass/fail rates rather than claiming AI correctness.
+
+### 11. Operator and contributor experience
+
+Provide:
+- AI suggestion/review panel in the existing Ops Console.
+- Accept, edit, reject and source inspection.
+- Mobile-friendly restricted task board.
+- Task status and evidence submission.
+- Reward obligation and dispute history.
+- Operator task assignment/review.
+- Privacy-safe operational and cost metrics.
+
+Do not open an unrestricted public gig marketplace.
+
+### 12. Release and report
+
+Use one reviewable PR with separate internal logical commits for AI and Network packages.
+
+Deploy behind independently controllable feature flags. If AI or Network prerequisites remain incomplete, keep those features disabled rather than weakening controls.
+
+Require full CI, DB/RLS/integration, provider-mock and browser validation. Verify the merged production SHA, migration and actual enabled flags.
+
+Report actual AI task coverage, provider readiness, synthetic versus real-data limitations, contributor onboarding/assignment capabilities, financial ledger state, permission tests, costs and known blockers.
+
+Explain what an operator, exporter, sourcing buyer, institutional organiser and approved local contributor can accomplish, distinguishing real actions from demonstrations.
+
+Report Part 5 requirements. Complete Part 4 only. Start implementation now.
