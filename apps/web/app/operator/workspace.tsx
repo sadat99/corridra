@@ -6,6 +6,8 @@ import { Counterparties } from './counterparties';
 import { Missions } from './missions';
 import { CommercialProgress } from './opportunities';
 import { ControlledAccess } from './access';
+import { GovernedAssistance } from './intelligence';
+import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
 type RecordRow = {
   id: string;
@@ -168,6 +170,12 @@ export function Workspace({
         <p>Loading workspace…</p>
       ) : (
         <>
+          {data.role !== 'viewer' && (
+            <>
+              <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} />
+              <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
+            </>
+          )}
           <Missions
             key={tenant}
             tenant={tenant}
@@ -506,6 +514,8 @@ export function Workspace({
                 'communications.introductions',
                 'communications.dispatch',
                 'opportunities.commands',
+                'ai.enabled',
+                'network.enabled',
               ].map((key) => (
                 <div key={key}>
                   <span>

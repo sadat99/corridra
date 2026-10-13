@@ -21,5 +21,6 @@ export default defineConfig({
     url: 'http://127.0.0.1:3200',
     reuseExistingServer: false,
     timeout: 60000,
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 10000 },
   },
 });

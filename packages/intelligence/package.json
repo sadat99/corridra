@@ -1,0 +1,22 @@
+{
+  "name": "@corridra/intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapters": "./src/adapters.ts",
+    "./registry": "./src/registry.ts",
+    "./service": "./src/service.ts",
+    "./local-fixture": "./src/local-fixture.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.78",
+    "@ai-sdk/google": "4.0.93",
+    "@ai-sdk/openai": "4.0.91",
+    "@corridra/db": "workspace:*",
+    "@corridra/domain": "workspace:*",
+    "ai": "7.0.137",
+    "zod": "4.6.5"
+  }
+}

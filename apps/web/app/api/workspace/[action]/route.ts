@@ -31,6 +31,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET') {
       const read = {
+        'ai-sources': () =>
+          s.intelligence.sources(ctx, z.uuid().parse(new URL(request.url).searchParams.get('run'))),
+        intelligence: () => s.intelligence.workspace(ctx),
+        network: () => s.network.workspace(ctx),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
         'commercial-mission': () =>
           s.commercialMissions.workspace(
@@ -183,7 +187,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       const chunk = await stream.read();
       if (chunk.done) break;
       size += chunk.value.length;
-      if (size > (action === 'commercial-mission' ? 32768 : 8192)) {
+      if (size > (['commercial-mission', 'ai-review'].includes(action) ? 32768 : 8192)) {
         await stream.cancel();
         throw new DomainError('Request is too large', 413);
       }
@@ -192,6 +196,18 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      'ai-rights': () => s.intelligence.rights(ctx, input),
+      'network-rule': () => s.network.rule(ctx, input),
+      'ai-policy': () => s.intelligence.configure(ctx, input),
+      'ai-run': () => s.intelligence.run(ctx, input),
+      'ai-review': () => s.intelligence.review(ctx, input),
+      'network-profile': () => s.network.profile(ctx, input),
+      'network-task': () => s.network.task(ctx, input),
+      'network-event': () => s.network.event(ctx, input),
+      'network-review': () => s.network.reviewSubmission(ctx, input),
+      'network-assess': () => s.network.assess(ctx, input),
+      'network-reward': () => s.network.reward(ctx, input),
+      'network-reverse': () => s.network.reverse(ctx, input),
       'commercial-mission': () => s.commercialMissions.command(ctx, input),
       'commercial-origin': () => s.opportunities.registerOrigin(ctx, input),
       'mission-route': () => s.corridors.assign(ctx, input),
@@ -246,7 +262,9 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         ? error.status
         : error instanceof z.ZodError || error instanceof SyntaxError
           ? 400
-          : ['23514', '23503', '23505'].includes((error as { code?: string }).code ?? '')
+          : ['23514', '23503', '23505', 'P0001', '54000'].includes(
+                (error as { code?: string }).code ?? '',
+              )
             ? 409
             : (error as { code?: string }).code === '42501'
               ? 403

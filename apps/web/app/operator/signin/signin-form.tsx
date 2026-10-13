@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
-export function OperatorSignin() {
+export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
   const [email, setEmail] = useState(''),
@@ -38,7 +38,7 @@ export function OperatorSignin() {
         if (r.error) throw new Error('That code could not be verified. Try a current code.');
         setSetup(null);
         setCode('');
-        router.replace('/operator');
+        router.replace(returnTo);
         router.refresh();
       }
     } catch (e) {
@@ -57,7 +57,7 @@ export function OperatorSignin() {
             : 'Verify your authenticator'}
       </h2>
       <p>
-        Access is limited to invited operators. Use test records until customer data controls are
+        Access is limited to invited accounts. Use test records until customer data controls are
         complete.
       </p>
       {stage === 'password' && (
