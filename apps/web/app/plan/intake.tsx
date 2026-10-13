@@ -739,7 +739,7 @@ export function Intake() {
           Start another brief (save your receipt first)
         </button>
       )}
-      <section className="receipt-panel">
+      <section id="receipt-check" tabIndex={-1} className="receipt-panel">
         <h2>Check a mission brief.</h2>
         <form className="operator-form" onSubmit={check}>
           <label className="field">

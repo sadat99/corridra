@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { displayMoney as amount, displayDate } from '@corridra/domain/locale';
@@ -119,7 +120,45 @@ export function DeliveryView({
     }
   }
   if (!report)
-    return <p role={error ? 'alert' : 'status'}>{error || 'Opening your approved view…'}</p>;
+    return (
+      <div>
+        <p role={error ? 'alert' : 'status'}>{error || 'Opening your approved view…'}</p>
+        {error && (
+          <>
+            <p>
+              Use the original private link. If it expired or was revoked, ask the person who shared
+              it for a new reviewed link.
+            </p>
+            {
+              <button
+                className="text-link"
+                disabled={busy}
+                onClick={() => {
+                  token.current = capability ?? window.location.hash.slice(1);
+                  if (!/^[a-f0-9]{64}$/.test(token.current)) {
+                    setError('Open the private link shared by your Corridra operator.');
+                    return;
+                  }
+                  setBusy(true);
+                  void refresh()
+                    .then(() => setError(''))
+                    .catch((e) => setError(e.message))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                Retry approved view
+              </button>
+            }
+            <Link className="text-link" href="/account">
+              Customer account
+            </Link>
+            <Link className="text-link" href="/">
+              Back to Corridra
+            </Link>
+          </>
+        )}
+      </div>
+    );
   const count = report.missions.reduce(
     (sum, m) => ({
       held: sum.held + m.outcomes.heldMeetings,

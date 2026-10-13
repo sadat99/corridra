@@ -41,7 +41,7 @@ type Snapshot = {
   }[];
   drafts: Draft[];
 };
-export function GovernedAssistance({ tenant }: { tenant: string }) {
+export function GovernedAssistance({ tenant, role }: { tenant: string; role: string }) {
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -139,10 +139,43 @@ export function GovernedAssistance({ tenant }: { tenant: string }) {
       <p role="status" aria-live="polite">
         {message}
       </p>
+      <div className="workspace-links">
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void refresh()
+              .then(() => setMessage('Updated.'))
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Refresh AI review
+        </button>
+        <a href="#workspace-missions">Open missions</a>
+        <a href="#workspace-sources">Open sources and claims</a>
+        <a href="#workspace-authenticator">Verify current access</a>
+      </div>
+      {!data && (
+        <p>
+          {message
+            ? 'This section could not be loaded. Refresh it or verify your current access.'
+            : 'Loading reviewed workspace…'}
+        </p>
+      )}
       {data && !data.enabled && (
         <p>
           AI assistance is awaiting provider and policy activation. Existing manual work remains
-          available.
+          available. <a href="#workspace-missions">Continue with manual mission work</a>.
+        </p>
+      )}
+      {data && !data.policies.length && (
+        <p>
+          No reviewed model policy is available. Ask a workspace owner to review the source rights
+          and provider policy.{' '}
+          {['owner', 'admin'].includes(role) && (
+            <a href="#workspace-settings">Open owner policy settings</a>
+          )}
+          .
         </p>
       )}
       <form className="operator-form" onSubmit={run}>

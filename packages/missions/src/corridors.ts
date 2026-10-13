@@ -20,6 +20,12 @@ export class CorridorService {
   constructor(private pool: DatabasePool) {}
   catalogue(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => ({
+      routes: (
+        await db.query(
+          'SELECT id,origin_market,destination_market FROM app.corridor_route WHERE tenant_id=$1 ORDER BY origin_market,destination_market',
+          [ctx.tenantId],
+        )
+      ).rows,
       packs: (
         await db.query(
           `SELECT p.*,r.origin_market,r.destination_market FROM app.corridor_pack_version p JOIN app.corridor_route r ON r.tenant_id=p.tenant_id AND r.id=p.route_id WHERE p.tenant_id=$1 AND p.effective_from<=now() AND p.version=(SELECT max(version) FROM app.corridor_pack_version n WHERE n.tenant_id=p.tenant_id AND n.route_id=p.route_id AND n.effective_from<=now()) ORDER BY r.origin_market,r.destination_market`,

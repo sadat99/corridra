@@ -7,5 +7,12 @@ export const metadata = {
   openGraph: { title: content.title, description: content.description },
 };
 export default function Page() {
-  return <PublicPage content={content} />;
+  return (
+    <PublicPage
+      content={{
+        ...content,
+        related: { href: '/contributor', label: 'Already invited? Open assigned-task access' },
+      }}
+    />
+  );
 }

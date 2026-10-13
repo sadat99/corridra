@@ -115,6 +115,42 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  const sectionNav = page.getByRole('navigation', { name: 'Workspace sections' });
+  await expect(sectionNav).toBeVisible();
+  expect(await sectionNav.locator('a').count()).toBeGreaterThanOrEqual(10);
+  expect(
+    await sectionNav
+      .locator('a')
+      .evaluateAll((links) =>
+        links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
+      ),
+  ).toBe(true);
+  await sectionNav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
+  await expect(page).toHaveURL(/#workspace-sources$/);
+  await expect(page.locator('#workspace-sources')).toBeFocused();
+  await sectionNav.getByRole('link', { name: 'Corridors and policies' }).click();
+  const settings = page.getByRole('region', { name: 'Corridor and policy settings' });
+  await settings.getByText('Create a directional corridor route', { exact: true }).click();
+  await settings.getByLabel('Demand-origin market').selectOption('JP');
+  await settings.getByRole('combobox', { name: 'Target market', exact: true }).selectOption('KE');
+  await settings.getByLabel('Route review reason').fill('Synthetic navigation route review');
+  await settings.getByRole('button', { name: 'Create reviewed route', exact: true }).click();
+  await expect(settings.getByRole('status')).toContainText('Saved reference:');
+  await settings
+    .getByText('Current route packs and definition references', { exact: true })
+    .click();
+  await expect(settings.getByText(/JP → KE · [0-9a-f-]{36}/)).toBeVisible();
+  await settings.getByText('Advanced versioned policy review', { exact: true }).click();
+  await settings.getByLabel('Reviewed command JSON').fill('{');
+  await settings.getByRole('checkbox').check();
+  await settings.getByRole('button', { name: 'Save reviewed configuration' }).click();
+  await expect(settings.getByRole('status')).toContainText('valid JSON object');
+  await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
+  await settings.getByLabel('Reviewed configuration action').selectOption('ai-rights');
+  await settings.getByLabel('Reviewed command JSON').fill('{"unfinished":true}');
+  await settings.getByLabel('Reviewed configuration action').selectOption('corridor-pack');
+  await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
+  await sectionNav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
   await page.getByLabel('Source description').fill('Synthetic browser inspection');
   await page.getByRole('button', { name: 'Record source', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
@@ -2001,6 +2037,19 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await contributorContext.setOffline(true);
     await contributorPage.getByRole('button', { name: 'Submit for evidence review' }).click();
     await expect(contributorPage.getByRole('status')).toContainText('Not received');
+    await expect(
+      contributorPage.getByRole('button', { name: 'Sign out of assigned work' }),
+    ).toBeDisabled();
+    const verifyLink = contributorPage.getByRole('link', {
+      name: 'Verify your authenticator again',
+      exact: false,
+    });
+    await expect(verifyLink).toHaveAttribute('target', '_blank');
+    expect(
+      new URL((await verifyLink.getAttribute('href'))!, 'http://127.0.0.1:3200').searchParams.get(
+        'next',
+      ),
+    ).toBe('/contributor?workspace=' + seed.tenantId);
     expect(
       (await db.query('SELECT count(*)::int n FROM app.network_event WHERE task_id=$1', [taskId]))
         .rows[0].n,

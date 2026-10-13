@@ -27,6 +27,12 @@ export default function Page() {
               <Arrow />
             </span>
           </Link>
+          <Link prefetch={false} className="text-link" href="/operator">
+            Invited operator access
+          </Link>
+          <Link prefetch={false} className="text-link" href="/contributor">
+            Assigned-task invitation help
+          </Link>
           <Link prefetch={false} className="text-link" href="/">
             Back to Corridra
           </Link>
