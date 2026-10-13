@@ -1,4 +1,5 @@
 'use client';
+import { ContributorSignout } from './signout';
 import { displayMoney } from '@corridra/domain/locale';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 type Task = {
@@ -55,6 +56,7 @@ export function TaskBoard({ workspace }: { workspace: string }) {
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState<Command | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const refresh = useCallback(async () => {
     const r = await fetch('/api/network/tasks?workspace=' + encodeURIComponent(workspace), {
       cache: 'no-store',
@@ -62,6 +64,7 @@ export function TaskBoard({ workspace }: { workspace: string }) {
     const body = await r.json();
     if (!r.ok) throw new Error(body.error);
     setTasks(body);
+    setLoaded(true);
   }, [workspace]);
   useEffect(() => {
     let live = true;
@@ -73,7 +76,10 @@ export function TaskBoard({ workspace }: { workspace: string }) {
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error);
-        if (live) setTasks(data);
+        if (live) {
+          setTasks(data);
+          setLoaded(true);
+        }
       })
       .catch((e) => {
         if (live) setMessage(e.message);
@@ -140,7 +146,30 @@ export function TaskBoard({ workspace }: { workspace: string }) {
           Retry the same request
         </button>
       )}
-      {!tasks.length && <p>No current reviewed assignment is available.</p>}
+      {pending && (
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() => {
+            setPending(null);
+            setMessage(
+              'Local retry data cleared. This does not cancel work already received. Refresh tasks to check its status.',
+            );
+          }}
+        >
+          Clear pending request
+        </button>
+      )}
+      <ContributorSignout disabled={busy || !!pending} />
+      {pending && <p>Retry the pending request or clear it before signing out.</p>}
+      {!loaded && (
+        <p>
+          {message
+            ? 'Assigned work could not be loaded. Refresh tasks or verify your authenticator again.'
+            : 'Loading assigned work…'}
+        </p>
+      )}
+      {loaded && !tasks.length && <p>No current reviewed assignment is available.</p>}
       {tasks.map((task) => (
         <article className="detail-card" key={task.id}>
           <h2>{task.disclosure.kind.replaceAll('_', ' ')}</h2>

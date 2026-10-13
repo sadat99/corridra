@@ -299,13 +299,43 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       <section className="detail-card">
         <h2>Client and programme delivery</h2>
         <p>{message}</p>
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void load()
+              .then(() => {
+                setUnavailable(false);
+                setMessage('');
+              })
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Retry delivery
+        </button>
+        <a href="#workspace-authenticator">Verify current access</a>
       </section>
     );
   if (!data || dataScope !== scope)
     return (
       <section className="detail-card">
         <h2>Client and programme delivery</h2>
-        <p>Loading…</p>
+        <p>{message || 'Loading delivery…'}</p>
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void load()
+              .then(() => {
+                setUnavailable(false);
+                setMessage('');
+              })
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Retry delivery
+        </button>
+        <a href="#workspace-authenticator">Verify current access</a>
       </section>
     );
   const manages = ['owner', 'admin', 'operator'].includes(data.role),

@@ -345,7 +345,11 @@ export function Counterparties({
           </div>
         </>
       ) : (
-        <p>Loading research…</p>
+        <p>
+          {message
+            ? 'Research could not be loaded. Verify current access, then retry.'
+            : 'Loading research…'}
+        </p>
       )}
       {manage && (
         <details className="research-panel">

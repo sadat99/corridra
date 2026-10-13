@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { foundations } from '../../lib/foundations';
+import { ContributorSignout } from './signout';
 import { TaskBoard } from './task-board';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -15,13 +16,43 @@ export default async function Page({
   searchParams: Promise<{ workspace?: string }>;
 }) {
   const s = foundations();
-  if (!s) notFound();
+  if (!s)
+    return (
+      <main id="main" tabIndex={-1} className="operator-page">
+        <h1>Your assigned tasks.</h1>
+        <p>
+          Assigned-task access is not configured in this environment. Keep the invitation supplied
+          by your operator.
+        </p>
+        <Link className="text-link" href="/network">
+          How assigned work works
+        </Link>
+        <Link className="text-link" href="/signin">
+          Other sign-in options
+        </Link>
+        <Link className="text-link" href="/">
+          Back to Corridra
+        </Link>
+      </main>
+    );
   const workspace = z.uuid().safeParse((await searchParams).workspace);
   if (!workspace.success)
     return (
       <main id="main" className="operator-page">
         <h1>Your assigned tasks.</h1>
-        <p>Open the workspace link supplied with your reviewed invitation.</p>
+        <p>
+          Open the workspace link supplied with your reviewed invitation. A customer account does
+          not grant assigned-task access.
+        </p>
+        <Link className="text-link" href="/network">
+          How assigned work works
+        </Link>
+        <Link className="text-link" href="/signin">
+          Choose your sign-in route
+        </Link>
+        <Link className="text-link" href="/">
+          Back to Corridra
+        </Link>
       </main>
     );
   await s.ready;
@@ -43,9 +74,21 @@ export default async function Page({
       ) : (
         <p>The execution network is awaiting activation review. No work is currently available.</p>
       )}
-      <Link className="text-link" href="/operator/signin">
-        Verify your authenticator again
+      <Link
+        className="text-link"
+        href={
+          '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data)
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Verify your authenticator again (opens a new tab)
       </Link>
+      <p>Keep this task page open while verifying so unreceived work remains available to retry.</p>
+      <Link className="text-link" href="/network">
+        About assigned work
+      </Link>
+      {process.env.CORRIDRA_NETWORK_ENABLED !== 'true' && <ContributorSignout />}
     </main>
   );
 }

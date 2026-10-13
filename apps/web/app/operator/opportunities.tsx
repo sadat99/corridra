@@ -474,6 +474,18 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
         <p role="status" aria-label="Commercial status">
           {message || 'Loading commercial progress…'}
         </p>
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void refresh()
+              .then(() => setMessage(''))
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Retry this section
+        </button>
+        <a href="#workspace-authenticator">Verify current access</a>
       </section>
     );
   const manage = ['owner', 'admin', 'operator'].includes(data.role) && data.enabled,

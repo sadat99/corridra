@@ -258,9 +258,33 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
       <p role="status" aria-live="polite">
         {message}
       </p>
+      <div className="workspace-links">
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void request('network')
+              .then(setData)
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Refresh execution work
+        </button>
+        <a href="#workspace-missions">Open missions</a>
+        <a href="#workspace-sources">Open sources and claims</a>
+        <a href="#workspace-authenticator">Verify current access</a>
+      </div>
+      {!data && (
+        <p>
+          {message
+            ? 'This section could not be loaded. Refresh it or verify your current access.'
+            : 'Loading reviewed workspace…'}
+        </p>
+      )}
       {data && !data.enabled && (
         <p>
-          The execution network is awaiting activation review. No assignment or reward is available.
+          The execution network is awaiting activation review. No new assignment or reward can be
+          recorded. Existing history remains available.
         </p>
       )}
       <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
@@ -592,6 +616,41 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
             <Fields names={['reason']} />
             <button className="primary-link" disabled={busy || !data?.enabled}>
               Record independently approved obligation
+            </button>
+          </form>
+        </details>
+      )}
+      {admin && (
+        <details>
+          <summary>Compensate an unreconciled reward obligation</summary>
+          <p>
+            This appends an exact negative entry to the existing ledger. It does not reverse a bank
+            payment or remove the original obligation.
+          </p>
+          <form
+            className="operator-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              void act('network-reverse', {
+                commandId: crypto.randomUUID(),
+                ledgerId: f.get('ledgerId'),
+                sourceId: f.get('sourceId'),
+                reason: f.get('reason'),
+              });
+            }}
+          >
+            <label className="field">
+              Original reward ledger reference
+              <input name="ledgerId" required />
+            </label>
+            <label className="field">
+              Compensation source reference
+              <input name="sourceId" required />
+            </label>
+            <Fields names={['reason']} />
+            <button className="primary-link" disabled={busy || !data?.enabled}>
+              Record compensating obligation
             </button>
           </form>
         </details>

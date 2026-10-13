@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+import { ReviewSettings } from './review-settings';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
@@ -93,6 +95,13 @@ export function Workspace({
       active = false;
     };
   }, [tenant]);
+  const loaded = !!data;
+  useEffect(() => {
+    if (!loaded) return;
+    const target = document.getElementById(window.location.hash.slice(1));
+    target?.scrollIntoView();
+    target?.focus({ preventScroll: true });
+  }, [loaded]);
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
     setMessage('');
@@ -111,13 +120,13 @@ export function Workspace({
     const f = new FormData(event.currentTarget);
     void act(() =>
       request('source', {
-        kind: 'observation',
+        kind: f.get('kind'),
         locator: f.get('locator'),
         observedAt: new Date().toISOString(),
-        classification: 'INTERNAL',
+        classification: f.get('classification'),
         purpose: 'synthetic_validation',
         retentionUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
-        aiPolicy: 'DENY',
+        aiPolicy: f.get('aiPolicy'),
       }),
     );
   }
@@ -141,9 +150,12 @@ export function Workspace({
             value={tenant}
             onChange={(e) => {
               setTenant(e.target.value);
-              router.replace('/operator?workspace=' + encodeURIComponent(e.target.value), {
-                scroll: false,
-              });
+              router.replace(
+                '/operator?workspace=' + encodeURIComponent(e.target.value) + window.location.hash,
+                {
+                  scroll: false,
+                },
+              );
               setData(null);
               setMembers([]);
               setAudit([]);
@@ -167,42 +179,150 @@ export function Workspace({
         {message}
       </p>
       {!data ? (
-        <p>Loading workspace…</p>
+        <div>
+          <p>{message ? 'Workspace could not be loaded.' : 'Loading workspace…'}</p>
+          {message && (
+            <button className="text-link" disabled={busy} onClick={() => void act(refresh)}>
+              Retry workspace
+            </button>
+          )}
+          <Link className="text-link" href="/operator/signin">
+            Verify workspace access
+          </Link>
+          <Link className="text-link" href="/signin">
+            Other sign-in options
+          </Link>
+        </div>
       ) : (
         <>
+          <nav
+            className="workspace-navigation"
+            id="workspace-navigation"
+            tabIndex={-1}
+            aria-label="Workspace sections"
+          >
+            <a href="#workspace-missions">Missions and requirements</a>
+            <a href="#workspace-research">Companies and research</a>
+            <a href="#workspace-meetings">Introductions and meetings</a>
+            <a href="#workspace-commercial">Commercial progress</a>
+            <a href="#workspace-delivery">Client and institution delivery</a>
+            <a href="#workspace-sources">Sources and claims</a>
+            <a href="#workspace-evidence">Evidence review</a>
+            {data.role !== 'viewer' && (
+              <>
+                <a href="#workspace-ai">AI assistance</a>
+                <a href="#workspace-network">Execution network</a>
+              </>
+            )}
+            {['owner', 'admin'].includes(data.role) && (
+              <>
+                <a href="#workspace-settings">Corridors and policies</a>
+                <a href="#workspace-audit">Access and audit</a>
+              </>
+            )}
+            <a href="#workspace-authenticator">Authenticator</a>
+            {data.role === 'owner' && <a href="#workspace-controls">Workspace controls</a>}
+          </nav>
+          <p>
+            Choose a section above. Customer sharing and assigned work use their own access links.
+          </p>
           {data.role !== 'viewer' && (
             <>
-              <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} />
-              <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
+              <div id="workspace-ai" tabIndex={-1} className="workspace-panel">
+                <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
+                <a className="text-link" href="#workspace-navigation">
+                  Back to workspace sections
+                </a>
+              </div>
+              <div id="workspace-network" tabIndex={-1} className="workspace-panel">
+                <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
+                <a className="text-link" href="#workspace-navigation">
+                  Back to workspace sections
+                </a>
+              </div>
             </>
           )}
-          <Missions
-            key={tenant}
-            tenant={tenant}
-            onChanged={() => setMissionRevision((v) => v + 1)}
-          />
-          <Counterparties
-            key={`research-${tenant}`}
-            tenant={tenant}
-            missionRevision={missionRevision}
-          />
-          <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
-          <CommercialProgress
-            key={`commercial-${tenant}`}
-            tenant={tenant}
-            revision={missionRevision}
-          />
-          <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
-          <div className="detail-grid">
+          <div id="workspace-missions" tabIndex={-1} className="workspace-panel">
+            <Missions
+              key={tenant}
+              tenant={tenant}
+              onChanged={() => setMissionRevision((v) => v + 1)}
+            />
+            <a className="text-link" href="#workspace-navigation">
+              Back to workspace sections
+            </a>
+          </div>
+          <div id="workspace-research" tabIndex={-1} className="workspace-panel">
+            <Counterparties
+              key={`research-${tenant}`}
+              tenant={tenant}
+              missionRevision={missionRevision}
+            />
+            <a className="text-link" href="#workspace-navigation">
+              Back to workspace sections
+            </a>
+          </div>
+          <div id="workspace-meetings" tabIndex={-1} className="workspace-panel">
+            <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
+            <a className="text-link" href="#workspace-navigation">
+              Back to workspace sections
+            </a>
+          </div>
+          <div id="workspace-commercial" tabIndex={-1} className="workspace-panel">
+            <CommercialProgress
+              key={`commercial-${tenant}`}
+              tenant={tenant}
+              revision={missionRevision}
+            />
+            <a className="text-link" href="#workspace-navigation">
+              Back to workspace sections
+            </a>
+          </div>
+          <div id="workspace-delivery" tabIndex={-1} className="workspace-panel">
+            <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
+            <a className="text-link" href="#workspace-navigation">
+              Back to workspace sections
+            </a>
+          </div>
+          <div id="workspace-sources" tabIndex={-1} className="detail-grid workspace-panel">
             <section className="detail-card">
               <h2>Sources</h2>
               <ul>
                 {data.sources.map((r) => (
-                  <li key={r.id}>{r.locator}</li>
+                  <li key={r.id}>
+                    {r.locator}
+                    <p>Source reference: {r.id}</p>
+                  </li>
                 ))}
               </ul>
               {data.role !== 'viewer' && (
                 <form className="operator-form" onSubmit={source}>
+                  <label className="field">
+                    Source type
+                    <select name="kind" defaultValue="observation">
+                      <option value="observation">Observed information</option>
+                      <option value="public_record">Existing public record</option>
+                      <option value="self_declaration">Original declaration</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    Source visibility
+                    <select name="classification" defaultValue="INTERNAL">
+                      <option value="INTERNAL">Internal</option>
+                      <option value="PUBLIC">Already public</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    Source AI permission
+                    <select name="aiPolicy" defaultValue="DENY">
+                      <option value="DENY">Do not use for AI</option>
+                      <option value="REVIEW_REQUIRED">Requires a separate rights review</option>
+                    </select>
+                  </label>
+                  <p>
+                    Public visibility describes an already public source. A separate rights review
+                    and approved provider policy are required before inference.
+                  </p>
                   <label className="field">
                     Source description
                     <input name="locator" required maxLength={500} />
@@ -219,6 +339,7 @@ export function Workspace({
                 {data.claims.map((r) => (
                   <li key={r.id}>
                     {r.statement} <span className="evidence-label">Self-declared</span>
+                    <p>Claim reference: {r.id}</p>
                   </li>
                 ))}
               </ul>
@@ -254,7 +375,11 @@ export function Workspace({
               )}
             </section>
           </div>
-          <section className="operator-section">
+          <section
+            id="workspace-evidence"
+            tabIndex={-1}
+            className="operator-section workspace-panel"
+          >
             <h2>Evidence review</h2>
             <p>
               {data.scanMode === 'bypass'
@@ -408,7 +533,11 @@ export function Workspace({
               </form>
             )}
           </section>
-          <section className="operator-section">
+          <section
+            id="workspace-authenticator"
+            tabIndex={-1}
+            className="operator-section workspace-panel"
+          >
             <h2>Confirm a sensitive action</h2>
             <form
               className="operator-form"
@@ -437,7 +566,14 @@ export function Workspace({
             </form>
           </section>
           {['owner', 'admin'].includes(data.role) && (
-            <section className="operator-section">
+            <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+          )}
+          {['owner', 'admin'].includes(data.role) && (
+            <section
+              id="workspace-audit"
+              tabIndex={-1}
+              className="operator-section workspace-panel"
+            >
               <h2>Access and audit</h2>
               <button
                 className="text-link"
@@ -467,7 +603,11 @@ export function Workspace({
             </section>
           )}
           {data.role === 'owner' && (
-            <section className="operator-section">
+            <section
+              id="workspace-controls"
+              tabIndex={-1}
+              className="operator-section workspace-panel"
+            >
               <h2>Workspace controls</h2>
               <form
                 className="operator-form"
@@ -502,6 +642,10 @@ export function Workspace({
                   Update membership
                 </button>
               </form>
+              <p>
+                Deployment approval is separate from these workspace switches. Enabling a workspace
+                switch does not activate a disabled deployment.
+              </p>
               <p>
                 Feature changes append a new version. Disabling a feature preserves its records.
               </p>

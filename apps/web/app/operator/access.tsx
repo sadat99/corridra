@@ -240,6 +240,18 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         <p role="status" aria-label="Access status">
           {message || 'Loading controlled access…'}
         </p>
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() =>
+            void refresh()
+              .then(() => setMessage(''))
+              .catch((e) => setMessage(e.message))
+          }
+        >
+          Retry this section
+        </button>
+        <a href="#workspace-authenticator">Verify current access</a>
       </section>
     );
   const manage = ['owner', 'admin', 'operator'].includes(comms.role),

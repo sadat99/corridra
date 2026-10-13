@@ -23,6 +23,25 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             Workspace access requires a separate invitation.
           </p>
         )}
+        {mode === 'signin' && (
+          <nav className="access-options" aria-label="Other access routes">
+            <h2>Invited workspace access</h2>
+            <p>
+              Operators use their workspace invitation. Local contributors use the assigned-task
+              link supplied with their invitation. Institution and client sharing links keep their
+              existing access scope.
+            </p>
+            <Link className="text-link" href="/operator">
+              Operator workspace
+            </Link>
+            <Link className="text-link" href="/contributor">
+              Assigned-task access
+            </Link>
+            <Link className="text-link" href="/plan">
+              Start a test mission brief
+            </Link>
+          </nav>
+        )}
       </section>
     </main>
   );

@@ -1410,3 +1410,39 @@ summary:hover {
 .operator-page dd {
   overflow-wrap: anywhere;
 }
+
+.workspace-navigation,
+.workspace-links,
+.access-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 1.25rem 0;
+}
+.workspace-navigation {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+.workspace-navigation a,
+.workspace-links a,
+.access-options a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.access-options h2,
+.access-options p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.workspace-panel {
+  scroll-margin-top: 6rem;
+}
+.workspace-panel:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 0.25rem;
+}
+.workspace-panel p,
+.workspace-panel li {
+  overflow-wrap: anywhere;
+}

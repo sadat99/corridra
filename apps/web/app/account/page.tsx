@@ -17,6 +17,12 @@ export default async function Page() {
       <main id="main" tabIndex={-1} className="operator-page">
         <h1>Account access is temporarily unavailable.</h1>
         <p>Please try again in a moment.</p>
+        <Link className="text-link" href="/account">
+          Retry account access
+        </Link>
+        <Link className="text-link" href="/signin">
+          Return to sign-in
+        </Link>
       </main>
     );
   if (!data?.user) redirect('/signin');
@@ -41,7 +47,18 @@ export default async function Page() {
         Start a mission brief
       </Link>
       <p>Keep the private receipt supplied with your brief to check its status and replies.</p>
-      <CustomerMissions />
+      <nav className="access-options" aria-label="Account sections">
+        <a href="#customer-missions">My shared missions</a>
+        <Link className="text-link" href="/plan#receipt-check">
+          Check a test brief receipt
+        </Link>
+        <Link className="text-link" href="/contributor">
+          Assigned-task invitation help
+        </Link>
+      </nav>
+      <div id="customer-missions" tabIndex={-1}>
+        <CustomerMissions />
+      </div>
       <AccountSignout />
     </main>
   );

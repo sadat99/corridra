@@ -202,8 +202,22 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
           type="button"
           disabled={busy}
           onClick={() => {
-            request('missions')
-              .then(setQueue)
+            void Promise.all([request('missions'), request('mission-catalogue')])
+              .then(([missions, catalogue]) => {
+                setQueue(missions);
+                setRoutes(
+                  catalogue.packs.map(
+                    (p: {
+                      route_id: string;
+                      origin_market: string;
+                      destination_market: string;
+                    }) => ({
+                      id: p.route_id,
+                      label: `${p.origin_market} → ${p.destination_market}`,
+                    }),
+                  ),
+                );
+              })
               .catch((e) => setMessage(e.message));
           }}
         >
@@ -267,7 +281,11 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
         </div>
       )}
       {!queue ? (
-        <p>Loading missions…</p>
+        <p>
+          {message
+            ? 'Missions could not be loaded. Verify current access, then retry.'
+            : 'Loading missions…'}
+        </p>
       ) : queue.missions.length === 0 ? (
         <p>No mission briefs yet.</p>
       ) : (
