@@ -10,14 +10,30 @@ const local = execFileSync('git', ['branch', '--format=%(refname:short)'], { enc
   .trim()
   .split('\n')
   .filter(Boolean);
-const remote = execFileSync(
-  'gh',
-  ['api', 'repos/sadat99/corridra/branches', '--paginate', '--jq', '.[].name'],
-  { encoding: 'utf8' },
+const actions = process.env.GITHUB_ACTIONS === 'true';
+// CI has an ephemeral PR merge checkout, not another product branch. Use the
+// checkout's read-only Git credential instead of requesting additional API scope.
+const remote = actions
+  ? execFileSync('git', ['ls-remote', '--heads', 'origin'], { encoding: 'utf8' })
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => line.split(/\s+/)[1].replace('refs/heads/', ''))
+  : execFileSync(
+      'gh',
+      ['api', 'repos/sadat99/corridra/branches', '--paginate', '--jq', '.[].name'],
+      { encoding: 'utf8' },
+    )
+      .trim()
+      .split('\n')
+      .filter(Boolean);
+if (
+  remote.length > 10 ||
+  (!actions && (local.length > 10 || new Set([...local, ...remote]).size > 10))
 )
-  .trim()
-  .split('\n')
-  .filter(Boolean);
+  throw new Error(
+    'The ten-branch limit is already exceeded; preserve unfinished work and resolve it before publishing',
+  );
 if (!local.includes(branch)) assertBranchBudget(local.length);
 if (!remote.includes(branch)) assertBranchBudget(remote.length);
 console.log(JSON.stringify({ branch, localCount: local.length, remoteCount: remote.length }));

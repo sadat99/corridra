@@ -125,6 +125,51 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
         links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
       ),
   ).toBe(true);
+  await sectionNav.getByRole('link', { name: 'Global operations', exact: true }).click();
+  const operations = page.locator('#workspace-operations');
+  await expect(
+    operations.getByRole('button', { name: 'Refresh operations', exact: true }),
+  ).toBeVisible();
+  await expect(
+    operations.getByText(
+      'Current tenant and authorized records; all filtered missions contribute to totals, only the mission list is paginated',
+      { exact: true },
+    ),
+  ).toBeVisible();
+  expect(
+    await operations
+      .locator('nav a')
+      .evaluateAll((links) =>
+        links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
+      ),
+  ).toBe(true);
+  await operations.getByRole('link', { name: 'Production readiness', exact: true }).click();
+  await expect(page.locator('#ops-gates')).toBeFocused();
+  await expect(
+    operations.getByRole('region', { name: 'External production prerequisites' }),
+  ).toContainText('BLOCKED: external prerequisite');
+  await operations.getByRole('link', { name: 'Mission dashboard', exact: true }).click();
+  await operations
+    .getByRole('textbox', { name: 'Recorded industry', exact: true })
+    .fill('unrecorded synthetic sector');
+  await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(
+    operations
+      .locator('.operations-metrics > div')
+      .filter({ has: page.getByText('submitted', { exact: true }) })
+      .locator('dd'),
+  ).toHaveText('0');
+  await expect(
+    operations.locator('caption').filter({ hasText: 'Customer trade amounts' }),
+  ).toHaveCount(0);
+  await operations.getByRole('textbox', { name: 'Recorded industry', exact: true }).fill('');
+  await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(
+    operations.getByRole('button', { name: 'Refresh operations', exact: true }),
+  ).toBeEnabled();
+  expect(
+    (await new AxeBuilder({ page }).include('#workspace-operations').analyze()).violations,
+  ).toEqual([]);
   await sectionNav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
   await expect(page).toHaveURL(/#workspace-sources$/);
   await expect(page.locator('#workspace-sources')).toBeFocused();
@@ -1719,13 +1764,18 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
   const operatorContext = await browser.newContext(),
     contributorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {
-    const session = (
-      await db.query(
-        'SELECT s.token FROM identity.session s JOIN identity.assurance a ON a.session_id=s.id JOIN identity.principal p ON p.identity_id=s."userId" WHERE p.id=$1 ORDER BY a.verified_at DESC LIMIT 1',
-        [seed.principalId],
-      )
-    ).rows[0];
-    const ctx = { token: session.token, tenantId: seed.tenantId, purpose: 'synthetic_validation' };
+    // Use the session that actually completed this browser's MFA flow, rather
+    // than guessing the latest session for a fixture principal in another pool.
+    await expect(page.getByRole('navigation', { name: 'Workspace sections' })).toBeVisible();
+    const sessionResponse = await page.request.get('/api/operator-auth/get-session');
+    expect(sessionResponse.ok()).toBe(true);
+    const session = await sessionResponse.json();
+    expect(session?.session?.token).toBeTruthy();
+    const ctx = {
+      token: session.session.token,
+      tenantId: seed.tenantId,
+      purpose: 'synthetic_validation',
+    };
     const { provisionSyntheticContributor } = await import('../../packages/auth/src/bootstrap');
     const { withTenant } = await import('../../packages/db/src/index');
     const contributorPassword = 'synthetic-browser-contributor-strong-password',

@@ -1,0 +1,8 @@
+{
+  "source": "docs/source/v2-part-05-owner-packet.txt",
+  "bytes": 13417,
+  "sha256": "e88de00a5e1ed33ef74cb15e8580dbe653b31e846f17f143aa5137baa3e5f158",
+  "origin": "Owner text supplied through the asynchronous question reply; UTF-8 capture, not an uploaded-file byte claim",
+  "roadmap": "revised V2, Part 5 of 5",
+  "originalsModified": false
+}

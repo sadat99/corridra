@@ -1,0 +1,350 @@
+# CODEX IMPLEMENTATION — CORRIDRA V2 / PART 5 OF 5
+## Global Control Center, reliability, commercial operations and readiness
+
+**Model:** GPT-6.1 Sol, Medium effort  
+**Repository:** `sadat99/corridra`  
+**Branch:** `feat/v2-05-operations-launch` from accepted Part 4 `main`.
+
+### 0. Mission
+
+Complete the multi-corridor Corridra platform's operational controls, internal commercial visibility, administrative configuration, remaining technical readiness requirements and controlled launch mechanisms.
+
+This part integrates and completes the former Parts 11–12 without replacing the successfully implemented Parts 01–08 or v2 Parts 1–4.
+
+The intended operator is a small founder-led team managing multiple countries, missions, external partners and institutional customers. Design for clear decisions, low operating overhead and controlled scale.
+
+Read accepted architecture/ADRs, every v2 release record, the original deferred-controls register and current system behaviour before implementation.
+
+### 1. Global Corridor Control Center
+
+Build a protected admin experience over the versioned configuration introduced in Part 1.
+
+An authorized administrator should be able to:
+- View configured countries, market scopes and routes.
+- Create new corridor-route configuration from reusable templates.
+- Enable/disable eligible mission types.
+- Set supported languages, operating clusters and currencies.
+- Configure approved providers/source adapters.
+- Assign qualified operational owners/coverage.
+- Manage qualification/requirement template versions.
+- Manage approved AI task/model routes.
+- Configure permitted communication mechanisms.
+- Review active jurisdiction/privacy policy versions.
+- Manage feature availability per route.
+- Review capabilities and evidence required for route activation.
+- Preview the effect of a proposed configuration change.
+- Approve/publish/revert configuration versions where authorized.
+
+No arbitrary execution of admin-entered code or unrestricted policy expressions.
+
+No plaintext API-key retrieval.
+
+No admin interface may weaken platform-wide authorization, retention or legal approval requirements.
+
+New country-to-country routes should not require a database migration, new deployment or copy of another country's domain logic, provided their needed capabilities and adapters already exist.
+
+### 2. Route and feature readiness
+
+Each directional route must have its own operational readiness status.
+
+Examples:
+- BD→CN sourcing.
+- BD→CN machinery.
+- CN→BD market entry.
+- BD→ES buyer access.
+- ES→BD market entry.
+- BD→EU broader market-access scope.
+
+Readiness dimensions:
+- Commercial offer and pricing approved.
+- Named operational owner.
+- Qualification capability.
+- Actual available counterparty-research path.
+- Approved communication methods.
+- Language/operator coverage.
+- Evidence requirements.
+- Data-processing/retention/legal checks.
+- External service dependencies.
+- Customer support.
+- Quality assurance and escalation.
+- Deployment and rollback.
+- Real-user pilot acceptance.
+
+Display **PASS / BLOCKED / NOT APPLICABLE** with evidence and owner.
+
+No route can become publicly advertised as fully operational merely because its configuration is technically valid.
+
+### 3. Founder-level Mission Operations dashboard
+
+Use canonical source records; never invent analytics.
+
+Required filters:
+- Corridor and directional route.
+- Mission type.
+- Customer/tenant.
+- Industry.
+- Owner/operator.
+- Date range.
+- Commercial stage.
+- Programme/delegation.
+
+Required commercial metrics:
+- Submitted/qualified/accepted/rejected missions.
+- Paying versus non-paying engagements.
+- Revenue invoiced and collected by Corridra.
+- Mission delivery costs.
+- Gross contribution margin per mission.
+- External partner/contributor costs.
+- Operator effort where recorded.
+- Customer acquisition source and attribution when available.
+- Time from intake to first useful result.
+- Targets researched and qualified.
+- Responses and held meetings.
+- Quotes, samples and technical evaluations.
+- RFQs, proposals, contracts and cash outcomes.
+- Repeat missions/customer retention.
+- Delayed and blocked work.
+- Reasons for lost opportunities.
+- Programme yield and participant denominators.
+
+**Critical:** customer trade value, customer cash outcomes and Corridra's own fee revenue must never be aggregated as if they were the same metric.
+
+Unknown or insufficient data should be shown as unknown, not zero or an extrapolated success claim.
+
+### 4. Corridor economics and decisions
+
+Provide an operator-visible comparison of:
+- BD→CN sourcing.
+- BD→CN machinery.
+- BD→ES/EU market access.
+- Institution/delegation programmes.
+- Reverse-direction missions.
+
+Include:
+- Actual revenue per completed mission.
+- Direct delivery cost.
+- Hours per mission.
+- Contribution margin.
+- Time-to-commercial-outcome.
+- Repeat business.
+- Data/completeness warnings.
+
+Make it possible to identify which offerings merit more investment based on observed contribution and operational performance.
+
+No unsupported forecasts or fake predictive accuracy.
+
+### 5. AI and Network administration
+
+Complete administrative management using existing Part 1/4 policies:
+- Provider/model routing.
+- Prompt/version release.
+- Evaluation results.
+- Cost limits.
+- Tenant/mission budgets.
+- AI failures and fallback.
+- Contributor identity/capabilities.
+- Assignment/eligibility.
+- Task verification.
+- Reward rule versions.
+- Ledger review/compensations.
+- Disputes and fraud flags.
+
+Sensitive operations require proper roles, audit and step-up/approvals.
+
+No silent changes to historical rewards, verified facts or accepted contracts.
+
+### 6. Workflow reliability and observability
+
+Preserve PostgreSQL transactional/outbox truth.
+
+Implement or finish:
+- Retry and backoff policy.
+- Idempotent recovery.
+- Dead-letter handling with accountable owner.
+- Visible stuck task/communication/report queues.
+- Operator-initiated safe recovery.
+- Workflow version compatibility.
+- Health and error monitoring.
+- Privacy-safe request/mission correlation.
+- Data-source/provider failures.
+- Relevant infrastructure and AI cost visibility.
+
+Use existing supported Vercel Workflow capabilities where appropriate; verify current provider constraints before extending.
+
+Do not introduce Kubernetes, Kafka or a new queue product without a documented necessary reason.
+
+Never log tokens, credentials, unrestricted personal data or confidential evidence.
+
+### 7. Customer-data and infrastructure production gates
+
+Audit and address every outstanding deferred-control item.
+
+Specifically investigate and implement where technically and operationally possible:
+- Private-repository main-branch release protection or documented equivalent.
+- Secret scanning/push protection, including actual entitlement status.
+- CodeQL/security scanning or a validated available alternative if entitlement blocks it.
+- Secure production malware scanning and safe failure/quarantine.
+- Appropriate EU production evidence storage and upload limits.
+- Object lifecycle/orphan cleanup and hash reconciliation.
+- Retention, lawful deletion, legal hold and DSAR handling.
+- Privacy notices, controller/processor and data-transfer governance.
+- Real customer-data environment separation.
+- Real commercial outreach activation policy.
+- Source-data licensing/rights.
+- Backup/recovery/PITR checks.
+- CSRF, SSRF, XSS/CSP, session security and rate-limit review.
+- Independent release/permission regression testing.
+- Previously deferred production commercial write acceptance.
+
+Never silently close an item by changing its status text.
+
+If a check requires legal counsel, a paid GitHub entitlement, an external provider account, actual operator approval or an unavailable credential, mark **BLOCKED: external prerequisite** and show the exact safe next action. Do not fabricate clearance.
+
+Do not expose sensitive files or real customer records to an unreviewed testing environment.
+
+### 8. Real-data activation design
+
+Implement explicit environment separation for:
+- Synthetic development/preview.
+- Controlled production-candidate staging.
+- Approved real-data production.
+
+Do not reuse live production personal data for preview tests.
+
+Real-data migration must preserve canonical history and provenance. Keep the existing synthetic environment intact until a separate production-data setup has passed readiness.
+
+Production customer activation requires actual approval and recorded evidence for relevant jurisdiction, retention, storage, communications and operational controls.
+
+Account signup being live does not automatically mean real Mission intake is permitted.
+
+### 9. Independent route acceptance
+
+Run complete synthetic and controlled real-environment tests as authorized.
+
+Required scenarios:
+1. BD→China sourcing mission.
+2. BD→China machinery mission.
+3. BD→Spain buyer mission.
+4. Spain→Bangladesh market-entry mission.
+5. China→Bangladesh selective distributor/partner mission.
+6. Multi-company China business delegation.
+7. Institution-generated Spain programme.
+8. Arbitrary third-country route provisioned through configuration.
+9. Supplier/connector assignment with reward and dispute.
+10. AI unavailable while normal Mission operations continue.
+11. Compromised/unauthorized tenant access denied.
+12. Legacy mission/financial history unchanged after the full upgrade.
+
+Review:
+- PostgreSQL RLS.
+- Permission boundaries.
+- Durable workflow recovery.
+- Financial reconciliation.
+- Confidentiality of cross-company data.
+- Original-language evidence.
+- Translation-derived content.
+- AI prompt injection and data leakage.
+- Upload scanner outages.
+- Backup restore.
+- Safe rollout and rollback.
+
+No real-money or real-customer test transaction without explicit separate authorization and an approved test plan.
+
+### 10. Release and expansion policy
+
+Launch the two corridors asymmetrically:
+
+**BD→China:** sourcing/machinery first, then delegations.
+
+**BD→Spain/EU:** buyer access/export-market missions first, with reverse market-entry services selectively.
+
+Other routes stay configurable but unpublished until ready.
+
+Configure truthful route-specific product availability.
+
+New-country release should require:
+- Valid configuration.
+- Available delivery capability.
+- Named owner.
+- Approved data/communications policies.
+- Tested user journey.
+- Commercial offer and support plan.
+- Rollback.
+- Explicit readiness approval.
+
+Support ability to pause one route without disabling other routes or corrupting their data.
+
+### 11. Documentation and operations handover
+
+Produce:
+- Current v2 architecture map.
+- Administrator operating manual.
+- Corridor setup guide.
+- Route activation checklist.
+- Operator mission delivery playbook.
+- AI model/provider switching guide.
+- Contributor task and reward operations guide.
+- Data/privacy/security controls register.
+- Incident, backup, recovery and rollback runbooks.
+- Per-route launch-readiness report.
+- Final v2 implementation traceability matrix.
+
+Retain existing history and original architecture documents.
+
+### 12. Merge/deployment
+
+Create a scoped PR with reviewable logical commits.
+
+Run every required CI/integration/browser/DB/security/reliability check on the final commit. Complete safe forward migrations and compatible deployment verification.
+
+Merge when review and required gates truly pass. Verify Vercel production READY at the correct merged SHA and smoke-test affected routes.
+
+If a mandatory production prerequisite is absent, still release safe, feature-gated functionality where allowed. Keep restricted capabilities OFF and state exactly why.
+
+Do not claim paid-customer readiness where blockers remain.
+
+### 13. Final report: mandatory format
+
+Return a comprehensive **Corridra V2 Completion & Readiness Report** with:
+
+**1. Current version and release evidence**
+Commit, PR, CI, deployment, migrations, flags and environment.
+
+**2. What is now built**
+All five parts mapped against old Parts 01–12. Mark each feature implemented/tested/deployed/enabled/blocked.
+
+**3. Persona-by-persona experience**
+- Bangladesh exporter.
+- Spain/EU buyer.
+- Spain/EU company entering Bangladesh.
+- Bangladesh importer sourcing China.
+- Machinery purchaser.
+- Chinese manufacturer/supplier.
+- China→Bangladesh supplier seeking distributor.
+- Delegation leader and participant.
+- Chamber/institution.
+- Corridra local contributor.
+- Corridra operator.
+- Corridra admin.
+
+For each: how they enter, what they provide, the actual workflow, what they receive, what becomes commercially actionable and what is unavailable.
+
+**4. Technical assurance**
+Exact tests run, evidence, regressions, security controls, known limitations and rollback.
+
+**5. Commercial instrumentation**
+What revenue, delivery cost, margin, conversion, repeat and corridor performance can actually be measured.
+
+**6. Independent corridor readiness**
+BD→CN, CN→BD, BD→ES/EU, ES/EU→BD, future corridors.
+
+**7. Deferred/blocked**
+Exact issue, reason, dependency, owner and resolution conditions.
+
+**8. Remaining roadmap**
+Only genuinely unfinished capabilities or later-stage opportunities. Do not recreate items already completed.
+
+**9. Admin guide**
+How to configure a new route, enable a service, switch an AI model, assign a local operator, inspect evidence, manage privacy controls and recover a failed workflow.
+
+Complete Part 5. Start implementation now.

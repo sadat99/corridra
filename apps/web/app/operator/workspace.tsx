@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { ReviewSettings } from './review-settings';
+import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
@@ -202,6 +203,9 @@ export function Workspace({
             aria-label="Workspace sections"
           >
             <a href="#workspace-missions">Missions and requirements</a>
+            {['owner', 'admin', 'operator'].includes(data.role) && (
+              <a href="#workspace-operations">Global operations</a>
+            )}
             <a href="#workspace-research">Companies and research</a>
             <a href="#workspace-meetings">Introductions and meetings</a>
             <a href="#workspace-commercial">Commercial progress</a>
@@ -226,6 +230,9 @@ export function Workspace({
           <p>
             Choose a section above. Customer sharing and assigned work use their own access links.
           </p>
+          {['owner', 'admin', 'operator'].includes(data.role) && (
+            <Operations key={`operations-${tenant}`} tenant={tenant} role={data.role} />
+          )}
           {data.role !== 'viewer' && (
             <>
               <div id="workspace-ai" tabIndex={-1} className="workspace-panel">

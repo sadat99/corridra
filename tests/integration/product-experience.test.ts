@@ -940,7 +940,7 @@ test('populated Part 2 upgrade preserves every original row and historical expor
     // Only the request timestamp is newly observed. Every accepted publication field is retained.
     expect({ ...afterView, generatedAt: beforeView.generatedAt }).toEqual(beforeView);
     const row = (await g.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0];
-    expect(row.n).toBe(27);
+    expect(row.n).toBe(28);
     await expect(
       g.runtime.query('SELECT app.delivery_report_v1($1,$2)', ['0'.repeat(64), 'CLIENT_PROGRESS']),
     ).rejects.toThrow();
