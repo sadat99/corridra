@@ -664,7 +664,7 @@ test('UTF-8 programme exports retain Chinese names, Bangla text and every origin
   const bytes = await reportPdf(report);
   expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
   expect(bytes.length).toBeGreaterThan(5000);
-  await writeFile('/workspace/work/part03-font-report.pdf', bytes);
+  await writeFile('.cache/part03-unicode-export.pdf', bytes, { mode: 0o600 });
 });
 
 async function participantMeeting(missionId: string) {
