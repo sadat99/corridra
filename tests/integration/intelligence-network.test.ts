@@ -273,6 +273,44 @@ test('combined China machine journey: human AI review, restricted non-member wor
   ).toBe(budgetId);
   await ai.run(f.ctx, command);
   expect(calls).toBe(1);
+  await rawContext(
+    f.owner,
+    f.users.owner.ctx,
+    "UPDATE app.membership SET allowed_classifications=ARRAY['PUBLIC','INTERNAL','HIGHLY_RESTRICTED'] WHERE tenant_id=$1 AND user_id=$2",
+    [f.tenantA, f.users.owner.id],
+  );
+  const privateBudgetSource = await f.evidence.createSource(f.users.owner.ctx, {
+    kind: 'observation',
+    locator: 'Synthetic private budget approval',
+    observedAt: new Date().toISOString(),
+    classification: 'HIGHLY_RESTRICTED',
+    purpose: 'synthetic_validation',
+    retentionUntil: later(2),
+    aiPolicy: 'DENY',
+  });
+  await operations.command(f.users.owner.ctx, {
+    id: randomUUID(),
+    action: 'ai-budget',
+    missionId: j.t.missionId,
+    version: 3,
+    amountMinor: '0',
+    sourceId: privateBudgetSource.id,
+    validUntil: later(1),
+    reason,
+  });
+  expect(
+    (
+      await rawContext(
+        f.runtime,
+        f.ctx,
+        'SELECT id FROM app.ai_mission_budget WHERE version=3 AND mission_id=$1',
+        [j.t.missionId],
+      )
+    ).rows,
+  ).toEqual([]);
+  const hiddenBudgetRun = await ai.run(f.ctx, { ...command, commandId: randomUUID() });
+  expect('output' in hiddenBudgetRun && hiddenBudgetRun.output).toBeNull();
+  expect(calls).toBe(1);
   const draft = (await ai.workspace(f.ctx)).drafts.find((x) => x.run_id === command.commandId)!;
   await ai.review(f.users.reviewer.ctx, {
     commandId: randomUUID(),

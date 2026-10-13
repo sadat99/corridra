@@ -477,3 +477,61 @@ test('China to Bangladesh selective partner mission keeps the declared route thr
   expect(d.corridraMoney).toEqual([]);
   expect(d.customerTrade.find((x) => x.kind === 'CASH_RECEIPT')?.observed_minor).toBe('12000');
 });
+test('operational metadata never widens the classification of its backing source', async () => {
+  const t = await f.target();
+  await rawContext(
+    f.owner,
+    f.users.owner.ctx,
+    "UPDATE app.membership SET allowed_classifications=ARRAY['PUBLIC','INTERNAL','HIGHLY_RESTRICTED'] WHERE tenant_id=$1 AND user_id=$2",
+    [f.tenantA, f.users.owner.id],
+  );
+  const source = await f.evidence.createSource(f.users.owner.ctx, {
+    kind: 'observation',
+    locator: 'Synthetic restricted operational evidence',
+    observedAt: new Date().toISOString(),
+    classification: 'HIGHLY_RESTRICTED',
+    purpose: 'synthetic_validation',
+    retentionUntil: future(),
+    aiPolicy: 'DENY',
+  });
+  const id = randomUUID();
+  await s.command(f.users.owner.ctx, {
+    id,
+    action: 'context',
+    missionId: t.missionId,
+    version: 1,
+    customerReference: 'restricted-customer-reference',
+    industry: 'restricted-industry',
+    acquisitionSource: null,
+    payingStatus: 'UNKNOWN',
+    revenueComplete: false,
+    costComplete: false,
+    effortComplete: false,
+    sourceId: source.id,
+    reason,
+  });
+  expect(
+    (
+      await rawContext(
+        f.runtime,
+        f.users.operator.ctx,
+        'SELECT id FROM app.mission_operations_context WHERE id=$1',
+        [id],
+      )
+    ).rows,
+  ).toEqual([]);
+  expect(
+    (await s.dashboard(f.users.operator.ctx, { customer: 'restricted-customer-reference' })).summary
+      .submitted,
+  ).toBe(0);
+  expect(
+    (
+      await rawContext(
+        f.runtime,
+        f.users.owner.ctx,
+        'SELECT id FROM app.mission_operations_context WHERE id=$1',
+        [id],
+      )
+    ).rows,
+  ).toEqual([{ id }]);
+});

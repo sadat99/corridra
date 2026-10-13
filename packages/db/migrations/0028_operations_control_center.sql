@@ -140,7 +140,11 @@ END $$;
 DO $$ DECLARE t text; BEGIN
  FOREACH t IN ARRAY ARRAY['route_readiness','route_release','configuration_proposal','configuration_decision','service_document','mission_effort','mission_operations_context','operations_case','operations_command','ai_mission_budget'] LOOP
   EXECUTE format('ALTER TABLE app.%I ENABLE ROW LEVEL SECURITY',t);
-  EXECUTE format('CREATE POLICY read ON app.%I FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,''INTERNAL'',''synthetic_validation'') AND app.member_role(tenant_id) IN (''owner'',''admin''))',t);
+  IF t=ANY(ARRAY['route_readiness','service_document','mission_effort','mission_operations_context','operations_case','ai_mission_budget']) THEN
+   EXECUTE format('CREATE POLICY read ON app.%I FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,''INTERNAL'',''synthetic_validation'') AND app.member_role(tenant_id) IN (''owner'',''admin'') AND (%I.source_id IS NULL OR EXISTS(SELECT FROM app.source_record s WHERE s.tenant_id=%I.tenant_id AND s.id=%I.source_id AND app.can_access(s.tenant_id,s.classification,s.purpose))))',t,t,t,t);
+  ELSE
+   EXECUTE format('CREATE POLICY read ON app.%I FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,''INTERNAL'',''synthetic_validation'') AND app.member_role(tenant_id) IN (''owner'',''admin''))',t);
+  END IF;
   EXECUTE format('CREATE POLICY add ON app.%I FOR INSERT TO corridra_runtime WITH CHECK(app.can_access(tenant_id,''INTERNAL'',''synthetic_validation'') AND app.member_role(tenant_id) IN (''owner'',''admin'') AND created_by=app.actor_id())',t);
   EXECUTE format('GRANT SELECT,INSERT ON app.%I TO corridra_runtime',t);
   EXECUTE format('CREATE TRIGGER guard BEFORE INSERT ON app.%I FOR EACH ROW EXECUTE FUNCTION app.guard_operations_control()',t);
@@ -148,11 +152,11 @@ DO $$ DECLARE t text; BEGIN
   EXECUTE format('CREATE TRIGGER event AFTER INSERT ON app.%I FOR EACH ROW EXECUTE FUNCTION app.record_change()',t);
  END LOOP;
 END $$;
-CREATE POLICY operator_readiness ON app.route_readiness FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator');
+CREATE POLICY operator_readiness ON app.route_readiness FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator' AND (source_id IS NULL OR EXISTS(SELECT FROM app.source_record s WHERE s.tenant_id=route_readiness.tenant_id AND s.id=route_readiness.source_id AND app.can_access(s.tenant_id,s.classification,s.purpose))));
 CREATE POLICY operator_release ON app.route_release FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator');
-CREATE POLICY operator_cases ON app.operations_case FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator');
-CREATE POLICY operator_context ON app.mission_operations_context FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator');
-CREATE POLICY ai_budget_read ON app.ai_mission_budget FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id) IN ('operator','reviewer'));
+CREATE POLICY operator_cases ON app.operations_case FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator' AND owner_id=app.actor_id() AND (source_id IS NULL OR EXISTS(SELECT FROM app.source_record s WHERE s.tenant_id=operations_case.tenant_id AND s.id=operations_case.source_id AND app.can_access(s.tenant_id,s.classification,s.purpose))));
+CREATE POLICY operator_context ON app.mission_operations_context FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id)='operator' AND EXISTS(SELECT FROM app.source_record s WHERE s.tenant_id=mission_operations_context.tenant_id AND s.id=mission_operations_context.source_id AND app.can_access(s.tenant_id,s.classification,s.purpose)));
+CREATE POLICY ai_budget_read ON app.ai_mission_budget FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation') AND app.member_role(tenant_id) IN ('operator','reviewer') AND EXISTS(SELECT FROM app.source_record s WHERE s.tenant_id=ai_mission_budget.tenant_id AND s.id=ai_mission_budget.source_id AND app.can_access(s.tenant_id,s.classification,s.purpose)));
 REVOKE ALL ON FUNCTION app.guard_operations_control() FROM PUBLIC;
 -- Respect an explicit per-service pause without rewriting historical mission assignments.
 CREATE FUNCTION app.guard_route_pause() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
@@ -164,7 +168,7 @@ REVOKE ALL ON FUNCTION app.guard_route_pause() FROM PUBLIC;
 CREATE TRIGGER operational_pause BEFORE INSERT ON app.mission_route_assignment FOR EACH ROW EXECUTE FUNCTION app.guard_route_pause();
 ALTER TABLE app.ai_attempt ADD COLUMN mission_budget_id uuid;
 ALTER TABLE app.ai_attempt ADD FOREIGN KEY(tenant_id,mission_budget_id) REFERENCES app.ai_mission_budget(tenant_id,id);
-CREATE FUNCTION app.guard_ai_mission_budget() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
+CREATE FUNCTION app.guard_ai_mission_budget() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE b app.ai_mission_budget; m uuid;
 BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text||':ai-budget',0));
