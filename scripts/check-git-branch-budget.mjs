@@ -18,6 +18,10 @@ const remote = execFileSync(
   .trim()
   .split('\n')
   .filter(Boolean);
+if (local.length > 10 || remote.length > 10 || new Set([...local, ...remote]).size > 10)
+  throw new Error(
+    'The ten-branch limit is already exceeded; preserve unfinished work and resolve it before publishing',
+  );
 if (!local.includes(branch)) assertBranchBudget(local.length);
 if (!remote.includes(branch)) assertBranchBudget(remote.length);
 console.log(JSON.stringify({ branch, localCount: local.length, remoteCount: remote.length }));

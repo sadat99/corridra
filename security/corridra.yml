@@ -1,0 +1,34 @@
+rules:
+  - id: corridra-no-eval
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Administrative input must never execute as code.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: corridra-no-insecure-tls
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: TLS certificate verification must remain enabled.
+    pattern-either:
+      - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+      - pattern: '{..., rejectUnauthorized: false, ...}'
+  - id: corridra-no-raw-html
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Do not render unreviewed evidence or model output as HTML.
+    pattern: '<$TAG ... dangerouslySetInnerHTML={$VALUE} ... />'
+  - id: corridra-no-environment-logging
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Environment values may contain credentials and must not be logged.
+    pattern-either:
+      - pattern: console.$METHOD(process.env, ...)
+      - pattern: console.$METHOD(process.env.$KEY, ...)
+  - id: corridra-no-request-url-fetch
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Request-derived URLs require an approved destination adapter.
+    pattern-either:
+      - pattern: fetch($REQUEST.url, ...)
+      - pattern: fetch($REQUEST.body.url, ...)

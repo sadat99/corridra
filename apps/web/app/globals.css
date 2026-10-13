@@ -1446,3 +1446,48 @@ summary:hover {
 .workspace-panel li {
   overflow-wrap: anywhere;
 }
+.operations-table {
+  max-width: 100%;
+  overflow: auto;
+  margin-block: 1.25rem;
+}
+.operations-table table {
+  border-collapse: collapse;
+  min-width: 40rem;
+  width: 100%;
+  font-size: 0.875rem;
+}
+.operations-table th,
+.operations-table td {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  text-align: left;
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.operations-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-block: 0.5rem;
+}
+.operations-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+}
+.operations-metrics dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.operations-json {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#workspace-operations section {
+  margin-block: 2rem;
+  scroll-margin-top: 2rem;
+}

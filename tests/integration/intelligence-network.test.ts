@@ -7,6 +7,7 @@ import { CorridorService, initialRouteConfiguration } from '../../packages/missi
 import { initialRoutes } from '../../packages/domain/src/corridors';
 import { NetworkService } from '../../packages/network/src/index';
 import { IntelligenceService } from '../../packages/intelligence/src/service';
+import { OperationsService } from '../../packages/missions/src/operations';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
 import { missionCatalogue, machineryFields } from '../../packages/domain/src/commercial-missions';
 import { command as commercialCommand } from './access-fixture';
@@ -234,10 +235,42 @@ test('combined China machine journey: human AI review, restricted non-member wor
   };
   await expect(ai.run(f.users.other.ctx, command)).rejects.toThrow();
   await expect(ai.run(f.users.viewer.ctx, command)).rejects.toThrow();
+  const operations = new OperationsService(f.runtime);
+  await operations.command(f.users.owner.ctx, {
+    id: randomUUID(),
+    action: 'ai-budget',
+    missionId: j.t.missionId,
+    version: 1,
+    amountMinor: '0',
+    sourceId: source,
+    validUntil: later(1),
+    reason,
+  });
+  const blockedBudgetRun = await ai.run(f.ctx, { ...command, commandId: randomUUID() });
+  expect('output' in blockedBudgetRun && blockedBudgetRun.output).toBeNull();
+  expect(calls).toBe(0);
+  const budgetId = randomUUID();
+  await operations.command(f.users.owner.ctx, {
+    id: budgetId,
+    action: 'ai-budget',
+    missionId: j.t.missionId,
+    version: 2,
+    amountMinor: '100',
+    sourceId: source,
+    validUntil: later(1),
+    reason,
+  });
   expect(calls).toBe(0);
   const result = await ai.run(f.ctx, command);
   expect('output' in result && result.output).toBeTruthy();
   expect(calls).toBe(1);
+  expect(
+    (
+      await f.owner.query('SELECT mission_budget_id FROM app.ai_attempt WHERE run_id=$1', [
+        command.commandId,
+      ])
+    ).rows[0].mission_budget_id,
+  ).toBe(budgetId);
   await ai.run(f.ctx, command);
   expect(calls).toBe(1);
   const draft = (await ai.workspace(f.ctx)).drafts.find((x) => x.run_id === command.commandId)!;

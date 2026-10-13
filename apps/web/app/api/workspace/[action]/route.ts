@@ -6,9 +6,9 @@ import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-const headers = { 'Cache-Control': 'no-store' };
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
   const correlationId = randomUUID();
+  const headers = { 'Cache-Control': 'no-store', 'X-Corridra-Request-ID': correlationId };
   try {
     const s = foundations();
     if (!s)
@@ -36,6 +36,15 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         intelligence: () => s.intelligence.workspace(ctx),
         network: () => s.network.workspace(ctx),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
+        'operations-controls': () => s.operations.controlCenter(ctx),
+        'operations-health': () => s.operations.reliability(ctx),
+        'operations-dashboard': () =>
+          s.operations.dashboard(
+            ctx,
+            Object.fromEntries(
+              [...new URL(request.url).searchParams].filter(([key]) => key !== 'tenant'),
+            ),
+          ),
         'commercial-mission': () =>
           s.commercialMissions.workspace(
             ctx,
@@ -196,6 +205,8 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     const text = Buffer.concat(parts).toString('utf8');
     const input: unknown = JSON.parse(text);
     const writes = {
+      operations: () => s.operations.command(ctx, input),
+      'operations-preview': () => s.operations.preview(ctx, input),
       'ai-rights': () => s.intelligence.rights(ctx, input),
       'network-rule': () => s.network.rule(ctx, input),
       'ai-policy': () => s.intelligence.configure(ctx, input),
