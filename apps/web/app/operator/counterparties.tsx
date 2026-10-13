@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { CountryOptions } from './country-options';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
   name: string;
@@ -427,10 +428,8 @@ export function Counterparties({
               <Field label="Company name" name="name" />
               <label className="field">
                 Company country
-                <select name="country">
-                  <option value="BD">Bangladesh</option>
-                  <option value="ES">Spain</option>
-                  <option value="DE">Germany</option>
+                <select name="country" defaultValue="BD">
+                  <CountryOptions />
                 </select>
               </label>
               <Field

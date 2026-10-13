@@ -1,6 +1,7 @@
 import { databasePool } from './database-pool';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { z } from 'zod';
+import { assertBranchBudget } from './branch-budget';
 // Official REST schema: https://neon.com/api_spec/release/v2.json (checked 2026-10-04).
 const c = z
   .object({
@@ -48,6 +49,7 @@ let branch = branches.find((b: { name: string }) => b.name === name);
 if (branch && (branch.parent_id !== parent.id || branch.id === parent.id || branch.protected))
   throw new Error('Existing preview is outside the managed lifecycle');
 if (action === 'create' && !branch) {
+  assertBranchBudget(branches.length);
   if (!c.NEON_NONPROD_DATABASE_URL) throw new Error('Parent connection required for creation');
   const url = new URL(c.NEON_NONPROD_DATABASE_URL);
   const { endpoints } = await api(base + '/endpoints');
@@ -66,7 +68,7 @@ if (action === 'create' && !branch) {
     // The parent is a sterile template: only schemas, migration hashes and factual country primitives.
     // Synthetic accounts are seeded independently on each child, never cloned with sessions/passwords.
     const tables = await pool.query(
-      "SELECT table_schema,table_name FROM information_schema.tables WHERE table_schema IN ('app','identity') AND table_type='BASE TABLE' AND table_name NOT IN ('country','corridor')",
+      "SELECT table_schema,table_name FROM information_schema.tables WHERE table_schema IN ('app','identity') AND table_type='BASE TABLE' AND table_name NOT IN ('country','corridor','currency','market_scope','market_alias','market_member')",
     );
     for (const t of tables.rows) {
       const count = await pool.query(
@@ -84,8 +86,13 @@ if (action === 'create' && !branch) {
   }));
 }
 if (action === 'delete' && branch) {
+  if (branch.default || branches.some((b: { parent_id?: string }) => b.parent_id === branch.id))
+    throw new Error('Default branches and branches with children must be preserved');
   await api(base + '/branches/' + encodeURIComponent(branch.id), 'DELETE');
   branch = undefined;
+  const verified = await api(base + '/branches');
+  if (verified.branches.some((b: { name: string }) => b.name === name))
+    throw new Error('Branch deletion could not be verified');
 }
 await mkdir('.cache', { recursive: true });
 const evidence = {

@@ -109,7 +109,11 @@ export const initialRoutes = [
     destination: 'BD',
     missions: ['customers', 'distributors', 'partners', 'market_validation'],
   },
-  { origin: 'BD', destination: 'EU', missions: ['export_market_access', 'buyers', 'distributors'] },
+  {
+    origin: 'BD',
+    destination: 'EU',
+    missions: ['export_market_access', 'buyers', 'distributors', 'trade_fairs'],
+  },
   { origin: 'EU', destination: 'BD', missions: ['market_entry', 'sourcing'] },
 ] as const;
 

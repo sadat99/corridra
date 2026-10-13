@@ -11,6 +11,8 @@ import { MissionService } from '@corridra/missions';
 import { DeliveryService } from '@corridra/delivery';
 import { OpportunityService } from '@corridra/opportunities';
 import { MeetingService } from '@corridra/missions/meetings';
+import { CommercialMissionService } from '@corridra/missions/commercial';
+import { CorridorService } from '@corridra/missions/corridors';
 import { CommunicationService } from '@corridra/communications';
 import { SyntheticChannel } from '@corridra/communications/adapters';
 import { OutboxDispatcher } from '@corridra/workflows';
@@ -66,6 +68,8 @@ function createServices() {
       config.AUTH_SECRET,
     ),
     meetings: new MeetingService(runtimePool),
+    commercialMissions: new CommercialMissionService(runtimePool),
+    corridors: new CorridorService(runtimePool),
     opportunities: new OpportunityService(runtimePool),
     communications: new CommunicationService(runtimePool, config.AUTH_SECRET),
     dispatcher: new OutboxDispatcher(runtimePool, new SyntheticChannel(runtimePool)),

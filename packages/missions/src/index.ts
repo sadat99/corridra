@@ -6,7 +6,24 @@ import {
   type TenantTransaction,
 } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
-import { briefSchema, missionCommand, noticeVersion } from '@corridra/domain/missions';
+import {
+  briefSchema,
+  missionCommand,
+  noticeVersion,
+  missionStatus,
+} from '@corridra/domain/missions';
+import { z } from 'zod';
+export const queueFilters = z
+  .object({
+    owner: z.uuid().optional(),
+    stage: missionStatus.optional(),
+    route: z.uuid().optional(),
+    job: z
+      .string()
+      .regex(/^[a-z][a-z0-9_.-]{0,79}$/)
+      .optional(),
+  })
+  .strict();
 export const digest = (v: string) => createHash('sha256').update(v).digest('hex');
 export class MissionService {
   constructor(
@@ -54,10 +71,25 @@ export class MissionService {
     if (!r.rows[0].receipt) throw new DomainError('Receipt unavailable or expired', 404);
     return r.rows[0].receipt;
   }
-  queue(ctx: RequestContext, filter: 'all' | 'open' | 'overdue' = 'all', offset = 0) {
+  queue(
+    ctx: RequestContext,
+    filter: 'all' | 'open' | 'overdue' = 'all',
+    offset = 0,
+    filters: z.infer<typeof queueFilters> = {},
+  ) {
+    const selected = queueFilters.parse(filters);
     return withTenant(this.pool, ctx, 'missions.read', async ({ db, role }) => {
-      const where =
-        "m.tenant_id=$1 AND ($2='all' OR (m.status NOT IN ('CANCELLED','CLOSED') AND ($2<>'overdue' OR m.due_at<now())))";
+      const where = `m.tenant_id=$1 AND ($2='all' OR (m.status NOT IN ('CANCELLED','CLOSED') AND ($2<>'overdue' OR m.due_at<now())))
+         AND ($3::uuid IS NULL OR m.owner_id=$3) AND ($4::text IS NULL OR m.status=$4)
+         AND (($5::uuid IS NULL AND $6::text IS NULL) OR EXISTS(SELECT FROM app.mission_route_assignment a JOIN app.corridor_pack_version p ON p.tenant_id=a.tenant_id AND p.id=a.pack_id JOIN app.mission_type_definition t ON t.tenant_id=a.tenant_id AND t.id=a.mission_type_id WHERE a.tenant_id=m.tenant_id AND a.mission_id=m.id AND a.version=(SELECT max(version) FROM app.mission_route_assignment WHERE tenant_id=m.tenant_id AND mission_id=m.id) AND ($5::uuid IS NULL OR p.route_id=$5) AND ($6::text IS NULL OR t.key=$6)))`;
+      const args = [
+        ctx.tenantId,
+        filter,
+        selected.owner ?? null,
+        selected.stage ?? null,
+        selected.route ?? null,
+        selected.job ?? null,
+      ];
       const missions = (
         await db.query(
           `WITH scoped_missions AS MATERIALIZED (
@@ -72,7 +104,7 @@ export class MissionService {
         SELECT m.*,i.brief,i.notice_version,i.acknowledged_at,i.source_kind,i.claim_status,i.retention_until,mk.country_code
         FROM scoped_missions m JOIN scoped_intakes i ON i.tenant_id=m.tenant_id AND i.id=m.id
         JOIN scoped_markets mk ON mk.tenant_id=m.tenant_id AND mk.mission_id=m.id
-        ORDER BY CASE WHEN m.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,m.due_at,m.id LIMIT 100 OFFSET $3
+        ORDER BY CASE WHEN m.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,m.due_at,m.id LIMIT 100 OFFSET $7
       ), profiles AS MATERIALIZED (
         SELECT DISTINCT ON (tp.mission_id) tp.mission_id,tp.description
         FROM app.target_profile tp WHERE tp.tenant_id=$1 AND tp.mission_id IN (SELECT id FROM page)
@@ -80,19 +112,15 @@ export class MissionService {
       )
       SELECT p.*,tp.description AS target_profile FROM page p LEFT JOIN profiles tp ON tp.mission_id=p.id
       ORDER BY CASE WHEN p.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,p.due_at,p.id`,
-          [ctx.tenantId, filter, offset],
+          [...args, offset],
         )
       ).rows;
       const ids = missions.map((m) => m.id);
       return {
         role,
         missions,
-        total: (
-          await db.query(`SELECT count(*)::int AS n FROM app.mission m WHERE ${where}`, [
-            ctx.tenantId,
-            filter,
-          ])
-        ).rows[0].n,
+        total: (await db.query(`SELECT count(*)::int AS n FROM app.mission m WHERE ${where}`, args))
+          .rows[0].n,
         owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
         history: (
           await db.query(

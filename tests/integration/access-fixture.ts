@@ -44,7 +44,7 @@ export async function accessFixture(
   );
   await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
   const ctx = f.users.operator.ctx;
-  async function target() {
+  async function target(country = 'ES') {
     const source = await evidence.createSource(ctx, {
       kind: 'public_record',
       locator: 'https://example.invalid/part06',
@@ -59,7 +59,7 @@ export async function accessFixture(
       command('ingest', {
         sourceId: source.id,
         name: `Synthetic Buyer ${randomUUID()}`,
-        country: 'ES',
+        country,
         domain: `${randomUUID()}.example.invalid`,
         address: 'Synthetic business address',
         identifierType: 'registry',
@@ -101,7 +101,7 @@ export async function accessFixture(
     );
     const intake = await mission.submit(randomUUID(), {
       objective: 'Sell in a new market',
-      market: 'Spain',
+      market: country === 'ES' ? 'Spain' : country,
       attendance: 'No',
       startDate: '',
       endDate: '',
@@ -125,7 +125,7 @@ export async function accessFixture(
         reason: 'Synthetic access qualification',
         nextAction: 'Review relevant introduction',
         dueAt: future(),
-        marketCode: 'ES',
+        marketCode: country,
         targetProfile: 'Synthetic hotel distributor profile',
       });
     const target = await research.command(
@@ -144,6 +144,8 @@ export async function accessFixture(
       }),
     );
     return {
+      claimId: claim.id,
+      sourceId: source.id,
       targetId: target.id as string,
       contactId: contact.id as string,
       relationshipId: rel.id as string,
@@ -196,7 +198,12 @@ export async function accessFixture(
     availableDates: 'Dates subject to agreement',
   };
   async function introduction(
-    t = undefined as Awaited<ReturnType<typeof target>> | undefined,
+    t = undefined as
+      | Pick<
+          Awaited<ReturnType<typeof target>>,
+          'targetId' | 'contactId' | 'relationshipId' | 'missionId'
+        >
+      | undefined,
     expiresAt = future(),
   ) {
     const record = t ?? (await target());

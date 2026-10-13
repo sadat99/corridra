@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./meetings": "./src/meetings.ts",
     "./bootstrap": "./src/bootstrap.ts",
-    "./corridors": "./src/corridors.ts"
+    "./corridors": "./src/corridors.ts",
+    "./commercial": "./src/commercial.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",

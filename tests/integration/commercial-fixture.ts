@@ -30,8 +30,11 @@ export async function commercialFixture(upgrade = false, through?: string) {
     dueAt: future(),
     reason: 'Record invented commercial progression',
   });
-  async function held(before?: (i: Awaited<ReturnType<typeof f.introduction>>) => Promise<void>) {
-    const i = await f.introduction();
+  async function held(
+    before?: (i: Awaited<ReturnType<typeof f.introduction>>) => Promise<void>,
+    target?: NonNullable<Parameters<typeof f.introduction>[0]>,
+  ) {
+    const i = await f.introduction(target);
     await before?.(i);
     const m = await f.meetings.command(
       f.ctx,
@@ -108,7 +111,7 @@ export async function commercialFixture(upgrade = false, through?: string) {
   const snapshot = async () =>
     (
       await f.owner.query(
-        "SELECT jsonb_build_object('missions',(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM app.mission m),'meetings',(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM app.meeting m),'followups',(SELECT jsonb_agg(to_jsonb(f) ORDER BY id) FROM app.follow_up f),'events',(SELECT jsonb_agg(to_jsonb(e) ORDER BY id) FROM app.domain_event e),'outbox',(SELECT jsonb_agg(to_jsonb(o) ORDER BY id) FROM app.outbox o),'memberships',(SELECT jsonb_agg(to_jsonb(m) ORDER BY tenant_id,user_id) FROM app.membership m)) data",
+        "SELECT jsonb_build_object('missions',(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM app.mission m),'meetings',(SELECT jsonb_agg(to_jsonb(m)-'target_id'-'activity_kind'-'activity_context' ORDER BY id) FROM app.meeting m),'followups',(SELECT jsonb_agg(to_jsonb(f) ORDER BY id) FROM app.follow_up f),'events',(SELECT jsonb_agg(to_jsonb(e) ORDER BY id) FROM app.domain_event e),'outbox',(SELECT jsonb_agg(to_jsonb(o) ORDER BY id) FROM app.outbox o),'memberships',(SELECT jsonb_agg(to_jsonb(m) ORDER BY tenant_id,user_id) FROM app.membership m)) data",
       )
     ).rows[0].data;
   const before = upgrade ? await snapshot() : null;
