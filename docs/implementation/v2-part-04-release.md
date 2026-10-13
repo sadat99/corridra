@@ -1,6 +1,6 @@
 # Revised V2 Part 4 release record
 
-Status: implementation complete; final regression, PR and production acceptance pending. This record does not claim deployment. Baseline is revised Part 3 PR #33, main `ca7894301cf4c1b69a2718d6b6cf55ecfca2042d`. Original V1 Parts 1–8 remain accepted; Part 5 is not started.
+Status: local acceptance complete; final-head CI and production acceptance are recorded in PR #34. This record does not claim deployment. Baseline is revised Part 3 PR #33, main `ca7894301cf4c1b69a2718d6b6cf55ecfca2042d`. Original V1 Parts 1–8 remain accepted; Part 5 is not started.
 
 ## User-facing behavior
 
@@ -12,7 +12,7 @@ Existing customer, supplier, buyer and institution sharing remains governed by t
 
 ## Validation and activation
 
-Formatting, lint, typechecks, build, seven document tests, seven infrastructure tests and the production dependency audit passed during preparation. Focused gateway/network checks passed 25 tests before final regression. Final regression and browser acceptance results will be recorded after completion; interrupted or failing runs are not acceptance evidence.
+Formatting, lint, typechecks, build, seven document tests, seven infrastructure tests and the production dependency audit passed during preparation. Focused gateway/network checks passed 25 tests before final regression. Final regression passed 176 tests in 18 suites; all 52 public browser checks passed. The six existing protected journeys passed, and the corrected Part 4 journey passed separately, including actual MFA, offline retry, review, once-only credit, reversal, suspension and mobile accessibility. Final-head CI repeats all seven protected journeys. Interrupted or failing runs are not acceptance evidence.
 
 Final isolated Neon migration 25→27 and replay passed against a newly inspected sterile parent. Temporary validation branch `br-wild-queen-b1u8m9a5` was deleted and deletion verified; two required application-project branches remain. Historical migration files are unchanged.
 

@@ -1,6 +1,6 @@
 # ADR 028: Governed tasks and restricted execution work
 
-Status: implementation in progress for the revised V2 Part 4 packet.
+Status: implemented for the revised V2 Part 4 packet; production activation remains independently gated.
 
 Provider SDKs belong only to the intelligence adapter module. Business services request registered, versioned tasks with explicit evidence identifiers. Retrieval authorization precedes inference. The initial surface supports public, rights-reviewed text only; arbitrary retrieval, file inference, embeddings, model tools and autonomous commands are unavailable. Provider model identifiers and approved policy versions are configuration, not business code.
 

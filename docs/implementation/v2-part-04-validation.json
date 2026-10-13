@@ -2,7 +2,7 @@
   "checkedAt": "2026-10-13T12:13:26.202966+00:00",
   "baseline": "ca7894301cf4c1b69a2718d6b6cf55ecfca2042d",
   "branch": "feat/v2-04-intelligence-network",
-  "status": "PR preparation; final-head CI, browser acceptance, live migration and production acceptance must be recorded in the accepted PR.",
+  "status": "Local acceptance complete; final-head CI, live migration, exact production SHA and cleanup are recorded in the accepted PR.",
   "local": {
     "format": "passed",
     "lint": "passed",
@@ -18,9 +18,23 @@
       "files": 2,
       "note": "Synthetic SDK protocol and typed golden checks; final regression supersedes this preparation run."
     },
-    "finalIntegration": "in progress",
-    "finalPublicBrowser": "in progress",
-    "finalOperatorBrowser": "in progress"
+    "finalIntegration": {
+      "passed": 176,
+      "files": 18,
+      "skipped": 0,
+      "durationSeconds": 420.24
+    },
+    "finalPublicBrowser": {
+      "passed": 52,
+      "skipped": 0,
+      "duration": "2.1 minutes"
+    },
+    "finalOperatorBrowser": {
+      "existingJourneysPassed": 6,
+      "newPart4JourneyPassed": 1,
+      "note": "Existing six journeys passed in the full run; final corrected new journey passed separately. Final-head CI repeats all seven."
+    },
+    "accessibility": "No Axe violations or horizontal overflow in the reviewed contributor mobile journey; existing public accessibility tests passed."
   },
   "isolatedNeonUpgrade": {
     "checkedAt": "2026-10-13T12:06:28.931Z",
@@ -159,5 +173,9 @@
   },
   "part5": "not started",
   "branchPolicy": "maximum ten including main; preserve all open dependency PRs and incomplete work",
-  "deferred": "CodeQL D04; no real customer activation, outreach or payout"
+  "deferred": "CodeQL D04; no real customer activation, outreach or payout",
+  "screenshot": {
+    "path": "docs/implementation/evidence/v2-part-04/contributor-mobile.png",
+    "sha256": "47d6ca5cff8f6687606d1e929d8f6c11dac2354139dda5b7a902b9cacaac633a"
+  }
 }

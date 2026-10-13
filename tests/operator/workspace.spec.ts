@@ -2049,6 +2049,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await networkPanel
       .getByRole('button', { name: 'Review original submitted declaration' })
       .click();
+    await expect(networkPanel.getByText(/^REVIEW · version/)).toBeVisible();
     await expect(
       networkPanel.getByRole('button', { name: 'Save independent decision' }),
     ).toBeVisible();
@@ -2060,6 +2061,17 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     ).toBeVisible();
     await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
     await networkPanel.getByRole('button', { name: 'Assess contribution once' }).click();
+    await expect
+      .poll(
+        async () =>
+          (
+            await db.query(
+              'SELECT count(*)::int n FROM app.contribution WHERE tenant_id=$1 AND task_key=$2',
+              [seed.tenantId, 'network:' + taskId],
+            )
+          ).rows[0].n,
+      )
+      .toBe(1);
     const contribution = (
       await db.query('SELECT * FROM app.contribution WHERE tenant_id=$1 AND task_key=$2', [
         seed.tenantId,
