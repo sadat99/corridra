@@ -1,4 +1,9 @@
 'use client';
+import {
+  OperatorWorkbench,
+  useFormChangeGuard,
+  formAcknowledged,
+} from '../../components/operator-workbench';
 import { useState, type FormEvent } from 'react';
 import { machineryFields, missionCatalogue } from '@corridra/domain/commercial-missions';
 import { parseMoney, formatMoney, currency } from '@corridra/domain/opportunities';
@@ -147,6 +152,12 @@ export function CommercialMission({
   missionId: string;
   onChanged?: () => void;
 }) {
+  const {
+    ref: formRootRef,
+    onChangeCapture,
+    onResetCapture,
+    confirmChange,
+  } = useFormChangeGuard<HTMLDivElement>();
   const [data, setData] = useState<Snapshot | null>(null),
     [catalogue, setCatalogue] = useState<Catalogue | null>(null),
     [proof, setProof] = useState<Proof | null>(null),
@@ -433,6 +444,7 @@ export function CommercialMission({
       }
       await request(action, payload);
       delete form.dataset.commandId;
+      formAcknowledged(form);
       setData(await request('commercial-mission'));
       onChanged?.();
       setMessage('Saved with source and decision history.');
@@ -472,7 +484,22 @@ export function CommercialMission({
     </>
   );
   return (
-    <div className="operator-section">
+    <div
+      className="operator-section ux-commercial-workbench"
+      data-operator-workbench
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
+      <OperatorWorkbench
+        label={`Requirements and offer sections for mission ${missionId}`}
+        sections={[
+          { label: 'Requirements', heading: 'Requirements' },
+          { label: 'Original offers', heading: 'Original offers' },
+          { label: 'Comparison', heading: 'Supplier comparison' },
+          { label: 'History', heading: 'assessments' },
+        ]}
+      />
       <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
         Review requirements, offers and visits
       </button>
@@ -702,8 +729,10 @@ export function CommercialMission({
               <label className="field">
                 Next task
                 <select
+                  disabled={busy}
                   value={job}
                   onChange={(e) => {
+                    if (busy || !confirmChange()) return;
                     setJob(e.target.value);
                     setMessage('');
                   }}

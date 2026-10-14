@@ -1,0 +1,38 @@
+[
+  {
+    "name": "meetings",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "meetings",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "meetings",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "meetings",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "meetings",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "meetings",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

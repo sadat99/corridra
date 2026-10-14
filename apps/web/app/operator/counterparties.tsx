@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 type Row = { id: string; [key: string]: unknown };
@@ -264,8 +265,23 @@ export function Counterparties({
     (s) => s.classification === 'PUBLIC' && s.kind === 'public_record',
   );
   return (
-    <section className="operator-section research-workspace" aria-labelledby="research-heading">
+    <section
+      data-operator-workbench
+      className="operator-section research-workspace"
+      aria-labelledby="research-heading"
+    >
       <h2 id="research-heading">Counterparty research</h2>
+      <OperatorWorkbench
+        label="Research sections"
+        sections={[
+          { label: 'Search and sources', heading: 'Counterparty research' },
+          { label: 'Public identities', heading: 'Original public identities' },
+          { label: 'Evidence and claims', heading: 'Evidence and capabilities' },
+          { label: 'Private relationships', heading: 'Private relationships' },
+          { label: 'Matching', heading: 'Entity matching' },
+          { label: 'Mission shortlist', heading: 'Mission shortlist' },
+        ]}
+      />
       <p>
         Research manually, keep the sources and explain the fit. A company record, certificate or
         strong fit assessment does not verify a commercial claim.

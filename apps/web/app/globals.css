@@ -2261,3 +2261,52 @@ summary:hover {
 .delivery-metrics {
   gap: 1rem;
 }
+
+/* UX-04: contextual controls retain the original mounted operator workflows. */
+.ux-operator-workbench {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-subtle);
+  border-radius: var(--radius-panel);
+  padding: 1rem;
+  margin-block: 1rem 1.5rem;
+  min-width: 0;
+}
+.ux-operator-workbench > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.ux-operator-workbench button {
+  min-height: 44px;
+  padding: 0.5rem;
+  text-align: left;
+  white-space: normal;
+}
+.ux-operator-workbench > p:last-child {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  max-width: 78ch;
+}
+[data-operator-workbench] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+[data-operator-workbench] > h2 {
+  scroll-margin-top: 1.5rem;
+}
+.ux-commercial-workbench {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  margin-block: 1rem;
+}
+.ux-commercial-workbench > details {
+  margin-block: 1rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ux-commercial-workbench > details > summary {
+  min-height: 44px;
+  padding-block: 0.7rem;
+}

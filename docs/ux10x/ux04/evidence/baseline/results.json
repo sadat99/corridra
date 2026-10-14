@@ -1,0 +1,7 @@
+[
+  {
+    "command": "pnpm test:operator",
+    "exitCode": 1,
+    "seconds": 369.69
+  }
+]

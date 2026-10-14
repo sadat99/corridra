@@ -1,0 +1,48 @@
+{
+  "baseline": "fa703fd0572de24dd3ed2e1bbcdf18aee8b1cef6",
+  "scope": "Static control tags and input/link contract attributes. Does not prove runtime state/handler coverage.",
+  "results": [
+    {
+      "file": "apps/web/app/operator/missions.tsx",
+      "baselineControls": 21,
+      "currentControls": 21,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/commercial-mission.tsx",
+      "baselineControls": 39,
+      "currentControls": 39,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/counterparties.tsx",
+      "baselineControls": 61,
+      "currentControls": 61,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/access.tsx",
+      "baselineControls": 73,
+      "currentControls": 73,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/opportunities.tsx",
+      "baselineControls": 63,
+      "currentControls": 63,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/delivery.tsx",
+      "baselineControls": 70,
+      "currentControls": 70,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/delivery-experience.tsx",
+      "baselineControls": 52,
+      "currentControls": 52,
+      "missing": []
+    }
+  ]
+}

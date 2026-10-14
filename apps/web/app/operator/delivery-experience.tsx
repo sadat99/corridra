@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
 import { displayMoney } from '@corridra/domain/locale';
@@ -135,8 +136,21 @@ export function DeliveryExperience(props: Props) {
   );
   if (!data) return <p role="status">{message || 'Loading scoped delivery options…'}</p>;
   return (
-    <section className="detail-card">
+    <section data-operator-workbench className="detail-card">
       <h2>Mission and delegation experience</h2>
+      <OperatorWorkbench
+        label="Mission experience sections"
+        sections={[
+          { label: 'Delegation', heading: 'Delegation context' },
+          { label: 'Agenda', heading: 'Shared and participant agenda' },
+          { label: 'Participant detail', heading: 'Approve participant mission detail' },
+          {
+            label: 'Organisation attribution',
+            heading: 'Explicit participant organisation attribution',
+          },
+          { label: 'Recipient scope', heading: 'Recipient role' },
+        ]}
+      />
       <p>
         Owner/admin and fresh MFA are required for participant identity, client-detail and recipient
         disclosures. Programme context and proposed agenda remain operational tasks.

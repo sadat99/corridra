@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { displayDate } from '@corridra/domain/locale';
@@ -46,6 +47,7 @@ type Queue = {
   replies: { id: string; mission_id: string; body: string }[];
 };
 export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: () => void }) {
+  const { ref: formRootRef, onChangeCapture, onResetCapture, confirmChange } = useFormChangeGuard();
   const [queue, setQueue] = useState<Queue | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -151,20 +153,32 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
   }
   const manage = queue && ['owner', 'admin', 'operator'].includes(queue.role);
   return (
-    <section className="missions-home">
+    <section
+      className="missions-home"
+      data-operator-workbench
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
       <div className="section-heading">
         <p className="label">OPS HOME</p>
         <h2>Mission review queue</h2>
         <p>Start with the brief. Give each mission an owner and a clear next step.</p>
       </div>
+      <OperatorWorkbench
+        label="Mission queue sections"
+        sections={[{ label: 'Queue and filters', heading: 'Mission review queue' }]}
+      />
       <p aria-live="polite">{message}</p>
       <div className="hero-actions">
         {(['route', 'job', 'owner', 'stage'] as const).map((key) => (
           <label className="field" key={key}>
             Filter by {key}
             <select
+              disabled={busy}
               value={selected[key]}
               onChange={(e) => {
+                if (busy || !confirmChange()) return;
                 setSelected((v) => ({ ...v, [key]: e.target.value }));
                 setOffset(0);
               }}
@@ -188,8 +202,10 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
         <label className="field">
           Show missions
           <select
+            disabled={busy}
             value={filter}
             onChange={(e) => {
+              if (busy || !confirmChange()) return;
               setFilter(e.target.value);
               setOffset(0);
             }}
@@ -241,9 +257,10 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
         ].map((view) => (
           <button
             key={view.label}
-            disabled={!!view.direction && !routes.some((r) => r.label === view.direction)}
+            disabled={busy || (!!view.direction && !routes.some((r) => r.label === view.direction))}
             type="button"
             onClick={() => {
+              if (busy || !confirmChange()) return;
               setOffset(0);
               setFilter('open');
               setSelected({
@@ -268,7 +285,9 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
             type="button"
             className="text-link"
             disabled={busy || offset === 0}
-            onClick={() => setOffset((v) => Math.max(0, v - 100))}
+            onClick={() => {
+              if (confirmChange()) setOffset((v) => Math.max(0, v - 100));
+            }}
           >
             Previous missions
           </button>
@@ -276,7 +295,9 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
             type="button"
             className="text-link"
             disabled={busy || offset + 100 >= queue.total}
-            onClick={() => setOffset((v) => v + 100)}
+            onClick={() => {
+              if (confirmChange()) setOffset((v) => v + 100);
+            }}
           >
             Next missions
           </button>
