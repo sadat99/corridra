@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
@@ -12,8 +13,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   const returnTo = operatorReturnTo(next);
   if (!foundations())
     return (
-      <main id="main" tabIndex={-1} className="operator-page">
-        <h1>Workspace sign-in is unavailable.</h1>
+      <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Workspace sign-in is unavailable." compact>
         <p>Workspace access is not configured here. This page does not collect credentials.</p>
         <Link className="text-link" href="/signin">
           Other sign-in options
@@ -21,12 +21,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
         <Link className="text-link" href="/">
           Back to Corridra
         </Link>
-      </main>
+      </WorkspaceShell>
     );
   return (
-    <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">OPERATOR ACCESS</p>
-      <h1>Sign in to your workspace.</h1>
+    <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
       <OperatorSignin returnTo={returnTo} />
       <nav className="access-options" aria-label="Sign-in alternatives">
         <Link className="text-link" href="/operator/setup">
@@ -45,6 +43,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
           Back to Corridra
         </Link>
       </nav>
-    </main>
+    </WorkspaceShell>
   );
 }

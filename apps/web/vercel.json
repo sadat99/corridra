@@ -5,7 +5,8 @@
   "buildCommand": "pnpm build",
   "git": {
     "deploymentEnabled": {
-      "feat/part-03-foundations": false
+      "feat/part-03-foundations": false,
+      "feat/ux-01-foundations": false
     }
   },
   "regions": ["fra1"]

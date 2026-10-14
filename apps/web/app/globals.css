@@ -1516,3 +1516,257 @@ summary:hover {
   margin-block: 2rem;
   scroll-margin-top: 2rem;
 }
+
+/* UX10X foundations: semantic colors and geometry shared by access and workspaces. */
+:root {
+  --surface-raised: #fffefa;
+  --surface-subtle: #e9eee5;
+  --text-strong: var(--ink);
+  --text-muted: var(--muted);
+  --border-subtle: var(--line);
+  --action: #244b39;
+  --focus: #244b39;
+  --positive: #285b3b;
+  --positive-surface: #e7f0e7;
+  --caution: #805018;
+  --caution-surface: #f7ecd9;
+  --critical: #963d31;
+  --critical-surface: #f9e8e3;
+  --info: #365e62;
+  --info-surface: #e6eeee;
+  --unknown: #5b594e;
+  --unknown-surface: #efede5;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-panel: 0.375rem;
+  --radius-control: 0.25rem;
+  --sans: Arial, 'Noto Sans Bengali', 'Noto Sans SC', 'Microsoft YaHei', Helvetica, sans-serif;
+}
+.ux-workspace {
+  line-height: 1.65;
+  min-width: 0;
+}
+.ux-page-heading {
+  padding-block: var(--space-6);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ux-page-heading h1 {
+  font-family: var(--sans);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  max-width: 23ch;
+  overflow-wrap: anywhere;
+}
+.ux-page-heading .label {
+  color: var(--action);
+  font-size: 0.7rem;
+}
+.ux-access {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+.ux-workspace h2,
+.ux-workspace h3,
+.ux-workspace h4 {
+  font-family: var(--sans);
+  letter-spacing: -0.025em;
+}
+.ux-workspace .detail-card,
+.ux-workspace .workspace-start,
+.ux-workspace .operator-form {
+  background: var(--surface-raised);
+  border-radius: var(--radius-panel);
+}
+.ux-workspace .detail-card {
+  border: 1px solid var(--border-subtle);
+}
+.ux-workspace .operator-form {
+  padding: var(--space-6);
+}
+.ux-workspace .operator-form .operator-form {
+  padding: 0;
+}
+.ux-workspace .field {
+  min-width: 0;
+}
+.ux-workspace input,
+.ux-workspace select,
+.ux-workspace textarea {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-control);
+  font-size: 1rem;
+}
+.ux-workspace button,
+.ux-workspace .primary-link {
+  min-height: 44px;
+}
+.ux-workspace .primary-link {
+  background: var(--action);
+  border-radius: var(--radius-control);
+}
+.ux-workspace :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.ux-workspace .platform-access .access-cards article {
+  padding: var(--space-6);
+}
+.ux-workspace .platform-access #access-roles .detail-card {
+  border-top: 3px solid var(--accent);
+}
+.ux-workspace .platform-access #access-tools .access-cards {
+  gap: var(--space-4);
+}
+.ux-workspace .platform-access #access-tools article .label {
+  color: var(--text-muted);
+}
+.ux-workspace .platform-access #access-readiness {
+  background: var(--surface-subtle);
+  padding: var(--space-6);
+}
+.ux-state {
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--unknown);
+  border-radius: var(--radius-panel);
+  padding: var(--space-6);
+  margin-block: var(--space-4);
+  background: var(--surface-raised);
+  overflow-wrap: anywhere;
+}
+.ux-state[data-state='loading'] {
+  border-left-color: var(--info);
+}
+.ux-state:is([data-state='denied'], [data-state='expired'], [data-state='revoked']) {
+  border-left-color: var(--caution);
+}
+.ux-state[data-state='unavailable'] {
+  border-left-color: var(--critical);
+}
+.ux-state-label {
+  font-weight: 700;
+  margin-top: 0;
+  font-size: 0.875rem;
+}
+.ux-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.ux-status {
+  display: inline-flex;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-control);
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--ink);
+  background: var(--surface-subtle);
+}
+.ux-status[data-tone='positive'] {
+  color: var(--positive);
+  background: var(--positive-surface);
+}
+.ux-status[data-tone='caution'] {
+  color: var(--caution);
+  background: var(--caution-surface);
+}
+.ux-status[data-tone='critical'] {
+  color: var(--critical);
+  background: var(--critical-surface);
+}
+.ux-status[data-tone='info'] {
+  color: var(--info);
+  background: var(--info-surface);
+}
+.ux-status[data-tone='unknown'] {
+  color: var(--unknown);
+  background: var(--unknown-surface);
+}
+.ux-tool-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  border: 0;
+  padding: 0;
+}
+.ux-tool-index a {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  text-decoration: none;
+}
+.ux-tool-index a:hover {
+  background: var(--surface-subtle);
+}
+.ux-role-navigation {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-panel);
+}
+.ux-role-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2);
+  font-size: 0.875rem;
+}
+.ux-role-navigation a:focus-visible {
+  outline-color: var(--paper);
+}
+.ux-mission-passport {
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-6);
+}
+.ux-mission-passport h3 {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+}
+.ux-scope-note {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.ux-workspace .mission-card dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) minmax(0, 3fr);
+  gap: var(--space-3) var(--space-6);
+}
+.ux-workspace .mission-card dd {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .ux-workspace .operator-form,
+  .ux-workspace .detail-card,
+  .ux-state {
+    padding: var(--space-4);
+  }
+  .ux-workspace .mission-card dl {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+  .ux-workspace .mission-card dd {
+    margin-bottom: var(--space-3);
+  }
+  .ux-role-navigation {
+    gap: var(--space-1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "scope": "UX-01 acceptance only; not whole-programme action parity",
+  "tests": [
+    {
+      "baseline": "operator/workspace.tsx tenant selector, mounted sections and section links",
+      "implementation": "TenantWorkspace keyed boundary and RoleNavigation",
+      "positive": "UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority",
+      "negative": "Same test: cancel destructive switch; delayed old-tenant response cannot populate viewer workspace; real viewer write returns 403; interrupted sign-out retains the current view until real sign-out succeeds and subsequent scoped access returns 401",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "operator/missions.tsx scoped mission queue and original source brief",
+      "implementation": "Read-only mission passport and existing scoped GET",
+      "positive": "UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery",
+      "negative": "Same test: anonymous 401, unrelated tenant 403, expired actual session 401, inaccessible fragment, interrupted workspace transport and real retry",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log; evidence/after/operator-missions-{1440,1280,768,390,360,320}.png"
+    },
+    {
+      "baseline": "operator/error.tsx full-document retry following PR #38",
+      "implementation": "Shared access shell and window.location.reload retaining query and fragment",
+      "positive": "UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness",
+      "negative": "Same test: actual local database TCP outage, repeated failure, no protected content, restored readiness still requires sign-in",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "operator/setup/setup-form.tsx invitation lookup",
+      "implementation": "Shared access state, expiry display and read-only retry",
+      "positive": "invited operator enrolls MFA, records provenance, manages flags and signs out",
+      "negative": "UX-01 invitation outage can be retried without collecting credentials or changing identity",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log; evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "/workspace persona directory and every V2 section anchor",
+      "implementation": "WorkspaceShell with existing destinations and authority distinctions",
+      "positive": "platform directory connects every persona and V2 tool without privileged data",
+      "negative": "protected access entries explain unavailable configuration and offer a way back",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log; evidence/after/screenshots/"
+    }
+  ],
+  "limitations": [
+    "759 static controls include repeated controls, inputs and navigation; they are not an exhaustive runtime action denominator.",
+    "Baseline and regression suite success does not prove every role by state combination. Unlinked source-control rows remain NOT_YET_VERIFIED.",
+    "Hosted customer email lifecycle requires the existing separately controlled provider environment; it was not activated for this task.",
+    "Local navigation/paint measurements are not production Core Web Vitals or field INP.",
+    "No merge, deployment, provider activation, real customer operation or financial execution is authorized by this evidence."
+  ]
+}

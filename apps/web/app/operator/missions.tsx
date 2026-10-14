@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
+import { AccessState, StatusBadge } from '../../components/access-state';
+import { displayDate } from '@corridra/domain/locale';
 import type { MissionBrief } from '@corridra/domain/missions';
 import { CommercialMission } from './commercial-mission';
 import { CountryOptions } from './country-options';
@@ -287,11 +289,17 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
             : 'Loading missions…'}
         </p>
       ) : queue.missions.length === 0 ? (
-        <p>No mission briefs yet.</p>
+        <AccessState kind="empty">
+          <p>No mission briefs yet.</p>
+          <p>
+            No matching accessible records are shown. Change the filters or refresh; this does not
+            establish an outcome of zero.
+          </p>
+        </AccessState>
       ) : (
         queue.missions.map((m) => (
           <article className="detail-card mission-card" key={m.id}>
-            <header>
+            <header className="ux-mission-passport">
               <p className="label">
                 {m.status.replaceAll('_', ' ')} · VERSION {m.version}
               </p>
@@ -299,17 +307,24 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
               <p>
                 {m.brief.objective} · {m.brief.market}
               </p>
-              <span className="evidence-label">Self-declared</span>
+              <StatusBadge tone="unknown">Self-declared</StatusBadge>
+              <p className="ux-scope-note">
+                Private workspace record · Original brief · No independent verification implied
+              </p>
             </header>
             <CommercialMission tenant={tenant} missionId={m.id} onChanged={onChanged} />
             <dl>
               <dt>Owner</dt>
-              <dd>{queue.owners.find((o) => o.user_id === m.owner_id)?.name ?? m.owner_id}</dd>
+              <dd>
+                {queue.owners.find((o) => o.user_id === m.owner_id)?.name ??
+                  m.owner_id ??
+                  'Not assigned'}
+              </dd>
               <dt>Next action</dt>
-              <dd>{m.next_action}</dd>
+              <dd>{m.next_action || 'Not recorded'}</dd>
               <dt>Due</dt>
               <dd>
-                <time dateTime={m.due_at}>{new Date(m.due_at).toLocaleString()}</time>
+                <time dateTime={m.due_at}>{displayDate(m.due_at)}</time>
                 {new Date(m.due_at) < new Date() && !['CANCELLED', 'CLOSED'].includes(m.status)
                   ? ' · Overdue'
                   : ''}

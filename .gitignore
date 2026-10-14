@@ -12,3 +12,5 @@ test-results/
 apps/web/app/.well-known/workflow/
 apps/web/.workflow-data/
 apps/web/next-env.d.ts
+
+work/

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { WorkspaceShell } from '../../../components/workspace-shell';
 import { SetupForm } from './setup-form';
 export const metadata = {
   title: 'Invited operator setup | Corridra',
@@ -7,9 +8,7 @@ export const metadata = {
 };
 export default function Page() {
   return (
-    <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">INVITED OPERATOR ACCESS</p>
-      <h1>Set up your operator access.</h1>
+    <WorkspaceShell eyebrow="INVITED OPERATOR ACCESS" title="Set up your operator access." compact>
       <p>
         Sign in to your verified customer account first. A workspace owner must explicitly invite
         that email. This step creates your separate operator password; it does not turn customer
@@ -27,6 +26,6 @@ export default function Page() {
           All workspaces and tools
         </Link>
       </nav>
-    </main>
+    </WorkspaceShell>
   );
 }

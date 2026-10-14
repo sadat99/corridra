@@ -1,11 +1,15 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
 export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    heading.current?.focus();
+  }, [stage]);
   const [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [code, setCode] = useState('');
@@ -56,7 +60,7 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
   }
   return (
     <form className="operator-form" onSubmit={submit}>
-      <h2>
+      <h2 ref={heading} tabIndex={-1}>
         {stage === 'password'
           ? 'Use your operator account'
           : stage === 'enrol'

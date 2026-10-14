@@ -2271,3 +2271,240 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await runtime.end();
   }
 });
+
+test('UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  await page.goto('/operator/signin?next=%2Foperator%23workspace-missions');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
+  await expect(page.locator('#workspace-missions')).toBeFocused();
+  await page.getByLabel('Show missions').selectOption('all');
+  const response = await page.request.get(
+    `/api/workspace/missions?tenant=${seed.tenantId}&filter=all`,
+  );
+  expect(response.status()).toBe(200);
+  const queue = await response.json();
+  expect(queue.missions.length).toBeGreaterThan(0);
+  const mission = queue.missions[0];
+  const card = page
+    .locator('.mission-card')
+    .filter({ has: page.getByRole('heading', { name: mission.brief.company, exact: true }) })
+    .first();
+  await expect(card).toContainText(mission.brief.offer);
+  await expect(card).toContainText(mission.claim_status);
+  await expect(card).toContainText(`VERSION ${mission.version}`);
+  await expect(card.locator('.ux-mission-passport')).toContainText(
+    'No independent verification implied',
+  );
+  await page.evaluate(() => {
+    window.location.hash = 'main';
+  });
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toBeVisible();
+  const shortcut = page
+    .getByRole('navigation', { name: 'V2 tool shortcuts' })
+    .getByRole('link', { name: 'Missions and requirements', exact: false });
+  await shortcut.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#workspace-missions')).toBeFocused();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toHaveCount(0);
+  await mkdir('.cache/ux10x/after', { recursive: true });
+  for (const width of [1440, 1280, 768, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page
+      .locator('#workspace-missions')
+      .evaluate((section) => section.scrollIntoView({ block: 'start' }));
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({ path: `.cache/ux10x/after/operator-missions-${width}.png` });
+  }
+  expect(
+    (await new AxeBuilder({ page }).include('#workspace-missions').analyze()).violations,
+  ).toEqual([]);
+  const anonymous = await browser.newContext();
+  expect(
+    (
+      await anonymous.request.get(
+        `http://127.0.0.1:3200/api/workspace/missions?tenant=${seed.tenantId}`,
+      )
+    ).status(),
+  ).toBe(401);
+  await anonymous.close();
+  expect((await page.request.get(`/api/workspace/missions?tenant=${randomUUID()}`)).status()).toBe(
+    403,
+  );
+  // Inject only a transport outage. Recovery goes through the real protected endpoint.
+  await page.route('**/api/workspace/workspace?*', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Synthetic connection interruption' }),
+    }),
+  );
+  await page.reload();
+  await expect(page.getByRole('main').getByRole('alert')).toContainText(
+    'Workspace could not be loaded',
+  );
+  await expect(page.locator('.mission-card')).toHaveCount(0);
+  await page.unroute('**/api/workspace/workspace?*');
+  await page.getByRole('button', { name: 'Retry workspace', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your V2 tools' })).toBeVisible();
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const db = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    database: 'corridra_browser',
+    user: 'postgres',
+    password: local.ownerPassword,
+  });
+  try {
+    await db.query(
+      'UPDATE identity.session SET "expiresAt"=now()-interval \'1 minute\' WHERE "userId"=$1',
+      [seed.userId],
+    );
+  } finally {
+    await db.end();
+  }
+  await page.reload();
+  await expect(page).toHaveURL(/operator\/signin/);
+  expect((await page.request.get(`/api/workspace/missions?tenant=${seed.tenantId}`)).status()).toBe(
+    401,
+  );
+  await expect(page.locator('.mission-card')).toHaveCount(0);
+});
+
+test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority', async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const db = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    database: 'corridra_browser',
+    user: 'postgres',
+    password: local.ownerPassword,
+  });
+  const other = randomUUID(),
+    actor = randomUUID();
+  try {
+    await db.query('BEGIN');
+    await db.query(
+      "INSERT INTO identity.principal(id,kind,operating_country) VALUES($1,'service','DE')",
+      [actor],
+    );
+    await db.query(
+      "SELECT set_config('corridra.bootstrap_actor',$1,true),set_config('corridra.correlation_id',$2,true),set_config('corridra.causation_id',$3,true)",
+      [actor, randomUUID(), randomUUID()],
+    );
+    await db.query(
+      "INSERT INTO app.tenant(id,name,synthetic) VALUES($1,'UX-01 isolated viewer workspace',true)",
+      [other],
+    );
+    await db.query("INSERT INTO app.membership(tenant_id,user_id,role) VALUES($1,$2,'viewer')", [
+      other,
+      seed.principalId,
+    ]);
+    await db.query('COMMIT');
+  } finally {
+    await db.end();
+  }
+  await page.goto(
+    `/operator/signin?next=${encodeURIComponent('/operator?workspace=' + seed.tenantId + '#workspace-sources')}`,
+  );
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page
+    .getByLabel('Source description', { exact: true })
+    .fill('Unsaved synthetic source draft');
+  const nav = page.getByRole('navigation', { name: 'Workspace sections' });
+  await nav.getByRole('link', { name: 'Missions and requirements', exact: true }).click();
+  await nav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
+  await expect(page.getByLabel('Source description', { exact: true })).toHaveValue(
+    'Unsaved synthetic source draft',
+  );
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  await expect(page.getByRole('combobox', { name: 'Workspace', exact: true })).toHaveValue(
+    seed.tenantId,
+  );
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Workspace sections' })
+      .getByRole('link', { name: 'Global operations', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel('Source description', { exact: true })).toHaveCount(0);
+  expect(
+    (
+      await page.request.post(`/api/workspace/config?tenant=${other}`, {
+        headers: { Origin: 'http://127.0.0.1:3200' },
+        data: { key: 'ai.enabled', enabled: true },
+      })
+    ).status(),
+  ).toBe(403);
+  await expect(page.getByText('No mission briefs yet.', { exact: true })).toBeVisible();
+  let release!: () => void;
+  let reached!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const received = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  await page.route(`**/api/workspace/workspace?tenant=${seed.tenantId}`, async (route) => {
+    const response = await route.fetch();
+    reached();
+    await held;
+    try {
+      await route.fulfill({ response });
+    } catch {
+      /* Aborting an obsolete read is expected. */
+    }
+  });
+  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
+  await received;
+  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
+  release();
+  await page.unroute(`**/api/workspace/workspace?tenant=${seed.tenantId}`);
+  await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
+  await expect(page.locator('.mission-card')).toHaveCount(0);
+  await expect(page.getByLabel('Source description', { exact: true })).toHaveCount(0);
+  await page.route('**/api/operator-auth/sign-out', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Synthetic interruption' }),
+    }),
+  );
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toContainText(
+    'Sign-out could not be confirmed',
+  );
+  await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
+  await page.unroute('**/api/operator-auth/sign-out');
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin/);
+  expect((await page.request.get(`/api/workspace/missions?tenant=${other}`)).status()).toBe(401);
+});

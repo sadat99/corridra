@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { ReviewSettings } from './review-settings';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { AccessState, StatusBadge } from '../../components/access-state';
+import { RoleNavigation } from '../../components/role-navigation';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { Missions } from './missions';
@@ -36,20 +38,43 @@ type Snapshot = {
   evidence: RecordRow[];
   facts: RecordRow[];
 };
+type Tenant = { id: string; name: string; role: string };
 export function Workspace({
   tenants,
   initialTenant,
 }: {
-  tenants: { id: string; name: string; role: string }[];
+  tenants: Tenant[];
   initialTenant: string;
 }) {
   const router = useRouter();
-  const [tenant, setTenant] = useState(initialTenant),
-    [data, setData] = useState<Snapshot | null>(null),
+  const [tenant, setTenant] = useState(initialTenant);
+  function switchTenant(next: string) {
+    setTenant(next);
+    router.replace('/operator?workspace=' + encodeURIComponent(next) + window.location.hash, {
+      scroll: false,
+    });
+  }
+  return (
+    <TenantWorkspace key={tenant} tenants={tenants} tenant={tenant} switchTenant={switchTenant} />
+  );
+}
+function TenantWorkspace({
+  tenants,
+  tenant,
+  switchTenant,
+}: {
+  tenants: Tenant[];
+  tenant: string;
+  switchTenant: (next: string) => void;
+}) {
+  const router = useRouter();
+  const edited = useRef(false);
+  const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [missionRevision, setMissionRevision] = useState(0);
   const [unavailableSection, setUnavailableSection] = useState(false);
+  const [readFailure, setReadFailure] = useState<'denied' | 'unavailable'>('unavailable');
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
     [flags, setFlags] = useState<RecordRow[]>([]);
@@ -68,20 +93,35 @@ export function Workspace({
           },
     );
     const result = await r.json();
-    if (!r.ok) throw new Error(result.error ?? 'Request failed');
+    if (!r.ok) {
+      if (
+        body === undefined &&
+        ['workspace', 'config'].includes(action) &&
+        [401, 403].includes(r.status)
+      ) {
+        setData(null);
+        setReadFailure('denied');
+      }
+      throw new Error(result.error ?? 'Request failed');
+    }
     return result;
   }
   async function refresh() {
-    setData(await request('workspace'));
-    setFlags(await request('config'));
+    const [snapshot, config] = await Promise.all([request('workspace'), request('config')]);
+    setData(snapshot);
+    setFlags(config);
   }
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     Promise.all(
       ['workspace', 'config'].map(async (action) => {
-        const r = await fetch(`/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`);
+        const r = await fetch(`/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
         const result = await r.json();
-        if (!r.ok) throw new Error(result.error);
+        if (!r.ok) throw Object.assign(new Error(result.error), { status: r.status });
         return result;
       }),
     )
@@ -92,18 +132,30 @@ export function Workspace({
         }
       })
       .catch((e) => {
-        if (active) setMessage(e.message);
+        if (active) {
+          setReadFailure([401, 403].includes(e.status) ? 'denied' : 'unavailable');
+          setMessage(e.message);
+        }
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [tenant]);
   const loaded = !!data;
+  const currentRole = data?.role;
   useEffect(() => {
     if (!loaded) return;
     function navigate() {
       const fragment = window.location.hash.slice(1);
-      const target = fragment ? document.getElementById(fragment) : null;
+      const allowed =
+        fragment === 'workspace-navigation' ||
+        workspaceSections.some(
+          (section) =>
+            section.id === fragment &&
+            (section.roles as readonly string[]).includes(currentRole ?? ''),
+        );
+      const target = allowed ? document.getElementById(fragment) : null;
       setUnavailableSection(!!fragment && !target);
       target?.scrollIntoView();
       target?.focus({ preventScroll: true });
@@ -111,7 +163,18 @@ export function Workspace({
     navigate();
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
-  }, [loaded]);
+  }, [loaded, currentRole]);
+  async function retryRead() {
+    setBusy(true);
+    setMessage('');
+    try {
+      await refresh();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Workspace could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
     setMessage('');
@@ -146,12 +209,26 @@ export function Workspace({
     void act(() => request('claim', { sourceId: f.get('source'), statement: f.get('statement') }));
   }
   async function signOut() {
-    await identityClient.signOut();
-    router.replace('/operator/signin');
-    router.refresh();
+    setBusy(true);
+    try {
+      const result = await identityClient.signOut();
+      if (result.error) throw new Error('Sign-out could not be confirmed. Please try again.');
+      setData(null);
+      router.replace('/operator/signin');
+      router.refresh();
+    } catch {
+      setMessage('Sign-out could not be confirmed. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   }
   return (
-    <div>
+    <div
+      className="ux-workspace-body"
+      onChangeCapture={(event) => {
+        if ((event.target as HTMLElement).closest('form')) edited.current = true;
+      }}
+    >
       <div className="operator-toolbar">
         <label className="field">
           Workspace
@@ -159,18 +236,14 @@ export function Workspace({
             disabled={busy}
             value={tenant}
             onChange={(e) => {
-              setTenant(e.target.value);
-              router.replace(
-                '/operator?workspace=' + encodeURIComponent(e.target.value) + window.location.hash,
-                {
-                  scroll: false,
-                },
-              );
-              setData(null);
-              setMembers([]);
-              setAudit([]);
-              setFlags([]);
-              setMessage('');
+              if (
+                edited.current &&
+                !window.confirm(
+                  'Switch workspace? Unsaved entries in this workspace will be cleared. Stay here to finish or copy them first.',
+                )
+              )
+                return;
+              switchTenant(e.target.value);
             }}
           >
             {tenants.map((t) => (
@@ -180,7 +253,7 @@ export function Workspace({
             ))}
           </select>
         </label>
-        <button className="text-link" onClick={signOut}>
+        <button className="text-link" disabled={busy} onClick={signOut}>
           Sign out
         </button>
       </div>
@@ -192,10 +265,10 @@ export function Workspace({
         {message}
       </p>
       {!data ? (
-        <div>
+        <AccessState kind={message ? readFailure : 'loading'}>
           <p>{message ? 'Workspace could not be loaded.' : 'Loading workspace…'}</p>
           {message && (
-            <button className="text-link" disabled={busy} onClick={() => void act(refresh)}>
+            <button className="text-link" disabled={busy} onClick={() => void retryRead()}>
               Retry workspace
             </button>
           )}
@@ -205,10 +278,11 @@ export function Workspace({
           <Link className="text-link" href="/signin">
             Other sign-in options
           </Link>
-        </div>
+        </AccessState>
       ) : (
         <>
           <section className="workspace-panel workspace-start" aria-label="Workspace overview">
+            <StatusBadge tone="caution">Synthetic workspace</StatusBadge>
             <h2>Your V2 tools</h2>
             <p>
               Your role in this workspace: <strong>{data.role}</strong>. Start with a mission,
@@ -220,15 +294,7 @@ export function Workspace({
               configuration actions need the appropriate role and fresh MFA. Missing data is not a
               zero outcome.
             </p>
-            <nav className="workspace-navigation" aria-label="V2 tool shortcuts">
-              {workspaceSections
-                .filter((section) => (section.roles as readonly string[]).includes(data.role))
-                .map((section) => (
-                  <a key={section.id} href={'#' + section.id}>
-                    {section.label} <span className="tool-part">{section.part}</span>
-                  </a>
-                ))}
-            </nav>
+            <RoleNavigation role={data.role} shortcuts />
             {unavailableSection && (
               <p role="alert">
                 This section is unavailable for your current workspace role or the link is outdated.
@@ -237,37 +303,7 @@ export function Workspace({
               </p>
             )}
           </section>
-          <nav
-            className="workspace-navigation"
-            id="workspace-navigation"
-            tabIndex={-1}
-            aria-label="Workspace sections"
-          >
-            <a href="#workspace-missions">Missions and requirements</a>
-            {['owner', 'admin', 'operator'].includes(data.role) && (
-              <a href="#workspace-operations">Global operations</a>
-            )}
-            <a href="#workspace-research">Companies and research</a>
-            <a href="#workspace-meetings">Introductions and meetings</a>
-            <a href="#workspace-commercial">Commercial progress</a>
-            <a href="#workspace-delivery">Client and institution delivery</a>
-            <a href="#workspace-sources">Sources and claims</a>
-            <a href="#workspace-evidence">Evidence review</a>
-            {data.role !== 'viewer' && (
-              <>
-                <a href="#workspace-ai">AI assistance</a>
-                <a href="#workspace-network">Execution network</a>
-              </>
-            )}
-            {['owner', 'admin'].includes(data.role) && (
-              <>
-                <a href="#workspace-settings">Corridors and policies</a>
-                <a href="#workspace-audit">Access and audit</a>
-              </>
-            )}
-            <a href="#workspace-authenticator">Authenticator</a>
-            {data.role === 'owner' && <a href="#workspace-controls">Workspace controls</a>}
-          </nav>
+          <RoleNavigation role={data.role} />
           <p>
             Choose a section above. Customer sharing and assigned work use their own access links.
           </p>
