@@ -1168,6 +1168,58 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
       </section>
       <section id="ops-gates" tabIndex={-1}>
         <h3>Production readiness and activation</h3>
+        {admin && (
+          <details className="detail-card">
+            <summary>GitHub setup guide for the repository owner</summary>
+            <p>
+              Use a GitHub account with repository administration access. A 403 from the integration
+              does not prove that a paid entitlement is absent. Check the actual plan and settings
+              before purchasing anything.
+            </p>
+            <ol>
+              <li>
+                <a className="text-link" href="https://github.com/sadat99/corridra/settings/rules">
+                  Open repository rules
+                </a>
+                : protect main with pull requests, the CI validate check, appropriate independent
+                review, and restrictions on force pushes and deletion. Confirm the rule applies to
+                this private repository.
+              </li>
+              <li>
+                <a
+                  className="text-link"
+                  href="https://github.com/sadat99/corridra/settings/security_analysis"
+                >
+                  Open security settings
+                </a>
+                : inspect secret scanning, push protection and code-scanning availability. Gitleaks
+                and the limited local Semgrep rules are already CI checks.
+              </li>
+              <li>
+                <a
+                  className="text-link"
+                  href="https://github.com/sadat99/corridra/actions/workflows/security.yml"
+                >
+                  Inspect CodeQL runs
+                </a>
+                : only enable CODEQL_ENABLED after entitlement and configuration are confirmed, then
+                require an actual successful analysis. A skipped job is not clearance.
+              </li>
+              <li>
+                <a className="text-link" href="https://github.com/sadat99/corridra/pulls">
+                  Review open dependency PRs
+                </a>
+                : merge tested compatible changes, verify production, then delete only accepted
+                branches. Keep main and unfinished work; the maximum is ten Git branches including
+                main.
+              </li>
+            </ol>
+            <p>
+              Record actual settings and approval evidence through the existing source/readiness
+              controls. This guide cannot change GitHub settings or clear a blocked control.
+            </p>
+          </details>
+        )}
         <p>
           Development and preview are synthetic. A production-candidate setup and approved real-data
           production require separate verified database, storage, credentials and recorded

@@ -45,3 +45,9 @@ V2 Part 2 commercial missions: [execution decision](adr/0026-commercial-mission-
 V2 Part 3 product experience: [scoped experience decision](adr/0027-scoped-multi-corridor-product-experience.md), [operations runbook](runbooks/v2-product-experience.md) and [actor journeys and release evidence](implementation/v2-part-03-release.md). Job-first intake, customer capability redemption, recipient declarations and delegation agendas retain the synthetic mission and explicit disclosure boundaries.
 
 Revised V2 Part 4: [governed AI and restricted task scope](implementation/v2-part-04-scope.md), [authority and privacy decision](adr/0028-governed-tasks-and-restricted-execution-network.md), and [operations runbook](runbooks/v2-intelligence-network.md). Both activation flags are independent and default closed; actual release acceptance is recorded separately.
+
+Revised V2 Part 5: [Control Center, reliability and readiness](implementation/v2-part-05-traceability.md), [current architecture](architecture/v2-current-map.md), [administrator and operator manual](runbooks/v2-operations.md), and [production control register](implementation/v2-part-05-controls.md). Accepted PR #36 released the gated synthetic functionality.
+
+V2 access completion: public `/workspace` is the platform directory. See [access and GitHub launch guide](runbooks/v2-access-and-launch.md) and [navigation/dependency acceptance scope](implementation/v2-access-completion.md). Actual release evidence belongs to the accepted follow-up PR; customer signup is separate from operator membership and real mission activation.
+
+Invited staff setup: [explicit invitation and first-password decision](adr/0030-explicit-staff-invitation-and-first-password.md). Verified customers accept only an explicitly approved invitation at `/operator/setup`; operator sign-in and MFA remain separate.

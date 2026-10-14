@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
+import { operatorReturnTo } from '../../../lib/workspace-navigation';
 export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
@@ -38,7 +39,13 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
         if (r.error) throw new Error('That code could not be verified. Try a current code.');
         setSetup(null);
         setCode('');
-        router.replace(returnTo);
+        // Browsers can retain a fragment through the initial protected-page redirect.
+        // Validate it again and keep only registered destinations after MFA.
+        const destination =
+          returnTo.startsWith('/operator') && !returnTo.includes('#')
+            ? operatorReturnTo(returnTo + window.location.hash)
+            : operatorReturnTo(returnTo);
+        router.replace(destination);
         router.refresh();
       }
     } catch (e) {

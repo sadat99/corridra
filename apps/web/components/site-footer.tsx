@@ -26,6 +26,9 @@ export function SiteFooter() {
           </Link>
         </nav>
         <nav aria-label="About Corridra">
+          <Link prefetch={false} href="/workspace">
+            Platform access and tools
+          </Link>
           <Link prefetch={false} href="/how-it-works">
             How it works
           </Link>

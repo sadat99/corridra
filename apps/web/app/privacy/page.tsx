@@ -22,6 +22,12 @@ export default function Page() {
             in Ireland. Account creation does not grant workspace access.
           </p>
           <p>
+            Invited staff use a separate operator identity in the Frankfurt application database. An
+            explicit owner invitation is required. First-password setup checks your verified
+            customer identity, and workspace access still requires an authenticator. This does not
+            enable real customer mission processing.
+          </p>
+          <p>
             Account records remain until an administrator removes them. Automatic account deletion
             is not available. For account help or a deletion request, contact{' '}
             <a href="mailto:sadat@obsidianglobal.studio">sadat@obsidianglobal.studio</a>. The test

@@ -12,6 +12,7 @@ import { ControlledAccess } from './access';
 import { GovernedAssistance } from './intelligence';
 import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
+import { workspaceSections } from '../../lib/workspace-navigation';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -48,6 +49,7 @@ export function Workspace({
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [missionRevision, setMissionRevision] = useState(0);
+  const [unavailableSection, setUnavailableSection] = useState(false);
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
     [flags, setFlags] = useState<RecordRow[]>([]);
@@ -99,9 +101,16 @@ export function Workspace({
   const loaded = !!data;
   useEffect(() => {
     if (!loaded) return;
-    const target = document.getElementById(window.location.hash.slice(1));
-    target?.scrollIntoView();
-    target?.focus({ preventScroll: true });
+    function navigate() {
+      const fragment = window.location.hash.slice(1);
+      const target = fragment ? document.getElementById(fragment) : null;
+      setUnavailableSection(!!fragment && !target);
+      target?.scrollIntoView();
+      target?.focus({ preventScroll: true });
+    }
+    navigate();
+    window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
   }, [loaded]);
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
@@ -176,6 +185,9 @@ export function Workspace({
         </button>
       </div>
       <p>Use test records while customer data controls are completed.</p>
+      <Link className="text-link" href="/workspace">
+        All workspaces and access help
+      </Link>
       <p role="status" aria-live="polite" aria-label="Workspace status">
         {message}
       </p>
@@ -196,6 +208,35 @@ export function Workspace({
         </div>
       ) : (
         <>
+          <section className="workspace-panel workspace-start" aria-label="Workspace overview">
+            <h2>Your V2 tools</h2>
+            <p>
+              Your role in this workspace: <strong>{data.role}</strong>. Start with a mission,
+              attach source evidence, then follow its requirements, research, delivery and
+              commercial progress.
+            </p>
+            <p>
+              AI and contributor execution also require deployment approval. Financial and
+              configuration actions need the appropriate role and fresh MFA. Missing data is not a
+              zero outcome.
+            </p>
+            <nav className="workspace-navigation" aria-label="V2 tool shortcuts">
+              {workspaceSections
+                .filter((section) => (section.roles as readonly string[]).includes(data.role))
+                .map((section) => (
+                  <a key={section.id} href={'#' + section.id}>
+                    {section.label} <span className="tool-part">{section.part}</span>
+                  </a>
+                ))}
+            </nav>
+            {unavailableSection && (
+              <p role="alert">
+                This section is unavailable for your current workspace role or the link is outdated.
+                Choose an available tool above, or ask your workspace owner to review your
+                membership.
+              </p>
+            )}
+          </section>
           <nav
             className="workspace-navigation"
             id="workspace-navigation"
