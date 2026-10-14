@@ -1,0 +1,78 @@
+$ pnpm --filter @corridra/web build
+$ next build
+▲ Next.js 16.4.0 (Turbopack)
+✓ Compiled workflows in 472ms (18 steps, 1 workflow)
+✓ Running next.config.ts took 622ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 634ms
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 5ms
+  Running TypeScript ...
+  Finished TypeScript in 2.9s ...
+  Collecting page data using 2 workers ...
+  Generating static pages using 2 workers (0/28) ...
+  Generating static pages using 2 workers (7/28)
+  Generating static pages using 2 workers (14/28)
+  Generating static pages using 2 workers (21/28)
+✓ Generating static pages using 2 workers (28/28) in 521ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /.well-known/workflow/v1/flow
+├ ƒ /.well-known/workflow/v1/webhook/[token]
+├ ○ /about
+├ ƒ /account
+├ ƒ /api/account
+├ ƒ /api/auth/[...all]
+├ ƒ /api/buyer
+├ ƒ /api/customer-missions
+├ ƒ /api/delivery
+├ ƒ /api/intake
+├ ƒ /api/intake/receipt
+├ ƒ /api/network/tasks
+├ ƒ /api/operator-auth/[...all]
+├ ƒ /api/operator-setup
+├ ƒ /api/workspace/[action]
+├ ƒ /api/workspace/delivery
+├ ○ /business-trips
+├ ○ /buyer
+├ ○ /client
+├ ○ /coming-soon
+├ ƒ /contributor
+├ ○ /corridors
+├   /corridors/[corridor]
+│ ├ ● /corridors/bangladesh-china
+│ ├ ● /corridors/bangladesh-spain
+│ └ ● /corridors/bangladesh-eu
+├ ○ /enter-market
+├ ƒ /forgot-password
+├ ○ /how-it-works
+├ ○ /icon.svg
+├ ○ /institutions
+├ ○ /machinery
+├ ○ /network
+├ ƒ /operator
+├ ○ /operator/setup
+├ ƒ /operator/signin
+├ ○ /plan
+├ ○ /privacy
+├ ○ /programme
+├ ƒ /reset-password
+├ ○ /sell
+├ ƒ /signin
+├ ƒ /signup
+├ ○ /source
+├ ○ /trade-missions
+├ ○ /trust
+├ ƒ /verify-email
+└ ○ /workspace
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand

@@ -1,3 +1,4 @@
+import { WorkspaceShell } from '../../components/workspace-shell';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -18,8 +19,7 @@ export default async function Page({
   const s = foundations();
   if (!s)
     return (
-      <main id="main" tabIndex={-1} className="operator-page">
-        <h1>Your assigned tasks.</h1>
+      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
         <p>
           Assigned-task access is not configured in this environment. Keep the invitation supplied
           by your operator.
@@ -33,13 +33,12 @@ export default async function Page({
         <Link className="text-link" href="/">
           Back to Corridra
         </Link>
-      </main>
+      </WorkspaceShell>
     );
   const workspace = z.uuid().safeParse((await searchParams).workspace);
   if (!workspace.success)
     return (
-      <main id="main" className="operator-page">
-        <h1>Your assigned tasks.</h1>
+      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
         <p>
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
@@ -53,7 +52,7 @@ export default async function Page({
         <Link className="text-link" href="/">
           Back to Corridra
         </Link>
-      </main>
+      </WorkspaceShell>
     );
   await s.ready;
   const identity = await s.provider.getSession(await headers());
@@ -62,9 +61,7 @@ export default async function Page({
       '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data),
     );
   return (
-    <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">ASSIGNED EXECUTION WORK</p>
-      <h1>Your assigned tasks.</h1>
+    <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks.">
       <p>
         Only your disclosed tasks appear here. Use synthetic records until pilot controls are
         accepted.
@@ -89,6 +86,6 @@ export default async function Page({
         About assigned work
       </Link>
       {process.env.CORRIDRA_NETWORK_ENABLED !== 'true' && <ContributorSignout />}
-    </main>
+    </WorkspaceShell>
   );
 }

@@ -1,0 +1,98 @@
+[
+  {
+    "name": "contributor",
+    "width": 1440,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  },
+  {
+    "name": "contributor",
+    "width": 1280,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  },
+  {
+    "name": "contributor",
+    "width": 768,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  },
+  {
+    "name": "contributor",
+    "width": 390,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  },
+  {
+    "name": "contributor",
+    "width": 360,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  },
+  {
+    "name": "contributor",
+    "width": 320,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 268
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 268
+      }
+    ]
+  }
+]

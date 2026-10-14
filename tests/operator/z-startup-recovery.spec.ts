@@ -71,6 +71,16 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
         { timeout: 20000 },
       )
       .toBe(200);
+    await page.goto(`http://127.0.0.1:3300/contributor?workspace=${seed.tenantId}`);
+    await expect(
+      page.getByRole('heading', { name: 'Assigned work is temporarily unavailable.' }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Retry assigned work', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Assigned work is temporarily unavailable.' }),
+    ).toBeVisible();
+    expect(new URL(page.url()).searchParams.get('workspace')).toBe(seed.tenantId);
+    await expect(page.getByRole('region', { name: 'Assigned tasks' })).toHaveCount(0);
     await page.goto(`http://127.0.0.1:3300/operator?workspace=${seed.tenantId}#workspace-missions`);
     const heading = page.getByRole('heading', {
       name: 'The workspace is temporarily unavailable.',
@@ -95,6 +105,11 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
         await request.get(`http://127.0.0.1:3300/api/workspace/missions?tenant=${seed.tenantId}`)
       ).status(),
     ).toBe(401);
+    await page.goto(`http://127.0.0.1:3300/contributor?workspace=${seed.tenantId}`);
+    await expect(page.getByRole('heading', { name: 'Sign in to your workspace.' })).toBeVisible();
+    expect(new URL(page.url()).searchParams.get('next')).toBe(
+      '/contributor?workspace=' + seed.tenantId,
+    );
   } finally {
     server.kill('SIGTERM');
     for (const socket of sockets) socket.destroy();

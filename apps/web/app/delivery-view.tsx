@@ -3,6 +3,14 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { displayMoney as amount, displayDate } from '@corridra/domain/locale';
+import {
+  usePrivateCapability,
+  checkedResponse,
+  accessDenied,
+} from '../components/private-capability';
+import { AccessState } from '../components/access-state';
+import { ParticipantScope } from '../components/participant-scope';
+import { MissionPassport } from '../components/mission-passport';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
 export function DeliveryView({
   audience,
@@ -13,10 +21,42 @@ export function DeliveryView({
   capability?: string;
   endpoint?: string;
 }) {
+  const scope = usePrivateCapability(capability);
+  return (
+    <ScopedDeliveryView
+      key={`${endpoint}:${audience}:${scope}`}
+      audience={audience}
+      capability={scope}
+      endpoint={endpoint}
+    />
+  );
+}
+function ScopedDeliveryView({
+  audience,
+  capability,
+  endpoint,
+}: {
+  audience: DeliveryReport['audience'];
+  capability: string;
+  endpoint: string;
+}) {
   const [report, setReport] = useState<DeliveryReport | null>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [readInterrupted, setReadInterrupted] = useState(false),
+    [failureKind, setFailureKind] = useState<'denied' | 'unavailable'>('unavailable');
+  const [pendingResponse, setPendingResponse] = useState<{
+    requestId: string;
+    body: string;
+    acknowledged: boolean;
+    commandId: string;
+  } | null>(null);
+  const inFlight = useRef(false);
+  const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) feedback.current?.focus();
+  }, [error]);
   const token = useRef(''),
     commands = useRef(new Map<string, string>());
   async function post(input: Record<string, unknown>) {
@@ -25,39 +65,58 @@ export function DeliveryView({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...input, audience, token: token.current }),
     });
-    if (!r.ok) throw new Error((await r.json()).error ?? 'The request could not be completed');
-    return r;
+    try {
+      return await checkedResponse(r);
+    } catch (e) {
+      if (accessDenied(e)) {
+        setReport(null);
+        setFailureKind('denied');
+      }
+      throw e;
+    }
   }
   async function refresh() {
     const next = await (await post({ action: 'view' })).json();
     setReport(next);
+    setReadInterrupted(false);
+    setError('');
   }
   useEffect(() => {
-    token.current = capability ?? window.location.hash.slice(1);
+    token.current = capability;
     let active = true;
+    const controller = new AbortController();
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
-        if (active) setError('Open the private link shared by your Corridra operator.');
+        if (active) {
+          setFailureKind('denied');
+          setError('Open the private link shared by your Corridra operator.');
+        }
       });
       return () => {
         active = false;
       };
     }
     fetch(endpoint, {
+      signal: controller.signal,
+      cache: 'no-store',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'view', audience, token: token.current }),
     })
       .then(async (r) => {
+        await checkedResponse(r);
         const value = await r.json();
-        if (!r.ok) throw new Error(value.error);
         if (active) setReport(value);
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) {
+          setFailureKind(accessDenied(e) ? 'denied' : 'unavailable');
+          setError(e.message);
+        }
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [audience, capability, endpoint]);
   function command(key: string) {
@@ -72,28 +131,43 @@ export function DeliveryView({
     event.preventDefault();
     const form = event.currentTarget,
       data = new FormData(form);
+    if (
+      inFlight.current ||
+      readInterrupted ||
+      (pendingResponse && pendingResponse.requestId !== requestId)
+    )
+      return;
+    inFlight.current = true;
     setBusy(true);
     setError('');
     const body = String(data.get('body'));
     const key = `response:${requestId}:${body}`;
+    const request = pendingResponse ?? {
+      requestId,
+      body,
+      acknowledged: data.get('acknowledged') === 'on',
+      commandId: command(key),
+    };
+    setPendingResponse(request);
     try {
-      await post({
-        action: 'respond',
-        requestId,
-        body,
-        acknowledged: data.get('acknowledged') === 'on',
-        commandId: command(key),
-      });
-      await refresh();
+      await post({ action: 'respond', ...request });
+      setPendingResponse(null);
       setNotice('Response received as a self-declaration. Your operator will review it.');
+      await refresh().catch((e) => {
+        setReadInterrupted(true);
+        setError(e.message);
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Please try again');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
   async function download(format: 'CSV' | 'PDF') {
     if (!report) return;
+    if (inFlight.current || readInterrupted) return;
+    inFlight.current = true;
     setBusy(true);
     setError('');
     try {
@@ -116,13 +190,16 @@ export function DeliveryView({
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Please try again');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
   if (!report)
     return (
-      <div>
-        <p role={error ? 'alert' : 'status'}>{error || 'Opening your approved view…'}</p>
+      <AccessState kind={error ? failureKind : 'loading'}>
+        <p ref={feedback} tabIndex={-1}>
+          {error || 'Opening your approved view…'}
+        </p>
         {error && (
           <>
             <p>
@@ -134,16 +211,21 @@ export function DeliveryView({
                 className="text-link"
                 disabled={busy}
                 onClick={() => {
-                  token.current = capability ?? window.location.hash.slice(1);
+                  token.current = capability;
                   if (!/^[a-f0-9]{64}$/.test(token.current)) {
                     setError('Open the private link shared by your Corridra operator.');
                     return;
                   }
+                  if (inFlight.current) return;
+                  inFlight.current = true;
                   setBusy(true);
                   void refresh()
                     .then(() => setError(''))
                     .catch((e) => setError(e.message))
-                    .finally(() => setBusy(false));
+                    .finally(() => {
+                      inFlight.current = false;
+                      setBusy(false);
+                    });
                 }}
               >
                 Retry approved view
@@ -157,7 +239,7 @@ export function DeliveryView({
             </Link>
           </>
         )}
-      </div>
+      </AccessState>
     );
   const count = report.missions.reduce(
     (sum, m) => ({
@@ -170,11 +252,31 @@ export function DeliveryView({
   );
   return (
     <div className="delivery-view">
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p ref={feedback} tabIndex={-1} className="ux-error-summary" role="alert">
+          {error}
+        </p>
+      )}
+      {readInterrupted && (
+        <p>
+          Progress could not be refreshed. This is the last approved view. Refresh before sending
+          another response or export.
+        </p>
+      )}
       <p role="status">{notice}</p>
       <p className="evidence-label">
         Invented test mission data. Real customer mission admission is not enabled.
       </p>
+      <ParticipantScope
+        purpose={report.purpose}
+        expiresAt={report.expiresAt}
+        generatedAt={report.generatedAt}
+        audience={
+          audience === 'CLIENT_PROGRESS'
+            ? 'Client mission progress'
+            : 'Institution programme report'
+        }
+      />
       <p>
         {report.programme || 'Your approved mission'} · {report.approvedParticipants} approved{' '}
         {report.approvedParticipants === 1 ? 'participant' : 'participants'}
@@ -186,13 +288,18 @@ export function DeliveryView({
       <button
         disabled={busy}
         onClick={() => {
+          if (inFlight.current) return;
+          inFlight.current = true;
           setBusy(true);
           refresh()
             .catch((e) => {
               setError(e.message);
-              setReport(null);
+              setReadInterrupted(true);
             })
-            .finally(() => setBusy(false));
+            .finally(() => {
+              inFlight.current = false;
+              setBusy(false);
+            });
         }}
       >
         Refresh progress
@@ -248,10 +355,10 @@ export function DeliveryView({
           )}
           {report.allowExport && (
             <p>
-              <button disabled={busy} onClick={() => void download('CSV')}>
+              <button disabled={busy || readInterrupted} onClick={() => void download('CSV')}>
                 Download CSV
               </button>{' '}
-              <button disabled={busy} onClick={() => void download('PDF')}>
+              <button disabled={busy || readInterrupted} onClick={() => void download('PDF')}>
                 Download PDF
               </button>
             </p>
@@ -279,19 +386,11 @@ export function DeliveryView({
         </section>
       )}
       {report.missions.map((m) => (
-        <article key={m.publicationId} className="delivery-card">
-          <h2>
-            {m.company}: {m.title}
-          </h2>
-          <p>Progress: {m.status.replaceAll('_', ' ').toLowerCase()}</p>
+        <article key={m.publicationId} className="delivery-card ux-participant-mission">
+          <MissionPassport mission={m} />
           <h3>Mission brief</h3>
           <p>{m.objective}</p>
           <p>{m.brief}</p>
-          <h3>Next action</h3>
-          <p>
-            {m.nextAction} · Due {displayDate(m.dueAt)}
-          </p>
-          <p>Reviewed {displayDate(m.reviewedAt)}</p>
           {m.experience && <MissionExperienceView experience={m.experience} />}
           <h3>Itinerary</h3>
           {m.itinerary.length ? (
@@ -340,17 +439,30 @@ export function DeliveryView({
                   </p>
                   {r.response && <p>Your declaration: {r.response}</p>}
                   {r.status === 'OPEN' && (
-                    <form onSubmit={(e) => void respond(e, r.id)}>
-                      <label>
-                        Response
-                        <textarea name="body" minLength={3} maxLength={2000} required />
-                      </label>
-                      <label>
-                        <input type="checkbox" name="acknowledged" required /> This response is my
-                        declaration. Supporting documents will follow the operator&apos;s controlled
-                        collection and review process.
-                      </label>
-                      <button disabled={busy}>Send response</button>
+                    <form className="operator-form" onSubmit={(e) => void respond(e, r.id)}>
+                      <fieldset disabled={busy || readInterrupted || !!pendingResponse}>
+                        <legend className="sr-only">Evidence response</legend>
+                        <label>
+                          Response
+                          <textarea name="body" minLength={3} maxLength={2000} required />
+                        </label>
+                        <label>
+                          <input type="checkbox" name="acknowledged" required /> This response is my
+                          declaration. Supporting documents will follow the operator&apos;s
+                          controlled collection and review process.
+                        </label>
+                      </fieldset>
+                      <button
+                        disabled={
+                          busy ||
+                          readInterrupted ||
+                          (!!pendingResponse && pendingResponse.requestId !== r.id)
+                        }
+                      >
+                        {pendingResponse?.requestId === r.id
+                          ? 'Retry same evidence response'
+                          : 'Send response'}
+                      </button>
                     </form>
                   )}
                 </section>

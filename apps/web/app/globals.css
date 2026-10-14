@@ -2145,3 +2145,119 @@ summary:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* UX-03 participant surfaces reuse the frozen foundation tokens. */
+.ux-participant-scope,
+.ux-participant-passport,
+.ux-source-lens,
+.ux-task-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: clamp(1rem, 2vw, 2rem);
+  margin-block: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.ux-participant-scope {
+  background: var(--surface-subtle);
+}
+.ux-participant-scope dl,
+.ux-participant-passport dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+.ux-participant-scope dt,
+.ux-participant-passport dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.ux-participant-scope dd,
+.ux-participant-passport dd {
+  margin: 0.4rem 0 0;
+}
+.ux-participant-mission {
+  min-width: 0;
+}
+.ux-next-action {
+  border-left: 3px solid var(--action);
+  background: var(--surface-subtle);
+  padding: 1rem;
+  margin-top: 1.5rem;
+}
+.ux-comparison-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+  margin-block: 1.5rem;
+}
+.ux-comparison-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+.ux-comparison-matrix caption {
+  padding: 1rem;
+  text-align: left;
+  color: var(--text-muted);
+}
+.ux-comparison-matrix th,
+.ux-comparison-matrix td {
+  padding: 0.8rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-subtle);
+  min-width: 150px;
+}
+.ux-comparison-matrix th {
+  background: var(--surface-subtle);
+}
+.delivery-view > p,
+.ux-source-lens p,
+.ux-task-card p {
+  max-width: 78ch;
+}
+.delivery-view .operator-form fieldset,
+.buyer-card fieldset,
+.ux-task-card fieldset {
+  min-width: 0;
+}
+.delivery-view button,
+.buyer-card button,
+.ux-task-card button {
+  min-height: 44px;
+  white-space: normal;
+}
+@media (max-width: 640px) {
+  .delivery-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .delivery-card {
+    padding: 1rem;
+  }
+  .delivery-view dl,
+  .buyer-details {
+    overflow-wrap: anywhere;
+  }
+}
+.buyer-card {
+  padding: clamp(1rem, 2vw, 2rem);
+  max-width: 960px;
+}
+.buyer-card .check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 44px;
+}
+.buyer-card .check-field input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin-top: 0.3rem;
+}
+.ux-source-lens > article {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.delivery-metrics {
+  gap: 1rem;
+}
