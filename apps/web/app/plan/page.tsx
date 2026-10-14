@@ -1,3 +1,4 @@
+import { PublicShell } from '../../components/public-shell';
 import { Intake } from './intake';
 export const metadata = {
   title: 'Plan a mission | Corridra',
@@ -5,13 +6,13 @@ export const metadata = {
 };
 export default function Page() {
   return (
-    <main id="main" tabIndex={-1}>
+    <PublicShell className="ux-intake-page">
       <section className="page-hero intake-page">
         <p className="label">PLAN A MISSION</p>
         <h1>What needs to happen?</h1>
         <p className="page-description">A short brief is enough to start. No account required.</p>
         <Intake />
       </section>
-    </main>
+    </PublicShell>
   );
 }

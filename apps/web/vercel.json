@@ -7,7 +7,8 @@
     "deploymentEnabled": {
       "feat/part-03-foundations": false,
       "feat/ux-01-foundations": false,
-      "main": false
+      "main": false,
+      "feat/ux-02-public-experience": false
     }
   },
   "regions": ["fra1"]

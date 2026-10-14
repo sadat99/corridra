@@ -1,10 +1,12 @@
+import { PublicShell } from '../../components/public-shell';
+import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
 import { corridorPages } from '../../content/corridors';
 import { MarketSelector } from '../../components/market-selector';
 export const metadata = { title: 'Commercial corridors | Corridra' };
 export default function Page() {
   return (
-    <main id="main" tabIndex={-1}>
+    <PublicShell>
       <section className="page-hero">
         <p className="label">COMMERCIAL CORRIDORS</p>
         <h1>The job comes first. The route gives it context.</h1>
@@ -13,6 +15,7 @@ export default function Page() {
           follow-up use the same mission workflow.
         </p>
       </section>
+      <DiscoveryExperience overview />
       <section className="detail-section">
         <div className="detail-grid">
           {Object.entries(corridorPages).map(([slug, c]) => (
@@ -27,6 +30,6 @@ export default function Page() {
         </div>
         <MarketSelector />
       </section>
-    </main>
+    </PublicShell>
   );
 }

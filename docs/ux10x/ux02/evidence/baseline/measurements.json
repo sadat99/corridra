@@ -1,0 +1,482 @@
+[
+  {
+    "path": "/",
+    "width": 1440,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 400
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 400
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 1440,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 64
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 64
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 1440,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 80
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 80
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 1440,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 60
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 60
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 1440,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 164
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 164
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/",
+    "width": 1280,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 264
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 264
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 1280,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 84
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 84
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 1280,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 76
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 76
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 1280,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 52
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 52
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 1280,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 72
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 72
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/",
+    "width": 768,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 252
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 252
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 768,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 76
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 76
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 768,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 68
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 68
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 768,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 76
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 76
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 768,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 76
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 76
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 272
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 272
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 390,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 80
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 80
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 390,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 64
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 64
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 390,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 60
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 60
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 390,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 64
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 64
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/",
+    "width": 360,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 360,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 44
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 44
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 360,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 64
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 64
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 360,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 56
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 56
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 360,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 64
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 64
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/",
+    "width": 320,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 220
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 220
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/corridors",
+    "width": 320,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 68
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 68
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/machinery",
+    "width": 320,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 60
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 60
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/plan",
+    "width": 320,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 52
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 52
+      }
+    ],
+    "violations": []
+  },
+  {
+    "path": "/signup",
+    "width": 320,
+    "overflow": false,
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 44
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 44
+      }
+    ],
+    "violations": []
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "programme": "UX10X",
+  "release": "UX-01",
+  "approval": "Owner request: Push to production and start UX-02",
+  "commit": "21bc01327296edb8a5ee988b57918d94defce898",
+  "deploymentId": "dpl_7qoTKFfFt6jcr6KdZFGeqbGg33bt",
+  "projectId": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+  "state": "READY",
+  "target": "production",
+  "region": "fra1",
+  "primaryUrl": "https://c.obsidianglobal.studio",
+  "verifiedAlias": "https://corridra.vercel.app",
+  "buildMilliseconds": 84443,
+  "verification": "Five access routes rendered; no axe violations; anonymous mission read returned 401. No production sign-in, signup, intake, outreach or financial operation was performed.",
+  "limits": "The managed network policy blocks the custom domain. Browser evidence uses the official Vercel alias of the exact same READY deployment. Error/fatal runtime query returned no records for this deployment.",
+  "activation": "Existing runtime configuration and domain gates retained. No provider, payment, payout or real customer operation activated. Automatic Git deployment remains disabled."
+}

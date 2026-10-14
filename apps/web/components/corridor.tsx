@@ -36,7 +36,7 @@ export function Corridor() {
           <strong>Bangladesh</strong>
         </div>
         <span className="location-connection" aria-hidden="true">
-          ↔
+          →
         </span>
         <div>
           <span className="location-code">CN / ES / EU</span>

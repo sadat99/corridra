@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:65285) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/operator/z-ux02-access.spec.ts:8:1 › UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery (4.7s)
+  ✓  2 tests/operator/z-ux02-intake.spec.ts:5:1 › UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics (9.9s)
+
+  2 passed (15.8s)

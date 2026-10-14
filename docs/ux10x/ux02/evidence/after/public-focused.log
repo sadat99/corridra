@@ -1,0 +1,21 @@
+
+Running 8 tests using 2 workers
+
+(node:66645) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66646) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [desktop] › tests/browser/ux02-discovery.spec.ts:43:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (5.4s)
+  ✓  1 [desktop] › tests/browser/ux02-discovery.spec.ts:4:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (5.7s)
+  ✓  3 [desktop] › tests/browser/ux02-discovery.spec.ts:84:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (3.1s)
+(node:67027) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  5 [mobile] › tests/browser/ux02-discovery.spec.ts:4:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (4.1s)
+  ✓  4 [desktop] › tests/browser/ux02-discovery.spec.ts:112:1 › UX-02 native route disclosures and account recovery keep their real destinations (8.7s)
+(node:67261) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  7 [mobile] › tests/browser/ux02-discovery.spec.ts:84:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (2.6s)
+  ✓  6 [mobile] › tests/browser/ux02-discovery.spec.ts:43:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (5.8s)
+  ✓  8 [mobile] › tests/browser/ux02-discovery.spec.ts:112:1 › UX-02 native route disclosures and account recovery keep their real destinations (5.0s)
+
+  8 passed (24.9s)

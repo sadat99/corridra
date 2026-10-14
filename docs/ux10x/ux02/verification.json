@@ -1,0 +1,52 @@
+{
+  "scope": "UX-02 bounded public discovery, intake and identity presentation acceptance",
+  "tests": [
+    {
+      "baseline": "Public discovery and corridor scope pages; existing mission job catalogue and intake query parameters",
+      "implementation": "PublicShell and DiscoveryExperience; Atlas, perspective/job selectors and read-only synthetic walkthrough",
+      "positive": "UX-02 Atlas selects an actual direction and synthetic example without creating records",
+      "negative": "Same test: no writes or identity grant, EU remains a bloc, reverse direction has no announced operating offer",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log; six-width discovery screenshots"
+    },
+    {
+      "baseline": "24-hour session draft, original job/country/market/source text and currency",
+      "implementation": "Saved choices take precedence over link hints; draft/expiry recovery and brief context summary",
+      "positive": "UX-02 saved draft choices survive reload and take precedence over entry suggestions",
+      "negative": "UX-02 expired and corrupt drafts recover to a usable form without claiming admission; UX-02 blocked draft storage is visible and does not discard current form entries",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log"
+    },
+    {
+      "baseline": "Anonymous five-step adaptive intake, idempotent synthetic mission creation and private receipt reads",
+      "implementation": "Progress, input recovery, original amount summary and failed receipt lookup clearing previous result",
+      "positive": "UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics",
+      "negative": "Same test: invalid travel dates, real email refused before network, injected interruption, duplicate retry through real service and nonexistent receipt denial",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Customer Neon Auth SDK methods, input validation, independent identity and sealed account/operator distinction",
+      "implementation": "Shared account shell, verified-own-profile notice, focused failure feedback and in-flight submission guard",
+      "positive": "Configured forms and recovery links render through the existing server/config/SDK boundary; legacy access fallback remains reachable",
+      "negative": "UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery",
+      "status": "PARTIAL",
+      "evidence": "evidence/after/test-operator.log; production UX-01 access verification",
+      "limitation": "No successful hosted signup, received-email verification or password reset is claimed. Transport failures are intercepted; authorization success is never mocked. Existing accepted provider contracts remain unchanged."
+    },
+    {
+      "baseline": "Public job pages, native disclosures, global navigation, metadata and canonical/legacy routes",
+      "implementation": "Shared editorial geometry, native scope disclosures and connected page-section anchors",
+      "positive": "UX-02 native route disclosures and account recovery keep their real destinations",
+      "negative": "Existing every-public-link, unsupported-corridor, Escape/focus and anonymous-access regression tests",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log"
+    }
+  ],
+  "limitations": [
+    "Source controls are discovery records, not an expanded action denominator. Unlinked actions and role/state combinations remain NOT_YET_VERIFIED.",
+    "Hosted customer received-email lifecycle has not been exercised by this UX release.",
+    "Local paint/navigation observations are not field Core Web Vitals.",
+    "UX-01 deployment was separately approved and verified. UX-02 is not authorized for merge or deployment by that approval."
+  ]
+}

@@ -1,0 +1,27 @@
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 231 files tracked by git with 5 Code rules:
+
+  Language   Rules   Files          Origin   Rules
+ ──────────────────────────        ────────────────
+  ts             5     160          Custom       5
+  js             5       9
+
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 5
+ • Targets scanned: 169
+ • Parsed lines: ~100.0%
+ • Scan skipped:
+   ◦ Files larger than  files 1.0 MB: 1
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 5 rules on 169 files: 0 findings.
