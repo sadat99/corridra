@@ -4,6 +4,7 @@ import { IntelligenceService } from '@corridra/intelligence/service';
 import { NetworkService } from '@corridra/network';
 import { Pool, assertRestrictedPool } from '@corridra/db';
 import { createIdentity } from '@corridra/auth';
+import { OperatorSetup } from '@corridra/auth/operator-setup';
 import { AccessService } from '@corridra/auth/access';
 import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
@@ -75,6 +76,7 @@ function createServices() {
   return {
     config,
     ...identity,
+    operatorSetup: new OperatorSetup(authPool),
     access: new AccessService(runtimePool),
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
     network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),

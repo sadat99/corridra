@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+test('operator setup explains verified invitation requirements without collecting anonymous credentials', async ({
+  page,
+}) => {
+  await page.goto('/operator/setup');
+  await expect(page.getByRole('heading', { name: 'Set up your operator access.' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Your operator invitation' })).toContainText(
+    'unavailable',
+  );
+  await expect(page.getByLabel('New operator password', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Customer account and email verification' }),
+  ).toHaveAttribute('href', '/account');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
 test('platform directory connects every persona and V2 tool without privileged data', async ({
   page,
 }) => {

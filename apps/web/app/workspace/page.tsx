@@ -54,6 +54,11 @@ export default function Page() {
               Open operator workspace
             </Link>
             <p>
+              <Link className="text-link" href="/operator/setup">
+                Set up invited operator access
+              </Link>
+            </p>
+            <p>
               <a className="text-link" href="#access-tools">
                 Choose a specific tool
               </a>

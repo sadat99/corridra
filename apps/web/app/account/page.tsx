@@ -48,6 +48,9 @@ export default async function Page() {
       </Link>
       <p>Keep the private receipt supplied with your brief to check its status and replies.</p>
       <nav className="access-options" aria-label="Account sections">
+        <Link className="text-link" href="/operator/setup">
+          Set up invited operator access
+        </Link>
         <Link className="text-link" href="/workspace">
           All workspaces and tools
         </Link>

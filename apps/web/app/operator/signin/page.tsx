@@ -29,6 +29,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       <h1>Sign in to your workspace.</h1>
       <OperatorSignin returnTo={returnTo} />
       <nav className="access-options" aria-label="Sign-in alternatives">
+        <Link className="text-link" href="/operator/setup">
+          Set up invited operator access
+        </Link>
         <Link className="text-link" href="/workspace">
           All workspaces and tools
         </Link>
