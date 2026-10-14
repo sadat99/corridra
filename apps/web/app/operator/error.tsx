@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-export default function WorkspaceError({ reset }: { reset: () => void }) {
+export default function WorkspaceError() {
   return (
     <main id="main" tabIndex={-1} className="operator-page">
       <p className="label">WORKSPACE ACCESS</p>
@@ -9,9 +9,9 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
         A connection or page could not be loaded. Your stored records remain available when the
         connection recovers.
       </p>
-      <button className="primary-link" onClick={reset}>
+      <a className="primary-link" href="">
         Retry workspace
-      </button>
+      </a>
       <nav className="access-options" aria-label="Workspace recovery">
         <Link className="text-link" href="/operator/signin">
           Verify operator access
