@@ -2306,11 +2306,22 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     'No independent verification implied',
   );
   await page.evaluate(() => {
-    window.location.hash = 'main';
+    const target = document.createElement('input');
+    target.id = 'unregistered-workspace-input';
+    document.body.append(target);
+    window.location.hash = target.id;
   });
   await expect(
     page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
   ).toBeVisible();
+  await expect(page.locator('#unregistered-workspace-input')).not.toBeFocused();
+  const skip = page.getByRole('link', { name: 'Skip to content', exact: true });
+  await skip.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('main')).toBeFocused();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toHaveCount(0);
   const shortcut = page
     .getByRole('navigation', { name: 'V2 tool shortcuts' })
     .getByRole('link', { name: 'Missions and requirements', exact: false });
@@ -2330,6 +2341,9 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
       true,
     );
     await page.screenshot({ path: `.cache/ux10x/after/operator-missions-${width}.png` });
+    await card.locator('.ux-mission-passport').screenshot({
+      path: `.cache/ux10x/after/operator-mission-passport-${width}.png`,
+    });
   }
   expect(
     (await new AxeBuilder({ page }).include('#workspace-missions').analyze()).violations,

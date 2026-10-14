@@ -24,3 +24,5 @@ This is UX-01 acceptance evidence, not 100% programme coverage. Static discovery
 Customer email-provider lifecycle and production infrastructure are not exercised here. Local paint/navigation values are measured samples, not field LCP/INP or production budgets. Desktop/mobile screenshots establish reviewed presentations, not a guarantee for every possible source-text length. Existing external production gates remain open.
 
 No merge or deployment has occurred. Review the PR and authorize acceptance separately before starting UX-02. Rollback is a revert of this presentation/test/documentation diff; no migration or data rollback is required.
+
+Pre-merge review found that the shared Skip to content anchor was treated as unavailable, and native browser hash navigation could focus an unregistered input. The registered main landmark is now preserved and invalid destinations return focus to registered workspace navigation. The focused UX-01 scenarios pass again, including both keyboard paths; lint, type checks and build pass. See `evidence/after/merge-navigation-focused.log` and `merge-navigation-results.json`.

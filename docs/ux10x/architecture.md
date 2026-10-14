@@ -21,7 +21,7 @@ Preserve ivory `#f5f3ec`, ink `#222d29`, forest `#526544` and existing brand ide
 
 ## Identity and access
 
-Customer identity is separate from invited operator membership and TOTP. Contributor access is exact-assignee scope, not tenant membership. Private capability views remain subject to audience, publication, expiry/revocation and current source rights. Closed return URLs preserve only existing registered destinations. Unknown fragments must produce recovery guidance and must never focus arbitrary form inputs or private controls.
+Customer identity is separate from invited operator membership and TOTP. Contributor access is exact-assignee scope, not tenant membership. Private capability views remain subject to audience, publication, expiry/revocation and current source rights. Closed return URLs preserve only existing registered destinations. The shared Skip to content anchor (`#main`) remains a valid accessibility destination. Unknown fragments must produce recovery guidance and must never focus arbitrary form inputs or private controls.
 
 Read-only mission presentation must retain original company/name/language, source/claim distinctions, version, next action, owner and explicit timezones. Unknown values remain unknown. Customer trade, original quotation terms and Corridra service economics remain separate. Existing forms, command IDs, exports and history stay in their domain panels.
 

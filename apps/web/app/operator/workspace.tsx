@@ -149,6 +149,7 @@ function TenantWorkspace({
     function navigate() {
       const fragment = window.location.hash.slice(1);
       const allowed =
+        fragment === 'main' ||
         fragment === 'workspace-navigation' ||
         workspaceSections.some(
           (section) =>
@@ -157,8 +158,10 @@ function TenantWorkspace({
         );
       const target = allowed ? document.getElementById(fragment) : null;
       setUnavailableSection(!!fragment && !target);
-      target?.scrollIntoView();
-      target?.focus({ preventScroll: true });
+      const destination =
+        target ?? (fragment ? document.getElementById('workspace-navigation') : null);
+      destination?.scrollIntoView();
+      destination?.focus({ preventScroll: true });
     }
     navigate();
     window.addEventListener('hashchange', navigate);
