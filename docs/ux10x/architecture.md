@@ -27,6 +27,6 @@ Read-only mission presentation must retain original company/name/language, sourc
 
 ## Gates and rollback
 
-The UX-01 branch explicitly opts out of automatic Vercel Git deployment in apps/web/vercel.json. No runtime environment settings, production data, provider credentials, readiness observations, outreach adapters or payment/payout paths change. D01–D06/D08 remain open under the existing controls register. UI changes do not close any external gate. Local synthetic provider fixtures are test transports, not live inference.
+The UX-01 branch and main explicitly opt out of automatic Vercel Git deployment in apps/web/vercel.json. Main remains paused until a separately authorized deployment; merging UX-01 alone cannot release it. No runtime environment settings, production data, provider credentials, readiness observations, outreach adapters or payment/payout paths change. D01–D06/D08 remain open under the existing controls register. UI changes do not close any external gate. Local synthetic provider fixtures are test transports, not live inference.
 
 Rollback is the application diff against the accepted baseline; no database rollback is needed. Merge, previews/deployment and production acceptance require the owner's separate instruction. Validate the exact proposed code and preserve evidence before publication. The coverage ledger distinguishes source discovery from executed functional verification.

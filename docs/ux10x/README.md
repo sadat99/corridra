@@ -30,6 +30,6 @@ Baseline format check initially included newly generated audit/scratch files and
 
 ## Review and next action
 
-Review UX-01 code, screenshots, test results and explicit coverage gaps. Merge and deployment require the owner's separate approval. The branch opts out of automatic Vercel Git deployments. No production settings, real customer operation, outreach, provider activation, payment or payout changed.
+Review UX-01 code, screenshots, test results and explicit coverage gaps. Merge and deployment require the owner's separate approval. The branch and main opt out of automatic Vercel Git deployments pending separate release approval. No production settings, real customer operation, outreach, provider activation, payment or payout changed.
 
 After this PR is accepted and merged, switch to the owner's requested GPT 6.1 sol medium and execute **UX-02 — Editorial discovery, routes, job-first intake and account** from the complete handoff. Reconcile latest main and carry forward every NOT YET COVERED row; do not treat this PR's regression tests as whole-programme acceptance.

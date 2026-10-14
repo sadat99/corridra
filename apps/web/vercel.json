@@ -6,7 +6,8 @@
   "git": {
     "deploymentEnabled": {
       "feat/part-03-foundations": false,
-      "feat/ux-01-foundations": false
+      "feat/ux-01-foundations": false,
+      "main": false
     }
   },
   "regions": ["fra1"]
