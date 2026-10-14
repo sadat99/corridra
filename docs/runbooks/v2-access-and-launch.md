@@ -1,0 +1,37 @@
+# Accessing the revised V2 platform and completing launch
+
+The public entry is `/workspace`, linked from the main menu, footer, account and operator workspace. This directory maps revised V2 Parts 1–5 to actual registered tools and states the permissions and activation limits. It does not reveal tenant records or grant membership.
+
+## Which identity to use
+
+- Customers sign in at `/signin` and open `/account`. Email verification is required. An operator must share the relevant mission with that identity or provide the existing scoped private link.
+- Operators, founders and administrators sign in at `/operator/signin`, using their invited operator identity, authenticator and active tenant membership. Customer registration is a separate identity path and cannot create an operator membership.
+- Contributors open `/contributor` with the workspace invitation supplied by the operator. Invitations grant assigned tasks, not general workspace membership.
+- Client, buyer/supplier and institution recipients use their complete private links. Public `/client`, `/buyer` and `/programme` pages explain missing-link recovery; they cannot enumerate confidential records.
+
+The directory's tool links carry an allowlisted `next` destination through password, authenticator enrollment/verification and workspace selection. External URLs, arbitrary actions and unknown fragments are rejected. If a destination is not mounted for the current role, the workspace explains the restriction and offers available tools. Switching tenants retains the destination and rechecks available tools.
+
+## What is interactive now
+
+In the operator workspace, the V2 shortcuts lead to missions/requirements, research, introductions/meetings, commercial progress, client/institution delivery, source/evidence, AI/network tools, route policies and Global Operations. Owner/admin controls are role-dependent; operational overview is owner/admin/operator. Financial observations retain narrower permission checks. Root controls remain owner-only.
+
+The live mission environment is synthetic. Use invented records. Customer signup is separately enabled and does not permit real mission activation. AI/network execution remains off in production until accepted credentials/policies and pilots exist. An empty dashboard is not an invented zero and is not permission to populate real data.
+
+## GitHub owner setup
+
+Use an administrator account for `sadat99/corridra`:
+
+1. Open <https://github.com/sadat99/corridra/settings/rules>. Configure an active rule for `main` with PR review appropriate to the team, required CI `validate`, and restrictions on force pushes/deletion. Verify the rule is actually enforced for the private repository. Do not invent a second independent reviewer or bypass a rule to release.
+2. Open <https://github.com/sadat99/corridra/settings/security_analysis>. Inspect actual secret scanning, push protection and code-scanning availability. Upgrade only if the actual account entitlement requires it. The latest rulesets response explicitly requires GitHub Pro for this private repository. Other 403 responses do not establish their exact entitlement requirements.
+3. Inspect <https://github.com/sadat99/corridra/actions/workflows/security.yml>. Enable `CODEQL_ENABLED` only after actual entitlement/setup is confirmed, then inspect a successful analysis. A skipped CodeQL job is not a passed scan. Pinned Gitleaks and five local Semgrep rules already run in CI; their limits remain documented.
+4. Inspect <https://github.com/sadat99/corridra/pulls>. Integrate compatible upgrades through accepted PRs. Never delete unfinished heads just to reduce the count. The maximum is ten Git branches including `main`; run `node scripts/check-git-branch-budget.mjs <branch>` before creating/publishing a product branch. After accepted merge and production verification, remove only proven completed Git/Neon preview branches, preserving production, sterile parents and other PRs.
+
+Save dated settings/review evidence as a source and update the appropriate readiness observation. A guide or status label cannot replace actual server enforcement.
+
+## Remaining real launch prerequisites
+
+The exact register is [Part 5 controls](../implementation/v2-part-05-controls.md); direction-specific delivery is in [route readiness](../implementation/v2-part-05-readiness.md). The owner must supply approved offers, named delivery/support/QA owners, privacy/source/outreach decisions and pilot acceptance. Infrastructure must supply approved private EU evidence storage/scanning and recovery, separate candidate/real-data resources and verified bindings. Actual real-data admission remains a separately validated implementation/activation step; metadata environment validation does not activate it.
+
+The previously attempted live synthetic operations-write check failed before sign-in. A fresh diagnostic identified `ERR_CERT_AUTHORITY_INVALID` in the cloud Chromium/proxy trust path, before submitting credentials. This is a test-runtime trust issue, not proof that application login is broken. Do not disable TLS verification. Correct the supported browser trust store, then run the authorized synthetic MFA/write/reversal test. Original production commercial-write acceptance remains open until its complete flow actually passes. No real-money/customer transaction is authorized by this guide.
+
+AI provider setup requires accepted terms/regions, live evaluation, budgets and actual credentials. Contributor activation additionally needs eligibility/privacy/reward pilot acceptance; actual payouts still require a payout integration. Every directional service remains independently gated and can be paused without deleting its historical missions.

@@ -72,7 +72,7 @@ async function blobContract() {
   const original = getGlobalDispatcher();
   const transport = new Agent();
   class ContractDispatcher extends Dispatcher {
-    dispatch(options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandlers) {
+    dispatch(options: Dispatcher.DispatchOptions, handler: Parameters<Dispatcher['dispatch']>[1]) {
       const origin = String(options.origin);
       let routed: string;
       if (origin === 'https://vercel.com' && options.path.startsWith('/api/blob'))

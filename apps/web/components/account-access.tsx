@@ -34,6 +34,9 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             <Link className="text-link" href="/operator">
               Operator workspace
             </Link>
+            <Link className="text-link" href="/workspace">
+              Explore all workspaces and tools
+            </Link>
             <Link className="text-link" href="/contributor">
               Assigned-task access
             </Link>

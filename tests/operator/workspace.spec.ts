@@ -100,6 +100,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   await page.goto('/signin');
   await expect(page).toHaveURL(/operator\/signin/);
+  await page.goto('/operator/signin?next=%2Foperator%23ops-gates');
   expect((await page.request.get('/api/workspace/tenants')).status()).toBe(401);
   await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
@@ -115,6 +116,26 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  await expect(page).toHaveURL(/\/operator#ops-gates$/);
+  await expect(page.locator('#ops-gates')).toBeFocused();
+  const shortcuts = page.getByRole('navigation', { name: 'V2 tool shortcuts' });
+  expect(
+    await shortcuts
+      .locator('a')
+      .evaluateAll((links) =>
+        links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
+      ),
+  ).toBe(true);
+  await page.evaluate(() => {
+    window.location.hash = 'missing-tool';
+  });
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toBeVisible();
+  await shortcuts.getByRole('link', { name: 'Missions and requirements', exact: false }).click();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toHaveCount(0);
   const sectionNav = page.getByRole('navigation', { name: 'Workspace sections' });
   await expect(sectionNav).toBeVisible();
   expect(await sectionNav.locator('a').count()).toBeGreaterThanOrEqual(10);

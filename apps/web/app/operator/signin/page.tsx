@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
+import { operatorReturnTo } from '../../../lib/workspace-navigation';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Operator sign-in | Corridra',
@@ -8,8 +9,7 @@ export const metadata = {
 };
 export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const next = (await searchParams).next;
-  const returnTo =
-    next && /^\/contributor\?workspace=[0-9a-f-]{36}$/i.test(next) ? next : '/operator';
+  const returnTo = operatorReturnTo(next);
   if (!foundations())
     return (
       <main id="main" tabIndex={-1} className="operator-page">
@@ -29,6 +29,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       <h1>Sign in to your workspace.</h1>
       <OperatorSignin returnTo={returnTo} />
       <nav className="access-options" aria-label="Sign-in alternatives">
+        <Link className="text-link" href="/workspace">
+          All workspaces and tools
+        </Link>
         <Link className="text-link" href="/signin">
           Customer account sign-in
         </Link>

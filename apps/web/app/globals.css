@@ -1446,6 +1446,31 @@ summary:hover {
 .workspace-panel li {
   overflow-wrap: anywhere;
 }
+.platform-access section {
+  margin-block: 2.5rem;
+  scroll-margin-top: 2rem;
+}
+.access-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1.5rem;
+}
+.access-cards article {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.access-cards h3 {
+  font-size: 1.2rem;
+}
+.workspace-start {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+.tool-part {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
 .operations-table {
   max-width: 100%;
   overflow: auto;

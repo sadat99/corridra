@@ -28,16 +28,29 @@ export default async function Page({
       </main>
     );
   await s.ready;
-  const identity = await s.provider.getSession(await headers());
-  if (!identity) redirect('/operator/signin');
-  const tenants = await s.access.tenants(identity.token);
   const requested = (await searchParams).workspace;
+  const identity = await s.provider.getSession(await headers());
+  if (!identity) {
+    const destination =
+      requested && /^[0-9a-f-]{36}$/i.test(requested)
+        ? '/operator?workspace=' + requested
+        : '/operator';
+    redirect('/operator/signin?next=' + encodeURIComponent(destination));
+  }
+  const tenants = await s.access.tenants(identity.token);
   const selected = tenants.find((t) => t.id === requested)?.id ?? tenants[0]?.id;
   if (tenants.length === 0)
     return (
       <main id="main" tabIndex={-1} className="operator-page">
         <h1>Workspace access is unavailable.</h1>
         <p>Your session needs a current authenticator check and an active membership.</p>
+        <p>
+          Ask your workspace owner to confirm the invitation and your assigned role. A customer
+          account uses a separate sign-in and does not grant operator membership.
+        </p>
+        <Link className="text-link" href="/workspace">
+          Choose your workspace or tool
+        </Link>
         <p>
           Invited contributors use their assigned-task link, which does not grant workspace
           membership.

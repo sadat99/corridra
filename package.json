@@ -10,7 +10,7 @@
     "dev": "pnpm --filter @corridra/web dev",
     "build": "pnpm --filter @corridra/web build",
     "start": "pnpm --filter @corridra/web start",
-    "lint": "eslint apps/web packages scripts tests/integration tests/operator *.ts --max-warnings 0",
+    "lint": "eslint --config eslint.config.mjs apps/web packages scripts tests/integration tests/operator *.ts --max-warnings 0",
     "typecheck": "pnpm --filter @corridra/web typecheck && tsc -p tsconfig.packages.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

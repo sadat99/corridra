@@ -1,5 +1,31 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+test('platform directory connects every persona and V2 tool without privileged data', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  if (await page.getByRole('button', { name: 'Menu', exact: true }).isVisible())
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await nav.getByRole('link', { name: 'Workspaces', exact: true }).click();
+  await expect(page).toHaveURL(/\/workspace$/);
+  await expect(page.getByRole('heading', { name: 'Find your Corridra workspace.' })).toBeVisible();
+  await expect(page.getByRole('main')).toContainText('production activation is off');
+  await expect(
+    page.getByRole('link', { name: 'Open customer account', exact: true }),
+  ).toHaveAttribute('href', '/account');
+  await expect(
+    page.getByRole('link', { name: 'Open corridor control center', exact: true }),
+  ).toHaveAttribute('href', '/operator/signin?next=%2Foperator%23ops-center');
+  await expect(
+    page.getByRole('link', { name: 'Programme invitation help', exact: true }),
+  ).toHaveAttribute('href', '/programme');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('link', { name: 'Open corridor control center', exact: true }).click();
+  await expect(page).toHaveURL(/operator\/signin\?next=/);
+  await expect(page.getByRole('main')).toContainText('not configured');
+});
 test('protected access entries explain unavailable configuration and offer a way back', async ({
   page,
 }) => {
