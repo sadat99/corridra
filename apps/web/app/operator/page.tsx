@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { WorkspaceShell } from '../../components/workspace-shell';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { foundations } from '../../lib/foundations';
@@ -16,8 +17,7 @@ export default async function Page({
   const s = foundations();
   if (!s)
     return (
-      <main id="main" tabIndex={-1} className="operator-page">
-        <h1>Workspace access is unavailable.</h1>
+      <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>The protected workspace is not configured in this environment.</p>
         <Link className="text-link" href="/signin">
           Other sign-in options
@@ -25,7 +25,7 @@ export default async function Page({
         <Link className="text-link" href="/">
           Back to Corridra
         </Link>
-      </main>
+      </WorkspaceShell>
     );
   await s.ready;
   const requested = (await searchParams).workspace;
@@ -41,8 +41,7 @@ export default async function Page({
   const selected = tenants.find((t) => t.id === requested)?.id ?? tenants[0]?.id;
   if (tenants.length === 0)
     return (
-      <main id="main" tabIndex={-1} className="operator-page">
-        <h1>Workspace access is unavailable.</h1>
+      <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>Your session needs a current authenticator check and an active membership.</p>
         <p>
           Ask your workspace owner to confirm the invitation and your assigned role. A customer
@@ -64,13 +63,11 @@ export default async function Page({
         <Link className="text-link" href="/operator/signin">
           Verify your access
         </Link>
-      </main>
+      </WorkspaceShell>
     );
   return (
-    <main id="main" tabIndex={-1} className="operator-page">
-      <p className="label">OPERATOR WORKSPACE</p>
-      <h1>Your workspace.</h1>
+    <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Your workspace.">
       <Workspace tenants={tenants} initialTenant={selected!} />
-    </main>
+    </WorkspaceShell>
   );
 }

@@ -1,0 +1,10 @@
+
+Running 3 tests using 1 worker
+
+(node:27894) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/operator/workspace.spec.ts:2275:1 › UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery (8.0s)
+  ✓  2 tests/operator/workspace.spec.ts:2387:1 › UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority (5.2s)
+  ✓  3 tests/operator/z-startup-recovery.spec.ts:8:1 › UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness (3.0s)
+
+  3 passed (17.7s)

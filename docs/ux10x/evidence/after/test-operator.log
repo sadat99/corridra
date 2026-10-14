@@ -1,0 +1,26 @@
+$ playwright test --config playwright.operator.config.ts
+[WebServer] (node:34490) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:34504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:34520) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:34535) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 10 tests using 1 worker
+
+(node:34551) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/workspace.spec.ts:21:1 › anonymous five-step intake preserves draft, retries safely and returns a private receipt (4.7s)
+  ✓   2 tests/operator/workspace.spec.ts:96:1 › invited operator enrolls MFA, records provenance, manages flags and signs out (40.9s)
+  ✓   3 tests/operator/workspace.spec.ts:485:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up (17.5s)
+  ✓   4 tests/operator/workspace.spec.ts:784:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay (33.9s)
+  ✓   5 tests/operator/workspace.spec.ts:1044:1 › scoped delivery imports every row, serves client requests and downloads complete programme reports (10.2s)
+  ✓   6 tests/operator/workspace.spec.ts:1240:1 › route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace (1.7m)
+  ✓   7 tests/operator/workspace.spec.ts:1728:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries (1.2m)
+  ✓   8 tests/operator/workspace.spec.ts:2275:1 › UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery (7.0s)
+  ✓   9 tests/operator/workspace.spec.ts:2389:1 › UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority (5.5s)
+  ✓  10 tests/operator/z-startup-recovery.spec.ts:8:1 › UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness (2.8s)
+
+  10 passed (5.1m)

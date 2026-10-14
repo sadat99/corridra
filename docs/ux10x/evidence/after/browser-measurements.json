@@ -1,0 +1,692 @@
+[
+  {
+    "route": "/workspace",
+    "width": 1440,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 185.89999999850988,
+        "domContentLoaded": 293.19999999925494,
+        "load": 543
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 500
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 500
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 1440,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 98.80000000074506,
+        "domContentLoaded": 159.80000000074506,
+        "load": 168.69999999925494
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 156
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 156
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 1440,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 36.5,
+        "domContentLoaded": 78,
+        "load": 85.40000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 84
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 84
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 1440,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 7,
+        "domContentLoaded": 40,
+        "load": 40.099999997764826
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 56
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 56
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 1440,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 25,
+        "domContentLoaded": 55.80000000074506,
+        "load": 57.400000002235174
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 144
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 144
+      }
+    ]
+  },
+  {
+    "route": "/workspace",
+    "width": 1280,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 9.899999998509884,
+        "domContentLoaded": 221.10000000149012,
+        "load": 323
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 240
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 240
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 1280,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 30,
+        "domContentLoaded": 102.69999999925494,
+        "load": 112.39999999850988
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 124
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 124
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 1280,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 29.699999999254942,
+        "domContentLoaded": 71.59999999776483,
+        "load": 78.59999999776483
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 96
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 96
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 1280,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 15,
+        "domContentLoaded": 47.5,
+        "load": 48.80000000074506
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 1280,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 12.5,
+        "domContentLoaded": 67.5,
+        "load": 69.09999999776483
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 120
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 120
+      }
+    ]
+  },
+  {
+    "route": "/workspace",
+    "width": 768,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 14.300000000745058,
+        "domContentLoaded": 196.70000000298023,
+        "load": 379.5
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 228
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 228
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 768,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 14.900000002235174,
+        "domContentLoaded": 89.10000000149012,
+        "load": 102.40000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 104
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 104
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 768,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 14.200000002980232,
+        "domContentLoaded": 44.400000002235174,
+        "load": 49.80000000074506
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 44
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 44
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 768,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 10.600000001490116,
+        "domContentLoaded": 44.100000001490116,
+        "load": 45.69999999925494
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 60
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 60
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 768,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 8.5,
+        "domContentLoaded": 51.20000000298023,
+        "load": 52.70000000298023
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "route": "/workspace",
+    "width": 390,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 17.300000000745058,
+        "domContentLoaded": 174.39999999850988,
+        "load": 436.1000000014901
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 372
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 372
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 390,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 20.5,
+        "domContentLoaded": 93.89999999850988,
+        "load": 101.10000000149012
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 84
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 84
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 390,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 15.899999998509884,
+        "domContentLoaded": 61.5,
+        "load": 68.19999999925494
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 92
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 92
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 390,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 10.300000000745058,
+        "domContentLoaded": 49.80000000074506,
+        "load": 96.90000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 96
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 96
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 390,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 7.699999999254942,
+        "domContentLoaded": 51.5,
+        "load": 91.30000000074506
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 48
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 48
+      }
+    ]
+  },
+  {
+    "route": "/workspace",
+    "width": 360,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 10.800000000745058,
+        "domContentLoaded": 326.4000000022352,
+        "load": 326.9000000022352
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 296
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 296
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 360,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 17.200000002980232,
+        "domContentLoaded": 76.80000000074506,
+        "load": 88.30000000074506
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 108
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 108
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 360,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 19.699999999254942,
+        "domContentLoaded": 75.10000000149012,
+        "load": 84.40000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 92
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 92
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 360,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 18.400000002235174,
+        "domContentLoaded": 66.30000000074506,
+        "load": 92.90000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 104
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 104
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 360,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 27.599999997764826,
+        "domContentLoaded": 59.099999997764826,
+        "load": 81.79999999701977
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 96
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 96
+      }
+    ]
+  },
+  {
+    "route": "/workspace",
+    "width": 320,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 8.699999999254942,
+        "domContentLoaded": 105,
+        "load": 288
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "route": "/operator",
+    "width": 320,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 16.5,
+        "domContentLoaded": 66.30000000074506,
+        "load": 78.09999999776483
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 88
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 88
+      }
+    ]
+  },
+  {
+    "route": "/operator/signin",
+    "width": 320,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 11.800000000745058,
+        "domContentLoaded": 35.900000002235174,
+        "load": 42.900000002235174
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 52
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 52
+      }
+    ]
+  },
+  {
+    "route": "/operator/setup",
+    "width": 320,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 7.800000000745058,
+        "domContentLoaded": 36.30000000074506,
+        "load": 55.30000000074506
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 48
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 48
+      }
+    ]
+  },
+  {
+    "route": "/client",
+    "width": 320,
+    "violations": [],
+    "overflow": false,
+    "navigation": [
+      {
+        "responseEnd": 7.600000001490116,
+        "domContentLoaded": 56.5,
+        "load": 75.90000000223517
+      }
+    ],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 68
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 68
+      }
+    ]
+  }
+]

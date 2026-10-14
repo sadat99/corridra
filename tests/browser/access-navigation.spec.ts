@@ -73,3 +73,19 @@ test('invited network and private sharing help have connected recovery paths', a
     ).toBeVisible();
   }
 });
+
+test('UX-01 invitation outage can be retried without collecting credentials or changing identity', async ({
+  page,
+}) => {
+  await page.goto('/operator/setup');
+  const invitation = page.getByRole('region', { name: 'Your operator invitation' });
+  await expect(invitation.getByRole('alert')).toContainText('unavailable');
+  await expect(invitation.getByLabel('New operator password', { exact: true })).toHaveCount(0);
+  const request = page.waitForResponse((response) =>
+    response.url().endsWith('/api/operator-setup'),
+  );
+  await invitation.getByRole('button', { name: 'Check invitation again' }).click();
+  expect((await request).request().method()).toBe('GET');
+  await expect(invitation.getByRole('alert')).toContainText('unavailable');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});

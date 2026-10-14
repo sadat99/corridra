@@ -1,23 +1,28 @@
 'use client';
 import Link from 'next/link';
+import { AccessState } from '../../../components/access-state';
+import { displayDate } from '@corridra/domain/locale';
 import { useEffect, useState, type FormEvent } from 'react';
 type Invitation = { available: boolean; role?: string; expiresAt?: string };
 export function SetupForm() {
+  const [failure, setFailure] = useState<'denied' | 'unavailable'>('denied');
   const [invite, setInvite] = useState<Invitation | null>(null),
     [message, setMessage] = useState('Checking your invitation…'),
     [busy, setBusy] = useState(false),
-    [done, setDone] = useState(false);
+    [done, setDone] = useState(false),
+    [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     fetch('/api/operator-setup', { cache: 'no-store' })
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw Error(data.error);
+        if (!r.ok) throw Object.assign(Error(data.error), { status: r.status });
         return data as Invitation;
       })
       .then((data) => {
         if (active) {
           setInvite(data);
+          setFailure('denied');
           setMessage(
             data.available
               ? ''
@@ -26,12 +31,15 @@ export function SetupForm() {
         }
       })
       .catch((e) => {
-        if (active) setMessage(e.message);
+        if (active) {
+          setFailure([401, 403].includes(e.status) ? 'denied' : 'unavailable');
+          setMessage(e.message);
+        }
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [attempt]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget,
@@ -63,12 +71,37 @@ export function SetupForm() {
   }
   return (
     <section aria-label="Your operator invitation">
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
+      {message && (
+        <AccessState
+          kind={
+            done
+              ? 'complete'
+              : invite?.available
+                ? 'unknown'
+                : message === 'Checking your invitation…'
+                  ? 'loading'
+                  : failure
+          }
+        >
+          <p>{message}</p>
+        </AccessState>
+      )}
+      {!invite?.available && !done && message !== 'Checking your invitation…' && (
+        <button
+          type="button"
+          className="text-link"
+          onClick={() => {
+            setMessage('Checking your invitation…');
+            setAttempt((value) => value + 1);
+          }}
+        >
+          Check invitation again
+        </button>
+      )}
       {invite?.available && !done && (
         <form className="operator-form" onSubmit={submit}>
           <h2>Accept {invite.role} access</h2>
+          {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>}
           <p>
             Your invitation is for the synthetic workspace. It does not authorize real customer
             operations. Keep your password and authenticator recovery codes private.
