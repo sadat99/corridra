@@ -8,7 +8,7 @@ Baseline integration: 199 tests / 24 files passed. Existing protected operator w
 
 ## Final execution
 
-Final suite results and sanitized logs are saved in `evidence/after/`. The exact final commit is the PR head containing this report; the tested code and evidence are committed together. No application files change after these results.
+Final suite results and sanitized logs are saved in `evidence/after/`. The exact final commit is the PR head containing this report; the tested code and evidence are committed together. No application files change after these results. A subsequent capture-only correction disables smooth scrolling during screenshots; all three UX-01 scenarios passed again (evidence/after/focused-final.log).
 
 - Formatting, lint and type checks: passed. Document checks: 9 passed; infrastructure checks: 7 passed.
 - Real database integration: 199 passed across 24 files. Production build: passed. Public browser suite: 62 passed across desktop/mobile. Protected operator suite: all 10 passed (7 existing workflows plus 3 new UX-01 scenarios).

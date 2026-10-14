@@ -2325,7 +2325,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     await page.setViewportSize({ width, height: 1000 });
     await page
       .locator('#workspace-missions')
-      .evaluate((section) => section.scrollIntoView({ block: 'start' }));
+      .evaluate((section) => section.scrollIntoView({ block: 'start', behavior: 'instant' }));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
