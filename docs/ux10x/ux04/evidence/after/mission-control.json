@@ -1,0 +1,38 @@
+[
+  {
+    "name": "mission-control",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "mission-control",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "mission-control",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "mission-control",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "mission-control",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "mission-control",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

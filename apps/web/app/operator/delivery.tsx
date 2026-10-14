@@ -1,4 +1,9 @@
 'use client';
+import {
+  OperatorWorkbench,
+  useFormChangeGuard,
+  formAcknowledged,
+} from '../../components/operator-workbench';
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { ImportRow } from '@corridra/delivery/import';
 import { DeliveryExperience } from './delivery-experience';
@@ -59,6 +64,7 @@ function date(value: string) {
   return new Date(value).toISOString();
 }
 export function Delivery({ tenant, revision }: { tenant: string; revision: number }) {
+  const { ref: formRootRef, onChangeCapture, onResetCapture, confirmChange } = useFormChangeGuard();
   const [data, setData] = useState<Snapshot | null>(null),
     [programme, setProgramme] = useState(''),
     [offset, setOffset] = useState(0),
@@ -181,11 +187,12 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     pending.current.delete(key);
     return value;
   }
-  async function act(work: () => Promise<void>) {
+  async function act(work: () => Promise<void>, form?: HTMLFormElement) {
     setBusy(true);
     setMessage('');
     try {
       await work();
+      if (form) formAcknowledged(form);
       await load();
       setMessage('Saved.');
     } catch (e) {
@@ -196,15 +203,17 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   }
   function createProgramme(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const input = values(e.currentTarget);
+    const form = e.currentTarget;
+    const input = values(form);
     void act(async () => {
       const p = await action('programme', input);
       setProgramme(p.id);
-    });
+    }, form);
   }
   function upload(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget),
+    const form = e.currentTarget;
+    const f = new FormData(form),
       file = f.get('file') as File;
     if (!programme || !file?.size) {
       setMessage('Choose a programme and an intake file.');
@@ -226,12 +235,13 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       );
       setPreview(next);
       setResult(null);
-    });
+    }, form);
   }
   function confirm(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     if (!preview) return;
-    const f = values(e.currentTarget);
+    const f = values(form);
     void act(async () => {
       const r = await action('confirm', {
         importId: preview.id,
@@ -240,7 +250,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         acknowledged: f.acknowledged === 'on',
       });
       setResult(r.rows);
-    });
+    }, form);
   }
   function publish(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -268,11 +278,12 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         includeFinancials: input.includeFinancials === 'on',
         approved: input.approved === 'on',
       });
-    });
+    }, form);
   }
   function share(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = values(e.currentTarget);
+    const form = e.currentTarget;
+    const f = values(form);
     void act(async () => {
       const link = await action('share', {
         programmeId: audience === 'INSTITUTION_REPORT' ? programme : null,
@@ -285,19 +296,30 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         approved: f.approved === 'on',
       });
       setPrivateLink(`${window.location.origin}${link.path}#${link.token}`);
-    });
+    }, form);
   }
   function evidenceRequest(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = values(e.currentTarget);
+    const form = e.currentTarget;
+    const f = values(form);
     void act(async () => {
       await action('request', { ...f, dueAt: date(f.dueAt) });
-    });
+    }, form);
   }
   if (unavailable)
     return (
-      <section className="detail-card">
+      <section data-operator-workbench className="detail-card">
         <h2>Client and programme delivery</h2>
+        <OperatorWorkbench
+          label="Publication and reporting sections"
+          sections={[
+            { label: 'Programmes', heading: 'Create programme' },
+            { label: 'Participants', heading: 'Participants' },
+            { label: 'Publication', heading: 'Review client publication' },
+            { label: 'Private scope', heading: 'Share approved view' },
+            { label: 'Access and requests', heading: 'Access and requests' },
+          ]}
+        />
         <p>{message}</p>
         <button
           className="text-link"
@@ -318,8 +340,18 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     );
   if (!data || dataScope !== scope)
     return (
-      <section className="detail-card">
+      <section data-operator-workbench className="detail-card">
         <h2>Client and programme delivery</h2>
+        <OperatorWorkbench
+          label="Publication and reporting sections"
+          sections={[
+            { label: 'Programmes', heading: 'Create programme' },
+            { label: 'Participants', heading: 'Participants' },
+            { label: 'Publication', heading: 'Review client publication' },
+            { label: 'Private scope', heading: 'Share approved view' },
+            { label: 'Access and requests', heading: 'Access and requests' },
+          ]}
+        />
         <p>{message || 'Loading delivery…'}</p>
         <button
           className="text-link"
@@ -342,8 +374,24 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     shares = ['owner', 'admin'].includes(data.role);
   const publications = data.publications.filter((p) => !p.revoked);
   return (
-    <section className="delivery-ops detail-card">
+    <section
+      data-operator-workbench
+      className="delivery-ops detail-card"
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
       <h2>Client and programme delivery</h2>
+      <OperatorWorkbench
+        label="Publication and reporting sections"
+        sections={[
+          { label: 'Programmes', heading: 'Create programme' },
+          { label: 'Participants', heading: 'Participants' },
+          { label: 'Publication', heading: 'Review client publication' },
+          { label: 'Private scope', heading: 'Share approved view' },
+          { label: 'Access and requests', heading: 'Access and requests' },
+        ]}
+      />
       <p>
         Create a synthetic programme, review every intake row, then share only approved mission
         information. Use invented participant addresses ending in example.invalid.
@@ -357,9 +405,11 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       <label>
         Programme
         <select
+          disabled={busy}
           aria-label="Programme"
           value={programme}
           onChange={(e) => {
+            if (!confirmChange()) return;
             setProgramme(e.target.value);
             setSelected([]);
             setPreview(null);

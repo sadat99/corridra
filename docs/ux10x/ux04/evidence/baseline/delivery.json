@@ -1,0 +1,38 @@
+[
+  {
+    "name": "delivery",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "delivery",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "delivery",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "delivery",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "delivery",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "delivery",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

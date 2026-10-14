@@ -1,0 +1,58 @@
+{
+  "scope": "UX-04 operator presentation, mounted section navigation and draft preservation",
+  "tests": [
+    {
+      "baseline": "Operator queue filtering/paging and mission form",
+      "implementation": "Existing server filters, focus views and version-keyed forms plus edited-input guard",
+      "positive": "route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace",
+      "negative": "Cancel a queue filter change retains its current filter and actual unsaved requirement input",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Commercial requirements, quotation and source review",
+      "implementation": "In-context section focus/native disclosure without unmount; protected existing task switch",
+      "positive": "route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace",
+      "negative": "History navigation preserves input; cancelling task switch retains original form; real source and original quotation are preserved",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Programme, imports, publication and export",
+      "implementation": "Context index and current-form acknowledgement/dirty protection",
+      "positive": "scoped delivery imports every row, serves client requests and downloads complete programme reports",
+      "negative": "Cancel programme change retains the old selection and programme draft; actual import, publication, denied scopes and exact CSV/PDF replay remain enforced",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Research, private relationships, identity and shortlist",
+      "implementation": "Contextual access to existing native sections and every original field",
+      "positive": "invited operator enrolls MFA, records provenance, manages flags and signs out",
+      "negative": "Original public/private distinctions and permission/review actions are retained; existing negative authorization checks remain required",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Controlled introduction, meeting and follow-up",
+      "implementation": "Existing controls grouped through stable in-context focus",
+      "positive": "controlled buyer response progresses through durable delivery, a held meeting and owned follow-up",
+      "negative": "Original recipient opt-out, source limits, proposed/held status and independent follow-up remain in the real service path",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Original commercial record and compensating history",
+      "implementation": "Existing record/history sections and original-currency values",
+      "positive": "operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay",
+      "negative": "Independent reviewed confirmation/compensation, stale-session denial and historical event replay retain their actual contracts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    }
+  ],
+  "limitations": [
+    "Static control reconciliation is not runtime action/state coverage.",
+    "Unlinked whole-programme controls and inherited hosted identity lifecycle gaps remain NOT_YET_VERIFIED or PARTIAL.",
+    "No provider or real customer/financial operation is activated."
+  ]
+}

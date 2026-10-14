@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   contactPurpose,
@@ -235,8 +236,16 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   }
   if (!comms || !meetings)
     return (
-      <section className="operator-section">
+      <section data-operator-workbench className="operator-section">
         <h2>Introductions and meetings</h2>
+        <OperatorWorkbench
+          label="Introduction and meeting sections"
+          sections={[
+            { label: 'Introductions', heading: 'Introductions and replies' },
+            { label: 'Meetings', heading: 'Meeting itinerary' },
+            { label: 'Follow-up', heading: 'Owned follow-up' },
+          ]}
+        />
         <p role="status" aria-label="Access status">
           {message || 'Loading controlled access…'}
         </p>

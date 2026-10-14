@@ -1,3 +1,4 @@
+import { operatorEvidence } from './operator-evidence';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -475,6 +476,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.getByText('research.ingestion: enabled', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Change research.ingestion', exact: true }).click();
   await expect(page.getByText('research.ingestion: disabled', { exact: true })).toBeVisible();
+  await operatorEvidence(page, research, 'research');
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
@@ -799,6 +801,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   );
   await buyer.getByRole('button', { name: 'Stop further introductions' }).click();
   await expect(buyer.getByRole('status')).toContainText('Further introductions');
+  await operatorEvidence(page, page.locator('#workspace-meetings'), 'meetings');
   await buyerContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
@@ -1045,6 +1048,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const oldState = await page.context().storageState();
+  await operatorEvidence(page, page.locator('#workspace-commercial'), 'commercial-progress');
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   const stale = await browser.newContext({ storageState: oldState });
@@ -1193,6 +1197,30 @@ test('scoped delivery imports every row, serves client requests and downloads co
   ).toBeVisible();
   await evidenceRequest.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
   await expect(evidenceRequest).toContainText('completed');
+  await panel
+    .getByRole('navigation', { name: 'Publication and reporting sections' })
+    .getByRole('button', { name: 'Programmes', exact: true })
+    .click();
+  await panel.getByLabel('Programme name', { exact: true }).fill('UX-04 unsaved programme draft');
+  const oldProgramme = await panel
+    .getByRole('combobox', { name: 'Programme', exact: true })
+    .inputValue();
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    await dialog.dismiss();
+  });
+  await panel
+    .getByRole('combobox', { name: 'Programme', exact: true })
+    .selectOption(oldProgramme === programmeId ? '' : programmeId);
+  await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).toHaveValue(
+    oldProgramme,
+  );
+  await expect(panel.getByLabel('Programme name', { exact: true })).toHaveValue(
+    'UX-04 unsaved programme draft',
+  );
+  await panel
+    .getByLabel('Programme name', { exact: true })
+    .evaluate((input) => (input.closest('form') as HTMLFormElement).reset());
   let releaseScope!: () => void;
   const scopeGate = new Promise<void>((resolve) => {
     releaseScope = resolve;
@@ -1244,6 +1272,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await client.goto(institutionLink);
   await expect(client.getByRole('button', { name: 'Download CSV', exact: true })).toBeVisible();
   expect(await client.locator('body').innerText()).not.toContain('Invented requirement supplied');
+  await operatorEvidence(page, panel, 'delivery');
   await participantEvidence(client, 'institution');
   for (const format of ['CSV', 'PDF']) {
     const response = client.waitForResponse(
@@ -1500,6 +1529,42 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await card
     .getByLabel('Commercial objective', { exact: true })
     .fill('Procure a machine against declared requirements');
+  const ux04Guide = card.getByRole('navigation', {
+    name: /Requirements and offer sections for mission/,
+  });
+  const ux04Hash = new URL(page.url()).hash;
+  await ux04Guide.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(card.getByLabel('Commercial objective', { exact: true })).toHaveValue(
+    'Procure a machine against declared requirements',
+  );
+  expect(new URL(page.url()).hash).toBe(ux04Hash);
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    await dialog.dismiss();
+  });
+  await card.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('quotation');
+  await expect(card.getByRole('combobox', { name: 'Next task', exact: true })).toHaveValue(
+    'requirements',
+  );
+  await expect(card.getByLabel('Commercial objective', { exact: true })).toHaveValue(
+    'Procure a machine against declared requirements',
+  );
+  const oldQueueFilter = await page
+    .getByRole('combobox', { name: 'Show missions', exact: true })
+    .inputValue();
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    await dialog.dismiss();
+  });
+  await page
+    .getByRole('combobox', { name: 'Show missions', exact: true })
+    .selectOption(oldQueueFilter === 'all' ? 'open' : 'all');
+  await expect(page.getByRole('combobox', { name: 'Show missions', exact: true })).toHaveValue(
+    oldQueueFilter,
+  );
+  await expect(card.getByLabel('Commercial objective', { exact: true })).toHaveValue(
+    'Procure a machine against declared requirements',
+  );
   await card
     .getByRole('combobox', { name: 'Commercial role', exact: true })
     .selectOption('IMPORTER');
@@ -1517,6 +1582,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     )
   ).json();
   const requirementId = snapshot.requirements[0].id;
+  await ux04Guide.getByRole('button', { name: 'Requirements', exact: true }).click();
+  await expect(card.locator('summary').filter({ hasText: 'Requirements, version' })).toBeFocused();
+
   await card.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('assessment');
   await card
     .getByRole('combobox', { name: 'Declared source', exact: true })
@@ -1690,6 +1758,11 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     (await new AxeBuilder({ page: clientPage }).include('.delivery-view').analyze()).violations,
   ).toEqual([]);
   await mkdir('.cache/v2-part-03', { recursive: true });
+  await operatorEvidence(
+    page,
+    card.locator(':scope > .operator-section').first(),
+    'requirements-and-offers',
+  );
   await participantEvidence(clientPage, 'client-mission');
   await expect(
     clientPage.getByRole('region', { name: 'Original quotation comparison' }),
@@ -2522,6 +2595,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     .filter({ has: page.getByRole('heading', { name: mission.brief.company, exact: true }) })
     .first();
   await expect(card).toContainText(mission.brief.offer);
+  await operatorEvidence(page, card, 'mission-control');
   await expect(card).toContainText(mission.claim_status);
   await expect(card).toContainText(`VERSION ${mission.version}`);
   await expect(card.locator('.ux-mission-passport')).toContainText(

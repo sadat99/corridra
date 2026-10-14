@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   currencies,
@@ -469,8 +470,17 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
   });
   if (!data)
     return (
-      <section className="operator-section">
+      <section data-operator-workbench className="operator-section">
         <h2>Commercial progress</h2>
+        <OperatorWorkbench
+          label="Commercial record sections"
+          sections={[
+            { label: 'Mission yield', heading: 'Mission yield' },
+            { label: 'Overdue actions', heading: 'Overdue follow-up' },
+            { label: 'Opportunity records', heading: 'Evidence and accounting history' },
+            { label: 'Retained events', heading: 'Rebuild commercial reports' },
+          ]}
+        />
         <p role="status" aria-label="Commercial status">
           {message || 'Loading commercial progress…'}
         </p>
@@ -493,8 +503,17 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
   const name = (id: string) =>
     data.owners.find((o) => o.user_id === id)?.name ?? 'Owner no longer active';
   return (
-    <section className="operator-section" aria-label="Commercial progress">
+    <section data-operator-workbench className="operator-section" aria-label="Commercial progress">
       <h2>Commercial progress</h2>
+      <OperatorWorkbench
+        label="Commercial record sections"
+        sections={[
+          { label: 'Mission yield', heading: 'Mission yield' },
+          { label: 'Overdue actions', heading: 'Overdue follow-up' },
+          { label: 'Opportunity records', heading: 'Evidence and accounting history' },
+          { label: 'Retained events', heading: 'Rebuild commercial reports' },
+        ]}
+      />
       <p>
         Connect held meetings to commercial evidence. Use invented records while customer controls
         are completed.
