@@ -59,10 +59,10 @@ export class OperatorSetup {
         await db.query(
           `SELECT u.id FROM identity."user" u JOIN identity.principal p ON p.identity_id=u.id
          WHERE u.id=$1 AND p.id=$2 AND lower(u.email)=lower($3) AND u."emailVerified"=false
-         AND u."twoFactorEnabled"=false AND p.disabled_at IS NOT NULL
+         AND u."twoFactorEnabled"=false AND p.disabled_at=(SELECT "createdAt" FROM identity.verification WHERE id=$4)
          AND NOT EXISTS(SELECT FROM identity.session s WHERE s."userId"=u.id)
          AND NOT EXISTS(SELECT FROM identity."twoFactor" m WHERE m."userId"=u.id) FOR UPDATE OF u,p`,
-          [invite.userId, invite.principalId, account.email],
+          [invite.userId, invite.principalId, account.email, rows[0].id],
         )
       ).rows;
       if (target.length !== 1)

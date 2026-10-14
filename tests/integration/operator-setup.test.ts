@@ -143,6 +143,18 @@ test('expired invitations and weak passwords do not activate a principal', async
       { password: 'A separate long password 2026!' },
     ),
   ).rejects.toThrow('No current');
+  const suspended = 'suspended-setup@example.invalid';
+  await inviteOperator(f.owner, f.users.owner.ctx, invitation(suspended));
+  await f.owner.query(
+    `UPDATE identity.principal SET disabled_at=now()+interval '1 second' WHERE identity_id=(SELECT id FROM identity."user" WHERE email=$1)`,
+    [suspended],
+  );
+  await expect(
+    service.complete(
+      { email: suspended, emailVerified: true },
+      { password: 'A separate long operator password 2026!' },
+    ),
+  ).rejects.toThrow('cannot reset');
 });
 test('first-human-owner bootstrap is offline, exact-workspace, independently verified and once only', async () => {
   await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
