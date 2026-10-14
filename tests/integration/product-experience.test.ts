@@ -667,7 +667,7 @@ test('UTF-8 programme exports retain Chinese names, Bangla text and every origin
   await writeFile('.cache/part03-unicode-export.pdf', bytes, { mode: 0o600 });
 });
 
-async function participantMeeting(missionId: string) {
+async function participantMeeting(missionId: string, startsAt: Date) {
   const t = await f.target();
   for (const [index, action] of ['qualify', 'activate', 'targeting'].entries())
     await f.mission.command(f.ctx, {
@@ -697,12 +697,14 @@ async function participantMeeting(missionId: string) {
       dueAt: future(),
     }),
   );
-  return f.held(undefined, { ...t, missionId, targetId: target.id as string });
+  return f.held(undefined, { ...t, missionId, targetId: target.id as string }, startsAt);
 }
 test('confirmed shared activity uses actual participant meetings once and cannot be duplicated or borrowed', async () => {
   const { p, accepted } = await programme();
-  const a = await participantMeeting(accepted.rows[0].missionId!),
-    b = await participantMeeting(accepted.rows[1].missionId!);
+  // Both participants attended the same activity, even if setup crosses a minute boundary.
+  const startsAt = new Date(Date.now() - 3600000);
+  const a = await participantMeeting(accepted.rows[0].missionId!, startsAt),
+    b = await participantMeeting(accepted.rows[1].missionId!, startsAt);
   const agenda = {
     commandId: randomUUID(),
     programmeId: p.id,
