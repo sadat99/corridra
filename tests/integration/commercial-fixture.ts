@@ -33,6 +33,7 @@ export async function commercialFixture(upgrade = false, through?: string) {
   async function held(
     before?: (i: Awaited<ReturnType<typeof f.introduction>>) => Promise<void>,
     target?: NonNullable<Parameters<typeof f.introduction>[0]>,
+    scheduledStart?: Date,
   ) {
     const i = await f.introduction(target);
     await before?.(i);
@@ -66,7 +67,7 @@ export async function commercialFixture(upgrade = false, through?: string) {
         targetProfile: 'Synthetic commercial distributor',
         ...next(),
       });
-    const start = new Date(Date.now() - 3600000);
+    const start = new Date(scheduledStart?.getTime() ?? Date.now() - 3600000);
     start.setUTCSeconds(0, 0);
     const end = new Date(start.getTime() + 1800000);
     await f.meetings.command(
