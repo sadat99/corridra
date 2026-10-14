@@ -1,4 +1,5 @@
 import 'server-only';
+import { recoverableResource } from './recoverable-resource';
 import { localFixtureAdapter } from '@corridra/intelligence/local-fixture';
 import { IntelligenceService } from '@corridra/intelligence/service';
 import { NetworkService } from '@corridra/network';
@@ -22,19 +23,18 @@ import { OperationsService } from '@corridra/missions/operations';
 import { CommunicationService } from '@corridra/communications';
 import { SyntheticChannel } from '@corridra/communications/adapters';
 import { OutboxDispatcher } from '@corridra/workflows';
-let singleton: ReturnType<typeof createServices> | undefined;
 function createServices() {
   const config = readFoundationConfig();
   if (!config) return null;
   const runtimePool = new Pool({
     connectionString: config.RUNTIME_DATABASE_URL,
     max: 5,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 15000,
   });
   const authPool = new Pool({
     connectionString: config.AUTH_DATABASE_URL,
     max: 3,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 15000,
   });
   const identity = createIdentity({
     pool: authPool,
@@ -73,6 +73,9 @@ function createServices() {
     assertRestrictedPool(runtimePool),
     assertRestrictedPool(authPool, 'corridra_auth'),
   ]);
+  void ready.catch(() => {
+    void Promise.allSettled([runtimePool.end(), authPool.end()]);
+  });
   return {
     config,
     ...identity,
@@ -107,7 +110,4 @@ function createServices() {
       !!configuredStorage && (config.EVIDENCE_SCAN_MODE === 'bypass' || !!process.env.CLAMAV_HOST),
   };
 }
-export function foundations() {
-  if (singleton === undefined) singleton = createServices();
-  return singleton;
-}
+export const foundations = recoverableResource(createServices);
