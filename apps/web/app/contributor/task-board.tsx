@@ -1,7 +1,7 @@
 'use client';
 import { ContributorSignout } from './signout';
-import { displayMoney } from '@corridra/domain/locale';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { displayMoney, displayDate } from '@corridra/domain/locale';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 type Task = {
   id: string;
   version: number;
@@ -52,19 +52,32 @@ type Command = {
   details: { kind: string; body?: string };
 };
 export function TaskBoard({ workspace }: { workspace: string }) {
+  return <ScopedTaskBoard key={workspace} workspace={workspace} />;
+}
+function ScopedTaskBoard({ workspace }: { workspace: string }) {
   const [tasks, setTasks] = useState<Task[]>([]),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState<Command | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false),
+    [readInterrupted, setReadInterrupted] = useState(false);
+  const inFlight = useRef(false);
   const refresh = useCallback(async () => {
     const r = await fetch('/api/network/tasks?workspace=' + encodeURIComponent(workspace), {
       cache: 'no-store',
     });
     const body = await r.json();
-    if (!r.ok) throw new Error(body.error);
+    if (!r.ok) {
+      if ([401, 403, 404, 410].includes(r.status)) {
+        setTasks([]);
+        setLoaded(false);
+      }
+      setReadInterrupted(true);
+      throw new Error(body.error);
+    }
     setTasks(body);
     setLoaded(true);
+    setReadInterrupted(false);
   }, [workspace]);
   useEffect(() => {
     let live = true;
@@ -90,6 +103,8 @@ export function TaskBoard({ workspace }: { workspace: string }) {
     };
   }, [workspace]);
   async function send(command: Command) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setPending(command);
     setBusy(true);
     setMessage('');
@@ -104,18 +119,29 @@ export function TaskBoard({ workspace }: { workspace: string }) {
         body: JSON.stringify(command),
       });
       const body = await r.json();
-      if (!r.ok) throw new Error(body.error);
+      if (!r.ok) {
+        if ([401, 403, 404, 410].includes(r.status)) {
+          setTasks([]);
+          setLoaded(false);
+        }
+        throw new Error(body.error);
+      }
       setPending(null);
-      await refresh();
       setMessage('Received and saved.');
+      await refresh().catch((e) => {
+        setReadInterrupted(true);
+        setMessage('Received and saved. The task list could not refresh: ' + e.message);
+      });
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Not received. Retry this submission.');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
   function submit(e: FormEvent<HTMLFormElement>, task: Task, action: string) {
     e.preventDefault();
+    if (pending || inFlight.current || readInterrupted) return;
     const f = new FormData(e.currentTarget);
     void send({
       commandId: crypto.randomUUID(),
@@ -137,7 +163,17 @@ export function TaskBoard({ workspace }: { workspace: string }) {
       <button
         className="text-link"
         disabled={busy}
-        onClick={() => void refresh().catch((e) => setMessage(e.message))}
+        onClick={() => {
+          if (inFlight.current) return;
+          inFlight.current = true;
+          setBusy(true);
+          void refresh()
+            .catch((e) => setMessage(e.message))
+            .finally(() => {
+              inFlight.current = false;
+              setBusy(false);
+            });
+        }}
       >
         Refresh tasks
       </button>
@@ -151,6 +187,12 @@ export function TaskBoard({ workspace }: { workspace: string }) {
           className="text-link"
           disabled={busy}
           onClick={() => {
+            if (
+              !window.confirm(
+                'Clear local retry data? This does not cancel a request already received. Refresh tasks to check its status.',
+              )
+            )
+              return;
             setPending(null);
             setMessage(
               'Local retry data cleared. This does not cancel work already received. Refresh tasks to check its status.',
@@ -169,9 +211,16 @@ export function TaskBoard({ workspace }: { workspace: string }) {
             : 'Loading assigned work…'}
         </p>
       )}
+      {readInterrupted && (
+        <p>
+          Task progress could not be refreshed. Refresh tasks before starting another command.
+          Existing form entries remain here.
+        </p>
+      )}
       {loaded && !tasks.length && <p>No current reviewed assignment is available.</p>}
       {tasks.map((task) => (
-        <article className="detail-card" key={task.id}>
+        <article className="detail-card ux-task-card" key={task.id}>
+          <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
           <h2>{task.disclosure.kind.replaceAll('_', ' ')}</h2>
           <p>
             {task.status.replaceAll('_', ' ')} · {task.disclosure.market} · work country{' '}
@@ -182,9 +231,9 @@ export function TaskBoard({ workspace }: { workspace: string }) {
             <dt>Location</dt>
             <dd>{task.disclosure.location}</dd>
             <dt>Deadline</dt>
-            <dd>{new Date(task.deadline).toLocaleString()}</dd>
+            <dd>{displayDate(task.deadline)}</dd>
             <dt>Late submission cutoff</dt>
-            <dd>{new Date(task.expiresAt).toLocaleString()}</dd>
+            <dd>{displayDate(task.expiresAt)}</dd>
             <dt>Evidence required</dt>
             <dd>{task.disclosure.evidenceRequired}</dd>
             <dt>Expected effort</dt>
@@ -210,39 +259,48 @@ export function TaskBoard({ workspace }: { workspace: string }) {
           </p>
           {task.status === 'ASSIGN' && (
             <form className="operator-form" onSubmit={(e) => submit(e, task, 'ACCEPT')}>
-              <label className="field">
-                Acceptance and relationship confirmation
-                <input name="reason" required minLength={3} maxLength={500} />
-              </label>
-              <button className="primary-link" disabled={busy || !!pending}>
-                Accept the disclosed task
-              </button>
+              <fieldset disabled={busy || !!pending || readInterrupted}>
+                <legend className="sr-only">Acceptance</legend>
+                <label className="field">
+                  Acceptance and relationship confirmation
+                  <input name="reason" required minLength={3} maxLength={500} />
+                </label>
+                <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
+                  Accept the disclosed task
+                </button>
+              </fieldset>
             </form>
           )}
           {['ACCEPT', 'REQUEST_CORRECTION'].includes(task.status) && (
             <form className="operator-form" onSubmit={(e) => submit(e, task, 'SUBMIT')}>
-              <label className="field">
-                Original work and evidence statement
-                <textarea name="body" required minLength={3} maxLength={2000} />
-              </label>
-              <label className="field">
-                Submission context
-                <input name="reason" required minLength={3} maxLength={500} />
-              </label>
-              <button className="primary-link" disabled={busy || !!pending}>
-                Submit for evidence review
-              </button>
+              <fieldset disabled={busy || !!pending || readInterrupted}>
+                <legend className="sr-only">Original submission</legend>
+                <label className="field">
+                  Original work and evidence statement
+                  <textarea name="body" required minLength={3} maxLength={2000} />
+                </label>
+                <label className="field">
+                  Submission context
+                  <input name="reason" required minLength={3} maxLength={500} />
+                </label>
+                <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
+                  Submit for evidence review
+                </button>
+              </fieldset>
             </form>
           )}
           {['SUBMIT', 'REVIEW', 'COMPLETE', 'REJECT'].includes(task.status) && (
             <form className="operator-form" onSubmit={(e) => submit(e, task, 'DISPUTE')}>
-              <label className="field">
-                Dispute reason
-                <textarea name="reason" required minLength={3} maxLength={500} />
-              </label>
-              <button className="text-link" disabled={busy || !!pending}>
-                Request dispute review
-              </button>
+              <fieldset disabled={busy || !!pending || readInterrupted}>
+                <legend className="sr-only">Dispute request</legend>
+                <label className="field">
+                  Dispute reason
+                  <textarea name="reason" required minLength={3} maxLength={500} />
+                </label>
+                <button className="text-link" disabled={busy || !!pending || readInterrupted}>
+                  Request dispute review
+                </button>
+              </fieldset>
             </form>
           )}
           <details>
@@ -251,7 +309,9 @@ export function TaskBoard({ workspace }: { workspace: string }) {
               {task.history?.map((h) => (
                 <li key={h.version}>
                   <p>
-                    {h.action}: {h.reason}
+                    Version {h.version} · {h.action}: {h.reason}
+                    <br />
+                    {displayDate(h.createdAt)}
                   </p>
                   {h.details.body && <p>{h.details.body}</p>}
                   {h.details.rationale && (
@@ -267,7 +327,7 @@ export function TaskBoard({ workspace }: { workspace: string }) {
               ))}
             </ol>
           </details>
-          {task.obligations?.length && (
+          {!!task.obligations?.length && (
             <div>
               <h3>Reviewed reward obligations</h3>
               <ul>

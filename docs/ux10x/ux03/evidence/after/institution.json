@@ -1,0 +1,98 @@
+[
+  {
+    "name": "institution",
+    "width": 1440,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "name": "institution",
+    "width": 1280,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "name": "institution",
+    "width": 768,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "name": "institution",
+    "width": 390,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "name": "institution",
+    "width": 360,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  },
+  {
+    "name": "institution",
+    "width": 320,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 100
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 100
+      }
+    ]
+  }
+]

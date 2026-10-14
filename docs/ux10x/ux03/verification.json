@@ -1,0 +1,72 @@
+{
+  "scope": "UX-03 participant presentation and immutable retry acceptance",
+  "tests": [
+    {
+      "baseline": "Private buyer introduction and response",
+      "implementation": "Original decision and opt-out contracts, shared scope and retry acknowledgment",
+      "positive": "controlled buyer response progresses through durable delivery, a held meeting and owned follow-up",
+      "negative": "Injected interruption retains the exact original decision, opt-out flag and response ID",
+      "testFile": "tests/operator/workspace.spec.ts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Client evidence request and institutional export",
+      "implementation": "Actual declaration submission and CSV/PDF downloads",
+      "positive": "scoped delivery imports every row, serves client requests and downloads complete programme reports",
+      "negative": "Interrupted declaration preserves its payload/UUID; exact byte replay for both exports",
+      "testFile": "tests/operator/workspace.spec.ts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Client mission detail and quotation scope",
+      "implementation": "Approved original CNY quotation, Chinese original, Bangla formatting and evidence lens",
+      "positive": "route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace",
+      "negative": "Known second-tenant denial, unrelated capability, delayed old-scope read, wrong audience, actual expiry and revocation",
+      "testFile": "tests/operator/workspace.spec.ts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Supplier original declaration",
+      "implementation": "Recorded supplier terms in their original currency",
+      "positive": "route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace",
+      "negative": "Interrupted submission keeps identical original payload/response ID; revoked link remains denied",
+      "testFile": "tests/operator/workspace.spec.ts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Contributor exact assignment, offline work and rewards",
+      "implementation": "Actual independent MFA, disclosed work, immutable submission, recorded reward/reversal history",
+      "positive": "governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries",
+      "negative": "No tenant workspace access; offline retry and one submission event; receipt survives post-acknowledgment read outage",
+      "testFile": "tests/operator/workspace.spec.ts",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Verified customer invitation redemption",
+      "implementation": "Canonical client URL validation, focused malformed-input recovery and memory-only views",
+      "positive": "Unchanged accepted customer identity/capability service contracts",
+      "negative": "Existing customer API denies absent/unverified identity and unrelated scope; original origin/path/fragment validation and focused malformed-link feedback are retained",
+      "status": "PARTIAL",
+      "evidence": "evidence/after/test-integration.log",
+      "limitation": "The existing customer HTTP tests supply identity at their test boundary. They are not a new hosted identity or received-email browser acceptance claim."
+    },
+    {
+      "baseline": "Contributor server startup and independent MFA return destination",
+      "implementation": "Contributor error boundary with full-document retry preserving workspace",
+      "positive": "UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness",
+      "negative": "Same real TCP-outage test: repeated contributor failure, no assigned work, restored database still requires independent sign-in and retains exact contributor return path",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    }
+  ],
+  "limitations": [
+    "Source-control rows without direct runtime linkage remain NOT_YET_VERIFIED.",
+    "No new hosted customer email lifecycle acceptance is claimed.",
+    "Local viewport paint samples are not field Core Web Vitals."
+  ]
+}

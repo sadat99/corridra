@@ -1,3 +1,4 @@
+import { WorkspaceShell } from '../../components/workspace-shell';
 import type { Metadata } from 'next';
 import { DeliveryView } from '../delivery-view';
 export const metadata: Metadata = {
@@ -7,12 +8,8 @@ export const metadata: Metadata = {
 };
 export default function ClientPage() {
   return (
-    <main id="main" tabIndex={-1}>
-      <section className="page-hero">
-        <p className="label">Private mission progress</p>
-        <h1>Your next commercial step</h1>
-        <DeliveryView audience="CLIENT_PROGRESS" />
-      </section>
-    </main>
+    <WorkspaceShell eyebrow="Private mission progress" title="Your next commercial step">
+      <DeliveryView audience="CLIENT_PROGRESS" />
+    </WorkspaceShell>
   );
 }

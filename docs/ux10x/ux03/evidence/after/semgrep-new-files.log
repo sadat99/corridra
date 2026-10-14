@@ -1,0 +1,19 @@
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 5 files tracked by git with 5 Code rules:
+  Scanning 5 files with 5 ts rules.
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 5
+ • Targets scanned: 5
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 5 rules on 5 files: 0 findings.

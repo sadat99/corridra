@@ -1,9 +1,13 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { DeliveryView } from '../delivery-view';
 export function CustomerMissions() {
   const [missions, setMissions] = useState<{ token: string; label: string }[]>([]),
     [error, setError] = useState('');
+  const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) feedback.current?.focus();
+  }, [error]);
   function open(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
@@ -45,7 +49,11 @@ export function CustomerMissions() {
         </label>
         <button className="primary-link">Open authorized mission</button>
       </form>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p ref={feedback} tabIndex={-1} className="ux-error-summary" role="alert">
+          {error}
+        </p>
+      )}
       {missions.length === 0 && <p>No mission invitations have been opened in this session.</p>}
       {missions.map((m) => (
         <article key={m.token}>

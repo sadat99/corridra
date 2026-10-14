@@ -2,6 +2,12 @@
 import { displayDate } from '@corridra/domain/locale';
 import { useEffect, useRef, useState } from 'react';
 import type { Introduction } from '@corridra/domain/access';
+import {
+  usePrivateCapability,
+  checkedResponse,
+  accessDenied,
+} from '../../components/private-capability';
+import { ParticipantScope } from '../../components/participant-scope';
 import { RecipientResponse } from './recipient-response';
 type View = {
   capability?: string;
@@ -23,32 +29,46 @@ const labels = {
   NOT_RELEVANT: 'Not relevant',
 } as const;
 export function BuyerIntroduction() {
+  const capability = usePrivateCapability();
+  return <ScopedIntroduction key={capability} capability={capability} />;
+}
+function ScopedIntroduction({ capability }: { capability: string }) {
   const [data, setData] = useState<View | null>(null),
     [message, setMessage] = useState('Loading your introduction…'),
     [busy, setBusy] = useState(false),
     [optOut, setOptOut] = useState(false),
-    [declined, setDeclined] = useState(false);
+    [declined, setDeclined] = useState(false),
+    [pending, setPending] = useState<{
+      decision: keyof typeof labels;
+      optOut: boolean;
+      responseId: string;
+    } | null>(null);
+  const inFlight = useRef(false);
   const token = useRef(''),
     requestId = useRef('');
   useEffect(() => {
     let active = true;
-    token.current = window.location.hash.slice(1);
+    const controller = new AbortController();
+    token.current = capability;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
         if (active)
           setMessage('This private link is unavailable. Open the complete link you received.');
       });
-      return;
+      return () => {
+        active = false;
+      };
     }
     fetch('/api/buyer', {
+      signal: controller.signal,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'read', token: token.current }),
       cache: 'no-store',
     })
       .then(async (r) => {
+        await checkedResponse(r);
         const value = await r.json();
-        if (!r.ok) throw new Error(value.error);
         return value as View;
       })
       .then((v) => {
@@ -62,10 +82,15 @@ export function BuyerIntroduction() {
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, []);
+  }, [capability]);
   async function respond(decision: keyof typeof labels) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     if (!requestId.current) requestId.current = crypto.randomUUID();
+    const command = pending ?? { decision, optOut, responseId: requestId.current };
+    setPending(command);
     setBusy(true);
     setMessage('');
     try {
@@ -75,24 +100,30 @@ export function BuyerIntroduction() {
         body: JSON.stringify({
           action: 'respond',
           token: token.current,
-          responseId: requestId.current,
-          decision,
-          optOut,
+          ...command,
         }),
         cache: 'no-store',
       });
+      await checkedResponse(r);
       const v = await r.json();
-      if (!r.ok) throw new Error(v.error);
       setData((current) => (current ? { ...current, decision: v.decision } : current));
       setMessage('Thank you. Your response has been recorded.');
-      if (optOut) setDeclined(true);
+      setPending(null);
+      if (command.optOut) setDeclined(true);
     } catch (e) {
+      if (accessDenied(e)) {
+        setData(null);
+        setPending(null);
+      }
       setMessage(e instanceof Error ? e.message : 'Your response could not be saved. Try again.');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
   async function stopContact() {
+    if (inFlight.current || pending) return;
+    inFlight.current = true;
     setBusy(true);
     setMessage('');
     try {
@@ -102,15 +133,20 @@ export function BuyerIntroduction() {
         body: JSON.stringify({ action: 'optout', token: token.current }),
         cache: 'no-store',
       });
-      const v = await r.json();
-      if (!r.ok) throw new Error(v.error);
+      await checkedResponse(r);
+      await r.json();
       setDeclined(true);
       setMessage(
         'Your request has been recorded. Further introductions from this workspace are blocked.',
       );
     } catch (e) {
+      if (accessDenied(e)) {
+        setData(null);
+        setPending(null);
+      }
       setMessage(e instanceof Error ? e.message : 'Please try again.');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -119,9 +155,21 @@ export function BuyerIntroduction() {
       <p role="status" aria-live="polite">
         {message}
       </p>
+      {!data && message !== 'Loading your introduction…' && (
+        <button className="text-link" onClick={() => window.location.reload()}>
+          Retry private introduction
+        </button>
+      )}
       {data && (
         <>
           <p className="evidence-label">Invented demonstration. No real outreach.</p>
+          <ParticipantScope
+            purpose={data.introduction.conversationPurpose}
+            expiresAt={data.expiresAt}
+            audience={
+              data.role ? `${data.role.toLowerCase()} request` : 'Private buyer introduction'
+            }
+          />
           <p>{data.template}</p>
           {data.sharedRequirements && (
             <section>
@@ -131,6 +179,10 @@ export function BuyerIntroduction() {
               <p>Uncertainty: {data.sharedUncertainty}</p>
               <RecipientResponse
                 token={data.capability ?? ''}
+                onAccessDenied={() => {
+                  setData(null);
+                  setMessage('This private link is unavailable. Request a new reviewed link.');
+                }}
                 allowQuotation={!!data.allowQuotation}
                 allowMeetingInterest={!!data.allowMeetingInterest}
                 response={data.detailResponse}
@@ -174,7 +226,7 @@ export function BuyerIntroduction() {
                 <input
                   type="checkbox"
                   checked={optOut}
-                  disabled={busy}
+                  disabled={busy || !!pending}
                   onChange={(e) => setOptOut(e.target.checked)}
                 />
                 Do not send me further introductions from this workspace
@@ -184,7 +236,9 @@ export function BuyerIntroduction() {
                   <button
                     key={decision}
                     className={decision === 'INTERESTED' ? 'primary-link' : 'secondary-link'}
-                    disabled={busy || declined || (optOut && decision === 'INTERESTED')}
+                    disabled={
+                      busy || !!pending || declined || (optOut && decision === 'INTERESTED')
+                    }
                     onClick={() => void respond(decision)}
                   >
                     {labels[decision]}
@@ -193,8 +247,21 @@ export function BuyerIntroduction() {
               </div>
             </>
           )}
+          {pending && (
+            <button
+              className="primary-link"
+              disabled={busy}
+              onClick={() => void respond(pending.decision)}
+            >
+              Retry the same response
+            </button>
+          )}
           {!declined && (
-            <button className="text-link" disabled={busy} onClick={() => void stopContact()}>
+            <button
+              className="text-link"
+              disabled={busy || !!pending}
+              onClick={() => void stopContact()}
+            >
               Stop further introductions
             </button>
           )}

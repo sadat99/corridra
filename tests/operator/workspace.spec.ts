@@ -1,3 +1,4 @@
+import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
 import AxeBuilder from '@axe-core/playwright';
@@ -665,9 +666,33 @@ test('controlled buyer response progresses through durable delivery, a held meet
     await buyer.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBe(true);
   expect((await new AxeBuilder({ page: buyer }).analyze()).violations).toEqual([]);
+  await participantEvidence(buyer, 'buyer');
   await buyer.reload();
   await expect(buyer.getByRole('button', { name: 'Interested', exact: true })).toBeEnabled();
+  let buyerFailed: Record<string, unknown> | undefined;
+  await buyer.route('**/api/buyer', (route) => {
+    const input = route.request().postDataJSON();
+    if (input.action === 'respond') {
+      buyerFailed = input;
+      return route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Synthetic buyer transport interruption' }),
+      });
+    }
+    return route.continue();
+  });
   await buyer.getByRole('button', { name: 'Interested', exact: true }).click();
+  await expect(buyer.getByRole('button', { name: 'Retry the same response' })).toBeVisible();
+  await expect(
+    buyer.getByLabel('Do not send me further introductions', { exact: false }),
+  ).toBeDisabled();
+  await buyer.unroute('**/api/buyer');
+  const buyerRetry = buyer.waitForResponse(
+    (r) => r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'respond',
+  );
+  await buyer.getByRole('button', { name: 'Retry the same response' }).click();
+  expect((await buyerRetry).request().postDataJSON()).toEqual(buyerFailed);
   await expect(buyer.getByRole('status')).toContainText('response has been recorded');
   const duplicate = await buyer.request.post('/api/buyer', {
     headers,
@@ -1131,11 +1156,35 @@ test('scoped delivery imports every row, serves client requests and downloads co
     await client.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBe(true);
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
+  await participantEvidence(client, 'client-response');
   await client
     .getByLabel('Response', { exact: true })
     .fill('Invented requirement supplied as a declaration.');
   await client.getByLabel('This response is my declaration', { exact: false }).check();
+  let evidenceFailed: Record<string, unknown> | undefined;
+  await client.route('**/api/delivery', (route) => {
+    const input = route.request().postDataJSON();
+    if (input.action === 'respond') {
+      evidenceFailed = input;
+      return route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Synthetic evidence response interruption' }),
+      });
+    }
+    return route.continue();
+  });
   await client.getByRole('button', { name: 'Send response', exact: true }).click();
+  await expect(client.getByLabel('Response', { exact: true })).toHaveValue(
+    'Invented requirement supplied as a declaration.',
+  );
+  await expect(client.getByLabel('Response', { exact: true })).toBeDisabled();
+  await client.unroute('**/api/delivery');
+  const evidenceRetry = client.waitForResponse(
+    (r) => r.url().endsWith('/api/delivery') && r.request().postDataJSON().action === 'respond',
+  );
+  await client.getByRole('button', { name: 'Retry same evidence response' }).click();
+  expect((await evidenceRetry).request().postDataJSON()).toEqual(evidenceFailed);
   await expect(client.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
   await page.reload();
   const evidenceRequest = panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' });
@@ -1195,6 +1244,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await client.goto(institutionLink);
   await expect(client.getByRole('button', { name: 'Download CSV', exact: true })).toBeVisible();
   expect(await client.locator('body').innerText()).not.toContain('Invented requirement supplied');
+  await participantEvidence(client, 'institution');
   for (const format of ['CSV', 'PDF']) {
     const response = client.waitForResponse(
       (r) => r.url().endsWith('/api/delivery') && r.request().postDataJSON().action === 'export',
@@ -1211,6 +1261,12 @@ test('scoped delivery imports every row, serves client requests and downloads co
     if (format === 'CSV') expect(bytes.toString()).toContain('Reviewed delivery progress');
     else expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
     expect(downloaded.suggestedFilename()).toBe(`corridra-programme.${format.toLowerCase()}`);
+    const replay = await client.request.post('/api/delivery', {
+      headers: { Origin: 'http://127.0.0.1:3200' },
+      data: r.request().postDataJSON(),
+    });
+    expect(replay.status()).toBe(200);
+    expect(await replay.body()).toEqual(bytes);
   }
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
   const institutionalAccess = panel.locator('li').filter({
@@ -1583,6 +1639,30 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     allowExport: false,
     approved: true,
   });
+  const ux03Local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const ux03Owner = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    user: 'postgres',
+    password: ux03Local.ownerPassword,
+    database: 'corridra_browser',
+  });
+  try {
+    const { seedSyntheticWorkspace } = await import('../../packages/auth/src/bootstrap');
+    const other = await seedSyntheticWorkspace(ux03Owner, {
+      email: `ux03-other-${randomUUID()}@example.invalid`,
+      password: randomUUID() + randomUUID(),
+      name: 'UX-03 Unrelated Synthetic Owner',
+    });
+    expect(
+      (await page.request.get(`/api/workspace/delivery?tenant=${other.tenantId}`)).status(),
+    ).toBe(403);
+    const scoped = await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`);
+    expect(scoped.ok()).toBe(true);
+    expect(JSON.stringify(await scoped.json())).not.toContain(other.tenantId);
+  } finally {
+    await ux03Owner.end();
+  }
   const guestContext = await page
     .context()
     .browser()!
@@ -1610,6 +1690,59 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     (await new AxeBuilder({ page: clientPage }).include('.delivery-view').analyze()).violations,
   ).toEqual([]);
   await mkdir('.cache/v2-part-03', { recursive: true });
+  await participantEvidence(clientPage, 'client-mission');
+  await expect(
+    clientPage.getByRole('region', { name: 'Original quotation comparison' }),
+  ).toContainText('CNY 1,200.00');
+  await clientPage.getByLabel('Evidence lens', { exact: true }).selectOption('review');
+  await clientPage.getByLabel('Evidence lens', { exact: true }).selectOption('all');
+  await clientPage.getByLabel('Date and number display', { exact: true }).selectOption('bn-BD');
+  await expect(
+    clientPage.getByRole('region', { name: 'Original quotation comparison' }),
+  ).toContainText('CNY');
+  await expect(
+    clientPage.getByRole('heading', { name: /Synthetic Machinery Supplier 原始机械/ }),
+  ).toBeVisible();
+  await clientPage.getByLabel('Date and number display', { exact: true }).selectOption('en');
+  let releaseOldRead: (() => void) | undefined;
+  let oldReadStarted: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    oldReadStarted = resolve;
+  });
+  const release = new Promise<void>((resolve) => {
+    releaseOldRead = resolve;
+  });
+  await clientPage.route('**/api/delivery', async (route) => {
+    const input = route.request().postDataJSON();
+    if (input.action === 'view' && input.token === client.token) {
+      const real = await route.fetch();
+      oldReadStarted?.();
+      await release;
+      await route.fulfill({ response: real }).catch(() => {});
+    } else await route.continue();
+  });
+  await clientPage.getByRole('button', { name: 'Refresh progress', exact: true }).click();
+  await Promise.race([
+    started,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Delayed scope read did not start')), 15000),
+    ),
+  ]);
+  await clientPage.evaluate(() => {
+    window.location.hash = '0'.repeat(64);
+  });
+  await expect(clientPage.locator('.ux-workspace').getByRole('alert')).toBeVisible();
+  await expect(
+    clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toHaveCount(0);
+  releaseOldRead?.();
+  await clientPage.unroute('**/api/delivery');
+  await clientPage.evaluate((token) => {
+    window.location.hash = token;
+  }, client.token);
+  await expect(
+    clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toBeVisible();
   await clientPage.screenshot({
     path: '.cache/v2-part-03/client-machinery-detail.png',
     fullPage: true,
@@ -1683,10 +1816,45 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await recipientPage
     .getByLabel('This is my declaration for this request.', { exact: false })
     .check();
+  await recipientPage
+    .getByLabel('Unit price (original currency amount)', { exact: false })
+    .fill('123.456');
   await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await expect(recipientPage.locator('.buyer-card').getByRole('alert')).toBeFocused();
+  await expect(recipientPage.getByLabel('Your response', { exact: true })).toHaveValue(
+    '供应商原文答复：请确认技术参数。',
+  );
+  await recipientPage
+    .getByLabel('Unit price (original currency amount)', { exact: false })
+    .fill('123.45');
+  let supplierFailed: Record<string, unknown> | undefined;
+  await recipientPage.route('**/api/buyer', (route) => {
+    const input = route.request().postDataJSON();
+    if (input.action === 'detail-response') {
+      supplierFailed = input;
+      return route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Synthetic supplier interruption' }),
+      });
+    }
+    return route.continue();
+  });
+  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await expect(recipientPage.getByLabel('Your response', { exact: true })).toBeDisabled();
+  await recipientPage.unroute('**/api/buyer');
+  const supplierRetry = recipientPage.waitForResponse(
+    (r) =>
+      r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'detail-response',
+  );
+  await recipientPage.getByRole('button', { name: 'Retry the same declaration' }).click();
+  expect((await supplierRetry).request().postDataJSON()).toEqual(supplierFailed);
   await expect(
     recipientPage.getByRole('heading', { name: 'Your recorded response', exact: true }),
   ).toBeVisible();
+  await expect(
+    recipientPage.getByRole('heading', { name: 'Your recorded response', exact: true }),
+  ).toBeFocused();
   await expect(
     recipientPage.getByText('Original quoted unit price: CNY 123.45', { exact: true }),
   ).toBeVisible();
@@ -1694,12 +1862,49 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     'supplier-role@example.invalid',
   );
   expect((await new AxeBuilder({ page: recipientPage }).analyze()).violations).toEqual([]);
+  await participantEvidence(recipientPage, 'supplier');
   await recipientPage.screenshot({
     path: '.cache/v2-part-03/supplier-declared-response.png',
     fullPage: true,
   });
+  const shortExpiry = Date.now() + 5000;
+  const short = await deliveryAction('share', {
+    programmeId: null,
+    publicationIds: [publication.id],
+    audience: 'CLIENT_PROGRESS',
+    purpose: reason,
+    expiresAt: new Date(shortExpiry).toISOString(),
+    allowExport: false,
+    approved: true,
+  });
+  const expiredPage = await guestContext.newPage();
+  await expiredPage.goto(`/client#${short.token}`);
+  await expect(
+    expiredPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() => Date.now(), { timeout: 8000, intervals: [1000] })
+    .toBeGreaterThan(shortExpiry);
+  await expiredPage.getByRole('button', { name: 'Refresh progress', exact: true }).click();
+  await expect(expiredPage.locator('.ux-workspace').getByRole('alert')).toBeVisible();
+  await expect(
+    expiredPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toHaveCount(0);
+  await expiredPage.getByRole('button', { name: 'Retry approved view' }).click();
+  await expect(expiredPage.locator('.ux-workspace').getByRole('alert')).toBeVisible();
+  await expiredPage.close();
+  const wrongAudience = await guestContext.newPage();
+  await wrongAudience.goto(`/programme#${client.token}`);
+  await expect(wrongAudience.locator('.ux-workspace').getByRole('alert')).toBeVisible();
+  await expect(
+    wrongAudience.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toHaveCount(0);
+  await wrongAudience.close();
   await deliveryAction('revoke', { linkId: client.id, publicationId: null, reason });
-  await clientPage.reload();
+  await clientPage.getByRole('button', { name: 'Refresh progress', exact: true }).click();
+  await expect(
+    clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
+  ).toHaveCount(0);
   await expect(
     clientPage.getByRole('alert').filter({ hasText: 'Access denied or link unavailable' }),
   ).toBeVisible();
@@ -2126,8 +2331,24 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         .rows[0].n,
     ).toBe(2);
     await contributorContext.setOffline(false);
+    await contributorPage.route('**/api/network/tasks?*', (route) =>
+      route.request().method() === 'GET'
+        ? route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Synthetic post-acknowledgment refresh interruption' }),
+          })
+        : route.continue(),
+    );
     await contributorPage.getByRole('button', { name: 'Retry the same request' }).click();
     await expect(contributorPage.getByRole('status')).toContainText('Received and saved');
+    await expect(
+      contributorPage.getByRole('button', { name: 'Retry the same request' }),
+    ).toHaveCount(0);
+    await expect(contributorPage.getByLabel('Original work and evidence statement')).toBeDisabled();
+    await contributorPage.unroute('**/api/network/tasks?*');
+    await contributorPage.getByRole('button', { name: 'Refresh tasks', exact: true }).click();
+    await expect(contributorPage.getByLabel('Dispute reason')).toBeVisible();
     expect(
       (
         await db.query(
@@ -2229,6 +2450,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       ),
     ).toBe(true);
     await mkdir('docs/implementation/evidence/v2-part-04', { recursive: true });
+    await participantEvidence(contributorPage, 'contributor');
     await contributorPage.screenshot({
       path: 'docs/implementation/evidence/v2-part-04/contributor-mobile.png',
       fullPage: true,
