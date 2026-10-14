@@ -9,7 +9,7 @@ export function SiteFooter() {
             corridra
           </Link>
           <p>Make market entry deliberate.</p>
-          <span>Initial directions: Bangladesh ↔ China / Spain / EU</span>
+          <span>Initial product directions: Bangladesh → China / Spain / EU</span>
         </div>
         <nav aria-label="Footer solutions">
           <Link prefetch={false} href="/sell">
@@ -26,6 +26,9 @@ export function SiteFooter() {
           </Link>
         </nav>
         <nav aria-label="About Corridra">
+          <Link prefetch={false} href="/#mission-example">
+            Synthetic mission example
+          </Link>
           <Link prefetch={false} href="/workspace">
             Platform access and tools
           </Link>

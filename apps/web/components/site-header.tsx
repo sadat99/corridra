@@ -92,6 +92,9 @@ export function SiteHeader() {
         <Link prefetch={false} href="/trust" onClick={close}>
           Trust & Evidence
         </Link>
+        <Link prefetch={false} href="/#mission-example" onClick={close}>
+          Example
+        </Link>
         <Link prefetch={false} href="/signin" onClick={close}>
           Sign in
         </Link>

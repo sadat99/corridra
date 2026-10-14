@@ -1,6 +1,7 @@
 import { Arrow } from '../components/arrow';
 import Link from 'next/link';
-import { Corridor } from '../components/corridor';
+import { DiscoveryExperience } from '../components/discovery-experience';
+import { PublicShell } from '../components/public-shell';
 
 const jobs = [
   {
@@ -34,44 +35,8 @@ const steps = [
 
 export default function Home() {
   return (
-    <main id="main" tabIndex={-1}>
-      <section className="hero" aria-labelledby="hero-title">
-        <div className="hero-copy">
-          <p className="label hero-label">CROSS-BORDER MARKET ACCESS</p>
-          <h1 id="hero-title">
-            Going into a<br className="desktop-break" /> new market?
-            <br />
-            <span>
-              Know who is
-              <br className="desktop-break" /> worth meeting.
-            </span>
-          </h1>
-          <p className="hero-description">
-            We’re building Corridra to help you identify, qualify and reach the companies that fit
-            your commercial objective. Then keep track of what happens next.
-          </p>
-          <div className="hero-actions">
-            <Link prefetch={false} className="primary-link" href="/plan">
-              Plan a mission{' '}
-              <span aria-hidden="true">
-                <Arrow />
-              </span>
-              <span className="sr-only">(test intake)</span>
-            </Link>
-            <span className="launch-status">
-              <span aria-hidden="true" />
-              Coming soon
-            </span>
-          </div>
-          <Link prefetch={false} className="text-link hero-secondary" href="/how-it-works">
-            See how Corridra works <Arrow />
-          </Link>
-          <p className="hero-reassurance">
-            For companies selling, sourcing or entering a new market.
-          </p>
-        </div>
-        <Corridor />
-      </section>
+    <PublicShell>
+      <DiscoveryExperience />
       <section className="jobs-section" aria-labelledby="jobs-title">
         <div className="section-heading">
           <p className="label">START WITH YOUR OBJECTIVE</p>
@@ -110,7 +75,7 @@ export default function Home() {
       </section>
       <section className="process-section" aria-labelledby="process-title">
         <div className="section-heading">
-          <p className="label">THE PROCESS WE’RE BUILDING</p>
+          <p className="label">THE MISSION WORKFLOW</p>
           <h2 id="process-title">More than a list of companies.</h2>
         </div>
         <ol className="process-list">
@@ -133,7 +98,7 @@ export default function Home() {
           <p className="label">TRUST & EVIDENCE</p>
           <h2>Claims are not the same as evidence.</h2>
           <p>
-            The planned record distinguishes what a company has declared, what supporting evidence
+            The mission record distinguishes what a company has declared, what supporting evidence
             exists and what has been checked.
           </p>
           <Link prefetch={false} className="text-link" href="/trust">
@@ -171,7 +136,7 @@ export default function Home() {
           <br />A contract is not cash.
         </h2>
         <p>
-          The planned record follows distinct commercial events. Each step needs its own evidence.
+          The mission record follows distinct commercial events. Each step needs its own evidence.
         </p>
         <ol className="outcome-path">
           {[
@@ -207,6 +172,6 @@ export default function Home() {
           See the launch status <Arrow />
         </Link>
       </section>
-    </main>
+    </PublicShell>
   );
 }

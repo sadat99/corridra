@@ -1,10 +1,11 @@
+import { PublicShell } from './public-shell';
 import { Arrow } from './arrow';
 import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
 
 export function PublicPage({ content }: { content: PublicPageContent }) {
   return (
-    <main id="main" tabIndex={-1}>
+    <PublicShell>
       <section className="page-hero">
         <Link prefetch={false} className="text-link breadcrumb" href="/">
           Corridra /
@@ -29,7 +30,11 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           </span>
         </div>
       </section>
-      <section className="editorial-intro">
+      <nav className="ux-section-index" aria-label="Page sections">
+        <a href="#page-approach">The approach</a>
+        <a href="#page-next">Next step</a>
+      </nav>
+      <section className="editorial-intro" id="page-approach">
         <h2>{content.introduction.title}</h2>
         <p>{content.introduction.text}</p>
       </section>
@@ -44,12 +49,19 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
             <article className="detail-card" key={section.title}>
               <span className="label">{String(index + 1).padStart(2, '0')}</span>
               <h2>{section.title}</h2>
-              <p>{section.text}</p>
+              {content.label === 'TRUST & EVIDENCE' ? (
+                <p>{section.text}</p>
+              ) : (
+                <details className="ux-public-disclosure">
+                  <summary>Read the scope</summary>
+                  <p>{section.text}</p>
+                </details>
+              )}
             </article>
           ))}
         </div>
       </section>
-      <section className="closing public-closing">
+      <section className="closing public-closing" id="page-next">
         <p className="label">WHAT TO EXPECT</p>
         <h2>{content.closing.title}</h2>
         <p>{content.closing.text}</p>
@@ -60,6 +72,6 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           </span>
         </Link>
       </section>
-    </main>
+    </PublicShell>
   );
 }

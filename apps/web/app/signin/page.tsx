@@ -1,3 +1,4 @@
+import { PublicShell } from '../../components/public-shell';
 import { Arrow } from '../../components/arrow';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -12,14 +13,17 @@ export default function Page() {
   if (readNeonAuthConfig()) return <AccountAccess title="Sign in to Corridra." mode="signin" />;
   if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
   return (
-    <main id="main" tabIndex={-1}>
+    <PublicShell>
       <section className="page-hero status-page">
         <p className="label">COMING SOON</p>
         <h1>Sign-in is coming soon.</h1>
         <p className="page-description">
-          Accounts are not available yet. This page does not collect credentials. The public pages
-          explain what we’re building while the protected workspace is prepared.
+          Account access is unavailable here. This page does not collect credentials. Customer
+          identity is separate from invited operator membership and mission sharing.
         </p>
+        <Link className="text-link" href="/plan">
+          Prepare an invented test brief without an account
+        </Link>
         <div className="hero-actions">
           <Link prefetch={false} className="primary-link" href="/how-it-works">
             See how Corridra will work{' '}
@@ -38,6 +42,6 @@ export default function Page() {
           </Link>
         </div>
       </section>
-    </main>
+    </PublicShell>
   );
 }

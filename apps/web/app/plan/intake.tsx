@@ -117,14 +117,24 @@ export function Intake() {
       replies: { body: string; createdAt: string }[];
     } | null>(null),
     [finished, setFinished] = useState(false),
-    [ready, setReady] = useState(false);
+    [ready, setReady] = useState(false),
+    [draftNotice, setDraftNotice] = useState('');
   const key = useRef(''),
     submitted = useRef(false),
-    heading = useRef<HTMLHeadingElement>(null);
+    heading = useRef<HTMLHeadingElement>(null),
+    errorSummary = useRef<HTMLDivElement>(null);
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
-        const saved = JSON.parse(sessionStorage.getItem('corridra-mission-draft') ?? 'null');
+        let restored = false;
+        let saved;
+        try {
+          saved = JSON.parse(sessionStorage.getItem('corridra-mission-draft') ?? 'null');
+        } catch {
+          setDraftNotice(
+            'A saved draft could not be restored. The form still works; keep a copy of your invented brief before leaving this tab.',
+          );
+        }
         if (
           saved &&
           Date.now() - saved.at < 86400000 &&
@@ -132,13 +142,19 @@ export function Intake() {
           typeof saved.draft?.offer === 'string' &&
           Array.isArray(saved.draft.outcomes)
         ) {
+          restored = true;
+          setDraftNotice(
+            'A draft from this tab was resumed. Your saved choices take precedence over link suggestions.',
+          );
           key.current = saved.key;
           setDraft({ ...empty, ...saved.draft });
           setStep(saved.version === 2 ? Math.max(0, Math.min(4, Number(saved.step) || 0)) : 0);
         }
+        if (saved && !restored)
+          setDraftNotice('The earlier draft could not be resumed. Drafts expire after 24 hours.');
         const query = new URLSearchParams(window.location.search);
         const suggestedJob = query.get('job');
-        if (suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
+        if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
           setDraft((current) => ({
             ...current,
             job: suggestedJob,
@@ -147,6 +163,7 @@ export function Intake() {
         const companyCountry = query.get('companyCountry'),
           marketCode = query.get('marketCode');
         if (
+          !restored &&
           companyCountry &&
           countryCodes.includes(companyCountry as (typeof countryCodes)[number]) &&
           marketCode &&
@@ -171,17 +188,26 @@ export function Intake() {
           submitted.current = true;
         }
       } catch {
-        /* Storage may be unavailable. The form still works. */
+        setDraftNotice(
+          'A saved draft could not be restored. The form still works; keep a copy of your invented brief before leaving this tab.',
+        );
       } finally {
         setReady(true);
       }
     });
   }, []);
+  useEffect(() => {
+    if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
+  }, [errors]);
   function persist(v: Draft, n: number) {
     if (!key.current) key.current = crypto.randomUUID();
     try {
       saveDraft(v, n, key.current);
-    } catch {}
+    } catch {
+      setDraftNotice(
+        'This browser could not save the draft. Keep this tab open and copy the invented brief before leaving.',
+      );
+    }
   }
   function change(field: keyof Draft, value: string | boolean | string[]) {
     const v = { ...draft, [field]: value };
@@ -347,7 +373,11 @@ export function Intake() {
         try {
           sessionStorage.setItem('corridra-mission-receipt', data.receipt);
           sessionStorage.removeItem('corridra-mission-draft');
-        } catch {}
+        } catch {
+          setDraftNotice(
+            'The brief was recorded, but this browser could not save its receipt. Copy the private code before leaving.',
+          );
+        }
       }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Unable to save. Your input is still here.');
@@ -357,6 +387,8 @@ export function Intake() {
   }
   async function check(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
+    setResult(null);
     setBusy(true);
     setMessage('');
     try {
@@ -421,13 +453,74 @@ export function Intake() {
       <p role="status" aria-live="polite">
         {message}
       </p>
+      {draftNotice && (
+        <p className="ux-draft-notice" aria-live="polite">
+          {draftNotice}
+        </p>
+      )}
+      {!finished && (
+        <aside className="ux-brief-summary" aria-label="Your test brief">
+          <p className="label">YOUR TEST BRIEF</p>
+          <dl>
+            <div>
+              <dt>Objective</dt>
+              <dd>
+                {missionCatalogue.find((item) => item.key === draft.job)?.label ?? 'Not chosen'}
+              </dd>
+            </div>
+            <div>
+              <dt>Company country</dt>
+              <dd>
+                {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
+                  ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.companyCountry)
+                  : 'Not chosen'}
+              </dd>
+            </div>
+            <div>
+              <dt>Target market</dt>
+              <dd>
+                {draft.marketCode === 'EU'
+                  ? 'European Union (trade bloc)'
+                  : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+                    ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.marketCode)
+                    : 'Not chosen'}
+              </dd>
+            </div>
+            <div>
+              <dt>Original budget</dt>
+              <dd>
+                {draft.budgetAmount
+                  ? `${draft.budgetAmount} ${draft.currency || '(currency not chosen)'}`
+                  : 'Not supplied'}
+              </dd>
+            </div>
+          </dl>
+          <p>Draft only. No admission, quotation, verification or payment is implied.</p>
+        </aside>
+      )}
       {!finished && (
         <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
           <p className="label">STEP {step + 1} OF 5</p>
+          <ol className="ux-intake-steps" aria-label="Brief steps">
+            {['Objective', 'Direction', 'Requirements', 'Outcomes', 'Contact'].map(
+              (label, index) => (
+                <li key={label} aria-current={index === step ? 'step' : undefined}>
+                  <span>{index + 1}</span>
+                  {label}
+                </li>
+              ),
+            )}
+          </ol>
           <progress value={step + 1} max={5} aria-label="Brief progress" />
           <h2 ref={heading} tabIndex={-1}>
             {titles[step]}
           </h2>
+          {Object.values(errors).some((messages) => messages.length) && (
+            <div ref={errorSummary} className="ux-error-summary" tabIndex={-1} role="alert">
+              <strong>Check this step.</strong>
+              <p>Review the highlighted fields before continuing. Your entries are still here.</p>
+            </div>
+          )}
           {step === 0 && (
             <fieldset>
               <legend className="sr-only">Mission objective</legend>
@@ -687,13 +780,14 @@ export function Intake() {
             </button>
           </div>
           <p>
-            Your draft stays in this browser tab for up to 24 hours.{' '}
+            When browser storage is available, drafts stay in this tab for up to 24 hours.{' '}
             <button
               className="text-link"
               type="button"
               onClick={() => {
                 key.current = crypto.randomUUID();
                 setDraft(empty);
+                setDraftNotice('');
                 setStep(0);
                 setErrors({});
                 persist(empty, 0);
@@ -725,6 +819,7 @@ export function Intake() {
             submitted.current = false;
             key.current = crypto.randomUUID();
             setFinished(false);
+            setDraftNotice('');
             setReceipt('');
             setDraft(empty);
             setStep(0);

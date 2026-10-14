@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
 export type AccountFormMode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 export function AccountForm({ mode }: { mode: AccountFormMode }) {
@@ -14,8 +14,17 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const feedback = useRef<HTMLParagraphElement>(null);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    if (failed && message) feedback.current?.focus();
+  }, [failed, message]);
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setFailed(false);
     setBusy(true);
     setMessage('');
     try {
@@ -72,12 +81,14 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         );
       }
     } catch (error) {
+      setFailed(true);
       setMessage(
         error instanceof Error
           ? error.message
           : 'The request could not be completed. Please try again.',
       );
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -88,6 +99,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           Name
           <input
             value={name}
+            disabled={busy}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             required
@@ -101,6 +113,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           <input
             type="email"
             value={email}
+            disabled={busy}
             onChange={(e) => {
               setEmail(e.target.value);
               setSent(false);
@@ -118,6 +131,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           <input
             type="password"
             value={password}
+            disabled={busy}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             minLength={mode === 'signin' ? undefined : 14}
@@ -131,6 +145,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           Verification code
           <input
             value={code}
+            disabled={busy}
             onChange={(e) => setCode(e.target.value)}
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -141,7 +156,13 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         </label>
       )}
       {message && (
-        <p role="status" aria-live="polite">
+        <p
+          ref={feedback}
+          tabIndex={-1}
+          role={failed ? 'alert' : 'status'}
+          aria-live={failed ? 'assertive' : 'polite'}
+          className={failed ? 'ux-error-summary' : 'ux-draft-notice'}
+        >
           {message}
         </p>
       )}

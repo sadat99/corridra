@@ -1,0 +1,5 @@
+$ pnpm --filter @corridra/web typecheck && tsc -p tsconfig.packages.json
+$ next typegen && tsc --noEmit
+✓ Compiled workflows in 447ms (18 steps, 1 workflow)
+Generating route types...
+✓ Types generated successfully

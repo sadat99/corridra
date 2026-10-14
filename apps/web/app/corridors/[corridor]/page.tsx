@@ -1,3 +1,4 @@
+import { PublicShell } from '../../../components/public-shell';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { corridorPages } from '../../../content/corridors';
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ corridor:
 export default async function Page({ params }: { params: Promise<{ corridor: string }> }) {
   const c = await content(params);
   return (
-    <main id="main" tabIndex={-1}>
+    <PublicShell>
       <section className="page-hero">
         <Link href="/corridors" className="text-link breadcrumb">
           Commercial corridors /
@@ -74,6 +75,6 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
           How evidence and uncertainty are handled
         </Link>
       </section>
-    </main>
+    </PublicShell>
   );
 }

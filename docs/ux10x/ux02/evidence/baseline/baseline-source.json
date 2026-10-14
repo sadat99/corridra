@@ -1,0 +1,61 @@
+{
+  "baseline": "21bc01327296edb8a5ee988b57918d94defce898",
+  "restoredFiles": [
+    {
+      "path": "apps/web/app/account/page.tsx",
+      "sha256": "ca0e3f80812097490dc596aae6c6ee7b6a72b45d7707f3fad3df7c486b887fd8"
+    },
+    {
+      "path": "apps/web/app/corridors/[corridor]/page.tsx",
+      "sha256": "7c52c84a95dd8f04aeb8722df774110d28c49be37d289169b61972e65a111907"
+    },
+    {
+      "path": "apps/web/app/corridors/page.tsx",
+      "sha256": "ad470a608c8816d373a7872d7f3b33532099b500100ace22992765d9117d7d4d"
+    },
+    {
+      "path": "apps/web/app/globals.css",
+      "sha256": "d2afaa342a3d2ab2de25526b5d3f69735a7e8042e88b40bab1e0e0b23615df77"
+    },
+    {
+      "path": "apps/web/app/page.tsx",
+      "sha256": "b461638da2221feef769ee0e61352c8c59af48d46dd2b1725c8d465dda38ba39"
+    },
+    {
+      "path": "apps/web/app/plan/intake.tsx",
+      "sha256": "3618b9ed90c77f3380bf42522271a552b2ca72547986f612673832c81e5cc7fd"
+    },
+    {
+      "path": "apps/web/app/plan/page.tsx",
+      "sha256": "ce66ee8129650b9f8f477f05e446e8dea047892d3f6d5be78f7ed3a04b105afe"
+    },
+    {
+      "path": "apps/web/app/signin/page.tsx",
+      "sha256": "632ecbd1dc1ae31ebe39858e7bc3b95d7ec238ab4e7fd66a461fea50ab004291"
+    },
+    {
+      "path": "apps/web/components/account-access.tsx",
+      "sha256": "c3dbf901ad7ed2f6a0d978a7c26bd002fde45f6b9840d89114fee84294bdc205"
+    },
+    {
+      "path": "apps/web/components/account-form.tsx",
+      "sha256": "9d5ba9c8c1f00f5ff0b193958eab9c231132ae1354531f46246c79d5861a57bf"
+    },
+    {
+      "path": "apps/web/components/public-page.tsx",
+      "sha256": "569b505bc9405496eeae099098f7fecd00941957b1a65a3b28db0572510404eb"
+    },
+    {
+      "path": "apps/web/components/site-footer.tsx",
+      "sha256": "cc6c09a1b99d0b272c0a539a7775d1e5d26b41b2ba053db2e74da341320a2515"
+    },
+    {
+      "path": "apps/web/components/site-header.tsx",
+      "sha256": "8d758e6b5fb1db7041e215be708a34503325c852e463ab5ae8bba18a803347ef"
+    },
+    {
+      "path": "apps/web/vercel.json",
+      "sha256": "d0d2730d8063b0e4bff6d4b9e20e6851c81947aa8e7b2a258d1ff9e0e2be005f"
+    }
+  ]
+}

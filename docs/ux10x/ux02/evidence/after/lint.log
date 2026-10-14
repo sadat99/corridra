@@ -1,0 +1,1 @@
+$ eslint --config eslint.config.mjs apps/web packages scripts tests/integration tests/operator *.ts --max-warnings 0

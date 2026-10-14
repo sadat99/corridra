@@ -1,0 +1,46 @@
+[
+  {
+    "path": "/workspace",
+    "status": 200,
+    "finalPath": "/workspace",
+    "heading": "Find your Corridra workspace.",
+    "privateCards": 0,
+    "axeViolations": []
+  },
+  {
+    "path": "/operator",
+    "status": 200,
+    "finalPath": "/operator/signin",
+    "heading": "Sign in to your workspace.",
+    "privateCards": 0,
+    "axeViolations": []
+  },
+  {
+    "path": "/operator/setup",
+    "status": 200,
+    "finalPath": "/operator/setup",
+    "heading": "Set up your operator access.",
+    "privateCards": 0,
+    "axeViolations": []
+  },
+  {
+    "path": "/signin",
+    "status": 200,
+    "finalPath": "/signin",
+    "heading": "Sign in to Corridra.",
+    "privateCards": 0,
+    "axeViolations": []
+  },
+  {
+    "path": "/client",
+    "status": 200,
+    "finalPath": "/client",
+    "heading": "Your next commercial step",
+    "privateCards": 0,
+    "axeViolations": []
+  },
+  {
+    "endpoint": "anonymous mission read",
+    "status": 401
+  }
+]

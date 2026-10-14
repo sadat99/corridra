@@ -1,3 +1,5 @@
+import { WorkspaceShell } from './workspace-shell';
+import { AccessState } from './access-state';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -5,16 +7,20 @@ import { AccountForm, type AccountFormMode } from './account-form';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
   return (
-    <main id="main" tabIndex={-1}>
-      <section className="page-hero status-page">
-        <p className="label">YOUR ACCOUNT</p>
-        <h1>{title}</h1>
+    <WorkspaceShell eyebrow="YOUR ACCOUNT" title={title} compact>
+      <section className="ux-account-access" aria-label="Customer account access">
+        <p>Customer identity is separate from invited operator membership and mission sharing.</p>
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>
             <AccountForm mode={mode} />
           </Suspense>
         ) : (
-          <p>Account access is not available yet.</p>
+          <AccessState kind="unavailable">
+            <p>Account access is not available yet.</p>
+            <Link className="text-link" href="/plan">
+              Prepare an invented test brief without an account
+            </Link>
+          </AccessState>
         )}
         {config && mode === 'signup' && (
           <p>
@@ -46,6 +52,6 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           </nav>
         )}
       </section>
-    </main>
+    </WorkspaceShell>
   );
 }
