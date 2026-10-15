@@ -38,37 +38,46 @@ export default function Home() {
     <PublicShell className="ux-home">
       <DiscoveryExperience />
       <section className="ux-lead" aria-labelledby="lead-title">
-        <p className="label">START WITH CHINA</p>
-        <h2 id="lead-title">Going to China? Know who is worth meeting.</h2>
+        <p className="label">WHERE WE START</p>
+        <h2 id="lead-title">Source from China. Sell to Spain and the EU.</h2>
         <p className="ux-lead-note">
-          Corridra helps you find, review and reach the companies that fit what you need. Today you
-          can try an example with invented data. Real missions open after our checks are complete.
+          Corridra helps a Bangladesh company find, review and reach the companies that fit what it
+          needs. Today you can try an example with invented data. Real missions open after our
+          checks are complete.
         </p>
         <div className="ux-lead-paths">
           <article className="detail-card">
+            <p className="label">BANGLADESH AND CHINA</p>
             <h3>Visit fewer suppliers. Visit the ones that fit.</h3>
             <p>
-              Tell us what you need to buy. We narrow the market and show what is stated and what
-              has evidence, before you travel.
+              Tell us what you need to buy, or bring a delegation. We narrow the market and show
+              what is stated and what has evidence, before you travel.
             </p>
             <Link prefetch={false} className="primary-link" href="/source">
               Plan a sourcing visit <Arrow />
+            </Link>
+            <Link prefetch={false} className="button-secondary" href="/trade-missions">
+              Plan a delegation <Arrow />
             </Link>
             <Link prefetch={false} className="text-link" href="/machinery">
               Buying machinery? Start here
             </Link>
           </article>
           <article className="detail-card">
-            <h3>A delegation should produce more than attendance.</h3>
+            <p className="label">BANGLADESH AND SPAIN OR THE EU</p>
+            <h3>Reach the buyers that fit what you make.</h3>
             <p>
-              Give each company a clear agenda of qualified meetings. Then track what becomes
-              business after the group returns.
+              Find importers and distributors in Spain and the EU. We show why each one fits and
+              what has evidence, before you spend time or money on the meeting.
             </p>
-            <Link prefetch={false} className="button-secondary" href="/trade-missions">
-              Plan a delegation <Arrow />
+            <Link prefetch={false} className="primary-link" href="/sell">
+              Plan a selling mission <Arrow />
             </Link>
-            <Link prefetch={false} className="text-link" href="/institutions">
-              Chamber or programme owner? Design a programme
+            <Link prefetch={false} className="button-secondary" href="/enter-market">
+              Enter Bangladesh <Arrow />
+            </Link>
+            <Link prefetch={false} className="text-link" href="/corridors/bangladesh-eu">
+              Read the Spain and EU scope
             </Link>
           </article>
         </div>
