@@ -1,6 +1,6 @@
 # UI direction: the single design contract
 
-Read [product-vision.md](product-vision.md) first: it explains what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
+Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) first: they explain what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
 ## Business objective and cognitive load (owner directive, 2026-10-15)
 
@@ -83,7 +83,7 @@ Building one screen at a time must not produce a scattered product. Four mechani
    - _Report_: headline numbers with their denominators, then detail, then export.
 4. **One log, one contract.** Every change is recorded in `docs/agents/work-log.md` and must match this file. If a screen needs something this file does not allow, change this file first, with the reason.
 
-Review checklist before any visual change is done: tokens only, one of the five patterns, plain words from the glossary, one primary action, readable at 390 px, keyboard and focus work, axe clean.
+Review checklist before any visual change is done: it passes the Product Decision Test in v2.1 section 23 (real commercial problem, who pays, what they do today, more access, trust or progress), tokens only, one of the five patterns, plain words from the glossary, one primary action, readable at 390 px, keyboard and focus work, axe clean.
 
 ## Rules inherited from the Public Experience (section 26)
 

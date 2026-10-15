@@ -13,7 +13,7 @@ This handoff was reconciled on 15 October 2026 against `main` at `0c42920dbc970a
 5. [Access and administration](runbooks/v2-access-and-launch.md), [identity recovery](runbooks/neon-auth-accounts.md), [development](runbooks/development.md) and [deployment](runbooks/deployment.md).
 6. [Documentation catalogue](documentation-map.md): which files are current guides, historical packets, immutable requirements or dated evidence.
 
-Read `AGENTS.md`, the [agent protocol, master plan and work log](agents/README.md) and any nested instructions before editing. No automatic sequence resumes at old Part 9 or restarts completed V2 work.
+Read `AGENTS.md`, the governing [product vision v2.1](product/corridra-product-vision-v2.1.md), the [agent protocol, master plan and work log](agents/README.md) and any nested instructions before editing. No automatic sequence resumes at old Part 9 or restarts completed V2 work.
 
 ## Authority and preservation
 

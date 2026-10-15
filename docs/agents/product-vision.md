@@ -1,70 +1,74 @@
-# Product vision: what Corridra is, for whom, why and how it wins
+# Product vision: working summary for coding agents
 
-Read this first. It is a synthesis of the three founding documents in `docs/source/` (Positioning and Messaging Constitution, Public Experience, Implementation Canvas) plus the owner's later decisions. Where this file and a source document differ, the source stays authoritative unless a dated owner decision below overrides it. Section numbers refer to those documents.
+**The governing document is [Corridra Product Vision v2.1](../product/corridra-product-vision-v2.1.md)** (owner, 15 October 2026). Read it in full before any substantial work. This file is a short working summary that connects it to the older founding documents in `docs/source/`, `docs/brand/` and `docs/product/`, and to the UI rules. If this summary and v2.1 differ, v2.1 governs. Section numbers refer to v2.1 unless stated.
 
 ## What Corridra is
 
-**Cross-border market access.** Corridra is the operating layer between "I want to enter this market" and "a real commercial relationship is progressing". Internally it is infrastructure; customers only need the plain version.
+A globally configurable **cross-border market access and commercial mission platform**. It turns an international commercial intention into qualified counterparties, trusted interactions, coordinated execution and measurable commercial progress. Public category: cross-border market access. Strategic promise: make market entry deliberate. (Sections 1, 2.)
 
-- **Promise:** reach the right counterparties in a new market and turn the relationship into measurable commercial progress.
-- **Short line:** know who is worth meeting, reach them, move the opportunity forward, measure what became business.
-- **Brand line:** make market entry deliberate (footer and manifesto, not under every logo).
-- **Mechanism:** understand intent, find relevant companies, qualify fit, create access, coordinate local execution, capture evidence, follow up, measure outcome.
-- **Enemy:** hope-based internationalisation: attending, collecting contacts and following up "later".
-- **Not:** a buyer database, matchmaking app, CRM, sourcing directory, lead agency, consultant, marketplace, "AI company", or a success-fee broker. A lead is not the outcome.
+- **Principle:** know who matters, create access, execute intelligently, move the opportunity forward, measure what becomes business.
+- **It is not** a directory, contact database, CRM, procurement ERP, logistics or travel business, visa service, outreach engine, gig marketplace, social network or autonomous negotiator (section 20).
+- **It must beat** the customer's existing mix of staff, agents, fairs, spreadsheets and personal networks, not only look better than software.
 
-## For whom, and the job each one is doing
+## Three engines, four product lines
 
-| Audience                                               | Job in their words                                                               | Primary action                                  |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Bangladesh exporter or manufacturer                    | "Get me in front of people who could really buy from us."                        | Plan a mission                                  |
-| Sourcing buyer (EU, and importers sourcing from China) | "Help me evaluate a relevant option quickly. Narrow the market before I travel." | Plan a sourcing visit                           |
-| Market entrant (Spain/EU into Bangladesh)              | "Test this market without building a local office."                              | Assess a market                                 |
-| Buyer receiving an introduction                        | "Why this company, why me, why now?"                                             | Interested, Need more information, Not relevant |
-| Chamber, trade body, programme owner                   | "A credible programme that shows economic outcomes."                             | Design a programme                              |
-| Local helper (network, DCG)                            | "Use what I know locally for clear work and clear credit."                       | See opportunities near me                       |
-| Connector or local agent                               | "Use my relationships without losing ownership or credit."                       | Private, attributed                             |
-| Corridra operator                                      | "Next action fast, or I fall back to WhatsApp and Excel."                        | Work the queue                                  |
-| Owner or admin                                         | "Control without being omnipotent."                                              | Review, approve, audit                          |
+Engines: **Mission Infrastructure** (revenue-producing core), **Commercial Outcome Graph** (reusable knowledge from real activity, ordinary relational data, no graph database yet) and the **Commercial Execution Network** (people who do useful cross-border work; public name Corridra Network; DCG is the origin of the idea, and diaspora is a trust channel, not the only eligibility). (Section 4.)
 
-Buyers never register just to answer one introduction. Never make a buyer feel Corridra exists to sell suppliers at them.
+Offers that the engines generate, not separate apps (section 5): **Corridra Missions** (selling, entering, expanding), **Corridra Sourcing** (supplier discovery, quotation comparison, machinery, factory visits), **Corridra Programmes** (delegations and institutional programmes), **Corridra Field** (local execution), and later, only with real data, **Corridra Intelligence**.
 
-## How the business wins (explicit and implicit)
+## Two corridors, launched asymmetrically (section 6)
 
-1. **Sell missions before building portals.** Operators deliver paid missions from the Ops Console; every manual step is recorded in the canonical model, so manual work becomes product data. (Canvas section 22, 28.)
-2. **Conversion that matters is qualified, not clicks.** Comprehension, relevance, credibility, qualified requests, buyer acceptance, mission purchase intent, institutional response. (Constitution section 41.)
-3. **The money path:** visitor, mission request, qualified mission, introduction, meeting, opportunity, RFQ or sample, proposal, commitment, contract, invoice, cash, repeat. Corridra's service fee is separate from the customer's trade cash. Price is anchored against travel, fair, management time and failed entry, never as cheap leads. (Constitution section 30.)
-4. **The moat is outcome data from real missions**, not profiles or databases. Each mission should make the next one better. (Canvas section 29, 30.)
-5. **Trust is the product.** Claim, evidence, verified, derived and outcome must always look different. The proof ladder runs from activity to access to progression to transaction to cash to recurrence. Never overstate. (Constitution section 16, 17, 42.)
-6. **Operator speed is revenue.** If the Ops Console is slower than WhatsApp, delivery and learning stop.
-7. **Calm is a feature.** The desired feeling is commercial clarity: clearer, more deliberate, more controlled, more accountable. Reduce uncertainty, effort, noise, risk and ambiguity. (Public Experience section 29.)
-8. **Sophisticated architecture exists so the customer experience can stay simple.** Never impress every audience with everything Corridra contains. (Constitution section 39.)
+- **Bangladesh and China:** emphasis Bangladesh to China. Supplier discovery, machinery and equipment procurement, quotation comparison, factory and showroom visits, Canton Fair and cluster visits, buying trips, delegations, OEM and private label. Proposition: go to China knowing which suppliers, products, factories and commercial terms deserve your attention. **Machinery is special:** specifications, installation, commissioning, warranty, spares, training and service must be comparable. Two quotations are never equal if one leaves out a critical cost or obligation.
+- **Bangladesh and Spain/EU:** emphasis Bangladesh to Spain/EU. Export buyer access, distributor search, fair yield, buyer qualification, RFQ and sample follow-through, institutional programmes. Proposition: know who is worth meeting before entering the market.
+- Both run on **one foundation** with no country forks. Reverse directions are selective. Configuring a route is not the same as being able to deliver in it. Tourism, visas and hotel booking are not Corridra products.
 
-## Owner decisions that override or extend the sources (dated)
+**Owner decision for this UI programme (2026-10-15):** lead with Bangladesh to China sourcing and delegations, then the other routes one by one.
 
-| Date       | Decision                                                                                                                                                                                                                                                                                         |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-10-15 | Lead journey is Bangladesh to China: sourcing missions (suppliers and machinery) and leading or taking delegations. Other routes follow one at a time, reusing the same screens. The source documents name Bangladesh and Spain/EU as the initial corridor; this decision supersedes that order. |
-| 2026-10-15 | Plain, easy English for readers in Bangladesh, China and other non-English countries, without lowering the standard or vision.                                                                                                                                                                   |
-| 2026-10-15 | Treat cognitive load as a defect. One job per screen, few choices, hide never delete.                                                                                                                                                                                                            |
-| 2026-10-15 | Consistency is enforced by tooling, not goodwill (see `ui-direction.md`).                                                                                                                                                                                                                        |
-| 2026-10-15 | The word "brief" is too hard. The source copy says "mission brief"; use a plainer word, proposed "request".                                                                                                                                                                                      |
+## For whom (section 8)
 
-## Words Corridra owns (Constitution section 22)
+Bangladesh exporter. Bangladesh importer sourcing from China. Machinery buyer. EU or Spanish company entering Bangladesh. EU sourcing buyer. **Chinese supplier** (receives a permitted requirement, can show relevance, ask for details and respond, with no mandatory registration). Institution or delegation leader (sees permitted programme activity and aggregate outcomes, never unrestricted private participant data). Local contributor. Corridra operator (next useful action must be obvious). Corridra administrator (what works, what is uncertain, what is blocked, why, who is accountable).
 
-Primary: market, mission, counterparty, commercial, relevant, qualified, evidence, outcome, progress, access. Supporting: buyer, supplier, distributor, meeting, field, intent, relationship, opportunity, corridor. Use "verified" only when verified. Never "guaranteed". Avoid "lead", "match" (dating feel), "AI-powered", "platform" as persuasion. Prefer concrete nouns (buyer, supplier, factory, meeting, mission, RFQ, sample, proposal, contract, payment). Plain language means explaining these words, not replacing them. Explain first, name later.
+## Trust and money (sections 9, 10)
 
-## What this means for every screen
+- Never confuse self-declaration, source record, claim, supporting evidence, independent verification, derived inference, recommendation and observed outcome. A claim is not verified, a meeting scheduled is not held, an RFQ is not a purchase, a contract is not cash. Original language, currency, quotation and attribution stay intact. Translations and AI text are derivative.
+- Four money domains stay separate: **A** customer commercial value, **B** Corridra revenue, **C** Corridra delivery cost, **D** contributor obligations. Never present customer trade value as Corridra revenue. No summing of currencies without a dated method. History is immutable; corrections compensate.
+- **Status words are different things** and must never collapse into "complete": built, tested, deployed, enabled, legally approved, commercially operational (section 16).
 
-- A page answers in order: is this for me, what outcome, why current ways fall short, how it works in three to five steps, why trust it, what happens next, and the obvious objection near the call to action.
-- Headlines carry a situation, a desired progress, a recognisable failure or a specific contrast. Approved examples: "Going into a new market? Know who is worth meeting." "Visit fewer suppliers. Visit the ones that fit." "A foreign trip is too expensive to leave to chance." "Stop measuring trade missions by attendance."
-- Call to action names the job: Plan a mission, Plan a sourcing visit, Design a programme, Assess a market. Never "Get started" or "Join".
-- One primary call to action per visual section. No auto-rotating carousel, no modal in the first seconds, no account wall before value, no fake activity, no endless homepage.
-- Say what Corridra does not promise: orders are never guaranteed. It controls research, qualification, execution and agreed deliverables.
-- Before traction, do not publish "Trusted by", "Results", "Customer success" or "Our global network". Use "How it works", "What Corridra measures", "What is checked", "Where we are starting".
-- Visual primitive: origin, path, counterparty, progress. Quietly precise, not techno-global. No globes, handshakes, container ships or node clouds.
-- Mobile first for intake, buyer links and helper screens.
+## How the business wins (sections 11 to 13, 19, 21)
 
-## Hard gates (not UI decisions)
+- **Revenue now:** paid managed missions, operator-delivered first. Price hypotheses (not validated): focused mission about 1,500 to 3,500 euro, complex sourcing or entry mission 4,000 to 10,000 euro and up, institutional programme 15,000 to 50,000 euro and up. China customers may need lower, BDT-based tiers. Never apply European assumptions to small Bangladeshi importers.
+- **Main threat:** becoming an expensive consultancy with software. Track service revenue minus attributable delivery cost (mission contribution), revenue per human delivery hour, and time saved by repeatable workflows. A nicer interface alone is not improved economics.
+- **Acquire by trigger, not advertising:** an upcoming China trip, a machinery decision, Canton Fair, a delegation, a European fair, an active distributor search, a buyer planning Bangladesh visits. Channels: founder-led sales, referrals, chambers, delegation organisers, trusted connectors. Partnerships are hypotheses until agreed.
+- **Growth loops:** buyer, supplier, institutional, network, outcome and multi-corridor loops, all through useful interactions. No address-book import, spam or recruitment commissions.
+- **Measure results, not activity:** paid missions, revenue, contribution, time to first useful result, meetings actually held, RFQs, samples, proposals, contracts, confirmed cash, loss reasons, repeat purchases, human hours, AI and network cost.
 
-Real customer missions, outreach, AI inference, payments and payouts stay closed until the readiness controls and external approvals in `docs/implementation/` are complete. The interface must say so honestly and briefly, never as the headline and never as a hidden fact.
+## Where the work stands (section 18, 19)
+
+The V2 foundation is merged. The accepted posture is **synthetic and testing**. These stay closed: real customer mission data, unrestricted outreach, production AI inference, open paid contributor participation, automated international payouts, unreviewed real-file processing, unapproved route launch.
+
+Immediate priorities, in order: **A** complete verified user experience, **B** fix practical workflow defects for the exporter, China sourcing buyer, machinery purchaser, operator, institution, supplier and owner, **C** operational readiness (external evidence), **D** activate each corridor independently when ready, **E** measure commercial reality.
+
+## Rules that carry into every screen
+
+- Order of value in messaging: commercial relevance, access, trust and evidence, local execution, progression, accountability, intelligence, and technology last. AI is a mechanism, never the headline.
+- A page answers: is this for me, what outcome, why current ways fall short, how it works in three to five steps, why trust it, what happens next, the obvious objection near the call to action.
+- The call to action names the job (Plan a mission, Plan a sourcing visit, Design a programme, Assess a market). One primary action per visual section.
+- Owned words (mission, counterparty, evidence, outcome, progress, access, corridor and others) are not renamed. Plain language explains them. The five trust states keep their names.
+- Complete functional coverage beats a visual mockup. Never remove an authorised action, weaken data fidelity, accessibility or security for a layout. Hide, never delete.
+- Before traction publish no "Trusted by", "Results" or "Our global network". Say what is verified and what is not. Never promise orders.
+
+## The Product Decision Test (section 23)
+
+Before building or changing anything, answer: what real commercial problem does it solve, who needs it and pays, what do they do today instead, does it increase relevant access, trust, execution quality or measurable progress, could existing infrastructure or a partner do it more cheaply, does it reuse global primitives without country duplication, does it improve mission economics or permitted learning, can it be delivered, secured, operated and supported reliably. If the answers are weak, defer or reject.
+
+## Dated owner decisions that shape the UI work
+
+| Date       | Decision                                                                                                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-15 | UI and UX first, then backend. Presentation only, no backbone change.                                                                                                              |
+| 2026-10-15 | Lead with Bangladesh to China sourcing and delegations, then other routes one by one. v2.1 confirms two asymmetric corridors; it supersedes the older documents' "Spain/EU first". |
+| 2026-10-15 | Cognitive load is a defect. One job per screen, few choices, hide never delete.                                                                                                    |
+| 2026-10-15 | Plain, easy English for readers in Bangladesh, China and other non-English countries, without lowering the standard.                                                               |
+| 2026-10-15 | Consistency is enforced by tooling.                                                                                                                                                |
+| 2026-10-15 | "Brief" is too hard a word. Proposed replacement "request", pending confirmation.                                                                                                  |
+| 2026-10-15 | Use the existing agent coordination files from PR 48. Do not create a second system.                                                                                               |

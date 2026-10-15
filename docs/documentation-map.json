@@ -339,6 +339,11 @@
       "use": "Original requirements or bounded release packet; not current next-task authority"
     },
     {
+      "path": "docs/product/corridra-product-vision-v2.1.md",
+      "classification": "Current guide/contract",
+      "use": "Governing product direction supplied by the owner on 15 October 2026; meaning preserved; read before substantial work"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
