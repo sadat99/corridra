@@ -3,8 +3,13 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function openFineTune(page: Page) {
+  const details = page.locator('.ux-fine-tune');
+  if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
+}
 
 test('UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics', async ({
   page,
@@ -23,6 +28,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     const email = `ux02-${randomUUID()}@example.invalid`;
     await page.setViewportSize({ width: 390, height: 1000 });
     await page.goto('http://127.0.0.1:3450/');
+    await openFineTune(page);
     await page
       .getByRole('combobox', { name: "I'm trying to" })
       .selectOption('machinery_procurement');

@@ -121,3 +121,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: privacy page wording review. The hero headline decision. Phase B remainder.
 - Next step: merge PR 48 once exact-head CI is green, then continue Phase B on a fresh branch from the new `main`.
 - PR / commit: sadat99/corridra#48.
+
+## 2026-10-15, Claude Code, Phase B: five situations on the home page; branch limit
+
+- Request: the owner said "meanwhile u build the next" (build Phase B while CI runs for PR 48) and asked to keep the Git branch count below nine and delete branches once they no longer affect the system. The message was cut off after "& never".
+- Why: the Public Experience specifies five situations, not three dropdowns. The dropdowns made a first-time visitor decide role, job and route before seeing any value. The branch limit keeps the repository easy to read for both agents.
+- What changed: (1) `apps/web/components/discovery-experience.tsx`: five situation cards (Source from suppliers, Run a trade mission, Enter Bangladesh, Sell abroad, Help locally). Each card presets role, job and route and updates the example-request link. The three dropdowns remain, inside a closed "Fine-tune" disclosure, so no action was removed. (2) `apps/web/app/globals.css`: situation card and fine-tune styles, in the token-only layer. (3) Tests: a shared `openFineTune` helper in the affected browser and operator specs, and one new test for the situation cards. (4) `scripts/check-git-branch-budget.mjs`: now fails when the repository has more than eight Git branches. `scripts/branch-budget.ts` (Neon, ten) is unchanged. (5) `AGENTS.md` and `docs/agents/README.md` rule 7 state the new limit.
+- How it was verified: `format:check`, `lint` pass. Public browser suite 82 of 82 (with axe and no-write checks). Protected operator suite: see the PR. Not run: integration suite (no server or data code changed).
+- Preserved: all routes, link targets, payload shapes, the three original selectors and their labels, API behaviour.
+- Decisions and trade-offs: sourcing stays the first and selected card, per the owner's order. "Help locally" links to `/network` because that is a different path from the example request.
+- Open items and risks: three fully merged remote branches (`feat/ux-02-public-experience`, `feat/ux-03-participant-journeys`, `feat/ux-04-operator-experience`) could not be deleted from this environment (HTTP 403). The owner must delete them in GitHub. The text after "& never" in the branch rule message is unknown.
+- Next step: customer mission view with machinery quotation comparison, then the intake polish.
+- PR / commit: branch `feat/ux-phase-b-situations`.
