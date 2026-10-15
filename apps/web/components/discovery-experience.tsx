@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages } from '../content/corridors';
@@ -110,6 +110,13 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
   const activeSituation = situations.find(
     (item) => item.role === role && item.job === job && item.direction === direction,
   )?.key;
+  // Country names come from the browser's own locale data, which can differ from the server's, so
+  // the long lists show codes until the page has hydrated.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
   const placeName = (code: string) =>
     code === 'EU' ? 'European Union' : (regionNames.of(code) ?? code);
@@ -221,23 +228,25 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           <details className="ux-atlas-any">
             <summary>Another route? Pick any two countries</summary>
             <div className="ux-atlas-any-fields">
-              <label>
-                Your company is in
+              <div className="ux-atlas-any-field">
+                <label htmlFor="atlas-any-company">Your company is in</label>
                 <select
+                  id="atlas-any-company"
                   value={other.company}
                   onChange={(e) => setOther({ ...other, company: e.target.value })}
                 >
                   <option value="">Choose a country</option>
                   {countryCodes.map((code) => (
                     <option key={code} value={code}>
-                      {placeName(code)}
+                      {mounted ? placeName(code) : code}
                     </option>
                   ))}
                 </select>
-              </label>
-              <label>
-                You want to reach
+              </div>
+              <div className="ux-atlas-any-field">
+                <label htmlFor="atlas-any-market">You want to reach</label>
                 <select
+                  id="atlas-any-market"
                   value={other.market}
                   onChange={(e) => setOther({ ...other, market: e.target.value })}
                 >
@@ -245,11 +254,11 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                   <option value="EU">European Union (trade bloc)</option>
                   {countryCodes.map((code) => (
                     <option key={code} value={code}>
-                      {placeName(code)}
+                      {mounted ? placeName(code) : code}
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
               {(other.company || other.market) && (
                 <button type="button" className="ux-atlas-clear" onClick={clearOther}>
                   Clear

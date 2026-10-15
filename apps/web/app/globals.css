@@ -3999,9 +3999,11 @@ th {
   gap: var(--space-3);
   padding-block: var(--space-2) var(--space-3);
 }
-.ux-atlas .ux-atlas-any-fields label {
+.ux-atlas .ux-atlas-any-field {
   display: grid;
   gap: 0.35rem;
+}
+.ux-atlas .ux-atlas-any-fields label {
   font-size: var(--text-sm);
   color: var(--on-brand);
 }
