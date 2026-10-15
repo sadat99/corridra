@@ -99,7 +99,11 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
     for (const path of ['signup', 'forgot-password', 'verify-email']) {
       await page.goto('http://127.0.0.1:3400/' + path);
       await expect(page.getByRole('form', { name: 'Account access' })).toBeVisible();
-      await expect(page.getByRole('main')).toContainText('Customer identity is separate');
+      await expect(page.getByRole('main')).toContainText(
+        path === 'forgot-password'
+          ? 'It does not change an operator password or authenticator.'
+          : 'missions explicitly shared with you.',
+      );
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     }
   } finally {
