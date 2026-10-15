@@ -38,14 +38,14 @@ export function OperatorInvitationHint() {
   }, []);
   if (!available) return null;
   return (
-    <section className="operator-section" aria-label="Pending workspace invitation">
-      <h2>Finish your workspace setup</h2>
+    <section className="operator-section" aria-label="Pending team invitation">
+      <h2>Finish your team setup</h2>
       <p>
-        Your signed-in account has a pending operator invitation. Set your operator password, then
-        sign in and add your authenticator.
+        You have a pending team invitation. Set your team password, then sign in and add your
+        authenticator app.
       </p>
       <Link className="primary-link" href="/operator/setup">
-        Finish invited workspace setup
+        Finish team setup
       </Link>
     </section>
   );

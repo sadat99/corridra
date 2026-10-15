@@ -131,10 +131,10 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
     await page.goto(route);
     await expect(page.getByRole('main')).toContainText(
       route === '/signin'
-        ? 'Customer identity is separate'
+        ? 'Team members sign in separately'
         : ['/forgot-password', '/reset-password'].includes(route)
-          ? 'It does not change an operator password or authenticator.'
-          : 'missions explicitly shared with you.',
+          ? 'It does not change a team password.'
+          : 'missions shared with you.',
     );
     await expect(
       page

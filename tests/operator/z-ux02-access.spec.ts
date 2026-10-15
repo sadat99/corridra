@@ -101,8 +101,8 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
       await expect(page.getByRole('form', { name: 'Account access' })).toBeVisible();
       await expect(page.getByRole('main')).toContainText(
         path === 'forgot-password'
-          ? 'It does not change an operator password or authenticator.'
-          : 'missions explicitly shared with you.',
+          ? 'It does not change a team password.'
+          : 'missions shared with you.',
       );
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     }

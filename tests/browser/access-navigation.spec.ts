@@ -42,19 +42,11 @@ test('the start page offers three plain choices and links each kind of person to
     '/operator',
   );
   await expect(
-    main.getByRole('link', { name: 'Accept an invitation', exact: true }),
+    main.getByRole('link', { name: 'Set up your team account', exact: true }),
   ).toHaveAttribute('href', '/operator/setup');
-  await expect(main.getByRole('link', { name: 'Supplier link help', exact: true })).toHaveAttribute(
-    'href',
-    '/buyer',
-  );
   await expect(
-    main.getByRole('link', { name: 'Programme link help', exact: true }),
-  ).toHaveAttribute('href', '/programme');
-  await expect(main.getByRole('link', { name: 'Local helper tasks', exact: true })).toHaveAttribute(
-    'href',
-    '/contributor',
-  );
+    main.getByRole('link', { name: 'Local helper sign-in', exact: true }),
+  ).toHaveAttribute('href', '/contributor');
   // Plain words: none of the old role and tool jargon on the first page a visitor opens.
   const text = await main.innerText();
   for (const jargon of ['Synthetic', 'operator tools', 'Workspace roles', 'production activation'])

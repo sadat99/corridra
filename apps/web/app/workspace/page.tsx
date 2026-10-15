@@ -44,42 +44,37 @@ export default function Page() {
             <li>
               <div>
                 <h3>Corridra team</h3>
-                <p>Team accounts are by invitation and use an authenticator app.</p>
+                <p>
+                  Team accounts are by invitation. New team member? Open your invitation email, then
+                  set up your account.
+                </p>
               </div>
               <div className="ux-start-actions">
                 <Link className="primary-link" href="/operator">
                   Team sign-in
                 </Link>
                 <Link className="text-link" href="/operator/setup">
-                  Accept an invitation
+                  Set up your team account
                 </Link>
               </div>
             </li>
             <li>
               <div>
                 <h3>Supplier, programme member or local helper</h3>
-                <p>Open the private link we sent you. It shows only what is shared with you.</p>
+                <p>
+                  Open the private link we sent you. It shows only what is shared with you. Local
+                  helpers can also sign in to see their tasks.
+                </p>
               </div>
-              <div className="ux-start-actions">
-                <Link className="text-link" href="/buyer">
-                  Supplier link help
-                </Link>
-                <Link className="text-link" href="/programme">
-                  Programme link help
-                </Link>
-                <Link className="text-link" href="/contributor">
-                  Local helper tasks
-                </Link>
-              </div>
+              <Link className="text-link" href="/contributor">
+                Local helper sign-in
+              </Link>
             </li>
           </ul>
         </section>
         <nav className="ux-start-foot" aria-label="More">
           <Link className="text-link" href="/">
             Back to Corridra
-          </Link>
-          <Link className="text-link" href="/trust">
-            How evidence works
           </Link>
           <Link className="text-link" href="/privacy">
             Privacy
