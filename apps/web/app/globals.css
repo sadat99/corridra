@@ -3901,3 +3901,71 @@ th {
   font-size: var(--text-md);
   color: var(--text-2);
 }
+
+/* Start page: three plain choices, one list of who signs in where. */
+.ux-start {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 960px;
+}
+.ux-start-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-6);
+}
+.ux-start-grid .detail-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-8);
+}
+.ux-start-grid h2,
+.ux-start-signin h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+.ux-start-grid p {
+  flex: 1;
+  margin: 0 0 var(--space-3);
+  color: var(--text-2);
+}
+.ux-start-signin ul {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
+}
+.ux-start-signin li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ux-start-signin h3 {
+  margin: 0 0 0.2rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.ux-start-signin li p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: var(--text-md);
+}
+.ux-start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.ux-start-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
