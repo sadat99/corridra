@@ -278,7 +278,7 @@ function ScopedDeliveryView({
           ...(report.missions.length
             ? [
                 { label: 'Next decision', heading: 'Next action' },
-                { label: 'Mission brief', heading: 'Mission brief' },
+                { label: 'Mission request', heading: 'Mission request' },
               ]
             : []),
           ...(report.missions.some((m) => m.experience)
@@ -428,7 +428,7 @@ function ScopedDeliveryView({
       {report.missions.map((m) => (
         <article key={m.publicationId} className="delivery-card ux-participant-mission">
           <MissionPassport mission={m} />
-          <h3>Mission brief</h3>
+          <h3>Mission request</h3>
           <p>{m.objective}</p>
           <p>{m.brief}</p>
           {m.experience && (

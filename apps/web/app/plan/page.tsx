@@ -10,7 +10,7 @@ export default function Page() {
       <section className="page-hero intake-page">
         <p className="label">PLAN A MISSION</p>
         <h1>What needs to happen?</h1>
-        <p className="page-description">A short brief is enough to start. No account required.</p>
+        <p className="page-description">A short request is enough to start. No account required.</p>
         <Intake />
       </section>
     </PublicShell>

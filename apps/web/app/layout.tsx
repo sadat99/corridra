@@ -1,7 +1,17 @@
 import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import './globals.css';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
+
+// Self-hosted variable Inter (SIL OFL, see fonts/INTER-LICENSE.txt). Latin only; Bangla and Han
+// text keeps the system fallbacks declared in --font-ui.
+const inter = localFont({
+  src: './fonts/inter-latin-variable.woff2',
+  variable: '--font-inter',
+  weight: '100 900',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Corridra | Cross-border market access',
@@ -20,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content
@@ -28,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <div className="site-shell">
           <SiteHeader />
           <aside className="availability-note" aria-label="Service availability">
-            Mission intake is open for test briefs. Customer missions are not open yet.
+            Mission intake is open for example requests. Customer missions are not open yet.
           </aside>
           {children}
           <SiteFooter />

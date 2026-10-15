@@ -21,3 +21,7 @@ The owner requests a maximum of ten branches, including main. Before creating/pu
 Run `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` and `pnpm test:e2e` for this public release. Add meaningful behavior tests when changing flows. Real database integration/RLS tests and the protected operator browser suite are mandatory for the existing database-backed application; do not add empty passing suites to imply readiness.
 
 Report implemented behavior, actual test results, deployment evidence and concrete blockers. A built bundle is not a public deployment. Do not proceed to the next product part unless the user requests it.
+
+## Two coding agents, one product
+
+Claude Code and Codex both work in this repository and share no memory beyond it. Read [docs/agents/README.md](docs/agents/README.md), the [master plan](docs/agents/master-plan.md) and the governing [product vision v2.1](docs/product/corridra-product-vision-v2.1.md) with its [working summary](docs/agents/product-vision.md) (what Corridra is, for whom and why) before starting. Follow [docs/agents/ui-direction.md](docs/agents/ui-direction.md) for every visible change, and append an entry to [docs/agents/work-log.md](docs/agents/work-log.md) and update the master plan if the plan changed, in the same PR before finishing, stating what changed, why, how it was verified and what was not. Never rewrite the other agent's entries. If you disagree with an earlier decision, record both positions and leave the choice to the owner.

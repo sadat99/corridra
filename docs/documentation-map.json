@@ -149,6 +149,31 @@
       "use": "Read with explicit later amendments and ADR index"
     },
     {
+      "path": "docs/agents/README.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/master-plan.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/product-vision.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/ui-direction.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/work-log.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
       "path": "docs/architecture/implementation-canvas-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -314,6 +339,11 @@
       "use": "Original requirements or bounded release packet; not current next-task authority"
     },
     {
+      "path": "docs/product/corridra-product-vision-v2.1.md",
+      "classification": "Current guide/contract",
+      "use": "Governing product direction supplied by the owner on 15 October 2026; meaning preserved; read before substantial work"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -437,6 +467,11 @@
       "path": "docs/ux10x/master-handoff.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/ux10x/reconciliation-2026-10-15/README.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
     },
     {
       "path": "docs/ux10x/ux02/README.md",

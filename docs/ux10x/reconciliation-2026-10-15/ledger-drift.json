@@ -1,0 +1,529 @@
+{
+  "ledgerBaseline": "ebb992cebef7c68e16922a6f29471939de843867",
+  "currentHead": "bbb7d710f45fcd23e8b9a882a80675a7023973b0",
+  "counts": {
+    "ledger": {
+      "routes": 43,
+      "actions": 773,
+      "endpoints": 69,
+      "testCatalogue": 222
+    },
+    "current": {
+      "routes": 45,
+      "actions": 807,
+      "endpoints": 70,
+      "testCatalogue": 235
+    }
+  },
+  "routesAdded": ["/operator/forgot-password", "/operator/reset-password"],
+  "routesRemoved": [],
+  "controlsAddedByContent": [
+    {
+      "file": "apps/web/app/account/customer-missions.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={open}> <label className=\"field\"> Private mission invitation <input name=\"invitation\" type=\"text\" autoComplete=\"off\" required maxLength={300} /> </label> <butt",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Accept a new operator invitation </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/workspace\"> Find the right entry </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "element": "summary",
+      "label": "<summary>Other workspaces and invitations</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/delivery-view.tsx",
+      "element": "summary",
+      "label": "<summary>Requirements, targets and original supplier offers</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/forgot-password/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/forgot-password\"> Reset a customer account password </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/forgot-password/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Finish a pending invitation </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/forgot-password/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/signin\"> Back to operator sign-in </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/operator/forgot-password\"> Request a new operator reset link </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/operator/signin\"> Return to operator sign-in </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Finish a pending invitation </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "button",
+      "label": "<button className=\"primary-link\" disabled={busy}> {busy ? 'Please wait\u2026' : mode === 'request' ? 'Request operator reset email' : 'Set new operator password'} </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "form",
+      "label": "<form method=\"post\" className=\"operator-form\" aria-label=\"Operator password recovery\" onSubmit={submit} > {mode === 'request' ? ( <label className=\"field\"> Operator email <input name=\"email\" type=\"ema",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "input",
+      "label": "<input name=\"confirm\" type=\"password\" autoComplete=\"new-password\" minLength={14} maxLength={128} required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "input",
+      "label": "<input name=\"email\" type=\"email\" autoComplete=\"username\" required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/recovery-form.tsx",
+      "element": "input",
+      "label": "<input name=\"password\" type=\"password\" autoComplete=\"new-password\" minLength={14} maxLength={128} required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/reset-password/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/signin\"> Back to operator sign-in </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/setup/setup-form.tsx",
+      "element": "form",
+      "label": "<form method=\"post\" className=\"operator-form\" onSubmit={submit}> <h2>Accept {invite.role} access</h2> {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>} <p> Your invitatio",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/forgot-password\"> Forgot operator password? </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "form",
+      "label": "<form method=\"post\" className=\"operator-form\" onSubmit={submit} aria-label=\"Operator sign-in\"> <h2 ref={heading} tabIndex={-1}> {stage === 'password' ? 'Use your operator account' : stage === 'enrol' ",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input inputMode=\"numeric\" autoComplete=\"one-time-code\" pattern=\"[0-9]{6}\" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input type=\"email\" autoComplete=\"username\" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input type=\"password\" autoComplete=\"current-password\" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "a",
+      "label": "<a href=\"#ops-center\">Control Center</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "a",
+      "label": "<a href=\"#ops-gates\">Production readiness</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "a",
+      "label": "<a href=\"#workspace-audit\">Access and audit</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "a",
+      "label": "<a href=\"#workspace-controls\">People and workspace controls</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "a",
+      "label": "<a href=\"#workspace-settings\">Corridors and policies</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "button",
+      "label": "<button className=\"primary-link\" disabled={busy || !members.length}> Update membership </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "button",
+      "label": "<button className=\"text-link\" disabled={busy} onClick={() => act(async () => { setMembers(await request('members')); }) } > Load workspace members </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={(event) => { event.preventDefault(); const f = new FormData(event.currentTarget); void act(async () => { await request('member', { userId: f.get('user'), role",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "input",
+      "label": "<input type=\"checkbox\" name=\"revoked\" disabled={busy} />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "select",
+      "label": "<select name=\"role\" required disabled={busy} defaultValue=\"\"> <option value=\"\" disabled> Select the intended role </option> {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((r) => ( <option k",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "select",
+      "label": "<select name=\"user\" required disabled={!members.length || busy} defaultValue=\"\"> <option value=\"\" disabled> Select an existing member </option> {members.map((member) => ( <option key={member.user_id} ",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "summary",
+      "label": "<summary>Manage this workspace</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/how-it-works\"> See how Corridra works <Arrow /> </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/trust\"> Understand the evidence <Arrow /> </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/workspace\"> Explore workspaces <Arrow /> </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/page.tsx",
+      "element": "summary",
+      "label": "<summary>Explore the mission workflow, services and commercial outcomes</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/#mission-example\"> Explore the example </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/plan\"> Prepare my test brief </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Accept a new operator invitation </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a className=\"primary-link\" href=\"#access-roles\"> Find my existing work </a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-readiness\">What is available now</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-roles\">Open existing work</a>",
+      "count": 2
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-tools\">All operator tools</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/account-access.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/workspace\"> Help me find the right entry </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/account-access.tsx",
+      "element": "summary",
+      "label": "<summary>Looking for an operator workspace or invitation?</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "form",
+      "label": "<form method=\"post\" className=\"operator-form\" onSubmit={submit} aria-label=\"Account access\"> {mode === 'signup' && ( <label className=\"field\"> Name <input value={name} disabled={busy} onChange={(e) =>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "a",
+      "label": "<a className=\"primary-link\" href=\"#commercial-objective\"> Explore a commercial direction <Arrow /> </a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "a",
+      "label": "<a ref={exampleTrigger} className=\"text-link\" href=\"#mission-example\" onClick={openExample} > See a synthetic mission example <Arrow /> </a>",
+      "count": 2
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "button",
+      "label": "<button className=\"text-link\" onClick={() => { setExample(false); requestAnimationFrame(() => exampleTrigger.current?.focus()); }} > Close the example </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "button",
+      "label": "<button className=\"text-link\" onClick={openExample}> Explore this objective <Arrow /> </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/journey-disclosure.tsx",
+      "element": "summary",
+      "label": "<summary>{title}</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/operator-invitation-hint.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/operator/setup\"> Finish invited workspace setup </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/role-navigation.tsx",
+      "element": "a",
+      "label": "<a key={section.id} href={'#' + section.id}> {section.label} </a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/role-navigation.tsx",
+      "element": "summary",
+      "label": "<summary>All workspace tools and settings</summary>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/site-header.tsx",
+      "element": "Link",
+      "label": "<Link prefetch={false} href=\"/workspace\" onClick={close}> Start here </Link>",
+      "count": 1
+    }
+  ],
+  "controlsRemovedByContent": [
+    {
+      "file": "apps/web/app/account/customer-missions.tsx",
+      "element": "form",
+      "label": "<form onSubmit={open}> <label className=\"field\"> Private mission invitation <input name=\"invitation\" type=\"text\" autoComplete=\"off\" required maxLength={300} /> </label> <button className=\"primary-link",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Set up invited operator access </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/workspace\"> All workspaces and tools </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/setup/setup-form.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={submit}> <h2>Accept {invite.role} access</h2> {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>} <p> Your invitation is for the s",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={submit}> <h2 ref={heading} tabIndex={-1}> {stage === 'password' ? 'Use your operator account' : stage === 'enrol' ? 'Set up your authenticator' : 'Verify your",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input inputMode=\"numeric\" autoComplete=\"one-time-code\" pattern=\"[0-9]{6}\" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} required />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input type=\"email\" autoComplete=\"username\" value={email} onChange={(e) => setEmail(e.target.value)} required />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/signin/signin-form.tsx",
+      "element": "input",
+      "label": "<input type=\"password\" autoComplete=\"current-password\" value={password} onChange={(e) => setPassword(e.target.value)} required />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "button",
+      "label": "<button className=\"primary-link\" disabled={busy}> Update membership </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={(event) => { event.preventDefault(); const f = new FormData(event.currentTarget); void act(() => request('member', { userId: f.get('user'), role: f.get('role'",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "input",
+      "label": "<input name=\"user\" required />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "input",
+      "label": "<input type=\"checkbox\" name=\"revoked\" />",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "element": "select",
+      "label": "<select name=\"role\"> {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((r) => ( <option key={r}>{r}</option> ))} </select>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/operator/setup\"> Set up invited operator access </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-readiness\">Availability and prerequisites</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-roles\">Back to access choices</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-roles\">Choose your access</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/app/workspace/page.tsx",
+      "element": "a",
+      "label": "<a href=\"#access-tools\">Explore V2 tools</a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/account-access.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/workspace\"> Explore all workspaces and tools </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "form",
+      "label": "<form className=\"operator-form\" onSubmit={submit} aria-label=\"Account access\"> {mode === 'signup' && ( <label className=\"field\"> Name <input value={name} disabled={busy} onChange={(e) => setName(e.tar",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "Link",
+      "label": "<Link className=\"primary-link\" href=\"/plan\" prefetch={false}> Plan a mission <span className=\"sr-only\">(test intake)</span> <Arrow /> </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "Link",
+      "label": "<Link className=\"text-link\" href=\"/how-it-works\"> See how Corridra works <Arrow /> </Link>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "a",
+      "label": "<a className=\"text-link\" href=\"#mission-example\" onClick={() => { setExample(true); setStep(0); requestAnimationFrame(() => exampleHeading.current?.focus()); }} > See a synthetic mission example <Arro",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "element": "button",
+      "label": "<button className=\"text-link\" onClick={() => { setExample(false); requestAnimationFrame(() => exampleHeading.current?.focus()); }} > Close the example </button>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/role-navigation.tsx",
+      "element": "a",
+      "label": "<a key={section.id} href={'#' + section.id}> {section.label} {shortcuts && <span className=\"tool-part\">{section.part}</span>} </a>",
+      "count": 1
+    },
+    {
+      "file": "apps/web/components/site-header.tsx",
+      "element": "Link",
+      "label": "<Link prefetch={false} href=\"/workspace\" onClick={close}> Workspaces </Link>",
+      "count": 1
+    }
+  ],
+  "note": "Content comparison ignores line numbers. Reworded or relocated controls appear in both lists. The existing UX-06 ledger is retained unchanged."
+}

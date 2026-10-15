@@ -543,7 +543,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                       </label>
                       <label>
                         <input name="acknowledged" type="checkbox" required /> I reviewed every row
-                        and the exact ready, duplicate and empty counts. The accepted briefs are
+                        and the exact ready, duplicate and empty counts. The accepted requests are
                         synthetic self-declarations.
                       </label>
                       <button disabled={busy || !!preview.counts.errors}>Confirm intake</button>
@@ -615,7 +615,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                 <textarea name="objective" minLength={3} maxLength={500} required />
               </label>
               <label>
-                Approved brief
+                Approved request
                 <textarea name="brief" minLength={10} maxLength={2000} required />
               </label>
               <label>

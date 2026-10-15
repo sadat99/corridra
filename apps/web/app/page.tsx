@@ -37,38 +37,65 @@ export default function Home() {
   return (
     <PublicShell className="ux-home">
       <DiscoveryExperience />
-      <section className="ux-home-story" aria-labelledby="clarity-title">
-        <div>
-          <p className="label">A DIFFERENT KIND OF CLARITY</p>
-          <h2 id="clarity-title">
-            Better commercial <em>decisions.</em>
-          </h2>
-          <p>Make the objective precise. Understand the evidence. Keep the next step in view.</p>
+      <section className="ux-lead" aria-labelledby="lead-title">
+        <p className="label">START WITH CHINA</p>
+        <h2 id="lead-title">Going to China? Know who is worth meeting.</h2>
+        <p className="ux-lead-note">
+          Corridra helps you find, review and reach the companies that fit what you need. Today you
+          can try an example with invented data. Real missions open after our checks are complete.
+        </p>
+        <div className="ux-lead-paths">
+          <article className="detail-card">
+            <h3>Visit fewer suppliers. Visit the ones that fit.</h3>
+            <p>
+              Tell us what you need to buy. We narrow the market and show what is stated and what
+              has evidence, before you travel.
+            </p>
+            <Link prefetch={false} className="primary-link" href="/source">
+              Plan a sourcing visit <Arrow />
+            </Link>
+            <Link prefetch={false} className="text-link" href="/machinery">
+              Buying machinery? Start here
+            </Link>
+          </article>
+          <article className="detail-card">
+            <h3>A delegation should produce more than attendance.</h3>
+            <p>
+              Give each company a clear agenda of qualified meetings. Then track what becomes
+              business after the group returns.
+            </p>
+            <Link prefetch={false} className="button-secondary" href="/trade-missions">
+              Plan a delegation <Arrow />
+            </Link>
+            <Link prefetch={false} className="text-link" href="/institutions">
+              Chamber or programme owner? Design a programme
+            </Link>
+          </article>
         </div>
-        <ol>
+        <p className="ux-lead-boundary">
+          Corridra does not promise orders. We work on what we can control: research, review,
+          introductions and meetings.
+        </p>
+        <ol className="ux-lead-steps" aria-label="How a mission works">
           <li>
-            <span className="stage-number">01</span>
-            <h3>Define the objective.</h3>
-            <p>Start with what you need to achieve, where and when.</p>
-            <Link className="text-link" href="/how-it-works">
-              See how Corridra works <Arrow />
-            </Link>
+            <span className="stage-number">1</span>
+            <h3>Say what you need</h3>
+            <p>What you want to buy or achieve, and when.</p>
           </li>
           <li>
-            <span className="stage-number">02</span>
-            <h3>Qualify before committing.</h3>
-            <p>Keep declarations, supporting sources and verified facts distinct.</p>
-            <Link className="text-link" href="/trust">
-              Understand the evidence <Arrow />
-            </Link>
+            <span className="stage-number">2</span>
+            <h3>Find the right companies</h3>
+            <p>We look at the whole market, not only who attends one fair.</p>
           </li>
           <li>
-            <span className="stage-number">03</span>
-            <h3>Keep the work moving.</h3>
-            <p>Record the next decision, its owner and what remains uncertain.</p>
-            <Link className="text-link" href="/workspace">
-              Explore workspaces <Arrow />
-            </Link>
+            <span className="stage-number">3</span>
+            <h3>Review before you meet</h3>
+            <p>See why each company fits, what it states and what has evidence.</p>
+          </li>
+          <li>
+            <span className="stage-number">4</span>
+            <h3>Meet and follow up</h3>
+            <p>Plan meetings and visits. Track what happens next.</p>
           </li>
         </ol>
       </section>

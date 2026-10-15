@@ -58,13 +58,15 @@ export default async function Page() {
           </section>
           <OperatorInvitationHint key={data.user.id} />
           <Link className="primary-link" href="/plan">
-            Start a test mission brief
+            Start a test mission request
           </Link>
-          <p>Keep the private receipt supplied with your brief to check its status and replies.</p>
+          <p>
+            Keep the private receipt supplied with your request to check its status and replies.
+          </p>
           <nav className="access-options" aria-label="Account sections">
             <a href="#customer-missions">My shared missions</a>
             <Link className="text-link" href="/plan#receipt-check">
-              Check a test brief receipt
+              Check an example request receipt
             </Link>
           </nav>
           <details className="ux-journey-disclosure">

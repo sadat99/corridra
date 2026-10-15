@@ -336,7 +336,7 @@ publicPages.machinery = {
     text: 'Record the evidence behind a selection and what is still unknown. Corridra does not certify a machine or place an order for you.',
   },
   intakeJob: 'machinery_procurement',
-  cta: 'Prepare a machinery test brief',
+  cta: 'Prepare a machinery example request',
   related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh–China sourcing' },
 };
 publicPages['business-trips'] = {
@@ -367,7 +367,7 @@ publicPages['business-trips'] = {
     text: 'No travel booking or guaranteed meeting service is available. The current test flow lets you describe the commercial mission using invented details.',
   },
   intakeJob: 'business_trips',
-  cta: 'Prepare a business-trip test brief',
+  cta: 'Prepare a business-trip example request',
   related: { href: '/how-it-works', label: 'See the mission process' },
 };
 

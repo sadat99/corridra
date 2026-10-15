@@ -35,6 +35,9 @@ export function SiteFooter() {
           <Link prefetch={false} href="/how-it-works">
             How it works
           </Link>
+          <Link prefetch={false} href="/corridors">
+            Trade routes
+          </Link>
           <Link prefetch={false} href="/network">
             Corridra Network
           </Link>
