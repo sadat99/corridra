@@ -149,6 +149,21 @@
       "use": "Read with explicit later amendments and ADR index"
     },
     {
+      "path": "docs/agents/README.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/ui-direction.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
+      "path": "docs/agents/work-log.md",
+      "classification": "Current guide/contract",
+      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+    },
+    {
       "path": "docs/architecture/implementation-canvas-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
