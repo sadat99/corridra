@@ -127,7 +127,13 @@ test('UX-02 native route disclosures and account recovery keep their real destin
     '/reset-password',
   ]) {
     await page.goto(route);
-    await expect(page.getByRole('main')).toContainText('Customer identity is separate');
+    await expect(page.getByRole('main')).toContainText(
+      route === '/signin'
+        ? 'Customer identity is separate'
+        : ['/forgot-password', '/reset-password'].includes(route)
+          ? 'It does not change an operator password or authenticator.'
+          : 'missions explicitly shared with you.',
+    );
     await expect(
       page
         .getByRole('main')

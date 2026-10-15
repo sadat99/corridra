@@ -99,7 +99,7 @@ export function SiteHeader() {
           Sign in
         </Link>
         <Link prefetch={false} href="/workspace" onClick={close}>
-          Workspaces
+          Start here
         </Link>
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
           Plan a mission <span className="sr-only">(test intake)</span>

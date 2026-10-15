@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { mkdir } from 'node:fs/promises';
 test('operator setup explains verified invitation requirements without collecting anonymous credentials', async ({
   page,
 }) => {
@@ -21,10 +22,20 @@ test('platform directory connects every persona and V2 tool without privileged d
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   if (await page.getByRole('button', { name: 'Menu', exact: true }).isVisible())
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await nav.getByRole('link', { name: 'Workspaces', exact: true }).click();
+  await nav.getByRole('link', { name: 'Start here', exact: true }).click();
   await expect(page).toHaveURL(/\/workspace$/);
-  await expect(page.getByRole('heading', { name: 'Find your Corridra workspace.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Prepare my test brief', exact: true }),
+  ).toHaveAttribute('href', '/plan');
+  await expect(page.getByRole('link', { name: 'Open customer account', exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByRole('link', { name: 'Find my existing work', exact: true }).click();
+  await expect(page.locator('#access-roles')).toHaveJSProperty('open', true);
+  await page.locator('#access-readiness > summary').click();
   await expect(page.getByRole('main')).toContainText('production activation is off');
+  await page.getByText('All operator tools and settings', { exact: true }).click();
   await expect(
     page.getByRole('link', { name: 'Open customer account', exact: true }),
   ).toHaveAttribute('href', '/account');
@@ -88,4 +99,42 @@ test('UX-01 invitation outage can be retried without collecting credentials or c
   expect((await request).request().method()).toBe('GET');
   await expect(invitation.getByRole('alert')).toContainText('unavailable');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('newcomers see starting journeys while legacy directory links and keyboard disclosure remain usable', async ({
+  page,
+}) => {
+  await mkdir('.cache/ux06/public-after', { recursive: true });
+  await page.goto('/workspace');
+  await expect(
+    page.getByRole('link', { name: 'Explore the example', exact: true }),
+  ).toHaveAttribute('href', '/#mission-example');
+  await expect(
+    page.getByRole('link', { name: 'Prepare my test brief', exact: true }),
+  ).toHaveAttribute('href', '/plan');
+  for (const width of [1440, 1280, 768, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(page.locator('#access-tools')).not.toHaveAttribute('open');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.screenshot({ path: `.cache/ux06/public-after/start-${width}.png` });
+  }
+  await page.goto('/workspace#access-tools');
+  await expect(page.locator('#access-tools')).toHaveAttribute('open');
+  await expect(
+    page.getByRole('link', { name: 'Open corridor control center', exact: true }),
+  ).toBeVisible();
+  await page.goto('/workspace#access-roles');
+  await expect(page.locator('#access-roles')).toHaveAttribute('open');
+  const summary = page.locator('#access-roles > summary');
+  await summary.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#access-roles')).not.toHaveAttribute('open');
+  await page.getByRole('link', { name: 'Find my existing work', exact: true }).click();
+  await expect(page.locator('#access-roles')).toHaveAttribute('open');
+  await expect(
+    page.getByRole('link', { name: 'Open operator workspace', exact: true }),
+  ).toBeVisible();
 });

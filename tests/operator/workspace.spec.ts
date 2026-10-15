@@ -120,7 +120,31 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await expect(page).toHaveURL(/\/operator#ops-gates$/);
   await expect(page.locator('#ops-gates')).toBeFocused();
-  const shortcuts = page.getByRole('navigation', { name: 'V2 tool shortcuts' });
+  const shortcuts = page.getByRole('navigation', { name: 'Mission workflow' });
+  await expect(shortcuts.getByRole('link')).toHaveCount(5);
+  await expect(page.locator('#workspace-navigation details')).not.toHaveAttribute('open');
+  await page.getByText('Manage this workspace', { exact: true }).click();
+  const administration = page.getByRole('navigation', { name: 'Administration', exact: true });
+  await expect(administration.getByRole('link')).toHaveCount(4);
+  await expect(
+    administration.getByRole('link', { name: 'Control Center', exact: true }),
+  ).toHaveAttribute('href', '#ops-center');
+  await page.getByText('Manage this workspace', { exact: true }).click();
+  await mkdir('.cache/ux06/after', { recursive: true });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page
+      .getByRole('heading', { name: 'Your workspace.', exact: true })
+      .evaluate((heading) => heading.scrollIntoView());
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect(
+      (await new AxeBuilder({ page }).include('.workspace-start').analyze()).violations,
+    ).toEqual([]);
+    await page.screenshot({ path: `.cache/ux06/after/admin-start-${width}.png` });
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
   expect(
     await shortcuts
       .locator('a')
@@ -140,6 +164,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   ).toHaveCount(0);
   const sectionNav = page.getByRole('navigation', { name: 'Workspace sections' });
   await expect(sectionNav).toBeVisible();
+  await expect(sectionNav.locator('details')).toHaveAttribute('open');
   expect(await sectionNav.locator('a').count()).toBeGreaterThanOrEqual(10);
   expect(
     await sectionNav
@@ -2793,7 +2818,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
   ).toHaveCount(0);
   const shortcut = page
-    .getByRole('navigation', { name: 'V2 tool shortcuts' })
+    .getByRole('navigation', { name: 'Mission workflow' })
     .getByRole('link', { name: 'Missions and requirements', exact: false });
   await shortcut.focus();
   await page.keyboard.press('Enter');
@@ -2845,7 +2870,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
   await expect(page.locator('.mission-card')).toHaveCount(0);
   await page.unroute('**/api/workspace/workspace?*');
   await page.getByRole('button', { name: 'Retry workspace', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your V2 tools' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
   const db = new Pool({
     host: '127.0.0.1',
@@ -2920,6 +2945,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
     .getByLabel('Source description', { exact: true })
     .fill('Unsaved synthetic source draft');
   const nav = page.getByRole('navigation', { name: 'Workspace sections' });
+  await nav.getByText('All workspace tools and settings', { exact: true }).click();
   await nav.getByRole('link', { name: 'Missions and requirements', exact: true }).click();
   await nav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
   await expect(page.getByLabel('Source description', { exact: true })).toHaveValue(
@@ -2933,6 +2959,9 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
   await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
+  await expect(
+    page.getByRole('navigation', { name: 'Administration', includeHidden: true, exact: true }),
+  ).toHaveCount(0);
   await expect(
     page
       .getByRole('navigation', { name: 'Workspace sections' })

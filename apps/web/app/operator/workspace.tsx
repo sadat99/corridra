@@ -160,6 +160,10 @@ function TenantWorkspace({
       setUnavailableSection(!!fragment && !target);
       const destination =
         target ?? (fragment ? document.getElementById('workspace-navigation') : null);
+      if (destination?.id === 'workspace-navigation') {
+        const directory = destination.querySelector('details');
+        if (directory) directory.open = true;
+      }
       destination?.scrollIntoView();
       destination?.focus({ preventScroll: true });
     }
@@ -286,18 +290,34 @@ function TenantWorkspace({
         <>
           <section className="workspace-panel workspace-start" aria-label="Workspace overview">
             <StatusBadge tone="caution">Synthetic workspace</StatusBadge>
-            <h2>Your V2 tools</h2>
+            <h2>Start with a mission.</h2>
             <p>
-              Your role in this workspace: <strong>{data.role}</strong>. Start with a mission,
-              attach source evidence, then follow its requirements, research, delivery and
-              commercial progress.
+              Your access: <strong>{data.role}</strong>. Open a mission and define what needs to
+              happen. Find relevant companies, arrange the next conversation, then record the
+              commercial progress and share an approved view.
             </p>
             <p>
-              AI and contributor execution also require deployment approval. Financial and
-              configuration actions need the appropriate role and fresh MFA. Missing data is not a
-              zero outcome.
+              Start with Missions and requirements below. Evidence, financial controls and
+              administration remain available in All workspace tools and settings. Actions still
+              depend on your role, current authenticator verification and approved scope.
             </p>
             <RoleNavigation role={data.role} shortcuts />
+            {['owner', 'admin'].includes(data.role) && (
+              <details className="ux-journey-disclosure">
+                <summary>Manage this workspace</summary>
+                <nav className="workspace-navigation" aria-label="Administration">
+                  <a href="#ops-center">Control Center</a>
+                  <a href="#workspace-settings">Corridors and policies</a>
+                  <a href="#workspace-audit">Access and audit</a>
+                  <a href="#ops-gates">Production readiness</a>
+                </nav>
+                <p>
+                  Review operational configuration, membership records and launch requirements.
+                  Sensitive changes still require the existing approvals and fresh authenticator
+                  verification.
+                </p>
+              </details>
+            )}
             {unavailableSection && (
               <p role="alert">
                 This section is unavailable for your current workspace role or the link is outdated.
@@ -308,27 +328,9 @@ function TenantWorkspace({
           </section>
           <RoleNavigation role={data.role} />
           <p>
-            Choose a section above. Customer sharing and assigned work use their own access links.
+            Follow the mission workflow above. Open the full directory when you need evidence,
+            assistance, settings or administration.
           </p>
-          {['owner', 'admin', 'operator'].includes(data.role) && (
-            <Operations key={`operations-${tenant}`} tenant={tenant} role={data.role} />
-          )}
-          {data.role !== 'viewer' && (
-            <>
-              <div id="workspace-ai" tabIndex={-1} className="workspace-panel">
-                <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
-                <a className="text-link" href="#workspace-navigation">
-                  Back to workspace sections
-                </a>
-              </div>
-              <div id="workspace-network" tabIndex={-1} className="workspace-panel">
-                <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
-                <a className="text-link" href="#workspace-navigation">
-                  Back to workspace sections
-                </a>
-              </div>
-            </>
-          )}
           <div id="workspace-missions" tabIndex={-1} className="workspace-panel">
             <Missions
               key={tenant}
@@ -371,6 +373,25 @@ function TenantWorkspace({
               Back to workspace sections
             </a>
           </div>
+          {['owner', 'admin', 'operator'].includes(data.role) && (
+            <Operations key={`operations-${tenant}`} tenant={tenant} role={data.role} />
+          )}
+          {data.role !== 'viewer' && (
+            <>
+              <div id="workspace-ai" tabIndex={-1} className="workspace-panel">
+                <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
+                <a className="text-link" href="#workspace-navigation">
+                  Back to workspace sections
+                </a>
+              </div>
+              <div id="workspace-network" tabIndex={-1} className="workspace-panel">
+                <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
+                <a className="text-link" href="#workspace-navigation">
+                  Back to workspace sections
+                </a>
+              </div>
+            </>
+          )}
           <div id="workspace-sources" tabIndex={-1} className="detail-grid workspace-panel">
             <section className="detail-card">
               <h2>Sources</h2>

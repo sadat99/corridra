@@ -2727,3 +2727,39 @@ summary:hover {
     padding: 16px;
   }
 }
+
+/* Clear starting journeys; the full directory remains keyboard accessible. */
+.ux-start-paths .access-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+.ux-start-paths h2 {
+  font: 600 1.35rem/1.3 var(--sans);
+  margin: var(--space-3) 0;
+}
+.ux-journey-disclosure {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-4) 0;
+}
+.ux-journey-disclosure > summary,
+.ux-workspace-directory > summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: var(--space-3);
+  font-weight: 600;
+}
+.ux-journey-disclosure > div {
+  padding-top: var(--space-4);
+}
+.ux-workspace-directory {
+  width: 100%;
+}
+.ux-workspace-directory > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.ux-workspace-directory .label {
+  width: 100%;
+  color: inherit;
+}
