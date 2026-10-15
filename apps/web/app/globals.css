@@ -3969,3 +3969,11 @@ th {
   flex-wrap: wrap;
   gap: var(--space-6);
 }
+
+/* Home routes: each route is its own card, coloured like its line on the map. */
+.ux-lead-paths .ux-route-china {
+  border-top: 4px solid var(--map-china);
+}
+.ux-lead-paths .ux-route-europe {
+  border-top: 4px solid var(--map-spain);
+}
