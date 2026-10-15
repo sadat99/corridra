@@ -148,6 +148,20 @@ export const publicPages: Record<string, PublicPageContent> = {
       text: 'Reverse market-entry directions can be configured selectively. Define the actual country and commercial objective. Each operating offer needs its own reviewed scope.',
     },
     cta: 'Plan a market-entry mission',
+    route: {
+      label: 'Spain and the EU to Bangladesh',
+      href: '/corridors/bangladesh-spain',
+      linkLabel: 'Read the Spain to Bangladesh scope',
+    },
+    record: {
+      title: 'What we record for every market visit',
+      items: [
+        'What you set out to test, and what was observed.',
+        'Who you met and why they fit.',
+        'What you concluded, kept separate from what you observed.',
+        'Who owns the next step.',
+      ],
+    },
     related: { href: '/about', label: 'See where Corridra is starting' },
   },
   'trade-missions': {
@@ -178,6 +192,20 @@ export const publicPages: Record<string, PublicPageContent> = {
       text: 'The planned approach gives organisers visibility into commercial progression without requiring them to replace their institutional relationships.',
     },
     cta: 'Plan a trade mission',
+    route: {
+      label: 'Starting with Bangladesh to China',
+      href: '/corridors/bangladesh-china',
+      linkLabel: 'Read the China scope',
+    },
+    record: {
+      title: 'What we record for every delegation',
+      items: [
+        'Each participant’s own objective.',
+        'Which meetings were held and who attended.',
+        'Opportunities, quotation requests and proposals.',
+        'Contracts, invoices and collected cash, kept as separate outcomes.',
+      ],
+    },
     related: { href: '/institutions', label: 'Explore the institutional approach' },
   },
   'how-it-works': {

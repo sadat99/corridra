@@ -3524,7 +3524,7 @@ th {
 }
 @media (min-width: 1001px) {
   .ux-home .ux-discovery-grid {
-    align-items: center;
+    align-items: start;
   }
 }
 
