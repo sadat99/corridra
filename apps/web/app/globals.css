@@ -3636,3 +3636,15 @@ th {
   color: var(--text-1);
   line-height: 1.5;
 }
+
+/* Route page cards: breathing room now that the text is shown in full. */
+.detail-grid > .detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+.detail-grid > .detail-card h2,
+.detail-grid > .detail-card p {
+  margin: 0;
+}
