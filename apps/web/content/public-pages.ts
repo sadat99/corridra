@@ -9,6 +9,15 @@ export type PublicPageContent = {
   intakeJob?: string;
   /** The commercial direction this page is about, shown next to the main action. */
   route?: { label: string; href: string; linkLabel: string };
+  /** The opposite direction, when the route also works in reverse. */
+  reverse?: {
+    title: string;
+    text: string;
+    cta: string;
+    href: string;
+    scopeLabel: string;
+    scopeHref: string;
+  };
   /** What Corridra records, so a reader can see what can be proved later. */
   record?: { title: string; items: string[] };
   related: { href: string; label: string };
@@ -47,6 +56,14 @@ export const publicPages: Record<string, PublicPageContent> = {
       label: 'Bangladesh to Spain and the EU',
       href: '/corridors/bangladesh-eu',
       linkLabel: 'Read the Spain and EU scope',
+    },
+    reverse: {
+      title: 'It also works the other way.',
+      text: 'Most missions start with a Bangladesh company selling in Spain and the EU. The same method works in reverse: a Spanish or EU seller can reach suitable buyers in Bangladesh, with products chosen to fit the Bangladesh market. Spain to Bangladesh work is set up and reviewed separately for each case.',
+      cta: 'Plan a mission from Spain or the EU',
+      href: '/plan?companyCountry=ES&marketCode=BD&job=buyers',
+      scopeLabel: 'Read the Spain to Bangladesh scope',
+      scopeHref: '/corridors/bangladesh-spain',
     },
     record: {
       title: 'What we record for every introduction',

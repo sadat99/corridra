@@ -68,6 +68,25 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           ))}
         </div>
       </section>
+      {content.reverse && (
+        <section className="ux-reverse" aria-labelledby="reverse-title">
+          <div>
+            <h2 id="reverse-title">{content.reverse.title}</h2>
+            <p>{content.reverse.text}</p>
+          </div>
+          <div className="ux-reverse-actions">
+            <Link prefetch={false} className="button-secondary" href={content.reverse.href}>
+              {content.reverse.cta}{' '}
+              <span aria-hidden="true">
+                <Arrow />
+              </span>
+            </Link>
+            <Link prefetch={false} className="text-link" href={content.reverse.scopeHref}>
+              {content.reverse.scopeLabel}
+            </Link>
+          </div>
+        </section>
+      )}
       {content.record && (
         <section className="ux-record" aria-labelledby="record-title">
           <h2 id="record-title">{content.record.title}</h2>
