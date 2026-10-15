@@ -15,7 +15,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,7 +69,19 @@ jobs:
       - name: Browser and accessibility tests
         run: pnpm test:e2e
       - name: Protected operator browser tests
+        env:
+          UX06_EVIDENCE_STAGE: after
         run: pnpm test:operator
+      - name: Synthetic UX browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: synthetic-ux-browser-evidence
+          path: |
+            .cache/ux06/public-after/
+            .cache/ux06/after/
+          if-no-files-found: ignore
+          retention-days: 7
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

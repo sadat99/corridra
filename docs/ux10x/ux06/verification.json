@@ -1,0 +1,44 @@
+{
+  "scope": "UX-06 first visual repair packet; not complete programme action parity",
+  "tests": [
+    {
+      "baseline": "Public landing hero, job/direction selectors, illustrative example and every retained guide destination",
+      "implementation": "Fusion editorial hierarchy, objective anchor, accessible retained guide and legacy example fragment",
+      "positive": "UX-06 discovery prioritizes exploration and preserves the complete mission guide; UX-06 legacy example fragment opens the real synthetic flow and close restores focus",
+      "negative": "Same tests: reverse direction remains unavailable; illustrative controls create no records; closing/reopening preserves safe focus; original guide has all eleven distinct outcome labels",
+      "status": "PASS",
+      "evidence": "evidence/after/test-e2e.log; evidence/after/public/"
+    },
+    {
+      "baseline": "Scoped participant publication, exact requirements and original quotations",
+      "implementation": "Approved next-action focus card, source-backed situation summary and mounted contextual navigation that opens the native technical disclosure without losing choices",
+      "positive": "route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace",
+      "negative": "Same test: anonymous/unrelated tenant/source-expiry/publisher-revocation denial; original currencies/Han text retained; lens choices survive section navigation; stale responses cannot replace newer scope",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log; evidence/after/participant/client-mission-*.png"
+    },
+    {
+      "baseline": "Scoped institutional publication, denominators, original financial totals and CSV/PDF exports",
+      "implementation": "Programme overview with grouped actual counters, sharing scope and keyboard navigation",
+      "positive": "scoped delivery imports every row, serves client requests and downloads complete programme reports",
+      "negative": "Same journey: guest identity does not acquire workspace access, confidential participant declarations absent, revoked capability denied and export replay bytes identical",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log; evidence/after/participant/institution-*.png"
+    },
+    {
+      "baseline": "Verified account profile, invitation form, original account navigation and sign-out",
+      "implementation": "Account/access sidebar, padded mission card and shared form spacing; server identity guard and invitation logic unchanged",
+      "positive": "Exact account JSX initial static render, invented display data, six viewport captures with compiled CSS",
+      "negative": "Static fixture blocks all external requests and disables its sign-out slot; source compares unchanged auth checks and invitation/sign-out handlers. This is not hosted identity acceptance.",
+      "status": "PARTIAL",
+      "evidence": "evidence/after/account-presentation/observations.json"
+    }
+  ],
+  "limitations": [
+    "Programme source-control rows are not exhaustive runtime action/state coverage; unlinked records remain NOT_YET_VERIFIED and allBaselineUserActionsFound remains false.",
+    "Hosted customer received-email lifecycle and signed-in account actions were not exercised by the static account layout captures. No auth session was substituted.",
+    "Owner explicitly deferred the reported operator sign-in/setup issue. No production principal/query/reset/grant/configuration change was made.",
+    "Visual repair does not certify every remaining public/protected surface against Fusion; original source/status/amount values remain different from its fictional examples.",
+    "Paint measurements are local navigation observations, not field LCP/INP/CLS. Exact-head CI and deployment inspection remain release gates."
+  ]
+}

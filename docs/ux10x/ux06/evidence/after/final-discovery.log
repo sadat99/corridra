@@ -1,0 +1,17 @@
+
+Running 6 tests using 2 workers
+
+(node:189058) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:189057) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [desktop] › tests/browser/ux06-presentation.spec.ts:50:1 › UX-06 legacy example fragment opens the real synthetic flow and close restores focus (3.2s)
+  ✓  2 [desktop] › tests/browser/ux06-presentation.spec.ts:5:1 › UX-06 discovery prioritizes exploration and preserves the complete mission guide (6.2s)
+(node:189386) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  4 [mobile] › tests/browser/ux06-presentation.spec.ts:5:1 › UX-06 discovery prioritizes exploration and preserves the complete mission guide (4.2s)
+  ✓  5 [mobile] › tests/browser/ux06-presentation.spec.ts:50:1 › UX-06 legacy example fragment opens the real synthetic flow and close restores focus (1.9s)
+  ✓  3 [desktop] › tests/browser/ux06-presentation.spec.ts:80:1 › UX-06 discovery preserves keyboard and content at all required widths and reduced motion (17.9s)
+  ✓  6 [mobile] › tests/browser/ux06-presentation.spec.ts:80:1 › UX-06 discovery preserves keyboard and content at all required widths and reduced motion (14.5s)
+
+  6 passed (29.6s)

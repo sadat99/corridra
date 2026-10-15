@@ -1,0 +1,42 @@
+{
+  "scope": "Exact current account JSX initial static render with invented display data. Disabled sign-out fixture slot. No hydration, session substitution, provider request or account-action acceptance. Hosted auth remains separate.",
+  "observations": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 0
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 0
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 0
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 16
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 16
+    },
+    {
+      "width": 320,
+      "overflow": false,
+      "axeViolations": [],
+      "padding": 16
+    }
+  ],
+  "requests": []
+}

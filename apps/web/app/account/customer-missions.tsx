@@ -30,7 +30,7 @@ export function CustomerMissions() {
     }
   }
   return (
-    <section className="detail-card">
+    <section className="detail-card ux-account-missions" aria-label="My shared missions">
       <h2>My missions</h2>
       <p>
         Your account does not grant access to a company&apos;s missions. Open an explicit mission
@@ -42,7 +42,7 @@ export function CustomerMissions() {
         unavailable. Open invitations stay in this page&apos;s memory only and clear when you leave
         or sign out.
       </p>
-      <form onSubmit={open}>
+      <form className="operator-form" onSubmit={open}>
         <label className="field">
           Private mission invitation
           <input name="invitation" type="text" autoComplete="off" required maxLength={300} />

@@ -1,0 +1,26 @@
+$ pnpm test:docs && pnpm test:infrastructure
+$ node --test tests/documents.test.mjs
+✔ implementation-canvas: original upload is preserved byte for byte (4.873263ms)
+✔ implementation-canvas: working copy preserves all supplied content (1.898667ms)
+✔ positioning-constitution: original upload is preserved byte for byte (0.95639ms)
+✔ positioning-constitution: working copy preserves all supplied content (1.43525ms)
+✔ public-experience: original upload is preserved byte for byte (0.994727ms)
+✔ public-experience: working copy preserves all supplied content (1.284523ms)
+✔ implementation plan contains 12 ordered parts and a complete canvas-packet mapping (2.004346ms)
+✔ revised V2 Part 04 owner packet retains its recorded integrity (0.954487ms)
+✔ revised V2 Part 05 owner packet retains its recorded integrity (0.893074ms)
+✔ UX acceptance ledgers keep phase identifiers, unique records and bounded verification aligned (83.129825ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 157.877065
+$ python -B -m unittest discover -s tests -p neon_projects_test.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.022s
+
+OK

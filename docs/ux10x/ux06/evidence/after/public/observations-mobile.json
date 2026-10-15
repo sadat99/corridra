@@ -1,0 +1,101 @@
+{
+  "observations": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 2247,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 120
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 120
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 2217,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 148
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 148
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 3179,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 84
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 84
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 3975,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 100
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 100
+        }
+      ]
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 4133,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 56
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 56
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 4204,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 80
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 80
+        }
+      ]
+    }
+  ],
+  "limits": "Synthetic public presentation; paint measurements are not field Core Web Vitals or hosted-account acceptance."
+}

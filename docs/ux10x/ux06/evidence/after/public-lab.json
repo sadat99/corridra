@@ -1,0 +1,150 @@
+{
+  "environment": "Local production build, Chromium, cold new context, CPU 4x, RTT 150ms, downlink 1.5Mbit/s; three samples per route/width. LCP is last observed before closing the page; CLS is a bounded lab observation. No field percentile, INP, Lighthouse score or production performance comparison claimed.",
+  "observations": [
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 984,
+      "cls": 0,
+      "fcp": 984
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1172,
+      "cls": 0,
+      "fcp": 1172
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1540,
+      "cls": 0,
+      "fcp": 1540
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 1520,
+      "cls": 0,
+      "fcp": 1520
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1340,
+      "cls": 0,
+      "fcp": 1340
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1736,
+      "cls": 0,
+      "fcp": 1736
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 1372,
+      "cls": 0,
+      "fcp": 1372
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1080,
+      "cls": 0,
+      "fcp": 1080
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1096,
+      "cls": 0,
+      "fcp": 1096
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 1,
+      "lcp": 960,
+      "cls": 0,
+      "fcp": 960
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 2,
+      "lcp": 812,
+      "cls": 0,
+      "fcp": 812
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 3,
+      "lcp": 1056,
+      "cls": 0,
+      "fcp": 1056
+    },
+    {
+      "path": "/plan",
+      "width": 390,
+      "sample": 1,
+      "lcp": 752,
+      "cls": 0,
+      "fcp": 752
+    },
+    {
+      "path": "/plan",
+      "width": 390,
+      "sample": 2,
+      "lcp": 964,
+      "cls": 0,
+      "fcp": 964
+    },
+    {
+      "path": "/plan",
+      "width": 390,
+      "sample": 3,
+      "lcp": 860,
+      "cls": 0,
+      "fcp": 860
+    },
+    {
+      "path": "/workspace",
+      "width": 390,
+      "sample": 1,
+      "lcp": 1144,
+      "cls": 0,
+      "fcp": 1144
+    },
+    {
+      "path": "/workspace",
+      "width": 390,
+      "sample": 2,
+      "lcp": 1088,
+      "cls": 0,
+      "fcp": 1088
+    },
+    {
+      "path": "/workspace",
+      "width": 390,
+      "sample": 3,
+      "lcp": 856,
+      "cls": 0,
+      "fcp": 856
+    }
+  ],
+  "writes": []
+}

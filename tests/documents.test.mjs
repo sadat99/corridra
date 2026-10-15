@@ -74,6 +74,7 @@ test('UX acceptance ledgers keep phase identifiers, unique records and bounded v
     ['03', 'docs/ux10x/ux03'],
     ['04', 'docs/ux10x/ux04'],
     ['05', 'docs/ux10x/ux05'],
+    ['06', 'docs/ux10x/ux06'],
   ]) {
     const ledger = JSON.parse(await readFile(new URL(`${directory}/coverage.json`, root), 'utf8'));
     assert.ok(ledger.verification.scope.includes(`UX-${phase}`));

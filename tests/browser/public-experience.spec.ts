@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const routes = [
-  ['/', 'Going into a new market?'],
+  ['/', 'The right market.'],
   ['/sell', 'Make the trip commercially useful.'],
   ['/source', 'Visit fewer suppliers.'],
   ['/enter-market', 'without entering it blind.'],
@@ -66,14 +66,18 @@ test('navigation opens, closes with Escape and takes visitors to a solution', as
     await menu.click();
     await expect(menu).toHaveAttribute('aria-expanded', 'true');
   }
-  const solutions = page.locator('summary');
+  const solutions = page.getByRole('navigation', { name: 'Main navigation' }).locator('summary');
   await solutions.focus();
   await page.keyboard.press('Enter');
   await expect(
     page.getByRole('link', { name: 'Sell in a new market', exact: true }).first(),
   ).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.locator('details')).not.toHaveAttribute('open', '');
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Main navigation', includeHidden: true })
+      .locator('details'),
+  ).not.toHaveAttribute('open', '');
   if (isMobile) {
     await expect(menu).toBeFocused();
     await expect(menu).toHaveAttribute('aria-expanded', 'false');
@@ -98,7 +102,7 @@ test('open navigation passes accessibility checks and remains usable at narrow w
     await page.setViewportSize({ width: 320, height: 740 });
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
   }
-  await page.locator('summary').click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).locator('summary').click();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,

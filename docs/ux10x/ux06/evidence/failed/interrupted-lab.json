@@ -1,0 +1,102 @@
+{
+  "environment": "Local production build, Chromium, cold new context, CPU 4x, RTT 150ms, downlink 1.5Mbit/s; three samples per route/width. LCP is last observed before closing the page; CLS is a bounded lab observation. No field percentile, INP, Lighthouse score or production performance comparison claimed.",
+  "observations": [
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 1384,
+      "cls": 0,
+      "fcp": 1384
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1400,
+      "cls": 0,
+      "fcp": 1400
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1136,
+      "cls": 0,
+      "fcp": 1136
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 1524,
+      "cls": 0,
+      "fcp": 1524
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1536,
+      "cls": 0,
+      "fcp": 1536
+    },
+    {
+      "path": "/plan",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1708,
+      "cls": 0,
+      "fcp": 1708
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 1,
+      "lcp": 1484,
+      "cls": 0,
+      "fcp": 1484
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 2,
+      "lcp": 1288,
+      "cls": 0,
+      "fcp": 1288
+    },
+    {
+      "path": "/workspace",
+      "width": 1440,
+      "sample": 3,
+      "lcp": 1012,
+      "cls": 0,
+      "fcp": 1012
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 1,
+      "lcp": 1016,
+      "cls": 0,
+      "fcp": 1016
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 2,
+      "lcp": 952,
+      "cls": 0,
+      "fcp": 952
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "sample": 3,
+      "lcp": 820,
+      "cls": 0,
+      "fcp": 820
+    }
+  ],
+  "writes": []
+}

@@ -1,0 +1,76 @@
+{
+  "baseline": "ebb992cebef7c68e16922a6f29471939de843867",
+  "scope": "Static unique control/input contract attributes and destinations across seven changed presentation modules. Duplicate link placements may consolidate. Does not prove runtime handler/state coverage.",
+  "results": [
+    {
+      "file": "apps/web/app/page.tsx",
+      "relocated": [],
+      "baselineControls": 8,
+      "currentControls": 13,
+      "missing": []
+    },
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "relocated": [
+        {
+          "control": {
+            "tag": "a",
+            "attrs": ["href=\"/plan\""]
+          },
+          "before": 1,
+          "after": 0,
+          "redesignedLocation": "apps/web/app/page.tsx; header /plan also retained",
+          "acceptance": "Actual public link resolution and mobile/desktop header navigation tests"
+        },
+        {
+          "control": {
+            "tag": "a",
+            "attrs": ["href=\"/how-it-works\""]
+          },
+          "before": 1,
+          "after": 0,
+          "redesignedLocation": "apps/web/app/page.tsx; header /plan also retained",
+          "acceptance": "Actual public link resolution and mobile/desktop header navigation tests"
+        }
+      ],
+      "baselineControls": 12,
+      "currentControls": 13,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/account/page.tsx",
+      "relocated": [],
+      "baselineControls": 9,
+      "currentControls": 9,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/account/customer-missions.tsx",
+      "relocated": [],
+      "baselineControls": 4,
+      "currentControls": 4,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/delivery-view.tsx",
+      "relocated": [],
+      "baselineControls": 10,
+      "currentControls": 12,
+      "missing": []
+    },
+    {
+      "file": "apps/web/components/mission-passport.tsx",
+      "relocated": [],
+      "baselineControls": 0,
+      "currentControls": 0,
+      "missing": []
+    },
+    {
+      "file": "apps/web/components/participant-scope.tsx",
+      "relocated": [],
+      "baselineControls": 0,
+      "currentControls": 0,
+      "missing": []
+    }
+  ]
+}
