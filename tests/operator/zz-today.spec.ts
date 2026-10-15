@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { createHmac } from 'node:crypto';
 
 function totp(secret: string) {
@@ -93,6 +93,8 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
     'href',
     '#workspace-missions',
   );
+  await mkdir('.cache/today', { recursive: true });
+  await today.screenshot({ path: '.cache/today/today-panel.png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // A failed read says so and leaves the mission list working.
   await page.unroute('**/api/workspace/missions?*view=today*');
