@@ -110,3 +110,97 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
     server.kill('SIGTERM');
   }
 });
+
+test('UX-02 customer account forms validate, submit once and show non-disclosing outcomes for sign-up, reset request and email verification', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  const cli = createRequire(import.meta.url).resolve('next/dist/bin/next', {
+    paths: [resolve('apps/web')],
+  });
+  const server = spawn(
+    process.execPath,
+    [cli, 'start', '--hostname', '127.0.0.1', '--port', '3401'],
+    {
+      cwd: resolve('apps/web'),
+      stdio: 'ignore',
+      env: {
+        PATH: process.env.PATH,
+        NODE_ENV: 'production',
+        NEXT_TELEMETRY_DISABLED: '1',
+        CORRIDRA_NEON_AUTH_ENABLED: 'true',
+        NEON_AUTH_BASE_URL:
+          'https://ep-ux02-fixture.neonauth.eu-central-1.aws.neon.tech/neondb/auth',
+        NEON_AUTH_COOKIE_SECRET: randomBytes(32).toString('hex'),
+        APP_ORIGIN: 'http://127.0.0.1:3401',
+      },
+    },
+  );
+  try {
+    await expect(async () => {
+      expect((await page.request.get('http://127.0.0.1:3401/signup')).status()).toBe(200);
+    }).toPass({ timeout: 15000 });
+    // Synthetic transport only: every auth call is answered locally and recorded. No provider is reached.
+    const calls: { path: string; body: string }[] = [];
+    await page.route('**/api/auth/**', async (route) => {
+      if (route.request().method() === 'POST')
+        calls.push({
+          path: new URL(route.request().url()).pathname,
+          body: route.request().postData() ?? '',
+        });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: true,
+          success: true,
+          token: null,
+          user: { id: 'synthetic-user', email: 'synthetic@example.invalid', emailVerified: false },
+        }),
+      });
+    });
+    // Sign-up: browser validation blocks a short password before any request is sent.
+    await page.goto('http://127.0.0.1:3401/signup');
+    await page.getByLabel('Name', { exact: true }).fill('Synthetic Person');
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-signup@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill('too short');
+    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    expect(calls).toHaveLength(0);
+    await page.getByLabel('Password', { exact: true }).fill('Synthetic long password only');
+    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await expect(page).toHaveURL('http://127.0.0.1:3401/verify-email');
+    expect(calls).toHaveLength(1);
+    expect(calls[0].path).toContain('sign-up');
+    // Reset request: the answer never says whether the address has an account.
+    await page.goto('http://127.0.0.1:3401/forgot-password');
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-reset@example.invalid');
+    await page.getByRole('button', { name: 'Request reset email', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText(
+      'If an account uses this address, you will receive a password reset email.',
+    );
+    await expect(page.getByRole('button', { name: 'Request reset email' })).toHaveCount(0);
+    expect(calls).toHaveLength(2);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    // Email verification: request a code, reject a malformed code, then verify a six-digit one.
+    await page.goto('http://127.0.0.1:3401/verify-email');
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-verify@example.invalid');
+    await page.getByRole('button', { name: 'Request verification code', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText(
+      'If verification is needed for this account, a code will be sent to this address.',
+    );
+    expect(calls).toHaveLength(3);
+    await page.getByLabel('Verification code', { exact: true }).fill('12345');
+    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    expect(calls).toHaveLength(3);
+    await page.getByRole('button', { name: 'Request a new code' }).click();
+    await expect(page.getByLabel('Verification code', { exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Request verification code', exact: true }).click();
+    await page.getByLabel('Verification code', { exact: true }).fill('123456');
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await expect(page).toHaveURL('http://127.0.0.1:3401/signin');
+    expect(calls.filter((call) => call.path.includes('verify-email'))).toHaveLength(1);
+  } finally {
+    server.kill('SIGTERM');
+  }
+});

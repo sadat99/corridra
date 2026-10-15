@@ -174,3 +174,10 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Verification: public browser suite 82 of 82, lint, typecheck, build, docs and design tests pass. Desktop capture inspected. Mobile relies on the suite's overflow and axe checks at 390 px.
 - Limits: the section describes what the example flow does today and makes no claim about orders, buyers or outcomes.
 - Next step: Track V browser tests and the intake polish, then the corridor evidence view (later backend work).
+
+## 2026-10-15, Claude Code, Track V: customer account form test
+
+- Request: keep moving. Track V lists customer account forms as never exercised in a browser.
+- What changed: one new protected-suite test in `tests/operator/z-ux02-access.spec.ts`. It runs the real customer account screens against a locally answered auth transport (no provider is reached, only synthetic addresses). It checks that sign-up refuses a short password before sending anything and then submits once and moves to email verification, that the reset request shows the same non-disclosing message and hides its button, and that email verification rejects a malformed code, lets the user request a new code, and verifies a six-digit code once. Axe finds no violations on the reset and verification states.
+- Verification: the spec file passes (2 of 2). The full protected suite is run before the next merge.
+- Still open in Track V: staff invitation acceptance, operator error retry, owner membership form submit, contributor signed-out page, rebuilt coverage ledger.
