@@ -10,7 +10,8 @@
       "main": false,
       "feat/ux-02-public-experience": false,
       "feat/ux-03-participant-journeys": false,
-      "feat/ux-04-operator-experience": false
+      "feat/ux-04-operator-experience": false,
+      "feat/ux-05-governance-experience": false
     }
   },
   "regions": ["fra1"]

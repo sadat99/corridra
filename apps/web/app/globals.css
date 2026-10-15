@@ -2310,3 +2310,22 @@ summary:hover {
   min-height: 44px;
   padding-block: 0.7rem;
 }
+
+.ux-governance-panel > section {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+}
+.ux-governance-panel h3,
+.ux-governance-panel h4 {
+  scroll-margin-block-start: var(--space-6);
+}
+.ux-governance-panel .operations-metrics > div {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  padding: var(--space-4);
+}
+.ux-governance-panel .ux-next-action li + li {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}

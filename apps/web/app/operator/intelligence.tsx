@@ -1,4 +1,11 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
+import { StatusBadge } from '../../components/access-state';
+import {
+  SubmissionFailure,
+  submissionMessage,
+  useRetainedSubmission,
+} from '../../components/retained-submission';
 import { displayMoney } from '@corridra/domain/locale';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 const tasks = [
@@ -63,7 +70,12 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           : { cache: 'no-store' },
       );
       const body = await r.json();
-      if (!r.ok) throw new Error(body.error);
+      if (!r.ok)
+        throw new SubmissionFailure(
+          body.error ?? 'The submission could not be confirmed.',
+          r.status,
+          r.headers.get('X-Corridra-Request-ID'),
+        );
       return body;
     },
     [tenant],
@@ -82,15 +94,49 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
       live = false;
     };
   }, [request]);
-  async function act(action: string, input: unknown) {
+  const submit = useRetainedSubmission();
+  async function act(action: string, input: unknown, form: HTMLFormElement) {
     setBusy(true);
     setMessage('');
     try {
-      const result = await request(action, input);
+      const result = await submit(form, action, input, async (operation, original) => {
+        try {
+          return await request(operation, original);
+        } catch (error) {
+          if (
+            operation === 'ai-run' &&
+            error instanceof SubmissionFailure &&
+            [400, 403, 409, 413, 422].includes(error.status)
+          ) {
+            try {
+              const snapshot: Snapshot = await request('intelligence');
+              setData(snapshot);
+              const runId = (original as { commandId: string }).commandId;
+              if (snapshot.drafts.some((draft) => draft.run_id === runId))
+                return {
+                  message:
+                    'Request recorded. Inspect its current status before preparing another draft; manual mission work remains available.',
+                };
+              // The existing service returns at most 100 joined run rows. Only a complete
+              // authorized read can establish that this rejected request has no recorded intent.
+              error.intentNotRecorded = snapshot.drafts.length < 100;
+            } catch {
+              // An unavailable or denied read cannot establish receipt or absence.
+            }
+          }
+          throw error;
+        }
+      });
       setMessage(result.message ?? 'Saved for review.');
-      await refresh();
+      try {
+        await refresh();
+      } catch {
+        setMessage(
+          'Review received. Refresh failed; refresh AI review instead of submitting the received review again.',
+        );
+      }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Review could not be saved');
+      setMessage(submissionMessage(e, 'Review could not be saved', action === 'ai-run'));
     } finally {
       setBusy(false);
     }
@@ -99,39 +145,62 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const task = String(f.get('task'));
-    void act('ai-run', {
-      commandId: crypto.randomUUID(),
-      missionId: f.get('mission'),
-      policyId: f.get('policy'),
-      input: {
-        task,
-        schemaVersion: 1,
-        claimIds: String(f.get('claims'))
-          .split(',')
-          .map((v) => v.trim()),
-        ...(task === 'translation' ? { targetLanguage: f.get('language') } : {}),
+    void act(
+      'ai-run',
+      {
+        commandId: crypto.randomUUID(),
+        missionId: f.get('mission'),
+        policyId: f.get('policy'),
+        input: {
+          task,
+          schemaVersion: 1,
+          claimIds: String(f.get('claims'))
+            .split(',')
+            .map((v) => v.trim()),
+          ...(task === 'translation' ? { targetLanguage: f.get('language') } : {}),
+        },
       },
-    });
+      e.currentTarget,
+    );
   }
   function review(e: FormEvent<HTMLFormElement>, draft: Draft) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     try {
       const decision = String(f.get('decision'));
-      void act('ai-review', {
-        commandId: crypto.randomUUID(),
-        resultId: draft.result_id,
-        decision,
-        reason: f.get('reason'),
-        ...(decision === 'EDIT' ? { editedOutput: JSON.parse(String(f.get('edited'))) } : {}),
-      });
+      void act(
+        'ai-review',
+        {
+          commandId: crypto.randomUUID(),
+          resultId: draft.result_id,
+          decision,
+          reason: f.get('reason'),
+          ...(decision === 'EDIT' ? { editedOutput: JSON.parse(String(f.get('edited'))) } : {}),
+        },
+        e.currentTarget,
+      );
     } catch {
       setMessage('Check the structured draft before saving the edit.');
     }
   }
   return (
-    <section className="detail-card" aria-label="Governed AI review">
+    <section
+      className="detail-card ux-governance-panel"
+      data-operator-workbench
+      aria-label="Governed AI review"
+    >
       <h2>AI assistance and review</h2>
+      <OperatorWorkbench
+        label="AI review workflow sections"
+        sections={[
+          { label: 'Draft preparation', heading: 'Prepare a source-linked draft' },
+          { label: 'Review recorded drafts', heading: 'Recorded draft reviews' },
+          {
+            label: 'Original sources and rights',
+            heading: 'Authorized original source quotations and rights',
+          },
+        ]}
+      />
       <p>
         Assistance produces source-linked drafts. Accepting a draft records your review. Apply
         changes separately through mission commands.
@@ -178,6 +247,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           .
         </p>
       )}
+      <h3>Prepare a source-linked draft</h3>
       <form className="operator-form" onSubmit={run}>
         <label className="field">
           Task
@@ -216,6 +286,13 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           Prepare a draft
         </button>
       </form>
+      <h3>Recorded draft reviews</h3>
+      {data && !data.drafts.length && (
+        <p>
+          No recorded drafts in this workspace. Continue manual mission work or prepare a draft only
+          when its reviewed policy and source rights permit it.
+        </p>
+      )}
       {data?.drafts.map((draft, i) => (
         <article key={draft.result_id ?? `${draft.run_id}-${i}`}>
           <h3>{draft.task.replaceAll('_', ' ')}</h3>
@@ -234,7 +311,13 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           )}
           {draft.output !== null && draft.output !== undefined && (
             <>
-              <pre className="ai-draft-preview">
+              <StatusBadge tone="unknown">Unverified AI draft</StatusBadge>
+              <pre
+                className="ai-draft-preview"
+                tabIndex={0}
+                role="region"
+                aria-label={`Original ${draft.task.replaceAll('_', ' ')} draft ${i + 1}`}
+              >
                 {JSON.stringify(draft.edited_output ?? draft.output, null, 2)}
               </pre>
               <button
@@ -285,7 +368,14 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
       {sources !== null && (
         <details open>
           <summary>Authorized original source quotations and rights</summary>
-          <pre className="ai-draft-preview">{JSON.stringify(sources, null, 2)}</pre>
+          <pre
+            className="ai-draft-preview"
+            tabIndex={0}
+            role="region"
+            aria-label="Original source and rights data"
+          >
+            {JSON.stringify(sources, null, 2)}
+          </pre>
           <button className="text-link" onClick={() => setSources(null)}>
             Close source inspection
           </button>

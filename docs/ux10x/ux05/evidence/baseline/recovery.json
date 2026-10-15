@@ -1,0 +1,38 @@
+[
+  {
+    "name": "recovery",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "recovery",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "recovery",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "recovery",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "recovery",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "recovery",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

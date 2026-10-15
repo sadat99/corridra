@@ -1,0 +1,36 @@
+{
+  "baseline": "2fb94b716cd690fcb60325bda7cd299e5847435f",
+  "scope": "Static control tags and input/link contract attributes. Does not prove runtime state/handler coverage.",
+  "results": [
+    {
+      "file": "apps/web/app/operator/operations.tsx",
+      "baselineControls": 59,
+      "currentControls": 61,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/intelligence.tsx",
+      "baselineControls": 24,
+      "currentControls": 24,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/network.tsx",
+      "baselineControls": 52,
+      "currentControls": 52,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/review-settings.tsx",
+      "baselineControls": 27,
+      "currentControls": 27,
+      "missing": []
+    },
+    {
+      "file": "apps/web/app/operator/workspace.tsx",
+      "baselineControls": 42,
+      "currentControls": 42,
+      "missing": []
+    }
+  ]
+}

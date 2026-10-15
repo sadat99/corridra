@@ -662,6 +662,10 @@ function TenantWorkspace({
               className="operator-section workspace-panel"
             >
               <h2>Access and audit</h2>
+              <p>
+                Inspect members and recent changes for this workspace. Viewing an audit entry does
+                not change a role, verify a source or authorize a payment.
+              </p>
               <button
                 className="text-link"
                 onClick={() =>
@@ -696,6 +700,11 @@ function TenantWorkspace({
               className="operator-section workspace-panel"
             >
               <h2>Workspace controls</h2>
+              <p>
+                Membership and switches apply only to this workspace. Provider deployment approval,
+                exact source rights, current MFA and independent review remain separate. A synthetic
+                switch cannot authorize real customer work, outreach or a payout.
+              </p>
               <form
                 className="operator-form"
                 onSubmit={(event) => {

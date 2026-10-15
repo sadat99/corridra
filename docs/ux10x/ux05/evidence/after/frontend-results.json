@@ -1,0 +1,27 @@
+[
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "seconds": 9.33
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "seconds": 10.84
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "seconds": 10.7
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "seconds": 1.46
+  },
+  {
+    "command": "pnpm test:operator",
+    "exitCode": 0,
+    "seconds": 494.71
+  }
+]

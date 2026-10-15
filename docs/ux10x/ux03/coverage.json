@@ -14487,7 +14487,7 @@
       "notes": "Static control discovery; dynamic instances and runtime state coverage must be reconciled."
     },
     {
-      "id": "UX01-SCENARIO-1",
+      "id": "UX03-SCENARIO-1",
       "routeOrModule": "Private buyer introduction and response",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Private buyer introduction and response",
@@ -14504,7 +14504,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-2",
+      "id": "UX03-SCENARIO-2",
       "routeOrModule": "Client evidence request and institutional export",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Client evidence request and institutional export",
@@ -14521,7 +14521,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-3",
+      "id": "UX03-SCENARIO-3",
       "routeOrModule": "Client mission detail and quotation scope",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Client mission detail and quotation scope",
@@ -14538,7 +14538,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-4",
+      "id": "UX03-SCENARIO-4",
       "routeOrModule": "Supplier original declaration",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Supplier original declaration",
@@ -14555,7 +14555,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-5",
+      "id": "UX03-SCENARIO-5",
       "routeOrModule": "Contributor exact assignment, offline work and rewards",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Contributor exact assignment, offline work and rewards",
@@ -14572,7 +14572,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-6",
+      "id": "UX03-SCENARIO-6",
       "routeOrModule": "Verified customer invitation redemption",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Verified customer invitation redemption",
@@ -14587,7 +14587,7 @@
       "notes": "Bounded executed scenario only. Does not mark every control in this module verified."
     },
     {
-      "id": "UX01-SCENARIO-7",
+      "id": "UX03-SCENARIO-7",
       "routeOrModule": "Contributor server startup and independent MFA return destination",
       "role": "Exact roles exercised by linked test; no inference for other roles",
       "baselineAction": "Contributor server startup and independent MFA return destination",

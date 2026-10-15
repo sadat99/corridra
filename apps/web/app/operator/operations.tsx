@@ -1,4 +1,11 @@
 'use client';
+import {
+  OperatorWorkbench,
+  useFormChangeGuard,
+  formAcknowledged,
+} from '../../components/operator-workbench';
+import { SubmissionFailure } from '../../components/retained-submission';
+import { displayDate } from '@corridra/domain/locale';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
 type Row = Record<string, unknown>;
@@ -213,8 +220,25 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
     [preview, setPreview] = useState<Row | null>(null),
     [advanced, setAdvanced] = useState(''),
     [ack, setAck] = useState(false);
-  const pending = useRef<{ fingerprint: string; command: Row } | null>(null);
+  const pending = useRef<{
+    fingerprint: string;
+    command: Row;
+    form?: HTMLFormElement;
+    uncertain: boolean;
+  } | null>(null);
   const currentFilters = useRef('');
+  const { ref: formRootRef, onChangeCapture, onResetCapture } = useFormChangeGuard<HTMLElement>();
+  const [unacknowledged, setUnacknowledged] = useState(false);
+  function changeScope(change: () => void) {
+    if (
+      (packDraft || advanced || formRootRef.current?.querySelector('form[data-ux-dirty="true"]')) &&
+      !window.confirm(
+        'Change the route or service? Unsaved readiness entries may be removed. Cancel to keep this view and its drafts.',
+      )
+    )
+      return;
+    change();
+  }
   const request = useCallback(
     async (action: string, body?: unknown, query = '') => {
       const r = await fetch(
@@ -228,7 +252,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
             },
       );
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error ?? 'Request failed');
+      if (!r.ok)
+        throw new SubmissionFailure(
+          data.error ?? 'Request failed',
+          r.status,
+          r.headers.get('X-Corridra-Request-ID'),
+        );
       return data;
     },
     [tenant],
@@ -275,15 +304,28 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
   }, [load]);
-  async function send(command: Row) {
+  async function send(command: Row, form?: HTMLFormElement) {
     const fingerprint = JSON.stringify(command);
-    if (!pending.current || pending.current.fingerprint !== fingerprint)
-      pending.current = { fingerprint, command: { id: crypto.randomUUID(), ...command } };
+    if (pending.current && pending.current.fingerprint !== fingerprint) {
+      setMessage(
+        'An earlier command has no confirmed receipt. Retry its original entries before submitting another command.',
+      );
+      return;
+    }
+    if (!pending.current)
+      pending.current = {
+        fingerprint,
+        command: structuredClone({ id: crypto.randomUUID(), ...command }),
+        form,
+        uncertain: false,
+      };
     setBusy(true);
     setMessage('');
     try {
       await request('operations', pending.current.command);
+      if (pending.current.form) formAcknowledged(pending.current.form);
       pending.current = null;
+      setUnacknowledged(false);
       setMessage('Recorded. History is retained.');
       const refreshed = await load(filters);
       setMessage(
@@ -292,7 +334,18 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
           : 'Recorded. Refresh failed; refresh the view instead of resubmitting the received command.',
       );
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Request failed. Retry the same command.');
+      const rejected = e instanceof SubmissionFailure && e.rejected && !pending.current?.uncertain;
+      if (rejected) {
+        pending.current = null;
+        setUnacknowledged(false);
+      } else {
+        if (pending.current) pending.current.uncertain = true;
+        setUnacknowledged(true);
+      }
+      setMessage(
+        (e instanceof Error ? e.message : 'Request failed.') +
+          (rejected ? '' : ' Receipt not confirmed. Retry original operational command.'),
+      );
     } finally {
       setBusy(false);
     }
@@ -318,19 +371,22 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
     const f = new FormData(event.currentTarget),
       dimension = String(f.get('dimension')),
       old = readings.find((r) => r.dimension === dimension);
-    void send({
-      action: 'readiness',
-      routeId: route,
-      packId: pack.id,
-      missionType: type,
-      dimension,
-      version: Number(old?.version ?? 0) + 1,
-      status: f.get('status'),
-      ownerId: f.get('owner'),
-      sourceId: f.get('source') || null,
-      validUntil: new Date(String(f.get('until'))).toISOString(),
-      reason: f.get('reason'),
-    });
+    void send(
+      {
+        action: 'readiness',
+        routeId: route,
+        packId: pack.id,
+        missionType: type,
+        dimension,
+        version: Number(old?.version ?? 0) + 1,
+        status: f.get('status'),
+        ownerId: f.get('owner'),
+        sourceId: f.get('source') || null,
+        validUntil: new Date(String(f.get('until'))).toISOString(),
+        reason: f.get('reason'),
+      },
+      event.currentTarget,
+    );
   }
   function release(state: string) {
     if (!pack || !type) return;
@@ -359,6 +415,11 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
   function preparePack(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     if (!pack || !controls) return;
+    if (
+      packDraft &&
+      !window.confirm('Replace the current configuration draft? Cancel to keep your entries.')
+    )
+      return;
     setPreview(null);
     setPackDraft(
       JSON.stringify(
@@ -391,8 +452,35 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
     }
   }
   return (
-    <section id="workspace-operations" tabIndex={-1} className="workspace-panel">
+    <section
+      id="workspace-operations"
+      tabIndex={-1}
+      className="workspace-panel ux-governance-panel"
+      data-operator-workbench
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
       <h2>Global operations</h2>
+      <OperatorWorkbench
+        label="Operations workflow sections"
+        sections={[
+          { label: 'Mission funnel', heading: 'Mission Operations dashboard' },
+          { label: 'Service economics', heading: 'Corridra fee revenue and delivery economics' },
+          { label: 'Customer trade', heading: 'Customer trade outcomes' },
+          ...(admin
+            ? [
+                { label: 'Readiness review', heading: 'Readiness review' },
+                {
+                  label: 'Budgets, documents and effort',
+                  heading: 'Financial, effort and case records',
+                },
+              ]
+            : []),
+          { label: 'Recovery queue', heading: 'Recovery and health' },
+          { label: 'Activation blockers', heading: 'Production readiness and activation' },
+        ]}
+      />
       <p>
         Founder visibility, route readiness and accountable recovery. The current environment uses
         synthetic missions. Account signup does not authorize real mission intake.
@@ -414,6 +502,18 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
       <p role="status" aria-live="polite" aria-label="Operations status">
         {message}
       </p>
+      {unacknowledged && (
+        <button
+          className="button button-secondary"
+          disabled={busy}
+          onClick={() => {
+            const original = pending.current;
+            if (original) void send(JSON.parse(original.fingerprint));
+          }}
+        >
+          Retry original operational command
+        </button>
+      )}
       <section id="ops-dashboard" tabIndex={-1}>
         <h3>Mission Operations dashboard</h3>
         <form onSubmit={filter} className="operator-form">
@@ -482,6 +582,38 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
         {dashboard && (
           <>
             <p>{dashboard.definitions.scope}</p>
+            <section className="ux-next-action" aria-label="Recorded mission action queue">
+              <h4>Recorded next actions on this page</h4>
+              <p>
+                {dashboard.missions.length} records on this page of{' '}
+                {value(dashboard.summary.submitted)} matching submissions. Filter totals cover all
+                matching records. The list keeps server order and shows at most five recorded next
+                actions.
+              </p>
+              <ul>
+                {dashboard.missions
+                  .filter((m) => m.next_action)
+                  .slice(0, 5)
+                  .map((m) => (
+                    <li key={String(m.id)}>
+                      <strong>{value(m.next_action)}</strong>
+                      <p>
+                        Mission {value(m.id)} · Owner {value(m.owner_id)} · Due{' '}
+                        {m.due_at ? displayDate(String(m.due_at)) : 'Unknown'}
+                      </p>
+                    </li>
+                  ))}
+              </ul>
+              {!dashboard.missions.some((m) => m.next_action) && (
+                <p>
+                  No next action is recorded on this page. This does not imply that work is
+                  complete.
+                </p>
+              )}
+              <a className="text-link" href="#workspace-missions">
+                Open mission review queue
+              </a>
+            </section>
             <dl className="operations-metrics">
               {Object.entries(dashboard.summary).map(([k, v]) => (
                 <div key={k}>
@@ -521,11 +653,11 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
               rows={dashboard.economics.map((r) => ({
                 ...r,
                 contribution_margin:
-                  r.contribution_margin_minor === null
+                  r.contribution_margin_minor === null || r.contribution_margin_minor === undefined
                     ? 'Unknown; incomplete fee/cost coverage'
                     : formatMoney(String(r.contribution_margin_minor), currency.parse(r.currency)),
                 effort:
-                  r.effort_minutes === null
+                  r.effort_minutes === null || r.effort_minutes === undefined
                     ? 'Unknown'
                     : `${r.effort_minutes} recorded minutes; completeness ${r.effort_complete === true ? 'attested' : 'unknown'}`,
               }))}
@@ -665,9 +797,11 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
               disabled={busy}
               value={route}
               onChange={(e) => {
-                setRoute(e.target.value);
-                setType('');
-                setPreview(null);
+                changeScope(() => {
+                  setRoute(e.target.value);
+                  setType('');
+                  setPreview(null);
+                });
               }}
             >
               <option value="">Choose a configured route</option>
@@ -693,7 +827,11 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
               </p>
               <label className="field">
                 Route service
-                <select disabled={busy} value={type} onChange={(e) => setType(e.target.value)}>
+                <select
+                  disabled={busy}
+                  value={type}
+                  onChange={(e) => changeScope(() => setType(e.target.value))}
+                >
                   <option value="">Choose an enabled mission type</option>
                   {pack.configuration.missionTypes.map((t) => (
                     <option key={t}>{t}</option>
@@ -766,7 +904,14 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
                 </p>
                 <details>
                   <summary>Inspect exact proposed pack</summary>
-                  <pre className="operations-json">{JSON.stringify(p.proposed_pack, null, 2)}</pre>
+                  <pre
+                    className="operations-json"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={`Exact proposed configuration ${String(p.id)}`}
+                  >
+                    {JSON.stringify(p.proposed_pack, null, 2)}
+                  </pre>
                 </details>
                 <button
                   className="button"
@@ -800,6 +945,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
             ))}
           {pack && type && (
             <>
+              <h4>Readiness review</h4>
+              <p>
+                Evidence checked {controls ? displayDate(controls.checkedAt) : 'Not checked'}.
+                Effective status uses the current server review; the recorded decision remains
+                historical. Missing or expired evidence stays blocked.
+              </p>
               <h4>
                 {routeRow?.origin_market} → {routeRow?.destination_market}: {type} readiness
               </h4>
@@ -811,6 +962,8 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
                   return {
                     dimension: labels[d],
                     status: current ? r.status : 'BLOCKED',
+                    recorded_status: r?.status ?? 'No observation',
+                    valid_until: r?.valid_until ?? 'Unknown',
                     owner: r?.owner_id ?? null,
                     evidence: r?.source_id ?? null,
                     reason: r
@@ -823,12 +976,14 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
                 columns={[
                   ['dimension', 'Dimension'],
                   ['status', 'Status'],
+                  ['recorded_status', 'Recorded decision'],
+                  ['valid_until', 'Evidence valid until'],
                   ['owner', 'Owner'],
                   ['evidence', 'Source evidence'],
                   ['reason', 'Decision or blocker'],
                 ]}
               />
-              <form onSubmit={readiness} className="operator-form">
+              <form key={route + ':' + type} onSubmit={readiness} className="operator-form">
                 <fieldset disabled={busy}>
                   <legend>Record a readiness observation with evidence</legend>
                   <label className="field">
@@ -865,7 +1020,7 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
                   </label>
                   <label className="field">
                     Readiness valid until
-                    <input type="datetime-local" name="until" required />
+                    <input type="datetime-local" name="until" step="1" required />
                   </label>
                   <label className="field">
                     Readiness rationale
@@ -985,6 +1140,9 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
               ['id', 'ID'],
               ['mission_id', 'Mission'],
               ['kind', 'Kind'],
+              ['parent_id', 'Original invoice parent'],
+              ['external_reference', 'Original reference'],
+              ['occurred_at', 'Recorded occurrence'],
               ['amount_minor', 'Minor units'],
               ['currency', 'Currency'],
               ['source_id', 'Source'],
@@ -1031,6 +1189,24 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
               ['source_id', 'Evidence source'],
             ]}
           />
+          <Table
+            label="Recorded communication policy versions"
+            rows={controls?.policies ?? []}
+            columns={[
+              ['id', 'Policy reference'],
+              ['version', 'Version'],
+              ['jurisdiction', 'Jurisdiction'],
+              ['channel', 'Channel'],
+              ['basis', 'Recorded basis'],
+              ['enabled', 'Enabled flag'],
+              ['effective_from', 'Effective from'],
+              ['valid_until', 'Valid until'],
+            ]}
+          />
+          <p>
+            A recorded enabled flag does not approve outreach. Current policy, purpose, rights,
+            opt-out and deployment checks still apply to each communication.
+          </p>
           <Table
             label="Privacy policy versions"
             rows={controls?.privacy ?? []}

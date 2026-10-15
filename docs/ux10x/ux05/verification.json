@@ -1,0 +1,66 @@
+{
+  "scope": "UX-05 governance presentation, retained submissions and role-scoped operations acceptance",
+  "tests": [
+    {
+      "baseline": "Founder mission dashboard and separate service economics",
+      "implementation": "Source-grounded current-page actions and exact existing tables/denominators",
+      "positive": "UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics",
+      "negative": "Original EUR minor units and source-backed incomplete effort/margin stay unknown; ordinary operator cannot read financial controls",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Thirteen exact route readiness dimensions",
+      "implementation": "Current server review, original recorded decision, source/owner and validity timestamp",
+      "positive": "UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics",
+      "negative": "All thirteen missing dimensions block approval; a real observation expires and effective status returns BLOCKED while its historical PASS remains labelled",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Exact configuration preview and independent decision",
+      "implementation": "Existing bounded JSON, proposal and service commands plus draft guard",
+      "positive": "UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics",
+      "negative": "Cancelling scope replacement preserves the draft; own proposal cannot be published; existing operations integration test requires independent exact publication",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Operational recovery and case closure",
+      "implementation": "Immutable pending command, safe request reference, explicit original-command retry",
+      "positive": "UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics",
+      "negative": "Interrupt after actual commit, retry identical JSON/ID, deny closure without source and retain original current case before evidenced resolution",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "AI run and review",
+      "implementation": "Per-form retained command and received-versus-refresh feedback",
+      "positive": "governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries",
+      "negative": "Lost response replays original payload/ID; definitive pre-intent rejection allows correction only after complete authorized read; recorded input-size rejection creates no inference attempt; acknowledged review survives refresh outage",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Contributor execution review and rewards",
+      "implementation": "Per-form original command and unchanged exact-assignee/version/independence gates",
+      "positive": "governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries",
+      "negative": "Actual independent operator decision interrupted after commit replays identically; original non-member, suspension, reward-once and compensation negatives remain required",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    },
+    {
+      "baseline": "Rights, configuration, membership and audit",
+      "implementation": "Mounted original reviewed policy/member controls and focused disclosure access",
+      "positive": "invited operator enrolls MFA, records provenance, manages flags and signs out",
+      "negative": "New ordinary-operator workspace lacks owner control/policy/audit UI and actual controls/write APIs deny 403; existing fresh-MFA and two-tenant negatives remain required",
+      "status": "PASS",
+      "evidence": "evidence/after/test-operator.log"
+    }
+  ],
+  "limitations": [
+    "Static native-control parity does not prove every dynamic action/state.",
+    "Original programme rows without direct executed linkage remain NOT_YET_VERIFIED.",
+    "No new hosted customer email lifecycle or real-provider acceptance is claimed."
+  ]
+}

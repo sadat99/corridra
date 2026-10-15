@@ -212,6 +212,8 @@ for (const [file, root] of nodes) {
 }
 mkdirSync(outputDirectory, { recursive: true });
 const verification = JSON.parse(readFileSync(`${outputDirectory}/verification.json`, 'utf8'));
+const phase = verification.scope.match(/\bUX-(0[1-6])\b/)?.[1];
+if (!phase) throw new Error('Verification scope must identify its UX-01 through UX-06 phase');
 const coverage = {
   schemaVersion: 1,
   baselineRepository: 'sadat99/corridra',
@@ -244,7 +246,7 @@ const coverage = {
         'Static control discovery; dynamic instances and runtime state coverage must be reconciled.',
     })),
     ...verification.tests.map((test, index) => ({
-      id: `${verification.scope.includes('UX-02') ? 'UX02' : 'UX01'}-SCENARIO-${index + 1}`,
+      id: `UX${phase}-SCENARIO-${index + 1}`,
       routeOrModule: test.baseline,
       role: 'Exact roles exercised by linked test; no inference for other roles',
       baselineAction: test.baseline,

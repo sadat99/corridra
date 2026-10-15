@@ -1,0 +1,38 @@
+[
+  {
+    "name": "audit",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "audit",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "audit",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "audit",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "audit",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "audit",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

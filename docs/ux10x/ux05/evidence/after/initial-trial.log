@@ -1,0 +1,43 @@
+[WebServer] (node:121398) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:121412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:121428) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:121453) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics (11.8s)
+
+
+  1) tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('#workspace-operations').getByRole('status')
+    Expected pattern: /readiness|evidence/i
+    Received string:  "The record or policy changed. Check its status and refresh before retrying. Reference: d17b81fe-00a9-4715-8d9d-b618f6ab08a3"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('#workspace-operations').getByRole('status') with timeout 5000ms
+      - waiting for locator('#workspace-operations').getByRole('status')
+        13 × locator resolved to <p role="status" aria-live="polite" aria-label="Operations status">The record or policy changed. Check its status an…</p>
+           - unexpected value "The record or policy changed. Check its status and refresh before retrying. Reference: d17b81fe-00a9-4715-8d9d-b618f6ab08a3"
+
+
+      92 |   await expect(readiness.getByRole('cell', { name: 'BLOCKED', exact: true })).toHaveCount(13);
+      93 |   await ops.getByRole('button', { name: 'Approve synthetic route readiness', exact: true }).click();
+    > 94 |   await expect(ops.getByRole('status')).toContainText(/readiness|evidence/i);
+         |                                         ^
+      95 |   await expect(ops).toContainText('UNPUBLISHED');
+      96 |   await ops
+      97 |     .getByRole('combobox', { name: 'Readiness dimension', exact: true })
+        at /workspace/corridra/tests/operator/y-ux05-governance.spec.ts:94:41
+
+    Error Context: .cache/ux05/trial-results/y-ux05-governance-UX-05-go-3f204-and-role-specific-economics/error-context.md
+
+  1 failed
+    tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics

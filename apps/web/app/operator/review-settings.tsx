@@ -1,4 +1,5 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 type Catalogue = {
@@ -114,12 +115,28 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
   }
   return (
     <section
+      data-operator-workbench
       id="workspace-settings"
       tabIndex={-1}
       className="operator-section workspace-panel"
       aria-label="Corridor and policy settings"
     >
       <h2>Corridors and reviewed policies</h2>
+      <OperatorWorkbench
+        label="Reviewed configuration sections"
+        sections={[
+          { label: 'Mission templates', heading: 'Prepare commercial mission templates' },
+          { label: 'Directional route', heading: 'Create a directional corridor route' },
+          {
+            label: 'Source rights and model policies',
+            heading: 'Advanced versioned policy review',
+          },
+          {
+            label: 'Pinned configuration references',
+            heading: 'Current route packs and definition references',
+          },
+        ]}
+      />
       <p>
         Owner and admin reviews use existing versioned commands. Source, country, currency,
         permission and authenticator checks still apply. Use synthetic records until operational
@@ -273,7 +290,12 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
                   </p>
                   <details>
                     <summary>Inspect reviewed pack configuration</summary>
-                    <pre className="ai-draft-preview">
+                    <pre
+                      className="ai-draft-preview"
+                      tabIndex={0}
+                      role="region"
+                      aria-label={`Reviewed pack configuration ${p.id}`}
+                    >
                       {JSON.stringify(p.configuration, null, 2)}
                     </pre>
                   </details>

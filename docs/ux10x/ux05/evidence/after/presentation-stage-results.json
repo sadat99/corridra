@@ -1,0 +1,37 @@
+[
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "seconds": 9.05
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "seconds": 10.28
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "seconds": 12.97
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "seconds": 1.51
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "seconds": 11.28
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0,
+    "seconds": 113.41
+  },
+  {
+    "command": "pnpm test:operator",
+    "exitCode": 1,
+    "seconds": 443.8
+  }
+]
