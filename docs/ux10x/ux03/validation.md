@@ -1,5 +1,7 @@
 # UX-03 validation
 
+Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
+
 UX-02 main CI `38604184935` passed. Its file tree is the accepted baseline. A pre-change local build and all 12 protected tests passed, with six-width capture hooks exercising actual synthetic participant flows.
 
 The first static check found a React rule against rendering a ref and an unused local. Pending declaration state now uses React state; the imperative guard remains a ref. A newly added export replay assertion referred to an undefined test-local variable; the explicit local Origin header corrected it. A code review found that refresh did not release its in-flight guard; that guard is now released on every outcome. These were initial findings, not passing results. The first full run passed 199 integration and 72 public tests; eleven protected cases passed, while a new precision-error assertion matched both the application feedback and Next.js route announcer. It now scopes feedback to the participant view. Contributor startup recovery also uses the existing fresh-document pattern and is checked with the actual local database TCP outage.

@@ -1,5 +1,7 @@
 # Revised V2 Parts 1–4 UI navigation
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 This follow-up connects the existing V2 foundation, commercial missions, customer/institution delivery and governed intelligence/execution screens. It does not start Part 5 or activate unapproved operations.
 
 The operator workspace has role-aware, keyboard-accessible section links with stable fragment destinations. Workspace switching preserves the selected section. Source and claim references are visible to permitted operators. Owners/admins can inspect route/definition references, create directional routes, install missing commercial definitions and submit advanced reviewed pack/source-rights/model-policy versions through the existing guarded handlers. Unpacked routes are included in the existing tenant-scoped catalogue so a newly created route remains discoverable. Existing financial authority and append-only history are unchanged; independent reward compensation has an explicit form.

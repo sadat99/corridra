@@ -1,5 +1,7 @@
 # UX-06 first visual repair packet
 
+Current context: this is the historical first repair packet (PR 44). PR 45 subsequently improved entry/admin wayfinding, and PR 46 resolved the bounded owner setup guidance/password-recovery issue with confirmed owner workspace entry and both reset emails received. Its old deferred-auth statements below apply only to PR 44. See [access repair](access-repair.md), [production acceptance](../../implementation/access-recovery-production-acceptance.json) and [current plan](../../implementation/current-plan.md). Broader UX-06/action-state acceptance remains incomplete.
+
 Baseline: accepted UX-05 PR #43, merge `ebb992cebef7c68e16922a6f29471939de843867`. Exact-head and merge-commit CI passed. Production `dpl_5S5HDuzv7SNPzT8NkfT6wPT9VtLH` was READY in Frankfurt at that SHA; 30 read-only route/viewport checks passed with no axe violations, overflow or writes and anonymous mission access returned 401. The complete handoff governs behavior; Fusion supplies visual reference only.
 
 ## Actual implementation

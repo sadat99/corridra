@@ -1,5 +1,7 @@
 # Part 08: client and institutional delivery
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Use the protected operator workspace's **Client and programme delivery** panel. Programme operations are available to owner/admin/operator roles; approving publications, creating private links and publishing evidence-request instructions require owner/admin and fresh MFA. Reviewer/viewer access remains read-only. The original owner and the owner's personal admin account retain their existing permissions. This packet does not change owner-only configuration authority or enable signup.
 
 Create a programme with a name and explicit reporting purpose. Download the intake template. The first seven headers are required: participant_reference, company, name, email, objective, market and offer. Optional fields default to attendance “Not decided”, timezone “Asia/Dhaka”, outcome “Relevant meetings”, and empty visit dates, website and notes. Multiple outcomes use a `|` separator. Participant addresses must end in `@example.invalid`; these remain synthetic self-declarations, rather than approved customer onboarding.

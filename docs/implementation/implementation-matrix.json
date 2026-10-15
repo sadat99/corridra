@@ -1,0 +1,603 @@
+{
+  "schemaVersion": 1,
+  "reconciledDate": "2026-10-15",
+  "baselineCommit": "0c42920dbc970aa9fd49b1a8323d6ecca417a527",
+  "scope": "Requirement-family handoff index, not exhaustive runtime action/state coverage. Test references are locations to reproduce, not a new test execution claim.",
+  "authority": "docs/implementation/current-plan.md",
+  "historicalPlans": ["docs/implementation/plan-v1.0.md", "docs/implementation/v2-master-plan.md"],
+  "completeUXSpecification": "docs/ux10x/master-handoff.md",
+  "coverageLedger": "docs/ux10x/ux06/coverage.json",
+  "rows": [
+    {
+      "id": "V1-PUBLIC",
+      "programme": "V1",
+      "requirement": "Public routes, brand and synthetic discovery",
+      "status": "IMPLEMENTED",
+      "code": ["apps/web/app/page.tsx", "apps/web/components/public-shell.tsx"],
+      "tests": ["tests/browser/public-experience.spec.ts"],
+      "decisions": ["docs/design/public-experience.md"],
+      "pullRequests": [1, 2],
+      "limits": "Original public design has later UX amendments; visual acceptance is bounded, not universal."
+    },
+    {
+      "id": "V1-IDENTITY",
+      "programme": "V1",
+      "requirement": "Separate identities, MFA, tenant roles and RLS",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/auth/src/index.ts",
+        "packages/auth/src/access.ts",
+        "packages/domain/src/access.ts",
+        "packages/db/migrations/0001_identity_tenancy.sql"
+      ],
+      "tests": ["tests/integration/identity.test.ts", "tests/integration/foundations.test.ts"],
+      "decisions": ["docs/adr/0003-tenancy-and-identity.md"],
+      "pullRequests": [3],
+      "limits": "No public signup can grant a staff role; cross-tenant and fresh-assurance denial remain mandatory."
+    },
+    {
+      "id": "V1-EVIDENCE",
+      "programme": "V1",
+      "requirement": "Source/claim/evidence/review, provenance and quarantine",
+      "status": "IMPLEMENTED_WITH_EXTERNAL_GATES",
+      "code": ["packages/evidence/src/index.ts", "packages/evidence/src/storage.ts"],
+      "tests": ["tests/integration/foundations.test.ts", "tests/integration/scan-bypass.test.ts"],
+      "decisions": ["docs/adr/0004-evidence-semantics.md"],
+      "pullRequests": [3, 13],
+      "limits": "D01/D05/D06 scanner, approved production storage and lifecycle remain open. Explicit synthetic unscanned exception is not scanner acceptance."
+    },
+    {
+      "id": "V1-EVENTS",
+      "programme": "V1",
+      "requirement": "Atomic audit/events/outbox, dispatch and retries",
+      "status": "IMPLEMENTED",
+      "code": ["packages/workflows/src/index.ts", "packages/communications/src/index.ts"],
+      "tests": [
+        "tests/integration/communications.test.ts",
+        "tests/integration/foundations.test.ts"
+      ],
+      "decisions": ["docs/adr/0005-events-and-outbox.md"],
+      "pullRequests": [3, 19],
+      "limits": "Durable transport acceptance does not authorize outreach or every future automation."
+    },
+    {
+      "id": "V1-INTAKE",
+      "programme": "V1",
+      "requirement": "Test brief, private receipt/replies, mission review and commands",
+      "status": "IMPLEMENTED_WITH_EXTERNAL_GATES",
+      "code": [
+        "packages/missions/src/index.ts",
+        "apps/web/app/api/intake/route.ts",
+        "apps/web/app/api/intake/receipt/route.ts"
+      ],
+      "tests": ["tests/integration/missions.test.ts", "tests/operator/z-ux02-intake.spec.ts"],
+      "decisions": ["docs/adr/0016-mission-intake-and-operator-commands.md"],
+      "pullRequests": [14],
+      "limits": "Invented briefs only; claim submission is not company verification or real mission admission."
+    },
+    {
+      "id": "V1-RESEARCH",
+      "programme": "V1",
+      "requirement": "Counterparty provenance, dedupe, private contacts and shortlist",
+      "status": "IMPLEMENTED",
+      "code": ["packages/counterparties/src/index.ts"],
+      "tests": ["tests/integration/counterparties.test.ts"],
+      "decisions": ["docs/adr/0017-counterparty-research-and-reversible-attribution.md"],
+      "pullRequests": [16, 17, 18],
+      "limits": "Source-reported facts are not verified fit. Private relationship scope and source rights remain enforced."
+    },
+    {
+      "id": "V1-ACCESS",
+      "programme": "V1",
+      "requirement": "Controlled introductions, buyer response and recorded held meetings",
+      "status": "IMPLEMENTED_WITH_EXTERNAL_GATES",
+      "code": [
+        "packages/communications/src/index.ts",
+        "packages/missions/src/meetings.ts",
+        "apps/web/app/api/buyer/route.ts"
+      ],
+      "tests": ["tests/integration/communications.test.ts", "tests/integration/meetings.test.ts"],
+      "decisions": ["docs/adr/0018-controlled-introductions-and-meeting-truth.md"],
+      "pullRequests": [19],
+      "limits": "No real outreach; attendance, meeting, opportunity, contract, invoice and cash remain different events."
+    },
+    {
+      "id": "V1-COMMERCIAL",
+      "programme": "V1",
+      "requirement": "Commercial stages, exact contract/invoice/cash and compensation history",
+      "status": "IMPLEMENTED_PRODUCTION_JOURNEY_DEFERRED",
+      "code": ["packages/opportunities/src/index.ts", "packages/domain/src/opportunities.ts"],
+      "tests": ["tests/integration/opportunities.test.ts"],
+      "decisions": ["docs/adr/0021-commercial-funnel-cash-and-outcome-projections.md"],
+      "pullRequests": [22, 23],
+      "limits": "Isolated complete journeys passed. Original full customer contract/invoice/cash production write acceptance remains owner-deferred; later service-operations acceptance does not close it."
+    },
+    {
+      "id": "V1-DELIVERY",
+      "programme": "V1",
+      "requirement": "Scoped client/institution publication, imports and exports",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/delivery/src/index.ts",
+        "packages/delivery/src/import.ts",
+        "packages/delivery/src/report.ts"
+      ],
+      "tests": [
+        "tests/integration/delivery.test.ts",
+        "tests/integration/delivery-commercial.test.ts"
+      ],
+      "decisions": ["docs/adr/0022-scoped-client-and-institutional-delivery.md"],
+      "pullRequests": [24],
+      "limits": "Pinned source/version/denominator/currency and expiry/revocation are authoritative; no real customer imports."
+    },
+    {
+      "id": "CUSTOMER-AUTH",
+      "programme": "ACCESS",
+      "requirement": "Managed Neon signup, verify, signin, signout and password recovery",
+      "status": "IMPLEMENTED_BOUNDED_PRODUCTION_ACCEPTANCE",
+      "code": [
+        "apps/web/app/api/auth/[...all]/route.ts",
+        "apps/web/components/account-form.tsx",
+        "apps/web/app/account/page.tsx"
+      ],
+      "tests": [
+        "tests/operator/z-ux02-access.spec.ts",
+        "tests/operator/zz-access-recovery.spec.ts"
+      ],
+      "decisions": ["docs/adr/0020-neon-auth-accounts-and-preserved-operator-mfa.md"],
+      "pullRequests": [20, 26, 46],
+      "limits": "Original managed recovery consumption accepted in PR 26. Latest customer reset email receipt confirmed in PR 46; latest private link consumption not observed. Identity does not grant workspace authority."
+    },
+    {
+      "id": "STAFF-SETUP",
+      "programme": "ACCESS",
+      "requirement": "Explicit pending invitation and first password without MFA bypass",
+      "status": "IMPLEMENTED_BOUNDED_PRODUCTION_ACCEPTANCE",
+      "code": [
+        "packages/auth/src/operator-invitation.ts",
+        "packages/auth/src/operator-setup.ts",
+        "apps/web/app/api/operator-setup/route.ts",
+        "apps/web/components/operator-invitation-hint.tsx"
+      ],
+      "tests": [
+        "tests/integration/operator-setup.test.ts",
+        "tests/operator/zz-access-recovery.spec.ts"
+      ],
+      "decisions": ["docs/adr/0030-explicit-staff-invitation-and-first-password.md"],
+      "pullRequests": [37, 46],
+      "limits": "Owner privately completed setup/MFA and confirmed workspace entry. New/expired invitation and lost MFA recovery remain reviewed; no automatic customer linking."
+    },
+    {
+      "id": "STAFF-RECOVERY",
+      "programme": "ACCESS",
+      "requirement": "Separate existing-staff reset mail with one-use expiry, session revocation and retained MFA",
+      "status": "IMPLEMENTED_BOUNDED_PRODUCTION_ACCEPTANCE",
+      "code": [
+        "packages/auth/src/recovery-mail.ts",
+        "packages/auth/src/index.ts",
+        "apps/web/app/operator/forgot-password/page.tsx",
+        "apps/web/app/operator/reset-password/page.tsx",
+        "packages/db/migrations/0029_identity_password_audit.sql"
+      ],
+      "tests": [
+        "tests/integration/identity-recovery.test.ts",
+        "tests/operator/zz-access-recovery.spec.ts"
+      ],
+      "decisions": ["docs/adr/0031-operator-password-recovery-and-scoped-directory.md"],
+      "pullRequests": [46],
+      "limits": "Separate production sender/key configured; recipient confirmed real operator reset email. Latest private password change/signin not observed. Pending/suspended/unverified identities do not receive mail; audit trigger stores no secrets."
+    },
+    {
+      "id": "OWNER-ADMIN",
+      "programme": "ACCESS",
+      "requirement": "Named existing-member directory and permission-scoped workspace controls",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/auth/src/access.ts",
+        "apps/web/app/api/workspace/[action]/route.ts",
+        "apps/web/components/operator-workbench.tsx",
+        "apps/web/app/operator/workspace.tsx"
+      ],
+      "tests": ["tests/integration/identity.test.ts", "tests/operator/zz-access-recovery.spec.ts"],
+      "decisions": ["docs/adr/0031-operator-password-recovery-and-scoped-directory.md"],
+      "pullRequests": [45, 46],
+      "limits": "Owners manage existing memberships with fresh MFA and last-owner protection; admins retain their narrower configuration/audit rights. No provider-wide customer directory or public role grants."
+    },
+    {
+      "id": "V2-GEOGRAPHY",
+      "programme": "V2",
+      "requirement": "Global ISO countries, dated blocs and distinct commercial/location facts",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/domain/src/countries.ts",
+        "packages/domain/src/geography.ts",
+        "packages/db/migrations/0019_global_identifiers.sql"
+      ],
+      "tests": ["tests/integration/global-foundation.test.ts"],
+      "decisions": ["docs/adr/0023-global-markets-and-versioned-routes.md"],
+      "pullRequests": [30],
+      "limits": "EU is a market bloc, not a country or automatic legal basis; no guessed legacy classification."
+    },
+    {
+      "id": "V2-ROUTES",
+      "programme": "V2",
+      "requirement": "Versioned directional packs, restrictive precedence and pinned mission assignment",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/missions/src/corridors.ts",
+        "packages/domain/src/corridors.ts",
+        "packages/db/migrations/0020_versioned_corridors.sql"
+      ],
+      "tests": ["tests/integration/global-foundation.test.ts"],
+      "decisions": ["docs/architecture/multi-corridor-v2.md"],
+      "pullRequests": [30],
+      "limits": "Initial routes are draft and do not prove coverage; append new versions without mutating prior assignments. Arbitrary registered corridors reuse the same service."
+    },
+    {
+      "id": "V2-ORIGINS",
+      "programme": "V2",
+      "requirement": "Alternate origins without fabricated meetings and versioned replay",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/opportunities/src/index.ts",
+        "packages/db/migrations/0021_commercial_origins.sql"
+      ],
+      "tests": [
+        "tests/integration/global-foundation.test.ts",
+        "tests/integration/opportunities.test.ts"
+      ],
+      "decisions": ["docs/adr/0024-commercial-origin-and-event-coexistence.md"],
+      "pullRequests": [30],
+      "limits": "Exactly one original meeting or typed alternate origin; old snapshots/events retained."
+    },
+    {
+      "id": "V2-ECONOMICS",
+      "programme": "V2",
+      "requirement": "Original currencies/FX, separate service economics, reward obligations and source-rights policies",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/domain/src/currencies.ts",
+        "packages/domain/src/economics.ts",
+        "packages/domain/src/policy.ts",
+        "packages/db/migrations/0022_policy_and_service_economics.sql"
+      ],
+      "tests": ["tests/integration/global-foundation.test.ts"],
+      "decisions": ["docs/adr/0025-service-economics-rewards-and-privacy-boundaries.md"],
+      "pullRequests": [30],
+      "limits": "Exact minor-unit strings/BigInt, rational FX and append-only reversals. Policy records do not constitute independent legal approval or authorize payout."
+    },
+    {
+      "id": "V2-REQUIREMENTS",
+      "programme": "V2",
+      "requirement": "Versioned progressive requirements, RFQ and gap checks",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/missions/src/commercial.ts",
+        "packages/domain/src/commercial-missions.ts",
+        "packages/db/migrations/0023_commercial_mission_execution.sql"
+      ],
+      "tests": ["tests/integration/commercial-missions.test.ts"],
+      "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
+      "pullRequests": [31],
+      "limits": "Preserve original requirement versions and response history; missing requirements are explicit."
+    },
+    {
+      "id": "V2-OFFERS",
+      "programme": "V2",
+      "requirement": "Original supplier offers, revisions/comparison and technical assessment",
+      "status": "IMPLEMENTED",
+      "code": ["packages/missions/src/commercial.ts", "apps/web/components/comparison-matrix.tsx"],
+      "tests": ["tests/integration/commercial-missions.test.ts"],
+      "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
+      "pullRequests": [31],
+      "limits": "Original language/currency/terms retained; derived comparison is not verified suitability, converted canonical money or automatic purchasing."
+    },
+    {
+      "id": "V2-VISITS",
+      "programme": "V2",
+      "requirement": "Typed fair/factory/technical visits, machinery/site/after-sales requirements",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/missions/src/commercial.ts",
+        "packages/db/migrations/0024_typed_meeting_activities.sql"
+      ],
+      "tests": ["tests/integration/commercial-missions.test.ts"],
+      "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
+      "pullRequests": [31],
+      "limits": "A planned or typed visit does not become a held commercial meeting without evidence."
+    },
+    {
+      "id": "V2-PRODUCT",
+      "programme": "V2",
+      "requirement": "Job-first multi-corridor intake and scoped requirements/recipient views",
+      "status": "IMPLEMENTED",
+      "code": [
+        "apps/web/components/discovery-experience.tsx",
+        "packages/delivery/src/experience.ts",
+        "packages/domain/src/experience.ts"
+      ],
+      "tests": [
+        "tests/integration/product-experience.test.ts",
+        "tests/browser/product-experience.spec.ts"
+      ],
+      "decisions": ["docs/adr/0027-scoped-multi-corridor-product-experience.md"],
+      "pullRequests": [33, 35],
+      "limits": "Synthetic admission and exact publication disclosure remain enforced; public selectors do not grant access."
+    },
+    {
+      "id": "V2-PROGRAMMES",
+      "programme": "V2",
+      "requirement": "Institutional context, pinned agendas and scoped outcome reporting",
+      "status": "IMPLEMENTED",
+      "code": ["packages/delivery/src/experience.ts", "packages/delivery/src/report.ts"],
+      "tests": [
+        "tests/integration/product-experience.test.ts",
+        "tests/integration/delivery.test.ts"
+      ],
+      "decisions": ["docs/adr/0027-scoped-multi-corridor-product-experience.md"],
+      "pullRequests": [33],
+      "limits": "Original programme denominator, publication versions, source rights and per-currency totals remain visible."
+    },
+    {
+      "id": "V2-AI-TASKS",
+      "programme": "V2",
+      "requirement": "Registered governed drafts, schemas, prompts, evidence grounding and human review",
+      "status": "IMPLEMENTED_ACTIVATION_OFF",
+      "code": ["packages/intelligence/src/registry.ts", "packages/intelligence/src/service.ts"],
+      "tests": [
+        "tests/integration/intelligence.test.ts",
+        "tests/integration/intelligence-network.test.ts"
+      ],
+      "decisions": ["docs/adr/0028-governed-tasks-and-restricted-execution-network.md"],
+      "pullRequests": [34],
+      "limits": "Production AI remains off. Draft output has no permission, money, fact-verification or legal authority; vision/files/embeddings/streaming are not available."
+    },
+    {
+      "id": "V2-AI-ADAPTERS",
+      "programme": "V2",
+      "requirement": "Provider boundary, reserved exact costs, task/tenant/mission budgets, retries and circuit controls",
+      "status": "IMPLEMENTED_ACTIVATION_OFF",
+      "code": [
+        "packages/intelligence/src/adapters.ts",
+        "packages/intelligence/src/service.ts",
+        "packages/missions/src/operations.ts"
+      ],
+      "tests": ["tests/integration/intelligence.test.ts", "tests/integration/operations.test.ts"],
+      "decisions": ["docs/adr/0028-governed-tasks-and-restricted-execution-network.md"],
+      "pullRequests": [34, 36],
+      "limits": "Actual adapters exist but live credentials, terms/regions and quality acceptance remain gated. Local fixtures are protocol tests, not live inference."
+    },
+    {
+      "id": "V2-NETWORK",
+      "programme": "V2",
+      "requirement": "Exact invited task disclosure, eligibility, independent contribution review and disputes",
+      "status": "IMPLEMENTED_ACTIVATION_OFF",
+      "code": [
+        "packages/network/src/index.ts",
+        "packages/network/src/schema.ts",
+        "apps/web/app/api/network/tasks/route.ts"
+      ],
+      "tests": ["tests/integration/intelligence-network.test.ts"],
+      "decisions": ["docs/adr/0028-governed-tasks-and-restricted-execution-network.md"],
+      "pullRequests": [34],
+      "limits": "Ten task profiles; exact MFA assignee, capability/expiry/eligibility. No unrestricted public paid recruitment, complete broad reputation programme or real paid pilot acceptance."
+    },
+    {
+      "id": "V2-REWARDS",
+      "programme": "V2",
+      "requirement": "Versioned reviewed task rewards, reversals and contribution disputes",
+      "status": "IMPLEMENTED_NO_PAYOUT_TRANSPORT",
+      "code": [
+        "packages/network/src/index.ts",
+        "packages/db/migrations/0027_restricted_execution_network.sql"
+      ],
+      "tests": ["tests/integration/intelligence-network.test.ts"],
+      "decisions": ["docs/adr/0028-governed-tasks-and-restricted-execution-network.md"],
+      "pullRequests": [34],
+      "limits": "No automated payout integration or actual payout authorization; commercial attribution remains separately evidenced."
+    },
+    {
+      "id": "V2-CONTROL",
+      "programme": "V2",
+      "requirement": "Source-backed Control Center, reviewed configuration and accountable action/recovery",
+      "status": "IMPLEMENTED",
+      "code": [
+        "packages/missions/src/operations.ts",
+        "packages/db/migrations/0028_operations_control_center.sql"
+      ],
+      "tests": [
+        "tests/integration/operations.test.ts",
+        "tests/integration/operations-upgrade.test.ts"
+      ],
+      "decisions": ["docs/adr/0029-operational-readiness-and-observed-economics.md"],
+      "pullRequests": [36],
+      "limits": "No fabricated zeros, projections, independent approvals or authority beyond current tenant/role."
+    },
+    {
+      "id": "V2-READINESS",
+      "programme": "V2",
+      "requirement": "Per-route/service evidence readiness, pauses, environment metadata and preserved history",
+      "status": "IMPLEMENTED_WITH_EXTERNAL_GATES",
+      "code": ["packages/missions/src/operations.ts", "packages/config/src/environments.ts"],
+      "tests": [
+        "tests/integration/operations.test.ts",
+        "tests/integration/environment-separation.test.ts"
+      ],
+      "decisions": ["docs/implementation/v2-part-05-readiness.md"],
+      "pullRequests": [36],
+      "limits": "Readiness observations/config validation do not admit real data. D01\u2013D06/D08 remain open and real resources/pilots require separate approval."
+    },
+    {
+      "id": "V2-OBSERVED-COST",
+      "programme": "V2",
+      "requirement": "Observed service invoice/receipt/fees/cost completeness and compensation",
+      "status": "IMPLEMENTED_BOUNDED_PRODUCTION_ACCEPTANCE",
+      "code": ["packages/missions/src/operations.ts"],
+      "tests": [
+        "tests/integration/operations.test.ts",
+        "tests/integration/operations-upgrade.test.ts"
+      ],
+      "decisions": ["docs/adr/0029-operational-readiness-and-observed-economics.md"],
+      "pullRequests": [36, 37],
+      "limits": "Synthetic service-operations acceptance is distinct from original V1 full customer commercial production journey. No invented attribution, forecasts or cross-currency aggregation."
+    },
+    {
+      "id": "V2-LIFECYCLE",
+      "programme": "V2",
+      "requirement": "Rights/legal-hold records and accountable incident/recovery controls",
+      "status": "IMPLEMENTED_WITH_EXTERNAL_GATES",
+      "code": ["packages/missions/src/operations.ts"],
+      "tests": [
+        "tests/integration/operations.test.ts",
+        "tests/integration/operations-upgrade.test.ts"
+      ],
+      "decisions": ["docs/runbooks/v2-reliability-recovery.md"],
+      "pullRequests": [36],
+      "limits": "Records and isolated recovery tests exist; destructive lifecycle executor, independent assurance and all real-data drills are not collectively accepted."
+    },
+    {
+      "id": "UX-01",
+      "programme": "UX10X",
+      "requirement": "Architecture, semantic design system, safe role navigation, recovery and mission vertical slice",
+      "status": "IMPLEMENTED_BOUNDED_COVERAGE",
+      "code": [
+        "apps/web/components/workspace-shell.tsx",
+        "apps/web/components/access-state.tsx",
+        "apps/web/components/role-navigation.tsx",
+        "apps/web/components/mission-passport.tsx"
+      ],
+      "tests": [
+        "tests/integration/workspace-navigation.test.ts",
+        "tests/operator/workspace.spec.ts"
+      ],
+      "decisions": ["docs/ux10x/architecture.md"],
+      "pullRequests": [39],
+      "limits": "Preserve mounted forms, closed navigation, tenant-keyed private state, permission checks and unknown values. Whole action/state denominator unverified."
+    },
+    {
+      "id": "UX-02",
+      "programme": "UX10X",
+      "requirement": "Public discovery, progressive synthetic brief and customer access",
+      "status": "IMPLEMENTED_BOUNDED_COVERAGE",
+      "code": [
+        "apps/web/components/discovery-experience.tsx",
+        "apps/web/app/plan/page.tsx",
+        "apps/web/components/account-form.tsx"
+      ],
+      "tests": [
+        "tests/browser/ux02-discovery.spec.ts",
+        "tests/operator/z-ux02-intake.spec.ts",
+        "tests/operator/z-ux02-access.spec.ts"
+      ],
+      "decisions": ["docs/ux10x/ux02/README.md"],
+      "pullRequests": [40],
+      "limits": "Scope tests do not prove every newcomer journey or authorize customer operations."
+    },
+    {
+      "id": "UX-03",
+      "programme": "UX10X",
+      "requirement": "Scoped participant experience, original quotations and durable response recovery",
+      "status": "IMPLEMENTED_BOUNDED_COVERAGE",
+      "code": [
+        "apps/web/components/participant-scope.tsx",
+        "apps/web/components/comparison-matrix.tsx",
+        "apps/web/components/retained-submission.ts"
+      ],
+      "tests": ["tests/operator/workspace.spec.ts", "tests/browser/product-experience.spec.ts"],
+      "decisions": ["docs/ux10x/ux03/README.md"],
+      "pullRequests": [41],
+      "limits": "Retain exact source versions, all original actions and capability expiry/revocation; no full programme coverage claim."
+    },
+    {
+      "id": "UX-04",
+      "programme": "UX10X",
+      "requirement": "Contextual operator workflow and protected in-memory drafts",
+      "status": "IMPLEMENTED_BOUNDED_COVERAGE",
+      "code": [
+        "apps/web/components/operator-workbench.tsx",
+        "apps/web/components/role-navigation.tsx",
+        "apps/web/app/operator/workspace.tsx"
+      ],
+      "tests": ["tests/operator/workspace.spec.ts"],
+      "decisions": ["docs/ux10x/ux04/README.md"],
+      "pullRequests": [42],
+      "limits": "Presentation does not replace API/SQL permissions or invent next actions; broader usability remains under verification."
+    },
+    {
+      "id": "UX-05",
+      "programme": "UX10X",
+      "requirement": "Source-backed governance controls and retained submission recovery",
+      "status": "IMPLEMENTED_BOUNDED_COVERAGE",
+      "code": [
+        "apps/web/components/operator-workbench.tsx",
+        "apps/web/components/retained-submission.ts",
+        "apps/web/app/operator/operations.tsx"
+      ],
+      "tests": ["tests/operator/y-ux05-governance.spec.ts"],
+      "decisions": ["docs/ux10x/ux05/README.md"],
+      "pullRequests": [43],
+      "limits": "Do not infer source/legal/readiness approval from UI labels; broader ledger rows remain unverified."
+    },
+    {
+      "id": "UX-06",
+      "programme": "UX10X",
+      "requirement": "Bounded landing/account/participant hierarchy and entry/admin/access repairs",
+      "status": "PARTIAL_PROGRAMME_ACCEPTANCE",
+      "code": [
+        "apps/web/app/page.tsx",
+        "apps/web/components/account-access.tsx",
+        "apps/web/components/participant-scope.tsx",
+        "apps/web/components/operator-workbench.tsx",
+        "apps/web/app/operator/workspace.tsx"
+      ],
+      "tests": [
+        "tests/browser/ux06-presentation.spec.ts",
+        "tests/browser/access-navigation.spec.ts",
+        "tests/operator/zz-access-recovery.spec.ts"
+      ],
+      "decisions": ["docs/ux10x/ux06/README.md"],
+      "pullRequests": [44, 45, 46],
+      "limits": "UX-06 ledger retains 773 NOT_YET_VERIFIED, 3 VERIFIED, 1 PARTIAL rows at this baseline; allBaselineUserActionsFound=false. Broader runtime action inventory/usability acceptance incomplete."
+    },
+    {
+      "id": "RELIABILITY",
+      "programme": "CROSS_CUTTING",
+      "requirement": "Bounded startup timeout, rejected resource eviction and whole-document recovery",
+      "status": "IMPLEMENTED",
+      "code": ["apps/web/lib/foundations.ts", "packages/config/src/index.ts"],
+      "tests": [
+        "tests/integration/startup-recovery.test.ts",
+        "tests/operator/z-startup-recovery.spec.ts"
+      ],
+      "decisions": ["docs/runbooks/v2-reliability-recovery.md"],
+      "pullRequests": [38],
+      "limits": "No blanket availability/SLO or all production failure modes claim."
+    },
+    {
+      "id": "LAUNCH-GATES",
+      "programme": "CROSS_CUTTING",
+      "requirement": "Independent assurance, real pilots, privacy/retention/storage/scanning and provider activation",
+      "status": "EXTERNAL_GATES_OPEN",
+      "code": ["packages/config/src/environments.ts", "infrastructure/evidence-storage.yaml"],
+      "tests": ["tests/integration/environment-separation.test.ts"],
+      "decisions": ["docs/implementation/deferred-controls.md"],
+      "pullRequests": [36],
+      "limits": "D01\u2013D06/D08 remain open; D07/D09 closed within recorded scope. CodeQL skipped is not passed; full independent assurance, approved capacity/SLO and real pilots are not collectively accepted."
+    },
+    {
+      "id": "ORIGINALS",
+      "programme": "CROSS_CUTTING",
+      "requirement": "Immutable source documents, preserved owner packets and historical records",
+      "status": "PRESERVATION_REQUIRED",
+      "code": [
+        "docs/source/manifest.json",
+        "docs/ux10x/master-handoff.md",
+        "packages/db/src/migrate.ts"
+      ],
+      "tests": ["tests/documents.test.mjs", "tests/integration/operations-upgrade.test.ts"],
+      "decisions": ["docs/START_HERE.md"],
+      "pullRequests": [46],
+      "limits": "Do not edit source packets, historic evidence or deployed migration hashes; use explicit amendments and additive changes."
+    }
+  ]
+}

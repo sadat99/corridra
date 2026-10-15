@@ -1,4 +1,21 @@
-# UX-01 review packet
+# UX10X programme and evidence index
+
+Read [the current plan](../implementation/current-plan.md) and [developer handoff](../START_HERE.md). UX-01 through UX-05 were implemented and merged in PRs 39–43. Bounded UX-06 presentation, wayfinding and access repairs followed in PRs 44–46. Full UX10X functional acceptance remains incomplete. The complete [master handoff](master-handoff.md) is preserved; Fusion is the visual reference only.
+
+| Phase | Packet                                                                                                                | Status                                         |
+| ----- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| UX-01 | Original review packet below; [architecture](architecture.md), [validation](validation.md), [coverage](coverage.json) | PR 39 merged; bounded slice                    |
+| UX-02 | [Discovery, intake and account](ux02/README.md)                                                                       | PR 40 merged                                   |
+| UX-03 | [Participant journeys](ux03/README.md)                                                                                | PR 41 merged                                   |
+| UX-04 | [Operator experience](ux04/README.md)                                                                                 | PR 42 merged                                   |
+| UX-05 | [Governance experience](ux05/README.md)                                                                               | PR 43 merged                                   |
+| UX-06 | [Repair packets and limits](ux06/README.md)                                                                           | PRs 44–46 merged; programme acceptance partial |
+
+The [UX-06 ledger](ux06/coverage.json) still records 773 NOT_YET_VERIFIED, 3 VERIFIED and 1 PARTIAL rows, with allBaselineUserActionsFound=false. Those are recorded ledger counts, not exhaustive current runtime coverage. Inventories are frozen source-discovery evidence; package verification files report bounded executed scenarios. Do not rewrite frozen inventories or mark all actions covered based on merge status.
+
+## Historical UX-01 review packet
+
+The following records the original PR 39 scope and observations; baseline counts and limitations are historical. Current standing release authorization is in the current plan.
 
 UX-01 implements shared workspace geometry, semantic tokens and typography, role navigation, access/recovery presentation, and a real scoped mission read slice. It retains the existing domain panels and routes. Subsequent UX packages require acceptance of their predecessor; this branch implements no UX-02 work.
 
@@ -28,8 +45,6 @@ Local median first-contentful paint was 90 ms before and 98 ms after (maximum 28
 
 Baseline format check initially included newly generated audit/scratch files and failed; baseline public e2e initially collided with the screenshot server's port. The corrected baseline browser run passed all 60 tests. These failures are preserved in the baseline result manifest and explained here rather than silently removed.
 
-## Review and next action
+## Current continuation
 
-Review UX-01 code, screenshots, test results and explicit coverage gaps. Merge and deployment require the owner's separate approval. The branch and main opt out of automatic Vercel Git deployments pending separate release approval. No production settings, real customer operation, outreach, provider activation, payment or payout changed.
-
-After this PR is accepted and merged, switch to the owner's requested GPT 6.1 sol medium and execute **UX-02 — Editorial discovery, routes, job-first intake and account** from the complete handoff. Reconcile latest main and carry forward every NOT YET COVERED row; do not treat this PR's regression tests as whole-programme acceptance.
+The original UX-01 through UX-05 sequence is merged. Follow the current plan to reconcile outstanding UX requirements, baseline/new actions, permissions and response states, then implement bounded verified repairs. Standing owner authorization allows correctly checked merges and immediate exact-revision deployment, not real operational activation. Preserve all NOT_YET_VERIFIED/PARTIAL rows and source evidence; this review packet never established whole-programme acceptance.

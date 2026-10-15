@@ -1,5 +1,7 @@
 # V2 commercial mission operations
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Begin with the existing short synthetic mission intake and operator qualification. Preserve the customer's source declaration. Use current canonical counterparty research to add relevant targets and their source/claim records. No template requires a long public onboarding form.
 
 An owner with fresh MFA explicitly installs the reusable definitions through `CorridorService.installTemplates` or POST `mission-templates` in the existing authenticated workspace API. Installation is idempotent. It does not approve a route or rewrite Part 1 packs. Select the requirement and assessment definitions whose schema typeKey matches the job, and append a new pack through `CorridorService.appendPack` or POST `corridor-pack`. A new registered market pair uses `createRoute` or POST `corridor-route`. All of these operations retain Part 1 authority, immutable versions and synthetic-only restrictions. Part 3 supplies broader configuration administration surfaces.

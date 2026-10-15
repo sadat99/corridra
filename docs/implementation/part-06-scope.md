@@ -1,5 +1,7 @@
 # Part 06 requirement baseline
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 The governing documents are the complete constitution, public experience and implementation canvas indexed in `docs/README.md`. This packet implements Part 06 of `plan-v1.0.md`; Part 07 commercial opportunities and outcome projections remain later work.
 
 Corridra makes cross-border market access deliberate: understand intent, research and qualify relevant counterparties, create controlled access, coordinate execution and record what happens next. The initial corridor is Bangladesh and Spain/EU. Buyers need relevance, evidence, control and an easy decline. Operators need an accountable next action. Activity, acceptance, a held meeting and cash remain different outcomes.

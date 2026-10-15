@@ -1,5 +1,7 @@
 # UX-06 follow-up: getting started and admin navigation
 
+Historical PR 45 packet. PR 46 subsequently added and accepted bounded owner invitation guidance and existing-staff reset mail; the owner confirmed workspace entry and both reset emails. See [access repair](access-repair.md) and [dated production acceptance](../../implementation/access-recovery-production-acceptance.json). Provider-unavailable statements below describe the earlier investigation, not current accepted delivery.
+
 The owner reported that the deployed experience was confusing even to its founder and asked to prioritise the administrator before other audiences. This packet changes information hierarchy rather than identity, domain behaviour or access grants.
 
 The operator overview presents the five existing mission stages first. Owners and admins have a separate expandable management entry for Control Center, corridors/policies, access/audit and production readiness. The complete role-filtered directory remains available without V2 release labels. All original panels and forms stay mounted; mission work precedes AI, contributor execution and global operations. Existing hashes, return destinations, role filtering and unsaved-workspace-change confirmation remain authoritative.

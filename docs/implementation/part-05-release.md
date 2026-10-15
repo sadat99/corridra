@@ -1,5 +1,7 @@
 # Part 05 release: Counterparty research and qualification
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Implemented the protected organisation/counterparty workspace, sourced public identity ingestion, relationship-scoped contacts and notes, products/capabilities/certifications/requirements/markets, explicit independent public fact publication, deterministic ambiguous-match review and reversible tenant attribution. An active mission yields a shortlist with fit rationale, original source, uncertainty, evidence gaps and next action. Versioned assessments, role/visibility policies, RLS, idempotent commands and transactional audit/outbox behavior cover the workflows. TARGETING now follows activation and supports hold/resume/cancel; Part 06 outreach remains unavailable.
 
 The original uploaded documents remain immutable. [ADR-017](../adr/0017-counterparty-research-and-reversible-attribution.md) explains the shared/private split, the common typed attribute model and reversible attribution. [The runbook](../runbooks/part-05-counterparties.md) gives the working manual flow, migration, rollback and retention limits.

@@ -1,6 +1,6 @@
 # Accessing the revised V2 platform and completing launch
 
-The public entry is `/workspace`, linked from the main menu, footer, account and operator workspace. This directory maps revised V2 Parts 1–5 to actual registered tools and states the permissions and activation limits. It does not reveal tenant records or grant membership.
+The public entry is `/workspace`, linked from the main menu, footer, account and operator workspace. The main menu labels it **Start here**. It groups entry by audience and job, with secondary tool discovery; it does not ask newcomers to understand historical part numbers. See [the current plan](../implementation/current-plan.md) for roadmap status. It maps to actual registered tools and states permissions and activation limits. It does not reveal tenant records or grant membership.
 
 ## Which identity to use
 
@@ -10,6 +10,10 @@ The public entry is `/workspace`, linked from the main menu, footer, account and
 - Client, buyer/supplier and institution recipients use their complete private links. Public `/client`, `/buyer` and `/programme` pages explain missing-link recovery; they cannot enumerate confidential records.
 
 The directory's tool links carry an allowlisted `next` destination through password, authenticator enrollment/verification and workspace selection. External URLs, arbitrary actions and unknown fragments are rejected. If a destination is not mounted for the current role, the workspace explains the restriction and offers available tools. Switching tenants retains the destination and rechecks available tools.
+
+## Owner administration
+
+After staff sign-in and MFA, open `/operator` and **People and workspace controls**. Owners manage existing memberships through the named workspace-scoped selector. Admins retain permitted configuration/audit; membership changes remain owner-only with fresh MFA and last-owner protection. Global operations and route readiness summarize source-backed records without granting provider-wide Neon/Vercel authority. New staff invitations remain a reviewed offline operation.
 
 ## What is interactive now
 
@@ -22,7 +26,7 @@ The live mission environment is synthetic. Use invented records. Customer signup
 Use an administrator account for `sadat99/corridra`:
 
 1. Open <https://github.com/sadat99/corridra/settings/rules>. Configure an active rule for `main` with PR review appropriate to the team, required CI `validate`, and restrictions on force pushes/deletion. Verify the rule is actually enforced for the private repository. Do not invent a second independent reviewer or bypass a rule to release.
-2. Open <https://github.com/sadat99/corridra/settings/security_analysis>. Inspect actual secret scanning, push protection and code-scanning availability. Upgrade only if the actual account entitlement requires it. The latest rulesets response explicitly requires GitHub Pro for this private repository. Other 403 responses do not establish their exact entitlement requirements.
+2. Open <https://github.com/sadat99/corridra/settings/security_analysis>. Inspect actual secret scanning, push protection and code-scanning availability. Upgrade only if the actual account entitlement requires it. The dated Part 5 rulesets response required GitHub Pro for this private repository; verify current account settings/entitlement before treating that observation as current. Other 403 responses do not establish their exact entitlement requirements.
 3. Inspect <https://github.com/sadat99/corridra/actions/workflows/security.yml>. Enable `CODEQL_ENABLED` only after actual entitlement/setup is confirmed, then inspect a successful analysis. A skipped CodeQL job is not a passed scan. Pinned Gitleaks and five local Semgrep rules already run in CI; their limits remain documented.
 4. Inspect <https://github.com/sadat99/corridra/pulls>. Integrate compatible upgrades through accepted PRs. Never delete unfinished heads just to reduce the count. The maximum is ten Git branches including `main`; run `node scripts/check-git-branch-budget.mjs <branch>` before creating/publishing a product branch. After accepted merge and production verification, remove only proven completed Git/Neon preview branches, preserving production, sterile parents and other PRs.
 
@@ -38,4 +42,4 @@ AI provider setup requires accepted terms/regions, live evaluation, budgets and 
 
 ## Staff invitation boundaries
 
-See [ADR 030](../adr/0030-explicit-staff-invitation-and-first-password.md). Ordinary offline invitations require fresh owner MFA. The exceptional first-human-owner procedure is restricted to the exact synthetic intake workspace, privileged schema-owner administration, independently verified customer identity, explicit owner approval and no historical human owner. It preserves all technical owners and their MFA. A pending staff principal remains disabled until the matching verified customer completes first-password setup; password-only sign-in still cannot open a workspace. Expired or existing-account recovery is separately owner-reviewed. No automatic customer-to-admin conversion, emailed secret or shared test password is used.
+See [ADR 030](../adr/0030-explicit-staff-invitation-and-first-password.md). Ordinary offline invitations require fresh owner MFA. The exceptional first-human-owner procedure is restricted to the exact synthetic intake workspace, privileged schema-owner administration, independently verified customer identity, explicit owner approval and no historical human owner. It preserves all technical owners and their MFA. A pending staff principal remains disabled until the matching verified customer completes first-password setup; password-only sign-in still cannot open a workspace. Expired/new invitations, lost MFA and suspended identities remain reviewed recovery. Existing eligible staff password recovery is now `/operator/forgot-password`, implemented by [ADR 031](../adr/0031-operator-password-recovery-and-scoped-directory.md); it never resets MFA or grants a role. No automatic customer-to-admin conversion, emailed secret or shared test password is used.

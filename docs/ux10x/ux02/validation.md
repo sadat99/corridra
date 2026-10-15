@@ -1,5 +1,7 @@
 # UX-02 validation
 
+Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
+
 Accepted baseline is `21bc01327296edb8a5ee988b57918d94defce898`, UX-01 PR #39. Its main CI run passed. Original domain packages, API routes, server libraries, migrations, source documents and lockfile have no UX-02 diff. No live service or customer operation is exercised by local tests.
 
 ## Discovery and browser evidence

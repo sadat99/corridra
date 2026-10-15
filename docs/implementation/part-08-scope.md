@@ -1,5 +1,7 @@
 # Part 08 requirement baseline
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 The implementation plan defines client and institutional delivery. Its requirements inherit the full architecture canvas, public-experience institutional programme flow and constitution's proof hierarchy. Part 07 is deployed; the owner explicitly deferred its production commercial write acceptance. That remains recorded in PR #22 and does not become a passed check here.
 
 | Requirement                                 | Implementation contract                                                                                                                                   | Required evidence                                                                                                           |

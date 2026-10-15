@@ -1,5 +1,7 @@
 # UX-05 validation
 
+Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
+
 Final local checks passed: formatting, lint, types, 10 document and 7 infrastructure checks, 199 integration tests across 24 files, production build, 72 public browser tests and all 13 protected tests. After evidence contains 54 operator observations across six widths, with no axe violations or document overflow. Exact-head CI remains required before merge.
 
 The first code pass passed lint, types, document/infrastructure integrity and production build. Its new governance test needed a second formatting pass. Initial browser trials found test assumptions, not successful acceptance: the API deliberately returns a generic 409 for SQL readiness/closure guards, so tests now require the actual rejection and unchanged authorized records; exact text-label queries on controlled JSON textareas included their current text, so tests now use their actual accessible textbox names.

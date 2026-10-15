@@ -1,6 +1,8 @@
-# Corridra implementation plan v1.0
+# Historical Corridra V1 twelve-part implementation plan
 
-Status: Parts 01 through 08 are implemented and deployed. Their release records retain the synthetic-data boundaries and distinguish isolated complete journeys from production acceptance. Neon Auth customer identity signup, received-email verification and recovery are live; D09 is closed. Part 07's production commercial write check remains deferred by the owner. Real customer mission/data activation, outreach and the remaining controls are still gated. Parts 09 through 12 remain planned. See [Part 08 release status](part-08-release.md), [Part 07 release status](part-07-release.md), [account production acceptance](neon-auth-production-activation.json) and [deferred controls](deferred-controls.md).
+This preserves the original requirements and sequencing. V1 Parts 1–8 were implemented before the owner revised the programme into five V2 parts, all subsequently merged, followed by UX10X. Old V1 Parts 9–12 are not the next tasks and were not completed as the original sequence. See the authoritative [current plan and disposition](current-plan.md), [V2 plan](v2-master-plan.md) and [developer handoff](../START_HERE.md). Statements below describe original milestone requirements and dated acceptance, not current release instructions.
+
+Status: Parts 01 through 08 are implemented and deployed. Their release records retain the synthetic-data boundaries and distinguish isolated complete journeys from production acceptance. Neon Auth customer identity signup, received-email verification and recovery are live; D09 is closed. Part 07's production commercial write check remains deferred by the owner. Real customer mission/data activation, outreach and the remaining controls are still gated. Original Parts 09 through 12 were superseded as the next sequence; their requirements and remaining assurance gaps are mapped in the current plan. See [Part 08 release status](part-08-release.md), [Part 07 release status](part-07-release.md), [account production acceptance](neon-auth-production-activation.json) and [deferred controls](deferred-controls.md).
 
 ## Outcome and delivery method
 
@@ -248,8 +250,8 @@ Required by integration, not invented now: Vercel project/team access; EU Neon/s
 
 Keep match weights, prices, commissions, reputation weights, expansion markets, channels, model routes and automation thresholds versioned and evidence-led. No Kubernetes, Kafka, dedicated graph database, native app, autonomous outbound agent or automated global payout system in the initial scope.
 
-## Next planned part
+## Current continuation supersedes the original sequence
 
-Part 09, governed AI assistance, is next in the sequence. It remains planned and requires an explicit implementation request. Read the Part 09 requirements above, the original constitution/canvas, current ADRs and deferred controls before preparing its task packet. Do not enable speculative AI integrations or advance to later parts as part of documentation closeout.
+Do not resume old Part 09 automatically. Its governed AI mechanisms were later implemented within revised V2 Part 4, with production inference still disabled. The current plan maps all old Parts 9–12 to revised implementation and remaining gaps. Continue only the current requested bounded work, with the complete source requirements, ADRs and deferred controls preserved.
 
 The historical [Part 07 handoff](part-07-handoff.md) remains available as a record of its original authorization. Parts 07 and 08 now have their own implemented scope and release records. D09's account-email gate is closed; the remaining customer-data, outreach, scanner, retention and pilot boundaries are unchanged.

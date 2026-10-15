@@ -1,5 +1,7 @@
 # Evidence storage: Blob now, S3 later
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 ## Current synthetic Blob configuration
 
 The live Part 03 rollout uses the dedicated `store_C84BIU3MhR34CyTX`, confirmed by the owner as `fra1, Private`. Following ADR-015, these are bound only to production for corridra.vercel.app; the obsolete PR bindings and temporary preview were retired:

@@ -1,5 +1,7 @@
 # Part 05 counterparty research
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 ## Operator workflow
 
 Sign in at /operator with the invited account and real TOTP. Work in the intended workspace. Use invented company/contact records while customer-data readiness is pending.
@@ -16,11 +18,11 @@ Refresh after a conflicting version. A failed form request retains its fields; r
 
 ## Setup, migration and release
 
-Use the pinned Node 24/pnpm 11.19.0 toolchain and frozen install. Read the cloud runtime Docker instructions before restarting local PostgreSQL/ClamAV. Run the standard checks and public/operator browser suites sequentially. The operator suite resets only the disposable loopback corridra_browser database and applies all eight migrations. Never point it at a cloud URL.
+Use the pinned Node 24/pnpm 11.19.0 toolchain and frozen install. Read the cloud runtime Docker instructions before restarting local PostgreSQL/ClamAV. Run the standard checks and public/operator browser suites sequentially. The operator suite resets only the disposable loopback corridra_browser database and applies the current migration set (29 at the reconciled handoff baseline). Migration 0008 below describes the historical Part 5 addition, not the full current schema. Never point it at a cloud URL.
 
 Migration 0008_counterparty_research.sql adds the research tables, policies, scoped helpers and indexes. It replaces the mission guard with backward-compatible TARGETING support. Earlier migration files remain immutable. Review the exact migration hash and apply it separately from application builds using the approved offline migrator on the verified existing Frankfurt synthetic branch. Runtime remains restricted and cannot insert into shared organisation/identifier/fact tables directly; controlled functions explicitly validate their source and review authority. Management credentials do not belong in Vercel runtime. The separate production candidate and retained private Blob store must remain untouched.
 
-Merge through the normal PR process after actual CI success. Verify the Git-triggered production SHA, READY state, corridra.vercel.app alias and fra1 metadata, then exercise the real deployed research workflow. Record actual tests, migration, deployment and cleanup evidence. Preview authentication remains enabled; no protection bypass is introduced.
+Merge through the normal PR process after actual CI success. Follow the current deployment runbook for an explicit exact-merge deployment (main Git auto-deployment is disabled). Verify SHA, READY state, corridra.vercel.app alias and fra1 metadata. Use read-only routine production checks; any synthetic research write acceptance needs its own bounded scope. Record actual tests, migration, deployment and cleanup evidence. Preview authentication remains enabled; no protection bypass is introduced.
 
 ## Rollback and retention
 

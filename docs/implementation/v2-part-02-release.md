@@ -1,5 +1,7 @@
 # V2 Part 02 release record
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Status: released in PR #31 and verified in production at `2da05f6d523f7303cf5492b10b62d7abae456ed0`. The preparation history below is followed by the final production acceptance record.
 
 Accepted baseline: `a872c057e202217cdadbc235a58e43896fb2ac2c`, V2 Part 1 PR #30. The requested local branch is `feat/v2-02-commercial-missions`. Part 1's architecture, source documents, migration hashes, identity/MFA, tenant permissions, evidence distinctions, immutable commercial origins and accounting contracts remain intact.

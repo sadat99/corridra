@@ -1,5 +1,7 @@
 # Commercial follow-through operations
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Read [the requirement baseline](../implementation/part-07-scope.md), [ADR-021](../adr/0021-commercial-funnel-cash-and-outcome-projections.md) and [deferred controls](../implementation/deferred-controls.md). Use invented records until customer-data/pilot controls are complete. Existing invited-operator password and authenticator access remains available while Neon Auth customer signup is deferred.
 
 ## Operate a mission

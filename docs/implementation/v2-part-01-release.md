@@ -1,5 +1,7 @@
 # V2 Part 01 release record
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 ## Baseline and scope
 
 Starting/current accepted main: `54d9ba36d7f7be4e4c235b4a15d7af82d91f6d08`. Git fetch confirmed this baseline. Vercel production `dpl_DGZbDGq4b8Xtnzfy5HjueBCaaeTm` was READY at that exact commit on inspection. Baseline validate CI: https://github.com/sadat99/corridra/actions/runs/37952236350. The separate later Dependabot failure is not a passed check.

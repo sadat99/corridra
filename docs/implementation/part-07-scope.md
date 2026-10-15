@@ -1,5 +1,7 @@
 # Part 07 requirement baseline
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 This packet connects Corridra's existing intake, research, controlled introduction, held meeting and owned follow-up to observed commercial progress. The complete constitution, public experience and architecture canvas remain governing requirements in [the document index](../README.md). Originals and working-copy integrity are preserved.
 
 | Requirement                | Implementation and acceptance                                                                                                                                                                                                                                                                                                                                                               |
