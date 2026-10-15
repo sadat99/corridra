@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
-import { AvailabilityNote } from '../components/availability-note';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
 
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
   applicationName: 'Corridra',
   openGraph: {
     title: 'Corridra | Know who is worth meeting.',
-    description: 'Cross-border market access. Starting with Bangladesh and Spain/EU. Coming soon.',
+    description: 'Cross-border market access. Starting with Bangladesh and Spain/EU.',
     type: 'website',
     locale: 'en_GB',
   },
@@ -38,7 +37,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <div className="site-shell">
           <SiteHeader />
-          <AvailabilityNote />
           {children}
           <SiteFooter />
         </div>

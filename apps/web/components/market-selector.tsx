@@ -39,7 +39,6 @@ export function MarketSelector() {
             {initial
               ? 'An initial direction in the product design.'
               : 'This direction can be described in an example request. No operating offer is announced for this route.'}{' '}
-            Real customer mission admission remains unavailable.
           </p>
           <Link
             className="primary-link"

@@ -147,9 +147,6 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 See a synthetic mission example <Arrow />
               </a>
             </div>
-            <p className="ux-reassurance">
-              Explore with invented records. Real customer missions are not open yet.
-            </p>
           </div>
         )}
         <div className="ux-atlas" aria-label="Corridor Atlas">
@@ -178,9 +175,6 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           </div>
           <div className="ux-atlas-selected">
             <h3>{route.label}</h3>
-            <p className="ux-atlas-status">
-              <span>Customer operations</span> Not available
-            </p>
             <p className="ux-atlas-note">{route.note}</p>
             <Link href={`/corridors/${route.slug}`}>
               Read this corridor&apos;s scope <Arrow />
@@ -217,7 +211,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           ))}
           <Link className="ux-situation" href="/network">
             <strong>Help locally</strong>
-            <span>Do clear local tasks for a stated reward. Not open yet.</span>
+            <span>Do clear local tasks for a stated reward.</span>
           </Link>
         </div>
         <details className="ux-fine-tune">
@@ -374,7 +368,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             <p>
               {route.reverse
                 ? 'This reverse direction needs its own configured scope. No operating offer is announced.'
-                : 'This is an initial product direction, not approval to admit real customer missions.'}
+                : 'This is an initial product direction.'}
             </p>
             <Link className="text-link" href={briefUrl}>
               Continue with an invented request <Arrow />

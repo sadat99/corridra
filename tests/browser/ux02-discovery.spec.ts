@@ -22,8 +22,6 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     .selectOption('bangladesh-eu');
   const atlas = page.getByLabel('Corridor Atlas', { exact: true });
   await expect(atlas).toContainText('EU is a trade-bloc scope');
-  await expect(atlas).toContainText('Customer operations');
-  await expect(atlas).toContainText('Not available');
   await page.getByRole('link', { name: 'See a synthetic mission example' }).click();
   const example = page.getByRole('region', { name: 'Synthetic mission example' });
   await expect(example).toContainText('Run a multi-company mission');
