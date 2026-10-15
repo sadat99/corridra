@@ -9,7 +9,11 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title={title} compact>
       <section className="ux-account-access" aria-label="Customer account access">
-        <p>Customer identity is separate from invited operator membership and mission sharing.</p>
+        <p>
+          {mode === 'forgot' || mode === 'reset'
+            ? 'This changes your customer account password. It does not change an operator password or authenticator.'
+            : 'Use your customer account to manage your profile and open missions explicitly shared with you.'}
+        </p>
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>
             <AccountForm mode={mode} />
@@ -30,26 +34,28 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           </p>
         )}
         {mode === 'signin' && (
-          <nav className="access-options" aria-label="Other access routes">
-            <h2>Invited workspace access</h2>
-            <p>
-              Operators use their workspace invitation. Local contributors use the assigned-task
-              link supplied with their invitation. Institution and client sharing links keep their
-              existing access scope.
-            </p>
-            <Link className="text-link" href="/operator">
-              Operator workspace
-            </Link>
-            <Link className="text-link" href="/workspace">
-              Explore all workspaces and tools
-            </Link>
-            <Link className="text-link" href="/contributor">
-              Assigned-task access
-            </Link>
-            <Link className="text-link" href="/plan">
-              Start a test mission brief
-            </Link>
-          </nav>
+          <details className="ux-journey-disclosure">
+            <summary>Looking for an operator workspace or invitation?</summary>
+            <nav className="access-options" aria-label="Other access routes">
+              <h2>Open existing work</h2>
+              <p>
+                Operators use their separate operator password and authenticator. For a shared
+                mission, programme or assigned task, use the original private link you received.
+              </p>
+              <Link className="text-link" href="/operator">
+                Operator workspace
+              </Link>
+              <Link className="text-link" href="/workspace">
+                Help me find the right entry
+              </Link>
+              <Link className="text-link" href="/contributor">
+                Assigned-task access
+              </Link>
+              <Link className="text-link" href="/plan">
+                Start a test mission brief
+              </Link>
+            </nav>
+          </details>
         )}
       </section>
     </WorkspaceShell>

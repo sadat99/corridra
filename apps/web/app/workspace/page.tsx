@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { StatusBadge } from '../../components/access-state';
 import { operatorEntry, workspaceSections } from '../../lib/workspace-navigation';
+import { JourneyDisclosure } from '../../components/journey-disclosure';
 
 export const metadata = {
   title: 'Platform access and tools | Corridra',
@@ -11,20 +12,62 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <WorkspaceShell eyebrow="PLATFORM ACCESS" title="Find your Corridra workspace.">
+    <WorkspaceShell eyebrow="START HERE" title="What would you like to do?">
       <div className="platform-access">
         <StatusBadge tone="caution">Synthetic mission operations</StatusBadge>
         <p>
-          Choose your role, then open the tools you need. Customer accounts and invited operator
-          accounts have separate sign-in and permissions.
+          Corridra helps you organise work to find buyers, source suppliers or enter a market. A
+          mission keeps the objective, supporting evidence and next action together. You can explore
+          an example or prepare a test brief before signing in.
         </p>
         <nav className="workspace-navigation" aria-label="Platform access sections">
-          <a href="#access-roles">Choose your access</a>
-          <a href="#access-tools">Explore V2 tools</a>
-          <a href="#access-readiness">Availability and prerequisites</a>
+          <a href="#access-roles">Open existing work</a>
+          <a href="#access-tools">All operator tools</a>
+          <a href="#access-readiness">What is available now</a>
         </nav>
-        <section id="access-roles" tabIndex={-1}>
-          <h2>Choose your access</h2>
+        <section aria-label="Getting started" className="ux-start-paths">
+          <div className="detail-grid access-cards">
+            <article className="detail-card">
+              <p className="label">1. UNDERSTAND THE PROCESS</p>
+              <h2>See a mission in action</h2>
+              <p>
+                Follow an invented example from an objective to evidence and a next step. No account
+                needed.
+              </p>
+              <Link className="primary-link" href="/#mission-example">
+                Explore the example
+              </Link>
+            </article>
+            <article className="detail-card">
+              <p className="label">2. DESCRIBE YOUR OBJECTIVE</p>
+              <h2>Prepare a test brief</h2>
+              <p>
+                Choose what you need, the commercial direction and the details for review. Use
+                invented records only.
+              </p>
+              <Link className="primary-link" href="/plan">
+                Prepare my test brief
+              </Link>
+            </article>
+            <article className="detail-card">
+              <p className="label">ALREADY WORKING WITH US?</p>
+              <h2>Continue your work</h2>
+              <p>
+                Open your account, invited operator workspace or private sharing link. Choose the
+                access you already have.
+              </p>
+              <a className="primary-link" href="#access-roles">
+                Find my existing work
+              </a>
+            </article>
+          </div>
+        </section>
+        <JourneyDisclosure id="access-roles" title="Open your existing work">
+          <h2>Use the access you already have</h2>
+          <p>
+            Customer accounts and invited operator accounts have separate passwords. A private
+            mission or programme link opens only the information shared with you.
+          </p>
           <div className="detail-grid access-cards">
             <article className="detail-card">
               <h3>Customer or company</h3>
@@ -57,7 +100,7 @@ export default function Page() {
               </Link>
               <p>
                 <Link className="text-link" href="/operator/setup">
-                  Set up invited operator access
+                  Accept a new operator invitation
                 </Link>
               </p>
               <p>
@@ -102,9 +145,9 @@ export default function Page() {
               </p>
             </article>
           </div>
-        </section>
-        <section id="access-tools" tabIndex={-1}>
-          <h2>Explore the V2 tools</h2>
+        </JourneyDisclosure>
+        <JourneyDisclosure id="access-tools" title="All operator tools and settings">
+          <h2>Operator tool directory</h2>
           <p>
             These links preserve the selected tool through operator sign-in and MFA. Your membership
             determines which tools open. Empty records mean there is no accessible recorded data;
@@ -115,7 +158,6 @@ export default function Page() {
               .filter((section) => section.part !== 'Access')
               .map((section) => (
                 <article className="detail-card" key={section.id}>
-                  <p className="label">{section.part}</p>
                   <h3>{section.label}</h3>
                   <p>Workspace roles: {section.roles.join(', ')}.</p>
                   <Link className="text-link" prefetch={false} href={operatorEntry(section.id)}>
@@ -124,9 +166,9 @@ export default function Page() {
                 </article>
               ))}
           </div>
-        </section>
-        <section id="access-readiness" tabIndex={-1}>
-          <h2>Availability and prerequisites</h2>
+        </JourneyDisclosure>
+        <JourneyDisclosure id="access-readiness" title="What is available now">
+          <h2>Current availability</h2>
           <p>
             Current mission operation is synthetic. Use invented records only. Account signup is
             available separately; it does not activate real mission intake, outreach, payments or
@@ -163,10 +205,10 @@ export default function Page() {
               Account and test intake notice
             </Link>
           </p>
-        </section>
+        </JourneyDisclosure>
         <nav className="workspace-navigation" aria-label="Platform return links">
           <Link href="/">Back to Corridra</Link>
-          <a href="#access-roles">Back to access choices</a>
+          <a href="#access-roles">Open existing work</a>
         </nav>
       </div>
     </WorkspaceShell>
