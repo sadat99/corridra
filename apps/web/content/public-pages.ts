@@ -7,6 +7,10 @@ export type PublicPageContent = {
   closing: { title: string; text: string };
   cta?: string;
   intakeJob?: string;
+  /** The commercial direction this page is about, shown next to the main action. */
+  route?: { label: string; href: string; linkLabel: string };
+  /** What Corridra records, so a reader can see what can be proved later. */
+  record?: { title: string; items: string[] };
   related: { href: string; label: string };
 };
 
@@ -15,7 +19,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'SELL IN A NEW MARKET',
     title: 'You are already paying to be in the market. Make the trip commercially useful.',
     description:
-      'We’re building a way to identify and qualify buyers, distributors and partners before you arrive, then follow the relationship after you leave.',
+      'We’re building a way for a Bangladesh company to identify and qualify buyers, distributors and partners in Spain and the EU before it arrives, then follow the relationship after it leaves.',
     introduction: {
       title: 'A booth can give you visibility. It cannot decide who you should meet.',
       text: 'The right conversation starts with your offer, the market you want to reach and a reason for the other company to take an interest. An attendee list is only one place to look.',
@@ -39,6 +43,20 @@ export const publicPages: Record<string, PublicPageContent> = {
       text: 'Corridra will not promise orders. Research, qualification and execution will be scoped around the objective agreed for each mission.',
     },
     cta: 'Plan my mission',
+    route: {
+      label: 'Bangladesh to Spain and the EU',
+      href: '/corridors/bangladesh-eu',
+      linkLabel: 'Read the Spain and EU scope',
+    },
+    record: {
+      title: 'What we record for every introduction',
+      items: [
+        'Who the buyer is and why they fit your offer.',
+        'What the buyer stated, and what has evidence.',
+        'What was discussed in the meeting and what is still uncertain.',
+        'Who owns the next step, and what became business afterwards.',
+      ],
+    },
     related: { href: '/how-it-works', label: 'See the planned process' },
   },
   source: {
@@ -69,6 +87,20 @@ export const publicPages: Record<string, PublicPageContent> = {
       text: 'Qualification cannot remove every sourcing risk. The planned process makes the gaps visible so you can decide what to inspect, request or confirm.',
     },
     cta: 'Plan a sourcing mission',
+    route: {
+      label: 'Bangladesh to China',
+      href: '/corridors/bangladesh-china',
+      linkLabel: 'Read the China scope',
+    },
+    record: {
+      title: 'What we record for every supplier',
+      items: [
+        'What the supplier states about product, capacity and price.',
+        'Which supporting evidence is available.',
+        'What is still unverified.',
+        'What you decided after the visit, and the next step.',
+      ],
+    },
     related: { href: '/trust', label: 'Understand the evidence labels' },
   },
   'enter-market': {
