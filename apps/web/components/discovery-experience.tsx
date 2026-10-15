@@ -144,7 +144,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 href="#mission-example"
                 onClick={openExample}
               >
-                See a synthetic mission example <Arrow />
+                See a sample mission <Arrow />
               </a>
             </div>
           </div>
@@ -281,7 +281,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             href="#mission-example"
             onClick={openExample}
           >
-            See a synthetic mission example <Arrow />
+            See a sample mission <Arrow />
           </a>
         ) : (
           <button className="text-link" onClick={openExample}>
@@ -296,7 +296,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
         id="mission-example"
         tabIndex={-1}
         className={`ux-example${example ? ' ux-example-open' : ''}`}
-        aria-label="Synthetic mission example"
+        aria-label="Sample mission"
       >
         <div>
           <p className="label">A 90-SECOND WALKTHROUGH</p>
@@ -316,12 +316,12 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               requestAnimationFrame(() => exampleHeading.current?.focus());
             }}
           >
-            Open the synthetic example
+            Open the sample mission
           </button>
         ) : (
           <>
             <p className="ux-example-scope">
-              {selectedJob.label} · {route.label} · Invented scenario
+              {selectedJob.label} · {route.label} · Sample scenario
             </p>
             <nav className="ux-example-steps" aria-label="Example steps">
               {exampleSteps.map((label, index) => (
@@ -371,7 +371,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 : 'This is an initial product direction.'}
             </p>
             <Link className="text-link" href={briefUrl}>
-              Continue with an invented request <Arrow />
+              Continue with a sample request <Arrow />
             </Link>
             <button
               className="text-link"

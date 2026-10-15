@@ -22,7 +22,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           <AccessState kind="unavailable">
             <p>Account access is not available yet.</p>
             <Link className="text-link" href="/plan">
-              Prepare an invented example request without an account
+              Prepare an example request without an account
             </Link>
           </AccessState>
         )}
