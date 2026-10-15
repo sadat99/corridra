@@ -9,6 +9,7 @@ import { RoleNavigation } from '../../components/role-navigation';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { Missions } from './missions';
+import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
 import { ControlledAccess } from './access';
 import { GovernedAssistance } from './intelligence';
@@ -290,6 +291,7 @@ function TenantWorkspace({
         </AccessState>
       ) : (
         <>
+          <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
           <section className="workspace-panel workspace-start" aria-label="Workspace overview">
             <StatusBadge tone="caution">Synthetic workspace</StatusBadge>
             <h2>Start with a mission.</h2>

@@ -115,7 +115,10 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
   ].includes(job);
   const briefUrl = `/plan?companyCountry=${route.company}&marketCode=${route.market}&job=${selectedJob.key}`;
   return (
-    <section className="ux-discovery" aria-label="Explore a commercial objective">
+    <section
+      className={'ux-discovery' + (overview ? ' ux-discovery-overview' : '')}
+      aria-label="Explore a commercial objective"
+    >
       <div className="ux-discovery-grid">
         {!overview && (
           <div className="ux-editorial-copy">

@@ -3765,3 +3765,152 @@ th {
   font-size: var(--text-xl);
   font-weight: 600;
 }
+
+/* Corridors page: the atlas uses the full width, map beside the selected direction. */
+.ux-discovery-overview {
+  padding-top: 0;
+}
+.ux-discovery-overview .ux-discovery-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 901px) {
+  .ux-discovery-overview .ux-atlas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    column-gap: var(--space-8);
+    align-items: start;
+    min-height: 0;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-heading {
+    grid-column: 1 / -1;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-map {
+    grid-column: 1;
+    grid-row: 2 / span 3;
+    margin: 0;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-legend,
+  .ux-discovery-overview .ux-atlas > .ux-atlas-selected,
+  .ux-discovery-overview .ux-atlas > .ux-atlas-foot {
+    grid-column: 2;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-legend {
+    margin-top: 0;
+  }
+}
+.page-hero + .ux-discovery-overview {
+  margin-top: calc(var(--space-8) * -1);
+}
+
+/* Market selector: padded card, two fields side by side. */
+.detail-card.market-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+  padding: var(--space-8);
+}
+.detail-card.market-selector > h2,
+.detail-card.market-selector > p,
+.detail-card.market-selector > a {
+  grid-column: 1 / -1;
+}
+.detail-card.market-selector > h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+.detail-card.market-selector label {
+  margin: 0;
+  font-weight: 600;
+}
+.detail-card.market-selector select {
+  border-radius: var(--radius-control);
+  background: var(--surface-1);
+  font-weight: 400;
+}
+.detail-card.market-selector > a {
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .detail-card.market-selector {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-6);
+  }
+}
+
+/* Operator Today panel: what needs a person first. */
+.ux-today {
+  margin-block: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+.ux-today h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+.ux-today-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+.ux-today-tiles li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+}
+.ux-today-tiles strong {
+  font-size: var(--text-xl);
+  line-height: 1.1;
+  color: var(--text-strong);
+}
+.ux-today-tiles span {
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+.ux-today-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-3);
+}
+.ux-today-list h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.ux-today-list ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ux-today-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: var(--space-3);
+  border-left: 3px solid var(--brand);
+  background: var(--surface-subtle);
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+.ux-today-list li strong {
+  color: var(--text-strong);
+}
+.ux-today-more,
+.ux-today-empty {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
