@@ -46,6 +46,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/operator/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source:
           '/:page(signin|signup|forgot-password|reset-password|verify-email|account|client|programme)',
         headers: [

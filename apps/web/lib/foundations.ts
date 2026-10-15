@@ -5,6 +5,7 @@ import { IntelligenceService } from '@corridra/intelligence/service';
 import { NetworkService } from '@corridra/network';
 import { Pool, assertRestrictedPool } from '@corridra/db';
 import { createIdentity } from '@corridra/auth';
+import { operatorRecoveryMailer } from '@corridra/auth/recovery-mail';
 import { OperatorSetup } from '@corridra/auth/operator-setup';
 import { AccessService } from '@corridra/auth/access';
 import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
@@ -41,6 +42,7 @@ function createServices() {
     secret: config.AUTH_SECRET,
     baseURL: config.APP_ORIGIN,
     basePath: '/api/operator-auth',
+    sendPasswordRecovery: operatorRecoveryMailer(),
   });
   const configuredStorage = createEvidenceStorage();
   const storage = configuredStorage ?? {
@@ -80,7 +82,7 @@ function createServices() {
     config,
     ...identity,
     operatorSetup: new OperatorSetup(authPool),
-    access: new AccessService(runtimePool),
+    access: new AccessService(runtimePool, authPool),
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
     network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
     counterparties: new CounterpartyService(runtimePool),

@@ -54,6 +54,11 @@ const env = {
   RUNTIME_DATABASE_URL: connection('corridra_runtime_local', local.runtimePassword),
   AUTH_DATABASE_URL: connection('corridra_auth_local', local.authPassword),
   AUTH_SECRET: local.authSecret,
+  // Invalid, synthetic identity-mail credentials. Browser recovery tests intercept
+  // the same-origin SDK transport; backend tests use an in-memory mail collector.
+  CORRIDRA_OPERATOR_RECOVERY_ENABLED: 'true',
+  OPERATOR_RECOVERY_EMAIL_KEY: 'isolated-browser-fixture-not-a-provider-key',
+  OPERATOR_RECOVERY_EMAIL_FROM: 'identity@example.invalid',
 };
 // Prevent inherited cloud configuration from changing this local-only test.
 for (const key of [
