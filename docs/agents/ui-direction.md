@@ -15,6 +15,44 @@ Rules for every visible change:
 5. **Hide, never delete.** Reduce load by ordering, grouping, collapsing and role-based defaults. Keep every existing panel mounted and every action reachable, because tests, history and permissions depend on them.
 6. **Money path first.** Order content by the path visitor, brief, qualified mission, introduction, meeting, commercial outcome, service fee. Gated or unavailable capabilities are shown honestly and briefly, never as the headline.
 
+## Plain language for a global audience (owner directive, 2026-10-15)
+
+Users in Bangladesh, China and other non-English countries must understand every screen without help. Many read English as a second language and some use machine translation. Write for them, without lowering the business standard or the product vision.
+
+Rules:
+
+1. **Short, common words.** Prefer words an intermediate English reader knows. Choose the plain word over the clever one ("check" not "verify" in headings, "proof" not "evidence").
+2. **Short sentences.** One idea per sentence, ideally under 20 words, active voice, present tense.
+3. **One word per idea, everywhere.** Never use two names for one thing. Follow the glossary below.
+4. **No idioms, metaphors or slang.** Nothing that breaks in translation ("in focus", "what needs to happen", "next move").
+5. **Spell out abbreviations** on first use or avoid them (RFQ, MFA, SLA). Write dates unambiguously (15 Oct 2026) and always show the time zone for times.
+6. **Keep the exact trade terms people already use** where they are standard and precise: price quote, payment terms, lead time, delivery terms. Do not simplify these away.
+7. **Honest status words.** "Example" for demonstration data, "not checked" for unverified, "not available yet" for gated features. Never soften a limit.
+8. **Names and originals stay as written.** Company names, Chinese text and original amounts are never translated or reworded. Bangla guidance remains available where it exists.
+9. **Legal, privacy and consent text** changes only with owner review.
+
+### Glossary
+
+| Avoid                                      | Use                                             | Notes                                                                                                      |
+| ------------------------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| brief, test brief                          | request, example request                        | The thing a visitor submits. "Request" is proposed and awaits owner confirmation with the next three rows. |
+| mission                                    | project                                         | "Trade mission" stays only for organised delegation trips, which is a real standard term. Proposed.        |
+| evidence, claims, sources                  | proof, statements, where it came from           | Proposed.                                                                                                  |
+| corridor, commercial direction             | trade route (for example Bangladesh to China)   | Proposed.                                                                                                  |
+| verified / unverified                      | checked / not checked                           | Say who checked when known.                                                                                |
+| self-declared                              | stated by the company                           |                                                                                                            |
+| qualification, assessment                  | review                                          |                                                                                                            |
+| counterparty                               | company, buyer, supplier                        | Use the real role when known.                                                                              |
+| quotation, RFQ                             | price quote, price request                      | Quote terms stay exact.                                                                                    |
+| introduction                               | introduction                                    | Already plain.                                                                                             |
+| synthetic, test                            | example, practice data                          |                                                                                                            |
+| operator                                   | Corridra team                                   | In customer screens only. Staff screens may say "operator".                                                |
+| workspace, control center, readiness gates | team area, settings and checks, ready to start? | Staff screens.                                                                                             |
+| scope, capability, disclosure              | what you can see                                |                                                                                                            |
+| execution network, contributor             | trusted helpers, helper                         | Staff and helper screens.                                                                                  |
+
+Until the owner confirms the proposed rows, do not rename the core nouns in product copy. Apply the other rules at once. When confirmed, change copy and the tests that assert it in one pass, then update this table to "applied".
+
 ## Intent
 
 Quiet Intelligence (V10) is the grammar: calm, legible, mission first. SourceLab (V07) sets technical rigour for quotations and evidence. Heritage Atlas (V01) sets public editorial authority. Precision Ledger (V02) sets operator density. The result must read as one company: confident, precise, unhurried, never decorative for its own sake.

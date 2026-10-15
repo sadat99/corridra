@@ -49,3 +49,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: which single revenue path to optimise first is an owner decision. Real customer admission remains gated by the readiness controls; simplification does not open it.
 - Next step: owner confirms the lead path; then build the role landing screens and the five-area operator navigation.
 - PR / commit: sadat99/corridra#48.
+
+## 2026-10-15, Claude Code, Owner directive: plain language for a global audience
+
+- Request: "brief" is not easy to understand. Use the easiest, standard business English that people in Bangladesh, China and other non-English countries understand at once. Keep words like "evidence" simple too, without lowering the standard or the vision.
+- Why: the interface uses internal and consultant vocabulary (brief, mission, evidence, claims, corridor, qualification, execution network). It raises reading effort and breaks under machine translation, which adds to the cognitive load the owner reported.
+- What changed: added the section "Plain language for a global audience" with nine rules and a glossary to `docs/agents/ui-direction.md`. No product code or copy yet.
+- How it was verified: documentation only.
+- Preserved: all current copy, tests and legal text. Exact trade terms (price quote, payment terms, lead time) are kept on purpose.
+- Decisions and trade-offs: renaming core nouns touches many strings and the tests that assert them, and it changes product vocabulary, so those four rows (request, project, proof, trade route) are marked proposed and need owner confirmation before any rename. The other rules apply immediately.
+- Open items and risks: the homepage headline ("The right market. The right people. The next move.") is idiomatic and may not translate well; a plain alternative needs owner choice. Legal and privacy text needs owner review.
+- Next step: owner confirms the four core nouns; then one copy pass over public pages and landing screens, updating asserting tests in the same change.
+- PR / commit: sadat99/corridra#48.
