@@ -4034,6 +4034,11 @@ th {
   stroke-width: 0.4;
   opacity: 1;
 }
+.ux-atlas-map .ux-map-to-point {
+  fill: var(--map-spain-active);
+  stroke: var(--brand-deep);
+  stroke-width: 0.4;
+}
 .ux-atlas-map .ux-map-to {
   fill: var(--map-spain-active);
   stroke: var(--brand-deep);

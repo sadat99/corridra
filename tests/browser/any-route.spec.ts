@@ -28,9 +28,9 @@ test('any pair of countries shows on the world map with an honest, non-operating
   // The plan link keeps both countries.
   await atlas.getByRole('link', { name: 'Plan a mission on this route' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=JP&marketCode=KE');
-  await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-  ).toHaveValue('JP');
+  const summary = page.getByRole('complementary', { name: 'Your example request' });
+  await expect(summary).toContainText('Japan');
+  await expect(summary).toContainText('Kenya');
 });
 
 test('the European Union is drawn as its member states and a small country still gets a marker', async ({
@@ -40,7 +40,9 @@ test('the European Union is drawn as its member states and a small country still
   await atlas.getByLabel('Your company is in', { exact: true }).selectOption('JP');
   await atlas.getByLabel('You want to reach', { exact: true }).selectOption('EU');
   await expect(atlas.getByRole('heading', { name: 'Japan → European Union' })).toBeVisible();
-  await expect(atlas.locator('.ux-map-to')).toHaveCount(27);
+  // 26 members have an outline. Malta is too small at this scale and is shown as a marker.
+  await expect(atlas.locator('.ux-map-to')).toHaveCount(26);
+  await expect(atlas.locator('.ux-map-to-point')).toHaveCount(1);
   // Singapore has no outline at this scale, so it is shown as a point.
   await atlas.getByLabel('Your company is in', { exact: true }).selectOption('SG');
   await atlas.getByLabel('You want to reach', { exact: true }).selectOption('KE');

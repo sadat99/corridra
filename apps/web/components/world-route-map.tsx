@@ -100,6 +100,17 @@ export function WorldRouteMap({
           }
         />
       ))}
+      {[...toSet]
+        .filter((code) => !world.countries[code] && world.points[code])
+        .map((code) => (
+          <circle
+            key={code}
+            className="ux-map-to-point"
+            cx={world.points[code][0]}
+            cy={world.points[code][1]}
+            r="2"
+          />
+        ))}
       {a && b && (
         <path
           className="ux-map-arc is-active ux-map-arc-world"
