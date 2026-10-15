@@ -79,8 +79,31 @@ export function MissionExperienceView({ experience: e }: { experience: MissionEx
         (!r.fields.unit || r.fields.unit === q.terms.unit),
     })),
   );
+  const isCurrent = (q: MissionExperience['quotations'][number]) =>
+    !!r?.current && !q.superseded && q.assignmentCurrent;
+  const inLens = (q: MissionExperience['quotations'][number]) =>
+    lens === 'all' || (lens === 'current' ? isCurrent(q) : !isCurrent(q));
+  const currentCount = e.quotations.filter(isCurrent).length;
   return (
     <section className="ux-source-lens" aria-label="Approved mission detail">
+      <ul className="ux-glance" aria-label="Mission at a glance">
+        <li>
+          <strong>{e.shortlist.length}</strong>
+          <span>{e.shortlist.length === 1 ? 'company shortlisted' : 'companies shortlisted'}</span>
+        </li>
+        <li>
+          <strong>{e.quotations.length}</strong>
+          <span>{e.quotations.length === 1 ? 'offer to compare' : 'offers to compare'}</span>
+        </li>
+        <li>
+          <strong>{currentCount}</strong>
+          <span>match the current request</span>
+        </li>
+        <li>
+          <strong>{e.agenda.length}</strong>
+          <span>{e.agenda.length === 1 ? 'visit or action' : 'visits and actions'}</span>
+        </li>
+      </ul>
       <h3>Requirements and decisions</h3>
       <label htmlFor={dateId}>Date and number display</label>
       <select id={dateId} value={language} onChange={(ev) => setLanguage(ev.target.value)}>
@@ -218,23 +241,11 @@ export function MissionExperienceView({ experience: e }: { experience: MissionEx
         <option value="current">Current requirement and assignment</option>
         <option value="review">Requires updated scope review</option>
       </select>
-      <ComparisonMatrix
-        offers={e.quotations.filter(
-          (q) =>
-            lens === 'all' ||
-            (lens === 'current'
-              ? !!r?.current && !q.superseded && q.assignmentCurrent
-              : !r?.current || q.superseded || !q.assignmentCurrent),
-        )}
-        language={language}
-      />
+      <ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />
       {e.quotations.length ? (
         e.quotations.map(
           (q, index) =>
-            (lens === 'all' ||
-              (lens === 'current'
-                ? !!r?.current && !q.superseded && q.assignmentCurrent
-                : !r?.current || q.superseded || !q.assignmentCurrent)) && (
+            inLens(q) && (
               <article key={q.id}>
                 <h4>Supplier offer, revision {q.revision}</h4>
                 <StatusBadge
@@ -312,19 +323,12 @@ export function MissionExperienceView({ experience: e }: { experience: MissionEx
           by explicit selection.
         </p>
       )}
-      {e.quotations.length > 0 &&
-        !e.quotations.some(
-          (q) =>
-            lens === 'all' ||
-            (lens === 'current'
-              ? !!r?.current && !q.superseded && q.assignmentCurrent
-              : !r?.current || q.superseded || !q.assignmentCurrent),
-        ) && (
-          <p>
-            No approved offer matches this evidence lens. Choose all approved offers to retain the
-            complete view.
-          </p>
-        )}
+      {e.quotations.length > 0 && !e.quotations.some(inLens) && (
+        <p>
+          No approved offer matches this evidence lens. Choose all approved offers to retain the
+          complete view.
+        </p>
+      )}
       <h3>Visits and owned actions</h3>
       <AgendaView agenda={e.agenda} language={language} />
       <p>{e.documentAccess}</p>

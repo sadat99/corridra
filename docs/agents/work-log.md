@@ -133,3 +133,11 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: three fully merged remote branches (`feat/ux-02-public-experience`, `feat/ux-03-participant-journeys`, `feat/ux-04-operator-experience`) could not be deleted from this environment (HTTP 403). The owner must delete them in GitHub. The text after "& never" in the branch rule message is unknown.
 - Next step: customer mission view with machinery quotation comparison, then the intake polish.
 - PR / commit: branch `feat/ux-phase-b-situations`.
+
+## 2026-10-15, Claude Code, Merge PR 48; deployment blocked; mission view summary
+
+- Request: merge and deploy without extra steps ("go directly to production"), and keep building the next piece meanwhile.
+- What happened: `validate` passed on PR 48 head `96900bb` (`analyze` was skipped, which is not a pass). PR 48 was marked ready and merged with a normal merge commit, `7f61217`. The merge tree equals the tested head tree (`1b86c10`), so no new checks were needed on the merge result.
+- Deployment: **not done.** The Vercel connection in this session sees one team ("Nazmus Sadat's projects") with four projects (visastack, bidesh365, tradeproof, travelrouter). There is no `corridra` project in it, and `corridra.vercel.app` is not an alias there. The runbook says to confirm project and team IDs before deploying. Deploying to any other project would be wrong, and creating a new one is not authorised. Owner action: connect the Vercel account or team that holds the `corridra` project, or give its team and project IDs. Then the exact commit `7f61217` is deployed per `docs/runbooks/deployment.md`.
+- Mission view (branch `feat/ux-phase-b-situations`): added an "at a glance" row (companies shortlisted, offers to compare, offers that match the current request, visits and actions), one shared offer filter in place of three copies, a sticky term column in the quotation comparison table, and a shaded marker for missing terms. All headings, labels and controls that tests use are unchanged. Protected suite on the earlier Phase B commit: 14 of 14. The suite is being rerun on the mission view change.
+- Next step: rerun result, then push the branch and open a PR to `main`.

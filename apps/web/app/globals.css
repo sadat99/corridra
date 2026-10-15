@@ -3322,3 +3322,46 @@ th {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mission view: a short summary row, a calmer comparison table and a clear marker for missing terms. */
+.ux-glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+}
+.ux-glance li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+}
+.ux-glance strong {
+  font-size: var(--text-xl);
+  line-height: 1.1;
+  color: var(--text-strong);
+}
+.ux-glance span {
+  font-size: var(--text-md);
+  color: var(--text-2);
+}
+.ux-comparison-matrix tbody th[scope='row'] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: 1px 0 0 var(--border-subtle);
+}
+.ux-comparison-matrix tbody tr:hover td {
+  background: var(--surface-subtle);
+}
+.ux-comparison-matrix td.ux-cell-missing {
+  background: var(--caution-surface);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+}
