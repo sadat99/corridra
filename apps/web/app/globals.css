@@ -3365,3 +3365,28 @@ th {
   font-size: var(--text-sm);
   letter-spacing: 0.04em;
 }
+
+/* Workspace directory: five job areas side by side, one column on narrow screens. */
+.ux-workspace-directory > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+.ux-workspace-directory > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.ux-workspace-directory .label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+}
+.ux-workspace-directory a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
