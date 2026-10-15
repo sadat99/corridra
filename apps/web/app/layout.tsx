@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import { AvailabilityNote } from '../components/availability-note';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
 
@@ -37,9 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <div className="site-shell">
           <SiteHeader />
-          <aside className="availability-note" aria-label="Service availability">
-            Mission intake is open for example requests. Customer missions are not open yet.
-          </aside>
+          <AvailabilityNote />
           {children}
           <SiteFooter />
         </div>

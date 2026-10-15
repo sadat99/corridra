@@ -431,7 +431,7 @@ export function Intake() {
       </p>
     ) : null;
   return (
-    <>
+    <div className="ux-intake-layout">
       <aside className="intake-notice">
         <strong>Test intake is open. Real customer mission admission is unavailable.</strong> Use
         invented details and an email ending in @example.invalid. Keep your receipt to read operator
@@ -502,14 +502,12 @@ export function Intake() {
         <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
           <p className="label">STEP {step + 1} OF 5</p>
           <ol className="ux-intake-steps" aria-label="Request steps">
-            {['Objective', 'Direction', 'Requirements', 'Outcomes', 'Contact'].map(
-              (label, index) => (
-                <li key={label} aria-current={index === step ? 'step' : undefined}>
-                  <span>{index + 1}</span>
-                  {label}
-                </li>
-              ),
-            )}
+            {['Goal', 'Where', 'Details', 'Results', 'Contact'].map((label, index) => (
+              <li key={label} aria-current={index === step ? 'step' : undefined}>
+                <span>{index + 1}</span>
+                {label}
+              </li>
+            ))}
           </ol>
           <progress value={step + 1} max={5} aria-label="Request progress" />
           <h2 ref={heading} tabIndex={-1}>
@@ -869,6 +867,6 @@ export function Intake() {
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }

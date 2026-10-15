@@ -26,11 +26,26 @@ for (const [route, heading] of routes) {
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
     await expect(page).toHaveTitle(/Corridra/);
-    await expect(
-      page.getByText(
-        'Mission intake is open for example requests. Customer missions are not open yet.',
-      ),
-    ).toBeVisible();
+    if (route === '/') {
+      // The home page keeps the first screen clear and states the same limit under its main action.
+      await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(
+        0,
+      );
+      await expect(
+        page.getByText('Explore with invented records. Real customer missions are not open yet.'),
+      ).toBeVisible();
+    } else if (route === '/plan') {
+      // The request page carries its own, fuller notice (asserted below).
+      await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(
+        0,
+      );
+    } else {
+      await expect(
+        page.getByText(
+          'Mission intake is open for example requests. Customer missions are not open yet.',
+        ),
+      ).toBeVisible();
+    }
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
     if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
     else
@@ -190,4 +205,26 @@ test('/sell shows the Spain and EU route, the reverse direction and what is reco
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'buyers',
   );
+});
+
+test('/enter-market and /trade-missions name their route and what is recorded', async ({
+  page,
+}) => {
+  await page.goto('/enter-market');
+  await expect(page.getByText('Spain and the EU to Bangladesh', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Read the Spain to Bangladesh scope' }),
+  ).toHaveAttribute('href', '/corridors/bangladesh-spain');
+  await expect(
+    page.getByRole('region', { name: 'What we record for every market visit' }),
+  ).toBeVisible();
+  await page.goto('/trade-missions');
+  await expect(page.getByText('Starting with Bangladesh to China', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Read the China scope' })).toHaveAttribute(
+    'href',
+    '/corridors/bangladesh-china',
+  );
+  await expect(
+    page.getByRole('region', { name: 'What we record for every delegation' }),
+  ).toContainText('Contracts, invoices and collected cash, kept as separate outcomes.');
 });

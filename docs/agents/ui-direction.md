@@ -108,7 +108,7 @@ Buttons (primary, secondary, quiet), fields (label above, helper below, error in
 
 ## Content rules
 
-Natural, concrete English. No em dashes. No fake urgency, counts, logos, testimonials, coverage or availability. Synthetic or test data is always labelled. Original currency, language, source and version stay visible. Unknown is shown as unknown, never as zero or success.
+Natural, concrete English. No em dashes. No fake urgency, counts, logos, testimonials, coverage or availability. Synthetic or test data is always labelled. Original currency, language, source and version stay visible. Unknown is shown as unknown, never as zero or success. The product name is always written "Corridra" with a capital C, including the header and footer wordmark (owner directive, 2026-10-15).
 
 ## By audience
 

@@ -3524,7 +3524,7 @@ th {
 }
 @media (min-width: 1001px) {
   .ux-home .ux-discovery-grid {
-    align-items: center;
+    align-items: start;
   }
 }
 
@@ -3683,4 +3683,85 @@ th {
     grid-template-columns: minmax(0, 1fr);
     padding: var(--space-6);
   }
+}
+
+/* Request intake: form beside a sticky summary, one calm notice, one quiet progress bar. */
+.ux-intake-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  grid-auto-flow: row dense;
+  gap: var(--space-4) var(--space-8);
+  align-items: start;
+  max-width: 1080px;
+}
+.ux-intake-layout > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.ux-intake-layout > .ux-brief-summary {
+  grid-column: 2;
+  position: sticky;
+  top: var(--space-6);
+}
+.ux-intake-layout > .intake-form {
+  grid-column: 1;
+  max-width: none;
+}
+@media (max-width: 1000px) {
+  .ux-intake-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-intake-layout > .ux-brief-summary,
+  .ux-intake-layout > .intake-form {
+    grid-column: 1;
+    position: static;
+  }
+}
+.ux-intake-layout .intake-notice {
+  margin: 0;
+  padding: var(--space-4);
+  border: 0;
+  border-left: 3px solid var(--accent-gold);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  color: var(--text-1);
+}
+.ux-intake-layout .ux-brief-summary dl {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+.ux-intake-layout progress {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border-subtle);
+  color: var(--brand);
+}
+.ux-intake-layout progress::-webkit-progress-bar {
+  background: var(--border-subtle);
+}
+.ux-intake-layout progress::-webkit-progress-value {
+  background: var(--brand);
+  border-radius: 999px;
+}
+.ux-intake-layout progress::-moz-progress-bar {
+  background: var(--brand);
+  border-radius: 999px;
+}
+.ux-intake-layout .receipt-panel {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+.ux-intake-layout .receipt-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 600;
 }
