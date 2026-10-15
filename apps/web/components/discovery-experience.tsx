@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { corridorPages } from '../content/corridors';
 import { Arrow } from './arrow';
+import { CorridorMap } from './corridor-map';
 
 const directions = [
   ...Object.entries(corridorPages).map(([slug, content]) => ({
@@ -113,16 +114,6 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
     'factory_visits',
   ].includes(job);
   const briefUrl = `/plan?companyCountry=${route.company}&marketCode=${route.market}&job=${selectedJob.key}`;
-  const target =
-    route.market === 'CN'
-      ? [470, 166]
-      : route.market === 'ES'
-        ? [128, 166]
-        : route.market === 'EU'
-          ? [318, 110]
-          : [258, 246];
-  const origin =
-    route.company === 'CN' ? [470, 166] : route.company === 'ES' ? [128, 166] : [258, 246];
   return (
     <section className="ux-discovery" aria-label="Explore a commercial objective">
       <div className="ux-discovery-grid">
@@ -163,59 +154,39 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             <h2>Corridor Atlas</h2>
             <span>Illustrative</span>
           </div>
-          <svg viewBox="0 0 600 340" aria-hidden="true" className="ux-atlas-map">
-            <defs>
-              <pattern id="atlas-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1" fill="#719280" />
-              </pattern>
-            </defs>
-            <rect width="600" height="340" fill="url(#atlas-grid)" opacity="0.25" />
-            <ellipse cx="300" cy="174" rx="262" ry="132" />
-            <ellipse cx="300" cy="174" rx="162" ry="132" />
-            <path d="M38 174h524M63 108h474M63 240h474" />
-            <path
-              className="ux-atlas-direction"
-              d={`M${origin[0]} ${origin[1]} Q330 75 ${target[0]} ${target[1]}`}
-            />
-            <circle cx="258" cy="246" r="7" />
-            <text x="228" y="278">
-              Bangladesh
-            </text>
-            <circle cx="470" cy="166" r="7" />
-            <text x="482" y="158">
-              China
-            </text>
-            <circle cx="128" cy="166" r="5" />
-            <text x="60" y="156">
-              Spain
-            </text>
-            <circle cx="318" cy="110" r="5" />
-            <text x="326" y="96">
-              EU bloc
-            </text>
-          </svg>
-          <p className="ux-atlas-stamp">
-            Explore possibilities.
-            <br />
-            <em>Verify reality.</em>
+          <CorridorMap company={route.company} market={route.market} />
+          <div className="ux-atlas-legend" role="group" aria-label="Two commercial directions">
+            <button
+              type="button"
+              className="ux-atlas-pick ux-atlas-pick-china"
+              aria-pressed={route.company === 'CN' || route.market === 'CN'}
+              onClick={() => setDirection('bangladesh-china')}
+            >
+              Bangladesh and China
+            </button>
+            <button
+              type="button"
+              className="ux-atlas-pick ux-atlas-pick-europe"
+              aria-pressed={['ES', 'EU'].includes(route.market) || route.company === 'ES'}
+              onClick={() => setDirection('bangladesh-eu')}
+            >
+              Bangladesh and Spain or the EU
+            </button>
+          </div>
+          <div className="ux-atlas-selected">
+            <h3>{route.label}</h3>
+            <p className="ux-atlas-status">
+              <span>Customer operations</span> Not available
+            </p>
+            <p className="ux-atlas-note">{route.note}</p>
+            <Link href={`/corridors/${route.slug}`}>
+              Read this corridor&apos;s scope <Arrow />
+            </Link>
+          </div>
+          <p className="ux-atlas-foot">
+            Built for any corridor. These two come first. Commercial directions only, not shipment
+            routes or local coverage.
           </p>
-          <p className="ux-atlas-caption">
-            Commercial direction, not a shipment route or a map of local coverage.
-          </p>
-          <dl className="ux-atlas-facts">
-            <div>
-              <dt>Selected direction</dt>
-              <dd>{route.label}</dd>
-            </div>
-            <div>
-              <dt>Customer operations</dt>
-              <dd>Not available</dd>
-            </div>
-          </dl>
-          <p className="ux-atlas-note">{route.note}</p>
-          <Link href={`/corridors/${route.slug}`}>
-            Read this corridor&apos;s scope <Arrow />
-          </Link>
         </div>
       </div>
       <div id="commercial-objective" tabIndex={-1} className="ux-objective-bar">
