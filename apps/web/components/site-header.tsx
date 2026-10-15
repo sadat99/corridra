@@ -47,7 +47,7 @@ export function SiteHeader() {
             strokeWidth="3"
           />
         </svg>
-        <span>corridra</span>
+        <span>Corridra</span>
       </Link>
       <button
         ref={toggle}

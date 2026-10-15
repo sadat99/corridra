@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="footer-top">
         <div>
           <Link prefetch={false} className="brand" href="/">
-            corridra
+            Corridra
           </Link>
           <p>Make market entry deliberate.</p>
           <span>Initial product directions: Bangladesh → China / Spain / EU</span>

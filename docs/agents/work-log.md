@@ -205,3 +205,9 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Verification: public suite 86 of 86, lint, typecheck, docs and design tests, build. Desktop capture inspected.
 - Branches: the owner deleted `feat/ux-02-public-experience`, `feat/ux-03-participant-journeys` and `feat/ux-04-operator-experience`. The remote now has 4 branches (`main`, `claude/dazzling-hamilton-fe3jbc`, two Dependabot branches), under the cap of 9.
 - Next step: ship after PR 51, then the intake polish and the remaining Track V tests.
+
+## 2026-10-15, Claude Code, Brand name capitalised
+
+- Request: the owner said the name is "Corridra", not "corridra".
+- What changed: the header wordmark and the footer wordmark now read "Corridra". A search of the app source found no other visible lowercase use of the name. The content rules in `docs/agents/ui-direction.md` now say the name is always written with a capital C.
+- Verification: lint, format and docs tests. Browser suites run with the next build.
