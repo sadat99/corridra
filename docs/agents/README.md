@@ -35,5 +35,7 @@ Corridra is built by two coding agents plus the owner: **Claude Code** (web and 
 | Current programme status              | `docs/implementation/current-plan.md`   |
 | What the UI must look and behave like | `docs/agents/ui-direction.md`           |
 | What each agent did and why           | `docs/agents/work-log.md`               |
+| The plan, decisions and open items    | `docs/agents/master-plan.md`            |
+| SaaS readiness audit (15 Oct 2026)    | `docs/agents/saas-readiness-audit.md`   |
 | Full UX10X requirement set            | `docs/ux10x/master-handoff.md`          |
 | Coverage evidence                     | `docs/ux10x/reconciliation-2026-10-15/` |

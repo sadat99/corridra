@@ -164,6 +164,11 @@
       "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
     },
     {
+      "path": "docs/agents/saas-readiness-audit.md",
+      "classification": "Current guide/contract",
+      "use": "Read before paid-product, tenant, billing or enterprise work; dated read-only audit"
+    },
+    {
       "path": "docs/agents/ui-direction.md",
       "classification": "Current guide/contract",
       "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
