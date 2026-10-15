@@ -1,5 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function openFineTune(page: Page) {
+  const details = page.locator('.ux-fine-tune');
+  if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
+}
 
 test('UX-02 Atlas selects an actual direction and synthetic example without creating records', async ({
   page,
@@ -9,6 +14,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/');
+  await openFineTune(page);
   await page.getByRole('combobox', { name: 'Your perspective' }).selectOption('institution');
   await expect(page.getByRole('combobox', { name: "I'm trying to" })).toHaveValue('delegations');
   await page
@@ -168,4 +174,43 @@ test('UX-02 blocked draft storage is visible and does not discard current form e
   await expect(page.getByLabel('Your offer or requirement')).toHaveValue(
     'Invented requirement retained while storage is denied.',
   );
+});
+
+test('UX-02 situation cards preset the role, job and route and prefill the example request', async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') writes.push(request.url());
+  });
+  await page.goto('/');
+  const group = page.getByRole('group', { name: 'Choose your situation' });
+  await expect(group.getByRole('button', { name: /Source from suppliers/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await group.getByRole('button', { name: /Run a trade mission/ }).click();
+  await expect(group.getByRole('button', { name: /Run a trade mission/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
+    'href',
+    '/plan?companyCountry=BD&marketCode=CN&job=delegations',
+  );
+  await group.getByRole('button', { name: /Enter Bangladesh/ }).click();
+  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
+    'href',
+    '/plan?companyCountry=ES&marketCode=BD&job=market_entry',
+  );
+  await openFineTune(page);
+  await expect(
+    page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
+  ).toHaveValue('spain-bangladesh');
+  await expect(group.getByRole('link', { name: /Help locally/ })).toHaveAttribute(
+    'href',
+    '/network',
+  );
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect(writes).toEqual([]);
 });

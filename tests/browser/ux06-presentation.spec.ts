@@ -1,6 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
+
+async function openFineTune(page: Page) {
+  const details = page.locator('.ux-fine-tune');
+  if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
+}
 
 test('UX-06 discovery prioritizes exploration and preserves the complete mission guide', async ({
   page,
@@ -14,6 +19,7 @@ test('UX-06 discovery prioritizes exploration and preserves the complete mission
   await explore.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#commercial-objective')).toBeInViewport();
+  await openFineTune(page);
   await expect(
     page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
   ).toBeVisible();
@@ -64,6 +70,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
     'aria-current',
     'step',
   );
+  await openFineTune(page);
   await page
     .getByRole('combobox', { name: 'Commercial direction', exact: true })
     .selectOption('china-bangladesh');

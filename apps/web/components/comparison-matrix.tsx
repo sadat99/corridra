@@ -64,7 +64,7 @@ export function ComparisonMatrix({
               {offers.map((q) => {
                 const value = q.terms[field];
                 return (
-                  <td key={q.id}>
+                  <td key={q.id} className={value === undefined ? 'ux-cell-missing' : undefined}>
                     <span
                       lang={
                         typeof value === 'string' && /\p{Script=Han}/u.test(value)

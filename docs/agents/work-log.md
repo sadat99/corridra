@@ -121,3 +121,23 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: privacy page wording review. The hero headline decision. Phase B remainder.
 - Next step: merge PR 48 once exact-head CI is green, then continue Phase B on a fresh branch from the new `main`.
 - PR / commit: sadat99/corridra#48.
+
+## 2026-10-15, Claude Code, Phase B: five situations on the home page; branch limit
+
+- Request: the owner said "meanwhile u build the next" (build Phase B while CI runs for PR 48) and asked to keep the Git branch count below nine and delete branches once they no longer affect the system. The message was cut off after "& never".
+- Why: the Public Experience specifies five situations, not three dropdowns. The dropdowns made a first-time visitor decide role, job and route before seeing any value. The branch limit keeps the repository easy to read for both agents.
+- What changed: (1) `apps/web/components/discovery-experience.tsx`: five situation cards (Source from suppliers, Run a trade mission, Enter Bangladesh, Sell abroad, Help locally). Each card presets role, job and route and updates the example-request link. The three dropdowns remain, inside a closed "Fine-tune" disclosure, so no action was removed. (2) `apps/web/app/globals.css`: situation card and fine-tune styles, in the token-only layer. (3) Tests: a shared `openFineTune` helper in the affected browser and operator specs, and one new test for the situation cards. (4) `scripts/check-git-branch-budget.mjs`: now fails when the repository has more than eight Git branches. `scripts/branch-budget.ts` (Neon, ten) is unchanged. (5) `AGENTS.md` and `docs/agents/README.md` rule 7 state the new limit.
+- How it was verified: `format:check`, `lint` pass. Public browser suite 82 of 82 (with axe and no-write checks). Protected operator suite: see the PR. Not run: integration suite (no server or data code changed).
+- Preserved: all routes, link targets, payload shapes, the three original selectors and their labels, API behaviour.
+- Decisions and trade-offs: sourcing stays the first and selected card, per the owner's order. "Help locally" links to `/network` because that is a different path from the example request.
+- Open items and risks: three fully merged remote branches (`feat/ux-02-public-experience`, `feat/ux-03-participant-journeys`, `feat/ux-04-operator-experience`) could not be deleted from this environment (HTTP 403). The owner must delete them in GitHub. The text after "& never" in the branch rule message is unknown.
+- Next step: customer mission view with machinery quotation comparison, then the intake polish.
+- PR / commit: branch `feat/ux-phase-b-situations`.
+
+## 2026-10-15, Claude Code, Merge PR 48; deployment blocked; mission view summary
+
+- Request: merge and deploy without extra steps ("go directly to production"), and keep building the next piece meanwhile.
+- What happened: `validate` passed on PR 48 head `96900bb` (`analyze` was skipped, which is not a pass). PR 48 was marked ready and merged with a normal merge commit, `7f61217`. The merge tree equals the tested head tree (`1b86c10`), so no new checks were needed on the merge result.
+- Deployment: **not done.** The Vercel connection in this session sees one team ("Nazmus Sadat's projects") with four projects (visastack, bidesh365, tradeproof, travelrouter). There is no `corridra` project in it, and `corridra.vercel.app` is not an alias there. The runbook says to confirm project and team IDs before deploying. Deploying to any other project would be wrong, and creating a new one is not authorised. Owner action: connect the Vercel account or team that holds the `corridra` project, or give its team and project IDs. Then the exact commit `7f61217` is deployed per `docs/runbooks/deployment.md`.
+- Mission view (branch `feat/ux-phase-b-situations`): added an "at a glance" row (companies shortlisted, offers to compare, offers that match the current request, visits and actions), one shared offer filter in place of three copies, a sticky term column in the quotation comparison table, and a shaded marker for missing terms. All headings, labels and controls that tests use are unchanged. Protected suite on the earlier Phase B commit: 14 of 14. The suite is being rerun on the mission view change.
+- Next step: rerun result, then push the branch and open a PR to `main`.

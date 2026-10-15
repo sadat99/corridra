@@ -10,7 +10,8 @@ Corridra is built by two coding agents plus the owner: **Claude Code** (web and 
 4. **Never rewrite the other agent's history.** The log is append-only. To correct an earlier entry, add a new entry that references it.
 5. **Report evidence, not intent.** Name the exact commands run and their results. State what was not run. Keep "implemented", "tested", "deployed" and "externally approved" separate.
 6. **When the two agents conflict,** do not pick silently. Record both positions in the log and leave the decision to the owner.
-7. **The backbone is not UI scope.** Domain packages, API handlers, authentication, RLS, migrations, money, evidence and permission rules, and the production gates change only with an explicit owner request and an ADR where `AGENTS.md` requires one.
+7. **Keep fewer than nine Git branches, including main.** Delete a branch as soon as it no longer affects the system: fully merged, no open PR, no environment bound to it. Run `node scripts/check-git-branch-budget.mjs <branch>` before publishing; it refuses a ninth. Never delete unfinished work or open dependency PRs to meet the limit.
+8. **The backbone is not UI scope.** Domain packages, API handlers, authentication, RLS, migrations, money, evidence and permission rules, and the production gates change only with an explicit owner request and an ADR where `AGENTS.md` requires one.
 
 ## Work log entry template
 

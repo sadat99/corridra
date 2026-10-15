@@ -35,6 +35,41 @@ const directions = [
     reverse: true,
   },
 ];
+/** The five situations from the Public Experience. Each presets the existing selectors. */
+const situations = [
+  {
+    key: 'source',
+    title: 'Source from suppliers',
+    text: 'Find suppliers and compare their offers before you travel.',
+    role: 'buyer',
+    job: 'sourcing',
+    direction: 'bangladesh-china',
+  },
+  {
+    key: 'delegation',
+    title: 'Run a trade mission',
+    text: 'Plan a group visit with clear agendas and results.',
+    role: 'institution',
+    job: 'delegations',
+    direction: 'bangladesh-china',
+  },
+  {
+    key: 'sell',
+    title: 'Sell in a new market',
+    text: 'Reach the buyers and distributors that fit what you offer.',
+    role: 'exporter',
+    job: 'buyers',
+    direction: 'bangladesh-eu',
+  },
+  {
+    key: 'enter',
+    title: 'Enter Bangladesh',
+    text: 'Find customers and partners without a local office.',
+    role: 'exporter',
+    job: 'market_entry',
+    direction: 'spain-bangladesh',
+  },
+] as const;
 const exampleSteps = [
   'Define the objective',
   'Inspect the evidence',
@@ -66,6 +101,9 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
     window.addEventListener('hashchange', openFromHash);
     return () => window.removeEventListener('hashchange', openFromHash);
   }, []);
+  const activeSituation = situations.find(
+    (item) => item.role === role && item.job === job && item.direction === direction,
+  )?.key;
   const route = directions.find((item) => item.key === direction) ?? directions[0];
   const selectedJob = missionCatalogue.find((item) => item.key === job) ?? missionCatalogue[0];
   const sourcing = [
@@ -181,62 +219,90 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
         </div>
       </div>
       <div id="commercial-objective" tabIndex={-1} className="ux-objective-bar">
-        <div>
-          <p className="label">START WITH YOUR OBJECTIVE</p>
-          <h2>What needs to happen?</h2>
+        <div className="ux-objective-head">
+          <p className="label">START WITH YOUR GOAL</p>
+          <h2>What are you trying to do?</h2>
         </div>
-        <label className="field">
-          Your perspective
-          <select
-            value={role}
-            onChange={(e) => {
-              setRole(e.target.value);
-              setJob(
-                e.target.value === 'institution'
-                  ? 'delegations'
-                  : e.target.value === 'exporter'
-                    ? 'buyers'
-                    : 'sourcing',
-              );
-            }}
-          >
-            <option value="buyer">Buyer or importer</option>
-            <option value="exporter">Exporter or company</option>
-            <option value="institution">Institution or delegation</option>
-          </select>
-        </label>
-        <label className="field">
-          I&apos;m trying to
-          <select
-            value={job}
-            onChange={(e) => {
-              setJob(e.target.value);
-              setStep(0);
-            }}
-          >
-            {missionCatalogue.map((item) => (
-              <option key={item.key} value={item.key}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          Commercial direction
-          <select
-            value={direction}
-            onChange={(e) => {
-              setDirection(e.target.value);
-              setStep(0);
-            }}
-          >
-            {directions.map((item) => (
-              <option key={item.key} value={item.key}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="ux-situations" role="group" aria-label="Choose your situation">
+          {situations.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="ux-situation"
+              aria-pressed={activeSituation === item.key}
+              onClick={() => {
+                setRole(item.role);
+                setJob(item.job);
+                setDirection(item.direction);
+                setStep(0);
+              }}
+            >
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </button>
+          ))}
+          <Link className="ux-situation" href="/network">
+            <strong>Help locally</strong>
+            <span>Do clear local tasks for a stated reward. Not open yet.</span>
+          </Link>
+        </div>
+        <details className="ux-fine-tune">
+          <summary>Change role, job or route</summary>
+          <div className="ux-fine-tune-fields">
+            <label className="field">
+              Your perspective
+              <select
+                value={role}
+                onChange={(e) => {
+                  setRole(e.target.value);
+                  setJob(
+                    e.target.value === 'institution'
+                      ? 'delegations'
+                      : e.target.value === 'exporter'
+                        ? 'buyers'
+                        : 'sourcing',
+                  );
+                }}
+              >
+                <option value="buyer">Buyer or importer</option>
+                <option value="exporter">Exporter or company</option>
+                <option value="institution">Institution or delegation</option>
+              </select>
+            </label>
+            <label className="field">
+              I&apos;m trying to
+              <select
+                value={job}
+                onChange={(e) => {
+                  setJob(e.target.value);
+                  setStep(0);
+                }}
+              >
+                {missionCatalogue.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Commercial direction
+              <select
+                value={direction}
+                onChange={(e) => {
+                  setDirection(e.target.value);
+                  setStep(0);
+                }}
+              >
+                {directions.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </details>
       </div>
       <div className="ux-discovery-actions">
         <p>Perspective describes the example. It does not grant account or workspace access.</p>

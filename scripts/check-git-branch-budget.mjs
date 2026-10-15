@@ -36,4 +36,12 @@ if (
   );
 if (!local.includes(branch)) assertBranchBudget(local.length);
 if (!remote.includes(branch)) assertBranchBudget(remote.length);
+// Owner rule (2026-10-15): fewer than nine Git branches including main, so at most eight.
+// Retire merged branches that no longer affect the system before publishing another.
+const gitMaximum = 8;
+const afterPublish = new Set([...remote, branch]).size;
+if (afterPublish > gitMaximum)
+  throw new Error(
+    `Publishing ${branch} would make ${afterPublish} remote branches. Keep fewer than nine (at most ${gitMaximum}) including main: delete merged branches that no longer affect the system first.`,
+  );
 console.log(JSON.stringify({ branch, localCount: local.length, remoteCount: remote.length }));
