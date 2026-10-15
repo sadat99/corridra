@@ -1,15 +1,23 @@
-# Foundation modules
+# Domain module map
 
-`domain` contains deterministic input schemas, permissions and canonical evidence transitions. It has no network or database dependency.
+Read [Start here](../docs/START_HERE.md), [current architecture](../docs/architecture/v2-current-map.md), [ADRs](../docs/adr/README.md) and [implementation matrix](../docs/implementation/implementation-matrix.json) before changing module contracts.
 
-`db` owns reviewed SQL migrations, Drizzle identity mappings and scoped PostgreSQL transactions. `migrations/` is the authority for SQL policy, constraints, indexes and events. Do not run Drizzle push against a deployed database: a generated diff cannot preserve unmodeled RLS/security triggers. Migration hashes, fresh install and upgrade behavior are covered by integration tests.
+| Module           | Authority and responsibility                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `domain`         | Deterministic schemas, canonical states, permissions, countries/markets, currencies, policy and financial/evidence contracts; no network/database dependency |
+| `db`             | Reviewed additive SQL migrations, scoped transactions and identity mappings; SQL owns RLS/constraints/security triggers                                      |
+| `auth`           | Independent staff Better Auth/TOTP, invitation/setup/recovery and workspace authority; customer managed identity is composed by the app                      |
+| `config`         | Fail-closed runtime/environment/TLS/role/activation validation; metadata validation does not admit real data                                                 |
+| `evidence`       | Source/claim/evidence/review, storage/quarantine/scanner interfaces and provenance; no role grants                                                           |
+| `missions`       | Intake/receipt/review, meetings, global directional route packs, commercial requirements/offers/visits and operations controls                               |
+| `counterparties` | Sourced identities, dedupe, private relationships and mission targets; no autonomous URL fetch or outreach                                                   |
+| `communications` | Reviewed introductions/capabilities, recipient responses and idempotent dispatch boundaries; real outreach remains gated                                     |
+| `workflows`      | Existing durable workflow/outbox orchestration and recovery; no alternate canonical store                                                                    |
+| `opportunities`  | Commercial origins/stages, original contract/invoice/cash and append-only compensation; no payment processor                                                 |
+| `delivery`       | Scoped publication, imports, reproducible exports/reports and programme context; exact source/version/denominator/currency                                   |
+| `intelligence`   | Registered governed draft tasks, provider boundary, grounding/review and budgets; production inference OFF                                                   |
+| `network`        | Exact invited MFA task assignment, independent contribution review, rewards/reversals/disputes; production activation OFF, no payout transport               |
 
-`auth` owns the Better Auth adapter, MFA assurance and tenant access/configuration services. `bootstrap.ts` is an offline schema-owner operation for synthetic identities; never import it into a route handler or client bundle. `client.ts` is the only browser-facing auth entry point.
+App Router handlers compose services; server-only `apps/web/lib/foundations.ts` owns runtime resources/secrets. Offline bootstrap/migration helpers must never enter routes or client bundles. Public `auth/client.ts` is the browser-facing staff auth boundary. No provider management credential belongs in runtime.
 
-`evidence` owns source/claim/evidence/review services and storage/scanner interfaces. It uses scoped transactions and preserves provenance. It cannot grant identity or tenant membership. SQL guards independently enforce state transitions and inherited policy.
-
-`config` rejects unsafe preview activation, database locations, role sharing and weak TLS before services are created. Configuration does not replace live account verification.
-
-App Router handlers compose these modules. Secrets and pools stay in server-only `apps/web/lib/foundations.ts`. `missions` owns Part 04 intake, mission commands, review queues and receipt replies. Its offline bootstrap helper configures one synthetic ingress destination; it must never be imported into a route. Money, DCG and AI workflows remain future parts. See the [architecture decisions](../docs/adr/) and [security contracts](../docs/security/part-03-foundations.md).
-
-`counterparties` owns Part 05 research and targets. It uses domain validation and restricted tenant transactions; it does not call AI, fetch supplied URLs or send outreach.
+There are 29 reviewed SQL migrations at this handoff baseline. Do not use Drizzle push against a deployed database, rewrite migration hashes or bypass scoped roles. Preserve atomic events/outbox, originals, exact money, pinned historical versions, MFA/RLS and separate activation gates. Full current scope and remaining gaps are in the current plan; old module release descriptions are bounded historical context.

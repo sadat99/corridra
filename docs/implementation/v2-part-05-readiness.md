@@ -1,5 +1,7 @@
 # Independent corridor launch readiness
 
+Current control boundaries must be read with [the current plan](current-plan.md). Dated provider/account observations below are evidence for their own time, not a fresh settings audit. Implementation and identity-email acceptance do not close unrelated real-data, assurance or pilot gates.
+
 Current environment: live synthetic missions; verified customer identity is separate. Real operational activation, outreach and payouts remain OFF. No real-user pilot, route-specific legal/commercial/support approval or approved customer-data setup has been supplied. Every route's real launch is therefore **BLOCKED: external prerequisite**. A configuration/CI pass cannot change that conclusion.
 
 | Direction/service                   | Implemented synthetic delivery path                                                                                                                                                                              | Launch order and remaining evidence                                                                                                                                                                        |

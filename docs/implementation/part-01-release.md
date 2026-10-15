@@ -1,5 +1,7 @@
 # Part 01 release record
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Date: 4 October 2026
 
 Status: Part 01 delivered. The source is pushed to `main` and the coming soon page is live on Vercel.

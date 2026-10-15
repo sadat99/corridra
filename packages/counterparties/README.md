@@ -1,5 +1,7 @@
 # Counterparty research module
 
+Read the [current programme](../../docs/implementation/current-plan.md), [module map](../README.md) and applicable ADRs before changing this module. Part references below describe its original release; later V2/UX amendments and current activation limits are linked from the developer handoff.
+
 Owns manual public identity ingestion, relationship-scoped private contacts/notes, typed company attributes, deterministic entity candidates, reversible tenant attribution and evidence-aware mission target assessments. It has no AI, outbound email, crawler or object storage implementation.
 
 The service accepts a server-derived session/tenant/purpose context and uses the restricted runtime pool. Reads enforce research.read and database RLS. Operators manage their allowed records; authorized owner/admin/reviewer entity decisions and actual independent reviewer fact publication require fresh MFA. Shared identity/fact inserts are narrowly validated database capabilities, not direct table grants. Originals retain their source identities after attribution merges.

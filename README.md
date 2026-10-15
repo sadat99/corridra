@@ -1,52 +1,50 @@
 # Corridra
 
-Cross-border market access, starting with Bangladesh and Spain/EU.
+Cross-border market access with configurable commercial corridors, evidence-backed workflows and scoped workspaces.
 
-Parts 01 through 08 are implemented and deployed. Corridra includes the public website, mission intake and review, counterparty research, controlled introductions and meetings, commercial follow-through, and client/institutional delivery. Neon Auth customer signup, email verification, sign-in, sign-out and password recovery are live. Parts 09 through 12 remain planned.
+**Start with the [developer handoff](docs/START_HERE.md) and [current plan](docs/implementation/current-plan.md).** Original V1 Parts 1–8 are the retained foundation. The revised five-part V2 programme was implemented and merged, followed by UX-01 through UX-05 and bounded UX-06/access repairs. Original V1 Parts 9–12 are historical requirements, not the next implementation sequence. Full UX10X functional coverage and real customer readiness are not established.
 
-Mission intake and operational data remain restricted to invented test records. Customer accounts do not grant workspace membership. Real customer imports, outreach email, production evidence storage/scanning and the paid-customer pilot retain the gates in the [deferred controls register](docs/implementation/deferred-controls.md). Part 07's production commercial write check remains deferred by the owner; full commercial and delivery journeys passed in isolated test environments.
+Mission intake and operational records remain synthetic. Customer signup, verification and recovery are live; customer identity grants no workspace role. Production AI inference, network activation, outreach, payments and payouts remain closed. Preserve the [deferred controls](docs/implementation/deferred-controls.md), original records, MFA, RLS and exact monetary/evidence semantics.
 
 ## Access
 
-| Journey                           | Entry point                                                                                   | Access                                             |
-| --------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Public website                    | [c.obsidianglobal.studio](https://c.obsidianglobal.studio)                                    | Public                                             |
-| Customer signup                   | [Create an account](https://corridra.vercel.app/signup)                                       | Email verification required                        |
-| Customer sign-in and profile      | [Sign in](https://corridra.vercel.app/signin), [account](https://corridra.vercel.app/account) | Verified customer session                          |
-| Password recovery                 | [Reset access](https://corridra.vercel.app/forgot-password)                                   | Received email link                                |
-| Operator/admin workspace          | [Operator sign-in](https://corridra.vercel.app/operator/signin)                               | Existing invitation, tenant role and password/TOTP |
-| Test mission intake               | [Plan a mission](https://corridra.vercel.app/plan)                                            | No account required; test briefs only              |
-| Buyer, client and programme views | Links issued from the workspace                                                               | Scoped capabilities with expiry/revocation         |
+| Person or task                            | Entry                                                                                                                                       | Authority                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| New visitor                               | [Start here](https://corridra.vercel.app/workspace), [public site](https://corridra.vercel.app)                                             | Directory and public information only                                                                      |
+| Customer                                  | [Signup](https://corridra.vercel.app/signup), [sign in](https://corridra.vercel.app/signin), [account](https://corridra.vercel.app/account) | Verified identity; explicit mission invitations remain required                                            |
+| Customer password recovery                | [Forgot password](https://corridra.vercel.app/forgot-password)                                                                              | Managed Neon Auth email link                                                                               |
+| First invited staff setup                 | [Operator setup](https://corridra.vercel.app/operator/setup)                                                                                | Matching verified customer identity and an already approved pending invitation; own staff password and MFA |
+| Existing staff and owner/admin            | [Operator sign in](https://corridra.vercel.app/operator/signin), then [workspace](https://corridra.vercel.app/operator)                     | Separate staff password, authenticator and current role                                                    |
+| Staff password recovery                   | [Operator forgot password](https://corridra.vercel.app/operator/forgot-password)                                                            | Existing eligible staff; retains MFA and membership                                                        |
+| Owner administration                      | Operator workspace, **People and workspace controls**                                                                                       | Owner membership management; separately permitted admin configuration/audit                                |
+| Test mission brief                        | [Plan a mission](https://corridra.vercel.app/plan)                                                                                          | Invented test briefs only                                                                                  |
+| Contributor, buyer, client or institution | Original assigned/private invitation                                                                                                        | Exact task/publication/capability scope and expiry/revocation                                              |
 
-Interactive production pages use `https://corridra.vercel.app` as their canonical origin. Other aliases redirect there while preserving receipt and recovery query parameters. Customer identities and operator identities are separate: matching email addresses never grant operator access. The owner's existing admin access and MFA remain intact.
+Interactive production routes use `https://corridra.vercel.app` as their canonical origin. Matching email addresses do not join customer/staff identities. Lost MFA, suspended staff and expired/new staff invitations retain reviewed recovery. Workspace administration does not grant Neon/Vercel account control.
 
-Neon Auth stores accounts in Frankfurt and sends identity mail through Resend SMTP in Ireland. Received verification and recovery emails, reset-token reuse denial and live browser session behavior passed acceptance. [The account runbook](docs/runbooks/neon-auth-accounts.md) and [production acceptance record](docs/implementation/neon-auth-production-activation.json) contain the release evidence. Support uses the monitored `sadat@obsidianglobal.studio` inbox; `sadat@c.obsidianglobal.studio` is the sending address. Mission replies and outreach do not send email.
+The [identity runbook](docs/runbooks/neon-auth-accounts.md) and [PR 46 production acceptance](docs/implementation/access-recovery-production-acceptance.json) distinguish delivered emails, owner workspace entry and unobserved private reset completion. Never share or record passwords, reset links or authenticator codes.
 
-## Documents
+## Documentation and verification
 
-- [Documentation index](docs/README.md)
-- [Positioning & Messaging Constitution v1.0](docs/brand/positioning-messaging-constitution-v1.0.md)
-- [Public Experience v1.0](docs/product/public-experience-v1.0.md)
-- [Implementation Canvas v1.0](docs/architecture/implementation-canvas-v1.0.md)
-- [12-part implementation plan and current status](docs/implementation/plan-v1.0.md)
-- [Part 06 access and meetings](docs/implementation/part-06-release.md)
-- [Part 07 commercial follow-through](docs/implementation/part-07-release.md)
-- [Part 08 client and institutional delivery](docs/implementation/part-08-release.md)
+- [Current roadmap and old V1 Parts 9–12 disposition](docs/implementation/current-plan.md)
+- [Requirement/code/test/limit matrix](docs/implementation/implementation-matrix.json)
+- [Architecture map](docs/architecture/v2-current-map.md) and [ADR index](docs/adr/README.md)
+- [Verification and continuation guide](docs/verification-guide.md)
+- [Complete UX10X requirements and phase evidence](docs/ux10x/README.md)
+- [Documentation index](docs/README.md) and [document classification catalogue](docs/documentation-map.md)
 
-Original uploads remain byte-for-byte intact in `docs/source/`. The constitution working copy includes the requested writing rule under section 21. Release records distinguish historical results from current activation status.
+The three source uploads, V2 owner packets and full UX handoff are preserved. Historical plans and release records remain available with their dates and scope. Use the current plan for status; use source requirements and executed evidence to audit missing work. A merged phase is not exhaustive coverage.
 
 ## Development
 
-Use Node 24.19.0 and pnpm 11.19.0.
+Use Node 24.19.0 and pnpm 11.19.0. The Next.js app is `apps/web`; root commands select the workspace.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The Next.js app lives in `apps/web`; root scripts select the correct workspace. The public shell runs without application secrets. Persistent intake, operator features and managed customer accounts require their documented secure configuration. Use isolated development databases and separate signing material; never bind previews to production credentials. Follow the [development runbook](docs/runbooks/development.md), [foundation runbook](docs/runbooks/part-03-foundations.md) and [account runbook](docs/runbooks/neon-auth-accounts.md).
-
-## Validation
+The public shell needs no application secrets. Persistent features and customer/staff authentication require isolated, documented bindings. Follow [development](docs/runbooks/development.md); never bind previews or tests to production credentials or an unverified ambient database URL.
 
 ```sh
 pnpm db:local
@@ -56,14 +54,10 @@ pnpm exec playwright install --with-deps chromium
 pnpm check
 ```
 
-Docker is required for local PostgreSQL and scanner checks. `pnpm check` runs formatting, lint, typechecking, document/infrastructure checks, real database integration tests, the production build and public/protected browser suites. Tests cover tenant isolation, MFA, provenance, atomic events, quarantine, financial history, capability revocation, imports and exports. Browser checks include responsive layout, accessibility and actual operator journeys. Mission test submissions are persisted; their claims remain self-declared.
+Docker is required for local PostgreSQL/ClamAV. `pnpm check` runs formatting, lint, types, document/infrastructure checks, database integration, build and public/protected browser suites. These suites can persist synthetic submissions: **do not run them against production**. Verify provider email delivery separately; HTTP success alone is insufficient.
 
-Managed Neon Auth also needs isolated provider acceptance and received-email checks. Request success alone does not prove delivery. Keep credentials, authentication cookies, received codes and reset links out of source, logs and uploaded test artifacts.
+## Release
 
-## Release and cleanup
+Use reviewable PRs and passing checks on the intended revision. Under standing owner authorization, correctly checked merges are deployed immediately. Vercel Git auto-deployment for `main` is explicitly disabled in `apps/web/vercel.json`; deploy the exact merged SHA and verify READY, alias bindings and bounded live behavior. See [deployment and rollback](docs/runbooks/deployment.md). Repository enforcement and CodeQL entitlement retain their separately documented limitations.
 
-Release through short-lived PRs with passing checks on the reviewed revision. GitHub Actions validates PRs and `main`; Vercel Git integration deploys `main`. Repository protection, CodeQL entitlement and other account controls retain their separately documented status. Deploy with Vercel Root Directory `apps/web`, Node 24.x, workspace files outside the root included and the existing Frankfurt runtime configuration. The [deployment runbook](docs/runbooks/deployment.md) covers verification and rollback.
-
-Confirm the production deployment is READY at the intended commit and test the live behavior before recording acceptance. Preserve additive migrations, original owners, personal admin sessions and immutable history. Disable affected feature flags for rollback rather than deleting production records.
-
-Under the owner's standing cleanup instruction, remove completed short-lived Git branches, unused temporary Neon branches and their exact retired preview settings after acceptance and sanitized evidence are preserved. Inspect project/branch IDs, parents, children, PR status and bindings first. Keep production/default databases, sterile parents, open-PR environments and unfinished work. Revoke temporary protection-bypass credentials and remove test identities created for the release. Cleanup runs at task completion; no background deletion scheduler is installed.
+Builds never migrate. Preserve additive migrations, original owners/MFA, history and readiness gates. Retire only proven completed temporary branches/previews under the cleanup rules in `AGENTS.md`, preserving open dependency PRs, unfinished work, production and sterile parents. No background cleanup scheduler is installed.

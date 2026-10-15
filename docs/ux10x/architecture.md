@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-The owner authorizes UX-01 code, tests and a reviewable PR. The UX10X.1.0 handoff governs UX within current server/domain contracts. Fusion 01 supplies visual reference only. Its fictional metrics, approval controls and historical implementation instructions do not define production behavior. UX-02 through UX-06 remain sequential acceptance-gated work.
+This contract originated in UX-01 and remains a preservation contract for later UX changes. UX-01 through UX-05 are merged, with bounded UX-06/access repairs; see [current programme](../implementation/current-plan.md). The UX10X.1.0 handoff governs UX within current server/domain contracts. Fusion 01 supplies visual reference only. Its fictional metrics, approval controls and historical implementation instructions do not define production behavior. The sequential programme requirements remain; implementation of a phase is not exhaustive functional acceptance.
 
 Baseline main is `1e0dbea6f146265b256ca89b5482e789f97acdd9`. The existing checkout was clean at `5a5f6b7` and was fast-forwarded after inspecting the seven-file PR #38 diff. The 15-second connection timeout, rejected-resource eviction and full-document recovery remain unchanged. No worktree, migration or domain fork is introduced.
 
@@ -27,6 +27,6 @@ Read-only mission presentation must retain original company/name/language, sourc
 
 ## Gates and rollback
 
-The UX-01 branch and main explicitly opt out of automatic Vercel Git deployment in apps/web/vercel.json. Main remains paused until a separately authorized deployment; merging UX-01 alone cannot release it. No runtime environment settings, production data, provider credentials, readiness observations, outreach adapters or payment/payout paths change. D01–D06/D08 remain open under the existing controls register. UI changes do not close any external gate. Local synthetic provider fixtures are test transports, not live inference.
+The UX-01 branch and main explicitly opt out of automatic Vercel Git deployment in apps/web/vercel.json. Main Git auto-deployment remains disabled. The owner subsequently authorized immediate exact-revision deployment after correctly checked merges, without another approval. No runtime environment settings, production data, provider credentials, readiness observations, outreach adapters or payment/payout paths change. D01–D06/D08 remain open under the existing controls register. UI changes do not close any external gate. Local synthetic provider fixtures are test transports, not live inference.
 
-Rollback is the application diff against the accepted baseline; no database rollback is needed. Merge, previews/deployment and production acceptance require the owner's separate instruction. Validate the exact proposed code and preserve evidence before publication. The coverage ledger distinguishes source discovery from executed functional verification.
+Rollback is the application diff against the accepted baseline; no database rollback is needed. Follow current standing merge/deploy authorization and exact-revision checks; external activation and real operations still require their separate gates. Later migration-bearing repairs follow their own additive compatibility contract. Validate the exact proposed code and preserve evidence before publication. The coverage ledger distinguishes source discovery from executed functional verification.

@@ -1,5 +1,7 @@
 # V2 incident, recovery and rollback runbook
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 ## Triage and safe recovery
 
 Open Recovery and health in the affected authorized workspace. It shows safe identifiers/statuses, available times, expired leases, retained attempt counts, named mission owners, outstanding task reviewers, AI failures/pending reservations and owned cases. No provider payload, credential or private contact belongs in logs. Use the server-generated X-Corridra-Request-ID and mission/message/run UUIDs to correlate a request with the immutable audit/event history.

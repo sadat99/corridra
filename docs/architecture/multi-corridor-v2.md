@@ -1,6 +1,6 @@
 # Multi-corridor V2 architecture contract
 
-Read this contract before changing missions, research, commercial origins, corridor configuration, policy or money. V2 supersedes geographic rollout order, not tenant isolation, historical truth or production-data gates.
+Read this contract before changing missions, research, commercial origins, corridor configuration, policy or money. It records V2 Part 1 contracts; later parts added UI, governed provider adapters and operations controls under ADRs 026–031. Read [the current map](v2-current-map.md) and [current plan](../implementation/current-plan.md) for the complete implemented scope. V2 supersedes geographic rollout order, not tenant isolation, historical truth or production-data gates.
 
 ## Global identities and distinct locations
 
@@ -45,3 +45,7 @@ The AI policy contract permits only reviewed public-source summarization/extract
 Apply migrations 0019–0022 only after a populated isolated upgrade, restricted-role negative tests and full release checks. Migration files 0001–0018 and `docs/source/` remain immutable. Deployment builds never migrate a database. Verify the exact approved synthetic Neon branch before a separate migration job. Preserve verified Neon customer identity and independent operator MFA.
 
 Application rollback preserves additive tables and immutable history. Old clients keep the held-meeting path; rollback must not delete alternate origins or rewards. Disable new entry points, use compatible forward fixes and replay retained events. A historical old application version may not understand alternate-origin UI details, so retain the tested V2-compatible build for operational reads. Real customer mission flows remain blocked under the deferred controls register.
+
+## Later implementation amendments
+
+Part 1 exclusions describe its own release, not absent current capabilities. V2 Parts 2–5 subsequently added commercial execution, product UI, governed AI provider adapters (production inference OFF), restricted task execution (production activation OFF) and operational controls. See ADRs 026–029. PR 46 added existing-staff password recovery without changing MFA, role or source-rights authority (ADR 031). No amendment waives exact money, pinned versions, RLS or real-data gates.

@@ -1,0 +1,542 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "0c42920dbc970aa9fd49b1a8323d6ecca417a527",
+  "scope": "Every Markdown file under docs, including immutable originals and historical evidence. JSON rollout/validation and image/log evidence remain dated records, not current health claims.",
+  "entries": [
+    {
+      "path": "docs/README.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/START_HERE.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/adr/0001-public-launch-and-platform-boundaries.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0002-canonical-postgresql.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0003-tenancy-and-identity.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0004-evidence-semantics.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0005-events-and-outbox.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0010-eu-data-and-access.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0012-synthetic-preview-lifecycle.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0013-blob-storage-and-s3-migration.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0014-live-synthetic-preview-with-deferred-controls.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0015-production-domain-and-explicit-unscanned-evidence.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0016-mission-intake-and-operator-commands.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0017-counterparty-research-and-reversible-attribution.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0018-controlled-introductions-and-meeting-truth.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0019-part-06-production-release-and-customer-readiness.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0020-neon-auth-accounts-and-preserved-operator-mfa.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0021-commercial-funnel-cash-and-outcome-projections.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0022-scoped-client-and-institutional-delivery.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0023-global-markets-and-versioned-routes.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0024-commercial-origin-and-event-coexistence.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0025-service-economics-rewards-and-privacy-boundaries.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0026-commercial-mission-execution.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0027-scoped-multi-corridor-product-experience.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0028-governed-tasks-and-restricted-execution-network.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0029-operational-readiness-and-observed-economics.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0030-explicit-staff-invitation-and-first-password.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/0031-operator-password-recovery-and-scoped-directory.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/adr/README.md",
+      "classification": "Architecture contract/index",
+      "use": "Read with explicit later amendments and ADR index"
+    },
+    {
+      "path": "docs/architecture/implementation-canvas-v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/architecture/multi-corridor-v2.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/architecture/v2-current-map.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/brand/positioning-messaging-constitution-v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/design/public-experience.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/documentation-map.md",
+      "classification": "Current guide/contract",
+      "use": "Catalogue of document roles, not a replacement for requirements"
+    },
+    {
+      "path": "docs/implementation/current-plan.md",
+      "classification": "Current roadmap/control guide",
+      "use": "Use dated observations only within their stated scope"
+    },
+    {
+      "path": "docs/implementation/deferred-controls.md",
+      "classification": "Current roadmap/control guide",
+      "use": "Use dated observations only within their stated scope"
+    },
+    {
+      "path": "docs/implementation/part-01-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-02-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-03-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-04-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-05-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-06-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-06-scope.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-07-handoff.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-07-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-07-scope.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-08-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/part-08-scope.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/plan-v1.0.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-access-completion.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-master-plan.md",
+      "classification": "Current roadmap/control guide",
+      "use": "Use dated observations only within their stated scope"
+    },
+    {
+      "path": "docs/implementation/v2-part-01-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-01-scope.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-02-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-03-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-04-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-04-scope.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-part-05-controls.md",
+      "classification": "Current roadmap/control guide",
+      "use": "Use dated observations only within their stated scope"
+    },
+    {
+      "path": "docs/implementation/v2-part-05-readiness.md",
+      "classification": "Current roadmap/control guide",
+      "use": "Use dated observations only within their stated scope"
+    },
+    {
+      "path": "docs/implementation/v2-part-05-traceability.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/implementation/v2-ui-navigation-release.md",
+      "classification": "Historical plan/scope/release",
+      "use": "Original requirements or bounded release packet; not current next-task authority"
+    },
+    {
+      "path": "docs/product/public-experience-v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/runbooks/deployment.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/development.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/evidence-storage.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/neon-auth-accounts.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-03-foundations.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-04-missions.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-05-counterparties.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-06-access-and-meetings.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-07-commercial-followthrough.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/part-08-client-and-institutional-delivery.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-access-and-launch.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-commercial-missions.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-intelligence-network.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-operations.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-product-experience.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/runbooks/v2-reliability-recovery.md",
+      "classification": "Current operational guide",
+      "use": "Module-specific instructions; verify actual bindings and dated observations"
+    },
+    {
+      "path": "docs/security/part-03-foundations.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/source/Corridra_Implementation_Canvas_v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/source/Corridra_Positioning_Messaging_Constitution_v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/source/Corridra_Public_Experience_v1.0.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/ux10x/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/architecture.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/master-handoff.md",
+      "classification": "Preserved source/working copy",
+      "use": "Complete requirements; apply later explicit decisions without editing originals"
+    },
+    {
+      "path": "docs/ux10x/ux02/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux02/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux02/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux03/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux03/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux03/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux04/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux04/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux04/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux05/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux05/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux05/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux06/README.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux06/access-repair.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+    },
+    {
+      "path": "docs/ux10x/ux06/evidence/after/performance-notes.md",
+      "classification": "Frozen evidence",
+      "use": "Dated artifact/provenance; never current implementation authority"
+    },
+    {
+      "path": "docs/ux10x/ux06/inventory.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux06/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/ux06/wayfinding.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/ux10x/validation.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
+      "path": "docs/verification-guide.md",
+      "classification": "Current guide/contract",
+      "use": "Read alongside current plan, source requirements and ADRs"
+    }
+  ]
+}

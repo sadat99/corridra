@@ -1,5 +1,7 @@
 # V2 Part 3 product and delegation operations
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Use the existing operator workspace and tenant permissions. All mission operations remain synthetic. Customer identity signup is independently live; it does not activate customer mission processing.
 
 1. Review a short brief from `/plan`. Company country and target market are explicit; unsupported directions remain unconfigured. Assign a reviewed route through existing configuration, then collect requirements and evidence through Part 2 services.

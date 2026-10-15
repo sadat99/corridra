@@ -1,5 +1,7 @@
 # UX-06 first repair validation
 
+Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
+
 199 integration tests passed across 24 files against the actual isolated database, identities, scanner and service boundaries. No domain/API/auth package changes followed. The final disclosure/heading implementation passed lint, types, 10 document and 7 infrastructure checks, production build, all 78 public browser tests and all 13 protected browser tests. All six focused discovery checks subsequently passed with initial-state screenshot scroll/focus procedure finalized. The final caption-only wording, local-origin capture guard, evidence formatting and CI artifact configuration receive static/build checks and exact-head CI; they do not change application payloads or permissions.
 
 The first public run passed 77/78. Its mobile test had scoped the details assertion through a role locator that excludes a hidden navigation after Escape. The selector now explicitly includes that hidden navigation and still requires the real menu to close and restore keyboard focus. The failed log remains in evidence/failed, with the subsequent full public suites preserved. No product-menu behavior or test assertion was removed.

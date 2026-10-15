@@ -1,6 +1,6 @@
 # ADR 031: Operator password recovery and a scoped member directory
 
-Status: implementation under verification. Live delivery and owner setup acceptance are separate.
+Status: implemented and merged in PR 46. The owner confirmed workspace entry after private setup/MFA and receipt of both actual reset emails. Latest private reset consumption was not observed. See [bounded production acceptance](../implementation/access-recovery-production-acceptance.json); this does not establish all-role or full-programme acceptance.
 
 The owner requested working signup, sign-in and password recovery for the applicable audiences, with understandable administration and preserved permissions. Customer accounts retain managed Neon Auth. Staff identities retain the existing independent Better Auth password and authenticator. Private buyer, client, programme and contributor access retains its existing scope and invitation contracts. No account migration, automatic identity linking or public staff signup is introduced.
 

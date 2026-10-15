@@ -1,5 +1,7 @@
 # Revised V2 Part 4 operations
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Start with the existing operator password/TOTP identity and tenant authority. Use only synthetic data. Customer Neon identities do not gain execution access through email matching.
 
 ## AI preparation and review

@@ -1,5 +1,7 @@
 # UX-03 participant journeys
 
+Historical UX-03 package record, implemented and merged in PR 41. Later UX packages and bounded access repairs are also merged. Use [the current plan](../../implementation/current-plan.md) for present work and standing release authority. Original next-package or separate-approval statements below describe the historical packet; they do not restart completed work. Scope acceptance is not complete functional coverage.
+
 Accepted baseline: `1a1c3e14f6d79a6340340a5df07e17ada1eb28b4`, merged UX-02 PR #40. Its main CI passed. The master handoff remains governing and Fusion remains visual reference only.
 
 The shared participant shell keeps the original customer, buyer/supplier, institution and contributor entry paths. Mission passports show only the server-approved publication, canonical mission state, requirement version and next action. The original brief, itinerary, evidence requests and commercial totals remain accessible.

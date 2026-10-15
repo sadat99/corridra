@@ -1,5 +1,7 @@
 # Part 04 release
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Scope: five-step no-account test intake, normalized mission records, private status/reply receipts and protected Ops Home. The current live data environment remains synthetic under ADR-015. See ADR-016 for the ingress and state contracts and the mission runbook for operations/rollback.
 
 Implementation includes server and step-specific validation; tab-scoped draft preservation; retry-key/content deduplication; shared abuse budgets; original brief, notice and self-declared provenance; owner/next action/due date; structured market and append-only target profiles; qualification, activation, hold/resume and cancellation; source/claim creation; idempotent commands/replies; atomic event/audit/outbox and database guards. No future targeting, outreach, meeting, money or AI flow is included.

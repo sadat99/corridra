@@ -1,5 +1,7 @@
 # Part 03 development and release runbook
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 ## Local verification
 
 Use Node 24, pnpm 11.19.0 and a local Docker daemon. Start services with `pnpm db:local`, `pnpm db:prepare-local` and `pnpm scanner:local`. Both images are digest pinned, listen on loopback and hold synthetic data only. The scanner uses bundled signatures for repeatable tests. Never point the local commands at `DATABASE_URL` or another remote database.

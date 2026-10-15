@@ -1,4 +1,6 @@
-# Corridra V2 master plan
+# Corridra V2 five-part implementation plan
+
+All five revised parts were implemented and merged. This plan records the revised sequence, not an instruction to restart it. UI integration followed in PR #35, access/reliability in PRs #37–38, then UX10X. See [current programme and remaining work](current-plan.md) and [Start here](../START_HERE.md).
 
 Unqualified part numbers refer to the owner's revised five-part V2 roadmap. Original V1 Parts 1–8 remain the accepted baseline. The new packets revise the direction from that baseline; they are not Parts 1–5 of the old twelve-part plan. Later owner packets supersede earlier tentative allocations without waiving existing security/data gates.
 
@@ -8,7 +10,7 @@ Unqualified part numbers refer to the owner's revised five-part V2 roadmap. Orig
 | V2 2 | Universal commercial mission execution                                                        | Released in PR #31; [Part 2 record](v2-part-02-release.md)                                                                                                                                                                         |
 | V2 3 | Multi-corridor product experience and institutional delivery                                  | Released in PR #33 at main `ca7894301cf4c1b69a2718d6b6cf55ecfca2042d`; [Part 3 record](v2-part-03-release.md) and accepted PR contain validation and deployment evidence                                                           |
 | V2 4 | Governed AI and the global Commercial Execution Network, combined by the revised owner packet | Released in PR #34 at main `1b52b0bd723c974e624637ad27a4e5c2486b473c`; [scope](v2-part-04-scope.md), [decision](../adr/0028-governed-tasks-and-restricted-execution-network.md), [runbook](../runbooks/v2-intelligence-network.md) |
-| V2 5 | Global Control Center, reliability, commercial operations and readiness                       | Owner packet accepted; Part 5 implementation/release in progress; [traceability](v2-part-05-traceability.md) and [readiness](v2-part-05-readiness.md)                                                                              |
+| V2 5 | Global Control Center, reliability, commercial operations and readiness                       | Released in PR #36 (`712a750d48`); bounded synthetic acceptance, real activation still gated; [traceability](v2-part-05-traceability.md) and [readiness](v2-part-05-readiness.md)                                                  |
 
 V1 Parts 9–12 are historical planning and assurance requirements, not automatically the next implementation tasks. Independent assurance, recovery, privacy/legal, retention and pilot gates still apply before real operational activation. D01–D06 and D08 are not silently closed; D07 and D09 retain their recorded acceptance.
 

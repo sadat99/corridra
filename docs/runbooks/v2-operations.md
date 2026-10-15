@@ -1,5 +1,7 @@
 # Corridra V2 administrator and operator manual
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 ## Entry and navigation
 
 Use `/operator`, select the authorized workspace, verify the authenticator and open Global operations. Its links lead to Mission dashboard, Corridor Control Center, Recovery and health, Production readiness and the existing workspace sections. Owner/admin can administer; ordinary operators see authorized delivery metrics and recovery. Financial ledger and administration access remain owner/admin scoped. Workspace selection is the tenant filter; it never creates global access. Failed loads offer retry, and drafts remain in page memory. Do not reload a pending unacknowledged command unnecessarily; retry its existing ID.

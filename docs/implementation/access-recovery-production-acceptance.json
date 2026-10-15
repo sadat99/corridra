@@ -1,0 +1,69 @@
+{
+  "ciRun": 38677026927,
+  "ciConclusion": "success",
+  "testedHead": "4b04f601debe39ad81a92a99fa6ac2453f158b4a",
+  "mergeSha": "0c42920dbc970aa9fd49b1a8323d6ecca417a527",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/46",
+  "codeQL": "skipped; private entitlement unavailable",
+  "deployment": {
+    "id": "dpl_3qh2RBbsqPahZFusTTn8QCekVsWT",
+    "state": "READY",
+    "sha": "0c42920dbc970aa9fd49b1a8323d6ecca417a527",
+    "url": "https://corridra.vercel.app",
+    "region": "fra1",
+    "canonicalAliasVerified": true
+  },
+  "productionBrowser": {
+    "routeViewportObservations": 38,
+    "axeViolations": 0,
+    "overflow": 0,
+    "unexpectedOperationalWrites": 0,
+    "anonymousMissionRead": 401
+  },
+  "operatorMail": {
+    "configured": true,
+    "sendingKeyStoredSecurely": true,
+    "originalNeonSettingsUnchanged": true,
+    "identityOnly": true,
+    "recoveryActivated": "production; recipient confirmed delivery"
+  },
+  "operatorReset": {
+    "path": "/api/operator-auth/request-password-reset",
+    "status": 200,
+    "requests": 1,
+    "blockedWrites": 0,
+    "feedback": "If this address has an active operator account, you will receive an operator password reset email. Check spam too. A pending invitation needs setup instead.\n\nReturn to operator sign-inFinish a pending invitation",
+    "inboxReceipt": "recipient confirmed",
+    "screenshots": false,
+    "traces": false,
+    "privatePasswordResetCompletion": "not observed; recipient keeps credentials private"
+  },
+  "customerResetEmailRecipientConfirmed": true,
+  "owner": {
+    "privatelyCompletedSetup": true,
+    "workspaceOpened": true,
+    "activeOwnerVerifiedMFA": true
+  },
+  "security": {
+    "codeQL": "skipped; private entitlement unavailable"
+  },
+  "ciEvidenceArtifact": {
+    "id": 11947607075,
+    "name": "synthetic-ux-browser-evidence",
+    "retentionDays": 7
+  },
+  "checkoutClean": true,
+  "exactMergeTreeMatchesTestedHead": true,
+  "runtimeErrorRead": "No error/fatal groups in deployment-scoped 30-minute read",
+  "acceptanceScope": "Implemented access repair, private owner setup confirmed and both identity reset emails received; no whole-programme coverage claim",
+  "recordedDate": "2026-10-15",
+  "recordType": "Dated PR 46 acceptance, not ongoing health or full UX coverage",
+  "auditMigration": {
+    "file": "packages/db/migrations/0029_identity_password_audit.sql",
+    "sha256": "97f3635582514757daa30eac9451791999ac2474193a570ead1b5d7277c7b5dc",
+    "appliedToVerifiedLiveSyntheticBranch": true,
+    "existingCredentialRowsUnchangedDuringMigration": 8,
+    "authRoleCanDirectlyInsertAudit": false
+  },
+  "ciUrl": "https://github.com/sadat99/corridra/actions/runs/38677026927"
+}

@@ -1,5 +1,7 @@
 # Revised V2 Part 4: governed AI and execution network
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 This is the owner's revised five-part roadmap. Original V1 Parts 1–8 and revised V2 Parts 1–3 remain the accepted baseline. No Part 5 implementation is authorized by this packet.
 
 ## Implemented contract

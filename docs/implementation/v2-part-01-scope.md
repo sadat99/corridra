@@ -1,5 +1,7 @@
 # V2 Part 01 scope
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Baseline: local HEAD `54d9ba36d7f7be4e4c235b4a15d7af82d91f6d08`. This matches the supplied audit. Remote reconciliation succeeded after using approved network access. `origin/main` equals the starting commit. Existing legacy `country` and `corridor` registries are preserved; new tenant operating corridors use `corridor_definition`.
 
 | Disposition | Existing components                                                          | Bounded change                                                                        |

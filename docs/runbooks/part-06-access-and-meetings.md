@@ -1,5 +1,7 @@
 # Controlled introductions and meeting operations
 
+Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
+
 Part 06 uses invented identities and `@example.invalid` recipients. A synthetic receipt demonstrates the dispatch protocol; it does not prove an email was sent. A manual receipt records an operator handoff. EMAIL is blocked in the database and current runtime. The sender-domain, send-permission, legal-policy and D08 gates remain open for real outreach.
 
 ## Operator and buyer flow

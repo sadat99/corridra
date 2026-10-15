@@ -1,5 +1,7 @@
 # ADR 030: Explicit staff invitation and first-password setup
 
+Current amendment: [ADR 031](0031-operator-password-recovery-and-scoped-directory.md) supersedes only the offline existing-staff password-recovery restriction. First invitation, lost MFA, suspended identity and expired-invitation boundaries remain.
+
 Status: V2 access completion; actual provisioning and release evidence are separate.
 
 Customer identity and staff identity remain separate. A customer email matching an operator email never grants membership. The owner explicitly requested founder/admin access and supplied the email and operating country. Owner includes admin capabilities; one membership has one role per workspace.

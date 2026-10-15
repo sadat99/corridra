@@ -1,5 +1,7 @@
 # Part 07 implementation and release status
 
+Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
+
 Commercial follow-through is implemented through [PR #22](https://github.com/sadat99/corridra/pull/22). Its release evidence records the current exact revision, CI, preview, production migration, functional acceptance and cleanup status. The production entry point is [corridra.vercel.app](https://corridra.vercel.app). [The requirement baseline](part-07-scope.md), [ADR-021](../adr/0021-commercial-funnel-cash-and-outcome-projections.md) and [runbook](../runbooks/part-07-commercial-followthrough.md) define scope, accounting authority, complete operator operations and rollback.
 
 The module links held meetings to owned opportunities and immutable RFQ/sample/proposal/commitment/contract/invoice/cash/recurrence records. Accounting confirmation is a separate fresh-MFA owner/admin action. SQL preserves tenant/purpose/country and relationship permissions, immutable financial history, parent currency, invoice caps, confirmed-payment limits and explicit compensations. Observed contracts, invoices, reported receipts and confirmed cash remain distinct.
