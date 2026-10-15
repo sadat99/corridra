@@ -311,6 +311,9 @@ function TenantWorkspace({
                   <a href="#ops-center">Control Center</a>
                   <a href="#workspace-settings">Corridors and policies</a>
                   <a href="#workspace-audit">Access and audit</a>
+                  {data.role === 'owner' && (
+                    <a href="#workspace-controls">People and workspace controls</a>
+                  )}
                   <a href="#ops-gates">Production readiness</a>
                 </nav>
                 <p>

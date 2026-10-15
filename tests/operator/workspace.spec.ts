@@ -125,7 +125,10 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.locator('#workspace-navigation details')).not.toHaveAttribute('open');
   await page.getByText('Manage this workspace', { exact: true }).click();
   const administration = page.getByRole('navigation', { name: 'Administration', exact: true });
-  await expect(administration.getByRole('link')).toHaveCount(4);
+  await expect(administration.getByRole('link')).toHaveCount(5);
+  await expect(
+    administration.getByRole('link', { name: 'People and workspace controls', exact: true }),
+  ).toHaveAttribute('href', '#workspace-controls');
   await expect(
     administration.getByRole('link', { name: 'Control Center', exact: true }),
   ).toHaveAttribute('href', '#ops-center');
