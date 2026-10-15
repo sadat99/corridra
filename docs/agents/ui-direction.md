@@ -2,6 +2,19 @@
 
 Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
+## Business objective and cognitive load (owner directive, 2026-10-15)
+
+Corridra is a startup. Every screen must move a real person toward a business outcome: a qualified mission, an introduction, a commercial result or a Corridra service fee. The owner reports that the current product is too complex to understand, even for its builder. Treat cognitive load as a defect with the same weight as a bug.
+
+Rules for every visible change:
+
+1. **One job per screen.** A screen answers one question: what should I do next, why does it matter, who owns it. Everything else is behind a clearly named "More" or a disclosure.
+2. **At most five primary choices** in any navigation level. Group by the user's job, not by how the system is built.
+3. **One landing screen per audience** that shows the next action first. Do not show a directory of every tool before the person knows what they came to do.
+4. **Say it in the user's words.** No internal programme names (V2 parts, UX phases), module names or system vocabulary in the interface. Prefer a verb and a result ("Review new briefs", not "Missions and requirements").
+5. **Hide, never delete.** Reduce load by ordering, grouping, collapsing and role-based defaults. Keep every existing panel mounted and every action reachable, because tests, history and permissions depend on them.
+6. **Money path first.** Order content by the path visitor, brief, qualified mission, introduction, meeting, commercial outcome, service fee. Gated or unavailable capabilities are shown honestly and briefly, never as the headline.
+
 ## Intent
 
 Quiet Intelligence (V10) is the grammar: calm, legible, mission first. SourceLab (V07) sets technical rigour for quotations and evidence. Heritage Atlas (V01) sets public editorial authority. Precision Ledger (V02) sets operator density. The result must read as one company: confident, precise, unhurried, never decorative for its own sake.

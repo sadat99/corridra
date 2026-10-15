@@ -37,3 +37,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: this is the foundation, not the finished experience. Page-level composition is still plain in places: the participant mission view has no section rail or progression strip, the operator workspace has no queue-style table, and empty, loading and error states are unchanged apart from tokens. Heading weight on application pages is still heavy. Fusion parity is not claimed.
 - Next step: Phase 2, participant and customer surfaces (mission passport with progression strip and section rail, quotation comparison with missing-data and difference filters, programme report, contributor board, account).
 - PR / commit: sadat99/corridra#48 (this branch now carries the docs reconciliation and Phase 1).
+
+## 2026-10-15, Claude Code, Owner directive: cut cognitive load, tie UI to business outcomes
+
+- Request: the owner states this is a startup, so everything must lead to business wins, and that the current UI and UX is so complex that even its builder understands a small fraction of it. Cognitive load is far too high.
+- Why: measured at `bbb7d71`: 45 routes, 807 source controls, a public header with 8 links plus 6 job pages, and one operator page carrying 19 workspace sections across about 10,300 lines of panels (roughly 540 controls). Navigation follows how the system is built (sources, claims, evidence, execution network, control center), not what each user is trying to do. Phase 1 made the UI look consistent but did not change this.
+- What changed: added the section "Business objective and cognitive load" to `docs/agents/ui-direction.md` as a binding rule for both agents. No product code.
+- How it was verified: documentation only.
+- Preserved: all panels, routes and actions; the rule says hide, never delete.
+- Decisions and trade-offs: the next UI phase becomes simplification of information architecture (role landing screens, job-based grouping, plain language) ahead of further visual polish. Phase 2 to 4 in the contract are re-ordered accordingly once the owner confirms the lead revenue path.
+- Open items and risks: which single revenue path to optimise first is an owner decision. Real customer admission remains gated by the readiness controls; simplification does not open it.
+- Next step: owner confirms the lead path; then build the role landing screens and the five-area operator navigation.
+- PR / commit: sadat99/corridra#48.
