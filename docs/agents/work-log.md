@@ -109,3 +109,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: privacy page wording needs owner review. The hero still uses the Fusion headline. The home selector still has three dropdowns.
 - Next step: replace the three dropdowns with the five situations from the Public Experience, then the customer mission view with machinery quotation comparison.
 - PR / commit: sadat99/corridra#48.
+
+## 2026-10-15, Claude Code, Keep legal text out of the wording pass; merge readiness
+
+- Request: the owner asked what is next and whether anything should be merged. The repository authorises correct, checked merges (`AGENTS.md`, `CLAUDE.md`).
+- Why: the wording pass had also edited `apps/web/app/privacy/page.tsx`. That is legal text, and the UI contract says legal text changes only with owner review.
+- What changed: restored `apps/web/app/privacy/page.tsx` to the version on `main`. Updated the glossary note, the master plan and this log. The privacy page still says "briefs" until the owner reviews it.
+- How it was verified: see the PR. Gates are rerun on this commit before merging.
+- Preserved: everything else in the wording pass.
+- Decisions and trade-offs: a small inconsistency (privacy page says "briefs", screens say "requests") is acceptable until the owner reviews the legal wording.
+- Open items and risks: privacy page wording review. The hero headline decision. Phase B remainder.
+- Next step: merge PR 48 once exact-head CI is green, then continue Phase B on a fresh branch from the new `main`.
+- PR / commit: sadat99/corridra#48.

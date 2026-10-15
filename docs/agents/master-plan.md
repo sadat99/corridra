@@ -65,7 +65,7 @@ Decided by default on 2026-10-15 (the owner sent "?" after these were offered, w
 
 Still needs the owner:
 
-1. Review the privacy page wording, because it is legal text and "briefs" became "requests".
+1. Review the privacy page wording. It is legal text and still says "briefs" while the screens say "requests". It was left unchanged on purpose.
 2. Confirm or change the hero headline (the Fusion headline versus a situation headline).
 
 Claude Code is working on now: Phase B, the five-situation selector and the customer mission view.
