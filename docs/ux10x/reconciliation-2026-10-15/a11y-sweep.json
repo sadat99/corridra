@@ -1,0 +1,264 @@
+{
+  "head": "bbb7d710f45fcd23e8b9a882a80675a7023973b0",
+  "origin": "isolated local production build, no session",
+  "checks": 216,
+  "nonGetRequests": 0,
+  "axeTags": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+  "widths": [1440, 1280, 768, 390, 360, 320],
+  "violations": 0,
+  "horizontalOverflow": 0,
+  "results": [
+    {
+      "route": "/",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/",
+      "h1": 1
+    },
+    {
+      "route": "/sell",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/sell",
+      "h1": 1
+    },
+    {
+      "route": "/source",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/source",
+      "h1": 1
+    },
+    {
+      "route": "/machinery",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/machinery",
+      "h1": 1
+    },
+    {
+      "route": "/enter-market",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/enter-market",
+      "h1": 1
+    },
+    {
+      "route": "/business-trips",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/business-trips",
+      "h1": 1
+    },
+    {
+      "route": "/trade-missions",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/trade-missions",
+      "h1": 1
+    },
+    {
+      "route": "/how-it-works",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/how-it-works",
+      "h1": 1
+    },
+    {
+      "route": "/about",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/about",
+      "h1": 1
+    },
+    {
+      "route": "/trust",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/trust",
+      "h1": 1
+    },
+    {
+      "route": "/network",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/network",
+      "h1": 1
+    },
+    {
+      "route": "/institutions",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/institutions",
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/privacy",
+      "h1": 1
+    },
+    {
+      "route": "/corridors",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/corridors",
+      "h1": 1
+    },
+    {
+      "route": "/corridors/bangladesh-china",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/corridors/bangladesh-china",
+      "h1": 1
+    },
+    {
+      "route": "/corridors/bangladesh-spain",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/corridors/bangladesh-spain",
+      "h1": 1
+    },
+    {
+      "route": "/corridors/bangladesh-eu",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/corridors/bangladesh-eu",
+      "h1": 1
+    },
+    {
+      "route": "/plan",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/plan",
+      "h1": 1
+    },
+    {
+      "route": "/signin",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/signin",
+      "h1": 1
+    },
+    {
+      "route": "/signup",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/signup",
+      "h1": 1
+    },
+    {
+      "route": "/forgot-password",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/forgot-password",
+      "h1": 1
+    },
+    {
+      "route": "/reset-password",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/reset-password",
+      "h1": 1
+    },
+    {
+      "route": "/verify-email",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/verify-email",
+      "h1": 1
+    },
+    {
+      "route": "/account",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/signin",
+      "h1": 1
+    },
+    {
+      "route": "/workspace",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/workspace",
+      "h1": 1
+    },
+    {
+      "route": "/coming-soon",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/coming-soon",
+      "h1": 1
+    },
+    {
+      "route": "/operator/signin",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/operator/signin",
+      "h1": 1
+    },
+    {
+      "route": "/operator/setup",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/operator/setup",
+      "h1": 1
+    },
+    {
+      "route": "/operator/forgot-password",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/operator/forgot-password",
+      "h1": 1
+    },
+    {
+      "route": "/operator/reset-password",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/operator/reset-password",
+      "h1": 1
+    },
+    {
+      "route": "/buyer",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/buyer",
+      "h1": 1
+    },
+    {
+      "route": "/client",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/client",
+      "h1": 1
+    },
+    {
+      "route": "/programme",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/programme",
+      "h1": 1
+    },
+    {
+      "route": "/contributor",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/contributor",
+      "h1": 1
+    },
+    {
+      "route": "/operator",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/operator",
+      "h1": 1
+    },
+    {
+      "route": "/not-a-real-route",
+      "width": 1440,
+      "status": 404,
+      "finalPath": "/not-a-real-route",
+      "h1": 1
+    }
+  ]
+}

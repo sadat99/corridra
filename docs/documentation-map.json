@@ -439,6 +439,11 @@
       "use": "Complete requirements; apply later explicit decisions without editing originals"
     },
     {
+      "path": "docs/ux10x/reconciliation-2026-10-15/README.md",
+      "classification": "Dated UX inventory/validation",
+      "use": "Frozen discovery or scoped execution; paired JSON ledgers retain gaps"
+    },
+    {
       "path": "docs/ux10x/ux02/README.md",
       "classification": "UX programme/contract/packet",
       "use": "Read package historical labels and current plan; no exhaustive coverage claim"
