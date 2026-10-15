@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
+import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
+import { WorldRouteMap } from './world-route-map';
 
 const directions = [
   ...Object.entries(corridorPages).map(([slug, content]) => ({
@@ -80,6 +82,9 @@ const exampleSteps = [
 /** Educational selectors only. No identity, readiness decision, persisted mission or API call. */
 export function DiscoveryExperience({ overview = false }: { overview?: boolean }) {
   const [direction, setDirection] = useState(directions[0].key);
+  // Any other route: a company country and a target market chosen freely. Empty means none.
+  const [other, setOther] = useState({ company: '', market: '' });
+  const [world, setWorld] = useState<typeof import('./world-geography').world | null>(null);
   const [role, setRole] = useState('buyer');
   const [job, setJob] = useState<string>('sourcing');
   const [example, setExample] = useState(false);
@@ -105,7 +110,32 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
   const activeSituation = situations.find(
     (item) => item.role === role && item.job === job && item.direction === direction,
   )?.key;
-  const route = directions.find((item) => item.key === direction) ?? directions[0];
+  const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+  const placeName = (code: string) =>
+    code === 'EU' ? 'European Union' : (regionNames.of(code) ?? code);
+  const chosen = other.company && other.market && other.company !== other.market ? other : null;
+  const known = chosen
+    ? directions.find((item) => item.company === chosen.company && item.market === chosen.market)
+    : undefined;
+  const custom = chosen && !known ? chosen : null;
+  const route =
+    known ??
+    (custom
+      ? {
+          key: 'custom',
+          label: `${placeName(custom.company)} → ${placeName(custom.market)}`,
+          company: custom.company,
+          market: custom.market,
+          slug: '',
+          note: 'No operating offer is announced for this route yet. You can still describe your mission and we will review it.',
+          reverse: false,
+        }
+      : (directions.find((item) => item.key === direction) ?? directions[0]));
+  const clearOther = () => setOther({ company: '', market: '' });
+  useEffect(() => {
+    // The world outline is only needed for routes beyond the two spotlight corridors.
+    if (custom && !world) void import('./world-geography').then((m) => setWorld(m.world));
+  }, [custom, world]);
   const selectedJob = missionCatalogue.find((item) => item.key === job) ?? missionCatalogue[0];
   const sourcing = [
     'sourcing',
@@ -154,13 +184,25 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             <h2>Corridor Atlas</h2>
             <span>Illustrative</span>
           </div>
-          <CorridorMap company={route.company} market={route.market} />
+          {custom && world ? (
+            <WorldRouteMap
+              world={world}
+              from={route.company}
+              to={route.market}
+              names={{ from: placeName(route.company), to: placeName(route.market) }}
+            />
+          ) : (
+            <CorridorMap company={route.company} market={route.market} />
+          )}
           <div className="ux-atlas-legend" role="group" aria-label="Two commercial directions">
             <button
               type="button"
               className="ux-atlas-pick ux-atlas-pick-china"
               aria-pressed={route.company === 'CN' || route.market === 'CN'}
-              onClick={() => setDirection('bangladesh-china')}
+              onClick={() => {
+                setDirection('bangladesh-china');
+                clearOther();
+              }}
             >
               Bangladesh and China
             </button>
@@ -168,17 +210,65 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               type="button"
               className="ux-atlas-pick ux-atlas-pick-europe"
               aria-pressed={['ES', 'EU'].includes(route.market) || route.company === 'ES'}
-              onClick={() => setDirection('bangladesh-eu')}
+              onClick={() => {
+                setDirection('bangladesh-eu');
+                clearOther();
+              }}
             >
               Bangladesh and Spain or the EU
             </button>
           </div>
+          <details className="ux-atlas-any">
+            <summary>Another route? Pick any two countries</summary>
+            <div className="ux-atlas-any-fields">
+              <label>
+                Your company is in
+                <select
+                  value={other.company}
+                  onChange={(e) => setOther({ ...other, company: e.target.value })}
+                >
+                  <option value="">Choose a country</option>
+                  {countryCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {placeName(code)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                You want to reach
+                <select
+                  value={other.market}
+                  onChange={(e) => setOther({ ...other, market: e.target.value })}
+                >
+                  <option value="">Choose a market</option>
+                  <option value="EU">European Union (trade bloc)</option>
+                  {countryCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {placeName(code)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {(other.company || other.market) && (
+                <button type="button" className="ux-atlas-clear" onClick={clearOther}>
+                  Clear
+                </button>
+              )}
+            </div>
+          </details>
           <div className="ux-atlas-selected">
             <h3>{route.label}</h3>
             <p className="ux-atlas-note">{route.note}</p>
-            <Link href={`/corridors/${route.slug}`}>
-              Read this corridor&apos;s scope <Arrow />
-            </Link>
+            {route.slug ? (
+              <Link href={`/corridors/${route.slug}`}>
+                Read this corridor&apos;s scope <Arrow />
+              </Link>
+            ) : (
+              <Link href={`/plan?companyCountry=${route.company}&marketCode=${route.market}`}>
+                Plan a mission on this route <Arrow />
+              </Link>
+            )}
           </div>
           <p className="ux-atlas-foot">
             Built for any corridor. These two come first. Commercial directions only, not shipment
@@ -202,6 +292,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 setRole(item.role);
                 setJob(item.job);
                 setDirection(item.direction);
+                clearOther();
                 setStep(0);
               }}
             >
@@ -259,6 +350,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 value={direction}
                 onChange={(e) => {
                   setDirection(e.target.value);
+                  clearOther();
                   setStep(0);
                 }}
               >

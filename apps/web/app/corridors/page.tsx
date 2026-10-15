@@ -27,6 +27,15 @@ export default function Page() {
               </Link>
             </article>
           ))}
+          <article className="detail-card ux-route-other">
+            <div>
+              <h2>Any other route</h2>
+              <p>
+                Corridra is built for any route between countries. Pick two countries on the map
+                above, or use the selector below, and start a mission from there.
+              </p>
+            </div>
+          </article>
         </div>
         <MarketSelector />
       </section>

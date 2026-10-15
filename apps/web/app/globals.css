@@ -3977,3 +3977,104 @@ th {
 .ux-lead-paths .ux-route-europe {
   border-top: 4px solid var(--map-spain);
 }
+
+/* Any route: the two spotlight routes stay first, any other pair is one disclosure away. */
+.ux-atlas .ux-atlas-any {
+  margin-bottom: var(--space-4);
+  border-top: 1px solid var(--map-eu);
+  padding-top: var(--space-3);
+}
+.ux-atlas .ux-atlas-any > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--map-arc-europe);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.ux-atlas .ux-atlas-any-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-3);
+  padding-block: var(--space-2) var(--space-3);
+}
+.ux-atlas .ux-atlas-any-fields label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: var(--text-sm);
+  color: var(--on-brand);
+}
+.ux-atlas .ux-atlas-any-fields select {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--map-arc-china);
+  border-radius: var(--radius-control);
+  background: var(--brand-deep);
+  color: var(--on-brand);
+  font: inherit;
+  font-size: var(--text-md);
+}
+.ux-atlas .ux-atlas-clear {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--map-arc-europe);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--on-brand);
+  font: inherit;
+  cursor: pointer;
+}
+.ux-atlas-map .ux-map-from {
+  fill: var(--map-china-active);
+  stroke: var(--brand-deep);
+  stroke-width: 0.4;
+  opacity: 1;
+}
+.ux-atlas-map .ux-map-to {
+  fill: var(--map-spain-active);
+  stroke: var(--brand-deep);
+  stroke-width: 0.4;
+  opacity: 1;
+}
+.ux-atlas-map .ux-map-arc-world {
+  stroke: var(--on-brand);
+}
+.ux-atlas-map .ux-map-arc-world.is-active {
+  stroke-width: 2;
+}
+
+/* Any other route: a third wing, plain and neutral beside the two coloured routes. */
+.ux-route-other {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-style: dashed;
+}
+.ux-lead-paths .ux-route-other {
+  flex-direction: row;
+  align-items: center;
+}
+.ux-route-other h2,
+.ux-route-other h3 {
+  margin: 0 0 var(--space-2);
+}
+.ux-route-other p {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--text-2);
+}
+.ux-route-other .label {
+  margin-bottom: var(--space-2);
+  color: var(--brand);
+}
+.ux-route-other-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}

@@ -79,6 +79,24 @@ export default function Home() {
               Read the Spain and EU scope
             </Link>
           </article>
+          <article className="detail-card ux-route-other">
+            <div>
+              <p className="label">ANY OTHER ROUTE</p>
+              <h3>Working somewhere else?</h3>
+              <p>
+                Corridra is built for any route between countries. Tell us where your company is and
+                where you want to go.
+              </p>
+            </div>
+            <div className="ux-route-other-actions">
+              <Link prefetch={false} className="button-secondary" href="/plan">
+                Plan a mission on another route <Arrow />
+              </Link>
+              <Link prefetch={false} className="text-link" href="/corridors">
+                Pick two countries on the map
+              </Link>
+            </div>
+          </article>
         </div>
         <p className="ux-lead-boundary">
           Corridra does not promise orders. We work on what we can control: research, review,
