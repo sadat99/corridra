@@ -3241,3 +3241,9 @@ th {
     padding-block: var(--space-12) var(--space-8);
   }
 }
+.ux-lead-boundary {
+  max-width: 40rem;
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-md);
+  color: var(--text-2);
+}

@@ -38,57 +38,64 @@ export default function Home() {
     <PublicShell className="ux-home">
       <DiscoveryExperience />
       <section className="ux-lead" aria-labelledby="lead-title">
-        <p className="label">START HERE</p>
-        <h2 id="lead-title">Work with companies in China, step by step.</h2>
+        <p className="label">START WITH CHINA</p>
+        <h2 id="lead-title">Going to China? Know who is worth meeting.</h2>
         <p className="ux-lead-note">
-          Today you can try an example with invented data. Real projects open after our checks are
-          complete.
+          Corridra helps you find, review and reach the companies that fit what you need. Today you
+          can try an example with invented data. Real missions open after our checks are complete.
         </p>
         <div className="ux-lead-paths">
           <article className="detail-card">
-            <h3>Source products from China</h3>
-            <p>Find suppliers and factories. Compare price quotes. Plan your visits.</p>
+            <h3>Visit fewer suppliers. Visit the ones that fit.</h3>
+            <p>
+              Tell us what you need to buy. We narrow the market and show what is stated and what
+              has evidence, before you travel.
+            </p>
             <Link prefetch={false} className="primary-link" href="/source">
-              See how sourcing works <Arrow />
+              Plan a sourcing visit <Arrow />
             </Link>
             <Link prefetch={false} className="text-link" href="/machinery">
               Buying machinery? Start here
             </Link>
           </article>
           <article className="detail-card">
-            <h3>Lead a delegation to China</h3>
+            <h3>A delegation should produce more than attendance.</h3>
             <p>
-              Take a group to meet the right companies. Keep the agenda, the meetings and the
-              results in one place.
+              Give each company a clear agenda of qualified meetings. Then track what becomes
+              business after the group returns.
             </p>
-            <Link prefetch={false} className="primary-link" href="/trade-missions">
-              See how delegations work <Arrow />
+            <Link prefetch={false} className="button-secondary" href="/trade-missions">
+              Plan a delegation <Arrow />
             </Link>
             <Link prefetch={false} className="text-link" href="/institutions">
-              Organising for a chamber or institution? Start here
+              Chamber or programme owner? Design a programme
             </Link>
           </article>
         </div>
-        <ol className="ux-lead-steps" aria-label="How a project works">
+        <p className="ux-lead-boundary">
+          Corridra does not promise orders. We work on what we can control: research, review,
+          introductions and meetings.
+        </p>
+        <ol className="ux-lead-steps" aria-label="How a mission works">
           <li>
             <span className="stage-number">1</span>
             <h3>Say what you need</h3>
-            <p>Tell us what you want to buy or achieve, and when.</p>
+            <p>What you want to buy or achieve, and when.</p>
           </li>
           <li>
             <span className="stage-number">2</span>
-            <h3>Review companies</h3>
-            <p>See which companies fit. We show what is stated and what is checked.</p>
+            <h3>Find the right companies</h3>
+            <p>We look at the whole market, not only who attends one fair.</p>
           </li>
           <li>
             <span className="stage-number">3</span>
-            <h3>Meet the right people</h3>
-            <p>Plan introductions, meetings and visits.</p>
+            <h3>Review before you meet</h3>
+            <p>See why each company fits, what it states and what has evidence.</p>
           </li>
           <li>
             <span className="stage-number">4</span>
-            <h3>Decide with clear proof</h3>
-            <p>Compare price quotes and documents. You make the decision.</p>
+            <h3>Meet and follow up</h3>
+            <p>Plan meetings and visits. Track what happens next.</p>
           </li>
         </ol>
       </section>

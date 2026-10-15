@@ -4,9 +4,9 @@ Corridra is built by two coding agents plus the owner: **Claude Code** (web and 
 
 ## Rules for every agent, every task
 
-1. **Read first.** `AGENTS.md`, `docs/START_HERE.md`, [UI direction](ui-direction.md) for any visible change, and the last ten entries of the [work log](work-log.md). Fetch `origin/main` and check open PRs before editing.
+1. **Read first.** `AGENTS.md`, the [master plan](master-plan.md) (the single current plan and its revision history), [product vision](product-vision.md) (what Corridra is, for whom and why), `docs/START_HERE.md`, [UI direction](ui-direction.md) for any visible change, and the last ten entries of the [work log](work-log.md). Fetch `origin/main` and check open PRs before editing.
 2. **One design authority.** All visible work follows [ui-direction.md](ui-direction.md). Do not invent a new colour, font, spacing value, component or tone. If the direction is missing something, add it there in the same PR, with the reason, instead of improvising locally.
-3. **Document as you finish, in the same PR.** Append one entry to [work-log.md](work-log.md) using the template below. An entry that says what changed but not why, or that overstates what was verified, is a defect.
+3. **Document as you finish, in the same PR.** Append one entry to [work-log.md](work-log.md) using the template below, and update [master-plan.md](master-plan.md) if scope, order, a decision or a status changed. An entry that says what changed but not why, or that overstates what was verified, is a defect.
 4. **Never rewrite the other agent's history.** The log is append-only. To correct an earlier entry, add a new entry that references it.
 5. **Report evidence, not intent.** Name the exact commands run and their results. State what was not run. Keep "implemented", "tested", "deployed" and "externally approved" separate.
 6. **When the two agents conflict,** do not pick silently. Record both positions in the log and leave the decision to the owner.

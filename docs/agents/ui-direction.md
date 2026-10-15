@@ -1,6 +1,6 @@
 # UI direction: the single design contract
 
-Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
+Read [product-vision.md](product-vision.md) first: it explains what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
 ## Business objective and cognitive load (owner directive, 2026-10-15)
 
@@ -21,37 +21,41 @@ Users in Bangladesh, China and other non-English countries must understand every
 
 Rules:
 
-1. **Short, common words.** Prefer words an intermediate English reader knows. Choose the plain word over the clever one ("check" not "verify" in headings, "proof" not "evidence").
+1. **Short, common words.** Prefer words an intermediate English reader knows. Choose the plain word over the clever one, except for Corridra's owned words (mission, evidence, counterparty, corridor) and the five trust states, which keep their names and get a short plain explanation.
 2. **Short sentences.** One idea per sentence, ideally under 20 words, active voice, present tense.
 3. **One word per idea, everywhere.** Never use two names for one thing. Follow the glossary below.
 4. **No idioms, metaphors or slang.** Nothing that breaks in translation ("in focus", "what needs to happen", "next move").
 5. **Spell out abbreviations** on first use or avoid them (RFQ, MFA, SLA). Write dates unambiguously (15 Oct 2026) and always show the time zone for times.
 6. **Keep the exact trade terms people already use** where they are standard and precise: price quote, payment terms, lead time, delivery terms. Do not simplify these away.
-7. **Honest status words.** "Example" for demonstration data, "not checked" for unverified, "not available yet" for gated features. Never soften a limit.
+7. **Honest status words.** "Example" for demonstration data, the exact trust state for each fact (Self-declared, Evidence available, Verified, Derived, Outcome observed), "not available yet" for gated features. Never soften a limit and never call something verified unless it is.
 8. **Names and originals stay as written.** Company names, Chinese text and original amounts are never translated or reworded. Bangla guidance remains available where it exists.
 9. **Legal, privacy and consent text** changes only with owner review.
 
-### Glossary
+### Glossary (corrected after reading the source documents)
 
-| Avoid                                      | Use                                             | Notes                                                                                                      |
-| ------------------------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| brief, test brief                          | request, example request                        | The thing a visitor submits. "Request" is proposed and awaits owner confirmation with the next three rows. |
-| mission                                    | project                                         | "Trade mission" stays only for organised delegation trips, which is a real standard term. Proposed.        |
-| evidence, claims, sources                  | proof, statements, where it came from           | Proposed.                                                                                                  |
-| corridor, commercial direction             | trade route (for example Bangladesh to China)   | Proposed.                                                                                                  |
-| verified / unverified                      | checked / not checked                           | Say who checked when known.                                                                                |
-| self-declared                              | stated by the company                           |                                                                                                            |
-| qualification, assessment                  | review                                          |                                                                                                            |
-| counterparty                               | company, buyer, supplier                        | Use the real role when known.                                                                              |
-| quotation, RFQ                             | price quote, price request                      | Quote terms stay exact.                                                                                    |
-| introduction                               | introduction                                    | Already plain.                                                                                             |
-| synthetic, test                            | example, practice data                          |                                                                                                            |
-| operator                                   | Corridra team                                   | In customer screens only. Staff screens may say "operator".                                                |
-| workspace, control center, readiness gates | team area, settings and checks, ready to start? | Staff screens.                                                                                             |
-| scope, capability, disclosure              | what you can see                                |                                                                                                            |
-| execution network, contributor             | trusted helpers, helper                         | Staff and helper screens.                                                                                  |
+The Positioning Constitution (section 22) reserves a vocabulary that Corridra owns: market, mission, counterparty, commercial, relevant, qualified, evidence, outcome, progress, access, with corridor, buyer, supplier and others as supporting words. **Do not rename these.** Plain language means explaining them in one short line the first time, and choosing the plainer neighbour for everything else. The five trust states are fixed by the Public Experience and the code; keep their names and add the plain line.
 
-Until the owner confirms the proposed rows, do not rename the core nouns in product copy. Apply the other rules at once. When confirmed, change copy and the tests that assert it in one pass, then update this table to "applied".
+| Avoid                                      | Use                                                       | Notes                                                                                                                                            |
+| ------------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| brief, mission brief, test brief           | request, mission request, example request                 | Owner decision 2026-10-15. The source copy says "mission brief"; change it to "request" in a copy pass that also updates the tests asserting it. |
+| mission                                    | mission                                                   | Brand word. First use: "a mission is a planned piece of work to meet the right companies".                                                       |
+| evidence                                   | evidence                                                  | Brand word and a trust state. Gloss: "documents and facts that support a statement".                                                             |
+| counterparty                               | buyer, supplier, distributor, company                     | Prefer the real role in interface text. Keep "counterparty" in explanations.                                                                     |
+| corridor, commercial direction             | route, for example "Bangladesh to China route"            | Keep "corridor" as a supporting brand word where it already appears.                                                                             |
+| Self-declared                              | Self-declared, with the line "stated by the company"      | Fixed state name.                                                                                                                                |
+| Evidence available                         | Evidence available, "proof was provided"                  | Fixed state name.                                                                                                                                |
+| Verified                                   | Verified, "checked by a defined process"                  | Use only when it is true. Fixed state name.                                                                                                      |
+| Derived                                    | Derived, "worked out from available data"                 | Fixed state name.                                                                                                                                |
+| Outcome observed                           | Outcome observed, "a real result was recorded"            | Fixed state name.                                                                                                                                |
+| qualification, assessment                  | review for fit                                            | Keep "qualified" where the product means it.                                                                                                     |
+| quotation, RFQ                             | price quote, price request (RFQ written out on first use) | Quote terms stay exact.                                                                                                                          |
+| synthetic, test                            | example, example data                                     | Say clearly that no real record is created.                                                                                                      |
+| operator                                   | Corridra team                                             | Customer screens only. Staff screens may say "operator".                                                                                         |
+| workspace, control center, readiness gates | team area, settings and checks, ready to start?           | Staff screens.                                                                                                                                   |
+| scope, capability, disclosure              | what you can see                                          |                                                                                                                                                  |
+| execution network, contributor             | Corridra Network, helper                                  | Public name is Corridra Network.                                                                                                                 |
+
+The earlier proposal to rename mission to project, evidence to proof and verified to checked is **withdrawn** because it conflicts with the Constitution.
 
 ## Lead journey and order of work (owner decision, 2026-10-15)
 
@@ -80,6 +84,10 @@ Building one screen at a time must not produce a scattered product. Four mechani
 4. **One log, one contract.** Every change is recorded in `docs/agents/work-log.md` and must match this file. If a screen needs something this file does not allow, change this file first, with the reason.
 
 Review checklist before any visual change is done: tokens only, one of the five patterns, plain words from the glossary, one primary action, readable at 390 px, keyboard and focus work, axe clean.
+
+## Rules inherited from the Public Experience (section 26)
+
+One primary call to action per visual section, secondary actions visually quieter. Never auto-rotate a carousel. Never hide the main action in a clever interaction. No account wall before value. No modal in the first seconds. No chat widget over mobile actions. No fake activity. No endless homepage: every section earns its place. No jargon before comprehension: explain first, name later. Mobile first for intake, buyer links and helper screens. Never publish "Trusted by", "Results" or "Our global network" without real facts.
 
 ## Foundation (implemented in `apps/web/app/globals.css`, section "Design system")
 
