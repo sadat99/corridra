@@ -3765,3 +3765,75 @@ th {
   font-size: var(--text-xl);
   font-weight: 600;
 }
+
+/* Corridors page: the atlas uses the full width, map beside the selected direction. */
+.ux-discovery-overview {
+  padding-top: 0;
+}
+.ux-discovery-overview .ux-discovery-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 901px) {
+  .ux-discovery-overview .ux-atlas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    column-gap: var(--space-8);
+    align-items: start;
+    min-height: 0;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-heading {
+    grid-column: 1 / -1;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-map {
+    grid-column: 1;
+    grid-row: 2 / span 3;
+    margin: 0;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-legend,
+  .ux-discovery-overview .ux-atlas > .ux-atlas-selected,
+  .ux-discovery-overview .ux-atlas > .ux-atlas-foot {
+    grid-column: 2;
+  }
+  .ux-discovery-overview .ux-atlas > .ux-atlas-legend {
+    margin-top: 0;
+  }
+}
+.page-hero + .ux-discovery-overview {
+  margin-top: calc(var(--space-8) * -1);
+}
+
+/* Market selector: padded card, two fields side by side. */
+.detail-card.market-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+  padding: var(--space-8);
+}
+.detail-card.market-selector > h2,
+.detail-card.market-selector > p,
+.detail-card.market-selector > a {
+  grid-column: 1 / -1;
+}
+.detail-card.market-selector > h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+.detail-card.market-selector label {
+  margin: 0;
+  font-weight: 600;
+}
+.detail-card.market-selector select {
+  border-radius: var(--radius-control);
+  background: var(--surface-1);
+  font-weight: 400;
+}
+.detail-card.market-selector > a {
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .detail-card.market-selector {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-6);
+  }
+}
