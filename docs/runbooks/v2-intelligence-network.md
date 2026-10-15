@@ -33,4 +33,4 @@ Disabling either feature preserves history. Inspect owned blocked tasks, pending
 
 ## Release and Part 5 handoff
 
-Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Use one Part 4 PR with logical AI and network commits; retain a maximum of ten Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. The next revised Part 5 needs a new owner packet; this release does not implement it.
+Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Part 4 was merged in PR 34; for future changes use bounded reviewed PRs and the current release runbook; retain a maximum of ten Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. The next revised Part 5 needs a new owner packet; this release does not implement it.
