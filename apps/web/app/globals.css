@@ -3515,3 +3515,15 @@ th {
   outline: 2px solid var(--map-arc-europe);
   outline-offset: 2px;
 }
+
+.ux-atlas-map .ux-map-halo {
+  fill: none;
+  stroke: var(--accent-gold);
+  stroke-width: 1.5;
+  opacity: 0.9;
+}
+@media (min-width: 1001px) {
+  .ux-home .ux-discovery-grid {
+    align-items: center;
+  }
+}

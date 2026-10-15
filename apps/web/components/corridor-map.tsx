@@ -61,6 +61,7 @@ export function CorridorMap({ company, market }: { company: string; market: stri
         d={chinaArc}
         {...(chinaActive ? arrow : {})}
       />
+      <circle className="ux-map-halo" cx={dhaka[0]} cy={dhaka[1]} r="13" />
       <circle className="ux-map-pin ux-map-pin-home" cx={dhaka[0]} cy={dhaka[1]} r="5" />
       <circle className="ux-map-pin" cx={beijing[0]} cy={beijing[1]} r="4" />
       <circle className="ux-map-pin" cx={madrid[0]} cy={madrid[1]} r="4" />
@@ -73,7 +74,7 @@ export function CorridorMap({ company, market }: { company: string; market: stri
       <text className="ux-map-label ux-map-label-dark" x={madrid[0] - 14} y={madrid[1] + 30}>
         Spain
       </text>
-      <text className="ux-map-label" x={g.points.brussels[0] + 4} y={g.points.brussels[1] - 20}>
+      <text className="ux-map-label" x={g.points.brussels[0] + 20} y={g.points.brussels[1] - 4}>
         EU
       </text>
     </svg>
