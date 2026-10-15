@@ -26,7 +26,7 @@ test('platform directory connects every persona and V2 tool without privileged d
   await expect(page).toHaveURL(/\/workspace$/);
   await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Prepare my test brief', exact: true }),
+    page.getByRole('link', { name: 'Prepare my example request', exact: true }),
   ).toHaveAttribute('href', '/plan');
   await expect(page.getByRole('link', { name: 'Open customer account', exact: true })).toHaveCount(
     0,
@@ -110,7 +110,7 @@ test('newcomers see starting journeys while legacy directory links and keyboard 
     page.getByRole('link', { name: 'Explore the example', exact: true }),
   ).toHaveAttribute('href', '/#mission-example');
   await expect(
-    page.getByRole('link', { name: 'Prepare my test brief', exact: true }),
+    page.getByRole('link', { name: 'Prepare my example request', exact: true }),
   ).toHaveAttribute('href', '/plan');
   for (const width of [1440, 1280, 768, 390, 360, 320]) {
     await page.setViewportSize({ width, height: 1000 });

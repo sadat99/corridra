@@ -22,7 +22,7 @@ export default function Page() {
           identity is separate from invited operator membership and mission sharing.
         </p>
         <Link className="text-link" href="/plan">
-          Prepare an invented test brief without an account
+          Prepare an invented example request without an account
         </Link>
         <div className="hero-actions">
           <Link prefetch={false} className="primary-link" href="/how-it-works">

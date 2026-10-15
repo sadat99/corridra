@@ -255,7 +255,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           </button>
         )}
         <Link className="primary-link" href={briefUrl}>
-          Prepare this test brief <Arrow />
+          Prepare this example request <Arrow />
         </Link>
       </div>
       <section
@@ -305,7 +305,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               {step === 0 && (
                 <p>
                   {job === 'delegations'
-                    ? 'Give each participant an independent objective and private brief. Attendance alone does not establish commercial progress.'
+                    ? 'Give each participant an independent objective and private request. Attendance alone does not establish commercial progress.'
                     : sourcing
                       ? 'Describe the product or equipment, constraints and decision criteria before researching a supplier. A proposed visit is not a confirmed appointment.'
                       : 'Describe the offer and the kind of customer or partner that would make a conversation useful. A contact is not a qualified buyer.'}
@@ -337,7 +337,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 : 'This is an initial product direction, not approval to admit real customer missions.'}
             </p>
             <Link className="text-link" href={briefUrl}>
-              Continue with an invented brief <Arrow />
+              Continue with an invented request <Arrow />
             </Link>
             <button
               className="text-link"

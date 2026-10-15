@@ -3120,7 +3120,8 @@ details > summary {
   transition: color var(--dur) var(--ease);
 }
 details > summary:hover {
-  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .ux-state,
 .ux-scope-note,
@@ -3246,4 +3247,12 @@ th {
   margin: var(--space-6) 0 0;
   font-size: var(--text-md);
   color: var(--text-2);
+}
+
+/* Dark navigation keeps its light text on hover (the older global summary hover colour fails contrast there). */
+.workspace-navigation summary:hover,
+.ux-workspace-directory > summary:hover {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }

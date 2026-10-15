@@ -97,3 +97,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items and risks: the four owner decisions in the master plan are still open (header navigation, hero headline, one primary action, the word "request"). v2.1 section 19A requires coverage verification (Track V), which is not yet scheduled behind a specific PR. v2.1 section 17 says complete functional coverage outranks visual composition, so every lead-journey step must keep all authorised actions reachable.
 - Next step: Phase B (request flow and customer mission screen) on the owner's answers, with machinery quotation comparison designed in from the start. Schedule Track V tests alongside it.
 - PR / commit: sadat99/corridra#48.
+
+## 2026-10-15, Claude Code, Phase B start: "brief" becomes "request"
+
+- Request: the owner sent "?" after four decisions were offered with recommended defaults. Read as "proceed". Earlier the owner said "brief" is hard for readers in Bangladesh and China.
+- Why: plain language for a global audience, and the master plan said the wording pass was next.
+- What changed: about 45 user-visible strings in 20 files now say "request" (mission request, example request, Submit mission request, Your example request, Mission intake is open for example requests, and so on), with grammar fixed ("an example request"). Unchanged on purpose: data field names (`brief` in payloads and APIs), the API error messages, "meeting brief" (a different thing), and form field `name` attributes. Also changed: the privacy page wording (legal text, flagged for owner review). Tests that assert the old wording were updated in `tests/browser` and `tests/operator`. CSS: the summary hover colour no longer turns text dark green on the dark workspace navigation (an old global rule failed contrast there, exposed when the pointer rested on it).
+- How it was verified: `format:check`, `lint`, `typecheck`, `test`, `build` pass. Public browser suite 80 of 80. Protected operator suite 14 of 14 after fixing the contrast issue (the first two operator runs failed: one because the local database had stopped while idle, then twice on the hover contrast failure and one dependent test). Not run: integration suite (no server or data code changed), CI-only security jobs.
+- Preserved: all routes, link targets, ids, payload shapes, API behaviour and test hooks other than the quoted wording.
+- Decisions and trade-offs: replaced only visible copy, not identifiers, because renaming data fields would touch the backbone. Kept "meeting brief" because it is a separate domain term.
+- Open items and risks: privacy page wording needs owner review. The hero still uses the Fusion headline. The home selector still has three dropdowns.
+- Next step: replace the three dropdowns with the five situations from the Public Experience, then the customer mission view with machinery quotation comparison.
+- PR / commit: sadat99/corridra#48.

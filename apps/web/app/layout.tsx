@@ -38,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <div className="site-shell">
           <SiteHeader />
           <aside className="availability-note" aria-label="Service availability">
-            Mission intake is open for test briefs. Customer missions are not open yet.
+            Mission intake is open for example requests. Customer missions are not open yet.
           </aside>
           {children}
           <SiteFooter />

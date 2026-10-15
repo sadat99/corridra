@@ -27,7 +27,9 @@ for (const [route, heading] of routes) {
     await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
     await expect(page).toHaveTitle(/Corridra/);
     await expect(
-      page.getByText('Mission intake is open for test briefs. Customer missions are not open yet.'),
+      page.getByText(
+        'Mission intake is open for example requests. Customer missions are not open yet.',
+      ),
     ).toBeVisible();
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
     if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);

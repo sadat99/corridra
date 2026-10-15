@@ -64,7 +64,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
       body: JSON.stringify({ error: 'Temporary test failure. Retry your brief.' }),
     }),
   );
-  await page.getByRole('button', { name: 'Submit mission brief', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Temporary test failure');
   await expect(page.getByLabel('Work email', { exact: true })).toHaveValue(
     'intake@example.invalid',
@@ -73,7 +73,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   const response = page.waitForResponse(
     (r) => r.url().endsWith('/api/intake') && r.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Submit mission brief', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
   const saved = await response;
   expect(saved.status()).toBe(201);
   const payload = saved.request().postDataJSON();
@@ -1146,7 +1146,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('Approved company name').fill('Synthetic Browser Cohort');
   await panel.getByLabel('Approved objective').fill('Review suitable market conversations');
   await panel
-    .getByLabel('Approved brief', { exact: true })
+    .getByLabel('Approved request', { exact: true })
     .fill('Approved synthetic brief. Private intake contacts and negotiation notes are withheld.');
   await panel.getByLabel('Client next action').fill('Respond to the approved requirement request');
   const deadline = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
@@ -2979,7 +2979,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
       })
     ).status(),
   ).toBe(403);
-  await expect(page.getByText('No mission briefs yet.', { exact: true })).toBeVisible();
+  await expect(page.getByText('No mission requests yet.', { exact: true })).toBeVisible();
   let release!: () => void;
   let reached!: () => void;
   const held = new Promise<void>((resolve) => {

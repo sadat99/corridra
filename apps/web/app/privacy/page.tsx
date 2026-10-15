@@ -9,9 +9,9 @@ export default function Page() {
         <p className="label">TEST INTAKE NOTICE</p>
         <h1>Use test details for now.</h1>
         <p className="page-description">
-          Mission intake is available for testing. Please use invented names, companies and briefs,
-          with an email ending in @example.invalid. Do not submit customer details, confidential
-          documents or personal information.
+          Mission intake is available for testing. Please use invented names, companies and
+          requests, with an email ending in @example.invalid. Do not submit customer details,
+          confidential documents or personal information.
         </p>
         <div className="detail-card">
           <h2>Account details</h2>
@@ -31,7 +31,7 @@ export default function Page() {
             Account records remain until an administrator removes them. Automatic account deletion
             is not available. For account help or a deletion request, contact{' '}
             <a href="mailto:sadat@obsidianglobal.studio">sadat@obsidianglobal.studio</a>. The test
-            intake restrictions and retention details below apply separately to mission briefs.
+            intake restrictions and retention details below apply separately to mission requests.
           </p>
           <h2>What is saved</h2>
           <p>

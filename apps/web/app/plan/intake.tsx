@@ -132,7 +132,7 @@ export function Intake() {
           saved = JSON.parse(sessionStorage.getItem('corridra-mission-draft') ?? 'null');
         } catch {
           setDraftNotice(
-            'A saved draft could not be restored. The form still works; keep a copy of your invented brief before leaving this tab.',
+            'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
           );
         }
         if (
@@ -189,7 +189,7 @@ export function Intake() {
         }
       } catch {
         setDraftNotice(
-          'A saved draft could not be restored. The form still works; keep a copy of your invented brief before leaving this tab.',
+          'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
         );
       } finally {
         setReady(true);
@@ -205,7 +205,7 @@ export function Intake() {
       saveDraft(v, n, key.current);
     } catch {
       setDraftNotice(
-        'This browser could not save the draft. Keep this tab open and copy the invented brief before leaving.',
+        'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
       );
     }
   }
@@ -364,8 +364,8 @@ export function Intake() {
       setFinished(true);
       setMessage(
         data.duplicate
-          ? 'This invented test brief has already been recorded.'
-          : 'Your invented test brief has been recorded. No real customer mission has been accepted.',
+          ? 'This invented example request has already been recorded.'
+          : 'Your invented example request has been recorded. No real customer mission has been accepted.',
       );
       if (data.receipt) {
         setReceipt(data.receipt);
@@ -375,7 +375,7 @@ export function Intake() {
           sessionStorage.removeItem('corridra-mission-draft');
         } catch {
           setDraftNotice(
-            'The brief was recorded, but this browser could not save its receipt. Copy the private code before leaving.',
+            'The request was recorded, but this browser could not save its receipt. Copy the private code before leaving.',
           );
         }
       }
@@ -459,8 +459,8 @@ export function Intake() {
         </p>
       )}
       {!finished && (
-        <aside className="ux-brief-summary" aria-label="Your test brief">
-          <p className="label">YOUR TEST BRIEF</p>
+        <aside className="ux-brief-summary" aria-label="Your example request">
+          <p className="label">YOUR EXAMPLE REQUEST</p>
           <dl>
             <div>
               <dt>Objective</dt>
@@ -501,7 +501,7 @@ export function Intake() {
       {!finished && (
         <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
           <p className="label">STEP {step + 1} OF 5</p>
-          <ol className="ux-intake-steps" aria-label="Brief steps">
+          <ol className="ux-intake-steps" aria-label="Request steps">
             {['Objective', 'Direction', 'Requirements', 'Outcomes', 'Contact'].map(
               (label, index) => (
                 <li key={label} aria-current={index === step ? 'step' : undefined}>
@@ -511,7 +511,7 @@ export function Intake() {
               ),
             )}
           </ol>
-          <progress value={step + 1} max={5} aria-label="Brief progress" />
+          <progress value={step + 1} max={5} aria-label="Request progress" />
           <h2 ref={heading} tabIndex={-1}>
             {titles[step]}
           </h2>
@@ -703,8 +703,8 @@ export function Intake() {
               {error('requirements')}
               {field('website', 'Website or catalogue URL (optional)', 'url')}
               <p>
-                Share a public link if it helps explain the brief. We do not fetch it automatically.
-                Documents can be requested after review.
+                Share a public link if it helps explain the request. We do not fetch it
+                automatically. Documents can be requested after review.
               </p>
             </>
           )}
@@ -759,7 +759,7 @@ export function Intake() {
               </label>
               {error('acknowledged')}
               <p>
-                No account required. Corridra will review the brief before proposing next steps.
+                No account required. Corridra will review the request before proposing next steps.
                 Check your receipt here for replies.
               </p>
             </>
@@ -776,7 +776,7 @@ export function Intake() {
               </button>
             )}
             <button className="primary-link" disabled={!ready || busy}>
-              {busy ? 'Saving…' : step === 4 ? 'Submit mission brief' : 'Continue'}
+              {busy ? 'Saving…' : step === 4 ? 'Submit mission request' : 'Continue'}
             </button>
           </div>
           <p>
@@ -831,11 +831,11 @@ export function Intake() {
             persist(empty, 0);
           }}
         >
-          Start another brief (save your receipt first)
+          Start another request (save your receipt first)
         </button>
       )}
       <section id="receipt-check" tabIndex={-1} className="receipt-panel">
-        <h2>Check a mission brief.</h2>
+        <h2>Check a mission request.</h2>
         <form className="operator-form" onSubmit={check}>
           <label className="field">
             Receipt code

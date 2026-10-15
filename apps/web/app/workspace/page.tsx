@@ -18,7 +18,7 @@ export default function Page() {
         <p>
           Corridra helps you organise work to find buyers, source suppliers or enter a market. A
           mission keeps the objective, supporting evidence and next action together. You can explore
-          an example or prepare a test brief before signing in.
+          an example or prepare an example request before signing in.
         </p>
         <nav className="workspace-navigation" aria-label="Platform access sections">
           <a href="#access-roles">Open existing work</a>
@@ -40,13 +40,13 @@ export default function Page() {
             </article>
             <article className="detail-card">
               <p className="label">2. DESCRIBE YOUR OBJECTIVE</p>
-              <h2>Prepare a test brief</h2>
+              <h2>Prepare an example request</h2>
               <p>
                 Choose what you need, the commercial direction and the details for review. Use
                 invented records only.
               </p>
               <Link className="primary-link" href="/plan">
-                Prepare my test brief
+                Prepare my example request
               </Link>
             </article>
             <article className="detail-card">
@@ -80,7 +80,7 @@ export default function Page() {
               </Link>
               <p>
                 <Link className="text-link" href="/plan">
-                  Create a test mission brief
+                  Create a test mission request
                 </Link>
               </p>
               <p>

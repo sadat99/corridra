@@ -33,7 +33,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await expect(example).toContainText('No operating offer is announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
-  await example.getByRole('link', { name: 'Continue with an invented brief' }).click();
+  await example.getByRole('link', { name: 'Continue with an invented request' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',
@@ -65,7 +65,7 @@ test('UX-02 saved draft choices survive reload and take precedence over entry su
   await expect(page.getByLabel('Your offer or requirement')).toHaveValue(
     '原始机器要求。 কাল্পনিক পরীক্ষামূলক তথ্য।',
   );
-  const summary = page.getByRole('complementary', { name: 'Your test brief' });
+  const summary = page.getByRole('complementary', { name: 'Your example request' });
   await expect(summary).toContainText('Procure machinery');
   await expect(summary).toContainText('Japan');
   await expect(summary).toContainText('Kenya');
@@ -137,7 +137,7 @@ test('UX-02 native route disclosures and account recovery keep their real destin
     await expect(
       page
         .getByRole('main')
-        .getByRole('link', { name: 'Prepare an invented test brief without an account' }),
+        .getByRole('link', { name: 'Prepare an invented example request without an account' }),
     ).toHaveAttribute('href', '/plan');
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   }

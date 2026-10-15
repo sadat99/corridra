@@ -38,14 +38,14 @@ export function MarketSelector() {
           <p role="status">
             {initial
               ? 'An initial direction in the product design.'
-              : 'This direction can be described in a test brief. No operating offer is announced for this route.'}{' '}
+              : 'This direction can be described in an example request. No operating offer is announced for this route.'}{' '}
             Real customer mission admission remains unavailable.
           </p>
           <Link
             className="primary-link"
             href={`/plan?companyCountry=${company}&marketCode=${market}`}
           >
-            Prepare a test brief
+            Prepare an example request
           </Link>
         </>
       )}

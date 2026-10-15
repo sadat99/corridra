@@ -29,7 +29,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await page
       .getByRole('combobox', { name: 'Commercial direction', exact: true })
       .selectOption('bangladesh-china');
-    await page.getByRole('link', { name: 'Prepare this test brief' }).click();
+    await page.getByRole('link', { name: 'Prepare this example request' }).click();
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
       'machinery_procurement',
     );
@@ -63,7 +63,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
       .getByLabel('Budget basis, such as total equipment budget', { exact: true })
       .fill('Original synthetic equipment quote');
     await page.reload();
-    await expect(page.getByRole('complementary', { name: 'Your test brief' })).toContainText(
+    await expect(page.getByRole('complementary', { name: 'Your example request' })).toContainText(
       '1.234 BHD',
     );
     await expect(page.getByLabel('Your offer or requirement')).toHaveValue(
@@ -82,7 +82,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     page.on('request', (request) => {
       if (request.url().endsWith('/api/intake') && request.method() === 'POST') writes++;
     });
-    await page.getByRole('button', { name: 'Submit mission brief', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
     await expect(page.getByLabel('Work email', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -96,7 +96,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
         body: JSON.stringify({ error: 'Synthetic transport interruption. Retry the same brief.' }),
       }),
     );
-    await page.getByRole('button', { name: 'Submit mission brief', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Synthetic transport interruption');
     await expect(page.getByLabel('Work email', { exact: true })).toHaveValue(email);
     await page.unroute('**/api/intake');
@@ -104,7 +104,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
       (response) =>
         response.url().endsWith('/api/intake') && response.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Submit mission brief', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
     const response = await saved;
     expect(response.status()).toBe(201);
     const payload = response.request().postDataJSON();

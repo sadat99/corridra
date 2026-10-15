@@ -34,7 +34,7 @@ test('global selector retains an unsupported operating direction and opens the a
   await page.getByRole('combobox', { name: 'Company country', exact: true }).selectOption('JP');
   await page.getByRole('combobox', { name: 'Target market', exact: true }).selectOption('KE');
   await expect(page.getByRole('status')).toContainText('No operating offer is announced');
-  await page.getByRole('link', { name: 'Prepare a test brief', exact: true }).click();
+  await page.getByRole('link', { name: 'Prepare an example request', exact: true }).click();
   await page.getByLabel('Source suppliers', { exact: true }).check();
   await page
     .getByRole('combobox', { name: 'Commercial job', exact: true })
@@ -101,7 +101,7 @@ test('job-first navigation exposes machinery and commercial trips with real entr
     'Give each day a commercial purpose.',
   );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('link', { name: 'Prepare a business-trip test brief' }).click();
+  await page.getByRole('link', { name: 'Prepare a business-trip example request' }).click();
   await expect(page).toHaveURL('/plan?job=business_trips');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'business_trips',

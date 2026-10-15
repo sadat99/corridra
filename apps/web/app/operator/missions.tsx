@@ -163,7 +163,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
       <div className="section-heading">
         <p className="label">OPS HOME</p>
         <h2>Mission review queue</h2>
-        <p>Start with the brief. Give each mission an owner and a clear next step.</p>
+        <p>Start with the request. Give each mission an owner and a clear next step.</p>
       </div>
       <OperatorWorkbench
         label="Mission queue sections"
@@ -311,7 +311,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
         </p>
       ) : queue.missions.length === 0 ? (
         <AccessState kind="empty">
-          <p>No mission briefs yet.</p>
+          <p>No mission requests yet.</p>
           <p>
             No matching accessible records are shown. Change the filters or refresh; this does not
             establish an outcome of zero.
@@ -330,7 +330,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
               </p>
               <StatusBadge tone="unknown">Self-declared</StatusBadge>
               <p className="ux-scope-note">
-                Private workspace record · Original brief · No independent verification implied
+                Private workspace record · Original request · No independent verification implied
               </p>
             </header>
             <CommercialMission tenant={tenant} missionId={m.id} onChanged={onChanged} />

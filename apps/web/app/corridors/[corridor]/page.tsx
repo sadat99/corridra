@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
         <h1>{c.heading}</h1>
         <p className="page-description">{c.description}</p>
         <Link className="primary-link" href={`/plan?companyCountry=BD&marketCode=${c.market}`}>
-          Prepare a test mission brief
+          Prepare a test mission request
         </Link>
       </section>
       <section className="detail-section">

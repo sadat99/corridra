@@ -70,7 +70,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   await expect(page.getByLabel('Corridor Atlas', { exact: true })).toContainText(
     'China → Bangladesh',
   );
-  await expect(page.getByRole('link', { name: 'Prepare this test brief' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',
   );
