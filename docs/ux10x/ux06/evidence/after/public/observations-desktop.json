@@ -1,0 +1,101 @@
+{
+  "observations": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 2247,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 172
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 172
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 2217,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 168
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 168
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 3180,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 204
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 204
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 3976,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 180
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 180
+        }
+      ]
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 4134,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 184
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 184
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "overflow": false,
+      "axeViolations": 0,
+      "height": 4204,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 104
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 104
+        }
+      ]
+    }
+  ],
+  "limits": "Synthetic public presentation; paint measurements are not field Core Web Vitals or hosted-account acceptance."
+}

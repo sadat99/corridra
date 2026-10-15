@@ -1,0 +1,59 @@
+{
+  "domain": {
+    "report": "work/ux10x/ux06-full/results.json",
+    "result": {
+      "command": "pnpm test:integration",
+      "exitCode": 0,
+      "seconds": 327.22
+    },
+    "provenance": "Unchanged domain/API/auth packages; before final presentation and caption refinements"
+  },
+  "frontend": {
+    "report": "work/ux10x/ux06-final/results.json",
+    "results": [
+      {
+        "command": "pnpm format:check",
+        "exitCode": 0,
+        "seconds": 11.3
+      },
+      {
+        "command": "pnpm lint",
+        "exitCode": 0,
+        "seconds": 10.75
+      },
+      {
+        "command": "pnpm typecheck",
+        "exitCode": 0,
+        "seconds": 11.45
+      },
+      {
+        "command": "pnpm test",
+        "exitCode": 0,
+        "seconds": 1.77
+      },
+      {
+        "command": "pnpm build",
+        "exitCode": 0,
+        "seconds": 9.49
+      },
+      {
+        "command": "pnpm test:e2e",
+        "exitCode": 0,
+        "seconds": 162.28
+      },
+      {
+        "command": "pnpm test:operator",
+        "exitCode": 0,
+        "seconds": 506.48
+      }
+    ],
+    "provenance": "Full disclosure and shared-heading implementation; followed only by neutral screenshot procedure, origin-only capture guard and explanatory caption wording"
+  },
+  "discovery": {
+    "command": "pnpm exec playwright test tests/browser/ux06-presentation.spec.ts",
+    "exitCode": 0,
+    "seconds": 30.62,
+    "origin": "Isolated synthetic server; read-only discovery cases only; no fixture reset"
+  },
+  "finalStatic": "Final packet static/build results are recorded separately after evidence formatting; exact-head CI remains mandatory."
+}

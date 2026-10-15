@@ -1,0 +1,7 @@
+$ prettier --check .
+Checking formatting...
+[warn] docs/ux10x/ux06/evidence/after/control-parity.json
+[warn] docs/ux10x/ux06/evidence/baseline/public/capture.json
+[warn] docs/ux10x/ux06/evidence/baseline/ux05-release.json
+[warn] Code style issues found in 3 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

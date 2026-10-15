@@ -45,8 +45,8 @@ export function OperatorWorkbench({
         ))}
       </div>
       <p>
-        Section navigation keeps existing forms mounted. The server checks every action and its
-        current scope.
+        Move between sections without losing your entries. Available actions depend on your current
+        access and approved scope.
       </p>
       {notice && <p aria-live="polite">{notice}</p>}
     </nav>

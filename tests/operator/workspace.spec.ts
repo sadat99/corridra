@@ -1273,6 +1273,15 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await expect(client.getByRole('button', { name: 'Download CSV', exact: true })).toBeVisible();
   expect(await client.locator('body').innerText()).not.toContain('Invented requirement supplied');
   await operatorEvidence(page, panel, 'delivery');
+  const reportNavigation = client.getByRole('navigation', { name: 'Approved report sections' });
+  await reportNavigation.getByRole('button', { name: 'Programme overview', exact: true }).focus();
+  await client.keyboard.press('Enter');
+  await expect(
+    client.getByRole('heading', { name: 'Programme overview', exact: true }),
+  ).toBeFocused();
+  await expect(client.locator('.ux-programme-overview')).toContainText(
+    'Only the approved participants',
+  );
   await participantEvidence(client, 'institution');
   for (const format of ['CSV', 'PDF']) {
     const response = client.waitForResponse(
@@ -1738,6 +1747,15 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   const clientPage = await guestContext.newPage();
   expect((await clientPage.request.get('/api/workspace/tenants')).status()).toBe(401);
   await clientPage.goto(`/client#${client.token}`);
+  await expect(clientPage.getByRole('region', { name: 'Approved next action' })).toBeVisible();
+  await expect(clientPage.locator('.ux-mission-detail')).not.toHaveAttribute('open', '');
+  await participantEvidence(clientPage, 'client-mission-overview');
+  await clientPage
+    .getByRole('navigation', { name: 'Approved report sections' })
+    .getByRole('button', { name: 'Requirements', exact: true })
+    .focus();
+  await clientPage.keyboard.press('Enter');
+  await expect(clientPage.locator('.ux-mission-detail')).toHaveAttribute('open', '');
   await expect(
     clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toBeVisible();
@@ -1763,6 +1781,28 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     card.locator(':scope > .operator-section').first(),
     'requirements-and-offers',
   );
+  const missionNavigation = clientPage.getByRole('navigation', {
+    name: 'Approved report sections',
+  });
+  await missionNavigation.getByRole('button', { name: 'Supplier offers', exact: true }).focus();
+  await clientPage.keyboard.press('Enter');
+  await expect(
+    clientPage.getByRole('heading', { name: 'Original quotations and comparison', exact: true }),
+  ).toBeFocused();
+  await clientPage.getByLabel('Evidence lens', { exact: true }).selectOption('current');
+  await missionNavigation.getByRole('button', { name: 'Next decision', exact: true }).click();
+  await expect(clientPage.getByRole('heading', { name: 'Next action', exact: true })).toBeFocused();
+  await expect(clientPage.getByLabel('Evidence lens', { exact: true })).toHaveValue('current');
+  await clientPage.locator('.ux-mission-detail > summary').click();
+  await expect(clientPage.locator('.ux-mission-detail')).not.toHaveAttribute('open', '');
+  await missionNavigation.getByRole('button', { name: 'Supplier offers', exact: true }).focus();
+  await clientPage.keyboard.press('Enter');
+  await expect(clientPage.locator('.ux-mission-detail')).toHaveAttribute('open', '');
+  await expect(clientPage.getByLabel('Evidence lens', { exact: true })).toHaveValue('current');
+  await clientPage.getByLabel('Evidence lens', { exact: true }).selectOption('all');
+  await expect(
+    clientPage.getByRole('complementary', { name: 'Mission at a glance' }),
+  ).toContainText('Approved quotations');
   await participantEvidence(clientPage, 'client-mission');
   await expect(
     clientPage.getByRole('region', { name: 'Original quotation comparison' }),
@@ -1813,6 +1853,10 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await clientPage.evaluate((token) => {
     window.location.hash = token;
   }, client.token);
+  await clientPage
+    .getByRole('navigation', { name: 'Approved report sections' })
+    .getByRole('button', { name: 'Requirements', exact: true })
+    .click();
   await expect(
     clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toBeVisible();
@@ -1952,6 +1996,10 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   });
   const expiredPage = await guestContext.newPage();
   await expiredPage.goto(`/client#${short.token}`);
+  await expiredPage
+    .getByRole('navigation', { name: 'Approved report sections' })
+    .getByRole('button', { name: 'Requirements', exact: true })
+    .click();
   await expect(
     expiredPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toBeVisible();

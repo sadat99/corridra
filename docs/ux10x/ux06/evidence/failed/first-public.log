@@ -1,0 +1,140 @@
+$ playwright test
+[WebServer] (node:167977) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --hostname 0.0.0.0 --port 3100
+[WebServer] (node:167993) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 78 tests using 2 workers
+
+(node:168013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:168012) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [desktop] › tests/browser/access-navigation.spec.ts:3:1 › operator setup explains verified invitation requirements without collecting anonymous credentials (4.1s)
+  ✓   1 [desktop] › tests/browser/access-navigation.spec.ts:17:1 › platform directory connects every persona and V2 tool without privileged data (6.3s)
+  ✓   4 [desktop] › tests/browser/access-navigation.spec.ts:59:1 › invited network and private sharing help have connected recovery paths (3.1s)
+  ✓   3 [desktop] › tests/browser/access-navigation.spec.ts:43:1 › protected access entries explain unavailable configuration and offer a way back (8.6s)
+  ✓   5 [desktop] › tests/browser/access-navigation.spec.ts:77:1 › UX-01 invitation outage can be retried without collecting credentials or changing identity (4.6s)
+  ✓   6 [desktop] › tests/browser/coming-soon.spec.ts:4:1 › public page states the proposition and launch status without making up proof (1.6s)
+  ✓   8 [desktop] › tests/browser/coming-soon.spec.ts:41:1 › layout fits the viewport and respects reduced motion (1.5s)
+  ✓   7 [desktop] › tests/browser/coming-soon.spec.ts:26:1 › navigation leads to real content and supports keyboard access (2.7s)
+  ✓  10 [desktop] › tests/browser/coming-soon.spec.ts:62:1 › security headers and local assets are served (159ms)
+  ✓  11 [desktop] › tests/browser/coming-soon.spec.ts:74:1 › unavailable routes return a helpful 404 (1.8s)
+  ✓   9 [desktop] › tests/browser/coming-soon.spec.ts:54:1 › page passes relevant WCAG accessibility checks (3.3s)
+  ✓  12 [desktop] › tests/browser/product-experience.spec.ts:4:1 › corridor pages explain the actual direction, status and geographic limits (6.1s)
+  ✓  13 [desktop] › tests/browser/product-experience.spec.ts:30:1 › global selector retains an unsupported operating direction and opens the actual adaptive short brief (9.4s)
+  ✓  14 [desktop] › tests/browser/product-experience.spec.ts:87:1 › job-first navigation exposes machinery and commercial trips with real entry points (6.2s)
+  ✓  15 [desktop] › tests/browser/public-experience.spec.ts:21:3 › / has honest copy, accessible content and a responsive layout (5.8s)
+  ✓  16 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /sell has honest copy, accessible content and a responsive layout (4.6s)
+  ✓  17 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /source has honest copy, accessible content and a responsive layout (5.2s)
+  ✓  18 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /enter-market has honest copy, accessible content and a responsive layout (4.5s)
+  ✓  19 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /trade-missions has honest copy, accessible content and a responsive layout (4.4s)
+  ✓  20 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /how-it-works has honest copy, accessible content and a responsive layout (4.2s)
+  ✓  21 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /network has honest copy, accessible content and a responsive layout (4.0s)
+  ✓  22 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /institutions has honest copy, accessible content and a responsive layout (4.2s)
+  ✓  23 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /trust has honest copy, accessible content and a responsive layout (4.4s)
+  ✓  24 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /about has honest copy, accessible content and a responsive layout (4.1s)
+  ✓  26 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /signin has honest copy, accessible content and a responsive layout (4.1s)
+  ✓  25 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /plan has honest copy, accessible content and a responsive layout (4.3s)
+  ✓  28 [desktop] › tests/browser/public-experience.spec.ts:58:1 › navigation opens, closes with Escape and takes visitors to a solution (2.6s)
+  ✓  27 [desktop] › tests/browser/public-experience.spec.ts:21:3 › /privacy has honest copy, accessible content and a responsive layout (4.9s)
+  ✓  29 [desktop] › tests/browser/public-experience.spec.ts:94:1 › open navigation passes accessibility checks and remains usable at narrow widths (4.6s)
+  ✓  31 [desktop] › tests/browser/public-experience.spec.ts:148:1 › trust distinguishes declarations, evidence, verification and observed outcomes (1.4s)
+  ✓  30 [desktop] › tests/browser/public-experience.spec.ts:124:1 › every public link resolves and assets stay on the site (5.7s)
+  ✓  32 [desktop] › tests/browser/ux02-discovery.spec.ts:4:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (4.6s)
+  ✓  34 [desktop] › tests/browser/ux02-discovery.spec.ts:84:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (2.2s)
+  ✓  33 [desktop] › tests/browser/ux02-discovery.spec.ts:43:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (5.2s)
+  ✓  36 [desktop] › tests/browser/ux02-discovery.spec.ts:140:1 › UX-02 blocked draft storage is visible and does not discard current form entries (2.7s)
+  ✓  37 [desktop] › tests/browser/ux06-presentation.spec.ts:5:1 › UX-06 discovery prioritizes exploration and preserves the complete mission guide (3.7s)
+  ✓  38 [desktop] › tests/browser/ux06-presentation.spec.ts:50:1 › UX-06 legacy example fragment opens the real synthetic flow and close restores focus (1.9s)
+  ✓  35 [desktop] › tests/browser/ux02-discovery.spec.ts:112:1 › UX-02 native route disclosures and account recovery keep their real destinations (9.9s)
+(node:170994) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  40 [mobile] › tests/browser/access-navigation.spec.ts:3:1 › operator setup explains verified invitation requirements without collecting anonymous credentials (4.1s)
+  ✓  41 [mobile] › tests/browser/access-navigation.spec.ts:17:1 › platform directory connects every persona and V2 tool without privileged data (5.5s)
+  ✓  42 [mobile] › tests/browser/access-navigation.spec.ts:43:1 › protected access entries explain unavailable configuration and offer a way back (6.7s)
+  ✓  43 [mobile] › tests/browser/access-navigation.spec.ts:59:1 › invited network and private sharing help have connected recovery paths (2.9s)
+  ✓  39 [desktop] › tests/browser/ux06-presentation.spec.ts:80:1 › UX-06 discovery preserves keyboard and content at all required widths and reduced motion (23.8s)
+(node:171972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  44 [mobile] › tests/browser/access-navigation.spec.ts:77:1 › UX-01 invitation outage can be retried without collecting credentials or changing identity (5.2s)
+  ✓  45 [mobile] › tests/browser/coming-soon.spec.ts:4:1 › public page states the proposition and launch status without making up proof (2.4s)
+  ✓  47 [mobile] › tests/browser/coming-soon.spec.ts:41:1 › layout fits the viewport and respects reduced motion (1.9s)
+  ✓  46 [mobile] › tests/browser/coming-soon.spec.ts:26:1 › navigation leads to real content and supports keyboard access (2.9s)
+  ✓  49 [mobile] › tests/browser/coming-soon.spec.ts:62:1 › security headers and local assets are served (92ms)
+  ✓  50 [mobile] › tests/browser/coming-soon.spec.ts:74:1 › unavailable routes return a helpful 404 (2.2s)
+  ✓  48 [mobile] › tests/browser/coming-soon.spec.ts:54:1 › page passes relevant WCAG accessibility checks (4.2s)
+  ✓  51 [mobile] › tests/browser/product-experience.spec.ts:4:1 › corridor pages explain the actual direction, status and geographic limits (5.8s)
+  ✓  53 [mobile] › tests/browser/product-experience.spec.ts:87:1 › job-first navigation exposes machinery and commercial trips with real entry points (2.8s)
+  ✓  52 [mobile] › tests/browser/product-experience.spec.ts:30:1 › global selector retains an unsupported operating direction and opens the actual adaptive short brief (8.1s)
+  ✓  54 [mobile] › tests/browser/public-experience.spec.ts:21:3 › / has honest copy, accessible content and a responsive layout (2.6s)
+  ✓  55 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /sell has honest copy, accessible content and a responsive layout (2.3s)
+  ✓  56 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /source has honest copy, accessible content and a responsive layout (2.5s)
+  ✓  57 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /enter-market has honest copy, accessible content and a responsive layout (2.4s)
+  ✓  58 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /trade-missions has honest copy, accessible content and a responsive layout (2.4s)
+  ✓  59 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /how-it-works has honest copy, accessible content and a responsive layout (2.5s)
+  ✓  60 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /network has honest copy, accessible content and a responsive layout (2.5s)
+  ✓  61 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /institutions has honest copy, accessible content and a responsive layout (2.6s)
+  ✓  62 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /trust has honest copy, accessible content and a responsive layout (2.5s)
+  ✓  63 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /about has honest copy, accessible content and a responsive layout (2.4s)
+  ✓  64 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /plan has honest copy, accessible content and a responsive layout (3.0s)
+  ✓  65 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /signin has honest copy, accessible content and a responsive layout (2.3s)
+  ✓  66 [mobile] › tests/browser/public-experience.spec.ts:21:3 › /privacy has honest copy, accessible content and a responsive layout (2.3s)
+  ✓  68 [mobile] › tests/browser/public-experience.spec.ts:94:1 › open navigation passes accessibility checks and remains usable at narrow widths (1.8s)
+  ✓  69 [mobile] › tests/browser/public-experience.spec.ts:124:1 › every public link resolves and assets stay on the site (2.1s)
+  ✓  70 [mobile] › tests/browser/public-experience.spec.ts:148:1 › trust distinguishes declarations, evidence, verification and observed outcomes (783ms)
+  ✘  67 [mobile] › tests/browser/public-experience.spec.ts:58:1 › navigation opens, closes with Escape and takes visitors to a solution (6.6s)
+(node:173430) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  71 [mobile] › tests/browser/ux02-discovery.spec.ts:4:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (3.9s)
+  ✓  73 [mobile] › tests/browser/ux02-discovery.spec.ts:84:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (2.1s)
+  ✓  72 [mobile] › tests/browser/ux02-discovery.spec.ts:43:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (5.3s)
+  ✓  75 [mobile] › tests/browser/ux02-discovery.spec.ts:140:1 › UX-02 blocked draft storage is visible and does not discard current form entries (4.0s)
+  ✓  74 [mobile] › tests/browser/ux02-discovery.spec.ts:112:1 › UX-02 native route disclosures and account recovery keep their real destinations (7.5s)
+  ✓  76 [mobile] › tests/browser/ux06-presentation.spec.ts:5:1 › UX-06 discovery prioritizes exploration and preserves the complete mission guide (4.0s)
+  ✓  77 [mobile] › tests/browser/ux06-presentation.spec.ts:50:1 › UX-06 legacy example fragment opens the real synthetic flow and close restores focus (2.3s)
+  ✓  78 [mobile] › tests/browser/ux06-presentation.spec.ts:80:1 › UX-06 discovery preserves keyboard and content at all required widths and reduced motion (10.3s)
+
+
+  1) [mobile] › tests/browser/public-experience.spec.ts:58:1 › navigation opens, closes with Escape and takes visitors to a solution 
+
+    Error: expect(locator).not.toHaveAttribute(expected) failed
+
+    Locator: getByRole('navigation', { name: 'Main navigation' }).locator('details')
+    Expected: not ""
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "not toHaveAttribute" getByRole('navigation', { name: 'Main navigation' }).locator('details') with timeout 5000ms
+      - waiting for getByRole('navigation', { name: 'Main navigation' }).locator('details')
+
+
+      76 |   await expect(
+      77 |     page.getByRole('navigation', { name: 'Main navigation' }).locator('details'),
+    > 78 |   ).not.toHaveAttribute('open', '');
+         |         ^
+      79 |   if (isMobile) {
+      80 |     await expect(menu).toBeFocused();
+      81 |     await expect(menu).toHaveAttribute('aria-expanded', 'false');
+        at /workspace/corridra/tests/browser/public-experience.spec.ts:78:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-experience-navigati-26db8-akes-visitors-to-a-solution-mobile/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-experience-navigati-26db8-akes-visitors-to-a-solution-mobile/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/public-experience-navigati-26db8-akes-visitors-to-a-solution-mobile/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/public-experience-navigati-26db8-akes-visitors-to-a-solution-mobile/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [mobile] › tests/browser/public-experience.spec.ts:58:1 › navigation opens, closes with Escape and takes visitors to a solution 
+  77 passed (2.9m)
+[ELIFECYCLE] Command failed with exit code 1.

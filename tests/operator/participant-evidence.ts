@@ -4,9 +4,12 @@ import AxeBuilder from '@axe-core/playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 /** Captures only invented fixture views; no capability URLs, cookies or auth state. */
 export async function participantEvidence(page: Page, name: string) {
-  const stage = process.env.UX03_EVIDENCE_STAGE;
+  const phase = process.env.UX06_EVIDENCE_STAGE ? 'ux06' : 'ux03';
+  const stage = process.env.UX06_EVIDENCE_STAGE ?? process.env.UX03_EVIDENCE_STAGE;
   if (!stage || !['baseline', 'after'].includes(stage)) return;
-  const directory = `.cache/ux03/${stage}`;
+  if (new URL(page.url()).origin !== 'http://127.0.0.1:3200')
+    throw new Error('Participant evidence is restricted to the isolated synthetic browser server');
+  const directory = `.cache/${phase}/${stage}`;
   await mkdir(directory, { recursive: true });
   const original = page.viewportSize();
   const observations = [];

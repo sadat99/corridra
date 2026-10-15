@@ -1,0 +1,39 @@
+{
+  "pr": 43,
+  "prUrl": "https://github.com/sadat99/corridra/pull/43",
+  "testedHead": "65673086892a74467db387e6f6828fadac4aee97",
+  "merge": "ebb992cebef7c68e16922a6f29471939de843867",
+  "mergeTreeEqualsTestedHead": true,
+  "requiredCi": {
+    "run": 38660938006,
+    "conclusion": "success"
+  },
+  "production": {
+    "id": "dpl_5S5HDuzv7SNPzT8NkfT6wPT9VtLH",
+    "url": "https://corridra.vercel.app",
+    "deploymentUrl": "https://corridra-7a7msp7yu-sadat-os.vercel.app",
+    "state": "READY",
+    "region": "fra1",
+    "sha": "ebb992cebef7c68e16922a6f29471939de843867"
+  },
+  "readOnlyBrowser": {
+    "routeViewportObservations": 30,
+    "axeViolations": 0,
+    "overflow": 0,
+    "attemptedWrites": 0,
+    "anonymousMissionRead": 401,
+    "artifact": "browser.json"
+  },
+  "runtime": {
+    "window": "30m",
+    "levels": ["error", "fatal"],
+    "groupsReturned": 0,
+    "limits": "Bounded grouped query only, not an assurance of all historical logs"
+  },
+  "mainCi": {
+    "run": 38662852479,
+    "statusAtInspection": "completed",
+    "conclusion": "success"
+  },
+  "deferred": "Operator setup/sign-in investigation explicitly deferred by owner; no reset, role grant, auth configuration or identity query."
+}

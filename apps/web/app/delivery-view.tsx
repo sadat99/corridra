@@ -10,6 +10,7 @@ import {
 } from '../components/private-capability';
 import { AccessState } from '../components/access-state';
 import { ParticipantScope } from '../components/participant-scope';
+import { OperatorWorkbench } from '../components/operator-workbench';
 import { MissionPassport } from '../components/mission-passport';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
 export function DeliveryView({
@@ -251,7 +252,7 @@ function ScopedDeliveryView({
     { held: 0, qualified: 0, proposals: 0, contracts: 0 },
   );
   return (
-    <div className="delivery-view">
+    <div className="delivery-view ux-delivery" data-operator-workbench>
       {error && (
         <p ref={feedback} tabIndex={-1} className="ux-error-summary" role="alert">
           {error}
@@ -267,6 +268,34 @@ function ScopedDeliveryView({
       <p className="evidence-label">
         Invented test mission data. Real customer mission admission is not enabled.
       </p>
+      <OperatorWorkbench
+        label="Approved report sections"
+        sections={[
+          { label: 'Sharing scope', heading: 'Approved sharing scope' },
+          ...(audience === 'INSTITUTION_REPORT'
+            ? [{ label: 'Programme overview', heading: 'Programme overview' }]
+            : []),
+          ...(report.missions.length
+            ? [
+                { label: 'Next decision', heading: 'Next action' },
+                { label: 'Mission brief', heading: 'Mission brief' },
+              ]
+            : []),
+          ...(report.missions.some((m) => m.experience)
+            ? [
+                { label: 'Requirements', heading: 'Requirements and decisions' },
+                { label: 'Supplier offers', heading: 'Original quotations and comparison' },
+              ]
+            : []),
+          ...(report.delegation
+            ? [{ label: 'Delegation agenda', heading: 'Approved delegation agenda' }]
+            : []),
+          ...(report.missions.length ? [{ label: 'Itinerary', heading: 'Itinerary' }] : []),
+          ...(report.missions.some((m) => m.requests)
+            ? [{ label: 'Evidence requests', heading: 'Evidence requests' }]
+            : []),
+        ]}
+      />
       <ParticipantScope
         purpose={report.purpose}
         expiresAt={report.expiresAt}
@@ -305,7 +334,18 @@ function ScopedDeliveryView({
         Refresh progress
       </button>
       {audience === 'INSTITUTION_REPORT' && (
-        <>
+        <section className="ux-programme-overview" aria-labelledby="programme-overview-title">
+          <div className="ux-programme-heading">
+            <div>
+              <p className="label">APPROVED PROGRAMME</p>
+              <h2 id="programme-overview-title">Programme overview</h2>
+              <p>{report.programme || 'Approved participant report'}</p>
+            </div>
+            <p className="ux-scope-note">
+              Only the approved participants and publications in this private view are counted.
+              Attendance, contracts and cash remain separate observations.
+            </p>
+          </div>
           <dl className="delivery-metrics">
             <div>
               <dt>Approved companies</dt>
@@ -363,7 +403,7 @@ function ScopedDeliveryView({
               </button>
             </p>
           )}
-        </>
+        </section>
       )}
       {report.delegation && (
         <section>
@@ -391,7 +431,12 @@ function ScopedDeliveryView({
           <h3>Mission brief</h3>
           <p>{m.objective}</p>
           <p>{m.brief}</p>
-          {m.experience && <MissionExperienceView experience={m.experience} />}
+          {m.experience && (
+            <details className="ux-mission-detail">
+              <summary>Requirements, targets and original supplier offers</summary>
+              <MissionExperienceView experience={m.experience} />
+            </details>
+          )}
           <h3>Itinerary</h3>
           {m.itinerary.length ? (
             <ul>

@@ -1,0 +1,6 @@
+{
+  "command": "pnpm exec playwright test tests/browser/ux06-presentation.spec.ts",
+  "exitCode": 0,
+  "seconds": 30.62,
+  "origin": "Isolated synthetic server; read-only discovery cases only; no fixture reset"
+}

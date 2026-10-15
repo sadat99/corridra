@@ -1,0 +1,98 @@
+[
+  {
+    "name": "buyer",
+    "width": 1440,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "name": "buyer",
+    "width": 1280,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "name": "buyer",
+    "width": 768,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "name": "buyer",
+    "width": 390,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "name": "buyer",
+    "width": 360,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  },
+  {
+    "name": "buyer",
+    "width": 320,
+    "overflow": false,
+    "violations": [],
+    "paint": [
+      {
+        "name": "first-paint",
+        "startTime": 204
+      },
+      {
+        "name": "first-contentful-paint",
+        "startTime": 204
+      }
+    ]
+  }
+]

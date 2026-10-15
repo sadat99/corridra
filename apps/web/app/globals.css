@@ -2329,3 +2329,401 @@ summary:hover {
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
 }
+
+/* UX-06 visual parity: compose actual scope and source records, never prototype facts. */
+.ux-home .ux-discovery-grid {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 48px;
+  align-items: stretch;
+}
+.ux-home .ux-editorial-copy {
+  padding-block: 24px;
+}
+.ux-home .ux-editorial-copy h1 {
+  font-size: clamp(42px, 5.45vw, 88px);
+  line-height: 1.06;
+  letter-spacing: -0.06em;
+  text-wrap: initial;
+}
+.ux-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+.ux-home .ux-editorial-copy .hero-description {
+  max-width: 47ch;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.ux-home .ux-atlas {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  min-height: 580px;
+}
+.ux-home .ux-atlas-map {
+  flex: 1;
+  min-height: 250px;
+}
+.ux-atlas-stamp {
+  text-align: right;
+  font: 400 20px/1.3 var(--serif);
+}
+.ux-atlas-stamp em {
+  color: #f4d399;
+}
+.ux-home .ux-atlas-facts {
+  margin-bottom: 8px;
+}
+.ux-home .ux-atlas-note {
+  font-size: 12px;
+}
+.ux-objective-bar {
+  scroll-margin-top: 24px;
+}
+.ux-example:not(.ux-example-open) {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+.ux-example:not(.ux-example-open) h2 {
+  font-size: 25px;
+}
+.ux-example:not(.ux-example-open) p {
+  font-size: 13px;
+}
+.ux-example:not(.ux-example-open) button {
+  flex-shrink: 0;
+}
+.ux-home-story {
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr;
+  gap: 48px;
+  padding-block: 48px;
+}
+.ux-home-story h2 {
+  font: 400 42px/1.15 var(--serif);
+  letter-spacing: -0.045em;
+}
+.ux-home-story h2 em {
+  color: var(--accent);
+}
+.ux-home-story ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+}
+.ux-home-story li {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+}
+.ux-home-story h3 {
+  font-size: 16px;
+  margin-block: 20px 12px;
+}
+.ux-home-story p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-block: 16px;
+}
+.ux-home-story .text-link {
+  font-size: 13px;
+}
+.ux-home-guide {
+  border-block: 1px solid var(--border-subtle);
+  margin-bottom: 48px;
+}
+.ux-home-guide > summary {
+  padding: 20px 0;
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.ux-workspace .detail-card {
+  padding: var(--space-6);
+}
+.ux-account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 24px;
+  align-items: start;
+}
+.ux-account-layout > * {
+  min-width: 0;
+}
+.ux-account-sidebar .access-options {
+  display: grid;
+  gap: 8px;
+  margin-block: 24px;
+  padding-block: 16px;
+  border-block: 1px solid var(--border-subtle);
+}
+.ux-account-sidebar p {
+  margin-block: 12px;
+}
+.ux-account-missions h2 {
+  margin-top: 0;
+}
+.ux-account-missions > p {
+  margin-block: 16px;
+}
+.ux-account-missions > .operator-form {
+  padding: 16px 0;
+}
+.ux-account-missions .field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.ux-account-missions > article {
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 24px;
+}
+.ux-account-missions input {
+  width: 100%;
+}
+.ux-delivery .ux-operator-workbench {
+  margin-top: 24px;
+}
+.ux-participant-passport {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.ux-participant-passport > h2 {
+  font: 400 clamp(28px, 3vw, 42px)/1.2 var(--serif);
+  margin-block: 14px;
+}
+.ux-mission-focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-block: 24px;
+}
+.ux-mission-next {
+  margin: 0;
+  padding: 28px;
+  background: var(--action);
+  color: var(--paper);
+  border: 0;
+  border-radius: var(--radius-panel);
+}
+.ux-mission-next h3 {
+  font: 400 32px/1.25 var(--serif);
+  margin-block: 20px;
+}
+.ux-mission-next > p {
+  margin-block: 16px;
+}
+.ux-mission-next .ux-scope-note {
+  color: var(--paper);
+}
+.ux-mission-facts {
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  border-radius: var(--radius-panel);
+}
+.ux-mission-facts dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.ux-mission-facts dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 16px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ux-mission-facts dd {
+  margin: 0;
+  font-size: 14px;
+  text-align: right;
+}
+.ux-programme-overview {
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  margin-block: 24px;
+}
+.ux-programme-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.ux-programme-heading h2 {
+  font: 400 32px/1.2 var(--serif);
+  margin-block: 12px;
+}
+.ux-programme-overview .delivery-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ux-programme-overview .delivery-metrics > div {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 16px;
+}
+.ux-programme-overview .delivery-metrics dt {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.ux-programme-overview .delivery-metrics dd {
+  color: var(--action);
+  font-family: var(--serif);
+}
+@media (max-width: 980px) {
+  .ux-home .ux-discovery-grid,
+  .ux-home-story,
+  .ux-account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-home .ux-atlas {
+    min-height: 480px;
+  }
+  .ux-home-story {
+    gap: 24px;
+  }
+}
+@media (max-width: 640px) {
+  .ux-home .ux-discovery-grid {
+    gap: 28px;
+  }
+  .ux-home .ux-editorial-copy {
+    padding-block: 0;
+  }
+  .ux-home .ux-editorial-copy h1 {
+    font-size: clamp(36px, 10.8vw, 59px);
+  }
+  .ux-home .ux-atlas {
+    min-height: 360px;
+    padding: 20px;
+  }
+  .ux-home .ux-atlas-map {
+    min-height: 150px;
+  }
+  .ux-home .ux-atlas-facts {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  .ux-home .ux-atlas-facts dd {
+    font-size: 14px;
+  }
+  .ux-example:not(.ux-example-open) {
+    display: block;
+  }
+  .ux-example:not(.ux-example-open) button {
+    margin-top: 16px;
+  }
+  .ux-home-story ol,
+  .ux-mission-focus-grid,
+  .ux-programme-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-home-story h2 {
+    font-size: 32px;
+  }
+  .ux-home-story h3 {
+    margin-block: 12px;
+  }
+  .ux-workspace .detail-card,
+  .ux-mission-next,
+  .ux-mission-facts,
+  .ux-programme-overview {
+    padding: 16px;
+  }
+  .ux-mission-next h3 {
+    font-size: 28px;
+  }
+  .ux-programme-overview .delivery-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Clear heading and record hierarchy for dense work, using existing source fields. */
+.ux-workspace h3 {
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.4;
+  margin-block: 1.5rem 0.75rem;
+}
+.ux-workspace h4 {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.4;
+  margin-block: 1rem 0.5rem;
+}
+.ux-account-layout {
+  overflow-wrap: anywhere;
+}
+.ux-mission-next h3 {
+  font: 650 13px/1.4 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ux-mission-next .ux-mission-decision {
+  font: 400 clamp(24px, 2.5vw, 34px)/1.25 var(--serif);
+  margin-block: 24px;
+}
+.ux-participant-scope h2 {
+  font: 650 13px/1.4 var(--sans);
+  margin-block: 0 16px;
+}
+.ux-mission-detail {
+  margin-block: 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+.ux-mission-detail > summary {
+  padding: 20px;
+  min-height: 44px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.ux-mission-detail > .ux-source-lens {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.ux-source-lens > dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) minmax(0, 3fr);
+  gap: 12px 24px;
+  padding-block: 20px;
+}
+.ux-source-lens > dl dt {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.ux-source-lens > dl dd {
+  margin: 0;
+}
+.ux-source-lens p {
+  margin-block: 12px;
+}
+.ux-source-lens details {
+  border-top: 1px solid var(--border-subtle);
+  padding-block: 12px;
+}
+.ux-source-lens summary {
+  min-height: 44px;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .ux-source-lens > dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .ux-source-lens > dl dd {
+    margin-bottom: 12px;
+  }
+  .ux-mission-detail > summary {
+    padding: 16px;
+  }
+}

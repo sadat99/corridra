@@ -1,0 +1,132 @@
+{
+  "scope": "Anonymous read-only production observations; no signed-in state or complete interaction/visual acceptance implied",
+  "observations": [
+    {
+      "path": "/",
+      "width": 1440,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 4512,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 948
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 948
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    },
+    {
+      "path": "/",
+      "width": 1280,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 4477,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 572
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 572
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    },
+    {
+      "path": "/",
+      "width": 768,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 5817,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 1860
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 1860
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 7425,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 796
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 796
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    },
+    {
+      "path": "/",
+      "width": 360,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 7598,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 816
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 816
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    },
+    {
+      "path": "/",
+      "width": 320,
+      "status": 200,
+      "finalPath": "/",
+      "headings": ["Going into a new market?The right people.A considered next move."],
+      "overflow": false,
+      "height": 7849,
+      "paint": [
+        {
+          "name": "first-paint",
+          "milliseconds": 616
+        },
+        {
+          "name": "first-contentful-paint",
+          "milliseconds": 616
+        }
+      ],
+      "skipFocused": false,
+      "review": "NOT_REVIEWED"
+    }
+  ],
+  "blockedWrites": []
+}

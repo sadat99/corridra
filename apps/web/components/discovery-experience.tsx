@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { corridorPages } from '../content/corridors';
 import { Arrow } from './arrow';
@@ -49,6 +49,23 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
   const [example, setExample] = useState(false);
   const [step, setStep] = useState(0);
   const exampleHeading = useRef<HTMLHeadingElement>(null);
+  const exampleTrigger = useRef<HTMLAnchorElement>(null);
+  function openExample() {
+    setExample(true);
+    setStep(0);
+    requestAnimationFrame(() => exampleHeading.current?.focus());
+  }
+  useEffect(() => {
+    function openFromHash() {
+      if (window.location.hash === '#mission-example') {
+        setExample(true);
+        requestAnimationFrame(() => exampleHeading.current?.focus());
+      }
+    }
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => window.removeEventListener('hashchange', openFromHash);
+  }, []);
   const route = directions.find((item) => item.key === direction) ?? directions[0];
   const selectedJob = missionCatalogue.find((item) => item.key === job) ?? missionCatalogue[0];
   const sourcing = [
@@ -75,28 +92,32 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           <div className="ux-editorial-copy">
             <p className="label">CROSS-BORDER MARKET ACCESS</p>
             <h1>
-              Going into a new market?
+              The right market.
               <br />
-              <span>
-                The right people.
-                <br />
-                <em>A considered next move.</em>
-              </span>
+              The right people.
+              <br />
+              <em>The next move.</em>
             </h1>
             <p className="hero-description">
               Make the commercial objective clear. Understand the evidence behind a potential
               relationship. Keep the next decision and its owner in view.
             </p>
-            <Link className="primary-link" href="/plan" prefetch={false}>
-              Plan a mission <span className="sr-only">(test intake)</span>
-              <Arrow />
-            </Link>
+            <div className="ux-hero-actions">
+              <a className="primary-link" href="#commercial-objective">
+                Explore a commercial direction <Arrow />
+              </a>
+              <a
+                ref={exampleTrigger}
+                className="text-link"
+                href="#mission-example"
+                onClick={openExample}
+              >
+                See a synthetic mission example <Arrow />
+              </a>
+            </div>
             <p className="ux-reassurance">
               Explore with invented records. Real customer missions are not open yet.
             </p>
-            <Link className="text-link" href="/how-it-works">
-              See how Corridra works <Arrow />
-            </Link>
           </div>
         )}
         <div className="ux-atlas" aria-label="Corridor Atlas">
@@ -105,6 +126,12 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             <span>Illustrative</span>
           </div>
           <svg viewBox="0 0 600 340" aria-hidden="true" className="ux-atlas-map">
+            <defs>
+              <pattern id="atlas-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="#719280" />
+              </pattern>
+            </defs>
+            <rect width="600" height="340" fill="url(#atlas-grid)" opacity="0.25" />
             <ellipse cx="300" cy="174" rx="262" ry="132" />
             <ellipse cx="300" cy="174" rx="162" ry="132" />
             <path d="M38 174h524M63 108h474M63 240h474" />
@@ -129,6 +156,11 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               EU bloc
             </text>
           </svg>
+          <p className="ux-atlas-stamp">
+            Explore possibilities.
+            <br />
+            <em>Verify reality.</em>
+          </p>
           <p className="ux-atlas-caption">
             Commercial direction, not a shipment route or a map of local coverage.
           </p>
@@ -148,7 +180,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           </Link>
         </div>
       </div>
-      <div className="ux-objective-bar">
+      <div id="commercial-objective" tabIndex={-1} className="ux-objective-bar">
         <div>
           <p className="label">START WITH YOUR OBJECTIVE</p>
           <h2>What needs to happen?</h2>
@@ -208,17 +240,20 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
       </div>
       <div className="ux-discovery-actions">
         <p>Perspective describes the example. It does not grant account or workspace access.</p>
-        <a
-          className="text-link"
-          href="#mission-example"
-          onClick={() => {
-            setExample(true);
-            setStep(0);
-            requestAnimationFrame(() => exampleHeading.current?.focus());
-          }}
-        >
-          See a synthetic mission example <Arrow />
-        </a>
+        {overview ? (
+          <a
+            ref={exampleTrigger}
+            className="text-link"
+            href="#mission-example"
+            onClick={openExample}
+          >
+            See a synthetic mission example <Arrow />
+          </a>
+        ) : (
+          <button className="text-link" onClick={openExample}>
+            Explore this objective <Arrow />
+          </button>
+        )}
         <Link className="primary-link" href={briefUrl}>
           Prepare this test brief <Arrow />
         </Link>
@@ -226,7 +261,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
       <section
         id="mission-example"
         tabIndex={-1}
-        className="ux-example"
+        className={`ux-example${example ? ' ux-example-open' : ''}`}
         aria-label="Synthetic mission example"
       >
         <div>
@@ -308,7 +343,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               className="text-link"
               onClick={() => {
                 setExample(false);
-                requestAnimationFrame(() => exampleHeading.current?.focus());
+                requestAnimationFrame(() => exampleTrigger.current?.focus());
               }}
             >
               Close the example
