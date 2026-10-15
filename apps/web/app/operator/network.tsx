@@ -1,4 +1,10 @@
 'use client';
+import { OperatorWorkbench } from '../../components/operator-workbench';
+import {
+  SubmissionFailure,
+  submissionMessage,
+  useRetainedSubmission,
+} from '../../components/retained-submission';
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 type Profile = {
@@ -125,7 +131,12 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
           : { cache: 'no-store' },
       );
       const body = await r.json();
-      if (!r.ok) throw new Error(body.error);
+      if (!r.ok)
+        throw new SubmissionFailure(
+          body.error ?? 'The submission could not be confirmed.',
+          r.status,
+          r.headers.get('X-Corridra-Request-ID'),
+        );
       return body;
     },
     [tenant],
@@ -143,15 +154,24 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
       live = false;
     };
   }, [request]);
-  async function act(action: string, input: unknown) {
+  const submit = useRetainedSubmission();
+  async function act(action: string, input: unknown, form: HTMLFormElement) {
     setBusy(true);
     setMessage('');
     try {
-      const result = await request(action, input);
-      setData(await request('network'));
-      setMessage(result.id ? `Saved reference: ${result.id}` : 'Saved.');
+      const result = await submit(form, action, input, request);
+      const receipt = result.id ? `Saved reference: ${result.id}` : 'Saved.';
+      setMessage(receipt);
+      try {
+        setData(await request('network'));
+      } catch {
+        setMessage(
+          receipt +
+            ' Refresh failed; refresh execution work instead of submitting the received command again.',
+        );
+      }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Work could not be saved');
+      setMessage(submissionMessage(e, 'Work could not be saved'));
     } finally {
       setBusy(false);
     }
@@ -163,23 +183,27 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
       String(f.get(key))
         .split(',')
         .map((v) => v.trim());
-    void act('network-profile', {
-      id: crypto.randomUUID(),
-      version: 1,
-      principalId: f.get('principalId'),
-      alias: f.get('alias'),
-      categories: [f.get('category')],
-      capabilities: list('capabilities'),
-      markets: list('markets'),
-      workCountries: list('workCountries'),
-      languages: list('languages'),
-      sectors: list('sectors'),
-      eligibilitySourceId: f.get('eligibilitySourceId'),
-      expiresAt: f.get('expiresAt'),
-      available: true,
-      status: 'ACTIVE',
-      reason: f.get('reason'),
-    });
+    void act(
+      'network-profile',
+      {
+        id: crypto.randomUUID(),
+        version: 1,
+        principalId: f.get('principalId'),
+        alias: f.get('alias'),
+        categories: [f.get('category')],
+        capabilities: list('capabilities'),
+        markets: list('markets'),
+        workCountries: list('workCountries'),
+        languages: list('languages'),
+        sectors: list('sectors'),
+        eligibilitySourceId: f.get('eligibilitySourceId'),
+        expiresAt: f.get('expiresAt'),
+        available: true,
+        status: 'ACTIVE',
+        reason: f.get('reason'),
+      },
+      e.currentTarget,
+    );
   }
   function createTask(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -210,47 +234,73 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
       .split(',')
       .map((v) => v.trim());
     input.rewardRuleId = f.get('rewardRuleId') || null;
-    void act('network-task', input);
+    void act('network-task', input, e.currentTarget);
   }
   function taskEvent(e: FormEvent<HTMLFormElement>, task: Task) {
     e.preventDefault();
     const f = new FormData(e.currentTarget),
       action = String(f.get('action'));
-    void act('network-event', {
-      commandId: crypto.randomUUID(),
-      taskId: task.id,
-      version: task.version,
-      action,
-      reason: f.get('reason'),
-      details:
-        action === 'ASSIGN'
-          ? {
-              kind: 'assignment',
-              profileId: f.get('profileId'),
-              relationshipDisclosure: f.get('relationshipDisclosure'),
-            }
-          : {
-              kind: 'decision',
-              ...(action === 'RESOLVE' ? { resolution: f.get('resolution') } : {}),
-            },
-    });
+    void act(
+      'network-event',
+      {
+        commandId: crypto.randomUUID(),
+        taskId: task.id,
+        version: task.version,
+        action,
+        reason: f.get('reason'),
+        details:
+          action === 'ASSIGN'
+            ? {
+                kind: 'assignment',
+                profileId: f.get('profileId'),
+                relationshipDisclosure: f.get('relationshipDisclosure'),
+              }
+            : {
+                kind: 'decision',
+                ...(action === 'RESOLVE' ? { resolution: f.get('resolution') } : {}),
+              },
+      },
+      e.currentTarget,
+    );
   }
   function review(e: FormEvent<HTMLFormElement>, task: Task) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    void act('network-review', {
-      commandId: crypto.randomUUID(),
-      taskId: task.id,
-      version: task.version,
-      evidenceQuality: Number(f.get('quality')),
-      timeliness: Number(f.get('timeliness')),
-      rationale: f.get('rationale'),
-      reason: f.get('reason'),
-    });
+    void act(
+      'network-review',
+      {
+        commandId: crypto.randomUUID(),
+        taskId: task.id,
+        version: task.version,
+        evidenceQuality: Number(f.get('quality')),
+        timeliness: Number(f.get('timeliness')),
+        rationale: f.get('rationale'),
+        reason: f.get('reason'),
+      },
+      e.currentTarget,
+    );
   }
   return (
-    <section className="detail-card" aria-label="Execution network">
+    <section
+      className="detail-card ux-governance-panel"
+      data-operator-workbench
+      aria-label="Execution network"
+    >
       <h2>Commercial execution work</h2>
+      <OperatorWorkbench
+        label="Execution work sections"
+        sections={[
+          { label: 'Tasks and decisions', heading: 'Current disclosed tasks' },
+          { label: 'Quality and timeliness', heading: 'Reviewed work dimensions by task category' },
+          ...(admin
+            ? [
+                { label: 'Eligibility and status', heading: 'Current private work profiles' },
+                { label: 'Reward obligations', heading: 'Independent reward approval' },
+                { label: 'Compensations', heading: 'Compensate an unreconciled reward obligation' },
+              ]
+            : []),
+        ]}
+      />
       <p>
         Review capabilities and work eligibility, assign only the disclosed task, and assess
         submitted evidence. Completion and rewards require separate decisions.
@@ -382,6 +432,13 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
           </form>
         </details>
       )}
+      <h3>Current disclosed tasks</h3>
+      {data && !data.tasks.length && (
+        <p>
+          No disclosed tasks are recorded in this workspace. Eligibility and exact assignment remain
+          required before work can start.
+        </p>
+      )}
       {data?.tasks.map((task) => (
         <article key={task.id}>
           <h3>
@@ -501,10 +558,14 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
               className="operator-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                void act('network-assess', {
-                  taskId: task.id,
-                  reason: new FormData(e.currentTarget).get('reason'),
-                });
+                void act(
+                  'network-assess',
+                  {
+                    taskId: task.id,
+                    reason: new FormData(e.currentTarget).get('reason'),
+                  },
+                  e.currentTarget,
+                );
               }}
             >
               <Fields names={['reason']} />
@@ -555,14 +616,18 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
                 onSubmit={(e) => {
                   e.preventDefault();
                   const f = new FormData(e.currentTarget);
-                  void act('network-profile', {
-                    ...p.configuration,
-                    id: crypto.randomUUID(),
-                    principalId: p.principal_id,
-                    version: p.version + 1,
-                    status: f.get('status'),
-                    reason: f.get('reason'),
-                  });
+                  void act(
+                    'network-profile',
+                    {
+                      ...p.configuration,
+                      id: crypto.randomUUID(),
+                      principalId: p.principal_id,
+                      version: p.version + 1,
+                      status: f.get('status'),
+                      reason: f.get('reason'),
+                    },
+                    e.currentTarget,
+                  );
                 }}
               >
                 <p>
@@ -597,12 +662,16 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
             onSubmit={(e) => {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
-              void act('network-reward', {
-                commandId: crypto.randomUUID(),
-                contributionId: f.get('contributionId'),
-                sourceId: f.get('sourceId'),
-                reason: f.get('reason'),
-              });
+              void act(
+                'network-reward',
+                {
+                  commandId: crypto.randomUUID(),
+                  contributionId: f.get('contributionId'),
+                  sourceId: f.get('sourceId'),
+                  reason: f.get('reason'),
+                },
+                e.currentTarget,
+              );
             }}
           >
             <label className="field">
@@ -632,12 +701,16 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
             onSubmit={(e) => {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
-              void act('network-reverse', {
-                commandId: crypto.randomUUID(),
-                ledgerId: f.get('ledgerId'),
-                sourceId: f.get('sourceId'),
-                reason: f.get('reason'),
-              });
+              void act(
+                'network-reverse',
+                {
+                  commandId: crypto.randomUUID(),
+                  ledgerId: f.get('ledgerId'),
+                  sourceId: f.get('sourceId'),
+                  reason: f.get('reason'),
+                },
+                e.currentTarget,
+              );
             }}
           >
             <label className="field">

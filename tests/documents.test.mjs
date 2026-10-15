@@ -66,3 +66,34 @@ for (const part of ['04', '05']) {
     assert.equal(record.originalsModified, false);
   });
 }
+
+test('UX acceptance ledgers keep phase identifiers, unique records and bounded verification aligned', async () => {
+  for (const [phase, directory] of [
+    ['01', 'docs/ux10x'],
+    ['02', 'docs/ux10x/ux02'],
+    ['03', 'docs/ux10x/ux03'],
+    ['04', 'docs/ux10x/ux04'],
+    ['05', 'docs/ux10x/ux05'],
+  ]) {
+    const ledger = JSON.parse(await readFile(new URL(`${directory}/coverage.json`, root), 'utf8'));
+    assert.ok(ledger.verification.scope.includes(`UX-${phase}`));
+    assert.equal(new Set(ledger.records.map((record) => record.id)).size, ledger.records.length);
+    const scenarios = ledger.records.filter((record) => /-SCENARIO-\d+$/.test(record.id));
+    assert.equal(scenarios.length, ledger.verification.tests.length);
+    scenarios.forEach((record, index) => {
+      const acceptance = ledger.verification.tests[index];
+      assert.equal(record.id, `UX${phase}-SCENARIO-${index + 1}`);
+      assert.equal(record.baselineAction, acceptance.baseline);
+      assert.equal(
+        record.preservation,
+        acceptance.status === 'PASS'
+          ? 'VERIFIED'
+          : acceptance.status === 'PARTIAL'
+            ? 'PARTIAL'
+            : 'NOT_YET_VERIFIED',
+      );
+      assert.ok(record.positiveTestIds.includes(acceptance.positive));
+      assert.ok(record.negativeTestIds.includes(acceptance.negative));
+    });
+  }
+});

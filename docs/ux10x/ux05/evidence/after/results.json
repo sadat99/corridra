@@ -1,0 +1,50 @@
+[
+  {
+    "command": "pnpm format:check",
+    "exitCode": 0,
+    "seconds": 9.33,
+    "evidence": "frontend-results.json"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "seconds": 10.84,
+    "evidence": "frontend-results.json"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "seconds": 10.7,
+    "evidence": "frontend-results.json"
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "seconds": 1.46,
+    "evidence": "frontend-results.json"
+  },
+  {
+    "command": "pnpm test:integration",
+    "exitCode": 0,
+    "seconds": 300.24,
+    "evidence": "domain-stage-results.json"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "seconds": 11.28,
+    "evidence": "presentation-stage-results.json"
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0,
+    "seconds": 113.41,
+    "evidence": "presentation-stage-results.json"
+  },
+  {
+    "command": "pnpm test:operator",
+    "exitCode": 0,
+    "seconds": 494.71,
+    "evidence": "frontend-results.json"
+  }
+]

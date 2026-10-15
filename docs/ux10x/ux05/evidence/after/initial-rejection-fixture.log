@@ -1,0 +1,53 @@
+$ playwright test --config playwright.operator.config.ts
+[WebServer] (node:152779) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:152793) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:152809) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:152823) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 13 tests using 1 worker
+
+(node:152837) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/workspace.spec.ts:23:1 › anonymous five-step intake preserves draft, retries safely and returns a private receipt (4.8s)
+  ✓   2 tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out (40.0s)
+  ✓   3 tests/operator/workspace.spec.ts:488:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up (16.2s)
+  ✓   4 tests/operator/workspace.spec.ts:812:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay (32.3s)
+  ✓   5 tests/operator/workspace.spec.ts:1073:1 › scoped delivery imports every row, serves client requests and downloads complete programme reports (12.9s)
+  ✓   6 tests/operator/workspace.spec.ts:1325:1 › route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace (1.9m)
+  ✘   7 tests/operator/workspace.spec.ts:2006:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries (1.1m)
+(node:154391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   8 tests/operator/workspace.spec.ts:2674:1 › UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery (7.9s)
+  ✓   9 tests/operator/workspace.spec.ts:2803:1 › UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority (6.2s)
+  ✓  10 tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics (2.0m)
+  ✓  11 tests/operator/z-startup-recovery.spec.ts:8:1 › UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness (3.1s)
+  ✓  12 tests/operator/z-ux02-access.spec.ts:8:1 › UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery (4.1s)
+  ✓  13 tests/operator/z-ux02-intake.spec.ts:9:1 › UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics (7.0s)
+
+
+  1) tests/operator/workspace.spec.ts:2006:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 403
+
+      2309 |     );
+      2310 |     await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    > 2311 |     expect((await rejectedAfterIntent).status()).toBe(400);
+           |                                                  ^
+      2312 |     await expect(aiPanel.getByRole('status')).toContainText('Request recorded.');
+      2313 |     expect(blockedCommands).toHaveLength(2);
+      2314 |     expect(blockedCommands[1].commandId).not.toBe(blockedCommands[0].commandId);
+        at /workspace/corridra/tests/operator/workspace.spec.ts:2311:50
+
+    Error Context: test-results/workspace-governed-SDK-fix-13e56-rewards-and-offline-retries/error-context.md
+
+  1 failed
+    tests/operator/workspace.spec.ts:2006:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries
+  12 passed (7.4m)
+[ELIFECYCLE] Command failed with exit code 1.

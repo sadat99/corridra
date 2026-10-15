@@ -2254,19 +2254,126 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await aiPanel.getByLabel('Mission reference', { exact: true }).fill(missionId);
     await aiPanel.getByLabel('Reviewed model policy').selectOption(policyId);
     await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
+    const aiSubmissions: unknown[] = [];
+    await page.route('**/api/workspace/ai-run?*', async (route) => {
+      aiSubmissions.push(route.request().postDataJSON());
+      if (aiSubmissions.length === 1) {
+        await route.fetch();
+        await route.abort('connectionfailed');
+      } else await route.continue();
+    });
     await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await expect(aiPanel.getByRole('status')).toContainText('Receipt not confirmed.');
+    await aiPanel
+      .getByLabel('Approved public claim references, separated by commas')
+      .fill(randomUUID());
+    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    expect(aiSubmissions).toHaveLength(2);
+    expect(aiSubmissions[1]).toEqual(aiSubmissions[0]);
+    await page.unroute('**/api/workspace/ai-run?*');
+    await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
     await expect(
       aiPanel
         .getByText('Synthetic provider fixture only; acceptance unknown', { exact: false })
         .first(),
     ).toBeVisible();
+    await expect(aiPanel.getByText('Unverified AI draft', { exact: true }).first()).toBeVisible();
+    const blockedCommands: { commandId: string }[] = [];
+    await page.route('**/api/workspace/ai-run?*', async (route) => {
+      blockedCommands.push(route.request().postDataJSON());
+      await route.continue();
+    });
+    await aiPanel
+      .getByLabel('Approved public claim references, separated by commas')
+      .fill(randomUUID());
+    const rejectedBeforeIntent = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
+    );
+    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    expect((await rejectedBeforeIntent).status()).toBe(403);
+    await expect(aiPanel.getByRole('status')).not.toContainText('Receipt not confirmed.');
+    const contactClaim = (
+      await post('claim', {
+        sourceId: source,
+        statement:
+          'Synthetic protocol-only contact fixture@example.invalid is not approved model input.',
+      })
+    ).id;
+    await aiPanel
+      .getByLabel('Approved public claim references, separated by commas')
+      .fill(contactClaim);
+    const contactDenied = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
+    );
+    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    expect((await contactDenied).status()).toBe(403);
+    await expect(aiPanel.getByRole('status')).not.toContainText('Receipt not confirmed.');
+    const largeClaims: string[] = [];
+    for (let i = 0; i < 4; i++)
+      largeClaims.push(
+        (await post('claim', { sourceId: source, statement: `${i}${'合成'.repeat(999)}` })).id,
+      );
+    await aiPanel
+      .getByLabel('Approved public claim references, separated by commas')
+      .fill(largeClaims.join(','));
+    const oversizedAfterIntent = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
+    );
+    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    expect((await oversizedAfterIntent).status()).toBe(413);
+    await expect(aiPanel.getByRole('status')).toContainText('Request recorded.');
+    expect(blockedCommands).toHaveLength(3);
+    expect(new Set(blockedCommands.map((command) => command.commandId)).size).toBe(3);
+    expect(
+      (
+        await db.query('SELECT count(*)::int n FROM app.ai_run WHERE id=$1', [
+          blockedCommands[0].commandId,
+        ])
+      ).rows[0].n,
+    ).toBe(0);
+    expect(
+      (
+        await db.query('SELECT count(*)::int n FROM app.ai_run WHERE id=$1', [
+          blockedCommands[1].commandId,
+        ])
+      ).rows[0].n,
+    ).toBe(0);
+    expect(
+      (
+        await db.query('SELECT count(*)::int n FROM app.ai_run WHERE id=$1', [
+          blockedCommands[2].commandId,
+        ])
+      ).rows[0].n,
+    ).toBe(1);
+    expect(
+      (
+        await db.query('SELECT count(*)::int n FROM app.ai_attempt WHERE run_id=ANY($1::uuid[])', [
+          blockedCommands.map((command) => command.commandId),
+        ])
+      ).rows[0].n,
+    ).toBe(0);
+    await page.unroute('**/api/workspace/ai-run?*');
+    await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
     await aiPanel.getByRole('button', { name: 'Inspect original sources' }).click();
     await expect(
       aiPanel.getByText('Authorized original source quotations and rights'),
     ).toBeVisible();
     await aiPanel.getByRole('button', { name: 'Close source inspection' }).click();
     await aiPanel.getByLabel('Review reason', { exact: true }).fill(reason);
+    await page.route('**/api/workspace/intelligence?*', (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Synthetic post-receipt refresh outage' }),
+      }),
+    );
     await aiPanel.getByRole('button', { name: 'Save human review' }).click();
+    await expect(aiPanel.getByRole('status')).toContainText('Review received. Refresh failed');
+    await page.unroute('**/api/workspace/intelligence?*');
+    await aiPanel.getByRole('button', { name: 'Refresh AI review', exact: true }).click();
     await expect(aiPanel.getByText('SUCCEEDED · ACCEPT', { exact: false })).toBeVisible();
     const profileId = randomUUID();
     await post('network-profile', {
@@ -2469,7 +2576,26 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     ).toBeVisible();
     await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
     await networkPanel.getByLabel('Evidence decision').selectOption('COMPLETE');
+    const decisions: unknown[] = [];
+    await reviewerPage.route('**/api/workspace/network-event?*', async (route) => {
+      decisions.push(route.request().postDataJSON());
+      if (decisions.length === 1) {
+        await route.fetch();
+        await route.abort('connectionfailed');
+      } else await route.continue();
+    });
     await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    await expect(
+      reviewerPage.getByRole('region', { name: 'Execution network' }).getByRole('status'),
+    ).toContainText('Receipt not confirmed.');
+    await networkPanel
+      .getByLabel('Review reason', { exact: true })
+      .first()
+      .fill('Changed after original submission');
+    await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    expect(decisions).toHaveLength(2);
+    expect(decisions[1]).toEqual(decisions[0]);
+    await reviewerPage.unroute('**/api/workspace/network-event?*');
     await expect(
       networkPanel.getByRole('button', { name: 'Assess contribution once' }),
     ).toBeVisible();

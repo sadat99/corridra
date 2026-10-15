@@ -1,0 +1,38 @@
+[
+  {
+    "name": "network",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "network",
+    "width": 1280,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "network",
+    "width": 768,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "network",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "network",
+    "width": 360,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "name": "network",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]
