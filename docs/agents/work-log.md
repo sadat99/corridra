@@ -211,3 +211,8 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Request: the owner said the name is "Corridra", not "corridra".
 - What changed: the header wordmark and the footer wordmark now read "Corridra". A search of the app source found no other visible lowercase use of the name. The content rules in `docs/agents/ui-direction.md` now say the name is always written with a capital C.
 - Verification: lint, format and docs tests. Browser suites run with the next build.
+
+## 2026-10-15, Claude Code, Release of PR 51
+
+- Release record. PR sadat99/corridra#51, head `dfb6c76c216630f22153454246c28f12d9236012`, `validate` passed (`analyze` skipped). Merge commit `70fc0256131a423225f4575b48e658911802a573`, tree `22af41d77d34f2f170351c523ecc1ca4387c1a5b`, identical to the tested head. Production deployment `dpl_Hn8H4JLdgVwEkTbA8nN3gef8gK8C` (project `corridra`, team `sadat-os`), region `fra1`, READY, aliases `corridra.vercel.app` and `c.obsidianglobal.studio` bound. Rollback target: `dpl_BaCVdGnuQpxPFXWBwR7AmgZTf25t` (PR 50, `35885e4`). It carries the two-corridor home section, the route page rewrite and `/sell` in both directions.
+- Process note: a protected-suite run was disturbed when I stopped a screenshot server with a broad process match and also stopped the suite's own server. The suite was rerun cleanly (15 of 15). Servers are now stopped by exact port or process id only.
