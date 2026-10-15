@@ -261,3 +261,19 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Request: the owner pointed out that "Source from China. Sell to Spain and the EU." reads as one chain, as if goods are bought in China and sold in Spain. The two corridors are separate.
 - What changed: the home lead heading is now "Choose the route that fits your business." with the label "TWO SEPARATE ROUTES" and the line "Corridra works on two separate routes from Bangladesh. Each route works on its own, and you can use either one without the other." Each route card has a coloured top edge that matches its line on the map (green for China, gold for Spain and the EU). Rule for copy: never put the two routes in one sentence in a way that suggests one flows into the other.
 - Verification: see the pull request.
+
+## 2026-10-15, Claude Code, Release of PR 54
+
+- Release record. PR sadat99/corridra#54, head `2d11156da485c3075f3324dc38c32cf93923f936`, `validate` passed (`analyze` skipped). Merge commit `71f6cb78fa839c01f231417b31503368368ed73c`, tree `b2089a6377a714ac6eb730d2aff09a0ff50d0e8c`, identical to the tested head. Deployment `dpl_6hNMSdkWpfUefvZfKcqbenUyR6uX`, target production, READY in fra1, aliases `corridra.vercel.app`, `c.obsidianglobal.studio`, `corridra-sadat-os.vercel.app`, `corridra-git-main-sadat-os.vercel.app`.
+- Local checks on the tested head: public suite 86 of 86, protected operator suite 16 of 16.
+- What shipped: the plain start page, availability declarations removed from marketing pages, the Today panel with meetings, sample wording and clearer links.
+
+## 2026-10-15, Claude Code, Any route: pick any two countries on a world map
+
+- Request: the owner approved showing that Corridra serves any country to any country, with two spotlight routes.
+- What changed: the home page and the corridors page have a third card, "Any other route". The atlas has a disclosure, "Another route? Pick any two countries", with two labelled selects and a Clear button. Choosing a pair draws both countries on a world map with an arc. A pair that matches a configured corridor snaps to it. Any other pair says that no operating offer is announced for it yet and links to the request page with both countries filled in. The EU is drawn as its 27 members; Malta is too small at this scale and is shown as a marker.
+- Data: `apps/web/components/world-geography.ts` is generated and checked in. Outlines are Natural Earth 110m (public domain) through world-atlas 2.0.2. Countries with no outline get a point from world-countries 5.1.0 (ODbL data, coordinates only). `tests/world-geography.test.mjs` fails if a supported country has neither an outline nor a point. Outlines are illustrative and not a statement on borders.
+- Defects caught by the new browser tests: the select labels wrapped the whole select, so their accessible names included every option; country names from the browser's own locale data differed from the server and caused a hydration error (React 418), so the long lists show codes until the page has hydrated.
+- Verification: public suite 94 of 94 and protected suite 16 of 16 on this branch. Lint, typecheck and docs tests pass.
+- Limits: the world map is illustrative. A new corridor still needs its configuration; the map itself needs no change.
+- Next step: a data-driven corridors list and a test that adds a corridor through configuration only.
