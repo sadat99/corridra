@@ -37,38 +37,58 @@ export default function Home() {
   return (
     <PublicShell className="ux-home">
       <DiscoveryExperience />
-      <section className="ux-home-story" aria-labelledby="clarity-title">
-        <div>
-          <p className="label">A DIFFERENT KIND OF CLARITY</p>
-          <h2 id="clarity-title">
-            Better commercial <em>decisions.</em>
-          </h2>
-          <p>Make the objective precise. Understand the evidence. Keep the next step in view.</p>
+      <section className="ux-lead" aria-labelledby="lead-title">
+        <p className="label">START HERE</p>
+        <h2 id="lead-title">Work with companies in China, step by step.</h2>
+        <p className="ux-lead-note">
+          Today you can try an example with invented data. Real projects open after our checks are
+          complete.
+        </p>
+        <div className="ux-lead-paths">
+          <article className="detail-card">
+            <h3>Source products from China</h3>
+            <p>Find suppliers and factories. Compare price quotes. Plan your visits.</p>
+            <Link prefetch={false} className="primary-link" href="/source">
+              See how sourcing works <Arrow />
+            </Link>
+            <Link prefetch={false} className="text-link" href="/machinery">
+              Buying machinery? Start here
+            </Link>
+          </article>
+          <article className="detail-card">
+            <h3>Lead a delegation to China</h3>
+            <p>
+              Take a group to meet the right companies. Keep the agenda, the meetings and the
+              results in one place.
+            </p>
+            <Link prefetch={false} className="primary-link" href="/trade-missions">
+              See how delegations work <Arrow />
+            </Link>
+            <Link prefetch={false} className="text-link" href="/institutions">
+              Organising for a chamber or institution? Start here
+            </Link>
+          </article>
         </div>
-        <ol>
+        <ol className="ux-lead-steps" aria-label="How a project works">
           <li>
-            <span className="stage-number">01</span>
-            <h3>Define the objective.</h3>
-            <p>Start with what you need to achieve, where and when.</p>
-            <Link className="text-link" href="/how-it-works">
-              See how Corridra works <Arrow />
-            </Link>
+            <span className="stage-number">1</span>
+            <h3>Say what you need</h3>
+            <p>Tell us what you want to buy or achieve, and when.</p>
           </li>
           <li>
-            <span className="stage-number">02</span>
-            <h3>Qualify before committing.</h3>
-            <p>Keep declarations, supporting sources and verified facts distinct.</p>
-            <Link className="text-link" href="/trust">
-              Understand the evidence <Arrow />
-            </Link>
+            <span className="stage-number">2</span>
+            <h3>Review companies</h3>
+            <p>See which companies fit. We show what is stated and what is checked.</p>
           </li>
           <li>
-            <span className="stage-number">03</span>
-            <h3>Keep the work moving.</h3>
-            <p>Record the next decision, its owner and what remains uncertain.</p>
-            <Link className="text-link" href="/workspace">
-              Explore workspaces <Arrow />
-            </Link>
+            <span className="stage-number">3</span>
+            <h3>Meet the right people</h3>
+            <p>Plan introductions, meetings and visits.</p>
+          </li>
+          <li>
+            <span className="stage-number">4</span>
+            <h3>Decide with clear proof</h3>
+            <p>Compare price quotes and documents. You make the decision.</p>
           </li>
         </ol>
       </section>

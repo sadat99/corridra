@@ -53,11 +53,33 @@ Rules:
 
 Until the owner confirms the proposed rows, do not rename the core nouns in product copy. Apply the other rules at once. When confirmed, change copy and the tests that assert it in one pass, then update this table to "applied".
 
+## Lead journey and order of work (owner decision, 2026-10-15)
+
+The first journey to make clear, fast and conversion-ready is **Bangladesh to China sourcing missions** (suppliers and machinery) and **leading or taking delegations to China**. Build and polish that path end to end for every audience. Then extend to the other routes and jobs one at a time: sell in Spain or the EU, enter a market, business trips. Each later route reuses the same screens and words; do not fork screens by country.
+
+Stored values are data, not UI copy. Mission objectives such as "Sell in a new market" are saved and validated by the backend. Never reword them to improve a screen; change only the label shown to people, and only where a mapping already exists.
+
 ## Intent
 
 Quiet Intelligence (V10) is the grammar: calm, legible, mission first. SourceLab (V07) sets technical rigour for quotations and evidence. Heritage Atlas (V01) sets public editorial authority. Precision Ledger (V02) sets operator density. The result must read as one company: confident, precise, unhurried, never decorative for its own sake.
 
 A person should always know what they may do next, why, what evidence supports it, what is uncertain and who owns it. Complexity recedes; it is never hidden or invented.
+
+## How consistency is enforced
+
+Building one screen at a time must not produce a scattered product. Four mechanisms make drift fail early:
+
+1. **One token layer.** Every colour, font, size, radius, shadow and duration comes from the tokens in the "Design system layer" of `apps/web/app/globals.css`. New CSS goes below that marker and may use tokens only.
+2. **An automated check.** `tests/design-system.test.mjs` runs in `pnpm test` and in CI. It fails on any raw hex colour, colour function or font family written after the marker, and it stops the older CSS from growing (`tests/design-system-baseline.json`). When you remove old values, lower the baseline in the same change. Never raise it.
+3. **Five page patterns.** Build new screens from these only, so that people learn the product once:
+   - _Landing_: label, one headline, one sentence, one or two choices, then simple steps.
+   - _Flow_: one question per step, progress shown, draft kept, clear send action.
+   - _Record_: header with status and owner, next action first, details in disclosures.
+   - _Queue_: filters on top, one row per item, status badge, one primary action per row.
+   - _Report_: headline numbers with their denominators, then detail, then export.
+4. **One log, one contract.** Every change is recorded in `docs/agents/work-log.md` and must match this file. If a screen needs something this file does not allow, change this file first, with the reason.
+
+Review checklist before any visual change is done: tokens only, one of the five patterns, plain words from the glossary, one primary action, readable at 390 px, keyboard and focus work, axe clean.
 
 ## Foundation (implemented in `apps/web/app/globals.css`, section "Design system")
 
@@ -94,12 +116,15 @@ Natural, concrete English. No em dashes. No fake urgency, counts, logos, testimo
 
 ## Programme phases
 
-| Phase | Scope                                                                                                                   | Status                                                                                      |
-| ----- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1     | Design foundation (tokens, type, controls, forms, tables, notices) plus public pages, sign-in and recovery shells       | Foundation layer and public shell done; page-level recomposition continues in phases 2 to 4 |
-| 2     | Participant and customer surfaces: mission passport, quotation comparison, programme report, contributor board, account | Not started                                                                                 |
-| 3     | Operator and governance workspace: navigation, queues, dense tables, forms, control centre                              | Not started                                                                                 |
-| 4     | Microcopy, empty and error states, motion, accessibility and performance pass, Fusion parity review                     | Not started                                                                                 |
+| Phase | Scope                                                                                                                          | Status        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| 1     | Design foundation: tokens, type, controls, forms, surfaces, header                                                             | Done          |
+| A     | Front door for China sourcing and delegations: home lead section, five-item header, footer keeps every destination             | Done in PR 48 |
+| B     | Request flow and the customer project screen, in plain words, for sourcing and delegations                                     | Not started   |
+| C     | Operator: one landing queue and five job areas instead of 19 sections                                                          | Not started   |
+| D     | Delegation programme report, helper and account screens                                                                        | Not started   |
+| E     | Other routes one by one: sell in Spain or the EU, enter a market, business trips                                               | Not started   |
+| F     | Core noun pass (needs owner confirmation), empty and error states, motion, accessibility and performance, Fusion parity review | Not started   |
 
 ## Hard limits (the backbone)
 

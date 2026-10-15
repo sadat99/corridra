@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 export const solutions = [
-  { href: '/sell', label: 'Sell in a new market' },
   { href: '/source', label: 'Source products/suppliers' },
   { href: '/machinery', label: 'Procure machinery' },
-  { href: '/business-trips', label: 'Plan a business trip' },
-  { href: '/enter-market', label: 'Enter a new market' },
   { href: '/trade-missions', label: 'Run a trade mission' },
+  { href: '/business-trips', label: 'Plan a business trip' },
+  { href: '/sell', label: 'Sell in a new market' },
+  { href: '/enter-market', label: 'Enter a new market' },
 ];
 
 export function SiteHeader() {
@@ -82,18 +82,6 @@ export function SiteHeader() {
         </details>
         <Link prefetch={false} href="/how-it-works" onClick={close}>
           How it works
-        </Link>
-        <Link prefetch={false} href="/corridors" onClick={close}>
-          Corridors
-        </Link>
-        <Link prefetch={false} href="/institutions" onClick={close}>
-          For Institutions
-        </Link>
-        <Link prefetch={false} href="/trust" onClick={close}>
-          Trust & Evidence
-        </Link>
-        <Link prefetch={false} href="/#mission-example" onClick={close}>
-          Example
         </Link>
         <Link prefetch={false} href="/signin" onClick={close}>
           Sign in
