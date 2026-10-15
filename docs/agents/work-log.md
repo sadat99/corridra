@@ -277,3 +277,10 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Verification: public suite 94 of 94 and protected suite 16 of 16 on this branch. Lint, typecheck and docs tests pass.
 - Limits: the world map is illustrative. A new corridor still needs its configuration; the map itself needs no change.
 - Next step: a data-driven corridors list and a test that adds a corridor through configuration only.
+
+## 2026-10-15, Claude Code, Release of PR 55
+
+- Release record. PR sadat99/corridra#55, head `96154aa7c5a6c56b2ac5314f302d3fcd73b37f44`, `validate` passed (`analyze` skipped). Merge commit `f5e6384da22535c66e6d1a5d943f6f7dccef1a76`, tree `27b9a7174aa5bfb8bdff7a944c50aff03f29bfb6`, identical to the tested head. Deployment `dpl_Aqz6dLRGuj8ARTJe87CT8SsATeZZ`, target production, READY in fra1, aliases `corridra.vercel.app`, `c.obsidianglobal.studio`, `corridra-sadat-os.vercel.app`, `corridra-git-main-sadat-os.vercel.app`, no alias error.
+- Live check: the production corridors page serves the "Any other route" card, the "Another route? Pick any two countries" disclosure and the "Pick two countries on the map" link.
+- Local checks on the tested head: public suite 94 of 94, protected operator suite 16 of 16.
+- Note for the next session: the cloud sandbox cannot reach the production host directly (curl returns no response), so live checks go through the Vercel fetch tool.
