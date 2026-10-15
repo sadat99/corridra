@@ -3381,7 +3381,7 @@ th {
 }
 .ux-workspace-directory .label {
   margin: 0;
-  color: var(--text-muted);
+  color: inherit;
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
 }
@@ -3389,4 +3389,129 @@ th {
   min-height: 44px;
   display: flex;
   align-items: center;
+}
+
+/* Corridor map: real outlines, both directions from Bangladesh always shown. */
+:root {
+  --map-land: #25503f;
+  --map-eu: #3b7a5c;
+  --map-eu-active: #4d9370;
+  --map-spain: #b98a4e;
+  --map-spain-active: #e0b872;
+  --map-china: #5f9e7f;
+  --map-china-active: #a9d6bc;
+  --map-bangladesh: #fffefa;
+  --map-arc-china: #c4ebd5;
+  --map-arc-europe: #f2ce95;
+}
+.ux-atlas-map .ux-map-land,
+.ux-atlas-map .ux-map-eu,
+.ux-atlas-map .ux-map-spain,
+.ux-atlas-map .ux-map-china,
+.ux-atlas-map .ux-map-bangladesh {
+  stroke: var(--brand-deep);
+  stroke-width: 0.6;
+  opacity: 1;
+}
+.ux-atlas-map .ux-map-land {
+  fill: var(--map-land);
+}
+.ux-atlas-map .ux-map-eu {
+  fill: var(--map-eu);
+}
+.ux-atlas-map .ux-map-eu.is-active {
+  fill: var(--map-eu-active);
+}
+.ux-atlas-map .ux-map-spain {
+  fill: var(--map-spain);
+}
+.ux-atlas-map .ux-map-spain.is-active {
+  fill: var(--map-spain-active);
+}
+.ux-atlas-map .ux-map-china {
+  fill: var(--map-china);
+}
+.ux-atlas-map .ux-map-china.is-active {
+  fill: var(--map-china-active);
+}
+.ux-atlas-map .ux-map-bangladesh {
+  fill: var(--map-bangladesh);
+  stroke-width: 1;
+}
+.ux-atlas-map .ux-map-arc {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.ux-atlas-map .ux-map-arc.is-active {
+  stroke-width: 3.5;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+.ux-atlas-map .ux-map-arc-china {
+  stroke: var(--map-arc-china);
+}
+.ux-atlas-map .ux-map-arc-europe {
+  stroke: var(--map-arc-europe);
+}
+.ux-atlas-map .ux-map-arrowhead {
+  fill: var(--map-arc-europe);
+  stroke: none;
+  opacity: 1;
+}
+.ux-atlas-map .ux-map-pin {
+  fill: var(--map-bangladesh);
+  stroke: var(--brand-deep);
+  stroke-width: 1.5;
+}
+.ux-atlas-map .ux-map-pin-home {
+  stroke: var(--accent-gold);
+  stroke-width: 2.5;
+}
+.ux-atlas-map .ux-map-label {
+  fill: var(--on-brand);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--brand-deep);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.ux-atlas-map .ux-map-label-dark {
+  fill: var(--on-brand);
+}
+.ux-atlas-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.ux-atlas .ux-atlas-pick {
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--map-arc-china);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--on-brand);
+  font: inherit;
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+.ux-atlas .ux-atlas-pick-europe {
+  border-color: var(--map-arc-europe);
+}
+.ux-atlas .ux-atlas-pick[aria-pressed='true'] {
+  background: var(--map-arc-china);
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+.ux-atlas .ux-atlas-pick-europe[aria-pressed='true'] {
+  background: var(--map-arc-europe);
+}
+.ux-atlas .ux-atlas-pick:focus-visible {
+  outline: 2px solid var(--map-arc-europe);
+  outline-offset: 2px;
 }
