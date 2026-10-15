@@ -2,7 +2,7 @@
 
 Corridra has three successive programmes, not one unfinished twelve-part checklist. Original V1 Parts 1–8 are the retained foundation. The revised five-part V2 programme was subsequently implemented and merged. UX10X then changed the experience on that foundation: UX-01 through UX-05 are merged, with bounded UX-06 presentation, navigation and access repairs. This does **not** establish complete UX10X functional coverage or readiness for real customer operations.
 
-This handoff was reconciled on 15 October 2026 against `main` at `0c42920dbc970aa9fd49b1a8323d6ecca417a527` (PR 46). It describes that baseline. Fetch the latest code and inspect subsequent PRs before making a new claim about production.
+This handoff was reconciled on 15 October 2026 against `main` at `0c42920dbc970aa9fd49b1a8323d6ecca417a527` (PR 46). It describes that baseline. Fetch the latest code and inspect subsequent PRs before making a new claim about production. Pull requests 47 to 56 added UI, wording and documentation changes only; they are summarised in [Changes since this reconciliation](implementation/current-plan.md#changes-since-this-reconciliation).
 
 ## Read in this order
 

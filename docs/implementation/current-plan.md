@@ -2,6 +2,14 @@
 
 Reconciled 15 October 2026 against `0c42920dbc970aa9fd49b1a8323d6ecca417a527`. This is the current roadmap status. [Start here](../START_HERE.md) explains authority; the [matrix](implementation-matrix.json) links implementation claims to code and tests. “Merged” means code integrated at the cited PR. It does not mean every requirement accepted, every action verified, or real operations enabled.
 
+## Changes since this reconciliation
+
+Pull requests 47 to 56 (15 October 2026) changed documentation, public presentation, the operator navigation and the operator Today panel only. They made no domain, API, authentication, migration or dependency change, and the production posture is unchanged: synthetic and testing, with real customer operations, outreach, AI inference, payments and payouts closed. `main` was at `47a03d0` when this note was written. The last application release, PR 55, is deployed as `dpl_Aqz6dLRGuj8ARTJe87CT8SsATeZZ`; PR 56 changed documents only.
+
+- The UI and UX programme has its own plan, with statuses and open owner decisions, in [the agent master plan](../agents/master-plan.md). Each change is recorded, with release evidence, in the [work log](../agents/work-log.md).
+- A read-only [SaaS readiness audit](../agents/saas-readiness-audit.md) found that no module is activated for real customers, and that there is no billing, tenant provisioning or white-label. Its roadmap changes the backbone and has not been started.
+- The ledger counts below were not re-reconciled by these pull requests.
+
 ## Programme history
 
 | Programme                    | Accepted implementation sequence                                                                                                                | Present interpretation                                                                                                                                |
