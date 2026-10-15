@@ -115,14 +115,12 @@ test('UX-02 expired and corrupt drafts recover to a usable form without claiming
   ).toBeVisible();
 });
 
-test('UX-02 native route disclosures and account recovery keep their real destinations', async ({
+test('UX-02 route pages show their sections in full and account recovery keeps its real destinations', async ({
   page,
 }) => {
   await page.goto('/machinery');
-  const scope = page.locator('.ux-public-disclosure summary').first();
-  await scope.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('.ux-public-disclosure').first()).toHaveAttribute('open', '');
+  await expect(page.locator('.ux-public-disclosure')).toHaveCount(0);
+  await expect(page.locator('.detail-card p').first()).toBeVisible();
   await page.getByRole('link', { name: 'Next step', exact: true }).click();
   await expect(page.locator('#page-next')).toBeInViewport();
   for (const route of [

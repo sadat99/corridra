@@ -166,3 +166,28 @@ test('trust distinguishes declarations, evidence, verification and observed outc
     page.getByText('A repeated claim does not become a verified fact.', { exact: false }),
   ).toBeVisible();
 });
+
+test('/sell shows the Spain and EU route, the reverse direction and what is recorded', async ({
+  page,
+}) => {
+  await page.goto('/sell');
+  await expect(page.getByText('Bangladesh to Spain and the EU', { exact: true })).toBeVisible();
+  const reverse = page.getByRole('region', { name: 'It also works the other way.' });
+  await expect(reverse).toContainText(
+    'Spanish or EU seller can reach suitable buyers in Bangladesh',
+  );
+  await expect(
+    reverse.getByRole('link', { name: /Plan a mission from Spain or the EU/ }),
+  ).toHaveAttribute('href', '/plan?companyCountry=ES&marketCode=BD&job=buyers');
+  await expect(
+    reverse.getByRole('link', { name: 'Read the Spain to Bangladesh scope' }),
+  ).toHaveAttribute('href', '/corridors/bangladesh-spain');
+  await expect(
+    page.getByRole('region', { name: 'What we record for every introduction' }),
+  ).toContainText('Who the buyer is and why they fit your offer.');
+  await reverse.getByRole('link', { name: /Plan a mission from Spain or the EU/ }).click();
+  await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=buyers');
+  await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
+    'buyers',
+  );
+});

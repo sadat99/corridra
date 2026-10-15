@@ -166,3 +166,34 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - What changed in the atlas: the lower half had seven separate text blocks with mixed alignment (toggle, stamp, two captions, a two-column facts grid, a note, a link). It is now one selected-direction block (route name, a "Customer operations: Not available" tag, the scope note, the link) followed by one footnote ("Built for any corridor. These two come first. Commercial directions only, not shipment routes or local coverage."). The "Explore possibilities. Verify reality." stamp was removed from the card because the hero already carries the message. All scope notes, route data and links are unchanged.
 - Verification: public browser suite 82 of 82 on the new markup, protected suite 14 of 14 on the previous commit (map, directory grouping and contrast fix). Screenshots of both directions at desktop and mobile widths were inspected.
 - Next step: ship the map, atlas and operator directory in the next PR, then the Spain/EU lead block on the home page.
+
+## 2026-10-15, Claude Code, Home lead section covers both corridors
+
+- Request: the owner asked for both corridors (Bangladesh with China, and Bangladesh with Spain or the EU) to be indicated from the beginning, at equal weight.
+- What changed: the home lead section was China only. It now reads "Source from China. Sell to Spain and the EU." and has one card per corridor. China card: sourcing (primary), delegation, machinery. Spain and EU card: selling mission (primary), Enter Bangladesh, a link to the Spain and EU scope. A fix keeps the two card titles on the same line. The boundary line and four-step list are unchanged.
+- Verification: public browser suite 82 of 82, lint, typecheck, build, docs and design tests pass. Desktop capture inspected. Mobile relies on the suite's overflow and axe checks at 390 px.
+- Limits: the section describes what the example flow does today and makes no claim about orders, buyers or outcomes.
+- Next step: Track V browser tests and the intake polish, then the corridor evidence view (later backend work).
+
+## 2026-10-15, Claude Code, Track V: customer account form test
+
+- Request: keep moving. Track V lists customer account forms as never exercised in a browser.
+- What changed: one new protected-suite test in `tests/operator/z-ux02-access.spec.ts`. It runs the real customer account screens against a locally answered auth transport (no provider is reached, only synthetic addresses). It checks that sign-up refuses a short password before sending anything and then submits once and moves to email verification, that the reset request shows the same non-disclosing message and hides its button, and that email verification rejects a malformed code, lets the user request a new code, and verifies a six-digit code once. Axe finds no violations on the reset and verification states.
+- Verification: the spec file passes (2 of 2). The full protected suite is run before the next merge.
+- Still open in Track V: staff invitation acceptance, operator error retry, owner membership form submit, contributor signed-out page, rebuilt coverage ledger.
+
+## 2026-10-15, Claude Code, Route pages rewritten on the shared page component
+
+- Request: "Go" on the proposal to make `/sell` the Spain and EU page and fix the weaknesses found on it.
+- Why: `/sell` never named Bangladesh, Spain or the EU, showed an active button beside "Coming soon", hid each card's text behind a "Read the scope" link and had a dangling "Corridra /" breadcrumb. The same component serves every route page, so the fix applies to all of them and keeps the platform consistent.
+- What changed: `apps/web/components/public-page.tsx` now has a real breadcrumb ("Corridra / Sell in a new market"), the status "Example requests only" (the example intake is open, so "Coming soon" was wrong), an optional route line under the main action, section text shown in full, and an optional "what we record" block. `apps/web/content/public-pages.ts` gains two optional fields (`route`, `record`). `/sell` names Bangladesh to Spain and the EU and lists what is recorded for each introduction. `/source` names Bangladesh to China and lists what is recorded for each supplier. Headlines are unchanged. One browser test was updated because the disclosures it checked no longer exist.
+- Verification: public suite 82 of 82, lint, typecheck, docs and design tests, build. Desktop and mobile captures of the cards were inspected after a missing card padding was found and fixed.
+- Rules kept: nothing claims orders, buyers or outcomes. The record blocks describe what the product keeps, not what it has achieved.
+- Next step: ship with the next PR after PR 50, then review `/enter-market` and `/trade-missions` with the same route line, and the intake polish.
+
+## 2026-10-15, Claude Code, /sell covers the reverse direction; release of PR 50
+
+- Request: the owner said /sell should also cover the other way round. Most missions sell in Spain and the EU, and Corridra also helps Spanish sellers with suitable items reach buyers in Bangladesh.
+- What changed: `/sell` gets a section "It also works the other way." It states the main direction first, then says a Spanish or EU seller can reach suitable buyers in Bangladesh with products chosen to fit that market, and that Spain to Bangladesh work is set up and reviewed separately for each case (this matches the corridor scope note, which says that direction is selectively configurable). Actions: "Plan a mission from Spain or the EU" opens the example request with Spain as the company country, Bangladesh as the market and the buyers job preselected, and "Read the Spain to Bangladesh scope" opens the corridor scope. New optional `reverse` field in the shared page content type. One new public browser test checks the route line, the reverse section, both links, the evidence block and that the request opens preselected.
+- Verification: public suite 84 of 84, lint, typecheck, docs and design tests, build. Protected suite 15 of 15 on the commit before this change.
+- Release record. PR sadat99/corridra#50, head `a45fe0dfc2ce2b9172ccb8a09175dba72e5cfd4a`, `validate` passed (`analyze` skipped). Merge commit `35885e4b19f653962483b2d17ac3c3e3624fec80`, tree `4b0e5757c0e01e13f9da9fc783fb4a9d1f1c47ea`, identical to the tested head. Note: the merge call was given a mistyped head SHA and the tool did not reject it. The tree comparison above confirms the correct content merged. Full SHAs are now copied from git output. Production deployment `dpl_BaCVdGnuQpxPFXWBwR7AmgZTf25t` created from the merge commit; READY check recorded below when verified. Rollback target: `dpl_9fiiozNPLZF9yPTLX6iCuhcmhrex` (PR 49, `e7eb309`).
