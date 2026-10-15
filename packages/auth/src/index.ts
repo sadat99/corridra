@@ -6,6 +6,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { z } from 'zod';
 import type { Pool } from '@corridra/db';
 import * as schema from '@corridra/db/schema';
+import type { PasswordRecoveryMail } from './recovery-mail';
 export interface IdentityProvider {
   getSession(headers: Headers): Promise<{ token: string; userId: string; name: string } | null>;
   revokeSession(headers: Headers, token: string): Promise<void>;
@@ -15,6 +16,7 @@ export function createIdentity(options: {
   secret: string;
   baseURL: string;
   basePath?: string;
+  sendPasswordRecovery?: (message: PasswordRecoveryMail) => Promise<void>;
 }) {
   if (options.secret.length < 32)
     throw new Error('Identity secret must contain at least 32 characters');
@@ -32,6 +34,26 @@ export function createIdentity(options: {
       disableSignUp: true,
       minPasswordLength: 14,
       maxPasswordLength: 128,
+      resetPasswordTokenExpiresIn: 1800,
+      revokeSessionsOnPasswordReset: true,
+      ...(options.sendPasswordRecovery
+        ? {
+            sendResetPassword: async ({
+              user,
+              url,
+            }: {
+              user: { id: string; email: string };
+              url: string;
+            }) => {
+              const eligible = await options.pool.query(
+                'SELECT p.id FROM identity.principal p JOIN identity."user" u ON u.id=p.identity_id WHERE u.id=$1 AND u."emailVerified"=true AND p.disabled_at IS NULL',
+                [user.id],
+              );
+              if (eligible.rowCount)
+                await options.sendPasswordRecovery!({ email: user.email, url });
+            },
+          }
+        : {}),
     },
     session: { expiresIn: 86400, updateAge: 3600, freshAge: 300, cookieCache: { enabled: false } },
     rateLimit: {
@@ -42,6 +64,8 @@ export function createIdentity(options: {
       customRules: {
         '/sign-in/email': { window: 60, max: 5 },
         '/two-factor/*': { window: 60, max: 5 },
+        '/request-password-reset': { window: 60, max: 5 },
+        '/reset-password': { window: 60, max: 5 },
       },
     },
     advanced: {
@@ -84,6 +108,15 @@ export function createIdentity(options: {
     },
   };
   const handler = async (request: Request) => {
+    const path = new URL(request.url).pathname;
+    const recoveryPath =
+      path.startsWith((options.basePath ?? '/api/auth') + '/reset-password') ||
+      path === (options.basePath ?? '/api/auth') + '/request-password-reset';
+    if (recoveryPath && !options.sendPasswordRecovery)
+      return Response.json(
+        { error: 'Operator recovery is unavailable' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
     if (
       request.method === 'POST' &&
       request.headers.get('origin') !== new URL(options.baseURL).origin
@@ -92,6 +125,17 @@ export function createIdentity(options: {
         { error: 'Request origin is not allowed' },
         { status: 403, headers: { 'Cache-Control': 'no-store' } },
       );
+    if (request.method === 'POST' && path.endsWith('/request-password-reset')) {
+      const body = await request
+        .clone()
+        .json()
+        .catch(() => null);
+      if (body?.redirectTo !== new URL('/operator/reset-password', options.baseURL).href)
+        return Response.json(
+          { error: 'Recovery destination is not allowed' },
+          { status: 400, headers: { 'Cache-Control': 'no-store' } },
+        );
+    }
     return auth.handler(request);
   };
   return { auth, provider, handler };

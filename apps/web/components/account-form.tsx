@@ -93,7 +93,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
     }
   }
   return (
-    <form className="operator-form" onSubmit={submit} aria-label="Account access">
+    <form method="post" className="operator-form" onSubmit={submit} aria-label="Account access">
       {mode === 'signup' && (
         <label className="field">
           Name

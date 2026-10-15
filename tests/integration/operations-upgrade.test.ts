@@ -45,7 +45,7 @@ test('populated Part 4 upgrade and replay preserve every original table column a
         .rows,
     ).toEqual(hashes);
     expect((await f.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n).toBe(
-      28,
+      29,
     );
     expect(
       (

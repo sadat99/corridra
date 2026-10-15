@@ -24,6 +24,8 @@ type RecordRow = {
   mime?: string;
   role?: string;
   user_id?: string;
+  name?: string | null;
+  revoked_at?: string | null;
   type?: string;
   version?: number;
   key?: string;
@@ -309,6 +311,9 @@ function TenantWorkspace({
                   <a href="#ops-center">Control Center</a>
                   <a href="#workspace-settings">Corridors and policies</a>
                   <a href="#workspace-audit">Access and audit</a>
+                  {data.role === 'owner' && (
+                    <a href="#workspace-controls">People and workspace controls</a>
+                  )}
                   <a href="#ops-gates">Production readiness</a>
                 </nav>
                 <p>
@@ -701,7 +706,8 @@ function TenantWorkspace({
               <ul>
                 {members.map((r) => (
                   <li key={r.user_id}>
-                    {r.user_id} · {r.role}
+                    {r.name ?? r.user_id} · {r.role} ·{' '}
+                    {r.revoked_at ? 'Access revoked' : 'Active membership'}
                   </li>
                 ))}
               </ul>
@@ -726,39 +732,69 @@ function TenantWorkspace({
                 exact source rights, current MFA and independent review remain separate. A synthetic
                 switch cannot authorize real customer work, outreach or a payout.
               </p>
+              <button
+                className="text-link"
+                disabled={busy}
+                onClick={() =>
+                  act(async () => {
+                    setMembers(await request('members'));
+                  })
+                }
+              >
+                Load workspace members
+              </button>
               <form
                 className="operator-form"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const f = new FormData(event.currentTarget);
-                  void act(() =>
-                    request('member', {
+                  void act(async () => {
+                    await request('member', {
                       userId: f.get('user'),
                       role: f.get('role'),
                       revoked: f.get('revoked') === 'on',
-                    }),
-                  );
+                    });
+                    setMembers(await request('members'));
+                  });
                 }}
               >
                 <label className="field">
-                  Member ID
-                  <input name="user" required />
+                  Workspace member
+                  <select name="user" required disabled={!members.length || busy} defaultValue="">
+                    <option value="" disabled>
+                      Select an existing member
+                    </option>
+                    {members.map((member) => (
+                      <option key={member.user_id} value={member.user_id}>
+                        {member.name ?? member.user_id} · {member.role} ·{' '}
+                        {member.revoked_at ? 'Revoked' : 'Active'}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="field">
                   Role
-                  <select name="role">
+                  <select name="role" required disabled={busy} defaultValue="">
+                    <option value="" disabled>
+                      Select the intended role
+                    </option>
                     {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((r) => (
                       <option key={r}>{r}</option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  <input type="checkbox" name="revoked" /> Revoke membership
+                  <input type="checkbox" name="revoked" disabled={busy} /> Revoke membership
                 </label>
-                <button className="primary-link" disabled={busy}>
+                <button className="primary-link" disabled={busy || !members.length}>
                   Update membership
                 </button>
               </form>
+              <p>
+                Only the workspace owner can change these roles. Clearing “Revoke membership”
+                restores that existing membership; it does not reactivate a suspended identity. New
+                staff invitations and lost authenticators require reviewed recovery.
+              </p>
               <p>
                 Deployment approval is separate from these workspace switches. Enabling a workspace
                 switch does not activate a disabled deployment.

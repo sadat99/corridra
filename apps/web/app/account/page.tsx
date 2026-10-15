@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
+import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -55,6 +56,7 @@ export default async function Page() {
               admit a real customer mission.
             </p>
           </section>
+          <OperatorInvitationHint key={data.user.id} />
           <Link className="primary-link" href="/plan">
             Start a test mission brief
           </Link>

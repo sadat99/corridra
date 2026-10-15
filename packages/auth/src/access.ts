@@ -2,7 +2,10 @@ import { z } from 'zod';
 import { DomainError, role } from '@corridra/domain';
 import { withTenant, sessionHash, type Pool, type RequestContext } from '@corridra/db';
 export class AccessService {
-  constructor(private pool: Pool) {}
+  constructor(
+    private pool: Pool,
+    private identityPool?: Pool,
+  ) {}
   async tenants(token: string) {
     const db = await this.pool.connect();
     try {
@@ -22,18 +25,22 @@ export class AccessService {
     }
   }
   members(ctx: RequestContext) {
-    return withTenant(
-      this.pool,
-      ctx,
-      'audit.read',
-      async (t) =>
-        (
-          await t.db.query(
-            'SELECT user_id,role,revoked_at,allowed_purposes,allowed_classifications,allowed_countries FROM app.membership WHERE tenant_id=$1 ORDER BY created_at',
-            [t.tenantId],
-          )
-        ).rows,
-    );
+    return withTenant(this.pool, ctx, 'audit.read', async (t) => {
+      const members = (
+        await t.db.query(
+          'SELECT user_id,role,revoked_at,allowed_purposes,allowed_classifications,allowed_countries FROM app.membership WHERE tenant_id=$1 ORDER BY created_at',
+          [t.tenantId],
+        )
+      ).rows;
+      if (!this.identityPool || members.length === 0) return members;
+      // Resolve names only after current tenant authorization, and only for its members.
+      const profiles = await this.identityPool.query(
+        'SELECT p.id,u.name FROM identity.principal p JOIN identity."user" u ON u.id=p.identity_id WHERE p.id=ANY($1::uuid[])',
+        [members.map((member) => member.user_id)],
+      );
+      const names = new Map(profiles.rows.map((profile) => [profile.id, profile.name]));
+      return members.map((member) => ({ ...member, name: names.get(member.user_id) ?? null }));
+    });
   }
   changeMember(ctx: RequestContext, input: unknown) {
     const v = z.object({ userId: z.uuid(), role, revoked: z.boolean() }).parse(input);

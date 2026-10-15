@@ -3,6 +3,7 @@ import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
+import { OperatorInvitationHint } from '../../../components/operator-invitation-hint';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Operator sign-in | Corridra',
@@ -25,7 +26,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
     );
   return (
     <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
+      <OperatorInvitationHint />
       <OperatorSignin returnTo={returnTo} />
+      <Link className="text-link" href="/operator/forgot-password">
+        Forgot operator password?
+      </Link>
       <nav className="access-options" aria-label="Sign-in alternatives">
         <Link className="text-link" href="/operator/setup">
           Set up invited operator access
