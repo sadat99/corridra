@@ -30,10 +30,6 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
               <Arrow />
             </span>
           </Link>
-          <span className="launch-status">
-            <span aria-hidden="true" />
-            Example requests only
-          </span>
         </div>
         {content.route && (
           <p className="ux-route-chip">

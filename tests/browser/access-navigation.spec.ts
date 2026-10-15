@@ -15,7 +15,7 @@ test('operator setup explains verified invitation requirements without collectin
   ).toHaveAttribute('href', '/account');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
-test('platform directory connects every persona and V2 tool without privileged data', async ({
+test('the start page offers three plain choices and links each kind of person to the right place', async ({
   page,
 }) => {
   await page.goto('/');
@@ -25,30 +25,36 @@ test('platform directory connects every persona and V2 tool without privileged d
   await nav.getByRole('link', { name: 'Start here', exact: true }).click();
   await expect(page).toHaveURL(/\/workspace$/);
   await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Prepare my example request', exact: true }),
-  ).toHaveAttribute('href', '/plan');
-  await expect(page.getByRole('link', { name: 'Open customer account', exact: true })).toHaveCount(
-    0,
+  const main = page.getByRole('main');
+  await expect(main.getByRole('link', { name: 'Plan a mission', exact: true })).toHaveAttribute(
+    'href',
+    '/plan',
   );
-  await page.getByRole('link', { name: 'Find my existing work', exact: true }).click();
-  await expect(page.locator('#access-roles')).toHaveJSProperty('open', true);
-  await page.locator('#access-readiness > summary').click();
-  await expect(page.getByRole('main')).toContainText('production activation is off');
-  await page.getByText('All operator tools and settings', { exact: true }).click();
   await expect(
-    page.getByRole('link', { name: 'Open customer account', exact: true }),
-  ).toHaveAttribute('href', '/account');
+    main.getByRole('link', { name: 'See a sample mission', exact: true }),
+  ).toHaveAttribute('href', '/#mission-example');
+  await expect(main.getByRole('link', { name: 'Open my account', exact: true })).toHaveAttribute(
+    'href',
+    '/account',
+  );
+  await expect(main.getByRole('link', { name: 'Team sign-in', exact: true })).toHaveAttribute(
+    'href',
+    '/operator',
+  );
   await expect(
-    page.getByRole('link', { name: 'Open corridor control center', exact: true }),
-  ).toHaveAttribute('href', '/operator/signin?next=%2Foperator%23ops-center');
+    main.getByRole('link', { name: 'Set up your team account', exact: true }),
+  ).toHaveAttribute('href', '/operator/setup');
   await expect(
-    page.getByRole('link', { name: 'Programme invitation help', exact: true }),
-  ).toHaveAttribute('href', '/programme');
+    main.getByRole('link', { name: 'Local helper sign-in', exact: true }),
+  ).toHaveAttribute('href', '/contributor');
+  // Plain words: none of the old role and tool jargon on the first page a visitor opens.
+  const text = await main.innerText();
+  for (const jargon of ['Synthetic', 'operator tools', 'Workspace roles', 'production activation'])
+    expect(text).not.toContain(jargon);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('link', { name: 'Open corridor control center', exact: true }).click();
-  await expect(page).toHaveURL(/operator\/signin\?next=/);
+  await main.getByRole('link', { name: 'Team sign-in', exact: true }).click();
+  await expect(page).toHaveURL(/\/operator$/);
   await expect(page.getByRole('main')).toContainText('not configured');
 });
 test('protected access entries explain unavailable configuration and offer a way back', async ({
@@ -101,40 +107,17 @@ test('UX-01 invitation outage can be retried without collecting credentials or c
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test('newcomers see starting journeys while legacy directory links and keyboard disclosure remain usable', async ({
+test('the start page holds at every width without overflow or accessibility problems', async ({
   page,
 }) => {
   await mkdir('.cache/ux06/public-after', { recursive: true });
   await page.goto('/workspace');
-  await expect(
-    page.getByRole('link', { name: 'Explore the example', exact: true }),
-  ).toHaveAttribute('href', '/#mission-example');
-  await expect(
-    page.getByRole('link', { name: 'Prepare my example request', exact: true }),
-  ).toHaveAttribute('href', '/plan');
   for (const width of [1440, 1280, 768, 390, 360, 320]) {
     await page.setViewportSize({ width, height: 1000 });
-    await expect(page.locator('#access-tools')).not.toHaveAttribute('open');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `.cache/ux06/public-after/start-${width}.png` });
   }
-  await page.goto('/workspace#access-tools');
-  await expect(page.locator('#access-tools')).toHaveAttribute('open');
-  await expect(
-    page.getByRole('link', { name: 'Open corridor control center', exact: true }),
-  ).toBeVisible();
-  await page.goto('/workspace#access-roles');
-  await expect(page.locator('#access-roles')).toHaveAttribute('open');
-  const summary = page.locator('#access-roles > summary');
-  await summary.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#access-roles')).not.toHaveAttribute('open');
-  await page.getByRole('link', { name: 'Find my existing work', exact: true }).click();
-  await expect(page.locator('#access-roles')).toHaveAttribute('open');
-  await expect(
-    page.getByRole('link', { name: 'Open operator workspace', exact: true }),
-  ).toBeVisible();
 });

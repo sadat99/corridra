@@ -27,10 +27,10 @@ export function SiteFooter() {
         </nav>
         <nav aria-label="About Corridra">
           <Link prefetch={false} href="/#mission-example">
-            Synthetic mission example
+            Sample mission
           </Link>
           <Link prefetch={false} href="/workspace">
-            Platform access and tools
+            Start here
           </Link>
           <Link prefetch={false} href="/how-it-works">
             How it works

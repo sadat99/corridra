@@ -38,15 +38,14 @@ export default function Home() {
     <PublicShell className="ux-home">
       <DiscoveryExperience />
       <section className="ux-lead" aria-labelledby="lead-title">
-        <p className="label">WHERE WE START</p>
-        <h2 id="lead-title">Source from China. Sell to Spain and the EU.</h2>
+        <p className="label">TWO SEPARATE ROUTES</p>
+        <h2 id="lead-title">Choose the route that fits your business.</h2>
         <p className="ux-lead-note">
-          Corridra helps a Bangladesh company find, review and reach the companies that fit what it
-          needs. Today you can try an example with invented data. Real missions open after our
-          checks are complete.
+          Corridra works on two separate routes from Bangladesh. Each route works on its own, and
+          you can use either one without the other.
         </p>
         <div className="ux-lead-paths">
-          <article className="detail-card">
+          <article className="detail-card ux-route-china">
             <p className="label">BANGLADESH AND CHINA</p>
             <h3>Visit fewer suppliers. Visit the ones that fit.</h3>
             <p>
@@ -63,7 +62,7 @@ export default function Home() {
               Buying machinery? Start here
             </Link>
           </article>
-          <article className="detail-card">
+          <article className="detail-card ux-route-europe">
             <p className="label">BANGLADESH AND SPAIN OR THE EU</p>
             <h3>Reach the buyers that fit what you make.</h3>
             <p>
@@ -183,7 +182,7 @@ export default function Home() {
             <h2>Some questions need someone on the ground.</h2>
             <p>
               We’re building scoped local work around clear tasks, evidence requirements and
-              contribution terms. Participation is not open yet.
+              contribution terms.
             </p>
             <Link prefetch={false} className="text-link" href="/network">
               See how participation will work <Arrow />
@@ -237,12 +236,9 @@ export default function Home() {
           <h2>
             Make market entry <em>deliberate.</em>
           </h2>
-          <p>
-            We’re validating the shared mission workflow with invented records. Real mission
-            delivery will open only after the operating and data controls are approved.
-          </p>
+          <p>One shared mission workflow, from the first objective to the recorded outcome.</p>
           <Link prefetch={false} className="text-link" href="/plan">
-            See the launch status <Arrow />
+            Plan a mission <Arrow />
           </Link>
         </section>
       </details>

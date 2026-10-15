@@ -33,14 +33,12 @@ export function CustomerMissions() {
     <section className="detail-card ux-account-missions" aria-label="My shared missions">
       <h2>My missions</h2>
       <p>
-        Your account does not grant access to a company&apos;s missions. Open an explicit mission
-        invitation supplied by your operator. Invitations remain subject to their expiry, revocation
-        and approved scope.
+        Missions are shared with you by private invitation. Paste your invitation below to open it.
+        An invitation can expire or be withdrawn.
       </p>
       <p>
-        Current mission work uses invented test data. Real customer mission admission is
-        unavailable. Open invitations stay in this page&apos;s memory only and clear when you leave
-        or sign out.
+        Missions here use test data. Invitations you open stay on this page only and clear when you
+        leave or sign out.
       </p>
       <form className="operator-form" onSubmit={open}>
         <label className="field">

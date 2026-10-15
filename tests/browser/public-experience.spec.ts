@@ -26,26 +26,9 @@ for (const [route, heading] of routes) {
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
     await expect(page).toHaveTitle(/Corridra/);
-    if (route === '/') {
-      // The home page keeps the first screen clear and states the same limit under its main action.
-      await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(
-        0,
-      );
-      await expect(
-        page.getByText('Explore with invented records. Real customer missions are not open yet.'),
-      ).toBeVisible();
-    } else if (route === '/plan') {
-      // The request page carries its own, fuller notice (asserted below).
-      await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(
-        0,
-      );
-    } else {
-      await expect(
-        page.getByText(
-          'Mission intake is open for example requests. Customer missions are not open yet.',
-        ),
-      ).toBeVisible();
-    }
+    // No site-wide availability banner on any page. The request page keeps its own notice at the
+    // point where details are entered (asserted below).
+    await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
     if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
     else

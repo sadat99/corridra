@@ -212,7 +212,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'HOW IT WORKS',
     title: 'One commercial objective. One mission. A clear record of what happens next.',
     description:
-      'This is the process we’re building. Mission planning and delivery are not open yet.',
+      'This is the process we’re building, from the first objective to the recorded outcome.',
     introduction: {
       title: 'Begin with a decision you need to make.',
       text: 'Selling, sourcing and entering a market need different targets. A mission gives the work a clear objective, scope and travel or delivery window.',
@@ -261,7 +261,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'CORRIDRA NETWORK',
     title: 'Your local knowledge can have commercial value.',
     description:
-      'We’re building a network for scoped local work, with a clear task, evidence requirement and reward before anyone accepts. Participation is not open yet.',
+      'We’re building a network for scoped local work, with a clear task, evidence requirement and reward before anyone accepts.',
     introduction: {
       title: 'Some market intelligence cannot be collected from a desk.',
       text: 'A local business check, a visit or a relevant introduction can answer questions that remote research cannot. The task needs to be specific enough to know when it is done.',
@@ -378,8 +378,8 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
     ],
     closing: {
-      title: 'The public site is live. Mission delivery is coming soon.',
-      text: 'You can explore the planned approach today. Intake, accounts and network tasks will open as their delivery and data safeguards are ready.',
+      title: 'Start with one objective.',
+      text: 'Explore the planned approach, then plan a mission when you are ready.',
     },
     related: { href: '/how-it-works', label: 'See how it will work' },
   },

@@ -37,11 +37,9 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
-  // Real server reads: the panel loads and shows three counts.
+  // Real server reads: the panel loads and shows five counts (the owner can read meetings).
   const today = page.getByRole('region', { name: 'Today' });
-  await expect(
-    today.getByRole('list', { name: 'Mission counts' }).getByRole('listitem'),
-  ).toHaveCount(3);
+  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(5);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // Synthetic answers prove the new-request and overdue lists.
   await page.route('**/api/workspace/missions?*view=today*', async (route) => {
@@ -79,6 +77,48 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
       body: JSON.stringify({ missions: rows, total: draft ? 1 : overdue ? 2 : 7 }),
     });
   });
+  const inTwoDays = new Date(Date.now() + 2 * 86400000).toISOString();
+  const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString();
+  await page.route('**/api/workspace/meetings?*view=today*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        meetings: [
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            title: 'Invented buyer introduction',
+            status: 'SCHEDULED',
+            starts_at: inTwoDays,
+            due_at: inTwoDays,
+            location: 'Invented meeting room',
+          },
+          {
+            id: '55555555-5555-4555-8555-555555555555',
+            title: 'Invented factory visit',
+            status: 'RESCHEDULE_REQUIRED',
+            starts_at: null,
+            due_at: inTwoDays,
+            location: null,
+          },
+        ],
+        followups: [
+          {
+            id: '66666666-6666-4666-8666-666666666666',
+            status: 'OPEN',
+            due_at: lastWeek,
+            next_action: 'Send invented samples',
+          },
+          {
+            id: '77777777-7777-4777-8777-777777777777',
+            status: 'COMPLETED',
+            due_at: lastWeek,
+            next_action: 'Completed invented task',
+          },
+        ],
+      }),
+    }),
+  );
   await page.reload();
   await expect(today.getByText('new request to review', { exact: true })).toBeVisible();
   await expect(today.getByText('missions past their due date', { exact: true })).toBeVisible();
@@ -89,6 +129,24 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   const late = today.getByRole('region', { name: 'Past their due date' });
   await expect(late.getByText('Invented Machinery Co')).toBeVisible();
   await expect(late.getByText('Invented Foods Co')).toBeVisible();
+  await expect(today.getByText('follow-up past its due date', { exact: true })).toBeVisible();
+  await expect(today.getByText('meeting in the next 7 days', { exact: true })).toBeVisible();
+  await expect(
+    today
+      .getByRole('region', { name: 'Follow-ups past their due date' })
+      .getByText('Send invented samples'),
+  ).toBeVisible();
+  await expect(today.getByText('Completed invented task')).toHaveCount(0);
+  await expect(
+    today
+      .getByRole('region', { name: 'Meetings in the next 7 days' })
+      .getByText('Invented buyer introduction'),
+  ).toBeVisible();
+  await expect(
+    today
+      .getByRole('region', { name: 'Meetings that need a new time' })
+      .getByText('Invented factory visit'),
+  ).toBeVisible();
   await expect(today.getByRole('link', { name: 'Open the mission list' })).toHaveAttribute(
     'href',
     '#workspace-missions',
@@ -96,6 +154,18 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await mkdir('.cache/today', { recursive: true });
   await today.screenshot({ path: '.cache/today/today-panel.png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  // A failed meetings read only hides the meeting counts. Missions still show.
+  await page.unroute('**/api/workspace/meetings?*view=today*');
+  await page.route('**/api/workspace/meetings?*view=today*', (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Synthetic interruption' }),
+    }),
+  );
+  await page.reload();
+  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(3);
+  await expect(today.getByText('Invented Towels Ltd')).toBeVisible();
   // A failed read says so and leaves the mission list working.
   await page.unroute('**/api/workspace/missions?*view=today*');
   await page.route('**/api/workspace/missions?*view=today*', (route) =>

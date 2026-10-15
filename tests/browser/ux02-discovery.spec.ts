@@ -22,10 +22,8 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     .selectOption('bangladesh-eu');
   const atlas = page.getByLabel('Corridor Atlas', { exact: true });
   await expect(atlas).toContainText('EU is a trade-bloc scope');
-  await expect(atlas).toContainText('Customer operations');
-  await expect(atlas).toContainText('Not available');
-  await page.getByRole('link', { name: 'See a synthetic mission example' }).click();
-  const example = page.getByRole('region', { name: 'Synthetic mission example' });
+  await page.getByRole('link', { name: 'See a sample mission' }).click();
+  const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example).toContainText('Run a multi-company mission');
   await expect(example).toContainText('Give each participant an independent objective');
   await example.getByRole('button', { name: '2. Inspect the evidence' }).focus();
@@ -39,7 +37,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await expect(example).toContainText('No operating offer is announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
-  await example.getByRole('link', { name: 'Continue with an invented request' }).click();
+  await example.getByRole('link', { name: 'Continue with a sample request' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',
@@ -133,15 +131,15 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
     await page.goto(route);
     await expect(page.getByRole('main')).toContainText(
       route === '/signin'
-        ? 'Customer identity is separate'
+        ? 'Team members sign in separately'
         : ['/forgot-password', '/reset-password'].includes(route)
-          ? 'It does not change an operator password or authenticator.'
-          : 'missions explicitly shared with you.',
+          ? 'It does not change a team password.'
+          : 'missions shared with you.',
     );
     await expect(
       page
         .getByRole('main')
-        .getByRole('link', { name: 'Prepare an invented example request without an account' }),
+        .getByRole('link', { name: 'Prepare an example request without an account' }),
     ).toHaveAttribute('href', '/plan');
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   }

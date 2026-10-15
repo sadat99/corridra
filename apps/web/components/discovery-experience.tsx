@@ -144,12 +144,9 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
                 href="#mission-example"
                 onClick={openExample}
               >
-                See a synthetic mission example <Arrow />
+                See a sample mission <Arrow />
               </a>
             </div>
-            <p className="ux-reassurance">
-              Explore with invented records. Real customer missions are not open yet.
-            </p>
           </div>
         )}
         <div className="ux-atlas" aria-label="Corridor Atlas">
@@ -178,9 +175,6 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           </div>
           <div className="ux-atlas-selected">
             <h3>{route.label}</h3>
-            <p className="ux-atlas-status">
-              <span>Customer operations</span> Not available
-            </p>
             <p className="ux-atlas-note">{route.note}</p>
             <Link href={`/corridors/${route.slug}`}>
               Read this corridor&apos;s scope <Arrow />
@@ -217,7 +211,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           ))}
           <Link className="ux-situation" href="/network">
             <strong>Help locally</strong>
-            <span>Do clear local tasks for a stated reward. Not open yet.</span>
+            <span>Do clear local tasks for a stated reward.</span>
           </Link>
         </div>
         <details className="ux-fine-tune">
@@ -287,7 +281,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             href="#mission-example"
             onClick={openExample}
           >
-            See a synthetic mission example <Arrow />
+            See a sample mission <Arrow />
           </a>
         ) : (
           <button className="text-link" onClick={openExample}>
@@ -302,7 +296,7 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
         id="mission-example"
         tabIndex={-1}
         className={`ux-example${example ? ' ux-example-open' : ''}`}
-        aria-label="Synthetic mission example"
+        aria-label="Sample mission"
       >
         <div>
           <p className="label">A 90-SECOND WALKTHROUGH</p>
@@ -322,12 +316,12 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               requestAnimationFrame(() => exampleHeading.current?.focus());
             }}
           >
-            Open the synthetic example
+            Open the sample mission
           </button>
         ) : (
           <>
             <p className="ux-example-scope">
-              {selectedJob.label} · {route.label} · Invented scenario
+              {selectedJob.label} · {route.label} · Sample scenario
             </p>
             <nav className="ux-example-steps" aria-label="Example steps">
               {exampleSteps.map((label, index) => (
@@ -374,10 +368,10 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
             <p>
               {route.reverse
                 ? 'This reverse direction needs its own configured scope. No operating offer is announced.'
-                : 'This is an initial product direction, not approval to admit real customer missions.'}
+                : 'This is an initial product direction.'}
             </p>
             <Link className="text-link" href={briefUrl}>
-              Continue with an invented request <Arrow />
+              Continue with a sample request <Arrow />
             </Link>
             <button
               className="text-link"

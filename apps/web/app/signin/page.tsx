@@ -18,11 +18,11 @@ export default function Page() {
         <p className="label">COMING SOON</p>
         <h1>Sign-in is coming soon.</h1>
         <p className="page-description">
-          Account access is unavailable here. This page does not collect credentials. Customer
-          identity is separate from invited operator membership and mission sharing.
+          Customer accounts are not open yet. You can still plan a mission without an account. Team
+          members sign in separately.
         </p>
         <Link className="text-link" href="/plan">
-          Prepare an invented example request without an account
+          Prepare an example request without an account
         </Link>
         <div className="hero-actions">
           <Link prefetch={false} className="primary-link" href="/how-it-works">
@@ -32,10 +32,10 @@ export default function Page() {
             </span>
           </Link>
           <Link prefetch={false} className="text-link" href="/operator">
-            Invited operator access
+            Team sign-in
           </Link>
           <Link prefetch={false} className="text-link" href="/contributor">
-            Assigned-task invitation help
+            Local helper tasks
           </Link>
           <Link prefetch={false} className="text-link" href="/">
             Back to Corridra

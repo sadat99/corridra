@@ -57,13 +57,13 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   page,
 }) => {
   await page.goto('/#mission-example');
-  const example = page.getByRole('region', { name: 'Synthetic mission example' });
+  const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example.getByRole('button', { name: '2. Inspect the evidence' })).toBeVisible();
   await example.getByRole('button', { name: '2. Inspect the evidence' }).focus();
   await page.keyboard.press('Enter');
   await expect(example.getByText('Evidence not established', { exact: true })).toBeVisible();
   await example.getByRole('button', { name: 'Close the example' }).click();
-  await expect(page.getByRole('link', { name: 'See a synthetic mission example' })).toBeFocused();
+  await expect(page.getByRole('link', { name: 'See a sample mission' })).toBeFocused();
   await expect(example.getByRole('button', { name: '2. Inspect the evidence' })).toHaveCount(0);
   await page.keyboard.press('Enter');
   await expect(example.getByRole('button', { name: '1. Define the objective' })).toHaveAttribute(

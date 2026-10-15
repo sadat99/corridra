@@ -15,10 +15,10 @@ test('pending invitation guidance is conditional; operator recovery handles inte
     'method',
     'post',
   );
-  await expect(page.getByRole('link', { name: 'Finish invited workspace setup' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Finish team setup' })).toBeVisible();
   invited = false;
   await page.reload();
-  await expect(page.getByRole('link', { name: 'Finish invited workspace setup' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Finish team setup' })).toHaveCount(0);
   let signinRequests = 0;
   let releaseSignin!: () => void;
   const signinHeld = new Promise<void>((resolve) => {

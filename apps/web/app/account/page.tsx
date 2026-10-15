@@ -51,35 +51,33 @@ export default async function Page() {
             </span>
             <h2>{data.user.name}</h2>
             <p>{data.user.email}</p>
-            <p>
-              This verifies account access. It does not verify a company, grant a workspace role or
-              admit a real customer mission.
-            </p>
+            <p>Your email address is verified. This does not verify your company.</p>
           </section>
           <OperatorInvitationHint key={data.user.id} />
           <Link className="primary-link" href="/plan">
-            Start a test mission request
+            Plan a mission
           </Link>
           <p>
-            Keep the private receipt supplied with your request to check its status and replies.
+            Keep the receipt we give you after you send a request. You can use it to check progress
+            and replies.
           </p>
           <nav className="access-options" aria-label="Account sections">
             <a href="#customer-missions">My shared missions</a>
             <Link className="text-link" href="/plan#receipt-check">
-              Check an example request receipt
+              Check a request receipt
             </Link>
           </nav>
           <details className="ux-journey-disclosure">
-            <summary>Other workspaces and invitations</summary>
+            <summary>Other ways in</summary>
             <nav className="access-options" aria-label="Other account access">
               <Link className="text-link" href="/operator/setup">
-                Accept a new operator invitation
+                Accept a team invitation
               </Link>
               <Link className="text-link" href="/workspace">
-                Find the right entry
+                Start page
               </Link>
               <Link className="text-link" href="/contributor">
-                Assigned-task invitation help
+                Local helper tasks
               </Link>
             </nav>
           </details>
