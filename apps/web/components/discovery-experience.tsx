@@ -173,31 +173,20 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               Bangladesh and Spain or the EU
             </button>
           </div>
-          <p className="ux-atlas-stamp">
-            Explore possibilities.
-            <br />
-            <em>Verify reality.</em>
+          <div className="ux-atlas-selected">
+            <h3>{route.label}</h3>
+            <p className="ux-atlas-status">
+              <span>Customer operations</span> Not available
+            </p>
+            <p className="ux-atlas-note">{route.note}</p>
+            <Link href={`/corridors/${route.slug}`}>
+              Read this corridor&apos;s scope <Arrow />
+            </Link>
+          </div>
+          <p className="ux-atlas-foot">
+            Built for any corridor. These two come first. Commercial directions only, not shipment
+            routes or local coverage.
           </p>
-          <p className="ux-atlas-caption">
-            Built for any corridor. These two are the ones we are working on first.
-          </p>
-          <p className="ux-atlas-caption">
-            Commercial direction, not a shipment route or a map of local coverage.
-          </p>
-          <dl className="ux-atlas-facts">
-            <div>
-              <dt>Selected direction</dt>
-              <dd>{route.label}</dd>
-            </div>
-            <div>
-              <dt>Customer operations</dt>
-              <dd>Not available</dd>
-            </div>
-          </dl>
-          <p className="ux-atlas-note">{route.note}</p>
-          <Link href={`/corridors/${route.slug}`}>
-            Read this corridor&apos;s scope <Arrow />
-          </Link>
         </div>
       </div>
       <div id="commercial-objective" tabIndex={-1} className="ux-objective-bar">
