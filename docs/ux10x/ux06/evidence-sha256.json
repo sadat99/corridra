@@ -38,8 +38,8 @@
     },
     {
       "path": "evidence/after/build.log",
-      "bytes": 2106,
-      "sha256": "77816602a19bf0b264ec3cad015fd10b2dbd1d35801c61571904c4a694a6cd16"
+      "bytes": 2103,
+      "sha256": "81411ba1ac77a37f719e6bbbe1ace709da61137bd50c2dfb64b3043fd2e6e55f"
     },
     {
       "path": "evidence/after/control-parity.json",
