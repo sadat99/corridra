@@ -34,6 +34,11 @@ for (const [route, heading] of routes) {
       await expect(
         page.getByText('Explore with invented records. Real customer missions are not open yet.'),
       ).toBeVisible();
+    } else if (route === '/plan') {
+      // The request page carries its own, fuller notice (asserted below).
+      await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(
+        0,
+      );
     } else {
       await expect(
         page.getByText(
