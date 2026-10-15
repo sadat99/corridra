@@ -11,12 +11,46 @@ test('pending invitation guidance is conditional; operator recovery handles inte
     route.fulfill({ json: { available: invited } }),
   );
   await page.goto('/operator/signin');
+  await expect(page.getByRole('form', { name: 'Operator sign-in', exact: true })).toHaveAttribute(
+    'method',
+    'post',
+  );
   await expect(page.getByRole('link', { name: 'Finish invited workspace setup' })).toBeVisible();
   invited = false;
   await page.reload();
   await expect(page.getByRole('link', { name: 'Finish invited workspace setup' })).toHaveCount(0);
+  let signinRequests = 0;
+  let releaseSignin!: () => void;
+  const signinHeld = new Promise<void>((resolve) => {
+    releaseSignin = resolve;
+  });
+  await page.route('**/api/operator-auth/sign-in/email', async (route) => {
+    signinRequests++;
+    await signinHeld;
+    await route.fulfill({ status: 503, json: { message: 'Synthetic interruption' } });
+  });
+  await page.getByLabel('Email', { exact: true }).fill('synthetic-recovery@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill('Synthetic sign-in password only');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect.poll(() => signinRequests).toBe(1);
+  await expect(page.getByLabel('Email', { exact: true })).toBeDisabled();
+  await page
+    .getByRole('form', { name: 'Operator sign-in' })
+    .evaluate((form) =>
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })),
+    );
+  expect(signinRequests).toBe(1);
+  releaseSignin();
+  await expect(page.getByRole('main').getByRole('alert')).toBeFocused();
+  await expect(page.getByLabel('Email', { exact: true })).toHaveValue(
+    'synthetic-recovery@example.invalid',
+  );
   await page.getByRole('link', { name: 'Forgot operator password?' }).click();
   await expect(page.getByRole('heading', { name: 'Reset your operator password.' })).toBeVisible();
+  await expect(page.getByRole('form', { name: 'Operator password recovery' })).toHaveAttribute(
+    'method',
+    'post',
+  );
   const endpoint = '/api/operator-auth/request-password-reset';
   expect(
     (

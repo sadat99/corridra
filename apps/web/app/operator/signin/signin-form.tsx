@@ -7,6 +7,8 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
   const router = useRouter();
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
   const heading = useRef<HTMLHeadingElement>(null);
+  const inFlight = useRef(false);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     heading.current?.focus();
   }, [stage]);
@@ -16,8 +18,13 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
   const [setup, setSetup] = useState<{ totpURI: string; backupCodes: string[] } | null>(null);
   const [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (message) errorMessage.current?.focus();
+  }, [message]);
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setMessage('');
     try {
@@ -55,11 +62,12 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Sign-in failed');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
   return (
-    <form className="operator-form" onSubmit={submit}>
+    <form method="post" className="operator-form" onSubmit={submit} aria-label="Operator sign-in">
       <h2 ref={heading} tabIndex={-1}>
         {stage === 'password'
           ? 'Use your operator account'
@@ -80,6 +88,7 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={busy}
           />
         </label>
       )}
@@ -92,6 +101,7 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={busy}
           />
         </label>
       )}
@@ -122,11 +132,12 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
+            disabled={busy}
           />
         </label>
       )}
       {message && (
-        <p role="alert" className="field-error">
+        <p role="alert" tabIndex={-1} ref={errorMessage} className="field-error">
           {message}
         </p>
       )}

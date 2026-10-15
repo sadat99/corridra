@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { AccessState } from '../../../components/access-state';
 import { displayDate } from '@corridra/domain/locale';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 type Invitation = { available: boolean; role?: string; expiresAt?: string };
 export function SetupForm() {
+  const inFlight = useRef(false);
   const [failure, setFailure] = useState<'denied' | 'unavailable'>('denied');
   const [invite, setInvite] = useState<Invitation | null>(null),
     [message, setMessage] = useState('Checking your invitation…'),
@@ -42,12 +43,14 @@ export function SetupForm() {
   }, [attempt]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (inFlight.current) return;
     const form = event.currentTarget,
       data = new FormData(form);
     if (data.get('password') !== data.get('confirm')) {
       setMessage('The operator passwords must match.');
       return;
     }
+    inFlight.current = true;
     setBusy(true);
     setMessage('');
     try {
@@ -66,6 +69,7 @@ export function SetupForm() {
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Setup failed. Try again.');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -99,7 +103,7 @@ export function SetupForm() {
         </button>
       )}
       {invite?.available && !done && (
-        <form className="operator-form" onSubmit={submit}>
+        <form method="post" className="operator-form" onSubmit={submit}>
           <h2>Accept {invite.role} access</h2>
           {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>}
           <p>

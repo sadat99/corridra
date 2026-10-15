@@ -93,7 +93,12 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
       </div>
     );
   return (
-    <form className="operator-form" aria-label="Operator password recovery" onSubmit={submit}>
+    <form
+      method="post"
+      className="operator-form"
+      aria-label="Operator password recovery"
+      onSubmit={submit}
+    >
       {mode === 'request' ? (
         <label className="field">
           Operator email
