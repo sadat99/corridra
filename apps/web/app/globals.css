@@ -3572,3 +3572,10 @@ th {
 .ux-home .ux-atlas {
   min-height: 0;
 }
+
+/* Lead cards: the route label keeps its own height so both titles start on the same line. */
+.ux-lead-paths .label {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--brand);
+}

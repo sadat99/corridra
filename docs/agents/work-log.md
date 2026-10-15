@@ -166,3 +166,11 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - What changed in the atlas: the lower half had seven separate text blocks with mixed alignment (toggle, stamp, two captions, a two-column facts grid, a note, a link). It is now one selected-direction block (route name, a "Customer operations: Not available" tag, the scope note, the link) followed by one footnote ("Built for any corridor. These two come first. Commercial directions only, not shipment routes or local coverage."). The "Explore possibilities. Verify reality." stamp was removed from the card because the hero already carries the message. All scope notes, route data and links are unchanged.
 - Verification: public browser suite 82 of 82 on the new markup, protected suite 14 of 14 on the previous commit (map, directory grouping and contrast fix). Screenshots of both directions at desktop and mobile widths were inspected.
 - Next step: ship the map, atlas and operator directory in the next PR, then the Spain/EU lead block on the home page.
+
+## 2026-10-15, Claude Code, Home lead section covers both corridors
+
+- Request: the owner asked for both corridors (Bangladesh with China, and Bangladesh with Spain or the EU) to be indicated from the beginning, at equal weight.
+- What changed: the home lead section was China only. It now reads "Source from China. Sell to Spain and the EU." and has one card per corridor. China card: sourcing (primary), delegation, machinery. Spain and EU card: selling mission (primary), Enter Bangladesh, a link to the Spain and EU scope. A fix keeps the two card titles on the same line. The boundary line and four-step list are unchanged.
+- Verification: public browser suite 82 of 82, lint, typecheck, build, docs and design tests pass. Desktop capture inspected. Mobile relies on the suite's overflow and axe checks at 390 px.
+- Limits: the section describes what the example flow does today and makes no claim about orders, buyers or outcomes.
+- Next step: Track V browser tests and the intake polish, then the corridor evidence view (later backend work).
