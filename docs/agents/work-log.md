@@ -315,3 +315,13 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Preserved: application behavior, auth/RLS, original migrations/source history and closed real-operation gates. Only local test fixtures and missing ignored workspace links repaired.
 - Next step: finish baseline runtime evidence, commit Phase 0, then bounded Phase 1 UI changes.
 - PR / commit: existing work checkout; no new published branch.
+
+## 2026-10-16, Codex, V3 P1a unified product entry
+
+- Request: continue V3 after the Phase 0 preservation commit (`d6b1f81`).
+- What changed: three prominent buyer/partner, supplier/product and delegation request entries, plus other objective. Reuses existing `/plan` validation, draft priority and admission notice; all old routes and controls retained.
+- Verification: lint/typecheck/build passed; Node 19 and infrastructure 7 passed; 24 preserved authority checks passed; full public browser suite `98 passed (2.9m)`; four screenshot observations, zero axe violations/overflow. Exact logs and source hashes in `docs/v3/phase-1/entry/`.
+- Preserved: backend contracts, migration/source/event/money history and auth/RLS. No flags, dependencies or live operations changed.
+- Gaps: Phase 1 overall partial, SaaS customer ownership/organiser self-service missing, V3 not deployed. Isolated customer identity environment unavailable; production auth cannot be reused as a preview.
+- Rollback: revert presentation commit; no data migration needed.
+- Next: founder clarity via retained protected operations, then resume SaaS work when correctly scoped isolated auth access is available.

@@ -11,12 +11,12 @@
     "unit/document 19 passed; infrastructure 7 passed",
     "integration 25 files and 204 tests passed",
     "production build exit 0",
-    "18 browser route/viewport observations; zero axe violations; zero overflow"
+    "18 browser route/viewport observations; zero axe violations; zero overflow",
+    "Full public browser baseline: 94 passed (2.8m)",
+    "Full protected browser baseline: 16 passed (7.7m)"
   ],
   "partial": [
-    "46 literal map collections expanded; 285 remaining maps need runtime/data expansion",
-    "Protected browser core journeys 1\u20135 passed; full 16-test run still in progress",
-    "Full public browser regression pending"
+    "46 literal map collections expanded; 285 remaining maps need runtime/data expansion"
   ],
   "blocked": [],
   "unverified": [

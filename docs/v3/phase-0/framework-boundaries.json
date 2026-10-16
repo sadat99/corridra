@@ -1,0 +1,94 @@
+[
+  {
+    "id": "apps/web/app/contributor/error.tsx:18:a",
+    "file": "apps/web/app/contributor/error.tsx",
+    "context": "/contributor",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": ["docs/v3/phase-0/inventory.json"],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/contributor/error.tsx:29:Link",
+    "file": "apps/web/app/contributor/error.tsx",
+    "context": "/contributor",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": ["docs/v3/phase-0/inventory.json"],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/contributor/error.tsx:32:Link",
+    "file": "apps/web/app/contributor/error.tsx",
+    "context": "/contributor",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": ["docs/v3/phase-0/inventory.json"],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/not-found.tsx:11:Link",
+    "file": "apps/web/app/not-found.tsx",
+    "context": "all unmatched public routes",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": ["docs/v3/phase-0/inventory.json"],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/operator/error.tsx:18:a",
+    "file": "apps/web/app/operator/error.tsx",
+    "context": "/operator",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": [
+      "tests/integration/startup-recovery.test.ts",
+      "tests/operator/z-startup-recovery.spec.ts"
+    ],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/operator/error.tsx:30:Link",
+    "file": "apps/web/app/operator/error.tsx",
+    "context": "/operator",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": [
+      "tests/integration/startup-recovery.test.ts",
+      "tests/operator/z-startup-recovery.spec.ts"
+    ],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/operator/error.tsx:33:Link",
+    "file": "apps/web/app/operator/error.tsx",
+    "context": "/operator",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": [
+      "tests/integration/startup-recovery.test.ts",
+      "tests/operator/z-startup-recovery.spec.ts"
+    ],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  },
+  {
+    "id": "apps/web/app/operator/error.tsx:36:Link",
+    "file": "apps/web/app/operator/error.tsx",
+    "context": "/operator",
+    "kind": "framework error/not-found boundary",
+    "destination": "Original error/recovery boundary retained",
+    "status": "PARTIAL",
+    "evidence": [
+      "tests/integration/startup-recovery.test.ts",
+      "tests/operator/z-startup-recovery.spec.ts"
+    ],
+    "nextAction": "Exercise each boundary and applicable recovery action; static route dependency collector excludes framework boundary mounting."
+  }
+]

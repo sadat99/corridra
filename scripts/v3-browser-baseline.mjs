@@ -5,7 +5,9 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const origin = process.env.V3_BASELINE_ORIGIN ?? 'http://127.0.0.1:3100';
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) throw new Error('Local baseline only');
-const out = 'docs/v3/phase-0/browser';
+const stage = process.argv[2] ?? 'baseline';
+if (!['baseline', 'entry'].includes(stage)) throw new Error('Unknown capture stage');
+const out = stage === 'baseline' ? 'docs/v3/phase-0/browser' : 'docs/v3/phase-1/entry/browser';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true });
 const results = [];
@@ -13,17 +15,21 @@ try {
   for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 } });
     const page = await context.newPage();
-    for (const route of [
-      '/',
-      '/plan',
-      '/workspace',
-      '/account',
-      '/operator/signin',
-      '/client',
-      '/programme',
-      '/buyer',
-      '/contributor',
-    ]) {
+    const routes =
+      stage === 'entry'
+        ? ['/', '/plan']
+        : [
+            '/',
+            '/plan',
+            '/workspace',
+            '/account',
+            '/operator/signin',
+            '/client',
+            '/programme',
+            '/buyer',
+            '/contributor',
+          ];
+    for (const route of routes) {
       const response = await page.goto(origin + route, { waitUntil: 'networkidle' });
       const axe = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
@@ -57,6 +63,17 @@ await writeFile(
   JSON.stringify(
     {
       baseline: 'e9ed2e53d97f543c30bace29d9ef38d568a65236',
+      stage,
+      applicationFiles: await Promise.all(
+        ['apps/web/components/discovery-experience.tsx', 'apps/web/app/globals.css'].map(
+          async (file) => ({
+            file,
+            sha256: createHash('sha256')
+              .update(await readFile(file))
+              .digest('hex'),
+          }),
+        ),
+      ),
       scope:
         'Unauthenticated local baseline; denied/private screens only. Protected journey results recorded separately.',
       results,
