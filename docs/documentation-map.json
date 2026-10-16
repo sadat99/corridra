@@ -577,6 +577,21 @@
       "path": "docs/verification-guide.md",
       "classification": "Current guide/contract",
       "use": "Read alongside current plan, source requirements and ADRs"
+    },
+    {
+      "path": "docs/V3_CONTRACT.md",
+      "classification": "Governing V3 contract",
+      "use": "Owner-supplied V3 product, preservation and acceptance contract; existing security/legal authority remains binding"
+    },
+    {
+      "path": "docs/V3_LEDGER.md",
+      "classification": "Current execution ledger",
+      "use": "Re-read for each V3 work chunk; requirement IDs, evidence, next actions and exact test results"
+    },
+    {
+      "path": "docs/v3/phase-0/preservation-matrix.md",
+      "classification": "V3 preservation mapping",
+      "use": "Current static inventory mapping and limitations; not runtime acceptance"
     }
   ]
 }

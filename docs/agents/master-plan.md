@@ -4,6 +4,10 @@ This is the one place that shows the **latest complete plan**: what we set out t
 
 Last updated: 2026-10-15 by Claude Code. Reconciled against `main` at `47a03d0` (PR 56). Last application release: PR 55, production deployment `dpl_Aqz6dLRGuj8ARTJe87CT8SsATeZZ`. Per-change records are in the [work log](work-log.md); the SaaS readiness audit is in [saas-readiness-audit.md](saas-readiness-audit.md).
 
+## V3 governing execution, 16 October 2026
+
+The owner has authorized end-to-end implementation of [the V3 contract](../V3_CONTRACT.md), beginning with Phase 0, then Phase 1 without intermediate permission requests. [V3_LEDGER.md](../V3_LEDGER.md) is the current execution state and bounded plan. This supersedes prior product categorisation and requests for authorisation to begin the listed SaaS additions, while preserving security, privacy, money and external readiness gates. Historical decisions below remain dated context. V3 Phase 0 is in progress; real activation remains gated.
+
 ## 1. Objective
 
 Make Corridra look, read and behave like a calm, precise, globally credible product that serves the business: more qualified mission requests, more introductions accepted, faster operator delivery, and trust that holds up. Presentation and navigation only. The backbone (domain, API, authentication, RLS, money, evidence, permissions, readiness gates) does not change in this programme. UI first, then backend work, as the owner decided.

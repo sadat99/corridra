@@ -25,3 +25,14 @@ Report implemented behavior, actual test results, deployment evidence and concre
 ## Two coding agents, one product
 
 Claude Code and Codex both work in this repository and share no memory beyond it. Read [docs/agents/README.md](docs/agents/README.md), the [master plan](docs/agents/master-plan.md) and the governing [product vision v2.1](docs/product/corridra-product-vision-v2.1.md) with its [working summary](docs/agents/product-vision.md) (what Corridra is, for whom and why) before starting. Follow [docs/agents/ui-direction.md](docs/agents/ui-direction.md) for every visible change, and append an entry to [docs/agents/work-log.md](docs/agents/work-log.md) and update the master plan if the plan changed, in the same PR before finishing, stating what changed, why, how it was verified and what was not. Never rewrite the other agent's entries. If you disagree with an earlier decision, record both positions and leave the choice to the owner.
+
+# V3 execution rules
+
+- Source of truth: docs/V3_CONTRACT.md (spec) and docs/V3_LEDGER.md (state). Re-read the ledger at the start of every work chunk, update it at the end. Never rely on chat memory.
+- Search before reading: use rg and targeted line ranges. Never cat large files or re-read unchanged ones.
+- Never claim done without command output proving it (tests, typecheck, build, route check). Quote the result in the ledger.
+- Never edit, skip or weaken a test to make it pass. Never fake data, KPIs, AI output or controls. A UI control without a working backend is marked MISSING, not shipped.
+- Never change auth, RLS, migrations history, money or event records without stating the blast radius first. Migrations are additive only.
+- Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.
+- Same mistake twice: add one line here.
+- Use discovered file paths and navigation IDs in inventories and verification; never guess them.

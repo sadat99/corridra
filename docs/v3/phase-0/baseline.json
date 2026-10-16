@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "fetchedMain": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "openPullRequests": [10, 32],
+  "deployedCommit": "f5e6384da22535c66e6d1a5d943f6f7dccef1a76",
+  "deploymentId": "dpl_Aqz6dLRGuj8ARTJe87CT8SsATeZZ",
+  "deploymentState": "READY",
+  "deploymentSource": "Vercel list_deployments read-only response, 2026-10-16",
+  "operatingMode": "synthetic only",
+  "runtimePreservation": "NOT VERIFIED for exhaustive role/state combinations; bounded suites reported separately",
+  "featureFlagsChanged": [],
+  "rollback": "No product/schema changes; revert Phase 0 documentation/scripts only."
+}
