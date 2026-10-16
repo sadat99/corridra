@@ -47,7 +47,7 @@
   "remainingGaps": [
     "Full customer/organiser walkthroughs blocked on isolated identity environment",
     "Independent usability and commercial-result measurements unverified",
-    "V3 deployment unverified",
+    "Full V3 acceptance remains unverified; bounded presentation release is deployed.",
     "Activation independently gated"
   ],
   "featureFlagsChanged": [],
@@ -63,5 +63,6 @@
       "sha256": "34b8a162275718fa70451d0468683404dcfa78b05f262e1a1d1932b6f1b55f50"
     }
   ],
-  "captureNote": "Mobile screenshot includes the active Skip to content focus affordance; no image retouching or hidden controls."
+  "captureNote": "Mobile screenshot includes the active Skip to content focus affordance; no image retouching or hidden controls.",
+  "boundedDeploymentEvidence": "docs/v3/release/report.json"
 }

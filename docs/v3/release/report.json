@@ -1,0 +1,108 @@
+{
+  "checkedAt": "2026-10-16T17:41:55.759Z",
+  "result": "verified bounded V3 foundation; full V3 partial",
+  "baseline": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "previousProduction": "f5e6384da22535c66e6d1a5d943f6f7dccef1a76",
+  "pr": "https://github.com/sadat99/corridra/pull/58",
+  "testedHead": "b12b4add16815a7898db87e9ca0ac0ad46cb1c2f",
+  "mergeSha": "f5815efe2ce144d97e1fcd514766d5651a83e573",
+  "ci": {
+    "url": "https://github.com/sadat99/corridra/actions/runs/38937305833",
+    "status": "completed",
+    "conclusion": "success",
+    "codeQL": "SKIPPED; D04 remains open; not a passing scan",
+    "logDownload": "Signed artifact host denied by managed proxy; API job steps verify success, local exact counts retained"
+  },
+  "deployment": {
+    "id": "dpl_HmrXkqKxggFHwJCaksSdPRkDwe4Z",
+    "url": "https://corridra-upofa7kae-sadat-os.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "gitSource": {
+      "ref": "f5815efe2ce144d97e1fcd514766d5651a83e573",
+      "repoId": 1404233563,
+      "type": "github",
+      "sha": "f5815efe2ce144d97e1fcd514766d5651a83e573"
+    },
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-f5815efe2ce144d97e1fcd514766d5651a83e573-sadat-os.vercel.app"
+    ],
+    "publicAliasDeployment": "dpl_HmrXkqKxggFHwJCaksSdPRkDwe4Z"
+  },
+  "productionBrowser": {
+    "checkedAt": "2026-10-16T17:39:26.429Z",
+    "origin": "https://corridra.vercel.app",
+    "result": "verified for bounded read-only routes and anonymous denial",
+    "observations": [
+      {
+        "path": "/",
+        "width": 1440,
+        "status": 200,
+        "primaryChoices": 3,
+        "overflowPx": 0
+      },
+      {
+        "path": "/",
+        "width": 390,
+        "status": 200,
+        "primaryChoices": 3,
+        "overflowPx": 0
+      },
+      {
+        "path": "/plan?job=buyers",
+        "status": 200,
+        "prefill": "buyers"
+      },
+      {
+        "path": "/plan?job=sourcing",
+        "status": 200,
+        "prefill": "sourcing"
+      },
+      {
+        "path": "/plan?job=delegations",
+        "status": 200,
+        "prefill": "delegations"
+      },
+      {
+        "path": "/operator/signin",
+        "status": 200,
+        "anonymousFounderRegions": 0
+      },
+      {
+        "path": "/api/workspace/operations-controls",
+        "status": 401,
+        "anonymousDenied": true
+      }
+    ],
+    "mutationRequests": [],
+    "limitations": [
+      "No live authenticated mutations or customer operations exercised",
+      "Protected founder authority verified in isolated full 17-case suite"
+    ]
+  },
+  "errorQuery": "Deployment-scoped error/fatal query since5m returned no groups; bounded snapshot only",
+  "cleanup": {
+    "previewAlias": "corridra-git-feat-v3-experience-foundation-sadat-os.vercel.app",
+    "previewAliasDeleted": true,
+    "verifiedAbsentStatus": 404,
+    "branchSpecificEnvBindings": 0,
+    "neonApiMutationsPerformed": false,
+    "neonScopeLimitation": "Correct project access remains unavailable; unrelated and existing environments were preserved."
+  },
+  "featureFlagsChanged": [],
+  "schemaAuthRlsMoneyHistoryChanges": [],
+  "rollback": "Revert the two presentation changes or redeploy the compatible prior production revision; retain canonical history and ledger. No data/schema rollback.",
+  "phaseResults": {
+    "0": "PARTIAL: source inventory/mapping verified; dynamic role-state acceptance not exhaustive",
+    "1": "PARTIAL: three product entries verified; customer persistence missing",
+    "2": "PARTIAL: managed/synthetic journeys retained; independent organiser SaaS missing",
+    "3": "BLOCKED: isolated customer-auth configuration and approved EU project access unavailable",
+    "4": "PARTIAL: bounded founder clarity verified; SaaS walkthroughs and measured results unavailable",
+    "5": "GATED: D01-D06 and D08 remain independently binding"
+  },
+  "nextAction": "Restore correct scoped EU synthetic customer identity environment, then resume Phase3 under existing owner authorization. No full V3 acceptance or live activation."
+}
