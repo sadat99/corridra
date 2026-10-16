@@ -325,3 +325,14 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Gaps: Phase 1 overall partial, SaaS customer ownership/organiser self-service missing, V3 not deployed. Isolated customer identity environment unavailable; production auth cannot be reused as a preview.
 - Rollback: revert presentation commit; no data migration needed.
 - Next: founder clarity via retained protected operations, then resume SaaS work when correctly scoped isolated auth access is available.
+
+## 2026-10-16, Codex, V3 founder clarity and concrete SaaS blocker
+
+- Request: execute V3 through authorized phases while preserving backend authority and stopping only at true blockers.
+- What changed: admin-only five-question Business overview in the retained Control Center, explicit MISSING/GATED capability labels, links to existing source-backed operations/economics/readiness and labelled synthetic explorer. Reconciled all 36 flagship journey steps and recorded per-phase scope/blockers in `docs/v3/`.
+- Verification: lint/typecheck/unit/build passed; operations/navigation/environment denial 15 tests passed; all original 16 protected browser cases passed. Corrected new test driver to await the exact authenticated workspace heading; focused founder case `1 passed (1.1m)` on the same unchanged application build, including actual ordinary-operator HTTP 403 and zero mobile/desktop axe violations/overflow. Do not equate separate runs with a single clean 17-case suite command. Full failed-run history retained.
+- Root cause corrections: distinct new link label preserves original navigation; exact MFA setup locator prevents the test driver from mistaking the sign-in heading for authenticated workspace entry. All original tests and all founder/denial assertions retained. No auth implementation changed.
+- Concrete blocker: documented EU Corridra Neon project `odd-pond-26265871` lookup is unauthorized/404 via current connector, runtime API is proxy-denied/403, and no isolated customer-auth base URL/signing binding is available. Production auth is not a valid preview substitute. No unrelated resources changed.
+- Preserved: all original route/control/backend/history/financial authorities. Flags/production settings unchanged; no deployment claimed. Whole V3 remains partial; independent organiser SaaS is missing and activation gates stay closed.
+- Rollback: revert the entry/founder UI files while retaining ledger/evidence; no data/schema rollback needed.
+- Next: restore correct project/isolated identity access, then resume the authorized Phase 3 ADR/additive ownership and permission-denial work.

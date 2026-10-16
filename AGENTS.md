@@ -36,3 +36,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.
 - Same mistake twice: add one line here.
 - Use discovered file paths and navigation IDs in inventories and verification; never guess them.
+- After a patch context mismatch, read the exact target lines before retrying.

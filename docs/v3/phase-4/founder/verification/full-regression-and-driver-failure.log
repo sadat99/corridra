@@ -1,0 +1,64 @@
+$ playwright test --config playwright.operator.config.ts
+[WebServer] (node:29829) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:29844) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:29860) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:29912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 17 tests using 1 worker
+
+(node:29926) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/workspace.spec.ts:23:1 › anonymous five-step intake preserves draft, retries safely and returns a private receipt (7.4s)
+  ✓   2 tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out (45.9s)
+  ✓   3 tests/operator/workspace.spec.ts:516:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up (16.1s)
+  ✓   4 tests/operator/workspace.spec.ts:840:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay (32.5s)
+  ✓   5 tests/operator/workspace.spec.ts:1101:1 › scoped delivery imports every row, serves client requests and downloads complete programme reports (12.9s)
+  ✓   6 tests/operator/workspace.spec.ts:1362:1 › route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace (1.6m)
+  ✓   7 tests/operator/workspace.spec.ts:2082:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries (1.3m)
+  ✓   8 tests/operator/workspace.spec.ts:2772:1 › UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery (8.0s)
+  ✓   9 tests/operator/workspace.spec.ts:2901:1 › UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority (5.4s)
+  ✓  10 tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics (1.8m)
+  ✓  11 tests/operator/z-startup-recovery.spec.ts:8:1 › UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness (9.0s)
+  ✓  12 tests/operator/z-ux02-access.spec.ts:8:1 › UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery (4.3s)
+  ✓  13 tests/operator/z-ux02-access.spec.ts:114:1 › UX-02 customer account forms validate, submit once and show non-disclosing outcomes for sign-up, reset request and email verification (4.8s)
+  ✓  14 tests/operator/z-ux02-intake.spec.ts:14:1 › UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics (8.5s)
+  ✓  15 tests/operator/zz-access-recovery.spec.ts:5:1 › pending invitation guidance is conditional; operator recovery handles interruption, one submission and private token cleanup (5.2s)
+  ✓  16 tests/operator/zz-today.spec.ts:25:1 › Operator Today panel reads the real mission list, shows new and overdue work and never blocks the workspace (23.9s)
+  ✘  17 tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context (1.1m)
+
+
+  1) tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('region', { name: 'Business overview' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('region', { name: 'Business overview' }) with timeout 5000ms
+      - waiting for getByRole('region', { name: 'Business overview' })
+
+
+      38 |   await page.goto(`/operator?workspace=${seed.tenantId}#ops-center`);
+      39 |   const overview = page.getByRole('region', { name: 'Business overview' });
+    > 40 |   await expect(overview).toBeVisible();
+         |                          ^
+      41 |   await expect(overview).toContainText('Synthetic mission operations only.');
+      42 |   await expect(overview).toContainText('MISSING');
+      43 |   await expect(overview).toContainText('GATED');
+        at /workspace/corridra/tests/operator/zzz-v3-founder.spec.ts:40:26
+
+    Error Context: test-results/zzz-v3-founder-V3-founder--e2366-e-ordinary-operator-context/error-context.md
+
+  Slow test file: tests/operator/workspace.spec.ts (5.0m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+  16 passed (8.9m)
+[ELIFECYCLE] Command failed with exit code 1.

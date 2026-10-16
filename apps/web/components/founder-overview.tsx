@@ -1,0 +1,59 @@
+import Link from 'next/link';
+import { StatusBadge } from './access-state';
+
+/** Capability descriptions, never live metrics. Mounted only inside the existing admin panel. */
+export function FounderOverview() {
+  return (
+    <section aria-labelledby="founder-overview-title" className="detail-card">
+      <h4 id="founder-overview-title">Business overview</h4>
+      <p>
+        These are implementation capabilities. Mission operations use sample records; an account, a
+        passing test or a deployment does not approve real commercial activity.
+      </p>
+      <dl>
+        <dt>What can Corridra do?</dt>
+        <dd>
+          <a href="#workspace-research">Research and qualify companies</a>,{' '}
+          <a href="#workspace-meetings">coordinate introductions and meetings</a>,{' '}
+          <a href="#workspace-missions">manage sourcing and machinery requirements</a>, and{' '}
+          <a href="#workspace-delivery">deliver staff-managed programmes and scoped reports</a>.
+          These reuse the shared mission infrastructure.
+        </dd>
+        <dt>What is activated?</dt>
+        <dd>
+          Synthetic mission operations only. Real mission admission, outreach, production AI
+          inference and contributor payments remain <StatusBadge tone="caution">GATED</StatusBadge>.
+          Check the route-specific evidence before making any availability claim.
+        </dd>
+        <dt>What are customers and operators doing?</dt>
+        <dd>
+          <a href="#ops-dashboard">Source-backed activity and outcomes</a> show recorded work,
+          denominators and missing evidence. Sample activity is not live customer demand.
+        </dd>
+        <dt>What produces results and revenue?</dt>
+        <dd>
+          Read the service economics and customer trade sections below. Customer trade value,
+          Corridra fee revenue, delivery costs and contributor obligations stay separate. Missing
+          financial evidence means unknown, not zero. Organiser economics remain{' '}
+          <StatusBadge tone="unknown">MISSING</StatusBadge>.
+        </dd>
+        <dt>What is blocked, and who acts next?</dt>
+        <dd>
+          Customer organisation provisioning, persistent owned workspaces and independent delegation
+          administration are <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must
+          implement and verify these separately. The owner and relevant legal, infrastructure,
+          security and provider reviewers must supply the independent activation evidence in{' '}
+          <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped sharing
+          remains available.
+        </dd>
+      </dl>
+      <Link prefetch={false} className="text-link" href="/#mission-example">
+        Synthetic product explorer
+      </Link>
+      <p>
+        Illustrations only. Explore the existing sample mission without creating company, financial
+        or AI records. This is separate from the recorded activity above.
+      </p>
+    </section>
+  );
+}

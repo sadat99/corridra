@@ -6,7 +6,7 @@ Last updated: 2026-10-15 by Claude Code. Reconciled against `main` at `47a03d0` 
 
 ## V3 governing execution, 16 October 2026
 
-The owner has authorized end-to-end implementation of [the V3 contract](../V3_CONTRACT.md), beginning with Phase 0, then Phase 1 without intermediate permission requests. [V3_LEDGER.md](../V3_LEDGER.md) is the current execution state and bounded plan. This supersedes prior product categorisation and requests for authorisation to begin the listed SaaS additions, while preserving security, privacy, money and external readiness gates. Historical decisions below remain dated context. V3 Phase 0 is in progress; real activation remains gated.
+The owner has authorized end-to-end implementation of [the V3 contract](../V3_CONTRACT.md), beginning with Phase 0, then Phase 1 without intermediate permission requests. [V3_LEDGER.md](../V3_LEDGER.md) is the current execution state and bounded plan. This supersedes prior product categorisation and requests for authorisation to begin the listed SaaS additions, while preserving security, privacy, money and external readiness gates. Historical decisions below remain dated context. V3 Phase 0 baseline and P1a entry are committed; bounded founder clarity is verified across the original protected regression and a focused new role-denial case. Whole V3 remains partial. Customer-owned SaaS work is blocked by unavailable isolated identity configuration/correct-project access. See the ledger for exact current state. Real activation remains gated.
 
 ## 1. Objective
 

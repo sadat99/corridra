@@ -1,0 +1,27 @@
+{
+  "scope": "Phase 3 customer-owned SaaS identity and environment separation",
+  "checkedDate": "2026-10-16",
+  "result": "blocked",
+  "runtimeConfigurationPresent": {
+    "NEON_AUTH_BASE_URL": false,
+    "NEON_AUTH_COOKIE_SECRET": false,
+    "CORRIDRA_NEON_AUTH_ENABLED": false
+  },
+  "vercelMetadataObservation": "Customer auth base URL and signing secret are bound to production only; no isolated preview binding found. Values not retrieved or copied.",
+  "neonConnectorObservation": "No Corridra project found; two visible projects are in aws-us-east-1 and outside this repository scope. No mutation attempted.",
+  "runtimeNeonApiObservation": "GET https://api.neon.tech/v2/projects via inherited required proxy: Tunnel connection failed: 403 Forbidden. No proxy bypass attempted.",
+  "governingEvidence": [
+    "docs/runbooks/development.md",
+    "docs/runbooks/neon-auth-accounts.md",
+    "tests/integration/environment-separation.test.ts",
+    "docs/implementation/deferred-controls.md"
+  ],
+  "requiredNextAction": "Restore access to the correct Corridra project and provide/provision an isolated EU synthetic customer-auth branch, approved localhost/preview origins and a separate signing secret. Verify IDs and environment isolation before any auth/RLS/customer-provisioning changes.",
+  "productionMayBeReused": false,
+  "unrelatedProjectsMayBeChanged": false,
+  "liveGatesRemainClosed": ["D01", "D02", "D03", "D04", "D05", "D06", "D08"],
+  "documentedCorridraProject": "odd-pond-26265871",
+  "documentedProjectEvidence": "docs/implementation/part-06-production-rollout.json",
+  "directProjectLookup": "Connected Neon describe_project(odd-pond-26265871) returned HTTP 404 / UNAVAILABLE: request could not be authorized.",
+  "organizationScopeCheck": "Only one Vercel-managed organization is exposed by the current connector; no alternate authorized Corridra organization found."
+}

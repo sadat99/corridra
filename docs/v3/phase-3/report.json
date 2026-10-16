@@ -1,0 +1,28 @@
+{
+  "phase": 3,
+  "result": "blocked",
+  "verified": [
+    "Existing customer/staff separation and tenant/permission denial were freshly tested",
+    "Read-only runtime/Vercel/Neon environment discovery performed"
+  ],
+  "partial": [],
+  "blocked": [
+    "No isolated customer-auth base URL/signing secret available",
+    "Correct Corridra Neon project not exposed by connected account; configured runtime API request rejected by required proxy with 403"
+  ],
+  "unverified": [
+    "Customer-owned organisation provisioning and memberships",
+    "Persistent customer-owned mission access",
+    "Independent delegation administration, participant onboarding and organiser economics",
+    "Notifications, entitlements and justified billing additions"
+  ],
+  "evidence": [
+    "docs/v3/environment-blockers.json",
+    "docs/v3/phase-0/verification/integration.log",
+    "docs/v3/phase-1/entry/verification/permission-denial.log"
+  ],
+  "nextAction": "Restore correct-project access and isolated EU synthetic identity settings; then write/review the additive customer-authority ADR and implement restricted-role/upgrade/browser acceptance before exposing controls.",
+  "featureFlagsChanged": [],
+  "authRlsMigrationsChanged": false,
+  "rollback": "No SaaS authority/schema changes made. Existing identity, source scopes, money and histories retained."
+}

@@ -1,0 +1,19 @@
+$ pnpm test:docs && pnpm test:infrastructure
+$ node --test tests/documents.test.mjs tests/design-system.test.mjs tests/world-geography.test.mjs
+✔ tests/design-system.test.mjs (57.876414ms)
+✔ tests/documents.test.mjs (352.814653ms)
+✔ tests/world-geography.test.mjs (73.115579ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 493.424573
+$ python -B -m unittest discover -s tests -p neon_projects_test.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.020s
+
+OK
