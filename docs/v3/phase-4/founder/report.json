@@ -1,0 +1,67 @@
+{
+  "phase": 4,
+  "concern": "Founder capability clarity in existing protected Control Center",
+  "result": "verified for the bounded founder concern; overall Phase 4 partial",
+  "baselineCommit": "5e26bc6",
+  "requirements": [
+    "V3-04-087",
+    "V3-04-088",
+    "V3-04-089",
+    "V3-04-090",
+    "V3-04-091",
+    "V3-04-092",
+    "V3-04-093",
+    "V3-04-094"
+  ],
+  "existingFunctionality": "Protected source-backed activity, service/customer economics, readiness and original synthetic illustration",
+  "newFunctionality": "Five-question overview labels missing SaaS and gated live operations; distinct working links to existing panels and explicitly labelled synthetic explorer",
+  "originalPath": "/operator#ops-center",
+  "destinationPath": "/operator#ops-center; existing underlying panel fragments retained",
+  "sourceFiles": [
+    {
+      "file": "apps/web/components/founder-overview.tsx",
+      "sha256": "dffb787c0a35660788a40ac2811d3a99c7220d5432a0968c02bdd8310f0655a0"
+    },
+    {
+      "file": "apps/web/app/operator/operations.tsx",
+      "sha256": "828caf93c70552f6db48aa8bf77465445e7bb72802854e7dd6c2b06ec8488a85"
+    },
+    {
+      "file": "tests/operator/zzz-v3-founder.spec.ts",
+      "sha256": "2ef66cabb017186bd166d9065132d1332c6e20f88c83c6592122740439d0b5f9"
+    }
+  ],
+  "serverDomainContractsChanged": [],
+  "results": {
+    "lint": "exit 0",
+    "typecheck": "exit 0",
+    "unit": "19 Node tests passed; 7 infrastructure tests passed",
+    "permissionDenial": "3 files; 15 tests passed",
+    "build": "exit 0",
+    "browser": "Fresh clean full protected command: 17 passed, including all original 16 and new founder case. See docs/v3/release/verification/operator.log.",
+    "responsiveAccessibility": "Desktop 1440 and mobile 390 founder screenshots; zero scoped axe violations and zero document overflow; real non-admin 403 verified."
+  },
+  "initialRegression": "Duplicate accessible Production readiness link detected by unchanged original test; new link renamed Review activation blockers. No test changed. Full failure log retained.",
+  "loadingEmptyErrorRecovery": "No new fetch/control state introduced. Existing Operations requests, refresh, unknown money, retry, dirty-form and role-denial states retained and exercised by the unchanged protected suite.",
+  "dataFinancialHistoryPreservation": "No data writes, source/migration/domain changes, money conversion or fabricated KPI/AI output. Synthetic illustration is separate from actual recorded activity.",
+  "remainingGaps": [
+    "Full customer/organiser walkthroughs blocked on isolated identity environment",
+    "Independent usability and commercial-result measurements unverified",
+    "V3 deployment unverified",
+    "Activation independently gated"
+  ],
+  "featureFlagsChanged": [],
+  "rollback": "Revert founder component import/mount and new component; all existing panels, APIs, authorizations and histories remain.",
+  "driverPrerequisite": "Exact positive Your workspace. heading is required after MFA. Non-exact text previously also matched Sign in to your workspace., causing the driver to interrupt MFA. No production auth change; all founder/denial assertions retained.",
+  "screenshots": [
+    {
+      "file": "docs/v3/phase-4/founder/browser/overview-1440.png",
+      "sha256": "fdbc179975a037b7183b78d1063df633924a4744c3f07cb23e6622e2bf0995a5"
+    },
+    {
+      "file": "docs/v3/phase-4/founder/browser/overview-390.png",
+      "sha256": "34b8a162275718fa70451d0468683404dcfa78b05f262e1a1d1932b6f1b55f50"
+    }
+  ],
+  "captureNote": "Mobile screenshot includes the active Skip to content focus affordance; no image retouching or hidden controls."
+}

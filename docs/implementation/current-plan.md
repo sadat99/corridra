@@ -1,5 +1,7 @@
 # Current programme and remaining work
 
+V3 is now the owner-authorized product/experience change request: read [the governing contract](../V3_CONTRACT.md) and [execution ledger](../V3_LEDGER.md). The V2/UX history below remains dated preservation context. New V3 implementation never waives existing security, privacy, financial or legal-readiness contracts.
+
 Reconciled 15 October 2026 against `0c42920dbc970aa9fd49b1a8323d6ecca417a527`. This is the current roadmap status. [Start here](../START_HERE.md) explains authority; the [matrix](implementation-matrix.json) links implementation claims to code and tests. “Merged” means code integrated at the cited PR. It does not mean every requirement accepted, every action verified, or real operations enabled.
 
 ## Changes since this reconciliation

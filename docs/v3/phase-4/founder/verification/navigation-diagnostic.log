@@ -1,0 +1,6 @@
+{"response":"/api/operator-auth/sign-in/email","status":200}
+{"afterMfaUrl":"http://127.0.0.1:3200/operator/signin"}
+{"stage":"afterMfa","cookies":[{"name":"better-auth.two_factor","domain":"127.0.0.1","path":"/","secure":false,"httpOnly":true,"expires":1792169534.65975}]}
+{"documentStatus":200,"afterDocumentUrl":"http://127.0.0.1:3200/operator/signin?next=%2Foperator%3Fworkspace%3D4a998cc1-5af5-4221-aa02-6d3d2c303a7a#ops-center","founderCount":0}
+{"stage":"afterDocument","cookies":[{"name":"better-auth.two_factor","domain":"127.0.0.1","path":"/","secure":false,"httpOnly":true,"expires":1792169534.65975}]}
+{"sessionHttpStatus":200,"sessionPresent":false,"userPresent":false}

@@ -1,0 +1,18 @@
+[
+  {
+    "file": "docs/ux10x/coverage.json",
+    "baseline": "1e0dbea6f146265b256ca89b5482e789f97acdd9",
+    "historicalActions": 759,
+    "currentActions": 806,
+    "exactLocationsRetained": 55,
+    "note": "Location changes do not establish loss; no historical acceptance transferred. Reconcile bindings and runtime instances before retiring any control."
+  },
+  {
+    "file": "docs/ux10x/ux06/coverage.json",
+    "baseline": "ebb992cebef7c68e16922a6f29471939de843867",
+    "historicalActions": 773,
+    "currentActions": 806,
+    "exactLocationsRetained": 604,
+    "note": "Location changes do not establish loss; no historical acceptance transferred. Reconcile bindings and runtime instances before retiring any control."
+  }
+]

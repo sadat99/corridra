@@ -171,8 +171,28 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
               Make the commercial objective clear. Understand the evidence behind a potential
               relationship. Keep the next decision and its owner in view.
             </p>
+            <nav className="v3-product-choices" aria-label="Choose your commercial objective">
+              <Link prefetch={false} href="/plan?job=buyers">
+                <strong>Find Buyers &amp; Partners</strong>
+                <span>Reach relevant buyers, distributors and business partners.</span>
+                <Arrow />
+              </Link>
+              <Link prefetch={false} href="/plan?job=sourcing">
+                <strong>Find Suppliers &amp; Products</strong>
+                <span>Source products, materials or machinery with evidence and clear terms.</span>
+                <Arrow />
+              </Link>
+              <Link prefetch={false} href="/plan?job=delegations">
+                <strong>Organise a Delegation</strong>
+                <span>Plan the group programme and each participant&apos;s commercial needs.</span>
+                <Arrow />
+              </Link>
+            </nav>
+            <Link prefetch={false} className="text-link v3-other-objective" href="/plan">
+              Other international business objective <Arrow />
+            </Link>
             <div className="ux-hero-actions">
-              <a className="primary-link" href="#commercial-objective">
+              <a className="text-link" href="#commercial-objective">
                 Explore a commercial direction <Arrow />
               </a>
               <a

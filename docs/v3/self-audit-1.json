@@ -1,0 +1,20 @@
+{
+  "audit": 1,
+  "afterCommit": "5e26bc6",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 810,
+  "originalBindingsMissing": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Multiset of AST control file/element/bindings/visibility excluding CSS class; not runtime acceptance. Original route and domain vocabulary retained.",
+  "runtimeEvidence": [
+    "docs/v3/phase-0/verification/operator.log",
+    "docs/v3/phase-1/entry/verification/public.log"
+  ],
+  "limitations": [
+    "Source mapping does not expand every role/data/state instance",
+    "No fake KPI/AI/verification or functional-control claims introduced",
+    "Self-service remains MISSING; no activation flags changed"
+  ]
+}

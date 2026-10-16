@@ -1,0 +1,8 @@
+
+Running 1 test using 1 worker
+
+(node:33560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context (1.1m)
+
+  1 passed (1.1m)

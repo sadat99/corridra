@@ -1,0 +1,43 @@
+{
+  "phase": 1,
+  "concern": "P1a three-product entry",
+  "result": "verified for this bounded concern; overall Phase 1 partial",
+  "baselineCommit": "d6b1f81",
+  "applicationBaseline": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "requirements": ["V3-04-029", "V3-04-030", "V3-04-031", "V3-04-032", "V3-04-040"],
+  "files": [
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "sha256": "8286455d1604254048e11531023a2a54c892b8be1d3aff4305d9ddef289bb65a"
+    },
+    {
+      "file": "apps/web/app/globals.css",
+      "sha256": "a630b113a5ca7509ed5c19fe333b02d515e7ef33ca51e8f3e5e3510dc89d239c"
+    },
+    {
+      "file": "tests/browser/v3-objective-entry.spec.ts",
+      "sha256": "3c752642a9b9bb742ec8eba852183990de396a438bce68eeab8fc6205bcf2507"
+    }
+  ],
+  "originalPaths": ["/", "/plan", "/#commercial-objective", "/#mission-example"],
+  "destinationPaths": ["/plan?job=buyers", "/plan?job=sourcing", "/plan?job=delegations", "/plan"],
+  "newFunctionality": "Three prominent entries and secondary other objective; actual existing request prefill, validation, draft restoration and admission restrictions reused.",
+  "serverDomainContractsChanged": [],
+  "results": {
+    "lint": "exit 0",
+    "typecheck": "exit 0",
+    "unit": "19 Node tests passed; 7 infrastructure tests passed",
+    "permissionDenial": "3 files, 24 tests passed",
+    "build": "exit 0",
+    "browser": "98 passed (2.9m)",
+    "screenshots": "4 observations; 0 axe violations; 0 overflow"
+  },
+  "states": "Real prefill, no creation during exploration, draft resumption and keyboard tested; full original browser recovery/invalid/expired/privacy tests retained. No new network loading state introduced by static links.",
+  "remainingGaps": [
+    "Persistent customer workspaces and organiser self-service MISSING pending Phase 3",
+    "No V3 deployment or commercial activation",
+    "Independent usability comparison NOT VERIFIED"
+  ],
+  "featureFlagsChanged": [],
+  "rollback": "Revert entry component/CSS commit; original routes, request schema, draft format, domain code and records untouched."
+}

@@ -1,0 +1,95 @@
+$ playwright test --config playwright.operator.config.ts
+[WebServer] (node:24289) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:24304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:24324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:24381) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 17 tests using 1 worker
+
+(node:24396) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/workspace.spec.ts:23:1 › anonymous five-step intake preserves draft, retries safely and returns a private receipt (7.8s)
+  ✘   2 tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out (7.8s)
+(node:24628) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   3 tests/operator/workspace.spec.ts:516:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up (2.0s)
+(node:24761) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   4 tests/operator/workspace.spec.ts:840:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay (1.4s)
+(node:24915) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   5 tests/operator/workspace.spec.ts:1101:1 › scoped delivery imports every row, serves client requests and downloads complete programme reports (12.3s)
+  ✓   6 tests/operator/workspace.spec.ts:1362:1 › route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace (1.7m)
+  ✘   7 tests/operator/workspace.spec.ts:2082:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries (33.8s)
+
+
+  1) tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out 
+
+    Error: locator.click: Error: strict mode violation: locator('#workspace-operations').getByRole('link', { name: 'Production readiness', exact: true }) resolved to 2 elements:
+        1) <a href="#ops-gates">Production readiness</a> aka getByRole('navigation', { name: 'Operations sections' }).getByRole('link', { name: 'Production readiness' })
+        2) <a href="#ops-gates">Production readiness</a> aka locator('#ops-center').getByRole('link', { name: 'Production readiness' })
+
+    Call log:
+      - waiting for locator('#workspace-operations').getByRole('link', { name: 'Production readiness', exact: true })
+
+
+      195 |       ),
+      196 |   ).toBe(true);
+    > 197 |   await operations.getByRole('link', { name: 'Production readiness', exact: true }).click();
+          |                                                                                     ^
+      198 |   await expect(page.locator('#ops-gates')).toBeFocused();
+      199 |   await expect(
+      200 |     operations.getByRole('region', { name: 'External production prerequisites' }),
+        at /workspace/corridra/tests/operator/workspace.spec.ts:197:85
+
+    Error Context: test-results/workspace-invited-operator-5a1ee-manages-flags-and-signs-out/error-context.md
+
+  2) tests/operator/workspace.spec.ts:516:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up 
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      599 |   const detail = await (
+      600 |     await page.request.get(
+    > 601 |       `/api/workspace/counterparty?tenant=${seed.tenantId}&id=${catalogue.organisations.find((o: { name: string }) => o.name === 'Synthetic Browser Distributor A').id}`,
+          |                                                                                                                                                                    ^
+      602 |     )
+      603 |   ).json();
+      604 |   const target = await post('research', {
+        at /workspace/corridra/tests/operator/workspace.spec.ts:601:164
+
+    Error Context: test-results/workspace-controlled-buyer-2bb89-meeting-and-owned-follow-up/error-context.md
+
+  3) tests/operator/workspace.spec.ts:840:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay 
+
+    Error: mission: 404 Mission not found
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      864 |     });
+      865 |     const d = await r.json();
+    > 866 |     expect(r.ok(), `${action}: ${r.status()} ${d.error ?? ''}`).toBe(true);
+          |                                                                 ^
+      867 |     return d;
+      868 |   }
+      869 |   await post('config', { key: 'opportunities.commands', enabled: true });
+        at post (/workspace/corridra/tests/operator/workspace.spec.ts:866:65)
+        at /workspace/corridra/tests/operator/workspace.spec.ts:871:5
+
+    Error Context: test-results/workspace-operator-follows-5cd52-pensation-and-report-replay/error-context.md
+
+  3 failed
+    tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out 
+    tests/operator/workspace.spec.ts:516:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up 
+    tests/operator/workspace.spec.ts:840:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay 
+  1 interrupted
+    tests/operator/workspace.spec.ts:2082:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries 
+  10 did not run
+  3 passed (2.9m)
+[ELIFECYCLE] Command failed with exit code 130.

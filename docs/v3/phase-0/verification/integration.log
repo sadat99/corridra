@@ -1,0 +1,10 @@
+$ vitest run
+
+ RUN  v5.0.3 /workspace/corridra
+
+
+ Test Files  25 passed (25)
+      Tests  204 passed (204)
+   Start at  15:24:26
+   Duration  277.69s (tests 98%, import 2%)
+

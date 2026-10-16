@@ -1,0 +1,186 @@
+{
+  "baseline": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "scope": "Unauthenticated local baseline; denied/private screens only. Protected journey results recorded separately.",
+  "results": [
+    {
+      "route": "/",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/",
+      "file": "home-1440.png",
+      "sha256": "a77c26abb6421776384e33a7571a2d96d411b8bc34c8fa005b1a16fdacc24ba0",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/plan",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/plan",
+      "file": "plan-1440.png",
+      "sha256": "d6b913783356cc14b371d529b977b8833620c2b539673e604c9203c68b6cb035",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/workspace",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/workspace",
+      "file": "workspace-1440.png",
+      "sha256": "e9ed3bdb00a08b20eaa5234a01c7f1633a509b0f0a520f5fdc490a9b7f040cec",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/account",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/signin",
+      "file": "account-1440.png",
+      "sha256": "86786f3bd5cd7fcdaa5cbee027d6d8d59fc0d07470e9be8bacfdec223a1a6b20",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/operator/signin",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/operator/signin",
+      "file": "operator-signin-1440.png",
+      "sha256": "869fdcbb0e89725ef9ce6890dccbe5eb0dac3e6c6f94596cc20919427e0df33a",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/client",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/client",
+      "file": "client-1440.png",
+      "sha256": "bc0e6f68320faec51fc1166d2745d9143186a31272d829afc801b2c550ad3fd4",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/programme",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/programme",
+      "file": "programme-1440.png",
+      "sha256": "84e5b919501c765da29fb546f1e4603d7c9a996ab26beb7eee47f89ba068a3b4",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/buyer",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/buyer",
+      "file": "buyer-1440.png",
+      "sha256": "076bca7a645051edcd2bf2193285a7ea982ae8ac11d87ad6a3088325cf4b4c3f",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/contributor",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/contributor",
+      "file": "contributor-1440.png",
+      "sha256": "98914e77fe7ae6e04a4939787827659fb5b0cbd7b83b22ffe9546d7740c5897d",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/",
+      "file": "home-390.png",
+      "sha256": "7beb0f07556998e58fb393b24f7093d9238ed3bcb20efac985bfb3ca1848b880",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/plan",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/plan",
+      "file": "plan-390.png",
+      "sha256": "392388749316b8ce83961cd3af0f311604c9071e31f32e56b6b0062dec37ebc2",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/workspace",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/workspace",
+      "file": "workspace-390.png",
+      "sha256": "eb052ed813042611081274437c3634d9aa03ed5e796411e36bd673e25cf97e7d",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/account",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/signin",
+      "file": "account-390.png",
+      "sha256": "9002404fbe1cf7c546651d32995ce33d4d4ccae730ba128e9cbdb7e1c269e0e8",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/operator/signin",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/operator/signin",
+      "file": "operator-signin-390.png",
+      "sha256": "b57889d3b5200734ad2c18cce77f2e79a725273ad7358f648a17732578dc891c",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/client",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/client",
+      "file": "client-390.png",
+      "sha256": "22e86638993b11f2578e314c0c13a4b6f82f32558fb28c9bd5e0d479ce1590a4",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/programme",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/programme",
+      "file": "programme-390.png",
+      "sha256": "f86527a457abbb75779a0bea889001f1c07ec05c41393d05aefadd3ac046dec2",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/buyer",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/buyer",
+      "file": "buyer-390.png",
+      "sha256": "63a65c23cf682d1f1a3a17767dc8f05c9c6915c30443bdf88a437ff415971066",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/contributor",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/contributor",
+      "file": "contributor-390.png",
+      "sha256": "e31f87f6e2228b5ac4216f6c3899c51eeb0c7b5e53e8842ad2e63e8675602dac",
+      "overflowPx": 0,
+      "violations": []
+    }
+  ]
+}

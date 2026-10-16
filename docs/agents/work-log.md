@@ -295,3 +295,44 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Not changed on purpose: the owner's Product Vision v2.1. Its section 18 still describes a snapshot at `bbb7d71` with PR 48 as an open draft. That is the owner's governing document; the owner decides whether it is refreshed.
 - Open items: the owner decisions listed in the master plan, section 4; the three Vercel variables flagged as readable secrets can only be changed by the owner.
 - Next step: the owner chooses between the data-driven corridors list and institution accounts, and decides whether to authorise the audit's backbone roadmap.
+
+## 2026-10-16, Codex, V3 execution rules
+
+- Request: add the supplied V3 execution rules to repo-root `AGENTS.md` for Codex to load.
+- Why: keep execution constraints in repository instructions across turns.
+- What changed: appended the supplied heading and seven rules to `AGENTS.md`.
+- How it was verified: Python exact-text assertion returned "PASS: V3 heading and all seven rules match the requested text."; `git diff --check` exited 0 with no output. `pnpm exec prettier --check AGENTS.md` was blocked by pnpm bootstrap (`ENOENT` creating `/home/agent/.local/share/pnpm`). Application tests, typecheck, build and route checks were not run for this instructions-only change.
+- Open items: `docs/V3_CONTRACT.md` and `docs/V3_LEDGER.md` are absent in this checkout; no specification or ledger content was invented. Verification is recorded here until the V3 ledger exists.
+- Next step: use the V3 contract and ledger when supplied.
+- PR / commit: local working-tree change only.
+
+## 2026-10-16, Codex, V3 Phase 0 baseline and preservation
+
+- Request: execute the supplied V3 contract end to end, starting with Phase 0 and continuing without intermediate permission requests.
+- Why: preserve authorized V2 capabilities while simplifying the product and identifying missing SaaS requirements.
+- What changed: saved the supplied contract; created the execution ledger with 507 source-block IDs, a 49-family preservation matrix and all 18 operator sections; added reproducible AST inventory and one-time register initialization scripts. Added current V3 document catalogue entries and a forward amendment to the master plan.
+- Verification: exact commands, discovered counts and pending baseline checks are tracked in `docs/V3_LEDGER.md`. No historical PASS is inherited; all runtime roles/states remain unverified until executed.
+- Preserved: application behavior, auth/RLS, original migrations/source history and closed real-operation gates. Only local test fixtures and missing ignored workspace links repaired.
+- Next step: finish baseline runtime evidence, commit Phase 0, then bounded Phase 1 UI changes.
+- PR / commit: existing work checkout; no new published branch.
+
+## 2026-10-16, Codex, V3 P1a unified product entry
+
+- Request: continue V3 after the Phase 0 preservation commit (`d6b1f81`).
+- What changed: three prominent buyer/partner, supplier/product and delegation request entries, plus other objective. Reuses existing `/plan` validation, draft priority and admission notice; all old routes and controls retained.
+- Verification: lint/typecheck/build passed; Node 19 and infrastructure 7 passed; 24 preserved authority checks passed; full public browser suite `98 passed (2.9m)`; four screenshot observations, zero axe violations/overflow. Exact logs and source hashes in `docs/v3/phase-1/entry/`.
+- Preserved: backend contracts, migration/source/event/money history and auth/RLS. No flags, dependencies or live operations changed.
+- Gaps: Phase 1 overall partial, SaaS customer ownership/organiser self-service missing, V3 not deployed. Isolated customer identity environment unavailable; production auth cannot be reused as a preview.
+- Rollback: revert presentation commit; no data migration needed.
+- Next: founder clarity via retained protected operations, then resume SaaS work when correctly scoped isolated auth access is available.
+
+## 2026-10-16, Codex, V3 founder clarity and concrete SaaS blocker
+
+- Request: execute V3 through authorized phases while preserving backend authority and stopping only at true blockers.
+- What changed: admin-only five-question Business overview in the retained Control Center, explicit MISSING/GATED capability labels, links to existing source-backed operations/economics/readiness and labelled synthetic explorer. Reconciled all 36 flagship journey steps and recorded per-phase scope/blockers in `docs/v3/`.
+- Verification: lint/typecheck/unit/build passed; operations/navigation/environment denial 15 tests passed; all original 16 protected browser cases passed. Corrected new test driver to await the exact authenticated workspace heading; focused founder case `1 passed (1.1m)` on the same unchanged application build, including actual ordinary-operator HTTP 403 and zero mobile/desktop axe violations/overflow. Do not equate separate runs with a single clean 17-case suite command. Full failed-run history retained.
+- Root cause corrections: distinct new link label preserves original navigation; exact MFA setup locator prevents the test driver from mistaking the sign-in heading for authenticated workspace entry. All original tests and all founder/denial assertions retained. No auth implementation changed.
+- Concrete blocker: documented EU Corridra Neon project `odd-pond-26265871` lookup is unauthorized/404 via current connector, runtime API is proxy-denied/403, and no isolated customer-auth base URL/signing binding is available. Production auth is not a valid preview substitute. No unrelated resources changed.
+- Preserved: all original route/control/backend/history/financial authorities. Flags/production settings unchanged; no deployment claimed. Whole V3 remains partial; independent organiser SaaS is missing and activation gates stay closed.
+- Rollback: revert the entry/founder UI files while retaining ledger/evidence; no data/schema rollback needed.
+- Next: restore correct project/isolated identity access, then resume the authorized Phase 3 ADR/additive ownership and permission-denial work.

@@ -1,0 +1,503 @@
+{
+  "phase": 2,
+  "result": "partial",
+  "scope": "Freshly verified existing managed/synthetic journeys, with every contract journey step reconciled; no independent SaaS release claimed",
+  "baseline": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "products": [
+    {
+      "product": "Buyer access",
+      "result": "partial",
+      "steps": [
+        {
+          "id": "V3-02-004",
+          "requirement": "1. Define offering, capacity, commercial objectives and target markets.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/domain/src/missions.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-005",
+          "requirement": "2. Identify event, intended visit, preferred dates and meeting location when relevant.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/domain/src/missions.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-006",
+          "requirement": "3. Establish target buyer/distributor/customer profiles.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/domain/src/counterparties.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-007",
+          "requirement": "4. Research and discover potentially relevant companies.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-008",
+          "requirement": "5. Assess commercial fit, capabilities, available evidence and limitations.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-009",
+          "requirement": "6. Build and approve a shortlist.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-010",
+          "requirement": "7. Facilitate permitted introductions and meeting requests.",
+          "status": "GATED",
+          "evidence": [
+            "packages/communications/src/index.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Synthetic introduction/response/durable-delivery flow passes. Real outreach remains disabled behind provider, rights and legal approvals.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-011",
+          "requirement": "8. Coordinate mutually accepted meeting times, locations, participants and agendas.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/meetings.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Existing meeting/follow-up and recurrence are tested; full mutual scheduling and reusable customer-owned portfolios remain partial.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-012",
+          "requirement": "9. Record actual engagement, attendance and outcomes.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/meetings.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-013",
+          "requirement": "10. Facilitate RFQs, samples, proposals, negotiations, contracts and follow-through.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/opportunities/src/index.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-014",
+          "requirement": "11. Maintain the relationship and support repeat commercial opportunities.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/meetings.ts",
+            "tests/operator/workspace.spec.ts:516",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Existing meeting/follow-up and recurrence are tested; full mutual scheduling and reusable customer-owned portfolios remain partial.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        }
+      ]
+    },
+    {
+      "product": "Supplier sourcing including machinery",
+      "result": "partial",
+      "steps": [
+        {
+          "id": "V3-02-021",
+          "requirement": "1. Define product or procurement objective.",
+          "status": "PARTIAL",
+          "evidence": [
+            "apps/web/app/plan/intake.tsx",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-022",
+          "requirement": "2. Capture relevant technical, commercial, regulatory and delivery requirements.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/domain/src/commercial-missions.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-023",
+          "requirement": "3. Discover manufacturers, traders or other eligible suppliers.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-024",
+          "requirement": "4. Screen commercial relevance and available evidence.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-025",
+          "requirement": "5. Identify missing information, risks and verification needs.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/commercial.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-026",
+          "requirement": "6. Shortlist and request quotations or further information.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/commercial.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-027",
+          "requirement": "7. Preserve original supplier responses and quotation revisions.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/commercial.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-028",
+          "requirement": "8. Compare commercial and technical suitability.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/commercial.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-029",
+          "requirement": "9. Arrange permitted factory, supplier, showroom or technical meetings.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/missions/src/meetings.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-030",
+          "requirement": "10. Facilitate samples, trials, negotiations, commercial decisions and orders.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/opportunities/src/index.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-031",
+          "requirement": "11. Record procurement progression and subsequent outcomes.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/opportunities/src/index.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-032",
+          "requirement": "12. Retain authorized relationship and supplier knowledge for future sourcing.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/counterparties/src/index.ts",
+            "tests/operator/workspace.spec.ts:1362",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Tenant-scoped source/relationship history exists. Customer-owned reusable supplier portfolio remains partial pending Phase 3.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        }
+      ]
+    },
+    {
+      "product": "Delegation operation",
+      "result": "partial",
+      "steps": [
+        {
+          "id": "V3-02-045",
+          "requirement": "1. Create a delegation for a supported destination, market, event or programme.",
+          "status": "MISSING",
+          "evidence": [
+            "packages/delivery/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Independent customer-organiser creation/administration is missing; existing staff programme context is not self-service.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-046",
+          "requirement": "2. Define objectives, sectors, dates, eligibility, capacity and participation terms.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/domain/src/delivery.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-047",
+          "requirement": "3. Establish participant pricing, expected expenses and commercial objectives.",
+          "status": "MISSING",
+          "evidence": [
+            "packages/domain/src/economics.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Organiser pricing, own expenses and separate contribution economics are missing.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-048",
+          "requirement": "4. Publish controlled invitations and register participants.",
+          "status": "MISSING",
+          "evidence": [
+            "packages/delivery/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Controlled scoped publications exist, but self-service participant registration/onboarding is missing.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-049",
+          "requirement": "5. Collect individual company profiles, needs and commercial intentions.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/delivery/src/import.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-050",
+          "requirement": "6. Review eligibility, confirmations and participation status.",
+          "status": "MISSING",
+          "evidence": [
+            "docs/agents/saas-readiness-audit.md",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Staff mission statuses are not independent participant eligibility/confirmation management.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-051",
+          "requirement": "7. Build shared programme activities, agendas, visits and meetings.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/delivery/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-052",
+          "requirement": "8. Arrange qualified individual commercial engagements using Corridra's shared commercial engines.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/delivery/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-053",
+          "requirement": "9. Assign responsibilities, local support and coordination tasks.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/network/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-054",
+          "requirement": "10. Manage participant communications, schedules and changes.",
+          "status": "MISSING",
+          "evidence": [
+            "packages/communications/src/index.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Real participant notifications/communications and organiser schedule-change delivery are missing or gated.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-055",
+          "requirement": "11. Record costs, payments and organiser economics where authorized.",
+          "status": "MISSING",
+          "evidence": [
+            "packages/domain/src/economics.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Organiser payment/cost domain is missing; existing Corridra service ledger cannot be repurposed as organiser revenue.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-056",
+          "requirement": "12. Track participant activity, consented outcomes and overall programme results.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/delivery/src/report.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Fresh managed/synthetic backend journey is verified; full intended self-service and role/state acceptance is not established.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        },
+        {
+          "id": "V3-02-057",
+          "requirement": "13. Produce scoped reporting, feedback and repeatable programme templates.",
+          "status": "PARTIAL",
+          "evidence": [
+            "packages/delivery/src/report.ts",
+            "tests/operator/workspace.spec.ts:1101",
+            "docs/v3/phase-0/verification/operator.log",
+            "docs/v3/phase-0/verification/integration.log"
+          ],
+          "gap": "Scoped CSV/PDF reports are tested. Feedback and reusable independent-organiser templates remain missing.",
+          "nextAction": "Retain staff-managed routes and domain commands; implement independent SaaS authority after isolated auth environment access is restored."
+        }
+      ]
+    }
+  ],
+  "newBackendImplemented": false,
+  "remainingGaps": [
+    "Independent customer-owned organisation and persistent workspace access",
+    "Independent organiser creation, participant onboarding and economics",
+    "Full contextual buyer/supplier portfolios and notifications",
+    "Exhaustive role/state acceptance and measured customer outcomes"
+  ],
+  "featureFlagsChanged": [],
+  "rollback": "No Phase 2 domain changes; original APIs, histories and published/capability links retained."
+}

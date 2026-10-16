@@ -121,3 +121,11 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 | [ux10x/ux06/wayfinding.md](ux10x/ux06/wayfinding.md)                                                                           | Dated UX inventory/validation | Frozen discovery or scoped execution; paired JSON ledgers retain gaps                                                 |
 | [ux10x/validation.md](ux10x/validation.md)                                                                                     | Dated UX inventory/validation | Frozen discovery or scoped execution; paired JSON ledgers retain gaps                                                 |
 | [verification-guide.md](verification-guide.md)                                                                                 | Current guide/contract        | Read alongside current plan, source requirements and ADRs                                                             |
+
+## V3 execution documents
+
+| Document                                                               | Classification           | Use                                                                                                                |
+| ---------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| [V3_CONTRACT.md](V3_CONTRACT.md)                                       | Governing V3 contract    | Owner-supplied V3 product, preservation and acceptance contract; existing security/legal authority remains binding |
+| [V3_LEDGER.md](V3_LEDGER.md)                                           | Current execution ledger | Re-read for each V3 work chunk; requirement IDs, evidence, next actions and exact test results                     |
+| [v3/phase-0/preservation-matrix.md](v3/phase-0/preservation-matrix.md) | V3 preservation mapping  | Current static inventory mapping and limitations; not runtime acceptance                                           |

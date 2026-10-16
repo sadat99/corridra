@@ -1,0 +1,79 @@
+{
+  "audit": 2,
+  "afterCommit": "65f55767f2812c7bc620357ffb7050675e6e0cba",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 817,
+  "originalBindingsMissing": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "AST control multiset excluding CSS class; immutable Git revision. Runtime acceptance remains bounded.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "817 controls retain all 806 original bindings; 45 routes retained. Runtime coverage bounded to existing suites.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "No auth, RLS or backend code changes. Existing denial tests and founder non-admin API403 retained.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "29 migrations and six sources hash-identical. No financial/event record mutation or conversion.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "All 36 flagship steps mapped in phase-2 report; missing organiser SaaS requirements explicitly retained.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser self-service remains MISSING/BLOCKED; no SaaS release acceptance claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "Canonical company/domain backend unchanged; no identity split or scope merge.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All 18 expert navigation destination IDs and original controls retained.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Homepage remains synthetic flow; founder overview explicitly labels synthetic, MISSING and GATED. Flags unchanged.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Local evidence in phase reports; exact-head CI and exact-merge deployment pending. CodeQL entitlement status is separate from local security results.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "Entry and founder detail bounded; no measured usability improvement or full V3 acceptance claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "limitations": [
+    "No customer-owned SaaS release claimed",
+    "All live gates remain closed",
+    "Dynamic role/data/state coverage is not exhaustive",
+    "Runtime evidence in phase reports; no UI-only backend claims"
+  ]
+}

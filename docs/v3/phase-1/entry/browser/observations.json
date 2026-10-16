@@ -1,0 +1,57 @@
+{
+  "baseline": "e9ed2e53d97f543c30bace29d9ef38d568a65236",
+  "stage": "entry",
+  "applicationFiles": [
+    {
+      "file": "apps/web/components/discovery-experience.tsx",
+      "sha256": "8286455d1604254048e11531023a2a54c892b8be1d3aff4305d9ddef289bb65a"
+    },
+    {
+      "file": "apps/web/app/globals.css",
+      "sha256": "a630b113a5ca7509ed5c19fe333b02d515e7ef33ca51e8f3e5e3510dc89d239c"
+    }
+  ],
+  "scope": "Unauthenticated local baseline; denied/private screens only. Protected journey results recorded separately.",
+  "results": [
+    {
+      "route": "/",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/",
+      "file": "home-1440.png",
+      "sha256": "3031e1a326d70374202e34261b20a13d5bc9d79398431e0f26e3fcf984785df5",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/plan",
+      "width": 1440,
+      "httpStatus": 200,
+      "finalPath": "/plan",
+      "file": "plan-1440.png",
+      "sha256": "d6b913783356cc14b371d529b977b8833620c2b539673e604c9203c68b6cb035",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/",
+      "file": "home-390.png",
+      "sha256": "8a468549e077a5fdfa317a954344dd80545fba48c3c87f01f29334419e18ed71",
+      "overflowPx": 0,
+      "violations": []
+    },
+    {
+      "route": "/plan",
+      "width": 390,
+      "httpStatus": 200,
+      "finalPath": "/plan",
+      "file": "plan-390.png",
+      "sha256": "392388749316b8ce83961cd3af0f311604c9071e31f32e56b6b0062dec37ebc2",
+      "overflowPx": 0,
+      "violations": []
+    }
+  ]
+}

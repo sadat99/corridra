@@ -1,4 +1,5 @@
 'use client';
+import { FounderOverview } from '../../components/founder-overview';
 import {
   OperatorWorkbench,
   useFormChangeGuard,
@@ -765,6 +766,7 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
       {admin && (
         <section id="ops-center" tabIndex={-1}>
           <h3>Global Corridor Control Center</h3>
+          <FounderOverview />
           <details>
             <summary>Configured country and market scopes</summary>
             <Table

@@ -1,0 +1,34 @@
+$ playwright test --config playwright.operator.config.ts
+[WebServer] (node:6688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:6702) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:6718) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:6762) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:6778) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/workspace.spec.ts:23:1 › anonymous five-step intake preserves draft, retries safely and returns a private receipt (8.7s)
+  ✓   2 tests/operator/workspace.spec.ts:98:1 › invited operator enrolls MFA, records provenance, manages flags and signs out (46.1s)
+  ✓   3 tests/operator/workspace.spec.ts:516:1 › controlled buyer response progresses through durable delivery, a held meeting and owned follow-up (15.8s)
+  ✓   4 tests/operator/workspace.spec.ts:840:1 › operator follows the intake and held meeting through confirmed cash, recurrence, compensation and report replay (31.4s)
+  ✓   5 tests/operator/workspace.spec.ts:1101:1 › scoped delivery imports every row, serves client requests and downloads complete programme reports (13.8s)
+  ✓   6 tests/operator/workspace.spec.ts:1362:1 › route-aware machinery requirements and evidence-aware supplier comparison work in the existing workspace (1.5m)
+  ✓   7 tests/operator/workspace.spec.ts:2082:1 › governed SDK fixture review and mobile non-member execution preserve independent rewards and offline retries (1.3m)
+  ✓   8 tests/operator/workspace.spec.ts:2772:1 › UX-01 scoped mission read preserves source truth, keyboard navigation and fail-closed recovery (7.6s)
+  ✓   9 tests/operator/workspace.spec.ts:2901:1 › UX-01 tenant switch isolates delayed reads, preserves navigation drafts and respects viewer authority (5.6s)
+  ✓  10 tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics (1.8m)
+  ✓  11 tests/operator/z-startup-recovery.spec.ts:8:1 › UX-01 startup outage stays denied and a fresh document retry rechecks real database readiness (4.5s)
+  ✓  12 tests/operator/z-ux02-access.spec.ts:8:1 › UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery (7.8s)
+  ✓  13 tests/operator/z-ux02-access.spec.ts:114:1 › UX-02 customer account forms validate, submit once and show non-disclosing outcomes for sign-up, reset request and email verification (6.8s)
+  ✓  14 tests/operator/z-ux02-intake.spec.ts:14:1 › UX-02 discovery completes a synthetic brief with original money, retry, duplicate and receipt denial semantics (11.0s)
+  ✓  15 tests/operator/zz-access-recovery.spec.ts:5:1 › pending invitation guidance is conditional; operator recovery handles interruption, one submission and private token cleanup (7.6s)
+  ✓  16 tests/operator/zz-today.spec.ts:25:1 › Operator Today panel reads the real mission list, shows new and overdue work and never blocks the workspace (11.0s)
+
+  Slow test file: tests/operator/workspace.spec.ts (5.0m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  16 passed (7.7m)
