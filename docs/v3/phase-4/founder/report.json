@@ -38,7 +38,7 @@
     "unit": "19 Node tests passed; 7 infrastructure tests passed",
     "permissionDenial": "3 files; 15 tests passed",
     "build": "exit 0",
-    "browser": "16 original protected cases passed in the full run; corrected new founder case 1 passed (1.1m) in focused rerun against the same retained real local fixture and unchanged application build. A clean single 17-case run after final driver correction was not repeated.",
+    "browser": "Fresh clean full protected command: 17 passed, including all original 16 and new founder case. See docs/v3/release/verification/operator.log.",
     "responsiveAccessibility": "Desktop 1440 and mobile 390 founder screenshots; zero scoped axe violations and zero document overflow; real non-admin 403 verified."
   },
   "initialRegression": "Duplicate accessible Production readiness link detected by unchanged original test; new link renamed Review activation blockers. No test changed. Full failure log retained.",
@@ -48,8 +48,7 @@
     "Full customer/organiser walkthroughs blocked on isolated identity environment",
     "Independent usability and commercial-result measurements unverified",
     "V3 deployment unverified",
-    "Activation independently gated",
-    "Single clean full 17-case protected command after final driver-only correction not repeated; original 16 and corrected founder case verified across separate runs on unchanged application build."
+    "Activation independently gated"
   ],
   "featureFlagsChanged": [],
   "rollback": "Revert founder component import/mount and new component; all existing panels, APIs, authorizations and histories remain.",
@@ -61,7 +60,7 @@
     },
     {
       "file": "docs/v3/phase-4/founder/browser/overview-390.png",
-      "sha256": "33947a979112fc27ca19656a6eae3c5240bcb630440854e9b1c23f33a62d92e8"
+      "sha256": "34b8a162275718fa70451d0468683404dcfa78b05f262e1a1d1932b6f1b55f50"
     }
   ],
   "captureNote": "Mobile screenshot includes the active Skip to content focus affordance; no image retouching or hidden controls."
