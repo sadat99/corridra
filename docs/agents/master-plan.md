@@ -10,6 +10,8 @@ The owner has authorized end-to-end implementation of [the V3 contract](../V3_CO
 
 ## 1. Objective
 
+Forward V3 status, 17 October 2026: PR59's verified evidence release is merged/deployed at c96420e, production READY. Owner-restored access to the documented Frankfurt Neon project is verified. An isolated sterile synthetic auth branch now exists with mandatory email verification. Phase3 environment preparation is partial, rather than blocked on project access; application bindings and authenticated customer acceptance remain under verification. Customer organisation/membership, persistent mission and independent organiser capabilities remain missing. Read [ledger chunk13](../V3_LEDGER.md) and [the sanitized environment recheck](../v3/phase-3/environment-recheck.json) before continuing. Historical status above records the earlier blocker; no real-operation gate has opened.
+
 Make Corridra look, read and behave like a calm, precise, globally credible product that serves the business: more qualified mission requests, more introductions accepted, faster operator delivery, and trust that holds up. Presentation and navigation only. The backbone (domain, API, authentication, RLS, money, evidence, permissions, readiness gates) does not change in this programme. UI first, then backend work, as the owner decided.
 
 Governing product direction is [Corridra Product Vision v2.1](../product/corridra-product-vision-v2.1.md); [product-vision.md](product-vision.md) is the working summary. Design rules live in [ui-direction.md](ui-direction.md).

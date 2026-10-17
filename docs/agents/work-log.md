@@ -342,3 +342,15 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - PR58 normal merge f5815ef has the full tree tested by successful exact-head CI38937305833 (20m34s); preview READY. Explicit production deployment dpl_HmrXkqKxggFHwJCaksSdPRkDwe4Z READY, correct Git SHA/fra1/public alias verified.
 - Read-only production browser verifies three entries, prefill, two viewport layouts, sign-in and anonymous401; no mutation requests. Full local regression17 protected/98 public/204 integration plus unit/security/build evidence retained. No backend/auth/RLS/migration/money/history/activation setting changed.
 - Ledger and docs/v3/release/report.json contain per-phase partial/blocked/gated results, rollback and cleanup. Full V3 remains unaccepted; isolated customer identity environment is the true next blocker. Live gates remain closed; CodeQL skipped is not passed.
+
+## 2026-10-17, Codex, owner access fix and isolated customer identity preparation
+
+- Request: check the owner's environment fix and resume V3; preserve fewer than nine Git branches, merge/deploy verified work without another general permission request.
+- Why: customer-owned SaaS cannot safely use production customer identity as its development substitute.
+- What changed: forward environment receipt, ledger and plans; one sterile Frankfurt synthetic Neon branch with managed auth, application name Corridra and mandatory email verification. No application or migration change in this packet.
+- Verification: PR59 full CI38942627188 success; merge tree equals tested head; explicit exact-SHA production deployment c96420e READY/fra1. Seven read-only browser observations passed with anonymous401, zero overflow and no mutation requests. Neon ADMIN access verified;25 non-reference tables empty before auth provisioning; verification PATCH HTTP200 independently read back true. Branch preflight passed; seven distinct names after new branch creation.
+- Preserved: all production settings/secrets, original identities/staff MFA, RLS, migrations, money/events, default/template/live-synthetic branches, open dependency PRs10/32 and unfinished work.
+- Decisions: account-required compute defaults after rejected timeout override; no partial branch remained. Shared development mail is not production acceptance. No credentials in committed evidence.
+- Open items: isolated signing/origin bindings and provider/session acceptance; customer authority ADR, new organisation/membership/mission and organiser capabilities. These remain unverified/missing. No live activation.
+- Next: finish isolated development configuration, then review additive authority design and restricted-role acceptance before exposing self-service controls.
+- Base commit: c96420e58e3c096293c3c5600ce89903942ec90d; unfinished work branch feat/v3-customer-workspaces.

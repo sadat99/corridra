@@ -71,4 +71,6 @@ For each requirement report: source/decision, existing code, actual tests and en
 
 ### V3 bounded foundation release — 16 October 2026
 
+Forward status, 17 October 2026: evidence PR59 is merged at c96420e and explicitly deployed READY in Frankfurt; seven read-only production observations passed, including anonymous401. The owner restored correct Neon project access and production-only managed-auth scope. New isolated synthetic auth branch preparation is underway with required email verification independently confirmed. The earlier access blocker is resolved; Phase3 is partial and customer-owned SaaS remains missing/unverified. See [environment recheck](../v3/phase-3/environment-recheck.json) and ledger chunk13. Production auth and D01-D06/D08 are unchanged.
+
 PR58 is merged at f5815ef; exact-head full CI passed and the explicit production deployment is READY with the correct source SHA, Frankfurt region and public alias. Three-product request entry and protected founder clarity are verified within their bounded scopes. See [release evidence](../v3/release/report.json) and the [V3 ledger](../V3_LEDGER.md). Whole V3 remains partial: Phase3 is blocked by isolated customer identity environment/project access, and Phase5 gates remain closed. No SaaS/customer admission, real operations or full V3 acceptance is implied.
