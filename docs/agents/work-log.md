@@ -400,3 +400,22 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Next: finish checks, normal merge, exact production and isolated preview deployments under standing release authorization, then continue SaaS work. Keep all unfinished/dependency/environment-bound branches and fewer than nine distinct Git names.
 
 - Fresh local result: formatting/lint/typecheck/build passed; unit19 Node/7 Python; full integration27 files226 tests; three customer browser regressions passed, including both unchanged legacy tests. Three responsive before/after views retained; axe/overflow zero. Hard Release Conditions self-audit4 maps two intentional form binding changes; no unaccounted legacy action loss. Publication scanner initially failed on direct DNS, before push; corrected the invocation to honor the managed Node proxy. CI/merge/deployment still pending at this recorded commit.
+
+## 2026-10-17, Codex, customer UI context rejection boundary
+
+- Request: continue the accepted V3 customer workspace packet while preserving identity/privacy and the priority OTP repair release.
+- Why: a mounted draft must not be submitted under a switched provider account. The server already authenticates each request; it now additionally rejects an optional stale expected subject before minting proofs or writing records.
+- Changed: customer service list/provision optional context check, API header forwarding, forward ADR032 and six new restricted-role integration cases. Caller scope cannot establish identity, admission, tenant or staff authority. Existing clients and all original tests unchanged. No schema/RLS/money/events/provider/activation changes.
+- Verification: lint/typecheck/unit/build passed; Node19/Python7; focused real integration4 files28 tests passed, including unchanged original customer authority/permission/navigation suites; desktop/mobile default-off API2 passed; preservation guard45 routes/29 migration hashes/six sources/18 expert IDs passed.
+- Unverified: actual private provider verification/session and UI walkthrough, full new packet CI/release. Customer creation remains flag-off. PR63 exact-head checks and deployment stay first priority; this change is on its separate bounded branch.
+- Next: implement list/create/retry with subject-scoped draft storage and denial recovery over the unchanged commercial backend, then full checked release. Fewer than nine distinct Git names retained.
+
+## 2026-10-17, Codex, OTP repair exact release and resumed gated UI
+
+- PR63 passed required CI39025982598:27 files226 integration,100 public and18 protected browser tests plus all required source/security/build checks. CodeQL skipped, not passed. Normal merged35ab920 has the exact tested d7336cd full tree6193ee6. Explicit production dpl_DyrwUFnBaNfenJ1eQ6qF13ncC2aE and existing-branch automatic preview dpl_2XYkdkGzpZ7gLK1aUTVqB4nMSXNr are READY/fra1 at that source; canonical and stable acceptance aliases verified.
+- Both actual verification pages return200 with the code input and request action present on arrival. Production public200/staff operations401/customer API503; actual preview anonymous session200/null and API503; zero product mutation requests. No provider/signing configuration or account recreation. Private received-code consumption/session restoration/revocation remain unverified. Receipt:docs/v3/phase-1/customer-verification/release.json.
+- Separate ongoing UI work is not part of that deployed revision: test-only workspace list/create/retry behind the existing off flag, preserving original private mission controls. No real operations, new dependency or backend rebuild. Full V3 remains partial.
+
+### 17 October 2026: gated customer workspace UI and self-audit (Codex)
+
+Added an account list/create/retry interface over the existing synthetic customer workspace API, preserving private mission invitations. Optional expected-subject checking rejects account switches without granting authority; saved retry intents are scoped to issuer and subject and reuse their command ID. Customer exposure stays default-off and production-hard-disabled. Direct format/lint/type/unit checks and preservation audit pass; full exact-head database/build/browser CI remains pending. New component fixtures are explicitly protocol tests, not actual provider OTP/session acceptance. Evidence:docs/v3/phase-3/customer-workspace-ui/report.json and docs/v3/self-audit-5.json. No dependency, schema, RLS, money, history or activation changes. Whole V3 remains partial.

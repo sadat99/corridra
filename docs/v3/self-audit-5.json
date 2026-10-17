@@ -1,0 +1,111 @@
+{
+  "audit": 5,
+  "afterCommit": "7328d7cc9908bcf15ec3c81c718a2110c1bd0e4b",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 827,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Original collector JSX AST binding/visibility algorithm over the current worktree; CSS/location ignored. Cross-checked all806 original controls, retaining the two previously verified OTP changes. Not dynamic runtime acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "Original806 controls accounted for against827 current controls; only the two previously verified OTP bindings changed. Original routes, domain states, commands and expert destinations retained. Full dynamic role/action/state coverage remains partial.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "Optional expected-subject header only rejects stale context; actual fresh provider identity, verification, principal admission and database proofs remain authority. Six new restricted-database context tests and original customer denial tests passed for the guard. UI exact-head integration/browser CI still pending; private provider acceptance remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "Preservation guard PASS:45 routes,29 migration hashes,six immutable sources,18 expert IDs. No SQL, historical source, money or event record edits. The component persists only synthetic pending command/name under issuer and subject, never credentials/codes or fetched rows.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "No flagship commercial requirement removed. Company linking, invitations, persistent customer mission access and independent delegation/participant/economics remain explicit missing work. New interface only lists and provisions the existing synthetic workspace shell.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser SaaS remains MISSING; no organiser journey release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical company or commercial-role identity change; workspace organisationId remains explicitly null.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 original expert IDs and original private-invitation/account paths preserved. No navigation authority change.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Browser protocol fixtures explicitly synthetic and separate from actual provider acceptance. New UI is default-off and production-hard-disabled. No real admission, outreach, inference, payments, KPIs or activation claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Direct format/lint/web-package types,19 JS and7 Python unit checks and static preservation pass. Guard has28 focused integration tests and2 default-off browser passes. Full exact-head UI build, integrations and protected/public browsers require CI and remain pending. CodeQL previously skipped; D04 remains open.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "Loading, empty, denial and safe same-command retry states implemented with bounded scoped storage; new UI protocol/keyboard/axe/responsive tests await CI. No measured V3 usability or speed improvement claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Full dynamic role/action/state denominator",
+    "Actual private OTP consumption and authenticated reload/sign-out/revocation",
+    "Canonical organisation linking, invitations and persistent customer mission access",
+    "Independent delegation, participant privacy and organiser economics",
+    "D01-D06/D08 and real activation"
+  ]
+}

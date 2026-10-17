@@ -1,12 +1,13 @@
 # V3 implementation status
 
-Verified application revision: `2add73ca749dfabfd442b58feebc58cc0befef1e`, 17 October 2026. Full V3 remains **PARTIAL**. [Contract](../V3_CONTRACT.md) governs requirements; [ledger](../V3_LEDGER.md) records all507 requirement IDs, evidence and next actions.
+Verified application revision: `d35ab920e3cd6aa4321e6e921040a168342f99f7`, 17 October 2026. Full V3 remains **PARTIAL**. [Contract](../V3_CONTRACT.md) governs requirements; [ledger](../V3_LEDGER.md) records all507 requirement IDs, evidence and next actions.
 
 ## Reflected in the live UI
 
 - Three prominent product entries and guided request prefill: buyers/partners, suppliers/products and delegation organisation, plus other objectives.
 - Protected founder clarity: implemented versus missing/gated capabilities and explicitly synthetic product exploration.
 - Existing customer identity/private-invitation flows, staff security and all18 expert operation destinations remain accessible within their existing permissions.
+- Signup email verification now shows the code field immediately, with separate resend and failure/retry recovery. The production and isolated preview routes both confirm the input is visible.
 
 The latest customer-authority release adds **no customer-facing screen or creation control**. It must not be presented as a finished self-service delegation or customer-workspace product.
 
@@ -32,11 +33,11 @@ The isolated nonproduction customer-auth child has29 preserved core migrations p
 
 Missing code is implementation work. Activation gates are separate constraints; they do not explain away missing functionality.
 
-Recipient update, 17 October 2026: the owner confirms signup delivered an OTP on the isolated preview. The verification form initially hid the code field until another request. A bounded presentation repair is under verification; it is not yet deployed. Private code consumption and authenticated reload/sign-out/revocation remain unverified.
+Recipient update, 17 October 2026: the owner confirms signup delivered an OTP on the isolated preview. PR63 fixed the hidden code field, passed full CI226 integration/100 public/18 protected tests, and is merged/deployed at the revision above. Production and the existing isolated preview are READY with the exact checked source. See [OTP release evidence](phase-1/customer-verification/release.json). Private code consumption and authenticated reload/sign-out/revocation remain unverified.
 
 ## Next bounded packets
 
-1. Verify and deploy the owner-reported OTP field repair, then add the customer workspace list/create/retry interface over the verified API, preserving the existing private-invitation path. Keep workspace creation gated until actual controlled customer acceptance.
+1. Add the customer workspace list/create/retry interface over the verified API, preserving the existing private-invitation path. Its stale-account rejection guard is locally tested on a separate branch; the UI is under verification. Keep workspace creation gated until actual controlled customer acceptance.
 2. Implement rights-aware company linking,collaboration/invitations/revocation and persistent mission authority in separately tested additions.
 3. Reuse the shared commercial engine for independent delegation,participant privacy and exact-currency organiser economics. Keep real communications and payments gated.
 4. Finish source-backed founder reporting,legacy role/state walkthroughs and the Hard Release Conditions audit.

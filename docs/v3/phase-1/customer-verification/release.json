@@ -1,0 +1,120 @@
+{
+  "result": "verified bounded OTP presentation release; private authenticated provider acceptance remains NOT VERIFIED",
+  "pr": 63,
+  "testedHead": "d7336cde1bb7c8e72580861f3a334c0039898eef",
+  "merge": "d35ab920e3cd6aa4321e6e921040a168342f99f7",
+  "fullTree": "6193ee648b296dca19a9c82975f56e1c1416cd4c",
+  "testedMergeTreeEqual": true,
+  "ci": {
+    "run": 39025982598,
+    "job": 117376935451,
+    "result": "success",
+    "integration": "27 files226 tests passed",
+    "public": "100 passed (2.8m)",
+    "protected": "18 passed (10.0m)",
+    "resultLines": [
+      "2026-10-17T10:52:23.4691505Z  Test Files  27 passed (27)",
+      "2026-10-17T10:52:23.4707652Z       Tests  226 passed (226)",
+      "2026-10-17T10:56:42.4774926Z   100 passed (2.8m)",
+      "2026-10-17T10:56:42.4811730Z ##[notice]  100 passed (2.8m)",
+      "2026-10-17T11:06:45.3453793Z   18 passed (10.0m)",
+      "2026-10-17T11:06:45.3477313Z ##[notice]  18 passed (10.0m)"
+    ],
+    "codeQL": "skipped; D04 remains open"
+  },
+  "production": {
+    "id": "dpl_DyrwUFnBaNfenJ1eQ6qF13ncC2aE",
+    "url": "corridra-fvdcqs3xu-sadat-os.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "sha": "d35ab920e3cd6aa4321e6e921040a168342f99f7",
+    "regions": ["fra1"],
+    "canonicalAlias": "https://corridra.vercel.app"
+  },
+  "preview": {
+    "id": "dpl_2XYkdkGzpZ7gLK1aUTVqB4nMSXNr",
+    "url": "corridra-72zkb6kki-sadat-os.vercel.app",
+    "state": "READY",
+    "target": null,
+    "sha": "d35ab920e3cd6aa4321e6e921040a168342f99f7",
+    "regions": ["fra1"],
+    "alias": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+    "branch": "feat/v3-customer-acceptance",
+    "fastForwardedFrom": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+    "providerAndSigningSettings": "unchanged; no account recreation"
+  },
+  "productionRoutes": [
+    {
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "passed": true
+    },
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "passed": true,
+      "codeInputVisible": true,
+      "resendAvailable": true
+    },
+    {
+      "path": "/signup",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "passed": true
+    },
+    {
+      "path": "/signin",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "passed": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "isError": false,
+      "passed": true
+    },
+    {
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401,
+      "isError": true,
+      "passed": true
+    }
+  ],
+  "previewRoutes": [
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "codeInputVisible": true,
+      "resendAvailable": true
+    },
+    {
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "anonymous": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "isError": false
+    }
+  ],
+  "productMutationRequests": 0,
+  "customerWorkspaceFlag": "unchanged/off; production hard-disabled",
+  "actualPrivateOTPAndAuthenticatedSession": "NOT VERIFIED; owner observed actual code delivery only",
+  "rollback": "Retain dpl_12CB9CTH3EBFMsvzpiWpc1zGEJtb and compatible application; no migration or data rollback",
+  "fullV3": "PARTIAL; D01-D06/D08 closed"
+}

@@ -45,3 +45,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Use discovered database names and explicit project/branch/role IDs; never assume a provider's default database.
 - Check `isError` and the parsed provider result before reporting a mutation as successful; an unparsed response is not proof.
 - Preserve managed proxy/TLS settings and set `NODE_USE_ENV_PROXY=1` for Node network calls; do not retry direct DNS.
+- Mount effects start external work; update React state from settled async callbacks or user events, not synchronous mount helpers.
