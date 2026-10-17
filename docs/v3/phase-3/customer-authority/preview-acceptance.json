@@ -1,0 +1,67 @@
+{
+  "deployment": "dpl_C6G2AuK5XEgJ4ZCZzXVMnhqgM6YN",
+  "origin": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+  "branch": "feat/v3-customer-acceptance",
+  "sha": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+  "environment": "preview only",
+  "state": "READY",
+  "verificationFields": [
+    {
+      "path": ".content.0.text.auth_methods.email_password.verify_email_on_sign_up",
+      "value": true
+    },
+    {
+      "path": ".content.0.text.auth_methods.email_password.verify_email_on_sign_in",
+      "value": true
+    },
+    {
+      "path": ".content.0.text.auth_methods.email_password.email_verification_method",
+      "value": "otp"
+    },
+    {
+      "path": ".content.0.text.auth_methods.email_password.require_email_verification",
+      "value": true
+    }
+  ],
+  "routes": [
+    {
+      "path": "/signup",
+      "status": 200,
+      "success": true,
+      "isError": false
+    },
+    {
+      "path": "/signin",
+      "status": 200,
+      "success": true,
+      "isError": false
+    },
+    {
+      "path": "/account",
+      "status": 200,
+      "success": true,
+      "isError": false
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "success": true,
+      "isError": false
+    },
+    {
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "success": false,
+      "isError": true
+    },
+    {
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "anonymous": true
+    }
+  ],
+  "identityCreated": false,
+  "emailSent": false,
+  "actualAuthenticatedProviderAcceptance": "NOT VERIFIED; controlled tester private verification pending",
+  "workspaceFlag": false
+}

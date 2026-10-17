@@ -42,3 +42,6 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Verify rendered accessible names, including descriptive descendants, before writing exact navigation selectors; preserve every behavior and denial assertion when correcting a driver.
 - Derive cleanup counts from the verified ID lists after all safety exclusions; never reuse pre-exclusion totals.
 - Use `set -e` for multi-step verification and publishing commands; a later success must never mask an earlier failure.
+- Use discovered database names and explicit project/branch/role IDs; never assume a provider's default database.
+- Check `isError` and the parsed provider result before reporting a mutation as successful; an unparsed response is not proof.
+- Preserve managed proxy/TLS settings and set `NODE_USE_ENV_PROXY=1` for Node network calls; do not retry direct DNS.

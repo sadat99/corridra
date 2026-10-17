@@ -1,0 +1,58 @@
+{
+  "result": "verified local presentation; exact-head CI and rollout pending",
+  "baseline": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+  "testedSource": "e53ec6c734ae83eed0d394d18e59cf8954b325b0",
+  "requirements": ["V3-05-006", "V3-07-025", "V3-07-028"],
+  "trigger": "Owner received signup OTP on the isolated preview but the code field was hidden until requesting another code",
+  "existing": "Managed Neon OTP delivery, verify/send SDK endpoints, customer routes, form validation, single-flight guard, staff identity separation",
+  "changed": "Initial verify form shows code immediately, email edits retain it, separate email-validated request action, mode-scoped component state",
+  "originalAndDestinationPaths": [
+    "/signup",
+    "/verify-email",
+    "/signin",
+    "/forgot-password",
+    "/reset-password"
+  ],
+  "serverDomainContracts": "unchanged",
+  "before": {
+    "screenshots": 3,
+    "widths": [390, 768, 1440],
+    "initialCodeFields": 0
+  },
+  "after": {
+    "screenshots": 3,
+    "widths": [390, 768, 1440],
+    "axeViolations": 0,
+    "horizontalOverflow": false,
+    "verified": [
+      "signup-to-code-entry without second OTP request",
+      "email edit retains code field",
+      "malformed code validation",
+      "rejected OTP remains on verify with focused error and preserved input",
+      "retry invokes original endpoint and navigates only after fixture success",
+      "direct/reloaded route exposes input",
+      "resend validates email without valid OTP",
+      "original two customer access regressions unchanged"
+    ]
+  },
+  "verification": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "unit": "19 Node and7 Python passed",
+    "integration": "27 files226 tests passed",
+    "focusedDenials": "4 files27 tests passed",
+    "build": "passed",
+    "focusedBrowser": "3 passed",
+    "sourcePreservation": "45 routes29 migrations6 sources18 expert IDs retained"
+  },
+  "notClaimed": [
+    "Actual private provider OTP consumption",
+    "Authenticated reload/sign-out/revocation",
+    "Full V3 acceptance",
+    "Real commercial activation",
+    "Measured performance/conversion improvement"
+  ],
+  "dataHistoryFinancialPreservation": "No server/domain/schema/history/money/permission changes; original tests unchanged",
+  "flags": "No changes; customer workspace remains off and production hard-disabled",
+  "rollback": "Redeploy retained compatible application; no data rollback or migration required"
+}

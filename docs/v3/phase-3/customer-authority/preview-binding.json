@@ -1,0 +1,99 @@
+{
+  "branch": "feat/v3-customer-acceptance",
+  "origin": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+  "project": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+  "neonProject": "odd-pond-26265871",
+  "neonBranch": "br-silent-tree-b18dmm1n",
+  "source": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+  "productionBindingsUnchanged": true,
+  "verificationPolicyChangeRequested": false,
+  "customerWorkspaceFlag": false,
+  "entries": [
+    {
+      "id": "MxyFHl0Ew4QsrDqK",
+      "key": "NEON_AUTH_BASE_URL",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "WT9h5PJ8hYuldcMN",
+      "key": "NEON_AUTH_COOKIE_SECRET",
+      "target": ["preview"],
+      "type": "encrypted",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "szGq9mKKgGV2AZEF",
+      "key": "CORRIDRA_NEON_AUTH_ENABLED",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "HuWFvLLzdyBGKrIP",
+      "key": "APP_ORIGIN",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "9xKhI6QSwFhbC2cx",
+      "key": "CORRIDRA_FOUNDATIONS_ENABLED",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "5r023qToOCHTxrXS",
+      "key": "RUNTIME_DATABASE_URL",
+      "target": ["preview"],
+      "type": "encrypted",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "wLD7xlomelxNgFmZ",
+      "key": "AUTH_DATABASE_URL",
+      "target": ["preview"],
+      "type": "encrypted",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "RG7y8ak6HLbouh2p",
+      "key": "AUTH_SECRET",
+      "target": ["preview"],
+      "type": "encrypted",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "uURSwLZGKD17DrDz",
+      "key": "DATA_ENVIRONMENT",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "daTyqCfx7yB7qAoT",
+      "key": "DATABASE_REGION",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "AxizEp3jnpmJIBLN",
+      "key": "EVIDENCE_SCAN_MODE",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    },
+    {
+      "id": "ZVJSH6xsQvgdc308",
+      "key": "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED",
+      "target": ["preview"],
+      "type": "plain",
+      "gitBranch": "feat/v3-customer-acceptance"
+    }
+  ],
+  "providerIdentityCreated": false,
+  "emailSent": false
+}

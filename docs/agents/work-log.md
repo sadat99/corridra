@@ -379,3 +379,24 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Decisions: use an independently deployed customer module, fully inventoried/hashed/tested; never conceal history or change old fixtures. Initial owner only, explicit organisationId:null; invitation/collaborative mission/programme authority remains subsequent work.
 - Open items: actual authenticated provider OTP/reload/revocation, canonical organisation linking, invitations, mission access, independent delegations, participant privacy/economics. Production customer authority hard-disabled, all real-operation gates closed.
 - Next step: exact-head full CI and default-off release, then isolated schema/provider acceptance before creation UI. Resource PR61 merged/deployed9029669; finished preview cleanup recorded forward.
+
+## 2026-10-17, Codex, verified customer foundation release and isolated schema
+
+- Request: continue V3 correctly without repeated approval and report visible versus backend progress honestly.
+- What changed: no new runtime source in this receipt; records PR62,exact deployment,cloud migration/role acceptance,actual three-day artifact expiry and finished resource retirement.
+- Verification: required CI39016523849 passed27 integration files226 tests,100 public and17 protected browsers. Normal merge2add73c has identical full tree to tested a7cf939;production dpl_12CB9CTH3EBFMsvzpiWpc1zGEJtb READY/fra1. Live public200/operations401/customer API503,zero product mutations.
+- Cloud scope: only empty isolated customer-auth child in corridra-nonprod. Verified25 tables empty,five original migration hashes;unchanged core runner upgraded to29 plus independent module and repeat install passed. Two actual restricted logins passed least-privilege startup and42501 denials. No customer/provider account,workspace,email,production credential/flag or historical financial/event change.
+- Preservation: source/history/test hashes,all original routes/actions/staff permissions;sterile/default/live-synthetic/production resources and dependency/unfinished work. Completed PR62 preview/alias/ref retired;full cleanup receipts retained. Original provider production D09 remains separate.
+- Open items: actual isolated authenticated OTP/reload/revocation acceptance needs a controlled inbox/test session;do not manufacture verification or ask for codes/passwords in chat. Organisation linking,invitations,mission ownership and independent delegation/participant/economics still need implementation. Customer UI is not shipped by a backend release.
+- Next:check/merge durable receipt,then continue bounded SaaS additions with gated customer UI acceptance. D01-D06/D08 remain closed. Whole V3 remains partial.
+
+## 2026-10-17, Codex, delivered OTP input repair
+
+- Request: owner reports signup sends a code but the verification field appears only after asking for another code.
+- Why: the form initialized verification in the request-code stage, although the configured provider already sends a code at signup.
+- Changed: existing client account form opens the code-entry stage immediately and retains it while editing email; a send-code button validates email independently of code validity. Existing resend/recovery and original SDK payloads remain. Mode key prevents transient signup state carrying into verification. Added a new browser regression; original tests unchanged. Added the missing status document catalogue entry to resolve the real documentation unit failure.
+- Blast radius/preservation: presentation only; provider verification, sessions, auth server, staff identity/MFA, RLS, migrations, money/events and all activation gates unchanged. No email/code in URL or browser storage. No provider OTP read or auto-verification.
+- Verification: local checks and exact-head release acceptance pending; no new deployment claimed. Owner-received OTP is delivery evidence, not observed successful verification/session restoration. Browser before/after and exact outputs will be appended to the ledger.
+- Next: finish checks, normal merge, exact production and isolated preview deployments under standing release authorization, then continue SaaS work. Keep all unfinished/dependency/environment-bound branches and fewer than nine distinct Git names.
+
+- Fresh local result: formatting/lint/typecheck/build passed; unit19 Node/7 Python; full integration27 files226 tests; three customer browser regressions passed, including both unchanged legacy tests. Three responsive before/after views retained; axe/overflow zero. Hard Release Conditions self-audit4 maps two intentional form binding changes; no unaccounted legacy action loss. Publication scanner initially failed on direct DNS, before push; corrected the invocation to honor the managed Node proxy. CI/merge/deployment still pending at this recorded commit.
