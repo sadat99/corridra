@@ -13,8 +13,11 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
+  // This selects a form stage, not a claim that the provider verified or delivered anything.
+  const [sent, setSent] = useState(mode === 'verify');
+  const [codeRequested, setCodeRequested] = useState(false);
   const [failed, setFailed] = useState(false);
+  const emailInput = useRef<HTMLInputElement>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -22,6 +25,9 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
   }, [failed, message]);
   async function submit(event: FormEvent) {
     event.preventDefault();
+    await perform();
+  }
+  async function perform(requestCode = false) {
     if (inFlight.current) return;
     inFlight.current = true;
     setFailed(false);
@@ -61,7 +67,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         setSent(true);
         setMessage('Your password has been changed. You can sign in now.');
         window.history.replaceState(null, '', '/reset-password');
-      } else if (sent) {
+      } else if (sent && !requestCode) {
         const result = await accountClient.emailOtp.verifyEmail({ email, otp: code });
         if (result.error)
           throw new Error('That code could not be verified. Check it or request a new code.');
@@ -75,6 +81,8 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         });
         if (result.error)
           throw new Error('A verification code could not be requested. Please try again.');
+        setCode('');
+        setCodeRequested(true);
         setSent(true);
         setMessage(
           'If verification is needed for this account, a code will be sent to this address.',
@@ -94,6 +102,12 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
   }
   return (
     <form method="post" className="operator-form" onSubmit={submit} aria-label="Account access">
+      {mode === 'verify' && (
+        <p>
+          Enter the email address you used to sign up and the six-digit code from your email. You do
+          not need a verification link. If you need another code, request one below.
+        </p>
+      )}
       {mode === 'signup' && (
         <label className="field">
           Name
@@ -112,11 +126,12 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           Email
           <input
             type="email"
+            ref={emailInput}
             value={email}
             disabled={busy}
             onChange={(e) => {
               setEmail(e.target.value);
-              setSent(false);
+              if (mode !== 'verify') setSent(false);
               setCode('');
             }}
             autoComplete="email"
@@ -183,7 +198,19 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
                       : 'Request verification code'}
         </button>
       )}
-      {mode === 'verify' && sent && (
+      {mode === 'verify' && sent && !codeRequested && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={busy}
+          onClick={() => {
+            if (emailInput.current?.reportValidity()) void perform(true);
+          }}
+        >
+          Request verification code
+        </button>
+      )}
+      {mode === 'verify' && sent && codeRequested && (
         <button
           type="button"
           className="text-link"
@@ -192,6 +219,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
             setSent(false);
             setCode('');
             setMessage('');
+            setFailed(false);
           }}
         >
           Request a new code

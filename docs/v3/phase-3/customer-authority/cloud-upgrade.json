@@ -1,0 +1,75 @@
+{
+  "mode": "apply",
+  "project": "odd-pond-26265871",
+  "branch": "br-silent-tree-b18dmm1n",
+  "parent": "br-lingering-sea-b1eob57e",
+  "endpoint": "ep-autumn-scene-b17sgino",
+  "region": "aws-eu-central-1",
+  "database": "corridra",
+  "role": "corridra_migrator",
+  "roles": [
+    {
+      "rolname": "corridra_auth",
+      "rolcanlogin": false,
+      "rolbypassrls": false,
+      "rolsuper": false
+    },
+    {
+      "rolname": "corridra_migrator",
+      "rolcanlogin": true,
+      "rolbypassrls": true,
+      "rolsuper": false
+    },
+    {
+      "rolname": "corridra_runtime",
+      "rolcanlogin": false,
+      "rolbypassrls": false,
+      "rolsuper": false
+    }
+  ],
+  "before": {
+    "coreMigrationCount": 5,
+    "coreHashesMatch": true,
+    "nonReferenceTableCount": 25,
+    "allEmpty": true,
+    "managedUserCount": 0
+  },
+  "applied": true,
+  "after": {
+    "coreMigrationCount": 29,
+    "moduleReceipts": [
+      {
+        "name": "0001_synthetic_workspace_authority.sql",
+        "sha256": "ffe34c899b5b316d19656db77a2c2c9417782a7d5a5bb2c01d95e44b0aa53a29"
+      }
+    ],
+    "customerWorkspaces": 0,
+    "admittedSubjects": 0,
+    "providerUsers": 0
+  },
+  "repeatInstall": "passed",
+  "restrictedRoles": {
+    "runtime": "corridra_v3_customer_runtime",
+    "auth": "corridra_v3_customer_auth",
+    "leastPrivilegeChecks": "passed",
+    "denials": [
+      {
+        "check": "runtime cannot read proofs",
+        "code": "42501"
+      },
+      {
+        "check": "runtime cannot list without a customer proof",
+        "code": "42501"
+      },
+      {
+        "check": "runtime cannot read staff sessions",
+        "code": "42501"
+      },
+      {
+        "check": "auth cannot read business source records",
+        "code": "42501"
+      }
+    ],
+    "settings": "private local file0600; no deployment binding changed"
+  }
+}

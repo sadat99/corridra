@@ -1,0 +1,18 @@
+[WebServer] (node:119187) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:119202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:119218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:119232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:119247) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/operator/v3-verification-code.spec.ts:9:1 › V3 signup exposes the delivered-code input immediately and preserves verification failure, retry and resend (5.2s)
+  ✓  2 tests/operator/z-ux02-access.spec.ts:8:1 › UX-02 customer access preserves SDK requests, interrupted retry, single submission and incomplete-link recovery (4.6s)
+  ✓  3 tests/operator/z-ux02-access.spec.ts:114:1 › UX-02 customer account forms validate, submit once and show non-disclosing outcomes for sign-up, reset request and email verification (3.9s)
+
+  3 passed (17.3s)

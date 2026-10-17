@@ -594,6 +594,11 @@
       "use": "Re-read for each V3 work chunk; requirement IDs, evidence, next actions and exact test results"
     },
     {
+      "path": "docs/v3/STATUS.md",
+      "classification": "Current V3 status",
+      "use": "Visible implementation, verified backend, missing SaaS work and independent activation gates; follow the execution ledger for current evidence"
+    },
+    {
       "path": "docs/v3/phase-0/preservation-matrix.md",
       "classification": "V3 preservation mapping",
       "use": "Current static inventory mapping and limitations; not runtime acceptance"

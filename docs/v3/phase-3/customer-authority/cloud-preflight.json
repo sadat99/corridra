@@ -1,0 +1,38 @@
+{
+  "mode": "inspect",
+  "project": "odd-pond-26265871",
+  "branch": "br-silent-tree-b18dmm1n",
+  "parent": "br-lingering-sea-b1eob57e",
+  "endpoint": "ep-autumn-scene-b17sgino",
+  "region": "aws-eu-central-1",
+  "database": "corridra",
+  "role": "corridra_migrator",
+  "roles": [
+    {
+      "rolname": "corridra_auth",
+      "rolcanlogin": false,
+      "rolbypassrls": false,
+      "rolsuper": false
+    },
+    {
+      "rolname": "corridra_migrator",
+      "rolcanlogin": true,
+      "rolbypassrls": true,
+      "rolsuper": false
+    },
+    {
+      "rolname": "corridra_runtime",
+      "rolcanlogin": false,
+      "rolbypassrls": false,
+      "rolsuper": false
+    }
+  ],
+  "before": {
+    "coreMigrationCount": 5,
+    "coreHashesMatch": true,
+    "nonReferenceTableCount": 25,
+    "allEmpty": true,
+    "managedUserCount": 0
+  },
+  "applied": false
+}

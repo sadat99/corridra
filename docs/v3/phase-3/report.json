@@ -6,11 +6,14 @@
     "Read-only runtime/Vercel/Neon environment discovery performed",
     "Isolated Frankfurt auth branch provisioned sterile; mandatory email verification and exact localhost origin confirmed",
     "Separate Development-only signing configuration; production bindings unchanged",
-    "PR60 full CI:26 integration files/209 tests,98 public and17 protected browser tests passed; exact merged source deployed READY"
+    "PR60 full CI:26 integration files/209 tests,98 public and17 protected browser tests passed; exact merged source deployed READY",
+    "PR62 exact-head full CI27 files226 integration/100 public/17 protected tests; exact merge2add73c deployed READY/fra1 with customer API503",
+    "Isolated empty customer branch upgraded to29 unchanged core migrations plus one explicit customer module; repeat install and actual separate-role42501 denials passed"
   ],
   "partial": [
     "Customer identity environment prepared; authenticated managed signup/OTP/revocation acceptance remains unverified",
-    "Customer authority backend locally verified within synthetic initial-owner scope; exact-head CI/deployment and actual authenticated provider acceptance remain pending"
+    "Customer authority backend locally verified within synthetic initial-owner scope; exact-head CI/deployment and actual authenticated provider acceptance remain pending",
+    "Synthetic customer provisioning/listing and immutable owner backend implemented/tested/deployed but production disabled; actual authenticated customer walkthrough remains NOT VERIFIED"
   ],
   "blocked": [],
   "unverified": [
@@ -26,14 +29,16 @@
     "docs/v3/phase-3/environment-recheck.json",
     "docs/v3/cleanup/2026-10-17-pr60-ci.json",
     "docs/v3/cleanup/2026-10-17-pr60-release.json",
-    "docs/v3/phase-3/customer-authority/report.json"
+    "docs/v3/phase-3/customer-authority/report.json",
+    "docs/v3/phase-3/customer-authority/release.json",
+    "docs/v3/phase-3/customer-authority/cloud-upgrade.json"
   ],
-  "nextAction": "Run exact-head full CI, deploy the default-off backend packet, verify isolated module installation and actual managed customer acceptance before exposing creation UI; continue invitations/mission ownership in separate packets",
+  "nextAction": "Verify isolated managed customer acceptance with a dedicated controlled inbox/test session before customer creation UI acceptance; continue canonical organisation linking, invitations and mission/organiser authority in separate packets",
   "featureFlagsChanged": [
     "Existing Neon Auth flag configured for isolated Development only; production unchanged"
   ],
   "authRlsMigrationsChanged": true,
   "rollback": "Disable customer flag and redeploy prior compatible application; preserve additive module and append-only canonical records",
   "initialBlockedObservation": "Retained in docs/v3/environment-blockers.json; project access and isolated auth configuration are now restored",
-  "changeScope": "New optional customer module only; original29 migrations, core runner, existing staff/RLS contracts and all original tests unchanged; no cloud migration applied"
+  "changeScope": "New customer namespace and two restricted logins on isolated nonproduction branch only; original core SQL/history/staff contracts and all original tests preserved; no production flag or credential change"
 }

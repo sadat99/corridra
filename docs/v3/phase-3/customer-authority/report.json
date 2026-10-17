@@ -77,7 +77,7 @@
     "Persistent customer-owned mission access missing",
     "Delegation SaaS, private participants and organiser economics missing",
     "Actual received OTP, authenticated provider/browser continuation and revocation NOT VERIFIED",
-    "Cloud extension install, dedicated Preview config, deployment and exact-head CI pending"
+    "Actual authenticated managed signup/received OTP/reload/revocation/browser acceptance; controlled tester outcome pending"
   ],
   "flags": {
     "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED": "default false, no environment setting changed",
@@ -89,8 +89,36 @@
     "coreMigrationsChanged": false,
     "existingRlsChanged": false,
     "sourceHistoryMoneyRewritten": false,
-    "cloudSchemaApplied": false
+    "cloudSchemaApplied": true,
+    "cloudScope": "Existing empty br-silent-tree-b18dmm1n only; five core migrations upgraded additively to29 plus customer module; parent/live/production unchanged"
   },
   "rollback": "Disable the flag and deploy the prior compatible application; retain additive schema/tenants and append-only history",
-  "release": "unverified; no SaaS acceptance or real activation"
+  "release": "Verified default-off backend release; whole SaaS remains partial",
+  "exactHeadCI": {
+    "run": 39016523849,
+    "job": 117349662085,
+    "conclusion": "success",
+    "integrationFiles": 27,
+    "integrationTests": 226,
+    "publicBrowserTests": 100,
+    "protectedBrowserTests": 17,
+    "codeql": "SKIPPED,not passed; D04 remains open"
+  },
+  "deployment": {
+    "id": "dpl_12CB9CTH3EBFMsvzpiWpc1zGEJtb",
+    "state": "READY",
+    "target": "production",
+    "regions": ["fra1"],
+    "actualSourceSha": "2add73ca749dfabfd442b58feebc58cc0befef1e"
+  },
+  "cloudUpgradeEvidence": "docs/v3/phase-3/customer-authority/cloud-upgrade.json",
+  "preview": {
+    "origin": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+    "deployment": "dpl_C6G2AuK5XEgJ4ZCZzXVMnhqgM6YN",
+    "branch": "feat/v3-customer-acceptance",
+    "source": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+    "productionSettingsChanged": false,
+    "workspaceFlag": false,
+    "purpose": "Existing account identity acceptance only; no new customer workspace UI"
+  }
 }

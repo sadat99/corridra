@@ -4,6 +4,8 @@
 
 Immutable sources/working copies and frozen evidence were intentionally not rewritten. Historical scope/release packets retain detailed original context under clear status notices. Provider settings, test counts, deployment URLs and next-step prose in historical packets are not today's status. Current operational guides link to the reconciled handoff.
 
+[V3 status](v3/STATUS.md) records visible UI, backend foundations, remaining implementation and independent activation gates. The [V3 ledger](V3_LEDGER.md) remains the per-chunk evidence and next-action authority.
+
 | Document                                                                                                                       | Role                           | How to use                                                                                                            |
 | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | [README.md](README.md)                                                                                                         | Current guide/contract         | Read alongside current plan, source requirements and ADRs                                                             |

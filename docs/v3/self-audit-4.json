@@ -1,0 +1,112 @@
+{
+  "audit": 4,
+  "afterCommit": "e53ec6c734ae83eed0d394d18e59cf8954b325b0",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 818,
+  "intentionalOriginalBindingChanges": [
+    {
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "element": "input",
+      "file": "apps/web/components/account-form.tsx",
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "tests/operator/z-ux02-access.spec.ts unchanged; tests/operator/v3-verification-code.spec.ts; docs/v3/phase-1/customer-verification/report.json",
+      "mapping": "Email binding now has a DOM validation ref and retains code stage on edits; original resend is available after actual request. Earlier delivered-code stage is additional, not verified authority."
+    },
+    {
+      "bindings": [
+        "type=\"button\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "element": "button",
+      "file": "apps/web/components/account-form.tsx",
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "tests/operator/z-ux02-access.spec.ts unchanged; tests/operator/v3-verification-code.spec.ts; docs/v3/phase-1/customer-verification/report.json",
+      "mapping": "Email binding now has a DOM validation ref and retains code stage on edits; original resend is available after actual request. Earlier delivered-code stage is additional, not verified authority."
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Immutable committed AST multiset; changed bindings require explicit tested replacement. This is not complete dynamic role/action/state acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "Original customer paths and all18 expert destinations retained. All legacy command/API/domain-state multisets retained. Intentional account-form input/resend binding changes mapped to unchanged legacy and new regression tests; broader dynamic action/state coverage remains partial.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "No auth handler/session/RLS/permission changes. Actual restricted-role/denial suites pass. Mandatory managed provider verification retained; private OTP consumption/session acceptance remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "All29 migration and six immutable source hashes retained. No SQL, money, event or historical source changes in this repair. Prior isolated migration acceptance is dated separately.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "All flagship requirement mappings remain; organisation linking, invitations, persistent mission access and delegation/participant/economics remain explicit gaps.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser SaaS remains MISSING; no self-service organiser release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No company, tenant or commercial-role identity change.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "18 expert navigation IDs and original URLs retained; no administrative operation removed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "UI fixtures labelled as protocol fixtures; only owner-reported email delivery is actual provider delivery evidence. No private OTP read, fake verification, KPI, outreach, payment or feature activation.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Local lint/typecheck/unit/build/integration and three customer browser regressions pass. Exact final-head CI and deployment still pending; skipped CodeQL is not a pass and D04 remains open.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "Initial code input no longer requires requesting another code. One verify action and one relevant request/recovery action shown together. Responsive screenshots and axe pass; no measured user task-time or full V3 usability improvement claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Full dynamic role/action/state denominator",
+    "Actual private OTP consumption and authenticated reload/sign-out/revocation",
+    "Canonical organisation linking, invitations and persistent customer mission access",
+    "Independent delegation, participant privacy and organiser economics",
+    "D01-D06/D08 and real activation"
+  ]
+}

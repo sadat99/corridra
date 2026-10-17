@@ -1,0 +1,74 @@
+{
+  "merge": "2add73ca749dfabfd442b58feebc58cc0befef1e",
+  "testedHead": "a7cf939d4f5d7a6f57c65c1c81a5406b608b84c4",
+  "tree": "e9ec482033f50700ba4c1a3f9d6ffcbbb18d2818",
+  "ci": {
+    "run": 39016523849,
+    "job": 117349662085,
+    "conclusion": "success",
+    "integrationFiles": 27,
+    "integrationTests": 226,
+    "publicBrowserTests": 100,
+    "protectedBrowserTests": 17,
+    "codeql": "SKIPPED,not passed; D04 remains open"
+  },
+  "deployment": {
+    "id": "dpl_12CB9CTH3EBFMsvzpiWpc1zGEJtb",
+    "state": "READY",
+    "target": "production",
+    "regions": ["fra1"],
+    "actualSourceSha": "2add73ca749dfabfd442b58feebc58cc0befef1e"
+  },
+  "liveRoutes": {
+    "observations": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=buyers",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=sourcing",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=delegations",
+        "status": 200
+      },
+      {
+        "path": "/operator/signin",
+        "status": 200
+      },
+      {
+        "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+        "status": 401
+      },
+      {
+        "path": "/api/customer-workspaces",
+        "status": 503
+      }
+    ],
+    "mutationRequests": [],
+    "customerCreationEnabled": false
+  },
+  "retirement": {
+    "previewDeleted": "dpl_KPmxnZbErcPs3NgqfKzhavo8mqDN",
+    "aliasesDeleted": ["corridra-git-feat-v3-customer-provisioning-sadat-os.vercel.app"],
+    "remoteRefDeleted": "feat/v3-customer-provisioning",
+    "absenceVerified": true,
+    "branchEnvironmentBindings": 0,
+    "currentProduction": "dpl_12CB9CTH3EBFMsvzpiWpc1zGEJtb",
+    "sha": "2add73ca749dfabfd442b58feebc58cc0befef1e"
+  },
+  "redundantMainCI": {
+    "run": 39018648786,
+    "conclusion": "cancelled",
+    "exactTreeCompared": true,
+    "notReportedAsAnotherPass": true
+  },
+  "result": "verified bounded backend release; full customer journey partial",
+  "flags": "customer flag unchanged/off; production hard-disabled",
+  "rollback": "Redeploy retained PR61 application and keep additive schema/history; isolated new logins are not production bindings"
+}

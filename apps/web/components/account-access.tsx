@@ -16,7 +16,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         </p>
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>
-            <AccountForm mode={mode} />
+            <AccountForm key={mode} mode={mode} />
           </Suspense>
         ) : (
           <AccessState kind="unavailable">
