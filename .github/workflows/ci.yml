@@ -27,7 +27,7 @@ jobs:
         run: npm install --global pnpm@11.19.0
       - name: Install workspace
         run: pnpm install --frozen-lockfile
-      - name: Ten-branch budget, preserving open PRs
+      - name: Git branch budget below nine, preserving open PRs
         env:
           GH_TOKEN: ${{ github.token }}
           REVIEW_BRANCH: ${{ github.head_ref || github.ref_name }}

@@ -1,0 +1,35 @@
+$ pnpm test:docs && pnpm test:infrastructure
+$ node --test tests/documents.test.mjs tests/design-system.test.mjs tests/world-geography.test.mjs
+✔ the design system marker exists exactly once (0.673488ms)
+✔ new CSS uses design tokens, never raw colours or fonts (0.375587ms)
+✔ legacy CSS debt does not grow (0.278563ms)
+✔ the root layout loads the single self-hosted interface font (3.953376ms)
+✔ developer handoff matrix points to real implementation, tests and decisions (26.479643ms)
+✔ documentation catalogue covers every Markdown document without duplicate or missing files (7.260755ms)
+✔ current developer entry and operational guides have valid local document links (15.818421ms)
+✔ implementation-canvas: original upload is preserved byte for byte (1.034552ms)
+✔ implementation-canvas: working copy preserves all supplied content (0.826293ms)
+✔ positioning-constitution: original upload is preserved byte for byte (0.603213ms)
+✔ positioning-constitution: working copy preserves all supplied content (0.870419ms)
+✔ public-experience: original upload is preserved byte for byte (0.458449ms)
+✔ public-experience: working copy preserves all supplied content (0.937739ms)
+✔ implementation plan contains 12 ordered parts and a complete canvas-packet mapping (0.954604ms)
+✔ revised V2 Part 04 owner packet retains its recorded integrity (0.655231ms)
+✔ revised V2 Part 05 owner packet retains its recorded integrity (0.538698ms)
+✔ UX acceptance ledgers keep phase identifiers, unique records and bounded verification aligned (75.196466ms)
+✔ every supported country has an outline or a point on the world map (1.015274ms)
+✔ the 27 EU member states all have outlines so the bloc can be drawn (0.145887ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 277.794812
+$ python -B -m unittest discover -s tests -p neon_projects_test.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.020s
+
+OK

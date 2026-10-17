@@ -1,0 +1,124 @@
+{
+  "checkedAt": "2026-10-17",
+  "result": "partial",
+  "previousAccessBlocker": "resolved",
+  "production": {
+    "merge": "c96420e58e3c096293c3c5600ce89903942ec90d",
+    "testedHead": "c1d7145d26d8230196975df7901afbc5069f67da",
+    "ciRun": "38942627188",
+    "deployment": "dpl_EWna2PQ1FCJyLQN1Aj6Q79NyvCBt",
+    "state": "READY",
+    "region": "fra1",
+    "publicAlias": "corridra.vercel.app",
+    "browserObservations": 7,
+    "anonymousProtectedStatus": 401,
+    "browserMutationRequests": 0,
+    "authConfigurationChanged": false
+  },
+  "isolatedAuth": {
+    "projectId": "odd-pond-26265871",
+    "permission": "ADMIN",
+    "region": "aws-eu-central-1",
+    "parentBranchId": "br-lingering-sea-b1eob57e",
+    "branchId": "br-silent-tree-b18dmm1n",
+    "branchName": "corridra-v3-auth-synthetic",
+    "nonReferenceTablesChecked": 25,
+    "populatedTablesBeforeProvisioning": [],
+    "providerAuthTablesBeforeProvisioning": 0,
+    "providerProvisioned": true,
+    "applicationName": "Corridra",
+    "requiredEmailVerificationPatchHTTP": 200,
+    "requiredEmailVerificationReadBack": true,
+    "verifyOnSignUpReadBack": true,
+    "verifyOnSignInReadBack": true,
+    "verificationMethod": "otp",
+    "trustedOrigins": ["http://localhost:3000"],
+    "localhostAllowed": true,
+    "applicationBindingsCreated": true,
+    "authenticatedCustomerJourney": "NOT VERIFIED",
+    "bindingTargets": ["development"],
+    "separateSigningMaterialGenerated": true,
+    "productionBindingsUnchanged": true,
+    "routeChecks": {
+      "result": "verified for anonymous/denial routes only",
+      "results": [
+        {
+          "path": "/api/auth/get-session",
+          "status": 200,
+          "finalPath": "/api/auth/get-session"
+        },
+        {
+          "path": "/account",
+          "status": 200,
+          "finalPath": "/signin"
+        },
+        {
+          "path": "/api/auth/sign-up/email",
+          "untrustedOriginStatus": 403
+        },
+        {
+          "path": "/api/auth/admin/list-users",
+          "status": 404
+        }
+      ],
+      "identityCreated": false,
+      "emailSent": false
+    },
+    "developmentBindingMetadata": [
+      {
+        "id": "DtQ72zDwJHQTVuaG",
+        "key": "NEON_AUTH_BASE_URL",
+        "target": ["development"],
+        "type": "plain"
+      },
+      {
+        "id": "QurDqjMYAxrPTzYQ",
+        "key": "NEON_AUTH_COOKIE_SECRET",
+        "target": ["development"],
+        "type": "encrypted"
+      },
+      {
+        "id": "2axD3buKWMqRi5KI",
+        "key": "CORRIDRA_NEON_AUTH_ENABLED",
+        "target": ["development"],
+        "type": "plain"
+      },
+      {
+        "id": "qOXECMyBUKkNX8hq",
+        "key": "APP_ORIGIN",
+        "target": ["development"],
+        "type": "plain"
+      }
+    ]
+  },
+  "gitBranches": {
+    "distinctBeforeNewWorkBranch": 6,
+    "distinctAfterNewWorkBranch": 7,
+    "maximumAllowed": 8,
+    "unfinishedAndDependencyBranchesPreserved": true
+  },
+  "remaining": [
+    "Branch-scoped Preview credentials and exact origin when a test deployment exists",
+    "Provider/session and authenticated browser acceptance",
+    "Additive customer-authority ADR and implementation",
+    "Customer-owned organisations, memberships and persistent missions",
+    "Independent delegation administration, participants and organiser economics"
+  ],
+  "liveGates": "D01-D06 and D08 remain closed",
+  "rollback": "No production runtime/schema settings changed. Do not delete the active unfinished synthetic branch; inspect bindings, children and work status before future retirement.",
+  "verification": {
+    "format": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "unitTests": 19,
+    "infrastructureTests": 7,
+    "permissionDenialTests": 15,
+    "permissionDenialFiles": 3,
+    "build": "passed",
+    "preservation": "45 routes,29 migration hashes,6 source hashes,18 expert IDs retained",
+    "limitations": [
+      "No authenticated customer signup/OTP/session revocation acceptance",
+      "No application source changed; full existing regression evidence belongs to the tested application release"
+    ]
+  }
+}
