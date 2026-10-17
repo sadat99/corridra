@@ -423,3 +423,14 @@ Added an account list/create/retry interface over the existing synthetic custome
 ### 17 October 2026: PR64 bounded release verification (Codex)
 
 PR64 merged 5e2c095331b392f590315d595f89e9055c19f175 after required CI39034554160 passed the exact head. Full production build,real restricted-database/denial tests and public/protected browsers passed;CodeQL remains skipped,D04 open. Exact-source production and the existing isolated identity preview are READY. Workspace list/create/retry and issuer/subject rejection are implemented/tested/deployed while exposure stays off;actual private OTP/session acceptance and company/team/mission/delegation gaps remain unverified/missing. No provider/schema/history/money/gate change. Forward evidence:docs/v3/phase-3/customer-workspace-ui/release.json and self-audit6.
+
+## 2026-10-17, Codex, synthetic customer collaboration backend
+
+- Request: continue the remaining V3 plan autonomously, preserving fewer than nine branches and all legacy authority.
+- Why: initial owner provisioning alone cannot support V3-06-003 collaboration. Reuse the existing customer service and optional migration lifecycle.
+- What changed: additive customer module0002, existing auth service, new gated access API, new restricted-database and route-denial tests; forward ADR032 and report. No UI control in this backend packet.
+- Verification: direct full format,lint,web/package types exit0;JS19pass/0fail,Python7OK;preservation45routes/29migration hashes/6sources/18expert IDs PASS. Real database/build/public/protected browsers pending required exact-head GitHub CI because local Docker/process operations are denied. No acceptance claimed for unrun tests.
+- Preserved: core29/customer0001 migrations,all old functions/policies/grants,initial owners,staff identity/MFA/source/financial authority and original tests. New authority is synthetic shell listing only. No dependencies or cloud settings changed.
+- Decisions:256-bit token hash only,first-response secret,24-hour expiry;single-use admitted recipient;immutable grants/revocations;original owner protected;bounded no-contact owner history;command/workspace locks and proof recheck. Lost token requires cancellation and fresh issue.
+- Open: collaboration UI,organisation linking,persistent missions,independent delegation/participant/economics,actual private provider acceptance and D01-D06/D08. Feature off,production disabled;module2 required before exposure. No new deletion.
+- Next: required CI,root-cause fixes if necessary,normal checked merge and exact-source deployment. Report:docs/v3/phase-3/customer-collaboration/report.json.

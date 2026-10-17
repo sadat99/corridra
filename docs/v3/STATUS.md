@@ -37,6 +37,8 @@ Recipient update, 17 October 2026: the owner confirms signup delivered an OTP on
 
 ## Next bounded packets
 
+In progress:synthetic workspace collaboration backend with additive module2,hashed single-use invitations,admitted member acceptance,owner cancellation/revocation and paginated history. Static checks pass;database/build/browser acceptance is pending. No collaboration UI or new company/mission authority is exposed. See [packet report](phase-3/customer-collaboration/report.json).
+
 1. Keep the verified workspace interface gated until actual private customer identity acceptance. The existing private-invitation path remains available. Continue independent synthetic SaaS implementation while that provider walkthrough remains unverified.
 2. Implement rights-aware company linking,collaboration/invitations/revocation and persistent mission authority in separately tested additions.
 3. Reuse the shared commercial engine for independent delegation,participant privacy and exact-currency organiser economics. Keep real communications and payments gated.

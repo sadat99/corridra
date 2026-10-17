@@ -53,6 +53,71 @@ export type CustomerWorkspaceOptions = {
   issuer: string;
 };
 
+export const customerAccessInput = z.discriminatedUnion('action', [
+  z
+    .object({
+      action: z.literal('invite'),
+      commandId: z.uuid(),
+      workspaceId: z.uuid(),
+      label: customerWorkspaceInput.shape.name,
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('accept'),
+      commandId: z.uuid(),
+      token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('revoke'),
+      commandId: z.uuid(),
+      workspaceId: z.uuid(),
+      kind: z.enum(['invitation', 'membership']),
+      targetId: z.uuid(),
+    })
+    .strict(),
+]);
+const accessPageInput = z
+  .object({
+    workspaceId: z.uuid(),
+    invitationAfter: z.uuid().optional(),
+    memberAfter: z.uuid().optional(),
+    pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  })
+  .strict();
+export type CustomerAccessOutcome = {
+  workspaceId: string;
+  invitationId?: string;
+  memberId?: string;
+  expiresAt?: string;
+  status?: 'cancelled' | 'revoked';
+  issued?: boolean;
+  token?: string | null;
+  workspace?: CustomerWorkspace;
+};
+export type CustomerAccessPage = {
+  workspaceId: string;
+  ownerProtected: true;
+  invitations: {
+    id: string;
+    label: string;
+    expiresAt: string;
+    memberId: string | null;
+    status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  }[];
+  memberships: {
+    id: string;
+    label: string;
+    role: 'member';
+    createdAt: string;
+    status: 'active' | 'revoked' | 'account-disabled';
+  }[];
+  nextInvitationAfter: string | null;
+  nextMemberAfter: string | null;
+};
+
 export function customerWorkspacesEnabled(env: NodeJS.ProcessEnv = process.env) {
   return (
     env.CORRIDRA_CUSTOMER_WORKSPACES_ENABLED === 'true' &&
@@ -74,7 +139,7 @@ export class CustomerWorkspaceService {
   async list(expectedSubject?: string, expectedIssuer?: string): Promise<CustomerWorkspace[]> {
     return this.transaction(
       async (db) => {
-        const result = await db.query('SELECT * FROM customer.workspaces()');
+        const result = await db.query('SELECT * FROM customer.collaborative_workspaces()');
         return result.rows.map((row) => ({
           id: row.id,
           name: row.name,
@@ -112,6 +177,82 @@ export class CustomerWorkspaceService {
           synthetic: workspace.synthetic,
           organisationId: workspace.organisation_id,
         };
+      },
+      expectedSubject,
+      expectedIssuer,
+    );
+  }
+
+  async listAccess(
+    input: unknown,
+    expectedSubject?: string,
+    expectedIssuer?: string,
+  ): Promise<CustomerAccessPage> {
+    const value = accessPageInput.parse(input);
+    return this.transaction(
+      async (db) => {
+        const {
+          rows: [row],
+        } = await db.query<{ result: CustomerAccessPage }>(
+          'SELECT customer.workspace_access_list($1,$2,$3,$4) AS result',
+          [
+            value.workspaceId,
+            value.invitationAfter ?? null,
+            value.memberAfter ?? null,
+            value.pageSize,
+          ],
+        );
+        return row.result;
+      },
+      expectedSubject,
+      expectedIssuer,
+    );
+  }
+
+  async access(
+    input: unknown,
+    expectedSubject?: string,
+    expectedIssuer?: string,
+  ): Promise<CustomerAccessOutcome> {
+    const value = customerAccessInput.parse(input);
+    return this.transaction(
+      async (db) => {
+        // Only a hash reaches PostgreSQL. A lost first response cannot recover the secret.
+        const token = value.action === 'invite' ? randomBytes(32).toString('base64url') : null;
+        const payload =
+          value.action === 'invite'
+            ? { workspaceId: value.workspaceId, label: value.label, tokenHash: sessionHash(token!) }
+            : value.action === 'accept'
+              ? { tokenHash: sessionHash(value.token) }
+              : { workspaceId: value.workspaceId, kind: value.kind, targetId: value.targetId };
+        const {
+          rows: [row],
+        } = await db.query<{ result: CustomerAccessOutcome }>(
+          'SELECT customer.workspace_access_command($1,$2,$3) AS result',
+          [value.commandId, value.action, JSON.stringify(payload)],
+        );
+        const result = row.result;
+        if (value.action === 'invite')
+          return { ...result, token: result.issued === true ? token : null };
+        if (value.action === 'accept') {
+          const {
+            rows: [workspace],
+          } = await db.query('SELECT * FROM customer.collaborative_workspaces() WHERE id=$1', [
+            result.workspaceId,
+          ]);
+          if (!workspace) throw new DomainError('Customer workspace is unavailable', 403);
+          return {
+            ...result,
+            workspace: {
+              id: workspace.id,
+              name: workspace.name,
+              role: workspace.role,
+              synthetic: workspace.synthetic,
+              organisationId: workspace.organisation_id,
+            },
+          };
+        }
+        return result;
       },
       expectedSubject,
       expectedIssuer,
