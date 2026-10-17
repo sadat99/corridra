@@ -438,3 +438,13 @@ PR64 merged 5e2c095331b392f590315d595f89e9055c19f175 after required CI3903455416
 ### 17 October 2026: PR65 privacy-header root repair and audit7 (Codex)
 
 Required CI39039863896 proved30 integration files/249 tests,including13 new collaboration cases,and production build;public browsers100passed/2failed because global Next headers overwrote the new API no-referrer policy. Protected tests skipped. Kept every test unchanged. Added a narrow later no-referrer/no-store rule for both customer workspace APIs;local lint and web/package types pass. Audit7 freshly accounts for all806 legacy controls against827 current,all119 command files/70 dispatch files unchanged,45routes/29migration hashes/6sources/18expertIDs retained. Full required new-head CI still pending;no merge,deploy,cloud migration,provider or flag change. Whole V3 partial.
+
+## 2026-10-17, Codex, sample workspace invitation acceptance UI under verification
+
+- Request:continue V3 autonomously with all preservation and release checks.
+- Why:the new synthetic collaboration API needs an honest customer entry point;owner issuing/management remains a separate packet.
+- What changed:new nested account form,existing gated workspace section,new4 browser protocol tests and a three-day artifact folder. No server/domain/permission/schema/provider/dependency change.
+- Verification:direct lint,web/package types pass;JS19/Python7 unit pass;45routes/29migration hashes/6sources/18expert IDs PASS;806 original/832 current controls with only2 previously verified OTP changes andzero new loss. Full exact-head CI/browser/screenshots/axe remain pending. Parent backend PR65 is still separate and unmerged while its repaired full CI runs.
+- Preserved:original account creation/retry/private mission routes,staff separation and synthetic/default-off/production-disabled gates. Tokens are memory-only,POST-only;strict member acknowledgement and original identity tuple;lost response reuses command,reload needs code re-entry.
+- Open:actual private provider acceptance,owner team UI,organisation/mission/delegation SaaS and D01-D06/D08.
+- Next:finish checked backend release,then publish this separate UI concern and run all required checks. Evidence:docs/v3/phase-1/workspace-invitation/report.json.

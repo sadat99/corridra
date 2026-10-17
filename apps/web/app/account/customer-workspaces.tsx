@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
+import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
@@ -273,8 +274,8 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
     >
       <h2>Your test workspaces</h2>
       <p>
-        Use fictional names only. Company profiles, team invitations and workspace projects are not
-        available here yet.
+        Use fictional names only. Company profiles, sending team invitations and workspace projects
+        are not available here yet.
       </p>
       {status === 'loading' && <p role="status">Loading your test workspaces…</p>}
       {status !== 'loading' && status !== 'ready' && (
@@ -318,6 +319,28 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
           >
             Refresh workspaces
           </button>
+          <CustomerWorkspaceInvitation
+            key={issuer + ':' + subject}
+            issuer={issuer}
+            subject={subject}
+            onJoined={() => {
+              void reload().then((loaded) => {
+                if (loaded)
+                  setMessage({
+                    text: 'Your test workspace membership is confirmed.',
+                    error: false,
+                  });
+              });
+            }}
+            onDenied={(status) => {
+              setRows([]);
+              setStatus(status === 403 ? 'changed' : failure(status));
+              setMessage({
+                text: 'Joining was not confirmed. Reload your account and check the invitation.',
+                error: true,
+              });
+            }}
+          />
           <form className="operator-form" aria-label="Create a test workspace" onSubmit={create}>
             <label className="field">
               Test workspace name

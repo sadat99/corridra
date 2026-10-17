@@ -1,0 +1,52 @@
+{
+  "result": "partial",
+  "baseline": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153",
+  "requirements": [
+    "V3-06-003",
+    "V3-07-023",
+    "V3-07-025",
+    "V3-07-026",
+    "V3-07-043",
+    "V3-07-044",
+    "V3-07-047",
+    "V3-09-079",
+    "V3-09-080",
+    "V3-09-086",
+    "V3-09-087"
+  ],
+  "existing": "Gated account workspace list/create/retry,independent private mission invitations and separately tested admitted customer collaboration backend",
+  "new": "Context-bound sample workspace invitation acceptance with memory-only code,same-command retries,strict success validation,denial clearing and safe reload/code re-entry",
+  "sourceAndDestination": "/account#customer-workspaces retains existing forms and private mission section;new contextual Join a test workspace disclosure calls POST /api/customer-workspace-access",
+  "backendContracts": "None changed by this UI packet;requires optional customer module2 before exposure. No schema,RLS,provider,permissions,money,event or dependency change.",
+  "localChecks": {
+    "format": "pass",
+    "lint": "pass",
+    "webTypes": "pass",
+    "packageTypes": "pass",
+    "javascriptUnit": "19 passed,0 failed",
+    "pythonUnit": "7 passed",
+    "preservation": "45routes/29migration hashes/6sources/18expert IDs PASS",
+    "actions": "806 original/832 current;only2 previously verified OTP changes;zero unaccounted original loss"
+  },
+  "exactHeadChecks": {
+    "integrationAndPermissionDenials": "pending CI",
+    "productionBuild": "pending CI",
+    "publicBrowsers": "pending CI",
+    "protectedAndNewComponentBrowsers": "pending CI"
+  },
+  "newTests": "4 component protocol cases:lost acknowledgement and duplicate submit,same-command retry,reload/re-entry,current issuer+subject,denials401/403/409/503,malformed success,clear uncertain code,legacy mission access,keyboard,responsive and axe. These fixtures do not establish actual private provider/session acceptance.",
+  "screenshots": "Planned immutable pre-UI 2a0055f and new UI at1440,768,390 in CI artifact .cache/v3-invitation-ui/after;no code entered in captured views;three-day retention,no image committed to repo.",
+  "featureFlag": "Existing CORRIDRA_CUSTOMER_WORKSPACES_ENABLED remains off;production hard-disabled. No new flag or real activation.",
+  "states": "Native required43-character code,loading/busy,empty,denied,unavailable,conflict,malformed response,lost acknowledgement,retry,reload and discard. Code never enters URLs/sessionStorage/localStorage;unmount aborts response handling.",
+  "remaining": [
+    "Owner issuing/cancellation/revocation UI",
+    "Canonical organisation linking",
+    "Persistent customer mission authority",
+    "Independent delegation/participant/economics",
+    "Actual private OTP/session walkthrough",
+    "Full legacy role/state acceptance",
+    "D01-D06/D08"
+  ],
+  "rollback": "Keep flag off or redeploy retained compatible app;preserve additive backend/access/event history. UI adds no data migration.",
+  "budget": "Reuse own branch;distinct local/remote union8,max8. Existing artifact retention only;new screenshot folder added to existing upload."
+}
