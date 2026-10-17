@@ -1,6 +1,6 @@
 {
   "result": "partial",
-  "baseline": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153",
+  "baseline": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
   "requirements": [
     "V3-06-003",
     "V3-07-023",
@@ -48,5 +48,10 @@
     "D01-D06/D08"
   ],
   "rollback": "Keep flag off or redeploy retained compatible app;preserve additive backend/access/event history. UI adds no data migration.",
-  "budget": "Reuse own branch;distinct local/remote union8,max8. Existing artifact retention only;new screenshot folder added to existing upload."
+  "budget": "Reuse own branch;distinct local/remote union8,max8. Existing artifact retention only;new screenshot folder added to existing upload.",
+  "immutableBrowserBaseline": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153,exact same pre-UI treeb3d6934 as merged baseline",
+  "sourceCommit": "ba99db4fed1c8ed653a612f10d99edae57d2e5a5",
+  "sourceTree": "5f1fe1168f91e201995fd5c1250e6cc85dadbf3c",
+  "backendRelease": "PR65 verified,merged/deployed89c9d07;isolated module2 installed;full249/102/22 checks pass. This does not verify new UI.",
+  "selfAudit": "docs/v3/self-audit-8.json"
 }

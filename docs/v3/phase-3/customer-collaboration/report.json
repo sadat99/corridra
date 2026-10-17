@@ -1,5 +1,5 @@
 {
-  "result": "partial",
+  "result": "verified bounded backend release;product PARTIAL;exposure gated",
   "baseline": "5e2c095331b392f590315d595f89e9055c19f175",
   "requirements": ["V3-06-003", "V3-09-079", "V3-09-080", "V3-09-081", "V3-09-087"],
   "existing": "Independent verified customer identity, explicit synthetic admission, bounded session proofs, immutable initial owner grants, workspace provisioning and append-only events",
@@ -16,14 +16,14 @@
     "preservation": "45 routes,29 migration hashes,6 source hashes,18 expert IDs PASS"
   },
   "exactHeadChecks": {
-    "databaseAndPermissionDenials": "pending required GitHub CI; local Docker socket EPERM",
-    "productionBuild": "pending required GitHub CI; local child-process spawning EPERM",
-    "publicAndNewRouteBrowsers": "pending required GitHub CI",
-    "protectedOperatorBrowsers": "pending required GitHub CI"
+    "databaseAndPermissionDenials": "30 files249 tests passed,including13 new collaboration tests",
+    "productionBuild": "passed",
+    "publicAndNewRouteBrowsers": "102 passed(2.9m)",
+    "protectedOperatorBrowsers": "22 passed(10.3m)"
   },
   "newTests": "13 real restricted-database tests, including populated module1 upgrade and original object/data preservation, concurrency, expiry/revocation, command conflicts, private grants, disabled account and expiring proof lock wait; default-off browser route checks",
   "states": "New API handles unavailable, denied, invalid, conflict and retry through existing safe HTTP errors. Owner history distinguishes pending,expired,cancelled,accepted and active,revoked,account-disabled. No UI loading/empty/recovery acceptance claimed for this backend packet.",
-  "featureFlags": "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED remains off; production hard-disabled. No cloud migration or provider/account/settings change.",
+  "featureFlags": "Isolated module2 installed and restricted denials verified;workspace flag off,production hard-disabled;no provider/account/signing change",
   "rollout": "Install optional module2 before enabling the new server; do not silently hide invited membership on a missing schema. Original functions stay available for the retained old application.",
   "rollback": "Keep flag off or redeploy the prior application. Retain additive tables, initial owner grants and all access/event history; never roll migration history back.",
   "remaining": [
@@ -37,7 +37,7 @@
   ],
   "branchBudget": "Fresh local5/remote6/distinct8/max8; reuse own branch; preserve open dependency PRs and unfinished/environment-bound refs",
   "cleanup": "No new deletion claimed. Required retained production,acceptance,rollback and unfinished resources remain.",
-  "testedCandidate": "a578fd74dab23b4a4245fe3af9de06748614a521",
+  "testedCandidate": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153",
   "failedCi": {
     "run": 39039863896,
     "job": 117416959674,
@@ -47,5 +47,7 @@
     "protectedBrowser": "skipped,not passed"
   },
   "repair": "Later narrow next.config no-referrer/no-store rule for both customer workspace APIs;all existing and new tests unchanged;full required CI pending",
-  "selfAudit": "docs/v3/self-audit-7.json"
+  "selfAudit": "docs/v3/self-audit-7.json",
+  "release": "docs/v3/phase-3/customer-collaboration/release.json",
+  "cloudUpgrade": "docs/v3/phase-3/customer-collaboration/cloud-upgrade.json"
 }

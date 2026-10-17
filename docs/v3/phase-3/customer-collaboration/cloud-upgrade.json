@@ -1,0 +1,79 @@
+{
+  "result": "verified bounded optional customer module2 install on isolated child only",
+  "project": "odd-pond-26265871",
+  "branch": "br-silent-tree-b18dmm1n",
+  "parent": "br-lingering-sea-b1eob57e",
+  "database": "corridra",
+  "role": "corridra_migrator",
+  "region": "aws-eu-central-1",
+  "testedHead": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153",
+  "merge": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
+  "canonicalModule": "packages/db/customer-migrations/0002_workspace_collaboration.sql",
+  "moduleSha256": "15e7a9aa23e60d537707aedb69b39f2a7b992c3657af2179155f8f65e8482cff",
+  "guardedSqlSha256": "741d09f6cf4bf201330ac919f06a539709d24889a9d24c1c7247f0bb65323289",
+  "before": {
+    "coreMigrations": 29,
+    "customerMigrations": 1,
+    "workspaces": 0,
+    "admitted": 0,
+    "proofs": 0
+  },
+  "readOnlyPreflight": "DO succeeded with no module execution or receipt write;counts verified unchanged",
+  "apply": "DO succeeded atomically;all preservation assertions passed",
+  "repeat": "same exact guarded statement succeeded without changing receipts",
+  "guards": [
+    "Fresh exact child/project/parent and nonprimary/nondefault status",
+    "Explicit database and migration role",
+    "All29 canonical core source hashes",
+    "Initial customer0001 complete receipt",
+    "No unexpected customer history or active workspace/admission/proof state",
+    "All old app/identity/customer table row digests",
+    "All old function definitions and ACLs",
+    "All old table ACLs,RLS and policies",
+    "All old core/initial module receipt fields",
+    "Migration advisory transaction lock and rollback on assertion failure"
+  ],
+  "after": {
+    "database": "corridra",
+    "migration_role": "corridra_migrator",
+    "core_count": "29",
+    "customer_receipts": [
+      {
+        "name": "0001_synthetic_workspace_authority.sql",
+        "sha256": "ffe34c899b5b316d19656db77a2c2c9417782a7d5a5bb2c01d95e44b0aa53a29"
+      },
+      {
+        "name": "0002_workspace_collaboration.sql",
+        "sha256": "15e7a9aa23e60d537707aedb69b39f2a7b992c3657af2179155f8f65e8482cff"
+      }
+    ],
+    "workspaces": "0",
+    "admitted": "0",
+    "verified_provider_users": "1",
+    "private_rls_tables": "5",
+    "private_reads_denied": true,
+    "runtime_command_allowed": true,
+    "auth_command_allowed": false,
+    "runtime_private_helper_allowed": false
+  },
+  "restrictedLogins": [
+    {
+      "check": "runtime cannot list without a customer proof",
+      "isError": true,
+      "text": "NeonDbError: Customer access denied"
+    },
+    {
+      "check": "runtime cannot inspect private membership records",
+      "isError": true,
+      "text": "NeonDbError: permission denied for schema customer_private"
+    },
+    {
+      "check": "auth cannot execute membership commands",
+      "isError": true,
+      "text": "NeonDbError: permission denied for schema customer"
+    }
+  ],
+  "productionDefaultTemplateAndLiveSynthetic": "untouched",
+  "providerAndSigningSettings": "unchanged;existing verified provider account retained;no admission/no feature enablement",
+  "limits": "Actual private customer browser acceptance unverified;no real commercial operations."
+}
