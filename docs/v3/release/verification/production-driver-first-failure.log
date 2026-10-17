@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.getAttribute: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link', { name: 'Find Buyers & Partners', exact: true })[22m
+
+    at /workspace/corridra/.cache/v3-production-check.mjs:25:75 {
+  log: [
+    "  - waiting for getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link', { name: 'Find Buyers & Partners', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

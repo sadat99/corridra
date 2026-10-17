@@ -39,5 +39,6 @@
     "Independent usability comparison NOT VERIFIED"
   ],
   "featureFlagsChanged": [],
-  "rollback": "Revert entry component/CSS commit; original routes, request schema, draft format, domain code and records untouched."
+  "rollback": "Revert entry component/CSS commit; original routes, request schema, draft format, domain code and records untouched.",
+  "boundedDeploymentEvidence": "docs/v3/release/report.json"
 }

@@ -38,3 +38,5 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Use discovered file paths and navigation IDs in inventories and verification; never guess them.
 - After a patch context mismatch, read the exact target lines before retrying.
 - Before publishing, verify the Git author matches the authenticated repository owner and established accepted release identity; correct inherited local configuration forward without rewriting pushed history.
+- After a missing path or unsupported CLI field, inspect available paths/fields before retrying; never substitute another guessed name.
+- Verify rendered accessible names, including descriptive descendants, before writing exact navigation selectors; preserve every behavior and denial assertion when correcting a driver.

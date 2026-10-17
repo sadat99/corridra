@@ -68,3 +68,7 @@ The complete [UX10X handoff](../ux10x/master-handoff.md), [architecture](../ux10
 ## How future developers should report progress
 
 For each requirement report: source/decision, existing code, actual tests and environment, release SHA, permitted/denied behavior, remaining gap and precise next action. Keep “implemented”, “tested”, “deployed”, “recipient confirmed” and “externally approved” separate. Update this plan and matrix when scope changes. Preserve dated release evidence and original uploads; never silently change history to match a new plan.
+
+### V3 bounded foundation release — 16 October 2026
+
+PR58 is merged at f5815ef; exact-head full CI passed and the explicit production deployment is READY with the correct source SHA, Frankfurt region and public alias. Three-product request entry and protected founder clarity are verified within their bounded scopes. See [release evidence](../v3/release/report.json) and the [V3 ledger](../V3_LEDGER.md). Whole V3 remains partial: Phase3 is blocked by isolated customer identity environment/project access, and Phase5 gates remain closed. No SaaS/customer admission, real operations or full V3 acceptance is implied.

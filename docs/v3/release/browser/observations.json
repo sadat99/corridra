@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-10-16T17:39:26.429Z",
+  "origin": "https://corridra.vercel.app",
+  "result": "verified for bounded read-only routes and anonymous denial",
+  "observations": [
+    {
+      "path": "/",
+      "width": 1440,
+      "status": 200,
+      "primaryChoices": 3,
+      "overflowPx": 0
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "status": 200,
+      "primaryChoices": 3,
+      "overflowPx": 0
+    },
+    {
+      "path": "/plan?job=buyers",
+      "status": 200,
+      "prefill": "buyers"
+    },
+    {
+      "path": "/plan?job=sourcing",
+      "status": 200,
+      "prefill": "sourcing"
+    },
+    {
+      "path": "/plan?job=delegations",
+      "status": 200,
+      "prefill": "delegations"
+    },
+    {
+      "path": "/operator/signin",
+      "status": 200,
+      "anonymousFounderRegions": 0
+    },
+    {
+      "path": "/api/workspace/operations-controls",
+      "status": 401,
+      "anonymousDenied": true
+    }
+  ],
+  "mutationRequests": [],
+  "limitations": [
+    "No live authenticated mutations or customer operations exercised",
+    "Protected founder authority verified in isolated full 17-case suite"
+  ]
+}

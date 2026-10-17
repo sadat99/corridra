@@ -336,3 +336,9 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Preserved: all original route/control/backend/history/financial authorities. Flags/production settings unchanged; no deployment claimed. Whole V3 remains partial; independent organiser SaaS is missing and activation gates stay closed.
 - Rollback: revert the entry/founder UI files while retaining ledger/evidence; no data/schema rollback needed.
 - Next: restore correct project/isolated identity access, then resume the authorized Phase 3 ADR/additive ownership and permission-denial work.
+
+### 2026-10-16 — V3 bounded foundation release evidence
+
+- PR58 normal merge f5815ef has the full tree tested by successful exact-head CI38937305833 (20m34s); preview READY. Explicit production deployment dpl_HmrXkqKxggFHwJCaksSdPRkDwe4Z READY, correct Git SHA/fra1/public alias verified.
+- Read-only production browser verifies three entries, prefill, two viewport layouts, sign-in and anonymous401; no mutation requests. Full local regression17 protected/98 public/204 integration plus unit/security/build evidence retained. No backend/auth/RLS/migration/money/history/activation setting changed.
+- Ledger and docs/v3/release/report.json contain per-phase partial/blocked/gated results, rollback and cleanup. Full V3 remains unaccepted; isolated customer identity environment is the true next blocker. Live gates remain closed; CodeQL skipped is not passed.
