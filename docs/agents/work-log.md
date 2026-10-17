@@ -434,3 +434,7 @@ PR64 merged 5e2c095331b392f590315d595f89e9055c19f175 after required CI3903455416
 - Decisions:256-bit token hash only,first-response secret,24-hour expiry;single-use admitted recipient;immutable grants/revocations;original owner protected;bounded no-contact owner history;command/workspace locks and proof recheck. Lost token requires cancellation and fresh issue.
 - Open: collaboration UI,organisation linking,persistent missions,independent delegation/participant/economics,actual private provider acceptance and D01-D06/D08. Feature off,production disabled;module2 required before exposure. No new deletion.
 - Next: required CI,root-cause fixes if necessary,normal checked merge and exact-source deployment. Report:docs/v3/phase-3/customer-collaboration/report.json.
+
+### 17 October 2026: PR65 privacy-header root repair and audit7 (Codex)
+
+Required CI39039863896 proved30 integration files/249 tests,including13 new collaboration cases,and production build;public browsers100passed/2failed because global Next headers overwrote the new API no-referrer policy. Protected tests skipped. Kept every test unchanged. Added a narrow later no-referrer/no-store rule for both customer workspace APIs;local lint and web/package types pass. Audit7 freshly accounts for all806 legacy controls against827 current,all119 command files/70 dispatch files unchanged,45routes/29migration hashes/6sources/18expertIDs retained. Full required new-head CI still pending;no merge,deploy,cloud migration,provider or flag change. Whole V3 partial.

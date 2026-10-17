@@ -1,0 +1,113 @@
+{
+  "audit": 7,
+  "afterCommit": "a578fd74dab23b4a4245fe3af9de06748614a521",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 827,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Original collector JSX AST binding/visibility algorithm over the current worktree; CSS/location ignored. Cross-checked all806 original controls, retaining the two previously verified OTP changes. Not dynamic runtime acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "Fresh JSX AST806 original/827 current;only2 previously verified OTP binding changes,zero unaccounted loss. All119 original command source files and70 API dispatch source files are unchanged against the original baseline. All45 route files and18 expert destinations retained. Full dynamic role/state coverage remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "New optional module2 grants admitted synthetic shell membership only. Original function/policy/ACL/row preservation and cross-workspace/member/forged-authority denials pass among249 integration tests. Staff MFA,app.actor_id and commercial/source authority unchanged. Actual private provider acceptance remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "Guard45routes/29migration hashes/6source hashes/18expertIDs PASS. Original customer0001 hash retained. New populated module1-to2 test compares all old rows/functions/ACLs/policies/receipts and passes. Access changes append service-executor/customer-initiator event/audit/outbox records. No cloud migration yet.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "All original flagship requirements remain mapped. Collaboration API adds synthetic access only;company linking,persistent missions and independent delegation/participant/economics remain missing. No interface-only commercial capability.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser SaaS remains MISSING;no complete organiser journey release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical company identity or contextual commercial role change. organisationId remains null rather than inventing or publishing a private company record.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 expert navigation IDs and original paths retained;no operator or protected operation hidden or removed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "No real-data admission,outreach,inference,payment or activation. Customer flag off and production hard-disabled. Explicit synthetic test fixtures are not actual managed-provider session evidence.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "CI39039863896:30 integration files/249 tests and build passed;public100passed/2failed privacy-header tests;protected suite skipped. New tests unchanged. Narrow header precedence repair is under verification;no merge,deployment or whole-V3 acceptance. CodeQL skipped,D04 open.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "No UI control or layout change in the backend packet. Honest API/history states added;UI loading/recovery/accessibility/responsive journey acceptance is still missing. No measured usability improvement claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Actual private OTP/session acceptance",
+    "Collaboration UI and canonical organisation linking",
+    "Persistent customer missions",
+    "Independent delegation/participant/economics",
+    "Full legacy role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "repairScope": "next.config narrowly scoped customer API privacy headers; no old test edited"
+}

@@ -36,5 +36,16 @@
     "D01-D06/D08"
   ],
   "branchBudget": "Fresh local5/remote6/distinct8/max8; reuse own branch; preserve open dependency PRs and unfinished/environment-bound refs",
-  "cleanup": "No new deletion claimed. Required retained production,acceptance,rollback and unfinished resources remain."
+  "cleanup": "No new deletion claimed. Required retained production,acceptance,rollback and unfinished resources remain.",
+  "testedCandidate": "a578fd74dab23b4a4245fe3af9de06748614a521",
+  "failedCi": {
+    "run": 39039863896,
+    "job": 117416959674,
+    "integration": "30 files,249 passed including13 new collaboration tests",
+    "build": "passed",
+    "publicBrowser": "100 passed,2 failed:global referrer-policy override",
+    "protectedBrowser": "skipped,not passed"
+  },
+  "repair": "Later narrow next.config no-referrer/no-store rule for both customer workspace APIs;all existing and new tests unchanged;full required CI pending",
+  "selfAudit": "docs/v3/self-audit-7.json"
 }

@@ -1,0 +1,31 @@
+2026-10-17T14:19:26.5038322Z  ✓ tests/integration/customer-workspace-collaboration.test.ts (13 tests) 3768ms
+2026-10-17T14:21:15.4121060Z  Test Files  30 passed (30)
+2026-10-17T14:21:15.4127699Z       Tests  249 passed (249)
+    Expected: "no-referrer"
+    Received: "strict-origin-when-cross-origin"
+        at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+    Expected: "no-referrer"
+    Received: "strict-origin-when-cross-origin"
+        at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+    Expected: "no-referrer"
+    Received: "strict-origin-when-cross-origin"
+        at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+    Expected: "no-referrer"
+    Received: "strict-origin-when-cross-origin"
+        at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+2026-10-17T14:24:56.5855543Z     Expected: "no-referrer"
+2026-10-17T14:24:56.5856062Z     Received: "strict-origin-when-cross-origin"
+2026-10-17T14:24:56.5861199Z         at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+2026-10-17T14:24:56.5871712Z     Expected: "no-referrer"
+2026-10-17T14:24:56.5872210Z     Received: "strict-origin-when-cross-origin"
+2026-10-17T14:24:56.5877608Z         at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+2026-10-17T14:24:56.5890499Z     Expected: "no-referrer"
+2026-10-17T14:24:56.5890972Z     Received: "strict-origin-when-cross-origin"
+2026-10-17T14:24:56.5895852Z         at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+2026-10-17T14:24:56.5904150Z     Expected: "no-referrer"
+2026-10-17T14:24:56.5904575Z     Received: "strict-origin-when-cross-origin"
+2026-10-17T14:24:56.5909485Z         at /home/runner/work/corridra/corridra/tests/browser/v3-customer-collaboration-gate.spec.ts:19:51
+2026-10-17T14:24:56.5916266Z   2 failed
+2026-10-17T14:24:56.5919833Z   100 passed (2.4m)
+2026-10-17T14:24:56.5929600Z ##[notice]  2 failed
+  100 passed (2.4m)
