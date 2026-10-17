@@ -1,0 +1,145 @@
+{
+  "result": "verified",
+  "scope": "Owned production origin/navigation repair;no application source change. Actual private authenticated customer/staff browser completion remains separately unverified.",
+  "source": "720d96ed8606d27c020fd470add1c9c6277faa85",
+  "tree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "cause": "Production APP_ORIGIN pointed at the hosting alias,so existing exact-origin proxy canonicalized custom-domain auth/workflow pages to vercel.app.",
+  "productionOriginBefore": "https://corridra.vercel.app",
+  "productionOriginAfter": "https://c.obsidianglobal.studio",
+  "configuration": {
+    "project": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+    "productionOriginEnvId": "c9LCBVKrQ1WVe8dm",
+    "target": ["production"],
+    "providerProject": "odd-pond-26265871",
+    "providerBranch": "br-lucky-darkness-b1ppj8en",
+    "trustedOrigins": ["https://corridra.vercel.app", "https://c.obsidianglobal.studio"],
+    "provider": "better_auth",
+    "signingMaterial": "unchanged",
+    "accountsAndMFA": "unchanged",
+    "preview": "independent exact origin,settings and alias unchanged"
+  },
+  "deployment": {
+    "id": "dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP",
+    "url": "corridra-9r9be4z84-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "720d96ed8606d27c020fd470add1c9c6277faa85",
+    "regions": ["fra1"]
+  },
+  "aliases": [
+    {
+      "alias": "corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+      "deploymentId": "dpl_6nLxrMSHJga68UnfvFZRBRrXhRif"
+    },
+    {
+      "alias": "c.obsidianglobal.studio",
+      "deploymentId": "dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP"
+    },
+    {
+      "alias": "corridra.vercel.app",
+      "deploymentId": "dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP"
+    }
+  ],
+  "verification": {
+    "originalCI": {
+      "run": 39050267774,
+      "attempt": 2,
+      "job": 117455840379,
+      "integration": 249,
+      "public": 102,
+      "protected": 31,
+      "buildStaticSecurityUnit": "pass",
+      "originalTests": "unchanged",
+      "CodeQL": "skipped,D04 open"
+    },
+    "customOriginPreflightAssertions": 26,
+    "beforeRedirectFlows": 7,
+    "afterProductionFlows": 23,
+    "securityChecks": [
+      {
+        "path": "/api/operator-setup",
+        "origin": "https://c.obsidianglobal.studio",
+        "expected": 401,
+        "status": 401,
+        "location": null,
+        "error": "Sign in to your customer account to check an invitation.",
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/api/operator-setup",
+        "origin": "https://corridra.vercel.app",
+        "expected": 403,
+        "status": 403,
+        "location": null,
+        "error": "Request origin is not allowed.",
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/api/operator-setup",
+        "origin": "https://untrusted.invalid",
+        "expected": 403,
+        "status": 403,
+        "location": null,
+        "error": "Request origin is not allowed.",
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/api/auth/sign-in/email",
+        "origin": "https://c.obsidianglobal.studio",
+        "expected": 400,
+        "status": 400,
+        "location": null,
+        "code": "VALIDATION_ERROR",
+        "cacheControl": "no-store"
+      }
+    ],
+    "protectedPreview": {
+      "url": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app/verify-email",
+      "status": 200,
+      "codeInputVisible": true,
+      "aliasUnchanged": true
+    },
+    "totalFinalChecks": 28,
+    "productMutations": 0,
+    "mailSent": 0,
+    "credentialsProvided": 0,
+    "sourceEdited": false,
+    "normalizer": "Original collector miscounted two JSONL records delivered in one stdout chunk;parsed every line from retained raw output. No HTTP assertion removed and no product/test change.",
+    "probeLimitations": "Initial combined direct probe exited1 before final verification;diagnostic stderr was truncated. Production-only rerun exited0;JSONL collector count repaired using retained output. Protected preview separately verified with its authorized fetch connector;no failed probe treated as acceptance."
+  },
+  "HTTPExecution": {
+    "before": {
+      "session": "sbx_ec2BhL8HHOqc0ZBZHUN3JdVhqVni",
+      "status": "stopped",
+      "command": {
+        "id": "cmd_43efa4ea42c745739128d3d2011c",
+        "exitCode": 0,
+        "durationMs": 3284
+      }
+    },
+    "combinedAfter": {
+      "session": "sbx_cBGesNS6GGbJQqcmxTfs4sBYKcJI",
+      "status": "stopped",
+      "result": "unaccepted failed probe"
+    },
+    "productionAfter": {
+      "session": "sbx_pPyJbZgIevUpcSrSuV4XsxyK73D4",
+      "status": "stopped",
+      "command": "cmd_dd397eeae8614ff19d6dec365f4d",
+      "exitCode": 0
+    },
+    "security": {
+      "session": "sbx_dxJ8OmtqQHIwEjNlb2HohNpM9IkO",
+      "status": "stopped",
+      "command": {
+        "id": "cmd_f41eaa07982748209a5a8f5a4950",
+        "exitCode": 0,
+        "durationMs": 881
+      }
+    },
+    "scope": "Secret-free,no source/ports/snapshots,persistence off,all stopped with read-back proof."
+  },
+  "preservation": "Exact single-origin CSRF/callback checks retained;old alias pages307 to owned domain;POSTs not redirected. Old exact provider origin retained for issued callbacks. Host-scoped cookies may require a fresh sign-in. No identity/RLS/migration/source/history/money/event/admission change.",
+  "featureFlags": "Customer workspace exposure off,production hard-disabled,D01-D06/D08 closed.",
+  "rollback": "Restore previous production APP_ORIGIN and explicitly deploy retained tested source. Keep both exact provider domains for existing callbacks;retain accounts,signing material,additive schema and history.",
+  "remaining": "Private authenticated sign-in/reload/sign-out/revocation,whole V3 organisation/mission/delegation/participant/economics and exhaustive role/state acceptance remain missing/unverified."
+}

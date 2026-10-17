@@ -1,0 +1,263 @@
+{
+  "result": "verified",
+  "scope": "Gated owner UI source/protocol and exact-source deployed route checks;whole V3 PARTIAL. Does not verify staying on the custom domain;that owner-reported navigation issue is a separate current packet.",
+  "pr": 67,
+  "testedHead": "80c37c16860ee80e0c5603a030fae1e201a1f745",
+  "testedTree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "merge": "720d96ed8606d27c020fd470add1c9c6277faa85",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39050267774,
+    "attempt": 2,
+    "job": 117455840379,
+    "result": "success",
+    "integrationFiles": 30,
+    "integrationTests": 249,
+    "publicBrowsers": 102,
+    "protectedBrowsers": 31,
+    "newOwnerCases": 5,
+    "build": "pass",
+    "staticSecurityUnit": "pass",
+    "CodeQL": "skipped;D04 open",
+    "originalTests": "unchanged",
+    "firstAttempt": "Failure retained in verification/failed-ci-39050267774.log and first-attempt-artifacts.json.",
+    "limitations": "Existing zero-second datetime driver normalization boundary and shared operator fixture coupling remain unresolved reliability limitations."
+  },
+  "artifact": {
+    "id": 12108838900,
+    "sizeInBytes": 19621961,
+    "digest": "sha256:fbe17297b9aef77b8abd7c8eedc6b58c62c6a0f1e79b40e6992db61819647b50",
+    "expiresAt": "2026-10-20T17:43:16Z",
+    "scope": "Immutable before/after1440/768/390,keyboard,axe,overflow;capture before code issuance. No separate manual image review/private provider walkthrough claimed."
+  },
+  "production": {
+    "id": "dpl_D3Ju8g71jNkQhwMuN28SRsA92N5U",
+    "url": "corridra-8nnl48je5-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "720d96ed8606d27c020fd470add1c9c6277faa85",
+    "regions": ["fra1"],
+    "target": "production"
+  },
+  "preview": {
+    "id": "dpl_6nLxrMSHJga68UnfvFZRBRrXhRif",
+    "url": "corridra-qdyry3i6h-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "720d96ed8606d27c020fd470add1c9c6277faa85",
+    "regions": ["fra1"],
+    "target": null
+  },
+  "aliases": [
+    {
+      "alias": "corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+      "deploymentId": "dpl_6nLxrMSHJga68UnfvFZRBRrXhRif"
+    },
+    {
+      "alias": "c.obsidianglobal.studio",
+      "deploymentId": "dpl_D3Ju8g71jNkQhwMuN28SRsA92N5U"
+    },
+    {
+      "alias": "corridra.vercel.app",
+      "deploymentId": "dpl_D3Ju8g71jNkQhwMuN28SRsA92N5U"
+    }
+  ],
+  "productionRoutes": [
+    {
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/signup",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/signin",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "host": "corridra.vercel.app",
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401,
+      "contentType": "application/json",
+      "error": "Sign in to continue",
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "evidence": "Direct unauthenticated Node fetch in temporary isolated sandbox;exit0"
+    },
+    {
+      "host": "c.obsidianglobal.studio",
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401,
+      "contentType": "application/json",
+      "error": "Sign in to continue",
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "evidence": "Direct unauthenticated Node fetch in temporary isolated sandbox;exit0"
+    }
+  ],
+  "previewRoutes": [
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "anonymousSession": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    }
+  ],
+  "routeObservations": 12,
+  "productMutations": 0,
+  "HTTPVerification": {
+    "command": "cmd_84a8ee74ef6b416793bdd2de7bbb",
+    "exitCode": 0,
+    "session": "sbx_ie0BJDngNbOfT4AzZKyA9ZAw8E05",
+    "finalStatus": "stopped",
+    "firstExpiredSession": "sbx_LqnV9nPDsGv6IJjA89puCkdrjjjh;stopped confirmed",
+    "scope": "Secret-free,no source,ports or persistence;two GETs on actual production domains. Connector authentication error not counted as product denial;direct JSON401 verified. No schema/provider/admission change."
+  },
+  "featureFlags": "Customer exposure off;production hard-disabled;D01-D06/D08 closed.",
+  "preservation": "45routes/29core hashes/6source hashes/18expertIDs;806 original/850 current controls with2 previously verified OTP changes,0 unaccounted loss.119 command/70 dispatch entries span32 files;30 unchanged from e9ed2e5,2 previously verified wiring/privacy additions.",
+  "remaining": [
+    "Actual private provider reload/sign-out/revocation acceptance",
+    "Canonical organisation linking/owner transfer",
+    "Persistent customer-owned missions;ADR033 design only",
+    "Independent delegation/participant/economics",
+    "Exhaustive legacy role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "rollback": "Keep flag off or redeploy retained PR66 dpl_CUUdsauFdsUySaha6LCZPXzAwvDG;retain additive schema and canonical/access/event history.",
+  "branchBudget": {
+    "local": 5,
+    "remote": 6,
+    "distinct": 8,
+    "maximum": 8,
+    "deleted": 0
+  },
+  "phaseResults": [
+    {
+      "phase": 0,
+      "result": "partial",
+      "gap": "Exhaustive dynamic legacy coverage unverified"
+    },
+    {
+      "phase": 1,
+      "result": "partial",
+      "verified": "Three-product entry,OTP field,role navigation and bounded gated workspace/team controls",
+      "gap": "Remaining contextual/customer screens and custom-domain navigation repair"
+    },
+    {
+      "phase": 2,
+      "result": "partial",
+      "verified": "Existing managed buyer/sourcing/machinery/programme capabilities retained",
+      "gap": "Full independent/self-service flagship acceptance"
+    },
+    {
+      "phase": 3,
+      "result": "partial",
+      "verified": "Synthetic provisioning/collaboration backends and gated client controls",
+      "gap": "Organisation/mission/delegation/participant/economics and private provider acceptance"
+    },
+    {
+      "phase": 4,
+      "result": "partial",
+      "verified": "Bounded source-backed founder overview/explorer and role denials",
+      "gap": "Whole venture reporting/measurements/all-audience walkthroughs"
+    },
+    {
+      "phase": 5,
+      "result": "blocked",
+      "status": "GATED",
+      "gap": "Independent legal/provider/security/activation and pilot evidence"
+    }
+  ]
+}

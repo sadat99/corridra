@@ -1,0 +1,358 @@
+[
+  {
+    "kind": "route",
+    "name": "custom/",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/workspace",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/workspace",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/operator/setup",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/operator/setup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/programme",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/programme",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/plan",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/plan",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/buyer",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/buyer",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "legacy/operator/setup",
+    "hops": [
+      {
+        "url": "https://corridra.vercel.app/operator/setup",
+        "status": 307,
+        "location": "https://c.obsidianglobal.studio/operator/setup",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/operator/setup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/client",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/client",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/api/customer-workspace-access",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/api/customer-workspace-access",
+        "status": 503,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "anonymousSession": false,
+        "error": "Customer workspaces are unavailable"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/signup",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/signup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/api/auth/get-session",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/api/auth/get-session",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "anonymousSession": true,
+        "error": null
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "legacy/reset-password?token=synthetic",
+    "hops": [
+      {
+        "url": "https://corridra.vercel.app/reset-password?token=synthetic",
+        "status": 307,
+        "location": "https://c.obsidianglobal.studio/reset-password?token=synthetic",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/reset-password?token=synthetic",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/forgot-password",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/forgot-password",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "legacy/signup",
+    "hops": [
+      {
+        "url": "https://corridra.vercel.app/signup",
+        "status": 307,
+        "location": "https://c.obsidianglobal.studio/signup",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/signup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/verify-email",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/verify-email",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/api/customer-workspaces",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/api/customer-workspaces",
+        "status": 503,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "anonymousSession": false,
+        "error": "Customer workspaces are unavailable"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/signin",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "legacy/signin",
+    "hops": [
+      {
+        "url": "https://corridra.vercel.app/signin",
+        "status": 307,
+        "location": "https://c.obsidianglobal.studio/signin",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/reset-password?token=synthetic",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/reset-password?token=synthetic",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/account",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/account",
+        "status": 307,
+        "location": "/signin",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "legacy/account",
+    "hops": [
+      {
+        "url": "https://corridra.vercel.app/account",
+        "status": 307,
+        "location": "https://c.obsidianglobal.studio/account",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/account",
+        "status": 307,
+        "location": "/signin",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://c.obsidianglobal.studio/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+        "status": 401,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "anonymousSession": false,
+        "error": "Sign in to continue"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "custom/operator/signin",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/operator/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  }
+]

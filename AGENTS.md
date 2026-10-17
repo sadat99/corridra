@@ -47,3 +47,6 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Preserve managed proxy/TLS settings and set `NODE_USE_ENV_PROXY=1` for Node network calls; do not retry direct DNS.
 - Mount effects start external work; update React state from settled async callbacks or user events, not synchronous mount helpers.
 - Discover read paths with `rg --files` before passing them to `sed` or `rg`; stop a read batch at a missing path instead of continuing with guessed names.
+- Use `set -euo pipefail` in batched commands with pipelines so a failed search producer cannot be concealed by a successful filter.
+- Distinguish inventory entries from unique source files; compare against the stated baseline and inspect changed paths before claiming file preservation.
+- Do not count connector/share-link authentication errors as application permission-denial evidence; verify the actual application response separately.

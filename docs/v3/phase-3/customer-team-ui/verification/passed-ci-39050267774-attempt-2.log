@@ -1,0 +1,35 @@
+PR67 tested80c37c16860ee80e0c5603a030fae1e201a1f745 treed829a0fc66fe0194a6bfd54ad853443ceb49f49f
+CI39050267774 attempt2 job117455840379 success; original first failure retained separately.
+Set up job: success
+Run actions/checkout@v7: success
+Run actions/setup-node@v7: success
+Install pinned pnpm: success
+Install workspace: success
+Git branch budget below nine, preserving open PRs: success
+Redacted Git-history secret scan: success
+Validated local code-security rules: success
+Dependency vulnerability gate: success
+Formatting: success
+Lint: success
+Typecheck: success
+Source document integrity: success
+Isolated PostgreSQL: success
+Reviewed database migrations and roles: success
+Real malware scanner readiness: success
+Database, identity, adapter and recovery integration tests: success
+Production build: success
+Browser runtime: success
+Browser and accessibility tests: success
+Protected operator browser tests: success
+Synthetic UX browser evidence: success
+Run actions/upload-artifact@v7: skipped
+Post Run actions/setup-node@v7: success
+Post Run actions/checkout@v7: success
+Complete job: success
+2026-10-17T17:28:13.0618209Z  Test Files  30 passed (30)
+2026-10-17T17:28:13.0619536Z       Tests  249 passed (249)
+2026-10-17T17:32:42.7578663Z   102 passed (2.9m)
+2026-10-17T17:32:42.7617073Z ##[notice]  102 passed (2.9m)
+2026-10-17T17:43:15.7314099Z   31 passed (10.5m)
+2026-10-17T17:43:15.7336192Z ##[notice]  31 passed (10.5m)
+All5 new owner component cases pass within31 protected tests. Protocol fixtures do not establish actual private provider/browser acceptance. CodeQL skipped;D04 open.

@@ -1,0 +1,133 @@
+{
+  "audit": 11,
+  "afterCommit": "80c37c16860ee80e0c5603a030fae1e201a1f745",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 850,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Original collector JSX AST binding/visibility algorithm over the current worktree; CSS/location ignored. Cross-checked all806 original controls, retaining the two previously verified OTP changes. Not dynamic runtime acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "All806 original controls accounted for against850 current;only2 previously verified OTP changes,no unaccounted loss. Guard45routes/29core hashes/6sources/18expertIDs PASS. Original119 command entries across27 files and70 dispatch entries across5 files combine to32 files;30 byte-unchanged against e9ed2e5,foundations.ts/next.config.ts contain the previously verified additive optional service wiring/API privacy rules. Current owner packet changes neither. Full dynamic role/state denominator remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "Owner UI reuses verified server owner authority with strict acknowledgements/context denial clearing. ADR033 privately scopes requests to creators,requires independent admission/attestation and canonical factory/receipt reuse;request implementation remains MISSING. No authority/schema/provider change in this UI/design concern.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "No schema/history/money/evidence/source change. Only fictional label/command/version in scoped sessionStorage,no token/row/contact. First-response code is memory-only and survives history refresh failures;uncertain issue/revoke retries retain identity. Backend immutable access/event history already independently verified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "No flagship requirement removed. First CI passed all5 new owner cases but two old protected cases failed. Full unchanged-head rerun pending. Canonical company linking,persistent owned missions and independent delegation/participant/economics remain missing;ADR033 is design only.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser journey remains MISSING;no full delegation SaaS release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical organisation or buyer/supplier role identity changes;organisationId remains null,no private company published or duplicated.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 expert IDs/original private mission routes remain. Exact invitation/grant references aid disambiguation;new team disclosure adds no top-level navigation item. Founder control/link/role bindings unchanged.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Customer flags remain off,production hard-disabled,D01-D06/D08 closed. All UI datasets explicitly protocol fixtures;actual configured provider verified-account/session counts are separately bounded observations. No message,email,payment,AI,live KPI or admission. Native production/preview route checks remain read-only.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Candidate80c37c1 first full CI39050267774/job117447246032:249 integration/102 public/all5 new owner cases passed;protected29pass/2fail at existing zero-second datetime driver boundary and its dependent operator fixture. Full unchanged-head rerun attempt2/job117455840379 pending. Original tests/assertions preserved,original failures retained. No new merge/deploy yet. CodeQL skipped,D04 open;actual private provider and full legacy role-state acceptance remain unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "Existing top-level navigation/expert/private mission paths preserved;owner controls contextually disclosed with exact-reference actions,confirmation,retry/history recovery and three-width/keyboard/axe checks. New5 cases passed first CI but whole job still pending. No comparative usability or whole-V3 acceptance claim.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Actual private authenticated provider/browser reload/sign-out/revocation",
+    "Canonical organisation linking and owner transfer",
+    "Persistent customer mission access",
+    "Independent delegation/participant/economics",
+    "Full legacy dynamic role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "tree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "sourceTree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "originalOperationFiles": {
+    "commandEntries": 119,
+    "dispatchEntries": 70,
+    "uniqueCommandFiles": 27,
+    "uniqueDispatchFiles": 5,
+    "combinedFiles": 32,
+    "unchangedAgainstOriginalBaseline": 30,
+    "changed": [
+      {
+        "file": "apps/web/lib/foundations.ts",
+        "finding": "Previously verified lazy optional customer service/provider wiring added; original service construction unchanged."
+      },
+      {
+        "file": "apps/web/next.config.ts",
+        "finding": "Previously verified narrow no-referrer/no-store rule for new customer workspace APIs added; all original rules unchanged."
+      }
+    ],
+    "correction": "Earlier all119 command/70 dispatch source files unchanged wording conflated entries with files and failed to name the original baseline. These two changes are from prior verified packets, not the current owner UI. Historical entries retained; this is the forward correction."
+  }
+}

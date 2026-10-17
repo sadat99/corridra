@@ -1,0 +1,27 @@
+{
+  "run": 39050267774,
+  "attempt": 1,
+  "result": "failure",
+  "artifacts": [
+    {
+      "id": 12108021888,
+      "name": "synthetic-ux-browser-evidence",
+      "sizeInBytes": 19612574,
+      "digest": "sha256:cecd32919cef5304bc0e43db334994e8e0be54185a335aeff295c59b17493be6",
+      "createdAt": "2026-10-17T16:57:42Z",
+      "expiresAt": "2026-10-20T16:57:40Z",
+      "head": "80c37c16860ee80e0c5603a030fae1e201a1f745"
+    },
+    {
+      "id": 12107962214,
+      "name": "browser-failure-evidence",
+      "sizeInBytes": 47941,
+      "digest": "sha256:c8845584fdc107c5bbebad974224e26c33e8c933d293c792c4f0a32822647067",
+      "createdAt": "2026-10-17T16:57:43Z",
+      "expiresAt": "2026-10-24T16:57:42Z",
+      "head": "80c37c16860ee80e0c5603a030fae1e201a1f745"
+    }
+  ],
+  "retention": "Provider-hosted first-attempt screenshot/failure artifacts only; expires at the recorded times. This metadata does not archive their image contents or establish manual image review.",
+  "preservation": "Keep these first-attempt references and sanitized failure log when recording any later successful rerun."
+}

@@ -33,3 +33,8 @@ ADR 014 preview-only deployment was amended by ADR 015 for the retained syntheti
 | [0030](0030-explicit-staff-invitation-and-first-password.md)      | ADR 030: Explicit staff invitation and first-password setup                               |
 | [0031](0031-operator-password-recovery-and-scoped-directory.md)   | ADR 031: Operator password recovery and a scoped member directory                         |
 | [0032](0032-customer-workspace-authority.md)                      | ADR 032: Proposed customer workspace authority; migration test-policy conflict unresolved |
+| [0033](0033-private-customer-request-authority.md)                | ADR 033: Private customer request design; canonical engine reuse, implementation missing  |
+
+Forward status, 17 October 2026: ADR032's original test-policy conflict was resolved by its documented independently optional customer module, with full original core tests retained. Synthetic provisioning/collaboration backends are verified; exposure and private provider acceptance remain gated. Read its forward amendments and the V3 ledger instead of treating the historical index label as current implementation state.
+
+[ADR034](0034-custom-production-origin.md) records the owner-reported navigation repair:owned production subdomain as the exact canonical origin,provider allowlist preservation,host-scoped cookie implications and rollback. This is an origin configuration change,not a new identity or commercial activation.
