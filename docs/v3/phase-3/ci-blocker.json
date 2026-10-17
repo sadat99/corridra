@@ -18,4 +18,4 @@
   "merge": "BLOCKED: required CI failed before runner assignment",
   "productionChanged": false,
   "knownCause": "Runner not assigned; precise service/account cause unavailable. No billing cause assumed."
-}\n
+}
