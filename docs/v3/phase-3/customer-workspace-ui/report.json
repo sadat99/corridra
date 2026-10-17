@@ -63,5 +63,13 @@
   "rollback": "Keep customer exposure off or redeploy retained compatible application. Preserve additive customer module and original records; no schema rollback.",
   "cleanup": "Interrupted cleanup did not execute. Retired fix ref and previews still retained; no new deletion totals claimed. Fresh distinct local/remote branch union8 including intended publication; no ninth name.",
   "issuerGuardChecks": "Four new restricted-database tests and strengthened browser realm-switch assertions pending exact-head CI",
-  "previousCandidate": "9b68eee integration and production build passed; superseded by stronger issuer guard before merge; not full release acceptance"
+  "previousCandidate": "9b68eee integration and production build passed; superseded by stronger issuer guard before merge; not full release acceptance",
+  "failedCandidate": {
+    "head": "a7aa0b2aa1d53337277f8960c59ebc37b7c0b6f3",
+    "run": 39033664299,
+    "job": 117399355900,
+    "integration": "29 files,235 passed/1 failed",
+    "rootCause": "URL refinement threw on empty input instead of returning a validation issue",
+    "repair": "Catch URL parse failure in the actual refinement; all assertions unchanged; new exact-head CI pending"
+  }
 }

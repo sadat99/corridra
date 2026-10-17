@@ -1,0 +1,48 @@
+✔ developer handoff matrix points to real implementation, tests and decisions (26.011238ms)
+✔ documentation catalogue covers every Markdown document without duplicate or missing files (9.861514ms)
+✔ current developer entry and operational guides have valid local document links (20.970284ms)
+✔ implementation-canvas: original upload is preserved byte for byte (0.7497ms)
+✔ implementation-canvas: working copy preserves all supplied content (0.957298ms)
+✔ positioning-constitution: original upload is preserved byte for byte (0.45946ms)
+✔ positioning-constitution: working copy preserves all supplied content (0.896267ms)
+✔ public-experience: original upload is preserved byte for byte (0.331841ms)
+✔ public-experience: working copy preserves all supplied content (0.944389ms)
+✔ implementation plan contains 12 ordered parts and a complete canvas-packet mapping (0.812683ms)
+✔ revised V2 Part 04 owner packet retains its recorded integrity (0.547771ms)
+✔ revised V2 Part 05 owner packet retains its recorded integrity (0.493541ms)
+✔ UX acceptance ledgers keep phase identifiers, unique records and bounded verification aligned (78.980687ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.531809
+✔ the design system marker exists exactly once (0.676492ms)
+✔ new CSS uses design tokens, never raw colours or fonts (0.367034ms)
+✔ legacy CSS debt does not grow (0.255258ms)
+✔ the root layout loads the single self-hosted interface font (2.264573ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7.742225
+✔ every supported country has an outline or a point on the world map (1.150183ms)
+✔ the 27 EU member states all have outlines so the bloc can be drawn (0.198885ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6.202795
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.018s
+
+OK

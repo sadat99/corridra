@@ -21,7 +21,12 @@ export const customerWorkspaceInput = z
   })
   .strict();
 export const customerIssuer = z.url().refine((value) => {
-  const url = new URL(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
   return (
     url.protocol === 'https:' &&
     url.hostname.endsWith('.neonauth.c-5.eu-central-1.aws.neon.tech') &&
