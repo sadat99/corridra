@@ -8,6 +8,11 @@ import { createIdentity } from '@corridra/auth';
 import { operatorRecoveryMailer } from '@corridra/auth/recovery-mail';
 import { OperatorSetup } from '@corridra/auth/operator-setup';
 import { AccessService } from '@corridra/auth/access';
+import {
+  CustomerWorkspaceService,
+  customerWorkspacesEnabled,
+} from '@corridra/auth/customer-workspaces';
+import { neonAuth } from './neon-auth';
 import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
 import { createEvidenceStorage } from '@corridra/evidence/storage';
@@ -83,6 +88,28 @@ function createServices() {
     ...identity,
     operatorSetup: new OperatorSetup(authPool),
     access: new AccessService(runtimePool, authPool),
+    customerWorkspaces: new CustomerWorkspaceService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerWorkspacesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      async () => {
+        const auth = neonAuth();
+        if (!auth) throw new Error('Customer identity is unavailable');
+        const { data, error } = await auth.getSession({ query: { disableCookieCache: true } });
+        if (error) throw new Error('Customer identity is unavailable');
+        if (!data?.user || !data.session) return null;
+        return {
+          subject: data.user.id,
+          emailVerified: data.user.emailVerified,
+          expiresAt: new Date(data.session.expiresAt),
+        };
+      },
+    ),
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
     network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
     counterparties: new CounterpartyService(runtimePool),

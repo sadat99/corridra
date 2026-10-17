@@ -1,0 +1,96 @@
+{
+  "result": "partial",
+  "baseline": "9029669c005f4936bcce730df22d9d5f761f307a",
+  "requirements": ["V3-06-002", "V3-06-003"],
+  "existing": "Canonical app.tenant, core domain-event/audit/outbox, restricted runtime/auth pools and Managed Neon identity reused",
+  "new": "Optional customer migration registry, synthetic admission, bounded provider proofs, immutable initial owner grant, atomic provisioning and owner listing API",
+  "localVerification": {
+    "format": "passed final source/documentation",
+    "lint": "passed final source",
+    "typecheck": "passed final source",
+    "build": "passed final source",
+    "unit": "19 Node and 7 Python tests passed",
+    "integration": "27 files /225 tests passed before adding provider-failure case; final customer suite17 passed",
+    "defaultOffRoute": "2 passed (desktop/mobile request contexts)",
+    "actualProviderNegativeRoutes": {
+      "provider": "actual isolated Managed Neon Auth",
+      "origin": "http://localhost:3300",
+      "observations": [
+        {
+          "method": "GET",
+          "status": 401,
+          "expected": 401,
+          "noStore": true
+        },
+        {
+          "method": "POST",
+          "status": 403,
+          "expected": 403,
+          "noStore": true
+        },
+        {
+          "method": "POST",
+          "status": 415,
+          "expected": 415,
+          "noStore": true
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "expected": 400,
+          "noStore": true
+        },
+        {
+          "method": "POST",
+          "status": 401,
+          "expected": 401,
+          "noStore": true
+        }
+      ],
+      "counts": {
+        "workspaces": 0,
+        "admitted": 0,
+        "proofs": 0,
+        "staff_users": 0
+      },
+      "identityCreated": false,
+      "emailSent": false,
+      "positiveProviderAcceptance": "NOT VERIFIED"
+    },
+    "preservation": "45 route files,29 migration hashes,6 source hashes,18 expert IDs retained; all populated core table digests, functions, RLS policies and ACLs unchanged by extension install"
+  },
+  "states": {
+    "success": "synthetic SQL/service fixtures verified",
+    "empty": "admitted customer list empty verified",
+    "conflict": "concurrent duplicate retry and changed-payload rejection verified",
+    "expired": "provider/proof expiry denied",
+    "revoked": "principal disablement and no-reactivation verified",
+    "retry": "same command returns original tenant, one event chain",
+    "interrupted": "transaction rollback and pool/proof cleanup verified",
+    "providerFailure": "503 without leaked diagnostics or writes",
+    "loading": "no UI introduced; not applicable",
+    "responsiveAccessibility": "existing app regression CI pending; no UI introduced"
+  },
+  "remaining": [
+    "No canonical company linked; organisationId is explicitly null",
+    "Invitations, mutable membership and owner transfer absent",
+    "Persistent customer-owned mission access missing",
+    "Delegation SaaS, private participants and organiser economics missing",
+    "Actual received OTP, authenticated provider/browser continuation and revocation NOT VERIFIED",
+    "Cloud extension install, dedicated Preview config, deployment and exact-head CI pending"
+  ],
+  "flags": {
+    "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED": "default false, no environment setting changed",
+    "production": "hard-disabled even if the customer flag is true",
+    "data": "synthetic only; explicit subject allowlist"
+  },
+  "preservation": {
+    "originalTestsChanged": false,
+    "coreMigrationsChanged": false,
+    "existingRlsChanged": false,
+    "sourceHistoryMoneyRewritten": false,
+    "cloudSchemaApplied": false
+  },
+  "rollback": "Disable the flag and deploy the prior compatible application; retain additive schema/tenants and append-only history",
+  "release": "unverified; no SaaS acceptance or real activation"
+}
