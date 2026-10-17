@@ -1,6 +1,6 @@
 # ADR-032: Customer workspace authority, preserved staff security
 
-Status: proposed; not implemented. Synthetic-only. Migration acceptance conflict unresolved.
+Status: forward implementation under verification; synthetic-only, production disabled. Initial conflict assessment retained below.
 
 V3 requirements V3-06-002 through V3-06-006 need customer-owned workspaces, memberships, persistent missions and independent delegation administration. Existing customer identity remains Managed Neon Auth; staff identity remains self-managed Better Auth with TOTP. Neither email equality nor a customer account can create staff authority. This amends forward from ADR-003 and ADR-020 without replacing their staff permissions.
 
@@ -19,3 +19,17 @@ Required acceptance includes fresh install and populated additive upgrade; origi
 ## Rollback and blast radius
 
 This proposed decision changes no auth implementation, RLS policy, migration or data. When implementation becomes possible, deploy schema additively before enabling the customer flag; disable the flag and redeploy the compatible application to roll back exposure. Retain new canonical records and audit/history, and leave all historic migrations immutable.
+
+## Forward resolution, 17 October 2026
+
+The initial blocking assessment above assumed that customer authority must be installed by every core migration invocation. Customer identity instead has an independently approved provider, admission policy and rollout lifecycle. Core staff-only installations must continue to operate without installing or configuring customer authority. This warrants an explicit optional module, rather than changing an original test or silently filtering its fixtures.
+
+`migrateCustomerAuthority` explicitly installs the unchanged core and then the additive `packages/db/customer-migrations/` module. Its separate `customer_migrations.applied` registry records every module file and SHA256, rejects changed/missing/reordered history, and uses the existing migration advisory lock. No core migration, runner, registry receipt or original test is altered. New integration acceptance enumerates the entire module directory, verifies repeat/fresh installation, and compares all populated core-table digests, function definitions, policies and ACLs before/after installation. The original core test still checks exactly its original29 migrations; full CI also runs the new module's independent tests. A separate registry without this genuine deployment boundary and preservation evidence would not resolve the initial concern.
+
+The first packet implements admitted synthetic customer tenant provisioning and owner listing only. `customer_private` holds the pinned Frankfurt issuer, explicit synthetic-subject admission and short-lived opaque proofs. `corridra_auth` can attest a fresh provider session but cannot grant admission, modify the issuer or extend a proof. Restricted runtime access uses fixed-path functions and self-scoped RLS in `customer`; existing staff identity and app RLS functions/policies are unchanged. Owner grants and provision commands are immutable. Revocation disables the customer principal; repeat admission does not reactivate it. Invitations, member changes and last-owner transfer require a later reviewed additive capability.
+
+Each command reuses `app.tenant` and records exactly one existing domain-event/audit/outbox chain. A real service principal is the executor and the separate customer initiator is explicit in the event payload. This does not manufacture staff authority or reinterpret historical events. No private company input is inserted into the globally readable organisation catalogue: the response explicitly returns `organisationId: null`. Canonical organisation linking, persistent mission access and independent organiser administration remain missing.
+
+Blast radius is limited to new module objects, their grants and a default-off customer API/service. Core tables receive new records only when an explicitly admitted synthetic customer invokes an enabled non-production service. No cloud schema or production flag is changed by this source packet. The existing foundations remain usable without customer configuration because the provider is resolved lazily. `CORRIDRA_CUSTOMER_WORKSPACES_ENABLED` requires `DATA_ENVIRONMENT=synthetic` and is hard-disabled for Vercel production even if set. There is no creation UI or commercial activation claim. Actual provider OTP/sign-in/reload/revocation and customer browser acceptance remain separately unverified.
+
+Rollback exposure by disabling the customer flag and deploying the previous compatible application. Retain additive schema, tenants and append-only history; do not drop module objects or rewrite records. Independent D01-D06/D08 remain binding.

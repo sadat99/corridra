@@ -3181,9 +3181,17 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 491,
     "requirement": "| Customer-owned organisation workspace and provisioning | Foundation for genuine B2B SaaS | P0 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql",
+      "packages/auth/src/customer-workspaces.ts",
+      "apps/web/app/api/customer-workspaces/route.ts",
+      "tests/integration/customer-workspaces.test.ts",
+      "docs/adr/0032-customer-workspace-authority.md"
+    ],
+    "nextAction": "Synthetic admitted-customer tenant provisioning and owner listing have local restricted-role/upgrade acceptance. Verify exact-head CI and actual managed provider/browser flow; canonical organisation linking and production admission remain missing/gated."
   },
   {
     "id": "V3-06-003",
@@ -3191,9 +3199,17 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 492,
     "requirement": "| Authorized organisation memberships and invitations | Self-service collaboration | P0 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql",
+      "packages/auth/src/customer-workspaces.ts",
+      "apps/web/app/api/customer-workspaces/route.ts",
+      "tests/integration/customer-workspaces.test.ts",
+      "docs/adr/0032-customer-workspace-authority.md"
+    ],
+    "nextAction": "Immutable initial customer owner grant and principal disablement are locally tested. Invitations, membership changes/revocation and collaborative browser acceptance remain missing; no self-service collaboration release is claimed."
   },
   {
     "id": "V3-06-004",

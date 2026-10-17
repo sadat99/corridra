@@ -1,0 +1,82 @@
+{
+  "audit": 3,
+  "afterCommit": "50dcb1edec8e7411a307a7ee4bce1f252323aa13",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 817,
+  "originalBindingsMissing": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "AST binding/visibility multiset excluding CSS class and location; command file/name and domain expression multisets. Immutable committed revisions; new API GET/POST are additional routes, not inferred legacy runtime coverage.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "806 original action bindings/visibility and119 original service methods retained; all45 original route files and70 dispatches retained. Runtime action/state denominator still partial.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "New independently gated customer proof/membership namespace; core function definitions, RLS policies and table/function ACLs unchanged in populated upgrade test. Actual provider anonymous denials verified; authenticated customer browser acceptance NOT VERIFIED.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "Original29 migration/six source hashes unchanged. New module registry explicit and tested for all files; core row digests/history unchanged by install. New synthetic provisioning appends accurate executor/initiator event/audit/outbox once; no cloud writes or money changes.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "All36 flagship steps remain mapped; canonical organisation linking, customer missions, invitations and organiser/participant/economics gaps remain explicit.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser SaaS remains MISSING; no organiser release acceptance claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No new company duplicate or private-name disclosure. Reuse app.tenant; organisationId:null explicitly, canonical company linking still missing.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "18 original expert navigation destination IDs retained; no existing UI control changed in this packet.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Customer flag defaults off, synthetic allowlist only, hard-disabled in production; no customer creation UI, fake provider verification, KPI, outreach or payment. All external gates remain closed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Local original integration suite225 and final customer suite17 passed; build/type/lint/unit and default-off/actual-provider negative routes passed. Exact-head backend CI/deployment pending. PR61 exact-tree deployment independently verified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "No UI added; no customer usability result or measured improvement claimed. Full end-to-end SaaS and measured user acceptance remain unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Full dynamic role/action/state runtime denominator",
+    "Canonical organisation linking and customer invitations/missions",
+    "Independent organiser/participant/economics SaaS",
+    "Actual authenticated provider OTP/reload/revocation/browser",
+    "External D01-D06/D08 closure and any real activation"
+  ]
+}

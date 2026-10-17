@@ -1,0 +1,66 @@
+{
+  "merge": "9029669c005f4936bcce730df22d9d5f761f307a",
+  "testedHead": "97de7e89dc34411287d2d853e7bc533b0ae6d9a5",
+  "tree": "5eaa7b400245081997bc21072e8008f4c95040e6",
+  "ci": {
+    "run": 39012807143,
+    "conclusion": "success",
+    "integrationFiles": 26,
+    "integrationTests": 209,
+    "publicBrowserTests": 98,
+    "protectedBrowserTests": 17,
+    "codeql": "SKIPPED; not passed"
+  },
+  "deployment": {
+    "id": "dpl_GqYDy2BZcL7Zkhwr6pNANLuWyiFa",
+    "sha": "9029669c005f4936bcce730df22d9d5f761f307a",
+    "target": "production",
+    "state": "READY",
+    "regions": ["fra1"]
+  },
+  "routes": {
+    "observations": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=buyers",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=sourcing",
+        "status": 200
+      },
+      {
+        "path": "/plan?job=delegations",
+        "status": 200
+      },
+      {
+        "path": "/operator/signin",
+        "status": 200
+      },
+      {
+        "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+        "status": 401
+      }
+    ],
+    "mutationRequests": []
+  },
+  "retirement": {
+    "previewDeleted": "dpl_69SPghEVBovSYeMnVnXhYWj1QfQ6",
+    "aliasesDeleted": ["corridra-git-chore-v3-resource-budget-sadat-os.vercel.app"],
+    "currentProduction": "dpl_GqYDy2BZcL7Zkhwr6pNANLuWyiFa",
+    "sha": "9029669c005f4936bcce730df22d9d5f761f307a",
+    "absenceVerified": true,
+    "branchEnvironmentBindings": 0
+  },
+  "remoteRefDeleted": "chore/v3-resource-budget",
+  "distinctGitBranchesAfter": 6,
+  "redundantMainCI": {
+    "id": 39014209767,
+    "conclusion": "cancelled",
+    "treeIdenticalToSuccessfulRequiredPR": true,
+    "notCountedAsPass": true
+  }
+}

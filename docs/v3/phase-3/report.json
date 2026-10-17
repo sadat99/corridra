@@ -9,13 +9,12 @@
     "PR60 full CI:26 integration files/209 tests,98 public and17 protected browser tests passed; exact merged source deployed READY"
   ],
   "partial": [
-    "Customer identity environment prepared; authenticated managed signup/OTP/revocation acceptance remains unverified"
+    "Customer identity environment prepared; authenticated managed signup/OTP/revocation acceptance remains unverified",
+    "Customer authority backend locally verified within synthetic initial-owner scope; exact-head CI/deployment and actual authenticated provider acceptance remain pending"
   ],
-  "blocked": [
-    "Proposed authority design requires independent additive extension acceptance; original core29 assertion and all original tests remain unchanged"
-  ],
+  "blocked": [],
   "unverified": [
-    "Customer-owned organisation provisioning and memberships",
+    "Canonical organisation linking, invitations and collaborative memberships; initial synthetic tenant/owner backend is locally tested",
     "Persistent customer-owned mission access",
     "Independent delegation administration, participant onboarding and organiser economics",
     "Notifications, entitlements and justified billing additions"
@@ -26,13 +25,15 @@
     "docs/v3/phase-1/entry/verification/permission-denial.log",
     "docs/v3/phase-3/environment-recheck.json",
     "docs/v3/cleanup/2026-10-17-pr60-ci.json",
-    "docs/v3/cleanup/2026-10-17-pr60-release.json"
+    "docs/v3/cleanup/2026-10-17-pr60-release.json",
+    "docs/v3/phase-3/customer-authority/report.json"
   ],
-  "nextAction": "Implement and test independently gated customer-authority extension with its own append-only history, canonical tenant reuse and restricted-role/upgrade acceptance; expose no incomplete control",
+  "nextAction": "Run exact-head full CI, deploy the default-off backend packet, verify isolated module installation and actual managed customer acceptance before exposing creation UI; continue invitations/mission ownership in separate packets",
   "featureFlagsChanged": [
     "Existing Neon Auth flag configured for isolated Development only; production unchanged"
   ],
-  "authRlsMigrationsChanged": false,
-  "rollback": "No SaaS authority/schema changes made. Existing identity, source scopes, money and histories retained.",
-  "initialBlockedObservation": "Retained in docs/v3/environment-blockers.json; project access and isolated auth configuration are now restored"
+  "authRlsMigrationsChanged": true,
+  "rollback": "Disable customer flag and redeploy prior compatible application; preserve additive module and append-only canonical records",
+  "initialBlockedObservation": "Retained in docs/v3/environment-blockers.json; project access and isolated auth configuration are now restored",
+  "changeScope": "New optional customer module only; original29 migrations, core runner, existing staff/RLS contracts and all original tests unchanged; no cloud migration applied"
 }
