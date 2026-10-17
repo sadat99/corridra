@@ -1,0 +1,21 @@
+{
+  "pr": 60,
+  "head": "1b33ad1f4f0059244df2d3eb06550abcff2fe669",
+  "testedLocalHead": "9bc047f3555e4feff8226bb0e604e6cc5a5115f4",
+  "identicalTree": "478c41579faf8174d18cc89a4340992b9b2f6257",
+  "runId": 39006623375,
+  "attempt": 2,
+  "result": "failure",
+  "jobId": 117320458649,
+  "runnerId": 0,
+  "runnerName": "",
+  "steps": [],
+  "startedAt": "2026-10-17T05:33:13Z",
+  "completedAt": "2026-10-17T05:33:15Z",
+  "runURL": "https://github.com/sadat99/corridra/actions/runs/39006623375",
+  "localFocusedTests": 20,
+  "vercelCommitStatus": "success",
+  "merge": "BLOCKED: required CI failed before runner assignment",
+  "productionChanged": false,
+  "knownCause": "Runner not assigned; precise service/account cause unavailable. No billing cause assumed."
+}\n
