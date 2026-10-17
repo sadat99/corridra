@@ -22,11 +22,16 @@ function failure(error: unknown) {
     return deliveryError(new DomainError('Customer workspaces are unavailable', 503));
   return deliveryError(error);
 }
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const s = await services();
     return Response.json(
-      { workspaces: await s.customerWorkspaces.list(), synthetic: true },
+      {
+        workspaces: await s.customerWorkspaces.list(
+          request.headers.get('x-corridra-customer-subject') ?? undefined,
+        ),
+        synthetic: true,
+      },
       { headers: deliveryHeaders },
     );
   } catch (error) {
@@ -41,7 +46,13 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
     const input: unknown = JSON.parse((await boundedBody(request, 4096)).toString('utf8'));
-    return Response.json(await s.customerWorkspaces.provision(input), { headers: deliveryHeaders });
+    return Response.json(
+      await s.customerWorkspaces.provision(
+        input,
+        request.headers.get('x-corridra-customer-subject') ?? undefined,
+      ),
+      { headers: deliveryHeaders },
+    );
   } catch (error) {
     return failure(error);
   }

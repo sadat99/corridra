@@ -66,7 +66,7 @@ export class CustomerWorkspaceService {
     private readSession: () => Promise<CustomerSession | null>,
   ) {}
 
-  async list(): Promise<CustomerWorkspace[]> {
+  async list(expectedSubject?: string): Promise<CustomerWorkspace[]> {
     return this.transaction(async (db) => {
       const result = await db.query('SELECT * FROM customer.workspaces()');
       return result.rows.map((row) => ({
@@ -76,10 +76,10 @@ export class CustomerWorkspaceService {
         synthetic: row.synthetic,
         organisationId: row.organisation_id,
       }));
-    });
+    }, expectedSubject);
   }
 
-  async provision(input: unknown): Promise<CustomerWorkspace> {
+  async provision(input: unknown, expectedSubject?: string): Promise<CustomerWorkspace> {
     const value = customerWorkspaceInput.parse(input);
     return this.transaction(async (db) => {
       const {
@@ -98,12 +98,22 @@ export class CustomerWorkspaceService {
         synthetic: workspace.synthetic,
         organisationId: workspace.organisation_id,
       };
-    });
+    }, expectedSubject);
   }
 
-  private async transaction<T>(work: (db: DatabaseClient) => Promise<T>): Promise<T> {
+  private async transaction<T>(
+    work: (db: DatabaseClient) => Promise<T>,
+    expectedSubject?: string,
+  ): Promise<T> {
     if (!this.options.enabled || !this.options.synthetic || this.options.production)
       throw new DomainError('Customer workspaces are unavailable', 503);
+    if (
+      expectedSubject !== undefined &&
+      (!expectedSubject ||
+        expectedSubject.length > 200 ||
+        /[\u0000-\u001f\u007f]/u.test(expectedSubject))
+    )
+      throw new DomainError('Customer account context is invalid', 400);
     const issuer = customerIssuer.parse(this.options.issuer);
     let session: CustomerSession | null;
     try {
@@ -121,6 +131,10 @@ export class CustomerWorkspaceService {
     if (session.emailVerified !== true) throw new DomainError('Verify your email to continue', 403);
     if (!session.subject || session.subject.length > 200)
       throw new DomainError('Customer session is invalid', 401);
+    // A browser scope is a rejection condition only. The fresh provider session
+    // still establishes identity, followed by the unchanged admission/RLS checks.
+    if (expectedSubject !== undefined && expectedSubject !== session.subject)
+      throw new DomainError('Your account changed. Reload before continuing.', 409);
     await Promise.all([
       assertRestrictedPool(this.runtime),
       assertRestrictedPool(this.auth, 'corridra_auth'),

@@ -400,3 +400,12 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Next: finish checks, normal merge, exact production and isolated preview deployments under standing release authorization, then continue SaaS work. Keep all unfinished/dependency/environment-bound branches and fewer than nine distinct Git names.
 
 - Fresh local result: formatting/lint/typecheck/build passed; unit19 Node/7 Python; full integration27 files226 tests; three customer browser regressions passed, including both unchanged legacy tests. Three responsive before/after views retained; axe/overflow zero. Hard Release Conditions self-audit4 maps two intentional form binding changes; no unaccounted legacy action loss. Publication scanner initially failed on direct DNS, before push; corrected the invocation to honor the managed Node proxy. CI/merge/deployment still pending at this recorded commit.
+
+## 2026-10-17, Codex, customer UI context rejection boundary
+
+- Request: continue the accepted V3 customer workspace packet while preserving identity/privacy and the priority OTP repair release.
+- Why: a mounted draft must not be submitted under a switched provider account. The server already authenticates each request; it now additionally rejects an optional stale expected subject before minting proofs or writing records.
+- Changed: customer service list/provision optional context check, API header forwarding, forward ADR032 and six new restricted-role integration cases. Caller scope cannot establish identity, admission, tenant or staff authority. Existing clients and all original tests unchanged. No schema/RLS/money/events/provider/activation changes.
+- Verification: lint/typecheck/unit/build passed; Node19/Python7; focused real integration4 files28 tests passed, including unchanged original customer authority/permission/navigation suites; desktop/mobile default-off API2 passed; preservation guard45 routes/29 migration hashes/six sources/18 expert IDs passed.
+- Unverified: actual private provider verification/session and UI walkthrough, full new packet CI/release. Customer creation remains flag-off. PR63 exact-head checks and deployment stay first priority; this change is on its separate bounded branch.
+- Next: implement list/create/retry with subject-scoped draft storage and denial recovery over the unchanged commercial backend, then full checked release. Fewer than nine distinct Git names retained.
