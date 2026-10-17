@@ -1,0 +1,146 @@
+{
+  "result": "verified bounded customer workspace source release; exposure gated; whole V3 PARTIAL",
+  "pr": 64,
+  "testedHead": "af925e2f910a1a7d5f4a528fe26f97a59b597ec5",
+  "merge": "5e2c095331b392f590315d595f89e9055c19f175",
+  "fullTree": "d0d5519662c5ed29aba87f9bb700130702612bc9",
+  "testedMergeTreeEqual": true,
+  "ci": {
+    "run": 39034554160,
+    "job": 117401649347,
+    "result": "success",
+    "integration": "29 files236 tests passed",
+    "public": "100 passed (2.5m)",
+    "protected": "22 passed (9.9m)",
+    "resultLines": [
+      "2026-10-17T13:04:34.0375120Z  Test Files  29 passed (29)",
+      "2026-10-17T13:04:34.0376370Z       Tests  236 passed (236)",
+      "2026-10-17T13:08:24.2619499Z   100 passed (2.5m)",
+      "2026-10-17T13:08:24.2656351Z ##[notice]  100 passed (2.5m)",
+      "2026-10-17T13:18:20.3674056Z   22 passed (9.9m)",
+      "2026-10-17T13:18:20.3715489Z ##[notice]  22 passed (9.9m)"
+    ],
+    "codeQL": "skipped;D04 remains open",
+    "artifact": {
+      "id": 12102380530,
+      "name": "synthetic-ux-browser-evidence",
+      "size": 18668382,
+      "sha256": "44268fbf3f12494e3f2f8e6e928277da687fc1c3e4a463255d49e0cd46ae3bb9",
+      "expires": "2026-10-20",
+      "includes": "Three workspace responsive screenshots at390/768/1440;automated axe and overflow checks passed. Artifact downloaded through connector to a File Service reference;not read as a local file."
+    }
+  },
+  "production": {
+    "id": "dpl_HPBBagj1HidonFKr1vP6ZkomAvBi",
+    "url": "corridra-qo3gchrht-sadat-os.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "sha": "5e2c095331b392f590315d595f89e9055c19f175",
+    "regions": ["fra1"],
+    "canonicalAlias": "https://corridra.vercel.app"
+  },
+  "preview": {
+    "id": "dpl_7WmfgBPoE7ARrRbDoZQQA7fXzart",
+    "url": "corridra-2zinjd8gu-sadat-os.vercel.app",
+    "state": "READY",
+    "target": null,
+    "sha": "5e2c095331b392f590315d595f89e9055c19f175",
+    "regions": ["fra1"],
+    "alias": "https://corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+    "branch": "feat/v3-customer-acceptance",
+    "fastForwardedFrom": "d35ab920e3cd6aa4321e6e921040a168342f99f7",
+    "providerAndSigningSettings": "unchanged;no account recreation"
+  },
+  "canonicalAliasesVerified": true,
+  "productionRoutes": [
+    {
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "isError": false
+    },
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "codeInputVisible": true
+    },
+    {
+      "path": "/signup",
+      "status": 200,
+      "expected": 200,
+      "isError": false
+    },
+    {
+      "path": "/signin",
+      "status": 200,
+      "expected": 200,
+      "isError": false
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "isError": false
+    },
+    {
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401,
+      "isError": true
+    }
+  ],
+  "previewRoutes": [
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "codeInputVisible": true
+    },
+    {
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "expected": 200,
+      "isError": false,
+      "anonymous": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "isError": false
+    }
+  ],
+  "productMutationRequests": 0,
+  "customerWorkspaceFlag": "unchanged/off on acceptance preview;production hard-disabled",
+  "actualPrivateOTPAndAuthenticatedSession": "NOT VERIFIED;owner observed actual code delivery only",
+  "newInterface": "Implemented and protocol-tested list/create/same-command retry over existing synthetic API;issuer+subject only reject stale context;backend remains the authority",
+  "phaseStatus": {
+    "0": "PARTIAL;static preservation verified,complete dynamic role/state acceptance unverified",
+    "1": "PARTIAL;entry/founder/OTP and gated workspace protocol verified,private customer walkthroughs unverified",
+    "2": "PARTIAL;managed shared engines preserved,independent flagship SaaS journeys missing",
+    "3": "PARTIAL;owner shell provisioning/list/retry verified;canonical company linking,invitations,persistent mission access,independent delegation/participants/economics missing",
+    "4": "PARTIAL;founder layer present,full real customer/economics/role acceptance missing",
+    "5": "GATED;D01-D06/D08 remain closed"
+  },
+  "remaining": [
+    "Actual private OTP consumption and authenticated reload/sign-out/revocation",
+    "Canonical organisation linking",
+    "Customer invitations/collaboration/revocation",
+    "Persistent customer mission authority",
+    "Independent delegation/participant administration and organiser economics",
+    "Full dynamic legacy role/action/state acceptance",
+    "Commercial activation prerequisites"
+  ],
+  "branchBudget": {
+    "local": 5,
+    "remote": 6,
+    "distinct": 8,
+    "maximum": 8
+  },
+  "cleanup": "No new deletions;runtime network/deletion-tool availability remains a cleanup constraint. Preserve all active settings,dependencies and unfinished refs.",
+  "rollbackDeployment": "dpl_DyrwUFnBaNfenJ1eQ6qF13ncC2aE",
+  "rollback": "Keep exposure off or redeploy retained compatible application;no SQL/migration/history rollback."
+}
