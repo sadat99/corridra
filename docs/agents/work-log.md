@@ -354,3 +354,10 @@ Append-only, newest entry last. Template and rules: [README](README.md). Entries
 - Open items: isolated signing/origin bindings and provider/session acceptance; customer authority ADR, new organisation/membership/mission and organiser capabilities. These remain unverified/missing. No live activation.
 - Next: finish isolated development configuration, then review additive authority design and restricted-role acceptance before exposing self-service controls.
 - Base commit: c96420e58e3c096293c3c5600ce89903942ec90d; unfinished work branch feat/v3-customer-workspaces.
+
+## 2026-10-17, Codex, Git branch ceiling and customer-authority preservation
+
+- Owner requests autonomous V3 execution and fewer than nine branches. Tightened the Git guard across distinct local/remote/intended names, preserving CI ephemeral checkout handling and separate Neon limit10. Added five policy tests; no original tests edited.
+- Proposed ADR032 records separate customer authority, reuse of existing canonical/domain infrastructure and the unresolved conflict between additive migrations and original exact29 assertion. No auth/RLS/schema implementation or fake controls added.
+- Checks:20 focused policy/permission tests passed; lint/typecheck/build passed. Fixed missing ADR catalogue entry at root cause; original documentation13/design4/geography2 checks passed directly. Branch count7; immutable preservation guard PASS. Full exact-head CI, merge and deployment for this packet remain pending.
+- Existing customer auth isolation proof and production release c96420e remain valid. Full V3 partial; live gates closed. Next: connected-tool publication and exact-head release checks; retain unfinished resources and dependency PRs.
