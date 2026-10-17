@@ -1,0 +1,65 @@
+{
+  "result": "partial",
+  "baseline": "d35ab920e3cd6aa4321e6e921040a168342f99f7",
+  "localGuardCommit": "64fecad00b4ab0c48af0e9889d1a3d1d7785007f",
+  "publishedGuardObject": "021396766ca238e96c2e942ba2729a301c9ada14",
+  "guardTree": "4a915b1e4bce9cf90267207a89b456008ca8ec36",
+  "localUiCommit": "7328d7cc9908bcf15ec3c81c718a2110c1bd0e4b",
+  "uiTree": "2ec63f2c664de0514bd798ac9a79c95b4f8fc5eb",
+  "requirements": [
+    "V3-06-002",
+    "V3-06-003",
+    "V3-07-023",
+    "V3-07-024",
+    "V3-07-025",
+    "V3-07-026",
+    "V3-07-042",
+    "V3-07-043",
+    "V3-07-044",
+    "V3-07-047",
+    "V3-09-079",
+    "V3-09-080",
+    "V3-09-081",
+    "V3-09-085",
+    "V3-09-086",
+    "V3-09-087"
+  ],
+  "sourceAndDestination": "/account adds a gated test-workspace section; existing /account private mission invitations remain below it; GET/POST /api/customer-workspaces reused",
+  "existing": "Fresh customer identity, admission and synthetic provisioning/list backend; atomic command deduplication; existing private mission invitations",
+  "new": "Rejection-only expected-subject context guard; gated list/create/retry UI; issuer/subject scoped synthetic command storage; response validation; denial recovery",
+  "localChecks": {
+    "format": "pass",
+    "lint": "pass",
+    "webTypes": "pass",
+    "packageTypes": "pass",
+    "javascriptUnit": "19 passed,0 failed",
+    "pythonUnit": "7 passed",
+    "preservation": "45 routes/29 migration hashes/6 sources/18 expert IDs PASS",
+    "actionAudit": "806 original/827 current;2 previously verified OTP changes;0 unaccounted original actions"
+  },
+  "guardChecks": {
+    "integration": "4 files/28 tests passed",
+    "defaultOffBrowser": "2 passed",
+    "evidence": "docs/v3/phase-3/customer-context/verification"
+  },
+  "exactHeadUiChecks": {
+    "build": "pending CI",
+    "integrationAndPermissionDenials": "pending CI",
+    "publicBrowser": "pending CI",
+    "protectedAndComponentBrowser": "pending CI"
+  },
+  "browserFixtureLimit": "The new esbuild/React loopback harness exercises actual component protocol, keyboard, denial, storage failure, lost acknowledgement, reload, identity switching, responsive widths and axe. It does not establish private live provider/session acceptance.",
+  "featureFlag": "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED remains false on the isolated acceptance preview and production; backend also refuses production.",
+  "remaining": [
+    "Actual private OTP consumption and authenticated reload/sign-out/revocation",
+    "Canonical organisation linking",
+    "Invitations/collaboration",
+    "Persistent customer mission authority",
+    "Independent delegation/participant/economics",
+    "Full role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "compatibility": "Optional context header retains original clients; no dependencies/schema/RLS/history/money/event changes. Native connected Git publication preserves exact local trees and owner identity with new commit metadata.",
+  "rollback": "Keep customer exposure off or redeploy retained compatible application. Preserve additive customer module and original records; no schema rollback.",
+  "cleanup": "Interrupted cleanup did not execute. Retired fix ref and previews still retained; no new deletion totals claimed. Fresh distinct local/remote branch union8 including intended publication; no ninth name."
+}
