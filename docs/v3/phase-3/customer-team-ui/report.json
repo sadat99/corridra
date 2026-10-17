@@ -1,6 +1,6 @@
 {
   "result": "partial",
-  "baseline": "d8f843f751d0c5029e60af0b1a9e44db762e6544",
+  "baseline": "bc845512f54a5b079def8546c5c7632f9a531150",
   "requirements": [
     "V3-06-003",
     "V3-04-085",
@@ -50,5 +50,10 @@
     "D01-D06/D08"
   ],
   "rollback": "Keep exposure off or redeploy compatible retained app. Preserve additive backend,initial owner/access grants and append-only event/history;no migration rollback.",
-  "branchBudget": "Reuse own branch,distinct union8/max8;preserve unfinished/open dependency/environment-bound refs. No new deletion claimed."
+  "branchBudget": "Reuse own branch,distinct union8/max8;preserve unfinished/open dependency/environment-bound refs. No new deletion claimed.",
+  "beforeReference": "d8f843f751d0c5029e60af0b1a9e44db762e6544,exact same pre-owner fe96632 tree as merged baseline",
+  "sourceCommit": "eddf85aeffbce6cc513c6feff85b864ab52333ee",
+  "sourceTree": "c9c85dce6b6ddb30a81fa6154722071c23fc255f",
+  "selfAudit": "docs/v3/self-audit-9.json",
+  "priorAcceptance": "PR66 invitation UI verified249/102/26,merged/deployedbc845512. These passes do not verify this owner UI."
 }

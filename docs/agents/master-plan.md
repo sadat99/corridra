@@ -125,3 +125,7 @@ PR65 merged/deployed89c9d07;required CI249 integration/102 public/22 protected p
 ### Forward V3 owner team UI,17 October 2026 (Codex)
 
 PR66 sample invitation acceptance remains under full CI. Next separate source concern implements owner issuance/paginated history/cancellation/confirmed member revocation through verified PR65 APIs,with durable label/command retries and memory-only codes. Current founder copy is clarified to distinguish tested,gated sample backend from missing company/mission/delegation SaaS. Local static/unit/preservation checks pass;new5 browser cases and full exact-head CI remain pending. No authority/schema/provider/flag/dependency change;original owners and legacy actions retained. Whole V3 partial. Report:../v3/phase-3/customer-team-ui/report.json.
+
+### Forward verified V3 invitation acceptance,17 October 2026 (Codex)
+
+PR66 is verified/merged/deployedbc845512 after249 integration/102 public/26 protected tests and1440/768/390/keyboard/axe evidence. Production/configured preview exact-source READY;workspace flag off,production disabled,actual private provider walkthrough unverified. Next separate owner/founder UI source eddf85a/treec9c85dc passes static/unit/preservation but its new5 browser cases/full CI remain pending. Organisation linking,persistent missions,independent delegation/participant/economics/full role-state acceptance and D01-D06/D08 remain gaps. Read ledger40 and phase-1/workspace-invitation/release.json.

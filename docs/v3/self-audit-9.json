@@ -1,0 +1,113 @@
+{
+  "audit": 9,
+  "afterCommit": "72513157f552171e886aa382abe4135f3c67947d",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 850,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Original collector JSX AST binding/visibility algorithm over the current worktree; CSS/location ignored. Cross-checked all806 original controls, retaining the two previously verified OTP changes. Not dynamic runtime acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "All806 original controls accounted for against850 current,only2 previously verified OTP changes,no unaccounted loss. All119 original command and70 dispatch source files unchanged;45routes/29core hashes/6sources/18expertIDs PASS. Dynamic full role/state denominator remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "Owner UI is rendered only for actual owner rows and calls the existing independent server owner check;member/admin fixtures have no owner controls. Mounted issuer+subject+workspace scope,strict response validation and denial clearing. Initial owner has no revokable grant. No server/permission change in this packet;new browser cases pending CI.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "No schema/history/money/evidence/source change. Only fictional label/command/version in scoped sessionStorage,no token/row/contact. First-response code is memory-only and survives history refresh failures;uncertain issue/revoke retries retain identity. Backend immutable access/event history already independently verified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "No commercial requirement removed. Owner controls expose existing tested synthetic shell invitations/revocation only. Canonical company linking,persistent missions,independent delegation/participant/economics remain missing;no interface-only commercial capability.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser journey remains MISSING;no full delegation SaaS release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical organisation or buyer/supplier role identity changes;organisationId remains null,no private company published or duplicated.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 expert IDs/original private mission routes remain. Exact invitation/grant references aid disambiguation;new team disclosure adds no top-level navigation item. Founder control/link/role bindings unchanged.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Customer flag stays off and production hard-disabled,D01-D06/D08 closed. Backend tested/gated status distinguished from missing company/mission/delegation in founder copy. No email,outreach,payment,live KPI,AI claim or admission.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Local format/lint/types,JS19/Python7,preservation pass. New5 component/browser cases and1440/768/390 before/after/axe/overflow pending required exact-head CI. PR66 acceptance UI separately under CI39047678546 with integration/build/public passed,protected pending. Parent/backend passes never transferred;CodeQL skipped,D04 open.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "Owner issue/history/revoke tasks progressively disclosed,one confirmation command at a time. Codes persist through history errors/refresh;lost first response has no recoverable secret and exact-reference cancellation. Closing confirmation never claims undo. Founder distinguishes tested backend from missing full SaaS. No measured usability/performance improvement claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Actual private authenticated provider/browser reload/sign-out/revocation",
+    "Canonical organisation linking and owner transfer",
+    "Persistent customer mission access",
+    "Independent delegation/participant/economics",
+    "Full legacy dynamic role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "tree": "c9c85dce6b6ddb30a81fa6154722071c23fc255f"
+}

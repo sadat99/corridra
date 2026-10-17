@@ -1,0 +1,202 @@
+{
+  "result": "verified bounded invitation acceptance UI source/protocol release;exposure gated;whole V3 PARTIAL",
+  "pr": 66,
+  "testedHead": "d8f843f751d0c5029e60af0b1a9e44db762e6544",
+  "merge": "bc845512f54a5b079def8546c5c7632f9a531150",
+  "fullTree": "fe96632ae6d012d93f7f6d7d29ea3aed219f95eb",
+  "testedMergeTreeEqual": true,
+  "ci": {
+    "run": 39047678546,
+    "job": 117439588210,
+    "result": "success",
+    "integration": "30 files249 tests passed",
+    "public": "102 passed(3.0m)",
+    "protectedAndComponent": "26 passed(10.3m),including4 new invitation UI protocol cases",
+    "resultLines": [
+      "2026-10-17T16:11:53.3519723Z  Test Files  30 passed (30)",
+      "2026-10-17T16:11:53.3521198Z       Tests  249 passed (249)",
+      "2026-10-17T16:16:29.4210601Z   102 passed (3.0m)",
+      "2026-10-17T16:16:29.4252766Z ##[notice]  102 passed (3.0m)",
+      "2026-10-17T16:26:46.0909562Z   26 passed (10.3m)",
+      "2026-10-17T16:26:46.0957204Z ##[notice]  26 passed (10.3m)"
+    ],
+    "codeQL": "skipped;D04 open",
+    "artifact": {
+      "id": 12107465536,
+      "name": "synthetic-ux-browser-evidence",
+      "size": 19091314,
+      "sha256": "sha256:c8d512220175a8b869b39549679d66535d0e0cc9a1c5338d6955fa2290a9c3d1",
+      "expires": "2026-10-20T16:26:46Z",
+      "evidence": "Six immutable-before/after screenshots1440/768/390 generated before code entry;keyboard/axe/overflow assertions pass. No separate manual visual review or private provider walkthrough claimed."
+    }
+  },
+  "production": {
+    "id": "dpl_CUUdsauFdsUySaha6LCZPXzAwvDG",
+    "url": "corridra-2pvdlws8j-sadat-os.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "sha": "bc845512f54a5b079def8546c5c7632f9a531150",
+    "regions": ["fra1"]
+  },
+  "preview": {
+    "id": "dpl_EuWekBFrBgewYh5CG2AN5NpGUnnS",
+    "url": "corridra-k9j0f2skf-sadat-os.vercel.app",
+    "state": "READY",
+    "target": null,
+    "sha": "bc845512f54a5b079def8546c5c7632f9a531150",
+    "regions": ["fra1"],
+    "branch": "feat/v3-customer-acceptance",
+    "fastForwardedFrom": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a"
+  },
+  "aliases": [
+    {
+      "alias": "corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+      "deploymentId": "dpl_EuWekBFrBgewYh5CG2AN5NpGUnnS"
+    },
+    {
+      "alias": "c.obsidianglobal.studio",
+      "deploymentId": "dpl_CUUdsauFdsUySaha6LCZPXzAwvDG"
+    },
+    {
+      "alias": "corridra.vercel.app",
+      "deploymentId": "dpl_CUUdsauFdsUySaha6LCZPXzAwvDG"
+    }
+  ],
+  "productionRoutes": [
+    {
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/signup",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/signin",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401
+    }
+  ],
+  "previewRoutes": [
+    {
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "anonymousSession": true
+    },
+    {
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    }
+  ],
+  "featureFlags": "Customer exposure unchanged off,production hard-disabled;D01-D06/D08 closed.",
+  "backendSchemaProviderAndSigning": "unchanged;prior isolated module2 retained,no new admission/account/provider/secret change",
+  "productMutationsDuringRouteChecks": 0,
+  "remaining": [
+    "Owner team UI/founder copy is separate local source,not verified by PR66 CI",
+    "Canonical organisation linking and owner transfer",
+    "Persistent customer mission authority",
+    "Independent delegation/participant/economics",
+    "Full dynamic legacy role/state acceptance",
+    "Actual private authenticated provider/browser reload/sign-out/revocation",
+    "D01-D06/D08"
+  ],
+  "phases": {
+    "Phase0": "partial:static preservation and bounded regressions verified;full dynamic denominator unverified",
+    "Phase1": "partial:entry/founder/OTP/workspace/invitation protocols verified;actual private wider browser walkthrough missing",
+    "Phase2": "partial:managed engines preserved;independent flagship/organiser journeys missing",
+    "Phase3": "partial:synthetic collaboration backend and gated acceptance UI verified;owner/company/mission/delegation economics still missing",
+    "Phase4": "partial:founder controls retained;full source-backed customer/economics and role/state acceptance missing",
+    "Phase5": "blocked:D01-D06/D08 and independent legal/provider/security/data/delivery/payment prerequisites"
+  },
+  "rollback": {
+    "application": "Retain PR65 dpl_EvYxYZzELBhEmUKu7RvJwz3sJou1 at89c9d07;keep exposure off or redeploy compatible revision",
+    "schema": "No schema change;retain additive module/access/event history and initial owners"
+  },
+  "cleanup": "No new deletion claimed;3 retained Neon branches,8 distinct Git names;unfinished/dependency/environment-bound refs preserved."
+}
