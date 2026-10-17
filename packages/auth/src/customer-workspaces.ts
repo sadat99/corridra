@@ -66,44 +66,57 @@ export class CustomerWorkspaceService {
     private readSession: () => Promise<CustomerSession | null>,
   ) {}
 
-  async list(expectedSubject?: string): Promise<CustomerWorkspace[]> {
-    return this.transaction(async (db) => {
-      const result = await db.query('SELECT * FROM customer.workspaces()');
-      return result.rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        role: row.role,
-        synthetic: row.synthetic,
-        organisationId: row.organisation_id,
-      }));
-    }, expectedSubject);
+  async list(expectedSubject?: string, expectedIssuer?: string): Promise<CustomerWorkspace[]> {
+    return this.transaction(
+      async (db) => {
+        const result = await db.query('SELECT * FROM customer.workspaces()');
+        return result.rows.map((row) => ({
+          id: row.id,
+          name: row.name,
+          role: row.role,
+          synthetic: row.synthetic,
+          organisationId: row.organisation_id,
+        }));
+      },
+      expectedSubject,
+      expectedIssuer,
+    );
   }
 
-  async provision(input: unknown, expectedSubject?: string): Promise<CustomerWorkspace> {
+  async provision(
+    input: unknown,
+    expectedSubject?: string,
+    expectedIssuer?: string,
+  ): Promise<CustomerWorkspace> {
     const value = customerWorkspaceInput.parse(input);
-    return this.transaction(async (db) => {
-      const {
-        rows: [row],
-      } = await db.query('SELECT customer.provision_workspace($1,$2) AS id', [
-        value.commandId,
-        value.name,
-      ]);
-      const result = await db.query('SELECT * FROM customer.workspaces() WHERE id=$1', [row.id]);
-      if (!result.rows[0]) throw new DomainError('Customer workspace is unavailable', 403);
-      const workspace = result.rows[0];
-      return {
-        id: workspace.id,
-        name: workspace.name,
-        role: workspace.role,
-        synthetic: workspace.synthetic,
-        organisationId: workspace.organisation_id,
-      };
-    }, expectedSubject);
+    return this.transaction(
+      async (db) => {
+        const {
+          rows: [row],
+        } = await db.query('SELECT customer.provision_workspace($1,$2) AS id', [
+          value.commandId,
+          value.name,
+        ]);
+        const result = await db.query('SELECT * FROM customer.workspaces() WHERE id=$1', [row.id]);
+        if (!result.rows[0]) throw new DomainError('Customer workspace is unavailable', 403);
+        const workspace = result.rows[0];
+        return {
+          id: workspace.id,
+          name: workspace.name,
+          role: workspace.role,
+          synthetic: workspace.synthetic,
+          organisationId: workspace.organisation_id,
+        };
+      },
+      expectedSubject,
+      expectedIssuer,
+    );
   }
 
   private async transaction<T>(
     work: (db: DatabaseClient) => Promise<T>,
     expectedSubject?: string,
+    expectedIssuer?: string,
   ): Promise<T> {
     if (!this.options.enabled || !this.options.synthetic || this.options.production)
       throw new DomainError('Customer workspaces are unavailable', 503);
@@ -112,6 +125,14 @@ export class CustomerWorkspaceService {
       (!expectedSubject ||
         expectedSubject.length > 200 ||
         /[\u0000-\u001f\u007f]/u.test(expectedSubject))
+    )
+      throw new DomainError('Customer account context is invalid', 400);
+    if (
+      expectedIssuer !== undefined &&
+      (expectedIssuer.length > 500 ||
+        expectedIssuer !== expectedIssuer.trim() ||
+        /[\u0000-\u001f\u007f]/u.test(expectedIssuer) ||
+        !customerIssuer.safeParse(expectedIssuer).success)
     )
       throw new DomainError('Customer account context is invalid', 400);
     const issuer = customerIssuer.parse(this.options.issuer);
@@ -133,7 +154,10 @@ export class CustomerWorkspaceService {
       throw new DomainError('Customer session is invalid', 401);
     // A browser scope is a rejection condition only. The fresh provider session
     // still establishes identity, followed by the unchanged admission/RLS checks.
-    if (expectedSubject !== undefined && expectedSubject !== session.subject)
+    if (
+      (expectedSubject !== undefined && expectedSubject !== session.subject) ||
+      (expectedIssuer !== undefined && expectedIssuer !== issuer)
+    )
       throw new DomainError('Your account changed. Reload before continuing.', 409);
     await Promise.all([
       assertRestrictedPool(this.runtime),

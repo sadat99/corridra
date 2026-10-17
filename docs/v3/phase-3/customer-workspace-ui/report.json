@@ -26,7 +26,7 @@
   ],
   "sourceAndDestination": "/account adds a gated test-workspace section; existing /account private mission invitations remain below it; GET/POST /api/customer-workspaces reused",
   "existing": "Fresh customer identity, admission and synthetic provisioning/list backend; atomic command deduplication; existing private mission invitations",
-  "new": "Rejection-only expected-subject context guard; gated list/create/retry UI; issuer/subject scoped synthetic command storage; response validation; denial recovery",
+  "new": "Rejection-only expected issuer and subject context guards; gated list/create/retry UI; issuer/subject scoped synthetic command storage; response validation; denial recovery",
   "localChecks": {
     "format": "pass",
     "lint": "pass",
@@ -61,5 +61,7 @@
   ],
   "compatibility": "Optional context header retains original clients; no dependencies/schema/RLS/history/money/event changes. Native connected Git publication preserves exact local trees and owner identity with new commit metadata.",
   "rollback": "Keep customer exposure off or redeploy retained compatible application. Preserve additive customer module and original records; no schema rollback.",
-  "cleanup": "Interrupted cleanup did not execute. Retired fix ref and previews still retained; no new deletion totals claimed. Fresh distinct local/remote branch union8 including intended publication; no ninth name."
+  "cleanup": "Interrupted cleanup did not execute. Retired fix ref and previews still retained; no new deletion totals claimed. Fresh distinct local/remote branch union8 including intended publication; no ninth name.",
+  "issuerGuardChecks": "Four new restricted-database tests and strengthened browser realm-switch assertions pending exact-head CI",
+  "previousCandidate": "9b68eee integration and production build passed; superseded by stronger issuer guard before merge; not full release acceptance"
 }

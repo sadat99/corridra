@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       {
         workspaces: await s.customerWorkspaces.list(
           request.headers.get('x-corridra-customer-subject') ?? undefined,
+          request.headers.get('x-corridra-customer-issuer') ?? undefined,
         ),
         synthetic: true,
       },
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       await s.customerWorkspaces.provision(
         input,
         request.headers.get('x-corridra-customer-subject') ?? undefined,
+        request.headers.get('x-corridra-customer-issuer') ?? undefined,
       ),
       { headers: deliveryHeaders },
     );

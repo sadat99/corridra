@@ -60,12 +60,12 @@ const messages: Record<Exclude<Status, 'loading' | 'ready'>, string> = {
   error: 'Your test workspaces could not be loaded. Try again.',
 };
 
-async function fetchWorkspaces(subject: string, signal: AbortSignal) {
+async function fetchWorkspaces(subject: string, issuer: string, signal: AbortSignal) {
   const response = await fetch('/api/customer-workspaces', {
     cache: 'no-store',
     credentials: 'same-origin',
     signal,
-    headers: { 'x-corridra-customer-subject': subject },
+    headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
   });
   if (!response.ok) return { status: response.status, rows: [] as CustomerWorkspace[] };
   const value: unknown = await response.json();
@@ -99,7 +99,7 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
-    return fetchWorkspaces(subject, request.signal).then(
+    return fetchWorkspaces(subject, issuer, request.signal).then(
       ({ status, rows }) => {
         if (!mounted.current || current !== sequence.current) return false;
         if (status < 200 || status >= 300) {
@@ -131,7 +131,7 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
         return false;
       },
     );
-  }, [storageKey, subject]);
+  }, [storageKey, subject, issuer]);
   const reload = useCallback(() => {
     setRows([]);
     setStatus('loading');
@@ -200,7 +200,11 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
         method: 'POST',
         credentials: 'same-origin',
         cache: 'no-store',
-        headers: { 'Content-Type': 'application/json', 'x-corridra-customer-subject': subject },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-corridra-customer-subject': subject,
+          'x-corridra-customer-issuer': issuer,
+        },
         body: JSON.stringify({ commandId: proposed.commandId, name: proposed.name }),
       });
       if (!mounted.current) return;

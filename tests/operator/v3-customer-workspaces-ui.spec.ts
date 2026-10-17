@@ -94,6 +94,7 @@ test('customer workspace UI preserves one command through loading, duplicate sub
   });
   await page.route('**/api/customer-workspaces', async (route) => {
     expect(route.request().headers()['x-corridra-customer-subject']).toBe('synthetic-alice');
+    expect(route.request().headers()['x-corridra-customer-issuer']).toBe(issuer);
     if (route.request().method() === 'GET') {
       await getGate;
       await route.fulfill({ json: { synthetic: true, workspaces: records } });
@@ -213,22 +214,28 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   page,
 }) => {
   let current = 'synthetic-alice';
+  let currentIssuer = issuer;
   const posts: { commandId: string; name: string }[] = [];
   const records = new Map<string, ReturnType<typeof row>[]>();
   await page.route('**/api/customer-workspaces', async (route) => {
     const expected = route.request().headers()['x-corridra-customer-subject'];
-    if (expected !== current) {
+    if (
+      expected !== current ||
+      route.request().headers()['x-corridra-customer-issuer'] !== currentIssuer
+    ) {
       await route.fulfill({ status: 409, json: { error: 'Synthetic switched account' } });
       return;
     }
     if (route.request().method() === 'GET') {
-      await route.fulfill({ json: { synthetic: true, workspaces: records.get(current) ?? [] } });
+      await route.fulfill({
+        json: { synthetic: true, workspaces: records.get(currentIssuer + ':' + current) ?? [] },
+      });
       return;
     }
     const body = route.request().postDataJSON();
     posts.push(body);
     const record = row(body.name);
-    records.set(current, [record]);
+    records.set(currentIssuer + ':' + current, [record]);
     if (current === 'synthetic-alice') await route.abort('failed');
     else await route.fulfill({ json: record });
   });
@@ -257,11 +264,13 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   expect(stored[0][0]).toBe(`corridra.customer-workspace.v1:${issuer}:synthetic-alice`);
   expect(Object.keys(JSON.parse(stored[0][1])).sort()).toEqual(['commandId', 'name', 'version']);
   current = 'synthetic-alice';
-  await page.goto(
-    origin +
-      '/?issuer=' +
-      encodeURIComponent(issuer.replace('ep-ui-fixture', 'ep-another-fixture')),
-  );
+  await page.goto(origin);
+  await expect(page.getByLabel('Test workspace name', { exact: true })).toHaveValue('Alice draft');
+  currentIssuer = issuer.replace('ep-ui-fixture', 'ep-another-fixture');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByRole('alert')).toContainText('Your account or saved request changed');
+  await expect(page.getByRole('form', { name: 'Create a test workspace' })).toHaveCount(0);
+  await page.goto(origin + '/?issuer=' + encodeURIComponent(currentIssuer));
   await expect(page.getByLabel('Test workspace name', { exact: true })).toBeEmpty();
   await expect(
     page.getByRole('button', { name: 'Retry workspace creation', exact: true }),
