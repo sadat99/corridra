@@ -1,0 +1,12 @@
+✔ the design system marker exists exactly once (0.706656ms)
+✔ new CSS uses design tokens, never raw colours or fonts (0.437638ms)
+✔ legacy CSS debt does not grow (0.249139ms)
+✔ the root layout loads the single self-hosted interface font (2.428066ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7.986427

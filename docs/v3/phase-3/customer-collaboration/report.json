@@ -1,0 +1,51 @@
+{
+  "result": "partial",
+  "baseline": "5e2c095331b392f590315d595f89e9055c19f175",
+  "requirements": ["V3-06-003", "V3-09-079", "V3-09-080", "V3-09-081", "V3-09-087"],
+  "existing": "Independent verified customer identity, explicit synthetic admission, bounded session proofs, immutable initial owner grants, workspace provisioning and append-only events",
+  "new": "Optional additive customer module2: hashed single-use invitations, admitted member acceptance, owner cancellation and member revocation, bounded owner-only history, idempotent commands and serialized audit/outbox writes",
+  "sourceAndDestination": "Original /account and private mission access retained; new GET/POST /api/customer-workspace-access is gated; no new UI control in this backend packet",
+  "blastRadius": "New customer-private tables and customer functions only; existing authority functions, policies, grants, core29 and customer0001 migration history remain unchanged. New members gain synthetic workspace-shell listing only, no staff/company/mission/source/finance authority.",
+  "localChecks": {
+    "format": "pass",
+    "lint": "pass",
+    "webTypes": "pass",
+    "packageTypes": "pass",
+    "javascriptUnit": "19 passed,0 failed",
+    "pythonUnit": "7 passed",
+    "preservation": "45 routes,29 migration hashes,6 source hashes,18 expert IDs PASS"
+  },
+  "exactHeadChecks": {
+    "databaseAndPermissionDenials": "pending required GitHub CI; local Docker socket EPERM",
+    "productionBuild": "pending required GitHub CI; local child-process spawning EPERM",
+    "publicAndNewRouteBrowsers": "pending required GitHub CI",
+    "protectedOperatorBrowsers": "pending required GitHub CI"
+  },
+  "newTests": "13 real restricted-database tests, including populated module1 upgrade and original object/data preservation, concurrency, expiry/revocation, command conflicts, private grants, disabled account and expiring proof lock wait; default-off browser route checks",
+  "states": "New API handles unavailable, denied, invalid, conflict and retry through existing safe HTTP errors. Owner history distinguishes pending,expired,cancelled,accepted and active,revoked,account-disabled. No UI loading/empty/recovery acceptance claimed for this backend packet.",
+  "featureFlags": "CORRIDRA_CUSTOMER_WORKSPACES_ENABLED remains off; production hard-disabled. No cloud migration or provider/account/settings change.",
+  "rollout": "Install optional module2 before enabling the new server; do not silently hide invited membership on a missing schema. Original functions stay available for the retained old application.",
+  "rollback": "Keep flag off or redeploy the prior application. Retain additive tables, initial owner grants and all access/event history; never roll migration history back.",
+  "remaining": [
+    "Actual private managed-provider OTP/session acceptance",
+    "Collaboration UI and authenticated route/browser acceptance",
+    "Canonical organisation linking and owner transfer",
+    "Persistent customer mission authority",
+    "Independent delegation/participant flows and organiser economics",
+    "Full legacy role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "branchBudget": "Fresh local5/remote6/distinct8/max8; reuse own branch; preserve open dependency PRs and unfinished/environment-bound refs",
+  "cleanup": "No new deletion claimed. Required retained production,acceptance,rollback and unfinished resources remain.",
+  "testedCandidate": "a578fd74dab23b4a4245fe3af9de06748614a521",
+  "failedCi": {
+    "run": 39039863896,
+    "job": 117416959674,
+    "integration": "30 files,249 passed including13 new collaboration tests",
+    "build": "passed",
+    "publicBrowser": "100 passed,2 failed:global referrer-policy override",
+    "protectedBrowser": "skipped,not passed"
+  },
+  "repair": "Later narrow next.config no-referrer/no-store rule for both customer workspace APIs;all existing and new tests unchanged;full required CI pending",
+  "selfAudit": "docs/v3/self-audit-7.json"
+}

@@ -53,6 +53,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/:page(customer-workspaces|customer-workspace-access)',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source:
           '/:page(signin|signup|forgot-password|reset-password|verify-email|account|client|programme)',
         headers: [
