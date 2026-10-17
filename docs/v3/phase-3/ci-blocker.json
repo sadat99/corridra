@@ -17,5 +17,10 @@
   "vercelCommitStatus": "success",
   "merge": "BLOCKED: required CI failed before runner assignment",
   "productionChanged": false,
-  "knownCause": "Runner not assigned; precise service/account cause unavailable. No billing cause assumed."
+  "knownCause": "GitHub account billing: payment failure or spending limit; provider annotation confirms this condition but not which alternative",
+  "providerAnnotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+  "annotationEvidence": "gh api repos/sadat99/corridra/check-runs/117320458649/annotations --jq .[].message (exit0)",
+  "requiredAccountAction": "Open GitHub Settings > Billing & plans, resolve the failed payment or applicable Actions spending limit, then rerun exact-head CI",
+  "billingSettingsURL": "https://github.com/settings/billing",
+  "accountPaymentsOrLimitsChanged": false
 }
