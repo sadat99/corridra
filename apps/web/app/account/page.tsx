@@ -5,6 +5,9 @@ import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
+import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
+import { CustomerWorkspaces } from './customer-workspaces';
+import { readNeonAuthConfig } from '@corridra/config';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -41,6 +44,9 @@ export default async function Page() {
         <AccountSignout />
       </WorkspaceShell>
     );
+  const workspaceIssuer = customerWorkspacesEnabled()
+    ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
+    : undefined;
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
       <div className="ux-account-layout">
@@ -62,6 +68,7 @@ export default async function Page() {
             and replies.
           </p>
           <nav className="access-options" aria-label="Account sections">
+            {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
             <a href="#customer-missions">My shared missions</a>
             <Link className="text-link" href="/plan#receipt-check">
               Check a request receipt
@@ -83,8 +90,19 @@ export default async function Page() {
           </details>
           <AccountSignout />
         </aside>
-        <div id="customer-missions" tabIndex={-1}>
-          <CustomerMissions />
+        <div>
+          {workspaceIssuer && (
+            <div id="customer-workspaces" tabIndex={-1}>
+              <CustomerWorkspaces
+                key={`${workspaceIssuer}:${data.user.id}`}
+                subject={data.user.id}
+                issuer={workspaceIssuer}
+              />
+            </div>
+          )}
+          <div id="customer-missions" tabIndex={-1}>
+            <CustomerMissions />
+          </div>
         </div>
       </div>
     </WorkspaceShell>

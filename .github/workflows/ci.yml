@@ -80,6 +80,7 @@ jobs:
           path: |
             .cache/ux06/public-after/
             .cache/ux06/after/
+            .cache/v3-customer-ui/after/
           if-no-files-found: ignore
           retention-days: 3
       - uses: actions/upload-artifact@v7
