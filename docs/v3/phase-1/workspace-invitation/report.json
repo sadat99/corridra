@@ -1,5 +1,5 @@
 {
-  "result": "partial",
+  "result": "verified bounded UI/source protocol release;exposure gated;whole V3 PARTIAL",
   "baseline": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
   "requirements": [
     "V3-06-003",
@@ -29,13 +29,13 @@
     "actions": "806 original/832 current;only2 previously verified OTP changes;zero unaccounted original loss"
   },
   "exactHeadChecks": {
-    "integrationAndPermissionDenials": "pending CI",
-    "productionBuild": "pending CI",
-    "publicBrowsers": "pending CI",
-    "protectedAndNewComponentBrowsers": "pending CI"
+    "integrationAndPermissionDenials": "30 files249 tests passed",
+    "productionBuild": "passed",
+    "publicBrowsers": "102 passed(3.0m)",
+    "protectedAndNewComponentBrowsers": "26 passed(10.3m),including4 new invitation UI cases"
   },
   "newTests": "4 component protocol cases:lost acknowledgement and duplicate submit,same-command retry,reload/re-entry,current issuer+subject,denials401/403/409/503,malformed success,clear uncertain code,legacy mission access,keyboard,responsive and axe. These fixtures do not establish actual private provider/session acceptance.",
-  "screenshots": "Planned immutable pre-UI 2a0055f and new UI at1440,768,390 in CI artifact .cache/v3-invitation-ui/after;no code entered in captured views;three-day retention,no image committed to repo.",
+  "screenshots": "Six immutable before/after1440/768/390 images generated;keyboard,axe and overflow pass;artifact12107465536 retained3days. No separate manual image review or private provider walkthrough claimed.",
   "featureFlag": "Existing CORRIDRA_CUSTOMER_WORKSPACES_ENABLED remains off;production hard-disabled. No new flag or real activation.",
   "states": "Native required43-character code,loading/busy,empty,denied,unavailable,conflict,malformed response,lost acknowledgement,retry,reload and discard. Code never enters URLs/sessionStorage/localStorage;unmount aborts response handling.",
   "remaining": [
@@ -53,5 +53,8 @@
   "sourceCommit": "ba99db4fed1c8ed653a612f10d99edae57d2e5a5",
   "sourceTree": "5f1fe1168f91e201995fd5c1250e6cc85dadbf3c",
   "backendRelease": "PR65 verified,merged/deployed89c9d07;isolated module2 installed;full249/102/22 checks pass. This does not verify new UI.",
-  "selfAudit": "docs/v3/self-audit-8.json"
+  "selfAudit": "docs/v3/self-audit-8.json",
+  "testedHead": "d8f843f751d0c5029e60af0b1a9e44db762e6544",
+  "merge": "bc845512f54a5b079def8546c5c7632f9a531150",
+  "release": "docs/v3/phase-1/workspace-invitation/release.json"
 }

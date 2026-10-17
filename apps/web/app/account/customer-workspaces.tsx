@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
+import { CustomerWorkspaceTeam } from './customer-workspace-team';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
@@ -274,8 +275,8 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
     >
       <h2>Your test workspaces</h2>
       <p>
-        Use fictional names only. Company profiles, sending team invitations and workspace projects
-        are not available here yet.
+        Use fictional names only. Company profiles and workspace projects are not available here
+        yet.
       </p>
       {status === 'loading' && <p role="status">Loading your test workspaces…</p>}
       {status !== 'loading' && status !== 'ready' && (
@@ -307,6 +308,22 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role} · Test data
+                  {row.role === 'owner' && (
+                    <CustomerWorkspaceTeam
+                      key={issuer + ':' + subject + ':' + row.id}
+                      workspace={row}
+                      subject={subject}
+                      issuer={issuer}
+                      onDenied={(status) => {
+                        setRows([]);
+                        setStatus(status === 403 ? 'changed' : failure(status));
+                        setMessage({
+                          text: 'Team access could not be confirmed. Reload your account before continuing.',
+                          error: true,
+                        });
+                      }}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

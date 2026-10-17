@@ -1,0 +1,2 @@
+tests/operator/v3-workspace-team-ui.spec.ts(506,62): error TS2345: Argument of type 'string' is not assignable to parameter of type '`${string}-${string}-${string}-${string}-${string}`'.
+Resolved new fixture default-parameter inference with an explicit wire-string annotation;all behavior/assertions unchanged.
