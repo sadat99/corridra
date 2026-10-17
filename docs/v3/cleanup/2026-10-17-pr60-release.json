@@ -1,0 +1,57 @@
+{
+  "merge": "fe1344a78af793caf573cf13b6c14d65d8f291ac",
+  "testedHead": "1b33ad1f4f0059244df2d3eb06550abcff2fe669",
+  "tree": "478c41579faf8174d18cc89a4340992b9b2f6257",
+  "ci": {
+    "run": 39006623375,
+    "conclusion": "success",
+    "integrationFiles": 26,
+    "integrationTests": 209,
+    "publicBrowserTests": 98,
+    "protectedBrowserTests": 17,
+    "codeql": "SKIPPED; D04 remains open"
+  },
+  "deployment": {
+    "id": "dpl_4fLCDBFQVQmWB7TADQAto2Bo6p7q",
+    "state": "READY",
+    "sha": "fe1344a78af793caf573cf13b6c14d65d8f291ac",
+    "regions": ["fra1"]
+  },
+  "observations": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/plan?job=buyers",
+      "status": 200
+    },
+    {
+      "path": "/plan?job=sourcing",
+      "status": 200
+    },
+    {
+      "path": "/plan?job=delegations",
+      "status": 200
+    },
+    {
+      "path": "/operator/signin",
+      "status": 200
+    },
+    {
+      "path": "/api/workspace/operations-controls",
+      "status": 401
+    }
+  ],
+  "mutationRequestsToProduct": 0,
+  "cleanup": {
+    "previewDeleted": "dpl_8gCtTUuwL5cWfXsHSDVQUQoKYiKo",
+    "aliasesDeleted": ["corridra-git-feat-v3-customer-workspaces-sadat-os.vercel.app"],
+    "remoteBranchDeleted": "feat/v3-customer-workspaces"
+  },
+  "duplicatePostMergeCI": {
+    "run": 39010161772,
+    "cancelRequested": true,
+    "reason": "Full required PR CI passed for the identical complete repository tree; no code changed; cancellation is not reported as another test pass"
+  }
+}
