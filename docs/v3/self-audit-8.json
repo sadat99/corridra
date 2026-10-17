@@ -1,0 +1,113 @@
+{
+  "audit": 8,
+  "afterCommit": "a94f8d844a20b38c3724e505dc3bcd430b60004a",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 832,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "Original collector JSX AST binding/visibility algorithm over the current worktree; CSS/location ignored. Cross-checked all806 original controls, retaining the two previously verified OTP changes. Not dynamic runtime acceptance.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "All806 original controls accounted for against832 current;only2 previously verified OTP changes. Original119 command and70 dispatch source files unchanged. Guard45routes/29core migration hashes/6sources/18expertIDs PASS. Static evidence is not complete dynamic role/state acceptance.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "Invitation UI sends mounted issuer+subject as rejection-only context to existing independently verified/admitted API. No new server authority. It clears code/stale rows on denial and validates member-only synthetic acknowledgement. Actual restricted-database backend tests passed on the parent candidate;UI browser acceptance still pending.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "UI stores code only in component memory,never URLs/sessionStorage/localStorage. Same-command retry and strict acknowledgement;unmount aborts stale response handling. No schema,source,evidence,money or event edit in UI. Additive collaboration history/initial owner grants preserved.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "No flagship requirement removed. Only sample invitation acceptance added. Owner invitation-management UI,canonical organisation linking,persistent customer missions and independent delegation/participant/economics remain missing. No simulated commercial control.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser journey remains MISSING and no SaaS organiser release claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical company identity or buyer/supplier role change;organisationId remains null and no private company details published.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 expert paths and original private mission invitations remain reachable in source. New disclosure adds no primary navigation item or permission-mode bypass.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Feature remains explicitly synthetic/default-off/production-hard-disabled. One actual provider account is stored verified and two sessions unexpired by count-only read;actual browser reload/sign-out/revocation remains unverified. No email/token/password retrieved,no admission or provider changes.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "UI local format/lint/web+package types,JS19/Python7 and preservation checks pass. New4 browser cases/screenshots/axe/build/exact-head integration pending its own CI;parent backend CI39044977384 integration/build passed and public/protected browsers pending. Failed prior candidate is not acceptance;CodeQL skipped,D04 open.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "One contextual invitation form adds keyboard/native43-character validation,loading/denied/recovery,same-command retry and clear-uncertain-code behavior. Before/after1440/768/390 screenshots and axe are written but not executed. No measured performance or whole-V3 usability claim.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Actual private provider/browser reload,sign-out and revocation",
+    "Owner invitation-management UI",
+    "Canonical organisation linking and persistent customer missions",
+    "Independent delegation/participant/economics",
+    "Full legacy role/action/state acceptance",
+    "D01-D06/D08"
+  ],
+  "tree": "5f1fe1168f91e201995fd5c1250e6cc85dadbf3c"
+}

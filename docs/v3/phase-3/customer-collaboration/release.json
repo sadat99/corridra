@@ -1,0 +1,238 @@
+{
+  "result": "verified bounded collaboration backend release;exposure gated;whole V3 PARTIAL",
+  "pr": 65,
+  "testedHead": "2a0055f5e21674a47bd3a38b1f38c8b055d2c153",
+  "merge": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
+  "fullTree": "b3d693441126ca957faaa51163890a6744e3215a",
+  "testedMergeTreeEqual": true,
+  "ci": {
+    "run": 39044977384,
+    "job": 117431792081,
+    "result": "success",
+    "integration": "30 files249 tests passed,including13 new collaboration tests",
+    "public": "102 passed(2.9m)",
+    "protected": "22 passed(10.3m)",
+    "resultLines": [
+      "2026-10-17T15:34:32.4557843Z  Test Files  30 passed (30)",
+      "2026-10-17T15:34:32.4559687Z       Tests  249 passed (249)",
+      "2026-10-17T15:39:01.1889484Z   102 passed (2.9m)",
+      "2026-10-17T15:39:01.1951074Z ##[notice]  102 passed (2.9m)",
+      "2026-10-17T15:49:22.4244936Z   22 passed (10.3m)",
+      "2026-10-17T15:49:22.4273063Z ##[notice]  22 passed (10.3m)"
+    ],
+    "codeQL": "skipped;D04 open",
+    "artifact": {
+      "id": 12105657922,
+      "name": "synthetic-ux-browser-evidence",
+      "size": 18697001,
+      "sha256": "ba01672e1dfe25d9d179de1b21c19278e04a808ca32000fb125632908333da47",
+      "expires": "2026-10-20T15:49:22Z"
+    }
+  },
+  "production": {
+    "id": "dpl_EvYxYZzELBhEmUKu7RvJwz3sJou1",
+    "url": "corridra-l5bh4bu4g-sadat-os.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "sha": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
+    "regions": ["fra1"]
+  },
+  "preview": {
+    "id": "dpl_3qkbpK4u6ZfJjTV418YLsyHwEVmH",
+    "url": "corridra-6aphcgn7v-sadat-os.vercel.app",
+    "state": "READY",
+    "target": null,
+    "sha": "89c9d07d438322f9adcd7d96cdc5d4ca93157f8a",
+    "regions": ["fra1"],
+    "branch": "feat/v3-customer-acceptance",
+    "fastForwardedFrom": "5e2c095331b392f590315d595f89e9055c19f175"
+  },
+  "aliases": [
+    {
+      "alias": "corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+      "deploymentId": "dpl_3qkbpK4u6ZfJjTV418YLsyHwEVmH"
+    },
+    {
+      "alias": "c.obsidianglobal.studio",
+      "deploymentId": "dpl_EvYxYZzELBhEmUKu7RvJwz3sJou1"
+    },
+    {
+      "alias": "corridra.vercel.app",
+      "deploymentId": "dpl_EvYxYZzELBhEmUKu7RvJwz3sJou1"
+    }
+  ],
+  "productionRoutes": [
+    {
+      "kind": "production",
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "production",
+      "path": "/signup",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "production",
+      "path": "/signin",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "production",
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "kind": "production",
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "production",
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "production",
+      "path": "/api/workspace/operations-controls?tenant=00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "expected": 401
+    }
+  ],
+  "previewRoutes": [
+    {
+      "kind": "preview",
+      "path": "/verify-email",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      },
+      "codeInputVisible": true
+    },
+    {
+      "kind": "preview",
+      "path": "/api/auth/get-session",
+      "status": 200,
+      "expected": 200,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "anonymousSession": true
+    },
+    {
+      "kind": "preview",
+      "path": "/api/customer-workspaces",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    },
+    {
+      "kind": "preview",
+      "path": "/api/customer-workspace-access",
+      "status": 503,
+      "expected": 503,
+      "headers": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff"
+      }
+    }
+  ],
+  "cloudMigration": "cloud-upgrade.json",
+  "featureFlags": "Customer workspace exposure unchanged off;production hard-disabled;D01-D06/D08 closed.",
+  "providerEvidence": "Count-only stored state:1 verified provider account,2 unexpired sessions,0 admitted customer principals. No password,code,session token,subject or email retrieved. Actual authenticated browser reload/sign-out/revocation unverified.",
+  "productMutationsDuringRouteChecks": 0,
+  "remaining": [
+    "Invitation acceptance UI committed separately but not verified by this backend release",
+    "Owner invitation-management UI",
+    "Canonical organisation linking",
+    "Persistent customer mission authority",
+    "Independent delegation/participant/economics",
+    "Full legacy role/state acceptance",
+    "D01-D06/D08"
+  ],
+  "phaseReport": {
+    "Phase0": {
+      "result": "partial",
+      "evidence": "Original806 controls/45routes/119command files/70dispatch files/29core migration hashes/6sources/18expert IDs retained;bounded original regression passes",
+      "gap": "Full dynamic legacy role/action/state denominator unverified"
+    },
+    "Phase1": {
+      "result": "partial",
+      "evidence": "Existing entry/founder/OTP/workspace source passes mandatory checks;actual code field visible",
+      "gap": "New invitation UI not yet accepted;broader professional/private browser walkthroughs unverified"
+    },
+    "Phase2": {
+      "result": "partial",
+      "evidence": "Shared managed commercial engines and original tests retained",
+      "gap": "Independent buyer/supplier/organiser journeys not yet implemented"
+    },
+    "Phase3": {
+      "result": "partial",
+      "evidence": "Synthetic collaboration backend full CI and isolated additive upgrade/restricted denials verified",
+      "gap": "Organisation/mission/self-service organiser/participant/economics and owner UI missing"
+    },
+    "Phase4": {
+      "result": "partial",
+      "evidence": "Founder clarity retained;source-backed existing controls",
+      "gap": "Full customer/activity/economics and role walkthroughs"
+    },
+    "Phase5": {
+      "result": "blocked",
+      "evidence": "D01-D06/D08 remain independently binding",
+      "gap": "Legal/provider/security/real-data/delivery/payment activation and paid pilot"
+    }
+  },
+  "rollback": {
+    "application": "dpl_HPBBagj1HidonFKr1vP6ZkomAvBi at5e2c095331b392f590315d595f89e9055c19f175 retained",
+    "schema": "Retain additive module,initial owners and all access/event history;disable exposure. No down migration.",
+    "preview": "Existing12 bindings/provider/account retained;no new signing material"
+  },
+  "cleanup": "No new deletion claimed;retained3 Neon branches and8 distinct local/remote Git names;dependency PRs/unfinished/environment-bound refs preserved. Native deployment/ref deletion unavailable and local network grant unavailable."
+}

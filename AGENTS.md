@@ -46,3 +46,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Check `isError` and the parsed provider result before reporting a mutation as successful; an unparsed response is not proof.
 - Preserve managed proxy/TLS settings and set `NODE_USE_ENV_PROXY=1` for Node network calls; do not retry direct DNS.
 - Mount effects start external work; update React state from settled async callbacks or user events, not synchronous mount helpers.
+- Discover read paths with `rg --files` before passing them to `sed` or `rg`; stop a read batch at a missing path instead of continuing with guessed names.
