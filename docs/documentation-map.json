@@ -144,6 +144,11 @@
       "use": "Read with explicit later amendments and ADR index"
     },
     {
+      "path": "docs/adr/0032-customer-workspace-authority.md",
+      "classification": "Proposed architecture decision",
+      "use": "Customer authority preservation and unresolved migration acceptance conflict; not implemented"
+    },
+    {
       "path": "docs/adr/README.md",
       "classification": "Architecture contract/index",
       "use": "Read with explicit later amendments and ADR index"
