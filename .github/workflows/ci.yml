@@ -81,7 +81,7 @@ jobs:
             .cache/ux06/public-after/
             .cache/ux06/after/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

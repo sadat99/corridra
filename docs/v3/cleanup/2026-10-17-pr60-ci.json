@@ -1,0 +1,181 @@
+{
+  "testedHead": "1b33ad1f4f0059244df2d3eb06550abcff2fe669",
+  "merge": "fe1344a78af793caf573cf13b6c14d65d8f291ac",
+  "identicalTree": "478c41579faf8174d18cc89a4340992b9b2f6257",
+  "runId": 39006623375,
+  "job": {
+    "id": 117325705323,
+    "name": "validate",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 39006623375,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Run actions/setup-node@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Install pinned pnpm",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Install workspace",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Git branch budget below nine, preserving open PRs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Redacted Git-history secret scan",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Validated local code-security rules",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Dependency vulnerability gate",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Formatting",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Lint",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Typecheck",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Source document integrity",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Isolated PostgreSQL",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14
+      },
+      {
+        "name": "Reviewed database migrations and roles",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15
+      },
+      {
+        "name": "Real malware scanner readiness",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Database, identity, adapter and recovery integration tests",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      },
+      {
+        "name": "Production build",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      },
+      {
+        "name": "Browser runtime",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19
+      },
+      {
+        "name": "Browser and accessibility tests",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20
+      },
+      {
+        "name": "Protected operator browser tests",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21
+      },
+      {
+        "name": "Synthetic UX browser evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 22
+      },
+      {
+        "name": "Run actions/upload-artifact@v7",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 23
+      },
+      {
+        "name": "Post Run actions/setup-node@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 45
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 46
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 47
+      }
+    ]
+  },
+  "summaryLines": [
+    "2026-10-17T06:12:21.3095425Z  Test Files  26 passed (26)",
+    "2026-10-17T06:12:21.3096904Z       Tests  209 passed (209)",
+    "2026-10-17T06:16:58.5791164Z   98 passed (3.0m)",
+    "2026-10-17T06:16:58.5830181Z ##[notice]  98 passed (3.0m)",
+    "2026-10-17T06:26:54.2261784Z   17 passed (9.9m)",
+    "2026-10-17T06:26:54.2282052Z ##[notice]  17 passed (9.9m)"
+  ],
+  "codeql": "SKIPPED; independent D04 remains open"
+}

@@ -99,3 +99,7 @@ Nothing is in progress at the time of writing. The last application release is P
 3. Move an item from "Open" to the log when it is decided.
 4. Keep the current plan table short: one row per step, one next action.
 5. The work log says what was done. This file says what the plan is.
+
+## Verified V3 release and resource housekeeping, 17 October 2026
+
+PR60 merged at fe1344a; exact source deployed READY in Frankfurt after full209 integration/98 public/17 protected tests. Required Actions budget is restored. Verified resource cleanup and remaining product gaps are recorded in ledger chunks18-19 and docs/v3/cleanup. Generated UX artifact retention is being reduced to3 days, with failures7 days and permanent source/acceptance evidence preserved. Current Phase3 is partial:isolated identity configuration is ready;customer authority and end-to-end SaaS remain under implementation/verification. Live gates remain closed.

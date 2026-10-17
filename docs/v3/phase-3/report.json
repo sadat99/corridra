@@ -1,14 +1,18 @@
 {
   "phase": 3,
-  "result": "blocked",
+  "result": "partial",
   "verified": [
     "Existing customer/staff separation and tenant/permission denial were freshly tested",
-    "Read-only runtime/Vercel/Neon environment discovery performed"
+    "Read-only runtime/Vercel/Neon environment discovery performed",
+    "Isolated Frankfurt auth branch provisioned sterile; mandatory email verification and exact localhost origin confirmed",
+    "Separate Development-only signing configuration; production bindings unchanged",
+    "PR60 full CI:26 integration files/209 tests,98 public and17 protected browser tests passed; exact merged source deployed READY"
   ],
-  "partial": [],
+  "partial": [
+    "Customer identity environment prepared; authenticated managed signup/OTP/revocation acceptance remains unverified"
+  ],
   "blocked": [
-    "No isolated customer-auth base URL/signing secret available",
-    "Correct Corridra Neon project not exposed by connected account; configured runtime API request rejected by required proxy with 403"
+    "Proposed authority design requires independent additive extension acceptance; original core29 assertion and all original tests remain unchanged"
   ],
   "unverified": [
     "Customer-owned organisation provisioning and memberships",
@@ -19,10 +23,16 @@
   "evidence": [
     "docs/v3/environment-blockers.json",
     "docs/v3/phase-0/verification/integration.log",
-    "docs/v3/phase-1/entry/verification/permission-denial.log"
+    "docs/v3/phase-1/entry/verification/permission-denial.log",
+    "docs/v3/phase-3/environment-recheck.json",
+    "docs/v3/cleanup/2026-10-17-pr60-ci.json",
+    "docs/v3/cleanup/2026-10-17-pr60-release.json"
   ],
-  "nextAction": "Restore correct-project access and isolated EU synthetic identity settings; then write/review the additive customer-authority ADR and implement restricted-role/upgrade/browser acceptance before exposing controls.",
-  "featureFlagsChanged": [],
+  "nextAction": "Implement and test independently gated customer-authority extension with its own append-only history, canonical tenant reuse and restricted-role/upgrade acceptance; expose no incomplete control",
+  "featureFlagsChanged": [
+    "Existing Neon Auth flag configured for isolated Development only; production unchanged"
+  ],
   "authRlsMigrationsChanged": false,
-  "rollback": "No SaaS authority/schema changes made. Existing identity, source scopes, money and histories retained."
+  "rollback": "No SaaS authority/schema changes made. Existing identity, source scopes, money and histories retained.",
+  "initialBlockedObservation": "Retained in docs/v3/environment-blockers.json; project access and isolated auth configuration are now restored"
 }
