@@ -499,3 +499,7 @@ Required CI39047678546/job117439588210 passed exactd8f843f:30 files249 integrati
 - Decisions: ADR033 exact lock order and creator privacy; retained private progress after workspace departure, denied new submissions; rotation-safe retry precedes new signing material. Metadata remains private, no source content copied.
 - Gaps: request UI/full mission administration, actual provider/browser acceptance, organisation/delegation/participants/economics and activation remain separate. V3-06-004 PARTIAL,not whole product acceptance.
 - Next: finish full exact-head checks, checked merge/deploy with flag off, then private request UI. Branch union8/max8, reused current branch.
+
+### 18 October follow-up: shared request ingress budget
+
+PR68 initial b3 source passed local260 integration/build/104 alternate-runtime public tests. Pre-merge review added the original shared MissionService.budget/trusted-address derivation to the new write API;no separate intake budget. All old tests retained,including actual replica/seventh-denial test. Updated source must pass fresh CI;old run is not final acceptance. Local pinned-browser install was network403,so installed Chromium151 checks are labelled separately. No production/cloud-schema/admission/flag change.

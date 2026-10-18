@@ -39,6 +39,11 @@ export async function POST(request: Request) {
       throw new DomainError('Request origin is not allowed', 403);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
+    // Share the original public intake limits; caller-supplied XFF is not authority.
+    const client = process.env.VERCEL
+      ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
+      : 'local';
+    await s.missions.budget(client);
     const input: unknown = JSON.parse((await boundedBody(request, 20000)).toString('utf8'));
     return Response.json(
       await s.customerRequests.submit(

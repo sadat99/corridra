@@ -10,7 +10,9 @@
   "verification": {
     "focused": "11 restricted PostgreSQL tests passed; prior combined focus 52 passed across five files before extra lock tests",
     "static": "lint/types/unit passed; full current-head checks running",
-    "failureEvidence": "verification/focused-initial.txt retains initial policy snapshot/new test status/immutable retention fixture errors. Narrow auth-only function replaces extra policy; new test uses authoritative DRAFT and short original retention at INSERT. No existing test changed or trigger disabled."
+    "failureEvidence": "verification/focused-initial.txt retains initial policy snapshot/new test status/immutable retention fixture errors. Narrow auth-only function replaces extra policy; new test uses authoritative DRAFT and short original retention at INSERT. No existing test changed or trigger disabled.",
+    "localFullInitialCandidate": "b3ca24b:31 files260 integration tests/build pass;104 public pass with installed Chromium151;protected running. Pinned browser download403,initial96 launch failures+8 API-only successes retained as runtime limitation. CI exact new source required.",
+    "rateBudgetReview": "Before merge, API now calls original shared MissionService.budget with trusted Vercel forwarded-address/local derivation. Existing actual database test proves replicated shared budget and seventh denial. No separate capacity bypass; source follow-up requires fresh exact-head CI."
   },
   "privacy": "No receipt secret reaches response/URL/storage. No brief/contact/reply copied to ownership store. Private immutable identifiers/digests/provenance remain; original receipt content expires unchanged, with an additional wall-clock guard. Metadata retention/legal approval remains independently gated.",
   "states": "unavailable/invalid/denied/conflict/retry/expired-source progress, bounded pagination; no loading/responsive UI claim yet",
