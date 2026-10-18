@@ -732,9 +732,10 @@
       "docs/adr/0037-customer-programme-command-authority.md",
       "docs/v3/phase-3/customer-programmes/report.json",
       "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
-      "tests/integration/customer-programmes.test.ts"
+      "tests/integration/customer-programmes.test.ts",
+      "docs/v3/phase-3/customer-programmes/release.json"
     ],
-    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
+    "nextAction": "PR76 exact CI346PG/118public/101protected,matching merge/READY production-preview and39live+3preview checks verified. Participant increment locally tested separately;full organiser/private mission/coordination/economics acceptance unfinished."
   },
   {
     "id": "V3-02-046",
@@ -762,9 +763,14 @@
     "heading": "Product 3 — Delegation OS",
     "line": 135,
     "requirement": "4. Publish controlled invitations and register participants.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-3/customer-participants/report.json",
+      "docs/adr/0041-private-delegation-participant-onboarding.md",
+      "tests/integration/customer-participants.test.ts",
+      "tests/operator/v3-customer-participants-ui.spec.ts"
+    ],
+    "nextAction": "Synthetic programme invitations/consented registration/revocation locally verified;full exact-head CI/release pending. Actual provider,full participant profiles/private missions,coordination/economics and organiser acceptance unfinished."
   },
   {
     "id": "V3-02-049",
@@ -877,9 +883,10 @@
       "docs/adr/0037-customer-programme-command-authority.md",
       "docs/v3/phase-3/customer-programmes/report.json",
       "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
-      "tests/integration/customer-programmes.test.ts"
+      "tests/integration/customer-programmes.test.ts",
+      "docs/v3/phase-3/customer-programmes/release.json"
     ],
-    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
+    "nextAction": "PR76 exact CI346PG/118public/101protected,matching merge/READY production-preview and39live+3preview checks verified. Participant increment locally tested separately;full organiser/private mission/coordination/economics acceptance unfinished."
   },
   {
     "id": "V3-02-060",
@@ -3272,9 +3279,10 @@
       "docs/adr/0037-customer-programme-command-authority.md",
       "docs/v3/phase-3/customer-programmes/report.json",
       "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
-      "tests/integration/customer-programmes.test.ts"
+      "tests/integration/customer-programmes.test.ts",
+      "docs/v3/phase-3/customer-programmes/release.json"
     ],
-    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
+    "nextAction": "PR76 exact CI346PG/118public/101protected,matching merge/READY production-preview and39live+3preview checks verified. Participant increment locally tested separately;full organiser/private mission/coordination/economics acceptance unfinished."
   },
   {
     "id": "V3-06-006",
@@ -3282,9 +3290,14 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 495,
     "requirement": "| Participant invitation/onboarding workflows | Delegation SaaS viability | P0 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-3/customer-participants/report.json",
+      "docs/adr/0041-private-delegation-participant-onboarding.md",
+      "tests/integration/customer-participants.test.ts",
+      "tests/operator/v3-customer-participants-ui.spec.ts"
+    ],
+    "nextAction": "Synthetic programme invitations/consented registration/revocation locally verified;full exact-head CI/release pending. Actual provider,full participant profiles/private missions,coordination/economics and organiser acceptance unfinished."
   },
   {
     "id": "V3-06-007",

@@ -46,3 +46,5 @@ Forward status, 17 October 2026: ADR032's original test-policy conflict was reso
 | [0038](0038-approved-customer-company-portfolios.md) | Canonical company continuity within original approved customer scopes |
 
 | [0037](0037-customer-programme-command-authority.md) | Scoped customer creation of canonical programmes; additive command authority and preserved staff guard/event behavior |
+
+| [0041](0041-private-delegation-participant-onboarding.md) | Private programme invitations and consented registrations;independent source and access authorities |

@@ -1,0 +1,53 @@
+{
+  "audit": 26,
+  "chunk": 92,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 973,
+  "intentionalOriginalBindingChanges": "Only2already accepted OTP bindings",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "PASS45baseline routes29core6source18expert IDs;806original/973current controls,only2prior accepted OTP changes,zero new original loss. Original import/sharing/recipient/report/export/security/recovery actions retained."
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "New participant module preserves all old function definitions/ACL/RLS/table metadata/rows and receipts exactly after the accepted programme dependency. Fresh provider-proof/admission boundary,exact canonical programme/owner-admin and participant code/own grants. Original locks/event helper and actual service/customer attribution.19new PG denials include expiry/revocation after workspace/event waits and own-view locking;no workspace/staff/private mission grant."
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "PASS45routes29core6sources18expert IDs. New private immutable invitation/consent/revocation/receipt rows and atomic genuine service/customer event/audit/outbox only. No old functions,migration files,RLS,source,money or event records rewritten. No fabricated original import or parallel mission engine."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Original requirements,source rights,quotation revisions/currencies,meeting states and opportunity origins remain existing engines. New programme record has actual name/purpose only;participant/agenda/meeting/economics controls explicitly unavailable rather than simulated."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "PR76 programme create/list gated source verified. New participant invitation/preview/explicit registration/revoke/withdraw locally verified but new exact-head CI/deployment pending. Full profiles/needs/private missions/eligibility/agenda/meetings/reporting/economics and actual organiser/provider acceptance unfinished;no full SaaS claim."
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "No organisation merge,identity inference or duplicated mission engine. Original app.delivery_programme reused;company roles and customer report/request rights unchanged. Canonical customer organisation linking remains unfinished."
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "All18expert destination IDs and original route/control inventory retained;new programme access contextual under existing owner/admin workspace cards. No sixth primary navigation or removal of sharing/correction/export/recovery."
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED defaultoff,requires synthetic workspace/nonproduction;production hardoff. Optional programme module not installed in cloud;no provider/admission/intake/feature flag or D01-D06/D08 activation. No fabricated KPIs or live service claim."
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "PR76 exactf99c648 CI346PG/118public/101protected,matching115ecca tree,READYproduction/isolatedpreview/fra1,39live+3preview checks and independently stopped no-persistence probe. New participant full38files365PG,focused34PG,22UI(12new+10unchanged programme,26.0s),2compiledgates(4.5s),final types/lint/build exit0,unit19JS7Python/format pass. Four widths/keyboard/axe plus inline320confirmation captures inspected. No original test/assertion weakened. New exact-head CI/source release pending;actual provider/full UX/security/usability NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "One contextual owner programme panel,lazy-loaded only when opened,and one participant account view. Relative real links,one-use code,explicit self-declared consent,status and recovery. Confirmation/reason/primary action/cancel adjacent to selected record,not a remote form. Privacy clears and bounded non-extending display. No new primary nav,pretend operations or repeated fake import/backend."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;actual managed-provider/full organiser acceptance NOT VERIFIED",
+  "rollback": "Disable independent exposure,use compatible prior source,preserve additive schema and canonical immutable programme/event history. No down migration.",
+  "note": "All10Hard Release Conditions checked against current ledger and original action inventory. New participant source locally verified only;full V3 remainsPARTIAL and real operationsGATED."
+}

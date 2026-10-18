@@ -149,3 +149,5 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 | [v3/phase-3/customer-companies/bounded-plan.md](v3/phase-3/customer-companies/bounded-plan.md) | Bounded implementation plan | Approved company portfolios,canonical identity and privacy-preserving recovery |
 
 - [ADR037](adr/0037-customer-programme-command-authority.md): scoped customer creation of canonical programmes. [Programme plan](v3/phase-3/customer-programmes/bounded-plan.md): optional authority, preservation and unfinished organiser requirements.
+
+- [ADR041](adr/0041-private-delegation-participant-onboarding.md) and [participant plan](v3/phase-3/customer-participants/bounded-plan.md): programme-specific consented registration without organiser workspace or private commercial authority.

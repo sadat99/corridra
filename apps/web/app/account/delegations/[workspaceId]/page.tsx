@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
+import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
@@ -35,7 +36,12 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="Plan a sample delegation">
-      <CustomerProgrammes subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+      <CustomerProgrammes
+        subject={session.data.user.id}
+        issuer={issuer}
+        workspaceId={id.data}
+        participantsEnabled={customerParticipantsEnabled()}
+      />
     </WorkspaceShell>
   );
 }

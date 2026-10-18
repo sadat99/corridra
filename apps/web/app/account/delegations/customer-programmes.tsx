@@ -1,5 +1,8 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+const ProgrammeParticipants = lazy(() =>
+  import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
+);
 type Programme = {
   id: string;
   workspaceId: string;
@@ -15,7 +18,12 @@ type Command = {
   reportingPurpose: string;
   acknowledged: true;
 };
-type Props = { subject: string; issuer: string; workspaceId: string };
+type Props = {
+  subject: string;
+  issuer: string;
+  workspaceId: string;
+  participantsEnabled?: boolean;
+};
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -44,7 +52,8 @@ export function CustomerProgrammes(props: Props) {
     />
   );
 }
-function ScopedProgrammes({ subject, issuer, workspaceId }: Props) {
+function ScopedProgrammes({ subject, issuer, workspaceId, participantsEnabled = false }: Props) {
+  const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
@@ -273,9 +282,10 @@ function ScopedProgrammes({ subject, issuer, workspaceId }: Props) {
         Back to my workspaces
       </a>
       <p>
-        Fictional sample planning only. This creates a programme in your workspace. Participant
-        invitations, private missions, dates, agendas, meetings, fees and costs are not available
-        here yet.
+        Fictional sample planning only. This creates a programme in your workspace. Participant{' '}
+        {participantsEnabled
+          ? 'invitations and consented registrations have separate sample controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
+          : 'invitations, private missions, dates, agendas, meetings, fees and costs are not available here yet.'}
       </p>
       {status === 'loading' && <p role="status">Checking programme access…</p>}
       {status === 'denied' && (
@@ -300,6 +310,31 @@ function ScopedProgrammes({ subject, issuer, workspaceId }: Props) {
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
                   <p>Planning record only · Sample data</p>
+                  {participantsEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() =>
+                          setSelectedProgramme(selectedProgramme === p.id ? null : p.id)
+                        }
+                      >
+                        {selectedProgramme === p.id
+                          ? 'Hide sample participants'
+                          : 'Manage sample participants'}
+                      </button>
+                      {selectedProgramme === p.id && (
+                        <Suspense fallback={<p role="status">Loading sample participant tools…</p>}>
+                          <ProgrammeParticipants
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                          />
+                        </Suspense>
+                      )}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
