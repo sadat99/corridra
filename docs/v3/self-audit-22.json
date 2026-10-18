@@ -1,0 +1,52 @@
+{
+  "audit": 22,
+  "chunk": 79,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 913,
+  "intentionalOriginalBindingChanges": "Only2 already accepted account-form OTP changes;zero new unaccounted originals",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "45baseline routes/18expert IDs retained;AST806original/913current controls,only2prior accepted OTP differences andzero new original losses. Full dynamic coverage remains separately bounded,not inferred from source."
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "New disclosure table tenant RLS,explicit own-publication owner/admin fresh MFA and original source rights;unchanged customer saved report/proof authority. Actual PG role/tenant/customer/directSQL denials,MFA after publication/event waits,proof expiry and read privacy pass. No old function/ACL/RLS change."
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "Populated old function definitions/ACLs/RLS/table metadata/row digests and29core+3base+1commercial receipts equal. Immutable original V2 decisions/sources/money/history reused;only new versioned disclosure plus atomic generic events. Invalid/expired approvals roll back all new records. Additive history never rewritten."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Exact SELECT/DECLINE/NEED_INFORMATION,rationale,next action,due date,quotation reference andsource trust retained. Original report/qualification/quotation/meeting/results controls unchanged. Selection explicitly distinct from order/contract/payment. Full customer commercial authoring remains unfinished."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "Independent Delegation OS still unfinished;programme packetecb809d and audit19 stashed separately. No organiser SaaS completion claimed or participant privacy implicitly granted."
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "PR73 canonical customer+tenant grouping preserved;decision records still reference original approved mission/target/company/report. No organisation copy,email identity matching or cross-tenant merge."
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "Original18expert destinations and all current staff/recipient/export/deep-link source controls retained. New review is a contextual delivery detail,not a replacement for existing commercial commands."
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "Explicit synthetic/read-only disclosures;new flag defaultoff andproduction hardoff;no cloud optional module,provider/admission/intake/flag,outreach/payment/inference or D01-D06/D08 activation. No real KPI or improvement claim."
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "PR73 verified release unchanged. PR74 exact11d096 CI failed typecheck (new fixture duplicate reason);no merge/deploy. Corrected forward with assertion preservation. Fail-fast format/lint/typecheck/unit/30PG/build chain actual exit0;then added genuine cross-mission denial and typecheck+31PG exit0. UI8/compiledgates2/4widths/keyboard/axe evidence applies to unchanged product source. New exact-head CI/release pending;managed-provider/full security/usability NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "Existing V2 engines and contextual reviewed disclosure reused. Separate approval/read action with explicit loading/unavailable/denied/malformed/withdrawn/expiry/retry recovery;no new primary navigation or duplicate CRM/mission engine."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;no completion percentage or improvement claim",
+  "note": "All10 Hard Release Conditions rechecked against ledger78 correction and original action inventory;913current/806original controls and45routes29core6source18expertIDs unchanged. No missing function hidden by typecheck claim;whole V3 remains PARTIAL."
+}

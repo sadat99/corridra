@@ -657,6 +657,16 @@
       "path": "docs/v3/phase-3/customer-companies/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Approved company portfolios,canonical identity and privacy-preserving recovery"
+    },
+    {
+      "path": "docs/adr/0039-explicit-commercial-decision-disclosures.md",
+      "classification": "Architecture decision",
+      "use": "Explicit owner/admin approval and creator-scoped original V2 decision disclosure"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-decisions/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Decision history scope,source rights,MFA,privacy,preservation and release acceptance"
     }
   ]
 }

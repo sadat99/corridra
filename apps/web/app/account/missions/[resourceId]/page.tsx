@@ -1,3 +1,4 @@
+import { customerDecisionsEnabled } from '@corridra/auth/customer-decisions';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
@@ -39,7 +40,12 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <WorkspaceShell eyebrow="APPROVED PRIVATE REPORT" title="Your commercial mission">
-      <SavedCommercialReport resourceId={id.data} subject={session.data.user.id} issuer={issuer} />
+      <SavedCommercialReport
+        resourceId={id.data}
+        subject={session.data.user.id}
+        issuer={issuer}
+        decisionsEnabled={customerDecisionsEnabled()}
+      />
     </WorkspaceShell>
   );
 }

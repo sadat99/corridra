@@ -60,6 +60,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/workspace/customer-decision-disclosures',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/customer-requests/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
@@ -68,7 +75,7 @@ const nextConfig: NextConfig = {
       },
       {
         source:
-          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions|customer-companies)',
+          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions|customer-companies|customer-decisions)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },
