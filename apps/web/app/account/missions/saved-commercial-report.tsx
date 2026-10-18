@@ -9,7 +9,8 @@ import { timeZone } from '@corridra/domain/geography';
 import { currency } from '@corridra/domain/opportunities';
 import { requirementFields, offerTerms } from '@corridra/domain/commercial-missions';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
-type Scope = SavedMissionScope & { resourceId: string };
+import { DecisionHistory } from './decision-history';
+type Scope = SavedMissionScope & { resourceId: string; decisionsEnabled?: boolean };
 function date(value: unknown): value is string {
   return typeof value === 'string' && Number.isFinite(Date.parse(value));
 }
@@ -181,7 +182,7 @@ export function SavedCommercialReport(props: Scope) {
     />
   );
 }
-function PrivateReport({ subject, issuer, resourceId }: Scope) {
+function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }: Scope) {
   const responsePrefix = useId();
   const [data, setData] = useState<DeliveryReport | null>(null),
     [status, setStatus] = useState('loading');
@@ -388,6 +389,9 @@ function PrivateReport({ subject, issuer, resourceId }: Scope) {
                 <p>
                   No company shortlist or supplier quotation has been approved for this report yet.
                 </p>
+              )}
+              {decisionsEnabled && (
+                <DecisionHistory subject={subject} issuer={issuer} resourceId={resourceId} />
               )}
               <h2>Meetings and visits</h2>
               {m.itinerary.length ? (

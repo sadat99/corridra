@@ -546,3 +546,14 @@ Forward V3,18 October2026: PR71 merged3ad4e8d/deployed READY production9RFw+conf
 - Preserved:all original functions/ACLs/RLS/rows/receipts and legacy routes/actions;original source/money/event history. No dependencies or cloud/gate changes.
 - Open:full customer research/commercial authoring and organisation authority remain unfinished. Programme work is safely stashed and follows the customer work.
 - Next:required exact-head checks,gated READY source release,then separately reviewed customer commercial commands on V2 engines.
+
+## 2026-10-18,Codex,company release and reviewed V2 decision history
+
+- Request:resume customer commercial workspace before independent Delegation OS,economics and full acceptance;merge/deploy checked source without repeat approval.
+- Why:preserve actual company continuity and expose real commercial decisions only under explicit original publisher approval;never imply a selection is an order or grant customer staff authority.
+- What changed:PR73 verified gated company release receipt;separate optional immutable decision-disclosure table/guards,staff review and customer read APIs/UI,ADR039 and bounded acceptance. Original backend and identities reused;no new dependency.
+- Verified:PR73 exactdd85413 CI34files292PG/112public/74protected plus static/unit/build/security,matching merge259691d,READY production/isolatedpreview/fra1,27live/3preview checks. New decision packet17new+12unchanged PG29pass(19.03s),8actualUI(16.4s),2compiledgates(2.9s),initial lint/types/build,19JS/0fail+7Python OK. Final static/full exact-head CI/release pending. Actual managed-provider acceptance NOT VERIFIED.
+- Preserved:45routes,806original controls,18expert IDs,29core/6source hashes;old function/ACL/RLS/table-row/receipts equal after new optional migration. No original test edited,canonical source/decision/money/history rewrite or provider/admission/intake/flag/cloud installation. D01-D06/D08 closed.
+- Decisions:read-only exact-state disclosure is distinct from customer canonical authoring. New owner/admin fresh-MFA/source checks repeat after waits and event writes;exact retries retain command,concurrent conflict fails,withdrawal keeps history. Current customer/tenant authority retained.
+- Open:wholeV3/customerworkspace PARTIAL;full research/commercial commands and organisation ownership,independent programme participants/coordination/economics,controlled-provider and complete UX/security/activation acceptance unfinished. Programme packetecb809d and pre-release decision WIP2f09296 preserved in stashes;branch union8.
+- Next:finish bounded decision packet exact-head CI and gated source release,then remaining customer authority before delegation. PR73 https://github.com/sadat99/corridra/pull/73;new concern uncommitted at this entry.

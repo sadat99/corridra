@@ -1,0 +1,95 @@
+{
+  "result": "verified bounded gated company portfolio source release;whole V3 PARTIAL;actual managed-provider acceptance NOT VERIFIED",
+  "pr": 73,
+  "baseline": "8bfa4503fcb0aba303a33d166e80893365499f05",
+  "testedHead": "dd85413bee3f72534e1d2350a915904295bfe828",
+  "testedTree": "9579b675b3e05e9ce406723adfe02b2e8200078f",
+  "merge": "259691db2a68fdaabd1628376f43ed2650961a8f",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39115225163,
+    "job": 117639558505,
+    "result": "success",
+    "integrationFiles": 34,
+    "integrationTests": 292,
+    "publicBrowsers": 112,
+    "protectedBrowsers": 74,
+    "quotes": [
+      "Test Files34 passed(34)",
+      "Tests292 passed(292)",
+      "112 passed(2.3m)",
+      "74 passed(10.9m)"
+    ],
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 open"
+  },
+  "artifact": {
+    "id": 12131864310,
+    "digest": "sha256:2efd4d43633f4f6766049b8266f6dad8ca9001d9df842e406272aa68ae98bfac",
+    "sizeInBytes": 22750075,
+    "expiresAt": "2026-10-21T09:47:13Z",
+    "scope": "Synthetic browser/component evidence;not actual managed-provider acceptance"
+  },
+  "production": {
+    "id": "dpl_H72c91U93uPJjw8thWFhphAwmFWj",
+    "url": "corridra-d99n0zxx8-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "259691db2a68fdaabd1628376f43ed2650961a8f",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-259691db2a68fdaabd1628376f43ed2650961a8f-sadat-os.vercel.app"
+    ]
+  },
+  "preview": {
+    "id": "dpl_F1hnhtqtZXegFEGmwHfvnCWVsR6e",
+    "url": "corridra-cxx95tbs3-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "259691db2a68fdaabd1628376f43ed2650961a8f",
+    "regions": ["fra1"],
+    "aliases": ["corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app"],
+    "checks": [
+      {
+        "path": "/api/customer-companies",
+        "status": 503,
+        "noStore": true,
+        "noReferrer": true
+      },
+      {
+        "path": "/account/companies",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": true,
+        "noForm": true
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 27,
+    "command": "cmd_12fee7c2b5cd4258b710ee289b32",
+    "exitCode": 0,
+    "session": "sbx_2dvcAHbqCo65e2jb2HckpuzJUPWp",
+    "sessionIndependentlyStopped": true,
+    "stdout": "{\"result\":\"pass\",\"count\":27,\"checks\":[...]}",
+    "scope": "Owned public/account/OTP/team pages,same-host redirects,actual anonymous staff401/null session,private gated request/saved/company APIs and pages,hosting→owned redirects,company POST405",
+    "logs": "Collected before stop;provider truncated the long checks string after its verified result/count prefix. Exit0 plus completed code checks is evidence;no invented full log archive.",
+    "firstProbe": "sbx_6Aj7vpfgafYTQPxWzbdekvl7CIpa exited1 due case-sensitive HTML attribute lookup. Actual page uses autoComplete;corrected DOM selector case-insensitively,keeping OTP presence assertion. Independently stopped.",
+    "resources": "Both nonpersistent1vCPU/fra1/60second/no source/env/snapshots;only two public hosts egress-allowed;no ongoing probe cost"
+  },
+  "runtime": "Exact-production error/fatal since10m grouped query returned no matching groups;not full security assurance",
+  "flags": "Customer company/saved/request/workspace flags unchanged,production hardoff. No cloud optional company module install,admission/provider/intake/real activation;D01-D06/D08 closed.",
+  "branchBudget": "local5/remote6/distinct8/max8;reused branch;dependency and unfinished/environment-bound branches preserved",
+  "rollback": "Disable exposure or deploy compatible8bfa450 source;retain additive read-only module/receipts and canonical histories",
+  "remaining": "Full customer commercial authoring/canonical organisation authority,independent delegation/participant controls/economics,actual managed-provider and full UX/security/activation acceptance. New decision-disclosure work is separate local WIP,not in73."
+}

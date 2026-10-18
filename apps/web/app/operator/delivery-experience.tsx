@@ -1,4 +1,5 @@
 'use client';
+import { DecisionDisclosures } from './decision-disclosures';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
@@ -519,6 +520,9 @@ export function DeliveryExperience(props: Props) {
           </button>
         </form>
       </details>
+      {['owner', 'admin'].includes(props.role) && (
+        <DecisionDisclosures tenant={tenant} publications={publications} />
+      )}
       <h3>Counterparty declarations awaiting review</h3>
       {data.responses.length ? (
         data.responses.map((r) => (

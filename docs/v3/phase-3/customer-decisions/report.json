@@ -1,0 +1,30 @@
+{
+  "result": "PARTIAL:local implementation;full exact-head CI/release pending;full customer commercial authoring unfinished",
+  "requirements": ["V3-02-030", "V3-04-073", "V3-05-017"],
+  "baseline": "259691db2a68fdaabd1628376f43ed2650961a8f (PR73 verified company portfolio source)",
+  "existing": "Immutable app.mission_selection and original mission/requirement/assessment/quotation/source/publication/report/customer authority,event/audit/outbox",
+  "new": "Explicit publisher owner/admin fresh-MFA decision allow-list and creator-scoped read-only history with working review/read UI",
+  "paths": {
+    "original": "Existing /operator delivery,commercial commands,/account/missions/[resourceId] and recipient/export/expert paths retained",
+    "destination": "Contextual reviewed staff disclosure and customer decision history;separate /api/workspace/customer-decision-disclosures and GET /api/customer-decisions"
+  },
+  "migration": {
+    "path": "packages/db/customer-decision-migrations/0001_reviewed_commercial_decisions.sql",
+    "sha256": "eca52873564c36715050bf4aaf6cb6ae4fa7647b7d1ec06d24ae775fe32798b7",
+    "installer": "packages/db/src/customer-decision-migrate.ts",
+    "receipt": "customer_decision_migrations.applied;original base3+commercial1 lifecycle retained",
+    "blastRadius": "New disclosure table/RLS/validation and generic atomic event/audit/outbox only;old functions/ACLs/RLS/rows/receipts and canonical history unchanged",
+    "cloud": "not installed"
+  },
+  "local": {
+    "integration": "18new+12unchanged saved-commercial:Test Files2 passed(2);Tests30 passed(30),19.16s;populated preservation,owner/admin positives,staff/customer/tenant/SQL/MFA/proof/source denials,concurrent retries,atomicity,explicit original-link revocation and protected receipt",
+    "ui": "8 passed(16.4s),actual customer/staff protocols at1440/768/390/320,keyboard/axe,privacy/expiry/retry;actual320customer screenshot reviewed",
+    "compiledGates": "2 passed(2.9s),current built defaultoff APIs/privateheaders and customer POST405",
+    "static": "Current format/lint/typecheck/build pass;19JS/0failed+7Python OK;full exact-head CI pending",
+    "provider": "NOT VERIFIED;synthetic fixtures do not establish managed-provider acceptance"
+  },
+  "featureFlags": "CORRIDRA_CUSTOMER_DECISIONS_ENABLED defaultoff plus saved/workspace/delivery/synthetic/nonproduction;production hardoff,D01-D06/D08 closed",
+  "remaining": "Full customer research/shortlist/qualification/RFQ/quotation/meeting/decision/results authoring and organisation ownership;independent delegation/participants/economics;actual provider and exhaustive security/usability/activation",
+  "rollback": "Disable exposure or deploy compatible259691d source;retain additive module/receipt/disclosure and canonical source/money/history",
+  "preservation": "806original/913current controls;only2earlier accepted OTP differences;45routes29core6source18expertIDs PASS;no original test edited"
+}

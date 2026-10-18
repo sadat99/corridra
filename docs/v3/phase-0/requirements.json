@@ -569,9 +569,15 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 104,
     "requirement": "10. Facilitate samples, trials, negotiations, commercial decisions and orders.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-3/customer-decisions/report.json",
+      "docs/adr/0039-explicit-commercial-decision-disclosures.md",
+      "tests/integration/customer-decisions.test.ts",
+      "tests/operator/v3-customer-decisions-ui.spec.ts"
+    ],
+    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
   },
   {
     "id": "V3-02-031",
@@ -2119,9 +2125,15 @@
     "heading": "The contextual workspace pattern",
     "line": 368,
     "requirement": "- Audit and decisions.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-3/customer-decisions/report.json",
+      "docs/adr/0039-explicit-commercial-decision-disclosures.md",
+      "tests/integration/customer-decisions.test.ts",
+      "tests/operator/v3-customer-decisions-ui.spec.ts"
+    ],
+    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
   },
   {
     "id": "V3-04-074",
@@ -2559,9 +2571,13 @@
     "evidence": [
       "packages/counterparties/src/index.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-3/customer-decisions/report.json",
+      "docs/adr/0039-explicit-commercial-decision-disclosures.md",
+      "tests/integration/customer-decisions.test.ts",
+      "tests/operator/v3-customer-decisions-ui.spec.ts"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
   },
   {
     "id": "V3-05-018",
