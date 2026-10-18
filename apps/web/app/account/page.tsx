@@ -8,6 +8,9 @@ import { OperatorInvitationHint } from '../../components/operator-invitation-hin
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
 import { readNeonAuthConfig } from '@corridra/config';
+import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
+import { missionStatus } from '@corridra/domain/missions';
+import { CustomerRequests } from './customer-requests';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -47,6 +50,9 @@ export default async function Page() {
   const workspaceIssuer = customerWorkspacesEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
+  const requestIssuer = customerRequestsEnabled()
+    ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
+    : undefined;
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
       <div className="ux-account-layout">
@@ -69,6 +75,7 @@ export default async function Page() {
           </p>
           <nav className="access-options" aria-label="Account sections">
             {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
+            {requestIssuer && <a href="#customer-requests">My saved requests</a>}
             <a href="#customer-missions">My shared missions</a>
             <Link className="text-link" href="/plan#receipt-check">
               Check a request receipt
@@ -97,6 +104,15 @@ export default async function Page() {
                 key={`${workspaceIssuer}:${data.user.id}`}
                 subject={data.user.id}
                 issuer={workspaceIssuer}
+              />
+            </div>
+          )}
+          {requestIssuer && (
+            <div id="customer-requests" tabIndex={-1}>
+              <CustomerRequests
+                subject={data.user.id}
+                issuer={requestIssuer}
+                statuses={missionStatus.options}
               />
             </div>
           )}

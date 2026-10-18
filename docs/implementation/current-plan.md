@@ -90,3 +90,7 @@ Forward current receipt,17 October 2026:PR65 collaboration backend,PR66 invitati
 ### 18 October 2026: private request candidate
 
 Ledger51 records an additive optional request-authority backend with independent default-off admission and creator-only progress through the unchanged canonical factory/receipt. Focused database11 pass and preserved legacy52 focus; full exact-head verification/release pending. V3-06-004 PARTIAL,not full mission administration. No cloud module3/intake configuration,customer flag or commercial gate activation. Next: checked backend release,then request UI.
+
+### 18 October 2026: private request source release
+
+PR68 normal mergec594 matches testedbd3 full tree,CI260/104/31/build/security/static/unit success. Production4tBn and configured previewHxR READY/exactsource;15 live/2preview checks pass. Request source is deployed with exposure off,not commercially live. Optional module3 not applied in cloud,source/admission/provider history intact. Ledger55/current STATUS distinguish separate locally verified saved-request UI from missing private submission/full mission and broader SaaS.

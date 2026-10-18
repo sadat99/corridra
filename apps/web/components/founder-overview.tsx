@@ -40,11 +40,12 @@ export function FounderOverview() {
         <dt>What is blocked, and who acts next?</dt>
         <dd>
           Sample customer workspace provisioning and membership have a tested backend. Sample
-          workspace screens remain <StatusBadge tone="caution">GATED</StatusBadge>. Company linking,
-          persistent customer-owned missions and independent delegation administration remain{' '}
-          <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must implement and verify
-          these separately. The owner and relevant legal, infrastructure, security and provider
-          reviewers must supply the independent activation evidence in{' '}
+          workspace screens remain <StatusBadge tone="caution">GATED</StatusBadge>. Private sample
+          request progress has a tested backend; its account view is implemented with exposure
+          closed. Full customer mission administration, company linking and independent delegation
+          administration remain <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must
+          implement and verify these separately. The owner and relevant legal, infrastructure,
+          security and provider reviewers must supply the independent activation evidence in{' '}
           <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped sharing
           remains available.
         </dd>

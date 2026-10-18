@@ -141,3 +141,11 @@ PR67 full CI249/102/31 passed,normal merge720d96e exact tested tree. Owner-repor
 ### 18 October 2026: bounded private request backend
 
 V3-06-004 is now PARTIAL in the working candidate: optional module3 and creator-only request API reuse canonical mission creation/receipt progress. Focused restricted-role tests pass; full candidate CI/release pending. No cloud migration/intake admission or flag activation. UI/full mission scope/private provider walkthrough remain unverified; independent organisation/delegation/participant/economics remains missing. Follow ledger51,ADR033 and phase-3/customer-requests/report.json. All prior acceptance and historical plans remain dated evidence.
+
+### 18 October 2026: saved request discovery candidate
+
+Separate UI packet on ledger54 uses private creator-only GET with canonical status/original replies/expiry/reference and safe context/restore/retry behavior. Focused component7/restricted-PG12 pass;exact-head CI/release pending. New submission UI/full mission scope remains missing;no fake control. Original public contextual Intake and all original actions retained. Canonical organisation/delegation/participant/economics and real activation remain separate.
+
+### 18 October 2026: verified private request foundation release
+
+PR68 mergedc594 with exactbd3 full-tree CI260/104/31,production4tBn READY and configured previewHxR READY.15 production/2preview checks pass;all customer/request flags remain off,production hard-disabled,no cloud module3/admission/intake change. Ledger55/release.json is current memory. Separate saved-request discovery UI is locally verified but unpublished;private submission/full mission/organisation/delegation/participant/economics and actual private-provider acceptance remain pending.

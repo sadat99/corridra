@@ -453,6 +453,52 @@ test('original retention expiry and independent resource revocation deny content
   await expect(service('carol').list()).rejects.toThrow('denied');
 });
 
+test('creator-only pagination is bounded and exhaustive across live and expired private references', async () => {
+  for (let n = 0; n < 3; n++) await service().submit(input(), prepare);
+  const expected = (
+    await f.owner.query(
+      `SELECT o.id FROM customer_private.owned_request o
+    WHERE principal_id=$1 AND NOT EXISTS(SELECT FROM customer_private.request_revocation r WHERE r.request_id=o.id)
+    ORDER BY o.id`,
+      [principals.alice],
+    )
+  ).rows.map((row) => row.id);
+  const found: string[] = [];
+  let after: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const result = await service().list({ pageSize: 2, ...(after ? { after } : {}) });
+    expect(result.requests.length).toBeLessThanOrEqual(2);
+    for (const row of result.requests) found.push(row.id);
+    if (result.nextAfter === null) break;
+    expect(result.nextAfter).toBe(result.requests.at(-1).id);
+    after = result.nextAfter;
+    if (page === 19) throw new Error('Private pagination did not terminate');
+  }
+  expect(found).toEqual(expected);
+  expect(new Set(found).size).toBe(found.length);
+  expect(
+    (await service('bob').list()).requests.every((row: { id: string }) => !found.includes(row.id)),
+  ).toBe(true);
+  await expect(service().list({ pageSize: 101 })).rejects.toThrow();
+  const hash = sessionHash(randomBytes(32).toString('hex'));
+  await f.auth.query(
+    "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at) VALUES($1,$2,$3,clock_timestamp()+interval '25 seconds')",
+    [hash, issuer, session('alice').subject],
+  );
+  const db = await f.runtime.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query("SELECT set_config('corridra.customer_proof_hash',$1,true)", [hash]);
+    await expect(db.query('SELECT customer.private_requests(NULL,101)')).rejects.toThrow(
+      'Invalid page size',
+    );
+  } finally {
+    await db.query('ROLLBACK');
+    db.release();
+    await f.auth.query('DELETE FROM customer_private.session_proof WHERE hash=$1', [hash]);
+  }
+});
+
 test('proof expiry after global intake lock cannot create a mission, binding or event', async () => {
   const value = input();
   const prior = await counts();
