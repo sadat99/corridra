@@ -17,14 +17,21 @@
     "cloud": "not installed"
   },
   "local": {
-    "integration": "18new+12unchanged saved-commercial:Test Files2 passed(2);Tests30 passed(30),19.16s;populated preservation,owner/admin positives,staff/customer/tenant/SQL/MFA/proof/source denials,concurrent retries,atomicity,explicit original-link revocation and protected receipt",
+    "integration": "19new+12unchanged saved-commercial:Test Files2 passed(2);Tests31 passed(31),19.92s. Adds genuine existing other-mission decision denial while original decision remains valid;all earlier populated preservation,owner/admin,role/customer/tenant/SQL/MFA/proof/source/revocation/concurrency/atomicity assertions retained.",
     "ui": "8 passed(16.4s),actual customer/staff protocols at1440/768/390/320,keyboard/axe,privacy/expiry/retry;actual320customer screenshot reviewed",
     "compiledGates": "2 passed(2.9s),current built defaultoff APIs/privateheaders and customer POST405",
-    "static": "Current format/lint/typecheck/build pass;19JS/0failed+7Python OK;full exact-head CI pending",
+    "static": "Corrected fail-fast verification chain exited0:format/lint/typecheck/unit/30PG/build;then final added cross-mission test typecheck+31PG exited0. Original11d096 CI failed a duplicate fixture reason/typecheck;corrected forward,no old test assertion weakened. UI8/compiledgates2 remain valid for unchanged product source. New exact-head CI pending.",
     "provider": "NOT VERIFIED;synthetic fixtures do not establish managed-provider acceptance"
   },
   "featureFlags": "CORRIDRA_CUSTOMER_DECISIONS_ENABLED defaultoff plus saved/workspace/delivery/synthetic/nonproduction;production hardoff,D01-D06/D08 closed",
   "remaining": "Full customer research/shortlist/qualification/RFQ/quotation/meeting/decision/results authoring and organisation ownership;independent delegation/participants/economics;actual provider and exhaustive security/usability/activation",
   "rollback": "Disable exposure or deploy compatible259691d source;retain additive module/receipt/disclosure and canonical source/money/history",
-  "preservation": "806original/913current controls;only2earlier accepted OTP differences;45routes29core6source18expertIDs PASS;no original test edited"
+  "preservation": "806original/913current controls;only2earlier accepted OTP differences;45routes29core6source18expertIDs PASS;no original test edited",
+  "ciFailure": {
+    "head": "11d096ca80b4387147dc0b7dc647fb6e664d0d0d",
+    "run": 39117634506,
+    "job": 117646544029,
+    "result": "failed",
+    "reason": "TS2783 duplicate reason in new test fixture;later unit exit had masked local typecheck failure;explicitly corrected ledger78 and fail-fast checks"
+  }
 }

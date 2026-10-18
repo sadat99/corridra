@@ -57,3 +57,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Rebuild after adding routes before production route checks; next start serves the prior compiled route manifest even when source files exist.
 - Collect ephemeral sandbox command stdout before stopping it;nonpersistent stopped sessions cannot serve command logs.
 - A filename mentioned only in a handoff summary is not a discovered path; confirm it with `rg --files` before opening it.
+- Verification receipts must use each process exit code; a later successful command or an incomplete log excerpt cannot establish an earlier pass.

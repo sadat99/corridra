@@ -771,7 +771,6 @@ test('expired original decision source withdraws customer data without deleting 
       rationale: 'Short-lived decision source requires fresh review',
       sourceId: source.id,
       claimId: claim.id,
-      reason,
       ...f.next(),
     }),
   );
@@ -811,4 +810,53 @@ test('revoked original client capability denies decision history and leaves reco
     await expect(
       pool.query('SELECT * FROM customer_decision_migrations.applied'),
     ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('a real decision from another mission cannot be approved into this publication', async () => {
+  const j = await journey('BD', 'CN', 'sourcing', 'CNY'),
+    assessment = await j.assess();
+  const other = await service.command(
+    f.ctx,
+    command('decision', {
+      ...j.base,
+      ...f.next(),
+      requirementId: j.requirement.id,
+      targetId: j.targetId,
+      assessmentId: assessment.id,
+      decision: 'NEED_INFORMATION',
+      rationale: 'Separate canonical mission must remain outside this disclosure',
+    }),
+  );
+  expect(
+    (await f.owner.query('SELECT mission_id FROM app.mission_selection WHERE id=$1', [other.id]))
+      .rows[0].mission_id,
+  ).toBe(j.missionId);
+  expect(
+    (
+      await f.owner.query('SELECT app.client_decision_valid($1,$2,$3,$4) valid', [
+        f.tenantA,
+        publicationId,
+        decisionId,
+        f.users.owner.id,
+      ])
+    ).rows[0].valid,
+  ).toBe(true);
+  const value = { ...input(5), decisionIds: [other.id] };
+  await expect(disclosure.approve(f.users.owner.ctx, value)).rejects.toMatchObject({
+    code: '42501',
+  });
+  expect(
+    (
+      await f.owner.query('SELECT id FROM app.delivery_decision_publication WHERE id=$1', [
+        value.commandId,
+      ])
+    ).rowCount,
+  ).toBe(0);
+  expect(
+    (
+      await f.owner.query('SELECT id FROM app.domain_event WHERE aggregate_id=$1', [
+        value.commandId,
+      ])
+    ).rowCount,
+  ).toBe(0);
 });
