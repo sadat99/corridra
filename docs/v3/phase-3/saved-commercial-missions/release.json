@@ -1,0 +1,141 @@
+{
+  "result": "verified bounded gated saved-commercial source release;whole V3 PARTIAL;actual managed-provider acceptance NOT VERIFIED",
+  "pr": 72,
+  "baseline": "3ad4e8de6d43f85a4f701f0241bcdcd162110197",
+  "testedHead": "b897599afbf6ad1072c329977ef7ae830c6eb0e8",
+  "testedTree": "d94620b086906d53abb11ab16fffd51ca13e536a",
+  "merge": "8bfa4503fcb0aba303a33d166e80893365499f05",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39101252532,
+    "job": 117597810846,
+    "result": "success",
+    "integrationFiles": 33,
+    "integrationTests": 281,
+    "publicBrowsers": 110,
+    "protectedBrowsers": 65,
+    "quotes": [
+      "Test Files33 passed(33)",
+      "Tests281 passed(281)",
+      "110 passed(2.9m)",
+      "65 passed(11.3m)"
+    ],
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 remains open"
+  },
+  "artifact": {
+    "id": 12127491452,
+    "digest": "sha256:4e2eea08861451adabecf30b85b167d92d71ff97709ee383acb52f03ec53e2a4",
+    "sizeInBytes": 22365890,
+    "expiresAt": "2026-10-21T06:03:44Z",
+    "scope": "Synthetic component/route evidence;not real managed-provider acceptance"
+  },
+  "production": {
+    "id": "dpl_6ACJLxwq2SxSQjGDSCrfmpgn18sU",
+    "url": "corridra-oimoxk3am-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "8bfa4503fcb0aba303a33d166e80893365499f05",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-8bfa4503fcb0aba303a33d166e80893365499f05-sadat-os.vercel.app"
+    ],
+    "target": "production"
+  },
+  "preview": {
+    "id": "dpl_FRhU4EyfcTinGMd8VHdEYrgReDfX",
+    "url": "corridra-81cbfy7ek-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "8bfa4503fcb0aba303a33d166e80893365499f05",
+    "regions": ["fra1"],
+    "checks": [
+      {
+        "path": "/api/customer-saved-missions",
+        "status": 503,
+        "noStore": true,
+        "noReferrer": true
+      },
+      {
+        "path": "/account/missions/00000000-0000-4000-8000-000000000001",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": true,
+        "codeInput": false
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": false,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 23,
+    "checks": [
+      ["/", 200, "same-origin"],
+      ["/signup", 200, "same-origin"],
+      ["/signin", 200, "same-origin"],
+      ["/verify-email", 200, "same-origin"],
+      ["/operator/setup", 200, "same-origin"],
+      ["/account", 200, "same-origin"],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["/api/customer-saved-missions", "GET", 503],
+      ["/api/customer-saved-missions", "POST", 503],
+      ["staff", 401],
+      ["nonendpoint", 404],
+      ["anonymous-session", 200],
+      ["hosting/signin", 307],
+      ["hosting/operator/setup", 307],
+      ["private-page", 200, "closed"],
+      ["hosting-private-page", 307],
+      ["request-detail-page", 200, "closed"],
+      ["hosting-request-detail-page", 307],
+      ["saved-commercial-page", 200, "closed"],
+      ["hosting-saved-commercial-page", 307],
+      ["request-detail-api", 503]
+    ],
+    "command": {
+      "id": "cmd_c2e6a33ef4944e63a2d07e594cac",
+      "exitCode": 0,
+      "durationMs": 4818
+    },
+    "sandbox": {
+      "id": "sbx_J1yYKoQq5h2QkYQ4sdBivmLpKWeX",
+      "status": "stopped",
+      "independentReadback": true,
+      "persistent": false,
+      "configurationEvidence": "explicit create request",
+      "source": "none",
+      "env": "none",
+      "snapshots": "none",
+      "networkPolicy": {
+        "mode": "custom",
+        "allowedDomains": ["c.obsidianglobal.studio", "corridra.vercel.app"]
+      }
+    },
+    "runtimeObservability": "Exact production deployment,error/fatal,since10m grouped query returned no matching groups;bounded observation,not full security approval."
+  },
+  "corrections": [
+    "Initial exactcb854803 run failed390px report overflow;fixed product delivery-view wrapper and scoped text wrapping with original assertions unchanged;replacement b897599 fullCI passed.",
+    "Initial live probe exited0 but stdout was requested after ephemeral stop and unavailable410. Same read-only probe rerun once with stdout collected before stop;both sandboxes independently verified stopped."
+  ],
+  "flags": "CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED defaultoff;workspace/delivery gates required;synthetic-only/production hardoff. Optional commercial module not cloud-installed. No provider/admission/intake/activation changes;D01-D06/D08 closed.",
+  "preservation": "806 original/893 current controls;only2 earlier accepted OTP binding differences;45routes29core6source18expertIDs PASS. Original tests/history/source/money/evidence retained.",
+  "remaining": "Actual controlled managed-provider OTP/session/reload/logout/revocation acceptance;full commercial authoring/canonical organisation authority;independent delegation/participants/onboarding/economics;exhaustive security/usability and live gates.",
+  "rollback": "Keep exposure off or redeploy compatible3ad4 source;retain additive schema and immutable source/business/command/event history;no down migration.",
+  "branchBudget": "local5/remote6/distinct8/max8;unfinished and environment-bound branches/dependency PRs retained",
+  "nextLocalWork": {
+    "stash": "ecb809d19bf75ac11d435b0c4ea362485e0859d1",
+    "scope": "Canonical sample programme planning create/list;15new PG+17unchanged workspace,10component and2compiled gate cases passed locally. Not published or deployed;full independent Delegation OS remains unfinished.",
+    "olderDraftStash": "f4232d3cdbb1e74986862636af461fbc28c7d99f"
+  }
+}

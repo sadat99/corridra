@@ -1,0 +1,13 @@
+# ADR-038: Company continuity within approved customer scopes
+
+Status: bounded implementation. V3-01-018 and V3-06-011 remain PARTIAL for the whole product.
+
+Add a read-only customer company view over the existing approved V2 commercial reports. It requires the same fresh admitted provider proof and saved CLIENT_PROGRESS invitation authority. No company, relationship, quotation, evidence, money, event or history is copied or changed. No original function, ACL, RLS policy or migration file changes. The optional module has its own receipt and requires the unchanged commercial bookmark installer.
+
+Group approved targets by the existing relationship's canonical organisation ID within the same tenant and customer. Return only a customer/tenant-specific digest, never a raw global organisation ID. Preserve every approved name, country and qualification snapshot beside its mission. Different tenants are independent identities in this view. No company identity is inferred from matching names or from buying/selling roles. No unapproved current organisation attributes, contacts or source records are read or returned.
+
+The function processes at most five saved scopes per page, each with the original thirty-target limit. It calls the original report authority again after identity resolution and rejects changed or expired content. Expired/revoked/removed scopes grant no company data. A changed or expired customer proof fails the whole request. All existing source/publication/rights/review limits remain. Pagination acknowledges scopes not yet loaded; the interface never implies a global company directory or a complete search over unloaded pages.
+
+The client merges canonical references across loaded pages, clears private data on account/context change, denial, interruption and expiry, and opens the existing private mission for current commercial detail. No browser storage. Original report/declaration and expert paths stay reachable. Company research authoring, customer commercial commands and organisation authority beyond approved scopes remain unfinished.
+
+CORRIDRA_CUSTOMER_COMPANIES_ENABLED requires saved-commercial/workspace/delivery flags, synthetic mode and nonproduction. No cloud install, admission, provider or live activation. Real managed-provider acceptance remains NOT VERIFIED. Required acceptance includes populated upgrade preservation, identity continuity across separate mission targets, tenant/customer separation, original report equality, revocation/expiry/late waits, pagination, malformed/denied/recovery UI, keyboard/axe/three widths, full exact-head CI and gated READY deployment.

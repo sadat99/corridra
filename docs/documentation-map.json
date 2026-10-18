@@ -647,6 +647,16 @@
       "path": "docs/v3/phase-3/saved-commercial-missions/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Persistent approved commercial report/reply UI,scope,preservation,recovery and acceptance"
+    },
+    {
+      "path": "docs/adr/0038-approved-customer-company-portfolios.md",
+      "classification": "Architecture decision",
+      "use": "Company continuity within existing approved customer scopes"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-companies/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Approved company portfolios,canonical identity and privacy-preserving recovery"
     }
   ]
 }

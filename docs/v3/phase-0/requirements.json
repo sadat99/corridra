@@ -215,9 +215,13 @@
     "heading": "Essential unification",
     "line": 51,
     "requirement": "- Maintain one canonical organisation identity within permitted tenant and data-rights boundaries.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-3/customer-companies/report.json",
+      "packages/db/customer-company-migrations/0001_approved_company_portfolio.sql",
+      "tests/integration/customer-companies.test.ts"
+    ],
+    "nextAction": "Local approved-company continuity verified within customer/tenant boundaries;fullCI/release pending. Full commercial authoring,organisation ownership and reusable independent supplier/buyer portfolios remain unfinished."
   },
   {
     "id": "V3-01-019",
@@ -3288,8 +3292,12 @@
     "line": 500,
     "requirement": "| Reusable supplier/buyer portfolios | Relationship continuity and repeat use | P1 |",
     "status": "PARTIAL",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "evidence": [
+      "docs/v3/phase-3/customer-companies/report.json",
+      "packages/db/customer-company-migrations/0001_approved_company_portfolio.sql",
+      "tests/integration/customer-companies.test.ts"
+    ],
+    "nextAction": "Local approved-company continuity verified within customer/tenant boundaries;fullCI/release pending. Full commercial authoring,organisation ownership and reusable independent supplier/buyer portfolios remain unfinished."
   },
   {
     "id": "V3-06-012",

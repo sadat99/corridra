@@ -534,3 +534,15 @@ Forward V3 candidate,18 October2026: original saved-request detail workspace use
 Forward V3,18 October2026: PR71 merged3ad4e8d/deployed READY production9RFw+configuredpreviewDYun,269integration/108public/54protected/fullstatic-unit-build-security and19live checks verified. Private original-source detail remains gated. Next saved-commercial candidate has12realPG/10actual-component/2compiledclosedroute plus finaltypes/lint/build/preservation pass;fullCI/release pending. It saves only private invitation digests/references and reuses V2 reports/comparison/declared replies,with original rights/expiry/revocation. No staff identity mapping,original source/money/history/test edits,provider/cloud/flag/real activation. WholeV3 PARTIAL;canonical organisation/full authoring/independent delegation/participant/economics/fullacceptance unfinished. Follow ledger65/66,ADR036,self-audit18 and saved-commercial-missions/report.json;continue independent engineering while provider acceptance remains NOT VERIFIED.
 
 2026-10-18 PR72 responsive correction: pinned CI exposed390px saved-report overflow after281PG/110public/64protected passes. Reused original delivery-view styles and report-scoped text wrapping without hiding quotation comparison content or changing tests. Current-source11UI/12PG,format/lint/types/unit/build pass;new exact-head CI required. No permission/backend/activation change.
+
+2026-10-18 PR72 source release:exactb897599 CI281PG/110public/65protected,normal merge8bfa450 matching tested tree,READY production+isolated preview/fra1,23live checks. All exposure/real-operation gates closed;actual provider acceptance NOT VERIFIED. Source preservation retained. Programme planning local packet safely stashed as ecb809d for separate review;not deployed. Release receipt docs/v3/phase-3/saved-commercial-missions/release.json.
+
+## 2026-10-18, Codex, approved customer company continuity
+
+- Request:finish customer commercial workspace before independent Delegation OS,economics and full acceptance.
+- Why:approved company/qualification knowledge was confined to individual saved reports.
+- What changed:read-only canonical company grouping within existing customer+tenant scope,original report context and private account company page;no organisation copy or expanded source authority. ADR038 and customer-companies/bounded-plan.md state exact scope.
+- How verified:local23restricted-PG cases(11new+12unchanged),9actual-component cases including three widths/keyboard/axe/privacy/recovery;initial lint/types/build pass. Full current-source static/gates/exact-head CI/release pending;actual managed-provider acceptance NOT VERIFIED.
+- Preserved:all original functions/ACLs/RLS/rows/receipts and legacy routes/actions;original source/money/event history. No dependencies or cloud/gate changes.
+- Open:full customer research/commercial authoring and organisation authority remain unfinished. Programme work is safely stashed and follows the customer work.
+- Next:required exact-head checks,gated READY source release,then separately reviewed customer commercial commands on V2 engines.
