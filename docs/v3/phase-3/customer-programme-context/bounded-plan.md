@@ -1,6 +1,6 @@
 # Customer programme context: bounded concern
 
-Baseline f447b2108c82ddf203e2fe54f30789b13df32b01, following verified PR78. Requirements V3-02-045/046/051/054/062 and V3-06 self-service delegation family remain PARTIAL. This increment adds organiser-owned canonical programme details and expressly shared participant reads, not a complete independent Delegation OS.
+Baseline f447b2108c82ddf203e2fe54f30789b13df32b01, following verified PR78. Requirements V3-02-045/046/062 and the V3-06 self-service delegation family remain PARTIAL. Shared activities V3-02-051 remain PARTIAL and communications V3-02-054 remain MISSING. This increment adds organiser-owned canonical programme details and expressly shared participant reads, not a complete independent Delegation OS.
 
 Files: additive customer-programme-context migration/installer; customer session service; private API/header override/foundations; optional organiser/participant detail tools; focused integration/browser tests; ADR043, ledger, agent log, documentation map and release evidence. Existing tables, migration history and staff ports remain unchanged. Exactly two original trigger function bodies receive fingerprint-checked early customer branches; every original fallback clause and function attribute remains intact. Existing programme creation authority remains table-specific. No dependencies added.
 

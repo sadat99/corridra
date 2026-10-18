@@ -229,6 +229,38 @@ test('direct canonical writes and forged settings cannot bypass staff scope', as
     db.release();
   }
 });
+test('participant projection rechecks proof after waiting for the same canonical programme lock', async () => {
+  const { sessionHash } = await import('../../packages/db/src/index');
+  const hash = sessionHash(randomUUID());
+  await f.auth.query(
+    "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at) VALUES($1,$2,$3,clock_timestamp()+interval '500 milliseconds')",
+    [hash, issuer, session('bob').subject],
+  );
+  const lock = await f.owner.connect(),
+    db = await f.runtime.connect();
+  try {
+    await lock.query('BEGIN');
+    await lock.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended($1::text||':programme:'||$2::text,0))",
+      [workspaceId, programmeId],
+    );
+    await db.query('BEGIN');
+    await db.query("SELECT set_config('corridra.customer_proof_hash',$1,true)", [hash]);
+    const pending = db.query('SELECT customer.programme_context_view(NULL,NULL,$1)', [
+      registrationId,
+    ]);
+    const denied = expect(pending).rejects.toHaveProperty('code', '42501');
+    await lock.query('SELECT pg_sleep(0.7)');
+    await lock.query('COMMIT');
+    await denied;
+  } finally {
+    await db.query('ROLLBACK');
+    await lock.query('ROLLBACK');
+    db.release();
+    lock.release();
+    await f.auth.query('DELETE FROM customer_private.session_proof WHERE hash=$1', [hash]);
+  }
+});
 test('registration revocation removes shared context access', async () => {
   await service().command(input(2));
   expect((await service('bob').view({ registrationId })).context.version).toBe(3);

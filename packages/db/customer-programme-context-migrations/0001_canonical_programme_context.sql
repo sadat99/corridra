@@ -163,6 +163,8 @@ BEGIN
  ELSE
   PERFORM customer_private.participant_scope(gen_random_uuid(),target,programme,true);
  END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended(target::text||':programme:'||programme::text,0));
+ IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Context access expired after programme wait' USING ERRCODE='42501'; END IF;
  SELECT * INTO row FROM app.delivery_programme_context WHERE tenant_id=target AND programme_id=programme ORDER BY version DESC LIMIT 1;
  SELECT * INTO binding FROM customer_private.programme_context_command WHERE context_id=row.id;
  -- Never fall back to an earlier share or expose unbound historical staff details.
