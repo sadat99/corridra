@@ -21,8 +21,8 @@
   "privacy": "Separate programme workspace,customer request workspace and canonical mission tenant;organiser sees only expressly shared self-declared text,opaque objective ID/version and status. No original request/mission/tenant IDs,contacts,offers,quotations,negotiations or values. Withdrawal never falls back. Source retention/revocation and programme departure end dependent sharing;independent private mission survives programme departure.",
   "verification": {
     "focusedDatabase": "16 new real-PG cases;full39files381PG pass(490.60s),including all pre-existing modules and source/ACL/RLS/table/row/receipt preservation",
-    "focusedBrowser": "15new pass(16.5s);earlier corrected24pass(29.9s) included12unchanged participant cases;four widths/keyboard/axe and320image inspected",
-    "static": "format/types/lint/unit19JS+7Python/build pass;exact-head CI required",
+    "focusedBrowser": "16new pass(19.7s),including wrong-request/impossible-version acknowledgement exact-retry regression;prior15pass and24including12unchanged participant cases;four widths/keyboard/axe and320image inspected",
+    "static": "Pre-correction full format/types/lint/unit19JS+7Python/build pass;current corrected editor/test lint passes;corrected exact-head CI/build still required",
     "preservation": "45baseline routes29core6source18expertIDs retained;806original/990current controls,2prior OTP changes,zero original loss",
     "provider": "NOT VERIFIED;controlled provider session/inbox unavailable;component protocols and fixture PG proofs are not actual provider acceptance",
     "publicBrowser": "122pass(5.0m),including2new compiled closed-gate/private-header cases after framework referrer-header correction",

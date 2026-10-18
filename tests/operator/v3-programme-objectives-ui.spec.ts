@@ -150,7 +150,14 @@ test('participant shares explicit text through a scoped real command and reopens
     if (r.request().method() === 'POST') {
       posts.push(r.request().postDataJSON());
       await r.fulfill({
-        json: { id: linkId, registrationId, version: 1, status: 'SHARED', synthetic: true },
+        json: {
+          id: linkId,
+          registrationId,
+          requestId,
+          version: 1,
+          status: 'SHARED',
+          synthetic: true,
+        },
       });
     } else
       await r.fulfill({
@@ -245,7 +252,14 @@ test('uncertain network result preserves command identity and payload on exact r
       if (sent.length === 1) await r.fulfill({ status: 500, json: { error: 'uncertain' } });
       else
         await r.fulfill({
-          json: { id: linkId, registrationId, version: 1, status: 'SHARED', synthetic: true },
+          json: {
+            id: linkId,
+            registrationId,
+            requestId,
+            version: 1,
+            status: 'SHARED',
+            synthetic: true,
+          },
         });
     } else
       await r.fulfill({
@@ -491,4 +505,45 @@ test('unsaved draft prevents tool closure and uses a real interrupted-navigation
   await expect(page.getByLabel('Fictional objective to share')).toHaveValue(
     'Synthetic supplier objective 工厂 বাংলা',
   );
+});
+test('wrong-request or impossible-version acknowledgement retains the same pending command until a matching retry', async ({
+  page,
+}) => {
+  const sent: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-objectives*', async (r) => {
+    if (r.request().method() === 'POST') {
+      sent.push(r.request().postDataJSON());
+      await r.fulfill({
+        json: {
+          id: linkId,
+          registrationId,
+          requestId: sent.length === 1 ? linkId : requestId,
+          version: sent.length === 2 ? 99 : 1,
+          status: 'SHARED',
+          synthetic: true,
+        },
+      });
+    } else
+      await r.fulfill({
+        json:
+          new URL(r.request().url()).searchParams.get('view') === 'choices'
+            ? choices()
+            : view(sent.length >= 3 ? [shared()] : []),
+      });
+  });
+  await page.goto(origin);
+  await draft(page);
+  await page.getByRole('button', { name: 'Share objective with organisers' }).click();
+  await expect(
+    page.getByText('The result could not be checked. Retry this exact change.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Retry exact objective change' }).click();
+  await expect(page.getByRole('button', { name: 'Retry exact objective change' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry exact objective change' }).click();
+  await expect(
+    page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
+  ).toBeVisible();
+  expect(sent).toHaveLength(3);
+  expect(sent[1]).toEqual(sent[0]);
+  expect(sent[2]).toEqual(sent[0]);
 });

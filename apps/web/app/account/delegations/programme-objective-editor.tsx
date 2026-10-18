@@ -366,6 +366,9 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
           v.synthetic !== true ||
           !Number.isInteger(v.version) ||
           Number(v.version) < 1 ||
+          Number(v.version) < command.expectedVersion ||
+          Number(v.version) > command.expectedVersion + 1 ||
+          (command.action === 'share' && v.requestId !== command.requestId) ||
           v.status !== (command.action === 'share' ? 'SHARED' : 'WITHDRAWN') ||
           (command.action === 'withdraw' && v.id !== command.linkId)
         )

@@ -608,3 +608,5 @@ Forward V3,18 October2026: PR71 merged3ad4e8d/deployed READY production9RFw+conf
 - Next: final new UI/compiled gates/static/full regression,then reviewed exact-head publication and matching source release. Read ledger95–96/report.json for actual current evidence.
 
 - Final local objective packet evidence:39files381PG(16new),122public,15new component browser cases plus prior24including12unchanged participant;format/types/lint/build/unit19JS+7Python pass. Source/AST preservation retained. Four widths/keyboard/axe and320image inspected. Exact-head required CI/protected regression/source release pending;report/ledger97 retain earlier failures and root fixes. No cloud/provider/exposure change.
+
+- Forward protocol correction:PR78 oldb445208 CI cancelled as superseded,not accepted. Current16newUI(19.7s) and focused lint pass after binding successful acknowledgements to selected request/revision;wrong-response exact retry strengthened. Backend381PG/public122 evidence unchanged in scope. Corrected exact-head fullCI/source release required;ledger98/self-audit28 retain boundaries.
