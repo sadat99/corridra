@@ -1,0 +1,119 @@
+{
+  "result": "verified bounded gated original request detail release;whole V3 PARTIAL;actual private-provider acceptance NOT VERIFIED",
+  "pr": 71,
+  "baseline": "9b213510eeeca38ab4f91cfe2d9133c0cb712613",
+  "testedHead": "b3d0ac000afc3e60314eee992109139271768ef0",
+  "testedTree": "e04bd37d092712a3ed157c62771d6f84688d5551",
+  "merge": "3ad4e8de6d43f85a4f701f0241bcdcd162110197",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39097013853,
+    "job": 117585459702,
+    "result": "success",
+    "integrationFiles": 32,
+    "integrationTests": 269,
+    "publicBrowsers": 108,
+    "protectedBrowsers": 54,
+    "quotes": [
+      "Test Files 32 passed (32)",
+      "269 passed (269)",
+      "108 passed (2.3m)",
+      "54 passed (10.4m)"
+    ],
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 remains open"
+  },
+  "artifact": {
+    "id": 12125012896,
+    "digest": "sha256:61a7054dc347330a841fb8c09892f17e3bc95d107cc89899401bdcd8f7c6c567",
+    "sizeInBytes": 20967449,
+    "expiresAt": "2026-10-21T04:47:11Z",
+    "scope": "Synthetic actual-component/route evidence;not real managed provider acceptance"
+  },
+  "production": {
+    "id": "dpl_9RFwC1HWFLDVnFbbXZWpKAtgQKWV",
+    "url": "corridra-rbmyw6v9u-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "3ad4e8de6d43f85a4f701f0241bcdcd162110197",
+    "regions": ["fra1"],
+    "aliases": ["c.obsidianglobal.studio", "corridra.vercel.app"],
+    "target": "production"
+  },
+  "preview": {
+    "id": "dpl_DYun6eXvcFpumMqywMh1x54fVzDp",
+    "state": "READY",
+    "source": "3ad4e8de6d43f85a4f701f0241bcdcd162110197",
+    "regions": ["fra1"],
+    "checks": [
+      {
+        "path": "/api/customer-requests/00000000-0000-4000-8000-000000000001",
+        "status": 503,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": false,
+        "codeInput": false
+      },
+      {
+        "path": "/account/requests/00000000-0000-4000-8000-000000000001",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": true,
+        "codeInput": false
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "closed": false,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 19,
+    "checks": [
+      ["/", 200, "same-origin"],
+      ["/signup", 200, "same-origin"],
+      ["/signin", 200, "same-origin"],
+      ["/verify-email", 200, "same-origin"],
+      ["/operator/setup", 200, "same-origin"],
+      ["/account", 200, "same-origin"],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["staff", 401],
+      ["nonendpoint", 404],
+      ["anonymous-session", 200],
+      ["hosting/signin", 307],
+      ["hosting/operator/setup", 307],
+      ["private-page", 200, "closed"],
+      ["hosting-private-page", 307],
+      ["request-detail-page", 200, "closed"],
+      ["request-detail-api", 503],
+      ["hosting-detail", 307]
+    ],
+    "command": {
+      "id": "cmd_da710124453546d989961fc8ac1e",
+      "exitCode": 0,
+      "durationMs": 9404
+    },
+    "sandbox": {
+      "id": "sbx_2d6XrcCzkpm3gQw4jy4SI1k6iiAd",
+      "status": "stopped",
+      "independentReadback": true,
+      "persistent": false,
+      "source": "none",
+      "env": "none",
+      "snapshots": "none"
+    },
+    "runtimeObservability": "Exact deployment,production,error/fatal level grouped query,since10m returned no matching groups. This bounded observation is not full security/readiness approval."
+  },
+  "flags": "Original detail/request/workspace exposure stays off;synthetic-only/production hard-disabled. Optional detail module not installed in cloud at source release. No provider/admission/intake/real gate changes.",
+  "preservation": "806 original/871 checked-source controls;only2 accepted prior OTP differences;45routes29core6source18expertIDs retained;all original tests unchanged. Independent optional detail module preserves accepted three-module installer.",
+  "remaining": "Actual private-provider session acceptance;full commercial authoring,canonical organisations,independent delegation/participant/economics and exhaustive dynamic/security/usability acceptance. Missing session does not block independent engineering.",
+  "rollback": "Keep flags off or redeploy compatible9b21351;retain all additive schema/history/source/money/evidence. No down migration.",
+  "branchBudget": "local5/remote6/distinct8/max8;owned next-packet stash applied/dropped after clean exact-head merge."
+}

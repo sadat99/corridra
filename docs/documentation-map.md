@@ -141,3 +141,6 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 
 | [adr/0035-private-original-request-details.md](adr/0035-private-original-request-details.md) | Architecture decision | Creator-only original source read and independent optional module |
 | [v3/phase-3/customer-request-details/bounded-plan.md](v3/phase-3/customer-request-details/bounded-plan.md) | Bounded implementation plan | Original request details,retention,privacy and acceptance |
+
+| [adr/0036-account-saved-commercial-reports.md](adr/0036-account-saved-commercial-reports.md) | Architecture decision | Account-saved approved commercial scopes and immutable navigation audit |
+| [v3/phase-3/saved-commercial-missions/bounded-plan.md](v3/phase-3/saved-commercial-missions/bounded-plan.md) | Bounded implementation plan | Scoped saved commercial reports,replies,privacy and recovery |

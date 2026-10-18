@@ -1,0 +1,51 @@
+{
+  "audit": 18,
+  "chunk": 66,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 893,
+  "intentionalOriginalBindingChanges": "Only2 already accepted account-form OTP changes;zero new unaccounted originals",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "45baseline routes/18expert IDs and806original controls preserved;old original invitation/receipt/export/admin paths untouched;only2 earlier OTP binding differences"
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "Fresh pinned admitted customer+valid original client scope;owner/member/cross-account/type/SQL denials realPG;new private tables only,no old auth/RLS/function changes"
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "29core/6source hashes PASS;actual populated old function/ACL/RLS/table-row-digest/customer-receipt equality;no copied business content;immutable binding/command history;original monetary formatter"
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Existing original requirements/qualification/quote revisions/currencies/comparison risk warnings/meeting statuses/report observations reused. No fabricated meetings/deals/verified facts."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "Independent organiser/participant/economics remain MISSING;no complete SaaS claim"
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "No organisation or role record created/merged;references existing approved shared engine;standalone customer portfolios/organisation authority remain unfinished"
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "18expert IDs and original staff/recipient/institution exports/deep links retained"
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "Sample notices,source scope and declaration labels;new flag defaultoff/prod hardoff;no provider/outreach/money/live gate activation"
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "Local12PG/10UI/2gates/types/lint/build and source checks pass;full new exactheadCI/READY release pending. Actual provider/full legacy dynamic/security/usability remain NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "Existing contextual commercial components/one saved-list entry;account nav max5;material quote assumptions/risk text and exact state distinctions visible;no general workflow builder/duplicate backend"
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;no completion percentage or improvement claim"
+}
