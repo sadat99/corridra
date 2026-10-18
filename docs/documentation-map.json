@@ -145,8 +145,13 @@
     },
     {
       "path": "docs/adr/0032-customer-workspace-authority.md",
-      "classification": "Proposed architecture decision",
-      "use": "Customer authority preservation and unresolved migration acceptance conflict; not implemented"
+      "classification": "Architecture contract with forward amendments",
+      "use": "Preserved staff authority; optional synthetic workspace/collaboration module, separate provider acceptance and activation gates"
+    },
+    {
+      "path": "docs/adr/0033-private-customer-request-authority.md",
+      "classification": "Implementation design",
+      "use": "Private creator-owned requests through the canonical engine; implementation and acceptance remain missing"
     },
     {
       "path": "docs/adr/README.md",
@@ -602,6 +607,16 @@
       "path": "docs/v3/phase-0/preservation-matrix.md",
       "classification": "V3 preservation mapping",
       "use": "Current static inventory mapping and limitations; not runtime acceptance"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-requests/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Next synthetic customer request authority packet; inspected existing ports, privacy, preservation and required tests; implementation missing"
+    },
+    {
+      "path": "docs/adr/0034-custom-production-origin.md",
+      "classification": "Operational architecture decision",
+      "use": "Owned production canonical origin,exact provider allowlist,CSRF/callback preservation and rollback;read current release evidence"
     }
   ]
 }

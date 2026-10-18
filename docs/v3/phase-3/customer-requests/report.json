@@ -1,0 +1,29 @@
+{
+  "result": "PARTIAL: backend implemented; full candidate checks running; exposure off",
+  "baseline": "720d96ed8606d27c020fd470add1c9c6277faa85",
+  "requirements": ["V3-06-004", "V3-09-079", "V3-09-080", "V3-09-081", "V3-09-087"],
+  "existing": "Unchanged canonical app.submit_mission/app.mission_receipt, original synthetic intake/retention/events, fresh verified provider proof and explicit workspace admission",
+  "new": "Optional customer0003; independent request admission; proof-bound auth-only submission attestation; creator-owned request binding and progress pagination; same-command rotation-safe retry; independent offline resource revocation; default-off GET/POST /api/customer-requests",
+  "sourceAndDestination": "Existing /request, /mission, /account and private publication routes retained. New API only; customer request UI is a separate packet.",
+  "blastRadius": "Shared server-only proof transaction extracted without changing original checks; canonical pure preparation port reuses exact old HMAC formulas. New optional private tables/functions/grants/events only. No original SQL functions/policies/ACLs, core29/customer0001/0002/history/money/provider configuration changed.",
+  "authority": "New request requires active independent request admission and workspace membership. Prior creator-only progress remains after departure while fresh proof, active principal/admission, unrevoked grant and source retention remain valid. Owner/admin/member/organiser get no implicit private scope. No staff identity/session is manufactured.",
+  "verification": {
+    "focused": "11 restricted PostgreSQL tests passed; prior combined focus 52 passed across five files before extra lock tests",
+    "static": "lint/types/unit passed; full current-head checks running",
+    "failureEvidence": "verification/focused-initial.txt retains initial policy snapshot/new test status/immutable retention fixture errors. Narrow auth-only function replaces extra policy; new test uses authoritative DRAFT and short original retention at INSERT. No existing test changed or trigger disabled.",
+    "localFullInitialCandidate": "b3ca24b:31 files260 integration tests/build pass;104 public pass with installed Chromium151;protected running. Pinned browser download403,initial96 launch failures+8 API-only successes retained as runtime limitation. CI exact new source required.",
+    "rateBudgetReview": "Before merge, API now calls original shared MissionService.budget with trusted Vercel forwarded-address/local derivation. Existing actual database test proves replicated shared budget and seventh denial. No separate capacity bypass; source follow-up requires fresh exact-head CI."
+  },
+  "privacy": "No receipt secret reaches response/URL/storage. No brief/contact/reply copied to ownership store. Private immutable identifiers/digests/provenance remain; original receipt content expires unchanged, with an additional wall-clock guard. Metadata retention/legal approval remains independently gated.",
+  "states": "unavailable/invalid/denied/conflict/retry/expired-source progress, bounded pagination; no loading/responsive UI claim yet",
+  "rollout": "New flag CORRIDRA_CUSTOMER_REQUESTS_ENABLED defaults off; synthetic-only and hard-disabled in Vercel production. Module3 has not been installed in any cloud environment and intake destination/admission has not been configured. Compatible gated application may deploy before opt-in migration because closed API never touches it. Install optional module3 before any isolated exposure.",
+  "rollback": "Keep flag off/redeploy retained compatible application. Retain additive schema and original records/events; never roll history backwards.",
+  "remaining": [
+    "Customer private-request UI and actual authenticated provider/browser/API walkthrough",
+    "Full customer commercial mission administration and scoped publication",
+    "Canonical organisation linking/owner transfer",
+    "Independent delegation administration/participant onboarding/privacy/economics",
+    "Exhaustive legacy action/state/role dynamic acceptance",
+    "D01-D06/D08 commercial activation gates"
+  ]
+}

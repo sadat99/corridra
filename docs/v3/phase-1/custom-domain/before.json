@@ -1,0 +1,142 @@
+[
+  {
+    "kind": "route",
+    "name": "/workspace",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/workspace",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/operator/setup",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/operator/setup",
+        "status": 307,
+        "location": "https://corridra.vercel.app/operator/setup",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/operator/setup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/plan",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/plan",
+        "status": 307,
+        "location": "https://corridra.vercel.app/plan",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/plan",
+        "status": 200,
+        "location": null,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/signin",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/signin",
+        "status": 307,
+        "location": "https://corridra.vercel.app/signin",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/signup",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/signup",
+        "status": 307,
+        "location": "https://corridra.vercel.app/signup",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/signup",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/account",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/account",
+        "status": 307,
+        "location": "https://corridra.vercel.app/account",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/account",
+        "status": 307,
+        "location": "/signin",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  },
+  {
+    "kind": "route",
+    "name": "/operator/signin",
+    "hops": [
+      {
+        "url": "https://c.obsidianglobal.studio/operator/signin",
+        "status": 307,
+        "location": "https://corridra.vercel.app/operator/signin",
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer"
+      },
+      {
+        "url": "https://corridra.vercel.app/operator/signin",
+        "status": 200,
+        "location": null,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrerPolicy": "no-referrer"
+      }
+    ]
+  }
+]

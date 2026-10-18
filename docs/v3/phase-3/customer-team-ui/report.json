@@ -31,13 +31,40 @@
   },
   "developmentTypeCorrection": "New fixture helper initially inferred a branded UUID default parameter;explicit wire-string annotation corrects TypeScript inference without changing any behavior or assertion. No original test edited.",
   "exactHeadChecks": {
-    "integrationAndPermissionDenials": "pending its own full CI",
-    "build": "pending its own full CI",
-    "publicBrowsers": "pending its own full CI",
-    "protectedAndNewComponentBrowsers": "pending its own full CI"
+    "head": "80c37c16860ee80e0c5603a030fae1e201a1f745",
+    "tree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+    "firstAttempt": {
+      "run": 39050267774,
+      "job": 117447246032,
+      "result": "failure",
+      "integration": "30 files/249 passed",
+      "build": "passed",
+      "publicBrowsers": "102 passed (2.2m)",
+      "protected": "29 passed/2 failed (8.6m)",
+      "newOwnerCases": "5 passed",
+      "failures": [
+        "Existing governance datetime-local fill at2026-10-17T16:56:00 rejected by Playwright normalized-value equality check before operator fixture creation.",
+        "Subsequent original founder test lacked that shared operator fixture."
+      ],
+      "evidence": "verification/failed-ci-39050267774.log"
+    },
+    "retry": {
+      "run": 39050267774,
+      "attempt": 2,
+      "job": 117455840379,
+      "headUnchanged": true,
+      "scope": "entire original validation job",
+      "result": "success",
+      "integration": "30 files/249 passed",
+      "build": "passed",
+      "publicBrowsers": "102 passed (2.9m)",
+      "protectedBrowsers": "31 passed (10.5m),including5 new owner cases",
+      "staticSecurityUnit": "passed;CodeQL skipped,D04 open"
+    },
+    "testPolicy": "No original test/assertion/input type/browser setter/retry policy changed. Clock-sensitive driver behavior and shared fixture coupling remain reliability limitations."
   },
   "newTests": "5 actual-component protocol cases:issue/cancel/revoke/history,keyboard/responsive/axe,lost-response reload/no-code recovery,confirmed code retained across failed history refresh,member/admin controls absent,401/403/409/503 and malformed history,blocked storage/no write,malformed acknowledgement,independent cursors and issuer/subject/workspace saved-intent scope. Fixtures do not establish actual provider/session authority.",
-  "screenshots": "Immutable before d8f843f and after1440/768/390 in .cache/v3-owner-team-ui/after;capture before code issuance;existing three-day artifact gains one folder. Browser execution pending.",
+  "screenshots": "Immutable before/after1440/768/390,keyboard/axe/overflow passed;artifact12108838900 retained3days,no separate manual image/private provider review claimed.",
   "states": "Empty/loading,busy/double-command exclusion,invalid values,conflicting/denied/unavailable scope,uncertain acknowledgement,same-command retry,reload and discard,missing code,history failure,explicit revocation confirmation and initial owner protection. Dates display UTC with original ISO retained. Exact references distinguish duplicate labels.",
   "privacy": "Only fictional label/version/commandId in sessionStorage under issuer+subject+workspace. No token,row,provider subject/email or contact stored in values. Raw code memory only;first-response code preserved across history errors and normal refresh,cleared explicitly/denial/unmount. Revocation history immutable.",
   "featureFlags": "Existing customer workspace flag stays off;production hard-disabled;D01-D06/D08 closed. No admission/provider/signing/cloud change.",
@@ -54,6 +81,10 @@
   "beforeReference": "d8f843f751d0c5029e60af0b1a9e44db762e6544,exact same pre-owner fe96632 tree as merged baseline",
   "sourceCommit": "eddf85aeffbce6cc513c6feff85b864ab52333ee",
   "sourceTree": "c9c85dce6b6ddb30a81fa6154722071c23fc255f",
-  "selfAudit": "docs/v3/self-audit-9.json",
-  "priorAcceptance": "PR66 invitation UI verified249/102/26,merged/deployedbc845512. These passes do not verify this owner UI."
+  "selfAudit": "docs/v3/self-audit-11.json",
+  "priorAcceptance": "PR66 invitation UI verified249/102/26,merged/deployedbc845512. These passes do not verify this owner UI.",
+  "operationFilePreservation": "119 command entries/70 dispatch entries span32 files;30 unchanged against original e9ed2e5. foundations.ts/next.config.ts have the previously verified additive service wiring/API privacy rules. Neither changed in owner packet;all original constructions/rules retained.",
+  "boundedSourceResult": "verified",
+  "release": "docs/v3/phase-3/customer-team-ui/release.json",
+  "currentProduction": "ADR034 domain-only repair deployed the same tested source as dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP;owned subdomain canonical. See phase-1/custom-domain/release.json."
 }

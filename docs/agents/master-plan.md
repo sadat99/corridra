@@ -129,3 +129,15 @@ PR66 sample invitation acceptance remains under full CI. Next separate source co
 ### Forward verified V3 invitation acceptance,17 October 2026 (Codex)
 
 PR66 is verified/merged/deployedbc845512 after249 integration/102 public/26 protected tests and1440/768/390/keyboard/axe evidence. Production/configured preview exact-source READY;workspace flag off,production disabled,actual private provider walkthrough unverified. Next separate owner/founder UI source eddf85a/treec9c85dc passes static/unit/preservation but its new5 browser cases/full CI remain pending. Organisation linking,persistent missions,independent delegation/participant/economics/full role-state acceptance and D01-D06/D08 remain gaps. Read ledger40 and phase-1/workspace-invitation/release.json.
+
+### Forward V3 request authority design and owner CI retry, 17 October 2026 (Codex)
+
+ADR033 and phase-3/customer-requests/bounded-plan.md define the next separately verified backend packet; implementation remains MISSING. Reuse canonical requests/receipts with independently admitted creator-only authority, original retention and atomic bindings; workspace owners/organisers inherit no private participant access. No source/schema/provider/flag change from this design. New Markdown catalogue entries added; unchanged documentation tests13pass and preservation45routes/29core hashes/6sources/18expertIDs PASS. PR67 first CI passed249 integration/102 public and all5 new owner cases, but two original protected cases failed at a zero-second datetime driver boundary and its dependent fixture. Full unchanged-head rerun attempt2 is underway; no merge/deploy claimed. See ledger43/44, including retained failure evidence and reliability limitations.
+
+### Forward verified owner UI and custom production origin,17 October 2026 (Codex)
+
+PR67 full CI249/102/31 passed,normal merge720d96e exact tested tree. Owner-reported canonical origin bug repaired with production-only configuration and exact provider domain;deployment dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP READY/fra1,26 preflight assertions and28 final live checks pass. STATUS.md/ledger48 and current receipts supersede historical pending statuses. Flags off,D01-D06/D08 closed;whole V3 PARTIAL. Next actual implementation is ADR033 private requests,then organisation/delegation/participant/economics and missing acceptance. Branch union8/max8;host cookies can require sign-in again.
+
+### 18 October 2026: bounded private request backend
+
+V3-06-004 is now PARTIAL in the working candidate: optional module3 and creator-only request API reuse canonical mission creation/receipt progress. Focused restricted-role tests pass; full candidate CI/release pending. No cloud migration/intake admission or flag activation. UI/full mission scope/private provider walkthrough remain unverified; independent organisation/delegation/participant/economics remains missing. Follow ledger51,ADR033 and phase-3/customer-requests/report.json. All prior acceptance and historical plans remain dated evidence.

@@ -52,14 +52,52 @@ export class MissionService {
     if (!r.rows[0].client || !r.rows[0].global)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
   }
-  async submit(key: string, input: unknown) {
+  // Pure canonical intake preparation, also used by the customer attestation boundary.
+  // No database authority, receipt URL or customer ownership is granted here.
+  prepareIntake(key: string, input: unknown) {
     const brief = briefSchema.parse(input);
     const receipt = this.hash(`intake-receipt:${key}`);
-    const h = this.hash(`intake-brief:${JSON.stringify(brief)}`);
+    return {
+      brief,
+      receipt,
+      payloadHash: this.hash(`intake-brief:${JSON.stringify(brief)}`),
+      receiptHash: digest(receipt),
+      noticeVersion,
+    };
+  }
+  prepareCustomerIntake(
+    context: { issuer: string; subject: string; workspaceId: string; commandId: string },
+    input: unknown,
+  ) {
+    const hex = this.hash(
+      `customer-intake-v1:${JSON.stringify([
+        context.issuer,
+        context.subject,
+        context.workspaceId,
+        context.commandId,
+      ])}`,
+    )
+      .slice(0, 32)
+      .split('');
+    hex[12] = '8';
+    hex[16] = ((parseInt(hex[16]!, 16) & 3) | 8).toString(16);
+    const text = hex.join('');
+    const key = `${text.slice(0, 8)}-${text.slice(8, 12)}-${text.slice(12, 16)}-${text.slice(16, 20)}-${text.slice(20)}`;
+    const plan = this.prepareIntake(key, input);
+    // The private service never receives the bearer receipt itself.
+    return {
+      key,
+      payloadHash: plan.payloadHash,
+      receiptHash: plan.receiptHash,
+      noticeVersion: plan.noticeVersion,
+    };
+  }
+  async submit(key: string, input: unknown) {
+    const { brief, receipt, payloadHash: h, receiptHash } = this.prepareIntake(key, input);
     const r = await this.pool.query('SELECT app.submit_mission($1,$2,$3,$4::jsonb,$5) AS result', [
       key,
       h,
-      digest(receipt),
+      receiptHash,
       JSON.stringify(brief),
       noticeVersion,
     ]);

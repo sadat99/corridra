@@ -1,0 +1,27 @@
+2026-10-17T16:45:34.0719459Z       Tests  249 passed (249)
+2026-10-17T16:49:01.2307211Z   102 passed (2.2m)
+2026-10-17T16:49:01.2412152Z ##[notice]  102 passed (2.2m)
+2026-10-17T16:55:50.9016234Z ##[error]  1) tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics 
+    Error: locator.fill: Error: Malformed value
+        - fill("2026-10-17T16:56:00")
+        at /home/runner/work/corridra/corridra/tests/operator/y-ux05-governance.spec.ts:121:66
+2026-10-17T16:57:40.2318319Z ##[error]  2) tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+    > 66 |   expect(operator).toBeTruthy();
+        at /home/runner/work/corridra/corridra/tests/operator/zzz-v3-founder.spec.ts:66:20
+2026-10-17T16:57:40.3367489Z   1) tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics 
+2026-10-17T16:57:40.3412391Z     Error: locator.fill: Error: Malformed value
+2026-10-17T16:57:40.3472317Z         - fill("2026-10-17T16:56:00")
+2026-10-17T16:57:40.3582993Z         at /home/runner/work/corridra/corridra/tests/operator/y-ux05-governance.spec.ts:121:66
+2026-10-17T16:57:40.3584239Z     Error Context: test-results/y-ux05-governance-UX-05-go-3f204-and-role-specific-economics/error-context.md
+2026-10-17T16:57:40.3585917Z   2) tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+2026-10-17T16:57:40.3590380Z     > 66 |   expect(operator).toBeTruthy();
+2026-10-17T16:57:40.3594310Z         at /home/runner/work/corridra/corridra/tests/operator/zzz-v3-founder.spec.ts:66:20
+2026-10-17T16:57:40.3595574Z     Error Context: test-results/zzz-v3-founder-V3-founder--e2366-e-ordinary-operator-context/error-context.md
+2026-10-17T16:57:40.3598142Z   2 failed
+2026-10-17T16:57:40.3599234Z     tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics 
+2026-10-17T16:57:40.3600848Z     tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+2026-10-17T16:57:40.3601875Z   29 passed (8.6m)
+2026-10-17T16:57:40.3609626Z ##[notice]  2 failed
+    tests/operator/y-ux05-governance.spec.ts:21:1 › UX-05 governance keeps evidenced readiness, exact recovery receipts and role-specific economics 
+    tests/operator/zzz-v3-founder.spec.ts:20:1 › V3 founder clarity retains source-backed operations and denies the ordinary operator context 
+  29 passed (8.6m)

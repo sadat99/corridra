@@ -1,0 +1,139 @@
+{
+  "audit": 13,
+  "afterCommit": "working candidate on documentation head470dc29; source candidate not yet committed",
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 850,
+  "intentionalOriginalBindingChanges": [
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "input",
+      "bindings": [
+        "type=\"email\"",
+        "value={email}",
+        "disabled={busy}",
+        "onChange={(e) => { setEmail(e.target.value); setSent(false); setCode(''); }}",
+        "autoComplete=\"email\"",
+        "required",
+        "maxLength={254}"
+      ],
+      "visibilityConditions": ["mode !== 'reset'"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    },
+    {
+      "file": "apps/web/components/account-form.tsx",
+      "element": "button",
+      "bindings": [
+        "type=\"button\"",
+        "className=\"text-link\"",
+        "disabled={busy}",
+        "onClick={() => { setSent(false); setCode(''); setMessage(''); }}"
+      ],
+      "visibilityConditions": ["mode === 'verify' && sent"],
+      "replacementEvidence": "docs/v3/self-audit-4.json; unchanged legacy customer tests and new OTP regression"
+    }
+  ],
+  "unaccountedOriginalActions": [],
+  "routesRemoved": [],
+  "domainStatesRemoved": [],
+  "serviceCommandsRemoved": [],
+  "apiDispatchesRemoved": [],
+  "method": "No TSX/UI bindings changed in this backend packet: all prior850 controls retained. Compared original source inventory paths and original protected migrations; source guard PASS. Dynamic whole-V3 acceptance remains separate.",
+  "hardReleaseConditions": [
+    {
+      "requirement": "V3-09-079",
+      "condition": "Original function access",
+      "finding": "All original45 routes and18 expert IDs retained; no TSX/action/navigation removal. Original119 command/70 dispatch entries span32 files; canonical MissionService preparation is a third additive changed file, leaving29 byte-unchanged original files. Full dynamic legacy denominator remains unverified.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-080",
+      "condition": "Authority/privacy",
+      "finding": "Creator-only resource access uses fresh pinned issuer/provider proof plus independent offline admission. Owner/member/organiser never inherit private scope. Restricted-role privacy/forgery/revocation tests pass; original staff MFA/app.actor_id/RLS unchanged.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-081",
+      "condition": "Sources/money/history",
+      "finding": "Core29/customer0001/0002 and original source hashes preserved. Populated upgrade compares all original rows/functions/policies/ACLs/registry. Factory/binding failure rolls back canonical rows/events. Retention test creates short original retention; no historical update or trigger disable.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-082",
+      "condition": "Commercial requirements",
+      "finding": "Existing buyer/sourcing/machinery/commercial requirements retained. New backend provides receipt progress only; no quotation/contact/financial publication implied. Full customer mission administration remains partial.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-083",
+      "condition": "Organiser acceptance",
+      "finding": "Independent organiser/participant/economics backend and journeys remain MISSING. No full delegation SaaS acceptance claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-084",
+      "condition": "Company identity reuse",
+      "finding": "No canonical organisation/buyer/supplier identity change. Workspace organisationId remains null; no duplicated company created.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-085",
+      "condition": "Advanced discoverability",
+      "finding": "All18 expert IDs/old deep links and owner controls retained. This packet adds a gated API and no navigation/UI removal.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-086",
+      "condition": "Simulation/live truth",
+      "finding": "Requests remain synthetic with canonical DRAFT/status and original replies. Request flag independent/default-off/production hard-disabled. D01-D06/D08 remain closed; no live capability or KPI claimed.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-087",
+      "condition": "Security/browser/deployment",
+      "finding": "Focused restricted PostgreSQL suite11 pass; full static/unit/integration/build/public/protected and security CI pending on final candidate. Initial failure retained. No old assertion edited. Exact merge/deploy remains pending.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    },
+    {
+      "requirement": "V3-09-088",
+      "condition": "Complexity/usability",
+      "finding": "No visible component change or usability improvement claimed. New private request UI is explicitly a separate backend-dependent packet; no interface-only shipped control.",
+      "wholeV3Acceptance": "NOT VERIFIED"
+    }
+  ],
+  "lostHiddenOrFake": [],
+  "remainingGaps": [
+    "Customer private-request UI and actual authenticated provider/browser/API walkthrough",
+    "Full customer commercial mission administration and scoped publication",
+    "Canonical organisation linking/owner transfer",
+    "Independent delegation administration/participant onboarding/privacy/economics",
+    "Exhaustive legacy action/state/role dynamic acceptance",
+    "D01-D06/D08 commercial activation gates"
+  ],
+  "tree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "sourceTree": "d829a0fc66fe0194a6bfd54ad853443ceb49f49f",
+  "originalOperationFiles": {
+    "commandEntries": 119,
+    "dispatchEntries": 70,
+    "uniqueCommandFiles": 27,
+    "uniqueDispatchFiles": 5,
+    "combinedFiles": 32,
+    "unchangedAgainstOriginalBaseline": 30,
+    "changed": [
+      {
+        "file": "apps/web/lib/foundations.ts",
+        "finding": "Previously verified lazy optional customer service/provider wiring added; original service construction unchanged."
+      },
+      {
+        "file": "apps/web/next.config.ts",
+        "finding": "Previously verified narrow no-referrer/no-store rule for new customer workspace APIs added; all original rules unchanged."
+      }
+    ],
+    "correction": "Earlier all119 command/70 dispatch source files unchanged wording conflated entries with files and failed to name the original baseline. These two changes are from prior verified packets, not the current owner UI. Historical entries retained; this is the forward correction."
+  },
+  "knownLimitations": [
+    "Full dynamic legacy role/action/state denominator unverified",
+    "Actual private authenticated provider reload/sign-out/revocation unverified",
+    "Existing zero-second datetime driver/shared fixture reliability limitations",
+    "Original combined HTTP probe failed;production rerun exit0 was correctly parsed as JSONL and separately protected preview verified"
+  ]
+}

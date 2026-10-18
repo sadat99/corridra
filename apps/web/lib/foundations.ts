@@ -12,6 +12,7 @@ import {
   CustomerWorkspaceService,
   customerWorkspacesEnabled,
 } from '@corridra/auth/customer-workspaces';
+import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { neonAuth } from './neon-auth';
 import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
@@ -83,6 +84,18 @@ function createServices() {
   void ready.catch(() => {
     void Promise.allSettled([runtimePool.end(), authPool.end()]);
   });
+  const readCustomerSession = async () => {
+    const auth = neonAuth();
+    if (!auth) throw new Error('Customer identity is unavailable');
+    const { data, error } = await auth.getSession({ query: { disableCookieCache: true } });
+    if (error) throw new Error('Customer identity is unavailable');
+    if (!data?.user || !data.session) return null;
+    return {
+      subject: data.user.id,
+      emailVerified: data.user.emailVerified,
+      expiresAt: new Date(data.session.expiresAt),
+    };
+  };
   return {
     config,
     ...identity,
@@ -97,18 +110,18 @@ function createServices() {
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
-      async () => {
-        const auth = neonAuth();
-        if (!auth) throw new Error('Customer identity is unavailable');
-        const { data, error } = await auth.getSession({ query: { disableCookieCache: true } });
-        if (error) throw new Error('Customer identity is unavailable');
-        if (!data?.user || !data.session) return null;
-        return {
-          subject: data.user.id,
-          emailVerified: data.user.emailVerified,
-          expiresAt: new Date(data.session.expiresAt),
-        };
+      readCustomerSession,
+    ),
+    customerRequests: new CustomerRequestService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerRequestsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
+      readCustomerSession,
     ),
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
     network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
