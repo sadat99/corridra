@@ -1,0 +1,52 @@
+{
+  "audit": 19,
+  "chunk": 69,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 903,
+  "intentionalOriginalBindingChanges": "Only2 already accepted account-form OTP changes;zero new unaccounted originals",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "45baseline routes/18expert IDs and806original controls preserved;old original invitation/receipt/export/admin paths untouched;only2 earlier OTP binding differences"
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "New owner/admin-only synthetic programme create/list,one-use private exact OID/row/PID/transaction/nonce/proof authority,actual service/customer attribution. Only two reviewed forward guard/event extensions;all old signatures/security attributes/ACLs/RLS/staff/MFA predicates preserved.15new realPG cases plus17unchanged workspace pass."
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "45routes/29core/6source/18expert source guard PASS;populated old rows/ACLs/RLS/receipts equal;only two explicitly reviewed forward function extensions. Immutable programme binding and canonical event/audit/outbox atomicity;no source/money/history rewrite."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Existing original requirements/qualification/quote revisions/currencies/comparison risk warnings/meeting statuses/report observations reused. No fabricated meetings/deals/verified facts."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "Only canonical programme planning create/list implemented locally. Participant onboarding/privacy,dates/agendas/commercial meetings/economics remain unfinished;full independent Delegation OS not accepted."
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "No organisation or role record created/merged;references existing approved shared engine;standalone customer portfolios/organisation authority remain unfinished"
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "18expert IDs and original staff/recipient/institution exports/deep links retained"
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "Sample notices,source scope and declaration labels;new flag defaultoff/prod hardoff;no provider/outreach/money/live gate activation"
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "Local15new PG+17unchanged workspace,9component and2compiled closed-route cases pass. Final current-source lint/types/build/unit/preservation checks and full new exact-head CI/release required;actual managed-provider/full dynamic/security/usability NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "Contextual link under current workspace owner/admin cards;no sixth account nav item. One planning task with original-purpose metadata and explicit unavailable operations;existing canonical programme engine reused."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;no completion percentage or improvement claim",
+  "historicalProvenance": "Recovered unchanged historical audit from stashecb809d;records local chunk69 before PR72 release,not acceptance of the current recovered programme source. Current forward evidence is ledger83 onward and customer-programmes/report.json."
+}

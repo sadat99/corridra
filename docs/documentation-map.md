@@ -147,3 +147,5 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 
 | [adr/0038-approved-customer-company-portfolios.md](adr/0038-approved-customer-company-portfolios.md) | Architecture decision | Company continuity within existing approved customer scopes |
 | [v3/phase-3/customer-companies/bounded-plan.md](v3/phase-3/customer-companies/bounded-plan.md) | Bounded implementation plan | Approved company portfolios,canonical identity and privacy-preserving recovery |
+
+- [ADR037](adr/0037-customer-programme-command-authority.md): scoped customer creation of canonical programmes. [Programme plan](v3/phase-3/customer-programmes/bounded-plan.md): optional authority, preservation and unfinished organiser requirements.

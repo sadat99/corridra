@@ -90,6 +90,7 @@ jobs:
             .cache/v3-companies/after/
             .cache/v3-decisions/after/
             .cache/v3-customer-delivery/after/
+            .cache/v3-programmes/after/
           if-no-files-found: ignore
           retention-days: 3
       - uses: actions/upload-artifact@v7

@@ -86,10 +86,12 @@ export function CustomerWorkspaces({
   subject,
   issuer,
   requestsEnabled = false,
+  programmesEnabled = false,
 }: {
   subject: string;
   issuer: string;
   requestsEnabled?: boolean;
+  programmesEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -283,8 +285,9 @@ export function CustomerWorkspaces({
     >
       <h2>Your test workspaces</h2>
       <p>
-        Use fictional names only. Company profiles and workspace projects are not available here
-        yet.
+        {programmesEnabled
+          ? 'Use fictional names only. Sample delegation planning is available to workspace owners and administrators. Company profiles and other project tools are not available here yet.'
+          : 'Use fictional names only. Company profiles and workspace projects are not available here yet.'}
       </p>
       {status === 'loading' && <p role="status">Loading your test workspaces…</p>}
       {status !== 'loading' && status !== 'ready' && (
@@ -316,6 +319,13 @@ export function CustomerWorkspaces({
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role} · Test data
+                  {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
+                    <p>
+                      <a className="text-link" href={'/account/delegations/' + row.id}>
+                        Plan sample delegations
+                      </a>
+                    </p>
+                  )}
                   {requestsEnabled && (
                     <p>
                       <a className="text-link" href={'/account/request/' + row.id}>

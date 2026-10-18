@@ -14,6 +14,10 @@ import {
 } from '@corridra/auth/customer-workspaces';
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import {
+  CustomerProgrammeService,
+  customerProgrammesEnabled,
+} from '@corridra/auth/customer-programmes';
+import {
   CustomerCompanyService,
   customerCompaniesEnabled,
 } from '@corridra/auth/customer-companies';
@@ -163,6 +167,17 @@ function createServices() {
       authPool,
       {
         enabled: customerCompaniesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerProgrammes: new CustomerProgrammeService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
