@@ -49,13 +49,14 @@ export function FounderOverview() {
           continuity across saved reports has another closed gate. Canonical sample programme
           creation and listing have a separate closed gate. Sample participant invitations,
           consented registrations and programme access changes have another synthetic gate. Private
-          participant missions, agendas, meetings and financial operations remain unavailable there.
-          Full customer mission administration, company linking and independent delegation
-          administration remain <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must
-          implement and verify these separately. The owner and relevant legal, infrastructure,
-          security and provider reviewers must supply the independent activation evidence in{' '}
-          <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped sharing
-          remains available.
+          participant objective sharing has its own closed gate and exposes only expressly consented
+          text. Full participant missions, agendas, meetings and financial operations remain
+          unavailable there. Full customer mission administration, company linking and independent
+          delegation administration remain <StatusBadge tone="unknown">MISSING</StatusBadge>.
+          Engineering must implement and verify these separately. The owner and relevant legal,
+          infrastructure, security and provider reviewers must supply the independent activation
+          evidence in <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped
+          sharing remains available.
         </dd>
       </dl>
       <Link prefetch={false} className="text-link" href="/#mission-example">

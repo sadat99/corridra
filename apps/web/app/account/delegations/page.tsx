@@ -1,3 +1,4 @@
+import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { redirect } from 'next/navigation';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -32,7 +33,11 @@ export default async function Page() {
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="My sample delegations">
-      <ParticipantAccount subject={session.data.user.id} issuer={issuer} />
+      <ParticipantAccount
+        missionSharesEnabled={customerMissionSharesEnabled()}
+        subject={session.data.user.id}
+        issuer={issuer}
+      />
     </WorkspaceShell>
   );
 }

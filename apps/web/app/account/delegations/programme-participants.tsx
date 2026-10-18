@@ -1,8 +1,13 @@
 'use client';
+import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParticipantView, type ParticipantScope } from './participant-client';
-type Props = ParticipantScope & { workspaceId: string; programmeId: string };
+type Props = ParticipantScope & {
+  workspaceId: string;
+  programmeId: string;
+  missionSharesEnabled?: boolean;
+};
 export function ProgrammeParticipants(props: Props) {
   return (
     <ScopedParticipants
@@ -220,6 +225,14 @@ function ScopedParticipants(props: Props) {
                         ? 'Participant withdrew'
                         : 'Programme access revoked'}
                   </p>
+                  {props.missionSharesEnabled && r.status === 'REGISTERED' && (
+                    <ProgrammeObjectives
+                      subject={props.subject}
+                      issuer={props.issuer}
+                      registrationId={r.id}
+                      view="manage"
+                    />
+                  )}
                   {r.status === 'REGISTERED' && (
                     <button
                       type="button"

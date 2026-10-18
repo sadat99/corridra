@@ -1,10 +1,11 @@
 'use client';
+import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
-export function ParticipantAccount(props: ParticipantScope) {
+export function ParticipantAccount(props: ParticipantScope & { missionSharesEnabled?: boolean }) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
 }
-function ScopedAccount(props: ParticipantScope) {
+function ScopedAccount(props: ParticipantScope & { missionSharesEnabled?: boolean }) {
   const [token, setToken] = useState(''),
     [label, setLabel] = useState(''),
     [consent, setConsent] = useState(false),
@@ -164,6 +165,14 @@ function ScopedAccount(props: ParticipantScope) {
                       <h3>{r.name}</h3>
                       <p>{r.reportingPurpose}</p>
                       <p>{r.displayLabel} · Registered, self-declared</p>
+                      {props.missionSharesEnabled && (
+                        <ProgrammeObjectives
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          registrationId={r.id}
+                          view="own"
+                        />
+                      )}
                       <button
                         type="button"
                         className="text-link"
