@@ -1,0 +1,32 @@
+{
+  "result": "PARTIAL:bounded local implementation/acceptance;full exact-head CI and gated source release pending;full customer commercial authoring/organisation ownership unfinished",
+  "requirements": ["V3-06-004"],
+  "baseline": "b2fdfab9ec74c6f7b3907fe5ec61a15b2b36706f (PR74 verified gated source release)",
+  "existing": "Original creator-owned request→canonical V2 mission binding,reviewed client publication/link,source rights and canonical revocation,original customer save/read/reply/comparison/company/decision engines,event/audit/outbox",
+  "new": "Explicit original-publisher owner/admin/MFA assignment to the request creator;token-free account discovery and acknowledged save/open through the original invitation engine",
+  "paths": {
+    "original": "/operator delivery/review/sharing and /account original requests/saved reports/companies,/account/missions/[resourceId] retained",
+    "destination": "Contextual customer account delivery list and staff mission review;GET/POST /api/customer-assigned-missions and /api/workspace/customer-mission-delivery"
+  },
+  "authority": "Exact original canonical mission/tenant/request creator and own reviewed client link. Workspace owners,members,organisers and other customers inherit none. No email or company-name matching,no staff-session/proof impersonation and no raw token/hash/subject/contact disclosure.",
+  "migration": {
+    "path": "packages/db/customer-delivery-migrations/0001_reviewed_customer_mission_delivery.sql",
+    "sha256": "d008e365f43f776a3c34d5826e0149df7c5cc2294ab82abe4f11f69bf9fb8e89",
+    "installer": "packages/db/src/customer-delivery-migrate.ts",
+    "receipt": "customer_delivery_migrations.applied;original base3+commercial1 lifecycle retained",
+    "blastRadius": "New immutable assignment table,owner/admin-scoped tenant RLS/private validators and original atomic events. No old function/ACL/RLS/row/source/money/history rewrite. Original save function used internally after customer acknowledgement.",
+    "cloud": "not installed"
+  },
+  "local": {
+    "integration": "20new+12unchanged saved-commercial:Test Files2 passed(2);Tests32 passed(32),15.67s;populated preservation,owner/admin/creator positives,real cross-mission and publisher/role/customer/workspace-owner/SQL/proof/MFA/expiry/revocation denials,concurrent retry,atomicity,paging and read-only equality,independent request/report authorities",
+    "ui": "9 passed(11.9s),actual staff/customer components with real Next router context and compiled CSS/font;acknowledgement/same-host route,existing saved link,empty/unavailable/malformed/denial/account/hide/expiry,exact retries,paging window,keyboard/axe1440/768/390/320. Existing brand primary/secondary classes;actual final320customer image reviewed. Initial standalone Next fixture missing compile-time process.env caused render failure;fixed fixture compilation environment,all behavioral assertions preserved.",
+    "compiledGates": "2 passed(2.5s),current compiled GET/POST503/privateheaders before optional module/provider",
+    "static": "Current fail-fast PG32/typecheck/lint/build chain exit0;final format:check pass,19JS/0failed+7Python OK. Full exact-head CI/merge/READY source release pending.",
+    "provider": "NOT VERIFIED;synthetic fixture proofs and component protocols do not establish managed-provider acceptance"
+  },
+  "featureFlags": "CORRIDRA_CUSTOMER_DELIVERY_ENABLED defaultoff plus request/saved/workspace/delivery/synthetic/nonproduction gates;production hardoff;D01-D06/D08 closed",
+  "independentRights": "Request revocation stops discovery/new acceptance;an independently approved saved client report remains governed by its original link/publication. Canonical link revocation closes both,new delivery does not merge legal authorities.",
+  "remaining": "Full customer commercial authoring/organisation authority,independent Delegation OS/participants/economics,actual provider and exhaustive UX/security/usability/activation",
+  "rollback": "Disable exposure or deploy compatibleb2fdfab;retain additive assignment/module/receipt and original bookmark/source/money/event history. No down migration.",
+  "preservation": "806original/928current controls,only2earlier accepted OTP differences;45routes29core6source18expertIDs PASS;original tests unchanged"
+}

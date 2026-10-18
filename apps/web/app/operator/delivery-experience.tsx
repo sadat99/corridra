@@ -1,4 +1,5 @@
 'use client';
+import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -522,6 +523,9 @@ export function DeliveryExperience(props: Props) {
       </details>
       {['owner', 'admin'].includes(props.role) && (
         <DecisionDisclosures tenant={tenant} publications={publications} />
+      )}
+      {['owner', 'admin'].includes(props.role) && mission && (
+        <CustomerMissionDelivery tenant={tenant} mission={mission} />
       )}
       <h3>Counterparty declarations awaiting review</h3>
       {data.responses.length ? (

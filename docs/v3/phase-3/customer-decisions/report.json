@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL:local implementation;full exact-head CI/release pending;full customer commercial authoring unfinished",
+  "result": "PARTIAL product;bounded gated source release verified by PR74 exact-head CI,matching merge,READY production/isolated preview and31live checks;full customer authoring unfinished",
   "requirements": ["V3-02-030", "V3-04-073", "V3-05-017"],
   "baseline": "259691db2a68fdaabd1628376f43ed2650961a8f (PR73 verified company portfolio source)",
   "existing": "Immutable app.mission_selection and original mission/requirement/assessment/quotation/source/publication/report/customer authority,event/audit/outbox",
@@ -20,7 +20,7 @@
     "integration": "19new+12unchanged saved-commercial:Test Files2 passed(2);Tests31 passed(31),19.92s. Adds genuine existing other-mission decision denial while original decision remains valid;all earlier populated preservation,owner/admin,role/customer/tenant/SQL/MFA/proof/source/revocation/concurrency/atomicity assertions retained.",
     "ui": "8 passed(16.4s),actual customer/staff protocols at1440/768/390/320,keyboard/axe,privacy/expiry/retry;actual320customer screenshot reviewed",
     "compiledGates": "2 passed(2.9s),current built defaultoff APIs/privateheaders and customer POST405",
-    "static": "Corrected fail-fast verification chain exited0:format/lint/typecheck/unit/30PG/build;then final added cross-mission test typecheck+31PG exited0. Original11d096 CI failed a duplicate fixture reason/typecheck;corrected forward,no old test assertion weakened. UI8/compiledgates2 remain valid for unchanged product source. New exact-head CI pending.",
+    "static": "Corrected fail-fast local verification and full exact0535b73 CI pass:35files311PG/114public/82protected plus static/unit/build/security. Earlier11d096 failed typecheck corrected in ledger78;no merge or deployment of that head.",
     "provider": "NOT VERIFIED;synthetic fixtures do not establish managed-provider acceptance"
   },
   "featureFlags": "CORRIDRA_CUSTOMER_DECISIONS_ENABLED defaultoff plus saved/workspace/delivery/synthetic/nonproduction;production hardoff,D01-D06/D08 closed",
@@ -33,5 +33,6 @@
     "job": 117646544029,
     "result": "failed",
     "reason": "TS2783 duplicate reason in new test fixture;later unit exit had masked local typecheck failure;explicitly corrected ledger78 and fail-fast checks"
-  }
+  },
+  "release": "docs/v3/phase-3/customer-decisions/release.json"
 }

@@ -1,0 +1,135 @@
+{
+  "result": "verified bounded gated V2 decision disclosure source release;whole V3 and customer workspace PARTIAL;actual managed-provider acceptance NOT VERIFIED",
+  "pr": 74,
+  "baseline": "259691db2a68fdaabd1628376f43ed2650961a8f",
+  "testedHead": "0535b73a360bf287fe79eb39292af7ddd0be841a",
+  "testedTree": "3e9198795428bbf7a570e90a75a25faa54758eb3",
+  "merge": "b2fdfab9ec74c6f7b3907fe5ec61a15b2b36706f",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39118156581,
+    "job": 117648081420,
+    "result": "success",
+    "integrationFiles": 35,
+    "integrationTests": 311,
+    "publicBrowsers": 114,
+    "protectedBrowsers": 82,
+    "quotes": [
+      "Test Files35 passed(35)",
+      "Tests311 passed(311)",
+      "114 passed(2.3m)",
+      "82 passed(10.3m)"
+    ],
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 open"
+  },
+  "priorFailure": {
+    "head": "11d096ca80b4387147dc0b7dc647fb6e664d0d0d",
+    "run": 39117634506,
+    "job": 117646544029,
+    "scope": "Duplicate reason property in new fixture caused typecheck failure;not merged/deployed. Later successful local unit exit had masked prior typecheck failure;ledger78 corrects the claim. Forward correction retains all assertions and adds real cross-mission denial;fail-fast verification and new exact-head full CI passed."
+  },
+  "artifact": {
+    "id": 12133212928,
+    "digest": "sha256:036ec5a3f353261b546750f4bae113429e19babd23614acfe6a4ed552a090431",
+    "sizeInBytes": 23405566,
+    "expiresAt": "2026-10-21T10:30:10Z",
+    "scope": "Synthetic component/route evidence;not actual managed-provider acceptance"
+  },
+  "production": {
+    "id": "dpl_FLhT2uQaF4C9F6d9LnYS51Py9aaQ",
+    "url": "corridra-dx984rfc2-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "b2fdfab9ec74c6f7b3907fe5ec61a15b2b36706f",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-b2fdfab9ec74c6f7b3907fe5ec61a15b2b36706f-sadat-os.vercel.app"
+    ]
+  },
+  "preview": {
+    "id": "dpl_GBjuFJ2Fpb6eY8S6qsve4GY9Xc4A",
+    "url": "corridra-4kg43pmnz-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "b2fdfab9ec74c6f7b3907fe5ec61a15b2b36706f",
+    "regions": ["fra1"],
+    "aliases": ["corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app"],
+    "checks": [
+      {
+        "path": "/api/customer-decisions",
+        "status": 503,
+        "noStore": true,
+        "noReferrer": true
+      },
+      {
+        "path": "/api/workspace/customer-decision-disclosures",
+        "status": 503,
+        "noStore": true,
+        "noReferrer": true
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "noStore": true,
+        "noReferrer": true,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 31,
+    "checks": [
+      ["/", "GET", 200],
+      ["/signup", "GET", 200],
+      ["/signin", "GET", 200],
+      ["/verify-email", "GET", 200],
+      ["/operator/setup", "GET", 200],
+      ["/account", "GET", 200],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["/api/customer-saved-missions", "GET", 503],
+      ["/api/customer-saved-missions", "POST", 503],
+      ["/api/customer-companies", "GET", 503],
+      ["/api/customer-requests/00000000-0000-4000-8000-000000000001", "GET", 503],
+      ["/api/workspace/tenants", "GET", 401],
+      ["/api/workspace", "GET", 404],
+      ["/api/auth/get-session", "GET", 200],
+      ["/signin", "GET", 307],
+      ["/operator/setup", "GET", 307],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "GET", 200],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "GET", 307],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "GET", 307],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "GET", 307],
+      ["/account/companies", "GET", 200],
+      ["/account/companies", "GET", 307],
+      ["/api/customer-companies", "POST", 405],
+      ["/api/customer-decisions?resourceId=00000000-0000-4000-8000-000000000001", "GET", 503],
+      [
+        "/api/workspace/customer-decision-disclosures?tenant=00000000-0000-4000-8000-000000000001",
+        "GET",
+        503
+      ],
+      ["/api/workspace/customer-decision-disclosures", "POST", 503],
+      ["/api/customer-decisions", "POST", 405]
+    ],
+    "command": "cmd_9e8492aa43a348c6948497f601b3",
+    "exitCode": 0,
+    "session": "sbx_mtiSs7x6zcCvL2JAFLiwg5Ug5JnJ",
+    "sessionIndependentlyStopped": true,
+    "stdoutCollectedBeforeStop": true,
+    "assertions": "Owned public/OTP/team/account same-host pages,actual staff401/null anonymous session,private closed request/saved/company/decision APIs/pages,hosting→owned redirects,read-only405. Compact stdout contains all31path/method/status entries;privacy/content assertions executed before successful output.",
+    "resources": "Nonpersistent1vCPU/fra1/60second/no source/env/snapshots;egress onlytwo public site hosts;stopped"
+  },
+  "runtime": "Exact-production error/fatal since10m grouped query returned no matching groups;not full security assurance",
+  "flags": "All exposure unchanged;new decision flag defaultoff/production hardoff. No optional cloud decision module,provider/admission/intake or real gate activation;D01-D06/D08 closed.",
+  "branchBudget": "local5/remote6/distinct8/max8;no new branch/worktree/forcepush;dependency/unfinished/environment-bound branches preserved",
+  "rollback": "Disable exposure or deploy compatible259691d;retain additive approval/module/receipt and canonical source/decision/money/history",
+  "remaining": "Full customer commercial authoring/canonical organisation ownership,independent Delegation OS/participants/economics,actual provider and full UX/security/activation. Next account-delivery packet is separate local WIP,not in74.",
+  "localWip": "Next account-delivery packet protected before merge in stashd110cd052672dc615f48a03ac50a119393f2d5ba and safely restored after matching source merge;programmeecb809d remains separate."
+}

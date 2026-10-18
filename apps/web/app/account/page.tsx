@@ -1,3 +1,5 @@
+import { AssignedMissions } from './assigned-missions';
+import { customerDeliveryEnabled } from '@corridra/auth/customer-assigned-missions';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -145,6 +147,9 @@ export default async function Page() {
           <div id="customer-missions" tabIndex={-1}>
             {savedMissionIssuer && (
               <div id="saved-commercial-missions">
+                {customerDeliveryEnabled() && (
+                  <AssignedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+                )}
                 <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
                 {customerCompaniesEnabled() && (
                   <p>
