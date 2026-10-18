@@ -250,3 +250,22 @@ test('detail gate requires its independent flag plus synthetic request admission
     }),
   ).toBe(false);
 });
+
+test('proof expiry while blocked on original source prevents a late content disclosure', async () => {
+  const lock = await f.owner.connect();
+  await lock.query('BEGIN');
+  await lock.query('LOCK TABLE app.mission_intake IN ACCESS EXCLUSIVE MODE');
+  const short = new CustomerRequestDetailService(f.runtime, f.auth, options, async () => ({
+    ...session('alice'),
+    expiresAt: new Date(Date.now() + 200),
+  }));
+  const pending = short.detail(created.id);
+  const denied = expect(pending).rejects.toMatchObject({ code: '42501' });
+  try {
+    await f.owner.query('SELECT pg_sleep(0.35)');
+  } finally {
+    await lock.query('ROLLBACK');
+    lock.release();
+  }
+  await denied;
+});

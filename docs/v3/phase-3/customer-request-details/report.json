@@ -23,7 +23,7 @@
   },
   "blastRadius": "One independently installed read function discloses creator-submitted original input only;no old function/RLS/ACL/migration/source/evidence/money/event change. No grant to workspace owner/organiser. Existing three-module installer unchanged. No cloud/provider/admission/intake/flag mutation.",
   "local": {
-    "integration": "2 files19 passed:7 new detail cases+12 unchanged request cases",
+    "integration": "2 files20 passed:8new detail cases+12unchanged request cases;includes proof expiry during a real source-table lock",
     "ui": "13 passed(14.7s):6 new protocols+7 unchanged list cases",
     "gate": "2 passed(4.1s),desktop/mobile,closed page/API/privateheaders",
     "lintTypesBuild": "pass;required exact-head CI must verify final founder copy",
