@@ -341,7 +341,10 @@ function PrivateReport({ subject, issuer, resourceId }: Scope) {
     }
   }
   return (
-    <section aria-label="Approved saved commercial report">
+    <section
+      className="delivery-view ux-saved-commercial-report"
+      aria-label="Approved saved commercial report"
+    >
       <a className="text-link" href="/account#saved-commercial-missions">
         Back to my saved commercial missions
       </a>

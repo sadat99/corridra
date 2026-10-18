@@ -2179,6 +2179,10 @@ summary:hover {
 .ux-participant-mission {
   min-width: 0;
 }
+.ux-saved-commercial-report {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .ux-next-action {
   border-left: 3px solid var(--action);
   background: var(--surface-subtle);
