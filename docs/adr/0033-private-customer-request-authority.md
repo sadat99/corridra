@@ -1,6 +1,6 @@
 # ADR-033: Private customer requests through the canonical mission engine
 
-Status: backend/migration/API implemented in candidate; focused local verification passed, full checks/release pending. Customer interface MISSING. This decision grants no admission or activation. It amends ADR-032 only for the next separately tested synthetic request capability.
+Status: backend/migration/API implemented, tested and source deployed with exposure closed (PR68). Customer interface acceptance is separately tracked; full mission administration remains missing. This decision grants no admission or activation. It amends ADR-032 only for the next separately tested synthetic request capability.
 
 V3-06-004 requires persistent customer-owned access. The existing public request factory already creates canonical missions; the existing receipt function already limits progress to status, received time and operator replies within the original retention period. Reuse both. Do not create another mission backend, infer ownership from email or company text, or expose staff/source/commercial records through a customer workspace.
 
@@ -41,3 +41,7 @@ Deploy additive schema before the compatible backend, with flags off. Disabling 
 ## Forward implementation detail (18 October 2026)
 
 Lock order is principal row SHARE → request-admission row SHARE → principal/command advisory → existing customer.access.workspace advisory → existing corridra:intake advisory. The unchanged factory reacquires its own transaction advisory lock reentrantly. Proof and attestation are rechecked after waiting. New binding events use their own aggregate per request; workspace provenance does not publish private content. The original source/receipt retention controls progress, while immutable binding metadata stores only identifiers, digests and time. Offline admission remains schema-owner-only and repeated admission cannot re-enable a disabled row.
+
+## Forward rollout clarification (18 October 2026)
+
+PR68 verifies the fully disabled base application on core-only installations. Source deployment with both customer flags off may precede the optional cloud module:the request gate runs before foundation/provider/schema access and production is hard-disabled. This clarifies the earlier schema-before-backend wording for a fully disabled base,not enabled request operation. Install reviewed customer0003 and separately establish synthetic intake/admission readiness before any isolated request exposure. Missing schema must remain unavailable,never an empty-success fallback. No real activation follows from source deployment.

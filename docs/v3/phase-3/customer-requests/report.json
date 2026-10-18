@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL: backend implemented; full candidate checks running; exposure off",
+  "result": "verified bounded backend release;V3 PARTIAL;exposure gated",
   "baseline": "720d96ed8606d27c020fd470add1c9c6277faa85",
   "requirements": ["V3-06-004", "V3-09-079", "V3-09-080", "V3-09-081", "V3-09-087"],
   "existing": "Unchanged canonical app.submit_mission/app.mission_receipt, original synthetic intake/retention/events, fresh verified provider proof and explicit workspace admission",
@@ -12,7 +12,8 @@
     "static": "lint/types/unit passed; full current-head checks running",
     "failureEvidence": "verification/focused-initial.txt retains initial policy snapshot/new test status/immutable retention fixture errors. Narrow auth-only function replaces extra policy; new test uses authoritative DRAFT and short original retention at INSERT. No existing test changed or trigger disabled.",
     "localFullInitialCandidate": "b3ca24b:31 files260 integration tests/build pass;104 public pass with installed Chromium151;protected running. Pinned browser download403,initial96 launch failures+8 API-only successes retained as runtime limitation. CI exact new source required.",
-    "rateBudgetReview": "Before merge, API now calls original shared MissionService.budget with trusted Vercel forwarded-address/local derivation. Existing actual database test proves replicated shared budget and seventh denial. No separate capacity bypass; source follow-up requires fresh exact-head CI."
+    "rateBudgetReview": "Before merge, API now calls original shared MissionService.budget with trusted Vercel forwarded-address/local derivation. Existing actual database test proves replicated shared budget and seventh denial. No separate capacity bypass; source follow-up requires fresh exact-head CI.",
+    "exactHeadCI": "bd3f7e566b924a99869e06aadfe8764f66afe674,full tree670390b2b525e4c76425ed07253f796405b251aa:CI39083382371/job117545028814 success;31files260integration/104public/31protected/build/static/security/unit pass. CodeQL skipped,D04 open."
   },
   "privacy": "No receipt secret reaches response/URL/storage. No brief/contact/reply copied to ownership store. Private immutable identifiers/digests/provenance remain; original receipt content expires unchanged, with an additional wall-clock guard. Metadata retention/legal approval remains independently gated.",
   "states": "unavailable/invalid/denied/conflict/retry/expired-source progress, bounded pagination; no loading/responsive UI claim yet",
@@ -25,5 +26,7 @@
     "Independent delegation administration/participant onboarding/privacy/economics",
     "Exhaustive legacy action/state/role dynamic acceptance",
     "D01-D06/D08 commercial activation gates"
-  ]
+  ],
+  "release": "PR68 normal mergec594bd92d0a3da709aaf5f45570f532f81446f77 matches tested full tree;production4tBn READY/fra1/exactsource,configuredpreviewHxR READY/exactsource;15 live production and2 preview observations pass. See release.json for command output,flags,cleanup and limitations.",
+  "migrationSha256": "f5ce0b4dd4bb652dd50f53ab5f48b5c2a827c238a4ecc200124e920c34ef2def"
 }

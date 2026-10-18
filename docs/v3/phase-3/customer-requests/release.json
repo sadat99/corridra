@@ -1,0 +1,106 @@
+{
+  "result": "verified bounded backend source/release;V3 PARTIAL;request exposure gated",
+  "pr": 68,
+  "testedHead": "bd3f7e566b924a99869e06aadfe8764f66afe674",
+  "testedTree": "670390b2b525e4c76425ed07253f796405b251aa",
+  "merge": "c594bd92d0a3da709aaf5f45570f532f81446f77",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39083382371,
+    "job": 117545028814,
+    "result": "success",
+    "integrationFiles": 31,
+    "integrationTests": 260,
+    "publicBrowsers": 104,
+    "protectedBrowsers": 31,
+    "build": "pass",
+    "staticSecurityUnit": "pass",
+    "CodeQL": "skipped;D04 open",
+    "supersededRun": "39082813643 cancelled after shared-budget source fix;not final acceptance",
+    "logAccess": "CLI archive endpoint forbidden;authorized GitHub connector decoded job logs and exact command output below"
+  },
+  "ciCommandOutput": [
+    "2026-10-18T00:38:31.6615611Z {\"scanner\":\"gitleaks\",\"version\":\"8.30.1\",\"archiveSha256\":\"551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb\",\"findings\":0,\"scope\":\"Git history; reports redacted\"}",
+    "2026-10-18T00:38:59.7925780Z All matched files use Prettier code style!",
+    "2026-10-18T00:43:18.9619651Z  Test Files  31 passed (31)",
+    "2026-10-18T00:43:18.9620357Z       Tests  260 passed (260)",
+    "2026-10-18T00:46:07.6064222Z   104 passed (1.8m)",
+    "2026-10-18T00:46:07.6089981Z ##[notice]  104 passed (1.8m)",
+    "2026-10-18T00:55:10.3581258Z   31 passed (9.0m)",
+    "2026-10-18T00:55:10.3632046Z ##[notice]  31 passed (9.0m)"
+  ],
+  "production": {
+    "id": "dpl_4tBnvaesbk4JWD89VqfgywkqzKHW",
+    "url": "corridra-18kvex99z-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "c594bd92d0a3da709aaf5f45570f532f81446f77",
+    "regions": ["fra1"],
+    "target": "production",
+    "aliases": ["c.obsidianglobal.studio", "corridra.vercel.app"]
+  },
+  "preview": {
+    "id": "dpl_HxRPLz8xV2eEnPBe2u41EMKP91sV",
+    "url": "corridra-3vzpaw5g6-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "c594bd92d0a3da709aaf5f45570f532f81446f77",
+    "regions": ["fra1"],
+    "alias": "corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app",
+    "checks": [
+      {
+        "path": "/api/customer-requests",
+        "status": 503,
+        "body": "{\"error\":\"Customer requests are unavailable\"}",
+        "cache": "no-store",
+        "referrer": "no-referrer"
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "checks": [
+      ["page", "/account", "GET", 200, "/signin"],
+      ["anonymous-session", "/api/auth/get-session", "GET", 200, true],
+      ["gate", "/api/customer-requests", "GET", 503, "Customer requests are unavailable"],
+      ["gate", "/api/customer-requests", "POST", 503, "Customer requests are unavailable"],
+      ["gate", "/api/customer-workspace-access", "GET", 503, "Customer workspaces are unavailable"],
+      ["gate", "/api/customer-workspaces", "GET", 503, "Customer workspaces are unavailable"],
+      ["staff-denial", "/api/workspace/tenants", "GET", 401, "Sign in to continue"],
+      ["no-root-resource", "/api/workspace", "GET", 404, null],
+      ["old-host", "/operator/setup", "GET", 307, "https://c.obsidianglobal.studio/operator/setup"],
+      ["page", "/operator/setup", "GET", 200, "/operator/setup"],
+      ["page", "/", "GET", 200, "/"],
+      ["old-host", "/signin", "GET", 307, "https://c.obsidianglobal.studio/signin"],
+      ["page", "/signin", "GET", 200, "/signin"],
+      ["page", "/signup", "GET", 200, "/signup"],
+      ["page", "/verify-email", "GET", 200, "/verify-email"]
+    ],
+    "count": 15,
+    "result": "pass",
+    "command": {
+      "id": "cmd_0a262499f0c14cb0b32b56e74f6a",
+      "exitCode": 0
+    },
+    "cleanup": [
+      {
+        "id": "sbx_1ylD5bnWLvQw8SibJTn7EQ9E0aWQ",
+        "status": "stopped",
+        "duration": 69267
+      },
+      {
+        "id": "sbx_j6AXY0L5OismwT2NQGGLPBffQplW",
+        "status": "stopped",
+        "duration": 8263
+      }
+    ],
+    "scope": "Anonymous bounded GETs and empty POST to independently closed request route;no provider/account/mail/customer/admission or data mutation"
+  },
+  "initialProbe": "Exit1 because guessed API root /api/workspace is404,not the protected resource. Discovered handler/tests specify /api/workspace/tenants. Final15 preserve401 denial on that actual resource and separately verify root404. No app/test assertion weakened;first partial probe is not acceptance.",
+  "featureFlags": "Request/workspace exposure off;synthetic-only and production hard-disabled. Optional customer0003 not installed in cloud;intake/admission not configured. D01-D06/D08 remain closed.",
+  "rollback": "Retain flags off or redeploy compatible old720 source;preserve additive schema,original data/events/evidence/money/history.",
+  "remaining": "Private provider/OTP/session walkthrough;request creation/full mission UI;canonical organisations;independent delegation/participants/economics;full legacy dynamic acceptance.",
+  "branchBudget": "local5/remote6/distinct8/max8;reused current branch;open dependency PRs/environments preserved"
+}

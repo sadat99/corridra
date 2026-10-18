@@ -1,0 +1,22 @@
+[WebServer] (node:196737) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:196751) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:196767) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:196804) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:196818) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/operator/v3-customer-requests-ui.spec.ts:124:1 › private saved requests show canonical status, original-script replies, expiry and bounded pagination (686ms)
+  ✓  2 tests/operator/v3-customer-requests-ui.spec.ts:169:1 › failed reads recover to empty and unavailable without pretending a request was created (455ms)
+  ✓  3 tests/operator/v3-customer-requests-ui.spec.ts:197:1 › permission loss clears prior content and denied responses cannot disclose private replies (464ms)
+  ✓  4 tests/operator/v3-customer-requests-ui.spec.ts:219:1 › malformed source/progress is rejected without showing fabricated success (408ms)
+  ✓  5 tests/operator/v3-customer-requests-ui.spec.ts:237:1 › saved request views retain keyboard access and fit three widths with accessible states (2.1s)
+  ✓  6 tests/operator/v3-customer-requests-ui.spec.ts:284:1 › identity changes abort stale private reads and remount without prior account state (475ms)
+  ✓  7 tests/operator/v3-customer-requests-ui.spec.ts:327:1 › page restoration clears cached progress and rechecks current permission before showing content (450ms)
+
+  7 passed (8.2s)

@@ -151,7 +151,7 @@
     {
       "path": "docs/adr/0033-private-customer-request-authority.md",
       "classification": "Implementation design",
-      "use": "Private creator-owned requests through the canonical engine; implementation and acceptance remain missing"
+      "use": "Private creator-owned request authority through the canonical engine;bounded backend implemented,exact-head release/private acceptance tracked separately"
     },
     {
       "path": "docs/adr/README.md",
@@ -611,12 +611,17 @@
     {
       "path": "docs/v3/phase-3/customer-requests/bounded-plan.md",
       "classification": "Bounded implementation plan",
-      "use": "Next synthetic customer request authority packet; inspected existing ports, privacy, preservation and required tests; implementation missing"
+      "use": "Bounded synthetic customer request backend;inspected ports,privacy,preservation and required tests;read current ledger for exact release"
     },
     {
       "path": "docs/adr/0034-custom-production-origin.md",
       "classification": "Operational architecture decision",
       "use": "Owned production canonical origin,exact provider allowlist,CSRF/callback preservation and rollback;read current release evidence"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-request-ui/bounded-plan.md",
+      "classification": "Bounded UI implementation plan",
+      "use": "Private saved request discovery/progress;scope,privacy,recovery,verification and separate creation gap"
     }
   ]
 }

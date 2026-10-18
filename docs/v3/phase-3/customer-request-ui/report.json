@@ -1,0 +1,46 @@
+{
+  "result": "PARTIAL: focused UI/database verification passed; exact-head CI/merge/deploy pending",
+  "baseline": "backend PR68 bd3f7e566b924a99869e06aadfe8764f66afe674 pending merge",
+  "requirements": [
+    "V3-06-004",
+    "V3-09-079",
+    "V3-09-080",
+    "V3-09-081",
+    "V3-09-085",
+    "V3-09-087",
+    "V3-09-088"
+  ],
+  "existing": "Canonical creator-only request API/receipt progress; existing /account shared missions, workspaces, public contextual intake and receipt recovery preserved",
+  "new": "Independently gated My saved requests section; canonical status/original replies/expiry/reference disclosure; bounded paging/retry/errors/denial; account-keyed abort and hide/restoration revalidation; truthful founder copy; new SQL pagination acceptance",
+  "serverContracts": "No changed API/database/auth/RLS/schema/events/money/providers/permissions or dependencies. Client passes expected issuer/subject only as rejection context; fresh server proof remains authority. Canonical status options supplied by server without bundling auth/database/schema.",
+  "localVerification": {
+    "componentProtocol": "7 passed (8.2s), frozen current source, actual component with invented API fixtures; not provider/API/database success evidence",
+    "database": "12 passed, real restricted SQL roles including new exhaustive/bounded pagination and cross-creator denial",
+    "lintAndTypes": "final lint/web+package types pass",
+    "unit": "final JS19 passed/0 failed;Python7 OK. Initial catalogue failure corrected in documentation-map.json,not a test change.",
+    "build": "final production build passed",
+    "visual": "Actual compiled application CSS/font class/self-hosted font;fixture before/after1440/768/390,keyboard/axe/overflow passed;final desktop/mobile manually reviewed. Full UUID retained behind native request-reference disclosure,behavior assertion added.",
+    "runtime": "Installed Chromium151.0.7922.173. Network403 blocks pinned local download; exact pinned browser acceptance remains CI requirement.",
+    "format": "All matched files use Prettier code style;git diff --check passed",
+    "copyCheck": "Unavailable copy describes separate receipt/publication scope without promising current backend availability. A scripted replacement initially did not match and a fixture captured old copy;6 pass/1 fail retained as process limitation. Corrected exact source and rebuilt fixture:7 pass,all original assertions retained. AGENTS now requires asserting scripted replacements match."
+  },
+  "stateCoverage": [
+    "loading",
+    "empty",
+    "original canonical status",
+    "original-script replies",
+    "expired original source",
+    "bounded pagination",
+    "500 retry",
+    "503 unavailable",
+    "401/403/409 denied with private content cleared",
+    "malformed response rejected",
+    "in-flight account change aborted",
+    "page restore discards cache and revalidates",
+    "keyboard and three responsive widths"
+  ],
+  "missing": "New private account submission form/full mission administration are explicitly unavailable; no fake creation button. Actual private managed-provider session/OTP/reload/sign-out/revocation walkthrough remains NOT VERIFIED. Canonical organisations, independent organiser/participant/economics and full legacy role/action/state coverage remain separate gaps.",
+  "flags": "CORRIDRA_CUSTOMER_REQUESTS_ENABLED remains default-off/synthetic-only/production hard-disabled. No cloud module3,intake configuration,admission or activation. D01-D06/D08 remain closed.",
+  "rollback": "Disable exposure/redeploy compatible source; preserve all additive backend/original sources/evidence/money/history. No schema rollback.",
+  "evidence": "verification/component-local.txt;verification/database-local.txt;self-audit-14.json; CI retains only synthetic fixture screenshots3days,not private auth screens."
+}

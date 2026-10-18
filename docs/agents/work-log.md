@@ -503,3 +503,19 @@ Required CI39047678546/job117439588210 passed exactd8f843f:30 files249 integrati
 ### 18 October follow-up: shared request ingress budget
 
 PR68 initial b3 source passed local260 integration/build/104 alternate-runtime public tests. Pre-merge review added the original shared MissionService.budget/trusted-address derivation to the new write API;no separate intake budget. All old tests retained,including actual replica/seventh-denial test. Updated source must pass fresh CI;old run is not final acceptance. Local pinned-browser install was network403,so installed Chromium151 checks are labelled separately. No production/cloud-schema/admission/flag change.
+
+## 2026-10-18, Codex, private saved request discovery candidate
+
+- Request: continue remaining V3 correctly and preserve working routes,privacy and checked release.
+- Why: creator-owned references need lasting account discovery beyond private receipt memory.
+- Changes: gated account section using canonical request API;status/original replies/expiry,reference disclosure,paging/retry;identity-keyed cancellation,denial/hide/restoration clearing/revalidation;founder capability truth. No new creation command,permission,schema,money,event/provider or dependency. Existing public contextual Intake and shared mission routes unchanged.
+- Verification: actual-component7 pass with compiled app CSS/font,three-width before/after,keyboard/axe/overflow;restricted-PG12 including newly added exhaustive/bounded private pagination;lint/types/unit/build before final disclosure pass,final checks and exact-head CI pending. First raw-CSS fixture strengthened after visual review;no old behavior assertion edited.
+- Preserved:806 original controls/855 current withonly2 prior OTP differences;45routes/29core hashes/6sources/18expertIDs PASS;119command/70dispatch entries span32 files/29 unchanged. Historical3 generated PNGs restored exactly;new fixture assets ignored and CI3day retention.
+- Limits: provider/OTP/session/private walkthrough remains NOT VERIFIED;private submission UI/full commercial mission scope and organisation/delegation/participant/economics remain missing. Flags off/production hard-disabled/D01-D06/D08 closed.
+- Next: checked backend68 release,then separate UI PR/full acceptance/exact-source deployment;private submission UI should reuse existing contextual Intake with reviewed scoped draft/exact retry.
+
+## 2026-10-18, Codex, verified private request backend release
+
+- PR68 normal mergec594 after exactbd3/tree6703 CI39083382371 success:260 integration/104 public/31 protected/build/static/security/unit;CodeQL skipped,D04 open. Native job logs supplied exact output after CLI archive restriction. Merge tree matches.
+- Explicit production4tBn READY/fra1/exactc594 on owned+hosting aliases;existing acceptance ref FF→automaticHxR READY/same source.15 actual live Node observations and2 configured-preview checks pass,including correct protected tenants401,closed customer503,owned-domain auth paths andcodeinput. First probe guessed nonexistent APIroot and failed;corrected inventory-derived target,kept401 assertion and separately tested404. Both nonpersistent/no-source/no-secret sessions stopped/read back,no snapshots.
+- No cloud schema/provider/admission/intake/gate change;optional module3 remains unapplied. ADR033 clarifies disabled-source rollout compatibility,never enabled-schema bypass. UI source stashed for clean backend merge,restored/dropped afterward;source remains separate pending PR. Current V3 still PARTIAL,private provider walkthrough unverified,real gates closed.
