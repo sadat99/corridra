@@ -1,4 +1,8 @@
 import {
+  CustomerProgrammeContextService,
+  customerProgrammeContextEnabled,
+} from '@corridra/auth/customer-programme-context';
+import {
   CustomerMissionShareService,
   customerMissionSharesEnabled,
 } from '@corridra/auth/customer-mission-shares';
@@ -197,6 +201,17 @@ function createServices() {
       authPool,
       {
         enabled: customerParticipantsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerProgrammeContext: new CustomerProgrammeContextService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammeContextEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',

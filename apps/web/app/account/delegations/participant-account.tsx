@@ -1,11 +1,16 @@
 'use client';
+import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
-export function ParticipantAccount(props: ParticipantScope & { missionSharesEnabled?: boolean }) {
+export function ParticipantAccount(
+  props: ParticipantScope & { missionSharesEnabled?: boolean; contextEnabled?: boolean },
+) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
 }
-function ScopedAccount(props: ParticipantScope & { missionSharesEnabled?: boolean }) {
+function ScopedAccount(
+  props: ParticipantScope & { missionSharesEnabled?: boolean; contextEnabled?: boolean },
+) {
   const [token, setToken] = useState(''),
     [label, setLabel] = useState(''),
     [consent, setConsent] = useState(false),
@@ -165,6 +170,14 @@ function ScopedAccount(props: ParticipantScope & { missionSharesEnabled?: boolea
                       <h3>{r.name}</h3>
                       <p>{r.reportingPurpose}</p>
                       <p>{r.displayLabel} · Registered, self-declared</p>
+                      {props.contextEnabled && (
+                        <ProgrammeContext
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          programmeId={r.programmeId!}
+                          registrationId={r.id}
+                        />
+                      )}
                       {props.missionSharesEnabled && (
                         <ProgrammeObjectives
                           subject={props.subject}

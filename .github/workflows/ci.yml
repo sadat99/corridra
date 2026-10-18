@@ -93,6 +93,7 @@ jobs:
             .cache/v3-programmes/after/
             .cache/v3-participants/after/
             .cache/v3-mission-shares/after/
+            .cache/v3-programme-context/after/
           if-no-files-found: ignore
           retention-days: 3
       - uses: actions/upload-artifact@v7

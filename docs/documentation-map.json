@@ -707,6 +707,16 @@
       "path": "docs/v3/phase-3/participant-commercial-missions/bounded-plan.md",
       "classification": "V3 bounded implementation plan",
       "use": "Additive sample objective-sharing scope and acceptance limits"
+    },
+    {
+      "path": "docs/adr/0043-customer-canonical-programme-context.md",
+      "classification": "Architecture contract/index",
+      "use": "Customer programme-context authority; preserve original staff and agenda semantics"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-programme-context/bounded-plan.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Optional synthetic programme details; acceptance evidence and remaining gaps"
     }
   ]
 }

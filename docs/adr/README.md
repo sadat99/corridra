@@ -49,3 +49,5 @@ Forward status, 17 October 2026: ADR032's original test-policy conflict was reso
 
 | [0041](0041-private-delegation-participant-onboarding.md) | Private programme invitations and consented registrations;independent source and access authorities |
 | [0042](0042-participant-commercial-mission-summary-grants.md) | Explicit participant objective summaries referencing canonical private missions;no organiser source grant |
+
+ADR043: [Canonical programme context](0043-customer-canonical-programme-context.md), optional customer command and explicit participant sharing; original staff/agenda authorities preserved.
