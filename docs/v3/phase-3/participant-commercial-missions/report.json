@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL:bounded sample participant objective sharing locally verified;full exact-head CI/source release pending",
+  "result": "Verified bounded gated participant objective-sharing source release;whole V3/independent Delegation OS PARTIAL;actual managed-provider acceptance NOT VERIFIED",
   "requirements": ["V3-02-049", "V3-02-059", "V3-02-061", "V3-02-062", "V3-02-063"],
   "baseline": "4247709f672b56eccc24e2b6717606ef4a616252",
   "adr": "docs/adr/0042-participant-commercial-mission-summary-grants.md",
@@ -22,14 +22,16 @@
   "verification": {
     "focusedDatabase": "16 new real-PG cases;full39files381PG pass(490.60s),including all pre-existing modules and source/ACL/RLS/table/row/receipt preservation",
     "focusedBrowser": "16new pass(19.7s),including wrong-request/impossible-version acknowledgement exact-retry regression;prior15pass and24including12unchanged participant cases;four widths/keyboard/axe and320image inspected",
-    "static": "Pre-correction full format/types/lint/unit19JS+7Python/build pass;current corrected editor/test lint passes;corrected exact-head CI/build still required",
+    "static": "Corrected exact-head CIformat/lint/types/unit/build/dependency/security/source/roles/scanner gates pass;CodeQL skipped,D04 unresolved and activation gate closed",
     "preservation": "45baseline routes29core6source18expertIDs retained;806original/990current controls,2prior OTP changes,zero original loss",
     "provider": "NOT VERIFIED;controlled provider session/inbox unavailable;component protocols and fixture PG proofs are not actual provider acceptance",
-    "publicBrowser": "122pass(5.0m),including2new compiled closed-gate/private-header cases after framework referrer-header correction",
-    "protectedBrowser": "Full existing protected operator suite required in exact-head CI;local full run pending"
+    "publicBrowser": "Corrected exact-head122pass(2.0m);48live and5isolatedpreview checks pass",
+    "protectedBrowser": "Corrected exact-head CI129pass(11.2m);earlier local128pass(11.2m) did not include final acknowledgement case",
+    "source": "aa163db11a3d85c45a0aebe4a65dfccc0a6b0bcf/treeb506f091a73e006f7d2cc6341d8c975fb3717aa8;matching mergef447b2108c82ddf203e2fe54f30789b13df32b01;production and isolatedpreview READY/fra1"
   },
   "states": "Loading/empty/current/withdrawn/unavailable,denial/conflict/error/exact retry,expired/interrupted/account changes;no invented success or private grant",
   "flags": "CORRIDRA_CUSTOMER_MISSION_SHARES_ENABLED defaultoff;requires participant/programme/workspace/request/detail/synthetic/nonproduction;production hardoff. No cloud module/provider/admission/intake/flag or D01-D06/D08 activation.",
   "rollback": "Disable independent objective-sharing exposure or use compatible PR77 source;retain additive immutable links/consent/revisions/commands and original canonical history. No down migration.",
-  "remaining": "Full customer organisation/authoring,participant profiles/eligibility/agenda/meeting coordination/consented reporting/templates,economics/refunds/settlements/Corridra charges/packaging/communications;actual provider/full UX/security/usability and external activation."
+  "remaining": "Full customer organisation/authoring,participant profiles/eligibility/agenda/meeting coordination/consented reporting/templates,economics/refunds/settlements/Corridra charges/packaging/communications;actual provider/full UX/security/usability and external activation.",
+  "release": "release.json"
 }

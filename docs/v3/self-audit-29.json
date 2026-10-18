@@ -1,0 +1,61 @@
+{
+  "audit": 29,
+  "chunk": 101,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 990,
+  "intentionalOriginalBindingChanges": "Only2already accepted OTP bindings",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "Original45routes29core6source18expert IDs and806original/990current controls retained;only2previous accepted OTP changes,no new original loss. Corrected exact-head129protected and122public browser cases pass."
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "New16PG privacy/consent/preservation/expiry/concurrency cases within381pass. Populated old functions/ACL/RLS/rows/receipts unchanged;creator-only private source,exact programme-owner summary grant,3authority separation and late-proof/revocation checks."
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "Immutable approved migration/source hashes retained;new append-only consent/revisions/commands and genuine service/customer attribution only. No historical source/money/evidence/event rewrite. Backend constraints and atomic event/audit/outbox tested."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Existing commercial requirements,currencies,original quotations,meeting/opportunity states and export paths unchanged. New self-declared objective is not a confirmed meeting or outcome;full customer authoring remains unfinished."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "Programme creation/onboarding/explicit objectives have verified gated source only. Full profiles/eligibility/dates/activities/meetings/reporting/economics and actual organiser/provider journey unfinished;no complete SaaS claim."
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "No organisation/identity merge or duplicate mission. Exact original canonical mission reused across independent programme workspace,request workspace and mission tenant;company ownership/linking remains unfinished."
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "All18expert destinations retained;new tools contextual/lazy under existing programme/registration cards. No new primary navigation tier or loss of original exports/correction/recovery."
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "New flag defaultoff,synthetic/nonproduction andproduction hardoff;optional cloud module not installed. No provider/admission/intake/feature or D01-D06/D08 activation. No live KPI or outreach/payment/inference claim."
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "Exactaa163db CI39files381PG/122public/129protected plus static/unit/build/security gates pass. Matching f447b21 tree;production andisolatedpreview READY/fra1. Actual48live+5preview checks pass and no-persistence probe independently stopped. CodeQL skipped,D04 open;actual provider/full security/usability remain NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "Four widths/keyboard/axe andactual320image inspected;ambiguous request label corrected in product markup,inline consent/withdrawal and exact retry/conflict/expiry/account cleanup verified. Full comparative user measurements/targets unfinished;no measured improvement claim."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;actual managed-provider/full organiser acceptance NOT VERIFIED",
+  "rollback": "Disable independent exposure,use compatible prior source,preserve additive schema and canonical immutable programme/event history. No down migration.",
+  "note": "All10Hard Release Conditions checked against current ledger and original action inventory. New participant source locally verified only;full V3 remainsPARTIAL and real operationsGATED.",
+  "currentIncrement": {
+    "release": "PR78 verified bounded gated source;wholeV3 andindependentDelegationOS PARTIAL",
+    "head": "aa163db11a3d85c45a0aebe4a65dfccc0a6b0bcf",
+    "tree": "b506f091a73e006f7d2cc6341d8c975fb3717aa8",
+    "merge": "f447b2108c82ddf203e2fe54f30789b13df32b01",
+    "evidence": "docs/v3/phase-3/participant-commercial-missions/release.json",
+    "lostHiddenFake": []
+  }
+}
