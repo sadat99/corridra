@@ -1,0 +1,98 @@
+
+ RUN  v5.0.3 /workspace/corridra
+
+ ❯ tests/integration/customer-workspace-collaboration.test.ts (13 tests | 1 failed) 3442ms
+   × populated additive collaboration upgrade preserves every old row, function, ACL, policy and migration receipt 111ms
+ ❯ tests/integration/customer-requests.test.ts (8 tests | 2 failed) 1472ms
+   × canonical creation, exact source preservation, atomic events, concurrent idempotency and conflict denial 55ms
+   × original retention expiry and independent resource revocation deny content without rewriting originals 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/customer-requests.test.ts > canonical creation, exact source preservation, atomic events, concurrent idempotency and conflict denial
+AssertionError: expected { …(6) } to match object { …(4) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "available": true,
+    "progress": {
+      "replies": [],
+-     "status": "RECEIVED",
++     "status": "DRAFT",
+    },
+    "synthetic": true,
+    "workspaceId": "499a567e-6559-4efb-8535-25f8f7b9e2e6",
+  }
+
+ ❯ tests/integration/customer-requests.test.ts:250:17
+    248|   ]);
+    249|   expect(first).toEqual(second);
+    250|   expect(first).toMatchObject({
+       |                 ^
+    251|     workspaceId,
+    252|     synthetic: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/integration/customer-requests.test.ts > original retention expiry and independent resource revocation deny content without rewriting originals
+error: Immutable record; append a new record
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+ ❯ tests/integration/customer-requests.test.ts:417:3
+    415|   ).rows[0];
+    416|   // Test-only forward clock fixture for source retention, preserving …
+    417|   await f.owner.query(
+       |   ^
+    418|     "UPDATE app.mission_intake SET retention_until=now()-interval '1 s…
+    419|     [owned.mission_id],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/integration/customer-workspace-collaboration.test.ts > populated additive collaboration upgrade preserves every old row, function, ACL, policy and migration receipt
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -5301,10 +5301,22 @@
+        "roles": "{corridra_runtime}",
+        "schemaname": "customer",
+        "tablename": "workspace",
+        "with_check": null,
+      },
++     {
++       "cmd": "INSERT",
++       "permissive": "PERMISSIVE",
++       "policyname": "attestation_insert",
++       "qual": null,
++       "roles": "{corridra_auth}",
++       "schemaname": "customer_private",
++       "tablename": "request_attestation",
++       "with_check": "(EXISTS ( SELECT
++    FROM customer_private.session_proof s
++   WHERE ((s.hash = request_attestation.proof_hash) AND (s.expires_at > clock_timestamp()))))",
++     },
+    ],
+    "records": [
+      {
+        "digest": "646eefdde2c1cf6a25c962525861c6f7",
+        "oid": 1155993,
+
+ ❯ tests/integration/customer-workspace-collaboration.test.ts:163:39
+    161|
+    162| test('populated additive collaboration upgrade preserves every old row…
+    163|   expect(await snapshot(oldSnapshot)).toEqual(oldSnapshot);
+       |                                       ^
+    164|   expect(
+    165|     (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  3 failed | 49 passed (52)
+   Start at  00:21:52
+   Duration  13.66s (tests 96%, import 3%, transform 1%)
+

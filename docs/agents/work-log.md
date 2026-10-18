@@ -488,3 +488,14 @@ Required CI39047678546/job117439588210 passed exactd8f843f:30 files249 integrati
 - Actual custom signup/signin/team setup remain on owned domain;5 old-host links307 to it. Custom-origin setup401,old/untrusted-origin403,empty custom-origin signin400 VALIDATION_ERROR,anonymous session200/null,gated customer503 and protected preview preserved. Temporary execution sessions all stopped. Failed probe and JSONL collector correction documented,not treated as acceptance.
 - Audit12 preserves806 original/850 current controls with2 previous OTP changes and0 unaccounted loss;45routes/29core hashes/6sources/18expertIDs PASS.119 command/70 dispatch entries span32 files,30 unchanged and2 prior verified additions. STATUS.md now distinguishes live,gated,missing and unverified. Whole phases0-4PARTIAL,5GATED;branch union8/max8.
 - Next:ADR033 private request implementation remains MISSING,then organisation/delegation/participant/economics and private-provider/full legacy acceptance. Forward receipts/docs are separate from deployed source;see ledger48 and phase-1/custom-domain/release.json.
+
+## 2026-10-18, Codex, private customer request backend under verification
+
+- Request: implement remaining V3 work autonomously, preserve all existing authority and checked exact-source release.
+- Why: persistent creator-owned request discovery was missing; existing receipt and canonical factory already provide the required bounded engine.
+- Changes: optional customer0003; independent offline request admission/revocation; proof-bound auth-only attestation; creator binding/progress pagination, atomic canonical factory/events and default-off API. Extracted existing session transaction intact; canonical pure preparation keeps old HMAC formulas. No dependency or UI added.
+- Verification: focused11 restricted-PG cases pass, earlier combined52 pass; lint/types exit0, JS19/0 and Python7OK; source guard45routes/29hashes/6sources/18IDs PASS. Full candidate integration/build/public/protected/security checks pending. Initial failures and fixes retained in bounded report; all original tests unchanged.
+- Preserved: original core/customer migration history/functions/policies/ACLs and source/evidence/money; staff MFA/authority; old routes/actions/private publications; canonical DRAFT/status/receipt retention. No cloud schema/provider/data/admission/activation change.
+- Decisions: ADR033 exact lock order and creator privacy; retained private progress after workspace departure, denied new submissions; rotation-safe retry precedes new signing material. Metadata remains private, no source content copied.
+- Gaps: request UI/full mission administration, actual provider/browser acceptance, organisation/delegation/participants/economics and activation remain separate. V3-06-004 PARTIAL,not whole product acceptance.
+- Next: finish full exact-head checks, checked merge/deploy with flag off, then private request UI. Branch union8/max8, reused current branch.

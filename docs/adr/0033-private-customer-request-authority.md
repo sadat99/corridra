@@ -1,6 +1,6 @@
 # ADR-033: Private customer requests through the canonical mission engine
 
-Status: implementation design; backend, migration, API and customer interface MISSING. This decision grants no admission or activation. It amends ADR-032 only for the next separately tested synthetic request capability.
+Status: backend/migration/API implemented in candidate; focused local verification passed, full checks/release pending. Customer interface MISSING. This decision grants no admission or activation. It amends ADR-032 only for the next separately tested synthetic request capability.
 
 V3-06-004 requires persistent customer-owned access. The existing public request factory already creates canonical missions; the existing receipt function already limits progress to status, received time and operator replies within the original retention period. Reuse both. Do not create another mission backend, infer ownership from email or company text, or expose staff/source/commercial records through a customer workspace.
 
@@ -37,3 +37,7 @@ Do not copy the request brief, contact details or operator replies into a new pe
 Before exposing UI, test fresh and populated additive upgrades, every old row/function/policy/ACL/receipt, restricted runtime/auth grants, actual canonical factory/event reuse, owner/member/organiser isolation, missing admission, forged issuer/subject/workspace, revoked membership versus retained private resource reads, expired proof/attestation after locks, disable/revoke serialization, same/conflicting/concurrent retries, no-ID duplicates, rollback of case and binding, signing-key rotation, receipt expiry and zero staff/source authority. Keep all original assertions. Run full static/security/unit/database/public/protected/build checks on the exact head.
 
 Deploy additive schema before the compatible backend, with flags off. Disabling exposure or redeploying the retained application rolls back availability; preserve canonical cases, resource/audit history and migrations. Do not drop tables or rewrite records. The isolated child still requires separately evidenced intake-destination readiness and private authenticated provider/browser acceptance. This design does not authorize either configuration or real-data activation.
+
+## Forward implementation detail (18 October 2026)
+
+Lock order is principal row SHARE → request-admission row SHARE → principal/command advisory → existing customer.access.workspace advisory → existing corridra:intake advisory. The unchanged factory reacquires its own transaction advisory lock reentrantly. Proof and attestation are rechecked after waiting. New binding events use their own aggregate per request; workspace provenance does not publish private content. The original source/receipt retention controls progress, while immutable binding metadata stores only identifiers, digests and time. Offline admission remains schema-owner-only and repeated admission cannot re-enable a disabled row.

@@ -137,3 +137,7 @@ ADR033 and phase-3/customer-requests/bounded-plan.md define the next separately 
 ### Forward verified owner UI and custom production origin,17 October 2026 (Codex)
 
 PR67 full CI249/102/31 passed,normal merge720d96e exact tested tree. Owner-reported canonical origin bug repaired with production-only configuration and exact provider domain;deployment dpl_2guCKLJdBCpeCev9HCHKnkoA9WrP READY/fra1,26 preflight assertions and28 final live checks pass. STATUS.md/ledger48 and current receipts supersede historical pending statuses. Flags off,D01-D06/D08 closed;whole V3 PARTIAL. Next actual implementation is ADR033 private requests,then organisation/delegation/participant/economics and missing acceptance. Branch union8/max8;host cookies can require sign-in again.
+
+### 18 October 2026: bounded private request backend
+
+V3-06-004 is now PARTIAL in the working candidate: optional module3 and creator-only request API reuse canonical mission creation/receipt progress. Focused restricted-role tests pass; full candidate CI/release pending. No cloud migration/intake admission or flag activation. UI/full mission scope/private provider walkthrough remain unverified; independent organisation/delegation/participant/economics remains missing. Follow ledger51,ADR033 and phase-3/customer-requests/report.json. All prior acceptance and historical plans remain dated evidence.

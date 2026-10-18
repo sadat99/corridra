@@ -50,3 +50,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Use `set -euo pipefail` in batched commands with pipelines so a failed search producer cannot be concealed by a successful filter.
 - Distinguish inventory entries from unique source files; compare against the stated baseline and inspect changed paths before claiming file preservation.
 - Do not count connector/share-link authentication errors as application permission-denial evidence; verify the actual application response separately.
+- Under pipefail, bound output with sed -n rather than head so SIGPIPE cannot abort a verification batch.

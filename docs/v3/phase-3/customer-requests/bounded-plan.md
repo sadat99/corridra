@@ -1,6 +1,6 @@
 # Next bounded customer request authority packet
 
-Status: planned; implementation MISSING. Requirement V3-06-004 remains MISSING. This first slice provides privately owned synthetic request discovery and progress. Full customer mission administration needs subsequent acceptance.
+Status: backend implemented and focused local tests passed; full candidate verification/release pending. Requirement V3-06-004 is PARTIAL; customer request UI and full mission administration remain unverified. This first slice provides privately owned synthetic request discovery and progress. Full customer mission administration needs subsequent acceptance.
 
 Authority design: [ADR-033](../../../adr/0033-private-customer-request-authority.md). The ADR is a design decision, not implementation evidence. New submission requires active selected-workspace membership; independently owned prior requests remain private to their creator after departure while fresh proof, request admission, resource grant and original retention remain valid.
 
