@@ -138,3 +138,6 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 | [v3/phase-3/customer-requests/bounded-plan.md](v3/phase-3/customer-requests/bounded-plan.md)                   | Bounded implementation plan     | Bounded synthetic customer request backend; inspected ports,privacy,preservation and required tests;see current ledger for exact release |
 | [v3/phase-3/customer-request-ui/bounded-plan.md](v3/phase-3/customer-request-ui/bounded-plan.md)               | Bounded UI implementation plan  | Private saved request discovery/progress;scope,privacy,recovery,verification and separate creation gap                                   |
 | [v3/phase-3/private-request-submission/bounded-plan.md](v3/phase-3/private-request-submission/bounded-plan.md) | Bounded private submission plan | Existing guided intake private port,exact recovery,authority gates,logout cleanup and acceptance                                         |
+
+| [adr/0035-private-original-request-details.md](adr/0035-private-original-request-details.md) | Architecture decision | Creator-only original source read and independent optional module |
+| [v3/phase-3/customer-request-details/bounded-plan.md](v3/phase-3/customer-request-details/bounded-plan.md) | Bounded implementation plan | Original request details,retention,privacy and acceptance |

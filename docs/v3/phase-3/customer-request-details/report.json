@@ -1,0 +1,59 @@
+{
+  "result": "PARTIAL: original request detail implementation locally verified;exact-head CI and release pending;whole customer commercial workspace unfinished",
+  "requirements": ["V3-06-004", "V3-04-069", "V3-04-070"],
+  "baseline": "9b213510eeeca38ab4f91cfe2d9133c0cb712613",
+  "new": "Creator-only original submitted request detail read and gated contextual UI;existing receipt progress/status/replies reused",
+  "existing": "Canonical mission_intake and customer immutable owned_request/proof/admission/revocation authority;no reconstructed source or new mission engine",
+  "files": [
+    "packages/db/customer-detail-migrations/0001_original_request_details.sql",
+    "packages/db/src/customer-detail-migrate.ts",
+    "packages/auth/src/customer-request-details.ts",
+    "apps/web/app/api/customer-requests/[requestId]/route.ts",
+    "apps/web/app/account/requests/[requestId]/page.tsx",
+    "apps/web/app/account/requests/request-detail.tsx",
+    "apps/web/app/account/customer-requests.tsx",
+    "apps/web/app/account/page.tsx",
+    "apps/web/lib/foundations.ts",
+    "apps/web/next.config.ts",
+    "apps/web/components/founder-overview.tsx"
+  ],
+  "paths": {
+    "original": "/account#customer-requests;public receipts and independent /client capabilities retained",
+    "destination": "/account/requests/[requestId] through gated saved-request links"
+  },
+  "blastRadius": "One independently installed read function discloses creator-submitted original input only;no old function/RLS/ACL/migration/source/evidence/money/event change. No grant to workspace owner/organiser. Existing three-module installer unchanged. No cloud/provider/admission/intake/flag mutation.",
+  "local": {
+    "integration": "2 files19 passed:7 new detail cases+12 unchanged request cases",
+    "ui": "13 passed(14.7s):6 new protocols+7 unchanged list cases",
+    "gate": "2 passed(4.1s),desktop/mobile,closed page/API/privateheaders",
+    "lintTypesBuild": "pass;required exact-head CI must verify final founder copy",
+    "unit": "19 JS passed/0failed;7 Python OK",
+    "visual": "Actual compiled brand CSS/font at1440/768/390;axe/overflow/keyboard pass;390 screenshot manually reviewed",
+    "runtime": "Local installed Chromium151 alternate;CI pinned Chromium acceptance separate",
+    "failure": "Initial new direct-source fixture wrongly expected42501 where canonical RLS returns exactly zero rows. Corrected new fixture to strict zero-row source denial,retaining all private-port/auth42501 assertions. No old tests or product permission changed."
+  },
+  "states": [
+    "loading",
+    "ready",
+    "empty replies",
+    "expired original",
+    "denied",
+    "unavailable module",
+    "malformed response",
+    "explicit retry",
+    "account change abort",
+    "hidden-page clear",
+    "restored-page authority read"
+  ],
+  "preservation": "806 original/871 current controls;only2 accepted prior OTP differences;45routes29corehashes6sources18expertIDs PASS. All original tests unchanged.",
+  "featureFlags": [
+    "CORRIDRA_CUSTOMER_REQUEST_DETAILS_ENABLED defaultoff",
+    "Existing customer request flag required",
+    "synthetic-only;production hard-disabled",
+    "D01-D06/D08 closed"
+  ],
+  "migration": "Separate protected customer_detail_migrations receipt and explicit migrateCustomerRequestDetails;unknown/hash-mismatched history aborts;exact repeat safe;legacy three-module lifecycle unchanged",
+  "privateProviderAcceptance": "NOT VERIFIED;controlled credentials/session absent;does not block subsequent independent engineering;no OTP/token extraction/admin verification",
+  "remaining": "Customer research/shortlists/qualification/quotations/meetings/decisions/results;canonical organisation scope;independent delegation/participant confidentiality;organiser economics;full dynamic preservation/security/usability and independent activation evidence",
+  "rollback": "Keep independent detail flag off or redeploy compatible9b21351;retain additive schema and immutable receipts/original history;no down migration"
+}

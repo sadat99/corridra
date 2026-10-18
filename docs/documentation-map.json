@@ -627,6 +627,16 @@
       "path": "docs/v3/phase-3/private-request-submission/bounded-plan.md",
       "classification": "Bounded private submission plan",
       "use": "Existing guided intake private port,exact scoped recovery,authority gates,logout cleanup,preservation and verification"
+    },
+    {
+      "path": "docs/adr/0035-private-original-request-details.md",
+      "classification": "Architecture decision",
+      "use": "Creator-only original source disclosure,independent optional module and unchanged legacy authority"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-request-details/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Original saved-request detail workspace,privacy,retention,recovery and acceptance"
     }
   ]
 }
