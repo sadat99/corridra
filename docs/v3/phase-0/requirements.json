@@ -219,9 +219,10 @@
     "evidence": [
       "docs/v3/phase-3/customer-companies/report.json",
       "packages/db/customer-company-migrations/0001_approved_company_portfolio.sql",
-      "tests/integration/customer-companies.test.ts"
+      "tests/integration/customer-companies.test.ts",
+      "docs/v3/phase-3/customer-companies/release.json"
     ],
-    "nextAction": "Local approved-company continuity verified within customer/tenant boundaries;fullCI/release pending. Full commercial authoring,organisation ownership and reusable independent supplier/buyer portfolios remain unfinished."
+    "nextAction": "Bounded approved-company continuity source verified in PR73;exposure stays off. Finish full commercial authoring,organisation authority,independent portfolios and controlled-provider acceptance."
   },
   {
     "id": "V3-01-019",
@@ -575,9 +576,10 @@
       "docs/v3/phase-3/customer-decisions/report.json",
       "docs/adr/0039-explicit-commercial-decision-disclosures.md",
       "tests/integration/customer-decisions.test.ts",
-      "tests/operator/v3-customer-decisions-ui.spec.ts"
+      "tests/operator/v3-customer-decisions-ui.spec.ts",
+      "docs/v3/phase-3/customer-decisions/release.json"
     ],
-    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
+    "nextAction": "Bounded reviewed decision disclosure source verified in PR74;exposure stays off. Finish customer canonical authoring,full role/state/source-history and controlled-provider acceptance."
   },
   {
     "id": "V3-02-031",
@@ -2131,9 +2133,10 @@
       "docs/v3/phase-3/customer-decisions/report.json",
       "docs/adr/0039-explicit-commercial-decision-disclosures.md",
       "tests/integration/customer-decisions.test.ts",
-      "tests/operator/v3-customer-decisions-ui.spec.ts"
+      "tests/operator/v3-customer-decisions-ui.spec.ts",
+      "docs/v3/phase-3/customer-decisions/release.json"
     ],
-    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
+    "nextAction": "Bounded reviewed decision disclosure source verified in PR74;exposure stays off. Finish customer canonical authoring,full role/state/source-history and controlled-provider acceptance."
   },
   {
     "id": "V3-04-074",
@@ -2575,9 +2578,10 @@
       "docs/v3/phase-3/customer-decisions/report.json",
       "docs/adr/0039-explicit-commercial-decision-disclosures.md",
       "tests/integration/customer-decisions.test.ts",
-      "tests/operator/v3-customer-decisions-ui.spec.ts"
+      "tests/operator/v3-customer-decisions-ui.spec.ts",
+      "docs/v3/phase-3/customer-decisions/release.json"
     ],
-    "nextAction": "Reviewed V2 decision disclosure locally verified;full exact-head CI/release pending. Full customer commercial authoring,organisation authority,orders and complete role/state/provider acceptance remain unfinished."
+    "nextAction": "Bounded reviewed decision disclosure source verified in PR74;exposure stays off. Finish customer canonical authoring,full role/state/source-history and controlled-provider acceptance."
   },
   {
     "id": "V3-05-018",
@@ -3237,9 +3241,14 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 493,
     "requirement": "| Persistent customer-owned mission access | Replace staff-dependent private-link discovery | P0 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-3/customer-mission-delivery/report.json",
+      "docs/adr/0040-reviewed-delivery-to-requesting-customer.md",
+      "tests/integration/customer-delivery.test.ts",
+      "tests/operator/v3-customer-delivery-ui.spec.ts"
+    ],
+    "nextAction": "Creator-only reviewed mission delivery locally verified;final UI/static and full exact-head CI/release pending. Actual provider and full self-service commercial/organisation authority remain unfinished."
   },
   {
     "id": "V3-06-005",
@@ -3311,9 +3320,10 @@
     "evidence": [
       "docs/v3/phase-3/customer-companies/report.json",
       "packages/db/customer-company-migrations/0001_approved_company_portfolio.sql",
-      "tests/integration/customer-companies.test.ts"
+      "tests/integration/customer-companies.test.ts",
+      "docs/v3/phase-3/customer-companies/release.json"
     ],
-    "nextAction": "Local approved-company continuity verified within customer/tenant boundaries;fullCI/release pending. Full commercial authoring,organisation ownership and reusable independent supplier/buyer portfolios remain unfinished."
+    "nextAction": "Bounded approved-company continuity source verified in PR73;exposure stays off. Finish full commercial authoring,organisation authority,independent portfolios and controlled-provider acceptance."
   },
   {
     "id": "V3-06-012",

@@ -667,6 +667,16 @@
       "path": "docs/v3/phase-3/customer-decisions/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Decision history scope,source rights,MFA,privacy,preservation and release acceptance"
+    },
+    {
+      "path": "docs/adr/0040-reviewed-delivery-to-requesting-customer.md",
+      "classification": "Architecture decision",
+      "use": "Explicit owner/admin delivery of an existing reviewed client report to its original requesting customer"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-mission-delivery/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Creator-only commercial mission discovery,original save/read/reply reuse,authority preservation and acceptance"
     }
   ]
 }

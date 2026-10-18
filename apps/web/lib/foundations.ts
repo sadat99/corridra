@@ -30,6 +30,11 @@ import {
   customerDecisionsEnabled,
 } from '@corridra/auth/customer-decisions';
 import { DecisionDisclosureService } from '@corridra/delivery/decision-disclosures';
+import {
+  CustomerAssignedMissionService,
+  customerDeliveryEnabled,
+} from '@corridra/auth/customer-assigned-missions';
+import { CustomerDeliveryService } from '@corridra/delivery/customer-delivery';
 import { neonAuth } from './neon-auth';
 import { EvidenceService, type MalwareScanner } from '@corridra/evidence';
 import { ClamAvScanner } from '@corridra/evidence/adapters';
@@ -135,6 +140,18 @@ function createServices() {
       authPool,
       {
         enabled: customerDecisionsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerDelivery: new CustomerDeliveryService(runtimePool),
+    customerAssignedMissions: new CustomerAssignedMissionService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerDeliveryEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
