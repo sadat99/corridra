@@ -687,6 +687,16 @@
       "path": "docs/v3/phase-3/customer-programmes/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Synthetic owner/admin programme planning creation/list,preservation and independent acceptance"
+    },
+    {
+      "path": "docs/adr/0041-private-delegation-participant-onboarding.md",
+      "classification": "Architecture decision",
+      "use": "Programme-specific invitations,explicit registration consent,independent revocation and original authority preservation"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-participants/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Private synthetic participant onboarding,backend/UI/denial acceptance and unfinished full organiser scope"
     }
   ]
 }

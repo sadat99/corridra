@@ -1,0 +1,143 @@
+{
+  "result": "verified bounded gated canonical customer programme planning source release;whole V3/Delegation OS PARTIAL;actual managed-provider acceptance NOT VERIFIED",
+  "pr": 76,
+  "baseline": "e562fd341ceeb6f5c964562a86a772934d81bb36",
+  "testedHead": "f99c6483a32b30d33184165c89e287234319719a",
+  "testedTree": "443d051bf429cd751d4de41409992ee49014cb6d",
+  "merge": "115ecca9d9007a68527bf96a38d984c6291c467b",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39136046056,
+    "job": 117700652621,
+    "result": "success",
+    "integrationFiles": 37,
+    "integrationTests": 346,
+    "publicBrowsers": 118,
+    "protectedBrowsers": 101,
+    "quotes": [
+      "Test Files37 passed(37)",
+      "Tests346 passed(346)",
+      "118 passed(1.9m)",
+      "101 passed(10.2m)"
+    ],
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 open"
+  },
+  "artifact": {
+    "id": 12139827860,
+    "digest": "sha256:f6c3d81350e06a9963ad0d037e86f589ac5b11a416eb6ed95d13febd859975d0",
+    "sizeInBytes": 24347672,
+    "expiresAt": "2026-10-21T14:46:46Z",
+    "scope": "Synthetic component/route evidence;not actual managed-provider acceptance"
+  },
+  "production": {
+    "id": "dpl_8o27zTPe1DiaCcbxeGmqBTP9shon",
+    "url": "corridra-56nqrtz89-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "115ecca9d9007a68527bf96a38d984c6291c467b",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-115ecca9d9007a68527bf96a38d984c6291c467b-sadat-os.vercel.app"
+    ]
+  },
+  "isolatedPreview": {
+    "id": "dpl_AeUPGgnyGMgZscetutjyxYqb5LGa",
+    "url": "corridra-6iwsrolsd-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "115ecca9d9007a68527bf96a38d984c6291c467b",
+    "regions": ["fra1"],
+    "aliases": ["corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app"],
+    "checks": [
+      {
+        "path": "/api/customer-programmes",
+        "status": 503,
+        "privateHeaders": true
+      },
+      {
+        "path": "/account/delegations/00000000-0000-4000-8000-000000000001",
+        "status": 200,
+        "privateHeaders": true,
+        "closedPage": true
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "privateHeaders": true,
+        "visibleOtp": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 39,
+    "checks": [
+      ["/", "GET", 200],
+      ["/signup", "GET", 200],
+      ["/signin", "GET", 200],
+      ["/verify-email", "GET", 200],
+      ["/operator/setup", "GET", 200],
+      ["/account", "GET", 200],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["/api/customer-saved-missions", "GET", 503],
+      ["/api/customer-saved-missions", "POST", 503],
+      ["/api/customer-companies", "GET", 503],
+      ["/api/customer-requests/00000000-0000-4000-8000-000000000001", "GET", 503],
+      ["/api/customer-decisions?resourceId=00000000-0000-4000-8000-000000000001", "GET", 503],
+      [
+        "/api/workspace/customer-decision-disclosures?tenant=00000000-0000-4000-8000-000000000001",
+        "GET",
+        503
+      ],
+      ["/api/workspace/customer-decision-disclosures", "POST", 503],
+      ["/api/customer-assigned-missions", "GET", 503],
+      ["/api/customer-assigned-missions", "POST", 503],
+      ["/api/workspace/customer-mission-delivery", "GET", 503],
+      ["/api/workspace/customer-mission-delivery", "POST", 503],
+      ["/api/customer-companies", "POST", 405],
+      ["/api/customer-decisions", "POST", 405],
+      ["/api/workspace/tenants", "GET", 401],
+      ["/api/workspace", "GET", 404],
+      ["/api/auth/get-session", "GET", 200],
+      ["/signin", "hosting GET", 307],
+      ["/operator/setup", "hosting GET", 307],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "GET", 200],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "hosting GET", 307],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "hosting GET", 307],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "hosting GET", 307],
+      ["/account/companies", "GET", 200],
+      ["/account/companies", "hosting GET", 307],
+      ["/api/customer-programmes", "GET", 503],
+      ["/api/customer-programmes", "POST", 503],
+      ["/account/delegations/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/delegations/00000000-0000-4000-8000-000000000001", "hosting GET", 307]
+    ],
+    "command": "cmd_ca1a8768638247a394d6c8c9516d",
+    "exitCode": 0,
+    "invariants": "Actual private headers/default-off503/readonly405/staff401/anonymous session/visible OTP/samehost/canonical307/no private forms,including new programme API and page."
+  },
+  "runtime": "Exact-production10m error/fatal grouped query returned no matching groups;not full security approval.",
+  "probe": {
+    "id": "sbx_Ca2ExN0dtpwjCcmtc5OS18C6vNJI",
+    "status": "stopped",
+    "requestedPersistent": false,
+    "nonpersistentReadbackVerified": true,
+    "requestedVcpus": 1,
+    "region": "fra1",
+    "timeoutMs": 60000,
+    "envProvided": false,
+    "sourceProvided": false,
+    "networkAllowedDomains": ["c.obsidianglobal.studio", "corridra.vercel.app"],
+    "stdoutCollectedBeforeStop": true,
+    "stopIndependentlyVerified": true
+  },
+  "activation": "CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED defaultoff,synthetic/nonproduction,production hardoff. No optional programme module installed in cloud;no provider/admission/intake/feature or D01-D06/D08 activation.",
+  "rollback": "Retain PR75 dpl_BGBz7E31CoETozfeyH5zU7Nt9Qo7/sourcee562fd3 with exposure off;retain additive optional module and immutable canonical programme/event/binding history. No down migration.",
+  "remaining": "Participant onboarding(local prototype not released),eligibility,private missions,agendas/meeting coordination,economics,canonical customer organisation/full authoring,actual managed-provider and full UX/security/usability."
+}

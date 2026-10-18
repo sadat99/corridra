@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
       },
       {
         source:
-          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes)',
+          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes|customer-programme-participants)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

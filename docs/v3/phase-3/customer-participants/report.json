@@ -1,0 +1,35 @@
+{
+  "result": "PARTIAL:bounded synthetic participant onboarding locally implemented/tested;full exact-head CI and gated source release pending;full independent Delegation OS unfinished",
+  "requirements": ["V3-02-048", "V3-06-006"],
+  "baseline": "115ecca9d9007a68527bf96a38d984c6291c467b/tree443d051bf429cd751d4de41409992ee49014cb6d (PR76 verified gated source)",
+  "existing": "Canonical app.delivery_programme;original CustomerSessionBoundary/customer proof,workspace access locks,private workspace_access_event with genuine service/customer event/audit/outbox;old confirmed-import participants and all independent commercial rights retained",
+  "new": "Programme-specific one-use invitations,preview,explicit fictional-label sharing consent,REGISTERED records,scoped organiser revoke/self-withdraw,private own-registration and owner/admin paged views,actual API/UI",
+  "authority": "Fresh admitted verified customer. Owner/admin of the exact canonical customer programme manages only invitation/consented registration metadata. A participant gains no organiser workspace membership,staff identity or private mission/offer/contact/value access. Same account can organise and participate independently.",
+  "paths": {
+    "original": "Original /operator delivery/import/sharing/recipient/report/export/expert and customer request/report/portfolio/decision paths unchanged",
+    "destination": "/account/delegations for own registration/preview/accept/withdraw;contextual owner/admin controls under /account/delegations/[workspaceId];GET own/manage and POST preview/invite/accept/revoke/withdraw at /api/customer-programme-participants"
+  },
+  "migration": {
+    "path": "packages/db/customer-participant-migrations/0001_private_programme_participants.sql",
+    "sha256": "259b0647822a2fc83964ee5d02a19a48adf3f71c1de258b4252dc5e4ca21cec4",
+    "installer": "packages/db/src/customer-participant-migrate.ts",
+    "receipt": "customer_participant_migrations.applied;separate explicit opt-in after accepted programme dependency",
+    "scope": "Four new private immutable/RLS tables and scoped functions only;all pre-existing definitions/ACL/RLS/rows/receipts preserved exactly on accepted optional-module baseline. No auto-DDL or original migration/source/money/history changes.",
+    "cloud": "not installed"
+  },
+  "privacy": "32-byte random base64url token,only digest to PostgreSQL,no token in URL/storage/events;secret returned once. Lost issuance retry returns same ID with no recovered secret. UI output clears on hide/account/source expiry with60s ceiling;pagination never extends original window. Own views serialize with revocation and hide revoked programme metadata. Explicit labels are self-declared,not verified identity/eligibility/meeting/outcome.",
+  "independentRights": "Invitation expiry/revocation stops preview/new joining,not an independently consented registration. Registration revoke/self-withdraw ends only programme grant,not separate commercial rights. New code cannot silently re-enrol revoked registration;restoration/re-enrolment not implemented and UI discloses this. Original imported participant/export authority is unchanged;new registrations do not silently enter old reports.",
+  "local": {
+    "fullDatabase": "Test Files38 passed(38);Tests365 passed(365),339.04s,exit0",
+    "focusedDatabase": "19new+15unchanged programme:Test Files2 passed(2);Tests34 passed(34),6.74s",
+    "ui": "Final22passed(26.0s),12new+10unchanged programme;actual components/compiled CSS/font/real router context. Scope,consent,no URL/storage secret,relative navigation,single-use lost issuance,exact uncertain retry,inline explicit revoke/withdraw confirmations and cancel,saved-draft cleanup,hide/account/expiry/paging/recovery,lazy contextual entry,native unsaved warning,keyboard/axe1440/768/390/320. Additional320inline axe/captures included in two cases;final initial and inline320images inspected.",
+    "compiledRoutes": "2passed(4.5s),current real built own/admin GET and preview POST503/privateheaders plus closed account route before optional schema/provider",
+    "static": "Final closing source typecheck/lint/build process exit0;registered docs unit19JS/0failed+7Python OK;format:check passes. Full exact-head CI/source release pending.",
+    "provider": "NOT VERIFIED;controlled managed-provider session/inbox unavailable. Component protocols and fixture PG proofs are not actual authenticated provider acceptance."
+  },
+  "priorFailures": "Initial13PG10pass3fail:fixed actual non-issuance retry metadata while retaining equality assertion;corrected new provider-error expectation and rawContext SQL-string driver against original contracts. Initial UI11pass11fail:fixed product eager optional import (diagnostic process-is-not-defined→function/errors[]) and new native navigation driver,all original tests unchanged. Subsequent21pass1fail:restored missing space in default planning copy,not old expectation. Final22pass. Inline confirmation moved beside its selected decision;no old test/assertion weakened.",
+  "flags": "CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED defaultoff,requires programme/workspace/synthetic/nonproduction;production hardoff. No module cloud install,provider/admission/intake/flags or D01-D06/D08 activation.",
+  "preservation": "45baseline routes29core hashes6immutable sources18expert IDs PASS;806original/973current controls,only2earlier accepted OTP bindings,zero new original loss. Original programme tests unchanged.",
+  "remaining": "Actual provider/full browser-to-provider-to-data acceptance;full participant company profiles/needs/private missions,eligibility/confirmations,agenda/meeting coordination,registration-aware consented reporting,economics,canonical customer organisation/full commercial authoring,versioned participant terms/retention/legal readiness,restoration/re-enrolment and full UX/security/usability.",
+  "rollback": "Disable independent participant exposure or use compatible PR76 source. Retain new immutable consent/invitation/revocation/receipt records and canonical event history. No down migration or historical rewrite."
+}

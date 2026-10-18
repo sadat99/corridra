@@ -13,6 +13,7 @@ import { OperatorInvitationHint } from '../../components/operator-invitation-hin
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
+import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
@@ -134,6 +135,13 @@ export default async function Page() {
                 programmesEnabled={customerProgrammesEnabled()}
               />
             </div>
+          )}
+          {workspaceIssuer && customerParticipantsEnabled() && (
+            <p>
+              <Link className="text-link" href="/account/delegations">
+                My sample delegation registrations
+              </Link>
+            </p>
           )}
           {requestIssuer && (
             <div id="customer-requests" tabIndex={-1}>
