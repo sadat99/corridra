@@ -727,9 +727,14 @@
     "heading": "Product 3 — Delegation OS",
     "line": 132,
     "requirement": "1. Create a delegation for a supported destination, market, event or programme.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/adr/0037-customer-programme-command-authority.md",
+      "docs/v3/phase-3/customer-programmes/report.json",
+      "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
+      "tests/integration/customer-programmes.test.ts"
+    ],
+    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
   },
   {
     "id": "V3-02-046",
@@ -867,9 +872,14 @@
     "heading": "Product 3 — Delegation OS",
     "line": 148,
     "requirement": "Organiser workspace → Multiple delegations → Participants → Independent commercial missions → Shared programme and individual outcomes.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/adr/0037-customer-programme-command-authority.md",
+      "docs/v3/phase-3/customer-programmes/report.json",
+      "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
+      "tests/integration/customer-programmes.test.ts"
+    ],
+    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
   },
   {
     "id": "V3-02-060",
@@ -3246,9 +3256,10 @@
       "docs/v3/phase-3/customer-mission-delivery/report.json",
       "docs/adr/0040-reviewed-delivery-to-requesting-customer.md",
       "tests/integration/customer-delivery.test.ts",
-      "tests/operator/v3-customer-delivery-ui.spec.ts"
+      "tests/operator/v3-customer-delivery-ui.spec.ts",
+      "docs/v3/phase-3/customer-mission-delivery/release.json"
     ],
-    "nextAction": "Creator-only reviewed mission delivery locally verified;final UI/static and full exact-head CI/release pending. Actual provider and full self-service commercial/organisation authority remain unfinished."
+    "nextAction": "PR75 exact CI331PG/116public/91protected,matching merge and READY production/preview verified;35live+3preview checks. Actual provider/full customer commercial/organisation authority remain unfinished."
   },
   {
     "id": "V3-06-005",
@@ -3256,9 +3267,14 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 494,
     "requirement": "| Self-service delegation creation and administration | Enable organisers to operate independently | P0 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/adr/0037-customer-programme-command-authority.md",
+      "docs/v3/phase-3/customer-programmes/report.json",
+      "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
+      "tests/integration/customer-programmes.test.ts"
+    ],
+    "nextAction": "Canonical synthetic programme create/list locally verified:37files346PG/118public/101protected. Exact-head CI/release pending;participant onboarding/private missions,dates/agendas/meeting coordination,economics and full independent organiser acceptance unfinished."
   },
   {
     "id": "V3-06-006",

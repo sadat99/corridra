@@ -677,6 +677,16 @@
       "path": "docs/v3/phase-3/customer-mission-delivery/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Creator-only commercial mission discovery,original save/read/reply reuse,authority preservation and acceptance"
+    },
+    {
+      "path": "docs/adr/0037-customer-programme-command-authority.md",
+      "classification": "Architecture decision",
+      "use": "Scoped canonical customer programme command,original staff authority and forward guard/event preservation"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-programmes/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Synthetic owner/admin programme planning creation/list,preservation and independent acceptance"
     }
   ]
 }

@@ -1,0 +1,33 @@
+{
+  "result": "PARTIAL: local programme planning implemented/tested;full exact-head CI/release pending;full independent Delegation OS unfinished",
+  "requirements": ["V3-02-045", "V3-02-059", "V3-06-005"],
+  "baseline": "e562fd341ceeb6f5c964562a86a772934d81bb36 (PR75 merge;full tree761845c648ed96260fc41cbd754909274d384001 exactly matches locally tested base53e96934ad28966f4367be8c803e5a565a5869ce)",
+  "existing": "Canonical app.delivery_programme,existing provider proof/workspace membership and original event/audit/outbox engine",
+  "new": "Narrow owner/admin canonical programme create/list,private execution grant/immutable command attribution,contextual sample planning API/UI",
+  "authority": "Fresh admitted verified customer and current workspace owner/admin;no staff identity,MFA bypass,app.membership grant or participant/private commercial disclosure",
+  "paths": {
+    "original": "All original staff delivery/client/programme/receipt/expert paths retained",
+    "destination": "/account workspaces → /account/delegations/[workspaceId];/api/customer-programmes"
+  },
+  "backendContract": "ADR037;only reviewed additive forward extensions to app.delivery_guard and app.record_change,actual SECURITY DEFINER attributes preserved;all old policies/signatures/owners/ACLs/rows/receipts preserved",
+  "local": {
+    "database": "Current baseline:15 new programme +17 unchanged customer-workspaces;Test Files2 passed(2);Tests32 passed(32),5.87s. Accepted company/decision/delivery optional modules installed before populated function/ACL/RLS/row preservation snapshot. Original initial attempt ECONNREFUSED had zero executed tests;existing local containers restarted before successful rerun.",
+    "ui": "10passed(12.1s) focused current component suite;all10also pass in final full101protected suite with four viewport widths,keyboard/axe and final320image inspected.",
+    "compiledClosedRoutes": "Current 2 passed(4.2s),actual compiled closed API and page,desktop/mobile;no provider or optional cloud module.",
+    "static": "Current fail-fast typecheck/lint/build exit0;latest format:check passes;19JS/0failed+7Python OK;full37files346PG/118public/101protected pass. New exact-head CI/source release pending.",
+    "provider": "NOT VERIFIED;fixtures are not managed-provider acceptance",
+    "fullIntegration": "Test Files37 passed(37);Tests346 passed(346),398.95s,current combined source;original cases unchanged.",
+    "publicBrowser": "Correctly isolated full run:118 passed(4.4m),exit0. Prior shared-output concurrent run116pass/2trace-cleanup failures was not accepted;only output directory corrected,assertions unchanged.",
+    "protectedBrowser": "Full current source:101 passed(13.7m),exit0,including final programme keyboard/axe/overflow1440/768/390/320 and all original protected journeys."
+  },
+  "migration": {
+    "path": "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
+    "sha256": "fa0008f647fe8208ce9293692b91738920c9ca1d59a2d7ea4c5468cd7482b24e",
+    "receipt": "customer_programme_migrations.applied;separate explicit opt-in,base3 unchanged",
+    "cloud": "not installed"
+  },
+  "preservation": "45baseline routes/29core hashes/6source hashes/18expert IDs PASS;806original/938current controls;only2 previously accepted OTP binding differences;zero new original action loss",
+  "flags": "CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED defaultoff;synthetic-only/nonproduction;all external activation gates remain closed",
+  "remaining": "Participant onboarding/private missions,programme dates/agendas/meeting coordination,economics,canonical organisation authority,full independent organiser acceptance,real provider and exhaustive security/usability",
+  "rollback": "Keep flag off or compatible prior source;preserve additive schema and canonical immutable programme/events,never down migration"
+}
