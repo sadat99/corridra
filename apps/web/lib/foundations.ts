@@ -1,3 +1,7 @@
+import {
+  CustomerMissionShareService,
+  customerMissionSharesEnabled,
+} from '@corridra/auth/customer-mission-shares';
 import 'server-only';
 import { recoverableResource } from './recoverable-resource';
 import { localFixtureAdapter } from '@corridra/intelligence/local-fixture';
@@ -171,6 +175,17 @@ function createServices() {
       authPool,
       {
         enabled: customerCompaniesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerMissionShares: new CustomerMissionShareService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerMissionSharesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',

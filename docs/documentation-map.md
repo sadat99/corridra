@@ -151,3 +151,5 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 - [ADR037](adr/0037-customer-programme-command-authority.md): scoped customer creation of canonical programmes. [Programme plan](v3/phase-3/customer-programmes/bounded-plan.md): optional authority, preservation and unfinished organiser requirements.
 
 - [ADR041](adr/0041-private-delegation-participant-onboarding.md) and [participant plan](v3/phase-3/customer-participants/bounded-plan.md): programme-specific consented registration without organiser workspace or private commercial authority.
+
+- [ADR042](adr/0042-participant-commercial-mission-summary-grants.md) and [objective-sharing plan](v3/phase-3/participant-commercial-missions/bounded-plan.md): participant-controlled commercial intentions,independent original private source authority and bounded acceptance.

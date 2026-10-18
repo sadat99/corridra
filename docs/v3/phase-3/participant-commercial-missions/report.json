@@ -1,0 +1,35 @@
+{
+  "result": "PARTIAL:bounded sample participant objective sharing locally verified;full exact-head CI/source release pending",
+  "requirements": ["V3-02-049", "V3-02-059", "V3-02-061", "V3-02-062", "V3-02-063"],
+  "baseline": "4247709f672b56eccc24e2b6717606ef4a616252",
+  "adr": "docs/adr/0042-participant-commercial-mission-summary-grants.md",
+  "existing": "Canonical customer_private.owned_request references existing app.mission;original creator/detail/receipt authority,customer proof and workspace locks/event helper;programme registration independent",
+  "new": "Explicit participant-authored summary consent,revisions,withdrawal,optimistic expected version and scoped own/organiser read;no private source sharing or duplicate mission",
+  "paths": {
+    "participant": "/account/delegations > own registration > Manage my shared objectives",
+    "organiser": "/account/delegations/[workspaceId] > programme > Manage sample participants > View shared objectives",
+    "api": "/api/customer-programme-objectives GET own/manage/choices;POST share/withdraw",
+    "originalPrivateLink": "/account/requests/[requestId];creator only"
+  },
+  "migration": {
+    "path": "packages/db/customer-mission-share-migrations/0001_participant_mission_summaries.sql",
+    "sha256": "3083445f5809565a6760fb277fc0728711e70e7d693bfe5f3aad903506dcf33e",
+    "installer": "packages/db/src/customer-mission-share-migrate.ts",
+    "optional": true,
+    "cloudInstalled": false
+  },
+  "privacy": "Separate programme workspace,customer request workspace and canonical mission tenant;organiser sees only expressly shared self-declared text,opaque objective ID/version and status. No original request/mission/tenant IDs,contacts,offers,quotations,negotiations or values. Withdrawal never falls back. Source retention/revocation and programme departure end dependent sharing;independent private mission survives programme departure.",
+  "verification": {
+    "focusedDatabase": "16 new real-PG cases;full39files381PG pass(490.60s),including all pre-existing modules and source/ACL/RLS/table/row/receipt preservation",
+    "focusedBrowser": "16new pass(19.7s),including wrong-request/impossible-version acknowledgement exact-retry regression;prior15pass and24including12unchanged participant cases;four widths/keyboard/axe and320image inspected",
+    "static": "Pre-correction full format/types/lint/unit19JS+7Python/build pass;current corrected editor/test lint passes;corrected exact-head CI/build still required",
+    "preservation": "45baseline routes29core6source18expertIDs retained;806original/990current controls,2prior OTP changes,zero original loss",
+    "provider": "NOT VERIFIED;controlled provider session/inbox unavailable;component protocols and fixture PG proofs are not actual provider acceptance",
+    "publicBrowser": "122pass(5.0m),including2new compiled closed-gate/private-header cases after framework referrer-header correction",
+    "protectedBrowser": "Full existing protected operator suite required in exact-head CI;local full run pending"
+  },
+  "states": "Loading/empty/current/withdrawn/unavailable,denial/conflict/error/exact retry,expired/interrupted/account changes;no invented success or private grant",
+  "flags": "CORRIDRA_CUSTOMER_MISSION_SHARES_ENABLED defaultoff;requires participant/programme/workspace/request/detail/synthetic/nonproduction;production hardoff. No cloud module/provider/admission/intake/flag or D01-D06/D08 activation.",
+  "rollback": "Disable independent objective-sharing exposure or use compatible PR77 source;retain additive immutable links/consent/revisions/commands and original canonical history. No down migration.",
+  "remaining": "Full customer organisation/authoring,participant profiles/eligibility/agenda/meeting coordination/consented reporting/templates,economics/refunds/settlements/Corridra charges/packaging/communications;actual provider/full UX/security/usability and external activation."
+}

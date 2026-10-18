@@ -23,6 +23,7 @@ type Props = {
   issuer: string;
   workspaceId: string;
   participantsEnabled?: boolean;
+  missionSharesEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -52,7 +53,13 @@ export function CustomerProgrammes(props: Props) {
     />
   );
 }
-function ScopedProgrammes({ subject, issuer, workspaceId, participantsEnabled = false }: Props) {
+function ScopedProgrammes({
+  subject,
+  issuer,
+  workspaceId,
+  participantsEnabled = false,
+  missionSharesEnabled = false,
+}: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
@@ -329,6 +336,7 @@ function ScopedProgrammes({ subject, issuer, workspaceId, participantsEnabled = 
                             subject={subject}
                             issuer={issuer}
                             workspaceId={workspaceId}
+                            missionSharesEnabled={missionSharesEnabled}
                             programmeId={p.id}
                           />
                         </Suspense>

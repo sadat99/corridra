@@ -697,6 +697,16 @@
       "path": "docs/v3/phase-3/customer-participants/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Private synthetic participant onboarding,backend/UI/denial acceptance and unfinished full organiser scope"
+    },
+    {
+      "path": "docs/adr/0042-participant-commercial-mission-summary-grants.md",
+      "classification": "Architecture contract/index",
+      "use": "Explicit participant-authored programme summaries;independent private source authority"
+    },
+    {
+      "path": "docs/v3/phase-3/participant-commercial-missions/bounded-plan.md",
+      "classification": "V3 bounded implementation plan",
+      "use": "Additive sample objective-sharing scope and acceptance limits"
     }
   ]
 }

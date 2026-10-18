@@ -59,3 +59,5 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - A filename mentioned only in a handoff summary is not a discovered path; confirm it with `rg --files` before opening it.
 - Verification receipts must use each process exit code; a later successful command or an incomplete log excerpt cannot establish an earlier pass.
 - Concurrent Playwright runs must use distinct --output paths; different server ports do not isolate their artifacts.
+- Keep live-probe stdout compact and map indexed results to the versioned path inventory so connector string limits cannot truncate release evidence.
+- Register each new private API in the framework private-header overrides before checking the compiled route; handler headers alone can be overridden.
