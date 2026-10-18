@@ -40,7 +40,7 @@
     },
     {
       "condition": "Browser/security/deployment evidence",
-      "evidence": "Local10PG pass including lock-read expiry regression;12finalUI and2compiled-route checks,format/lint/types/unit/build/source checks pass. Superseded first-head CI cancelled deliberately for read-lock fix;corrected fullCI/merge/deployment pending. Managed provider and full security/usability NOT VERIFIED."
+      "evidence": "Local11PG pass including canonical read/write lock expiry and non-synthetic workspace denial;12finalUI and2compiled-route checks,format/lint/types/unit/build/source checks pass. Superseded first two heads deliberately cancelled for read-lock and reused synthetic-scope corrections;final fullCI/merge/deployment pending. Managed provider and full security/usability NOT VERIFIED."
     },
     {
       "condition": "Complexity measured and bounded",
@@ -52,7 +52,12 @@
     "status": "Local bounded source;corrected exact-head CI/release pending",
     "supersededHead": "d366d1e76355302cfb88e7d12539f91e1529b9e9",
     "supersededCI": 39176656074,
-    "lostHiddenFake": []
+    "lostHiddenFake": [],
+    "supersededHeads": [
+      "d366d1e76355302cfb88e7d12539f91e1529b9e9",
+      "99ef0e4831cb02f4eee5e02df77643da46d1535f"
+    ],
+    "supersededCIs": [39176656074, 39176925147]
   },
   "rollback": "Disable new port,retain additive canonical context,command and event history;compatible PR78 source;no down migration."
 }

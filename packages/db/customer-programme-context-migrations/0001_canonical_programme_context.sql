@@ -158,7 +158,7 @@ BEGIN
   SELECT * INTO r FROM customer_private.programme_registration WHERE id=registration AND principal_id=actor;
   IF NOT FOUND THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
   target:=r.workspace_id;programme:=r.programme_id;
-  PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||target::text,0));
+  PERFORM customer_private.participant_scope(gen_random_uuid(),target,programme,false);
   IF EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE registration_id=registration) OR customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
  ELSE
   PERFORM customer_private.participant_scope(gen_random_uuid(),target,programme,true);

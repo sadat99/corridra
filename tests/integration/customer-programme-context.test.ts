@@ -402,3 +402,37 @@ test('context feature remains opt-in, synthetic and production hard off', async 
     }),
   ).toBe(false);
 });
+
+test('participant context refuses a workspace outside the synthetic tenant gate', async () => {
+  const invitation = await participants().command({
+    action: 'invite',
+    commandId: randomUUID(),
+    workspaceId,
+    programmeId,
+    label: 'Synthetic gate participant invitation',
+    acknowledged: true,
+  });
+  const registered = await participants('outsider').command({
+    action: 'accept',
+    commandId: randomUUID(),
+    programmeId,
+    token: invitation.token,
+    displayLabel: 'Synthetic gate participant',
+    consented: true,
+  });
+  expect((await service('outsider').view({ registrationId: registered.id })).context.version).toBe(
+    3,
+  );
+  await f.owner.query('UPDATE app.tenant SET synthetic=false WHERE id=$1', [workspaceId]);
+  try {
+    await expect(
+      service('outsider').view({ registrationId: registered.id }),
+    ).rejects.toHaveProperty('code', '42501');
+    await expect(service().view({ workspaceId, programmeId })).rejects.toHaveProperty(
+      'code',
+      '42501',
+    );
+  } finally {
+    await f.owner.query('UPDATE app.tenant SET synthetic=true WHERE id=$1', [workspaceId]);
+  }
+});
