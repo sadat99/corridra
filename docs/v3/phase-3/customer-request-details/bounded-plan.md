@@ -1,6 +1,6 @@
 # Original request detail workspace
 
-Requirements: V3-06-004,V3-04-069,V3-04-070. Status: implemented;full exact-head CI/release pending. This is original submitted requirements and receipt progress,not all customer research,shortlists,qualification,quotations,meetings or commercial results.
+Requirements: V3-06-004,V3-04-069,V3-04-070. Status: verified bounded gated source release PR71,merge3ad4e8d. Actual private-provider acceptance remains NOT VERIFIED. This is original submitted requirements and receipt progress,not all customer research,shortlists,qualification,quotations,meetings or commercial results.
 
 Files: independent optional detail migration/installer and auth detail service;fresh boundary composition;GET /api/customer-requests/[requestId];page /account/requests/[requestId] and request-detail client;gated saved-list link/account flag;private API headers;new database/browser/closed-route tests;ADR035 and evidence documents. No dependencies. Existing backend services,canonical records and all original tests retained.
 
@@ -9,3 +9,5 @@ Blast radius: a new opt-in creator-only original-source read. No staff/source/co
 Risks: cross-account/organiser access,expired/revoked/source retention leakage,source mutation or hidden material requirements,malformed acknowledgements,stale in-flight response,page restoration,precision/original language loss and private client persistence. Positive/denial PG and actual-component browser cases exercise these boundaries;full CI checks all original regression suites. Actual private-provider OTP/session acceptance remains NOT VERIFIED and independently tracked.
 
 Rollout: exact checked merge only,READY production/preview source verification plus closed-route/permission checks. Keep exposure off until schema and isolated authenticated acceptance are evidenced. Rollback exposure/source;retain additive schema and immutable receipts/history. Next independent engineering packet: explicit customer commercial publication/grants using existing V2 qualification/offer/meeting engines;then independent delegation/participant scopes and separated organiser economics. Do not claim request input detail implements those absent workflows.
+
+Forward release: [release.json](release.json) records269 database/108 public/54 protected/full static-security-unit-build success,matching tested/merged trees,READY production/preview and19actual live checks. No optional cloud detail module or flags activated at this source release.

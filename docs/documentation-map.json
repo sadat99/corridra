@@ -637,6 +637,16 @@
       "path": "docs/v3/phase-3/customer-request-details/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Original saved-request detail workspace,privacy,retention,recovery and acceptance"
+    },
+    {
+      "path": "docs/adr/0036-account-saved-commercial-reports.md",
+      "classification": "Architecture decision",
+      "use": "Private account-saved approved client reports,original capability limits,immutable navigation audit and self-declaration reuse"
+    },
+    {
+      "path": "docs/v3/phase-3/saved-commercial-missions/bounded-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Persistent approved commercial report/reply UI,scope,preservation,recovery and acceptance"
     }
   ]
 }

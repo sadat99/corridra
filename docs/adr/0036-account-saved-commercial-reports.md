@@ -1,0 +1,23 @@
+# ADR-036: Account-saved approved commercial mission reports
+
+Status: implemented locally;full exact-head CI/release pending. No activation. This amends ADR020/022 only to allow an independently admitted verified customer to explicitly retain a private navigation reference to a valid CLIENT_PROGRESS capability. An account is not a staff identity,and a bookmark is not a mission/company ownership grant.
+
+## Authority and preservation
+
+The server hashes the supplied original invitation and stores only that digest and canonical link reference in a private creator binding. Never recover/return a bearer or copy source,company,quote,money or report content. Every view and declaration reuses unchanged app.delivery_authorized,delivery_report and delivery_respond,including original publication/rights/expiry/revocation and review rules. Only CLIENT_PROGRESS,one publication,no programme/cohort,export or delegation scope is accepted. A workspace owner,organiser or member inherits no other customer's bookmark. Explicit possession of the same still-valid bearer can authorize another account as before;email or workspace membership never substitutes for it.
+
+Fresh pinned provider proof and continuing admitted customer principal are required. Request-submission admission is separate and is not repurposed as a sharing grant. Principal locks and proof checks retain the existing short TTL. Wall-clock link expiry is checked after waits and before returning data/committing declarations;late proof/expiry raises and rolls back. Original V2 source/publication validity semantics are retained. Removing a bookmark serializes against its readers and never cancels the canonical mission/invitation.
+
+Bindings retain immutable principal,digest,link and creation fields;only one-way removal is permitted. Immutable per-principal command audit supplies exact save/remove retry and conflict checks. Different save commands for the same active link reuse one binding;retrying an old removed save cannot reactivate it. A fresh explicit command may save the still-valid invitation again. Listing is bounded25/page with100active/account and returns no stale title/content for invalid links. No staff session,MFA or tenant role is manufactured. Original canonical declaration events retain their reviewed capability-authority attribution and self_declared state.
+
+## Module and interface
+
+A separate explicit migrateCustomerSavedMissions installs the customer-commercial-migrations module with a protected independent receipt,after the unchanged three-module foundation. The same advisory migration lock and hash/unknown-history checks apply. All old functions,ACLs,RLS,data and receipts remain unchanged. No new backend mission system,dependency,external communication or financial processor.
+
+CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED also requires the existing workspace and delivery flags,synthetic data and nonproduction. Check gates before optional/provider access. Missing module is503,not an invented empty portfolio. No cloud migration/admission/provider/intake/flags change in this source packet. D01-D06/D08 remain independently closed.
+
+Account list links open a scoped commercial workspace using existing MissionPassport and MissionExperienceView. It retains original requirements,qualification,quotation revisions/currencies/comparison assumptions,meeting statuses and scoped commercial observations. Customer trade values remain separate from Corridra/organiser revenue. Existing original invitation/receipt/public/expert paths remain reachable. Evidence replies use the unchanged self-declaration engine;no verified fact or supplier quote is inferred from them. Uncertain submissions freeze exact body/command for retry. Drafts survive same-account interruption in memory;fresh authority is required before redisplay,and account denial clears recovery. No source/bearer/draft is written to browser storage.
+
+## Acceptance limits
+
+Real restricted-PostgreSQL tests cover canonical report equality,creator denial,invalid/institution/revoked/expired scopes,locked late reads,save/remove/declaration idempotency,immutable bindings/audit,pagination and populated old-state preservation. Actual-component protocols cover scoped save/remove/report/response/retry/denial/malformed/interruption/responsive/keyboard/axe. These are not real managed-provider acceptance. Complete commercial authoring,canonical customer organisation linking,independent delegation/participants/economics,full legacy dynamic acceptance and live gates remain unfinished. Missing controlled provider credentials blocks that acceptance evidence,not independent engineering.

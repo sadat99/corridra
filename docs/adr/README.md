@@ -40,3 +40,5 @@ Forward status, 17 October 2026: ADR032's original test-policy conflict was reso
 [ADR034](0034-custom-production-origin.md) records the owner-reported navigation repair:owned production subdomain as the exact canonical origin,provider allowlist preservation,host-scoped cookie implications and rollback. This is an origin configuration change,not a new identity or commercial activation.
 
 | [0035](0035-private-original-request-details.md) | Creator-only original submitted request details;separate opt-in module |
+
+| [0036](0036-account-saved-commercial-reports.md) | Private saved commercial reports,capability preservation and self-declared replies |

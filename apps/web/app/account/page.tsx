@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
+import { SavedMissions } from './saved-missions';
+import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
@@ -55,6 +57,9 @@ export default async function Page() {
   const requestIssuer = customerRequestsEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
+  const savedMissionIssuer = customerSavedMissionsEnabled()
+    ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
+    : undefined;
   let requestCreationEnabled = false;
   if (requestIssuer && workspaceIssuer) {
     const services = foundations();
@@ -90,6 +95,9 @@ export default async function Page() {
           <nav className="access-options" aria-label="Account sections">
             {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
             {requestIssuer && <a href="#customer-requests">My saved requests</a>}
+            {savedMissionIssuer && (
+              <a href="#saved-commercial-missions">My saved commercial missions</a>
+            )}
             <a href="#customer-missions">My shared missions</a>
             <Link className="text-link" href="/plan#receipt-check">
               Check a request receipt
@@ -134,7 +142,12 @@ export default async function Page() {
             </div>
           )}
           <div id="customer-missions" tabIndex={-1}>
-            <CustomerMissions />
+            {savedMissionIssuer && (
+              <div id="saved-commercial-missions">
+                <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+              </div>
+            )}
+            <CustomerMissions key={data.user.id} />
           </div>
         </div>
       </div>

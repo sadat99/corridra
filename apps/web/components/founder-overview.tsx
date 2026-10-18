@@ -44,8 +44,9 @@ export function FounderOverview() {
           request progress has a tested backend; its account view is implemented with exposure
           closed. Original submitted requirements can be reopened through a separately gated
           creator-only detail workspace. These are unverified customer inputs, not research or
-          accepted commercial outcomes. Full customer mission administration, company linking and
-          independent delegation administration remain{' '}
+          accepted commercial outcomes. Account-saved approved commercial reports and self-declared
+          evidence replies reuse existing invitation scopes behind a separate gate. Full customer
+          mission administration, company linking and independent delegation administration remain{' '}
           <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must implement and verify
           these separately. The owner and relevant legal, infrastructure, security and provider
           reviewers must supply the independent activation evidence in{' '}
