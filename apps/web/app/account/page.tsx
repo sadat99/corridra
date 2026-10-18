@@ -6,6 +6,7 @@ import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
 import { SavedMissions } from './saved-missions';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
+import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
@@ -145,6 +146,13 @@ export default async function Page() {
             {savedMissionIssuer && (
               <div id="saved-commercial-missions">
                 <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+                {customerCompaniesEnabled() && (
+                  <p>
+                    <Link className="text-link" href="/account/companies">
+                      Browse approved companies
+                    </Link>
+                  </p>
+                )}
               </div>
             )}
             <CustomerMissions key={data.user.id} />

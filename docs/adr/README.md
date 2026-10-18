@@ -42,3 +42,5 @@ Forward status, 17 October 2026: ADR032's original test-policy conflict was reso
 | [0035](0035-private-original-request-details.md) | Creator-only original submitted request details;separate opt-in module |
 
 | [0036](0036-account-saved-commercial-reports.md) | Private saved commercial reports,capability preservation and self-declared replies |
+
+| [0038](0038-approved-customer-company-portfolios.md) | Canonical company continuity within original approved customer scopes |

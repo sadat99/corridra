@@ -1,0 +1,31 @@
+{
+  "result": "PARTIAL:local implementation/acceptance;full exact-head CI and gated source release pending;customer commercial authoring unfinished",
+  "requirements": ["V3-01-018", "V3-06-011"],
+  "baseline": "8bfa4503fcb0aba303a33d166e80893365499f05 (verified PR72);local c5be686 release receipt included",
+  "existing": "Original saved mission authority,delivery_report,source/publication/revocation/expiry rules,canonical target\u2192relationship\u2192organisation identity and report components",
+  "new": "Read-only tenant/customer-scoped canonical company continuity with approved per-report qualification,purpose and existing commercial workspace links;loaded-only search/paging/private recovery",
+  "paths": {
+    "original": "/account#saved-commercial-missions,/account/missions/[resourceId],/client,/programme and expert/export/receipt routes retained",
+    "destination": "contextual /account/companies;GET /api/customer-companies"
+  },
+  "authority": "Fresh provider/admitted creator plus original saved CLIENT_PROGRESS reports;workspace owner/organiser/member inherits no other customer data. Separate tenant and customer digest namespaces;no raw global organisation ID or extra contacts/source disclosure.",
+  "migration": {
+    "path": "packages/db/customer-company-migrations/0001_approved_company_portfolio.sql",
+    "sha256": "9e261035b6427cea91a93ef360ff0431875635489a5cc2de1ff78a3e70d6834a",
+    "installer": "packages/db/src/customer-company-migrate.ts",
+    "receipt": "customer_company_migrations.applied;original base3+commercial1 lifecycle retained",
+    "blastRadius": "One new read-only function and protected metadata receipt. No old function/ACL/RLS/history/domain record or dependency change.",
+    "cloud": "not installed"
+  },
+  "local": {
+    "integration": "11new+12unchanged saved-commercial:Test Files2 passed(2);Tests23 passed(23),9.84s;populated upgrade,readonly equality,provider outage503,hard expiry and history denial",
+    "ui": "9 passed(9.8s):actual component protocols,canonical merge/original report context/search/privacy/recovery/pagination/expiry/keyboard/axe at1440,768,390,320;actual320px image reviewed",
+    "compiledGates": "2 passed(4.2s),current built page/API defaultoff,desktop/mobile/privateheaders and read-only POST405",
+    "static": "Current-source lint/typecheck/build pass;19JS/0failed+7Python OK;full exact-head CI pending",
+    "provider": "NOT VERIFIED;synthetic fixtures are not managed-provider acceptance"
+  },
+  "featureFlags": "CORRIDRA_CUSTOMER_COMPANIES_ENABLED defaultoff;workspace/saved/delivery/synthetic/nonproduction gates required. Production hardoff;D01-D06/D08 closed.",
+  "remaining": "Full research/shortlist/qualification/commercial write commands,canonical customer organisation ownership;independent delegation/participants/economics;actual provider and exhaustive security/usability/activation",
+  "rollback": "Keep flag off or deploy compatible8bfa450;retain additive read-only module/receipts and all canonical company/source/money/event history.",
+  "preservation": "806original/902current control entries;only2earlier accepted OTP binding differences;45routes29core6source18expertIDs PASS;no existing test edited"
+}

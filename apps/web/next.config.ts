@@ -68,7 +68,7 @@ const nextConfig: NextConfig = {
       },
       {
         source:
-          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions)',
+          '/api/:page(customer-workspaces|customer-workspace-access|customer-requests|customer-saved-missions|customer-companies)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

@@ -1,0 +1,52 @@
+{
+  "audit": 20,
+  "chunk": 73,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 902,
+  "intentionalOriginalBindingChanges": "Only2 already accepted account-form OTP changes;zero new unaccounted originals",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "45baseline routes/18expert IDs and806original controls preserved;old original invitation/receipt/export/admin paths untouched;only2 earlier OTP binding differences"
+    },
+    {
+      "condition": "Authority/privacy preserved",
+      "evidence": "Read-only original saved report permissions with fresh admitted proof;canonical grouping is customer+tenant scoped. No old function/ACL/RLS or staff authority change. RealPG original report equality and customer/workspace/proof/expiry/SQL denial pass."
+    },
+    {
+      "condition": "Source,money,evidence,history preserved",
+      "evidence": "Populated old functions/ACLs/RLS/row digests/base3+commercial1/core29 receipts equal;readonly calls leave snapshots equal. Only additive readonly function/receipt;canonical company identities reused without copies.45routes29core6source18expertIDs PASS."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Original qualification/uncertainty/gaps/verification preserved per report;existing full commercial workspace/quotation/meetings/progression/results links retained. No new commercial state or financial inference."
+    },
+    {
+      "condition": "Organiser journey accepted before complete SaaS claim",
+      "evidence": "Independent Delegation OS remains unfinished. Programme planning prototype and its audit19 stay stashed;not mixed into customer packet or deployed."
+    },
+    {
+      "condition": "Canonical buyer/supplier identity correctness",
+      "evidence": "Different approved mission targets map to the same existing organisation within customer/tenant boundaries;one opaque company navigation key,independent original qualification/purpose retained. No name-based identity merge or inferred exclusive roles."
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "18expert IDs and original staff/recipient/institution exports/deep links retained"
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "Sample notices,source scope and declaration labels;new flag defaultoff/prod hardoff;no provider/outreach/money/live gate activation"
+    },
+    {
+      "condition": "Browser,security,deployment evidence",
+      "evidence": "Local11new+12unchangedPG,9actual-component,2compiledclosedroute,lint/types/unit/build pass;1440/768/390/320/keyboard/axe and image reviewed. Full exact-head CI/READY release pending;actual provider/full security/usability NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity not just relocated",
+      "evidence": "Contextual Companies link under existing commercial workspace,not a sixth account nav item;loaded-only search and explicit remaining reports;existing report engines and canonical identity reused. No new CRM/workflow system."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;no completion percentage or improvement claim",
+  "note": "Audit19 is reserved in the safely stashed programme packet;this customer-first packet does not publish that work."
+}
