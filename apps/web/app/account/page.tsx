@@ -11,6 +11,7 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
+import { foundations } from '../../lib/foundations';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -53,6 +54,18 @@ export default async function Page() {
   const requestIssuer = customerRequestsEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
+  let requestCreationEnabled = false;
+  if (requestIssuer && workspaceIssuer) {
+    const services = foundations();
+    if (services)
+      try {
+        await services.ready;
+        await services.customerRequests.list({ pageSize: 1 }, data.user.id, requestIssuer);
+        requestCreationEnabled = true;
+      } catch {
+        /* The independent request section provides the bounded unavailable/denied state. */
+      }
+  }
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
       <div className="ux-account-layout">
@@ -104,6 +117,7 @@ export default async function Page() {
                 key={`${workspaceIssuer}:${data.user.id}`}
                 subject={data.user.id}
                 issuer={workspaceIssuer}
+                requestsEnabled={requestCreationEnabled}
               />
             </div>
           )}
@@ -113,6 +127,7 @@ export default async function Page() {
                 subject={data.user.id}
                 issuer={requestIssuer}
                 statuses={missionStatus.options}
+                canSubmit={requestCreationEnabled}
               />
             </div>
           )}

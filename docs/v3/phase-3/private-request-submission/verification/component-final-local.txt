@@ -1,0 +1,25 @@
+[WebServer] (node:207175) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:207189) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:207205) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:207219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 10 tests using 1 worker
+
+(node:207233) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/operator/v3-private-request-intake.spec.ts:172:1 › private guided submission retains structured original inputs and uses the real private port only (3.5s)
+  ✓   2 tests/operator/v3-private-request-intake.spec.ts:220:1 › lost response and reload freeze the original command and payload for an exact safe retry (2.8s)
+  ✓   3 tests/operator/v3-private-request-intake.spec.ts:251:1 › private drafts never resume anonymous or another account and keep independent legacy receipts (1.7s)
+  ✓   4 tests/operator/v3-private-request-intake.spec.ts:300:1 › malformed acknowledgement retains the pending request and permission denial clears only its scope (3.4s)
+  ✓   5 tests/operator/v3-private-request-intake.spec.ts:336:1 › blocked retry storage sends no command and an invalid saved retry cannot create a request (2.7s)
+  ✓   6 tests/operator/v3-private-request-intake.spec.ts:385:1 › private sample request fields retain accessible responsive layouts and native keyboard controls (2.3s)
+  ✓   7 tests/operator/v3-private-request-intake.spec.ts:410:1 › changing account context aborts an in-flight private write without displaying its late acknowledgement (3.3s)
+  ✓   8 tests/operator/v3-private-request-intake.spec.ts:456:1 › confirmed customer logout clears only private request drafts and keeps independent public recovery (423ms)
+  ✓   9 tests/operator/v3-private-request-intake.spec.ts:484:1 › failed customer logout preserves private recovery and can retry the unchanged provider action (676ms)
+  ✓  10 tests/operator/v3-private-request-intake.spec.ts:518:1 › restoring a hidden private form reloads server authority and resumes only the scoped draft (1.7s)
+
+  10 passed (26.0s)

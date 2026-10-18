@@ -98,13 +98,21 @@ function objectiveForJob(job: string) {
     return 'Find customers or distributors';
   return 'Sell in a new market';
 }
-function saveDraft(draft: Draft, step: number, key: string) {
+function saveDraft(draft: Draft, step: number, key: string, storageKey: string) {
   sessionStorage.setItem(
-    'corridra-mission-draft',
+    storageKey,
     JSON.stringify({ version: 2, draft, step, key, at: Date.now() }),
   );
 }
-export function Intake() {
+export type PrivateIntakeSubmission = {
+  draftStorageKey: string;
+  submit: (commandId: string, brief: unknown) => Promise<void>;
+};
+export function Intake({
+  privateSubmission,
+}: { privateSubmission?: PrivateIntakeSubmission } = {}) {
+  const privateMode = privateSubmission !== undefined;
+  const draftStorageKey = privateSubmission?.draftStorageKey ?? 'corridra-mission-draft';
   const [draft, setDraft] = useState<Draft>(empty),
     [step, setStep] = useState(0),
     [errors, setErrors] = useState<Record<string, string[]>>({}),
@@ -129,7 +137,7 @@ export function Intake() {
         let restored = false;
         let saved;
         try {
-          saved = JSON.parse(sessionStorage.getItem('corridra-mission-draft') ?? 'null');
+          saved = JSON.parse(sessionStorage.getItem(draftStorageKey) ?? 'null');
         } catch {
           setDraftNotice(
             'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
@@ -180,7 +188,7 @@ export function Intake() {
                 : (new Intl.DisplayNames(['en'], { type: 'region' }).of(marketCode) ?? marketCode),
           }));
         }
-        const token = sessionStorage.getItem('corridra-mission-receipt');
+        const token = privateMode ? null : sessionStorage.getItem('corridra-mission-receipt');
         if (token) {
           setReceipt(token);
           setCheckCode(token);
@@ -195,14 +203,14 @@ export function Intake() {
         setReady(true);
       }
     });
-  }, []);
+  }, [draftStorageKey, privateMode]);
   useEffect(() => {
     if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
   }, [errors]);
   function persist(v: Draft, n: number) {
     if (!key.current) key.current = crypto.randomUUID();
     try {
-      saveDraft(v, n, key.current);
+      saveDraft(v, n, key.current, draftStorageKey);
     } catch {
       setDraftNotice(
         'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
@@ -346,6 +354,14 @@ export function Intake() {
     setMessage('');
     persist(draft, step);
     try {
+      if (privateSubmission) {
+        await privateSubmission.submit(
+          key.current,
+          briefSchema.parse({ ...draft, experience: experience() }),
+        );
+        submitted.current = true;
+        return;
+      }
       const r = await fetch('/api/intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -434,9 +450,11 @@ export function Intake() {
     <div className="ux-intake-layout">
       <aside className="intake-notice">
         <strong>Test intake is open. Real customer mission admission is unavailable.</strong> Use
-        invented details and an email ending in @example.invalid. Keep your receipt to read operator
-        replies here. Email delivery is not enabled.{' '}
-        <Link href="/privacy">Read the test intake notice</Link>.
+        invented details and an email ending in @example.invalid.{' '}
+        {privateMode
+          ? 'Submitted sample requests stay private to this account. '
+          : 'Keep your receipt to read operator replies here. '}
+        Email delivery is not enabled. <Link href="/privacy">Read the test intake notice</Link>.
       </aside>
       <details lang="bn">
         <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
@@ -832,7 +850,7 @@ export function Intake() {
           Start another request (save your receipt first)
         </button>
       )}
-      <section id="receipt-check" tabIndex={-1} className="receipt-panel">
+      <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
         <h2>Check a mission request.</h2>
         <form className="operator-form" onSubmit={check}>
           <label className="field">

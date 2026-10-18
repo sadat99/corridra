@@ -82,7 +82,15 @@ async function fetchWorkspaces(subject: string, issuer: string, signal: AbortSig
   return { status: response.status, rows: body.workspaces };
 }
 
-export function CustomerWorkspaces({ subject, issuer }: { subject: string; issuer: string }) {
+export function CustomerWorkspaces({
+  subject,
+  issuer,
+  requestsEnabled = false,
+}: {
+  subject: string;
+  issuer: string;
+  requestsEnabled?: boolean;
+}) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
   const [rows, setRows] = useState<CustomerWorkspace[]>([]);
@@ -308,6 +316,13 @@ export function CustomerWorkspaces({ subject, issuer }: { subject: string; issue
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role} · Test data
+                  {requestsEnabled && (
+                    <p>
+                      <a className="text-link" href={'/account/request/' + row.id}>
+                        Send a private sample request
+                      </a>
+                    </p>
+                  )}
                   {row.role === 'owner' && (
                     <CustomerWorkspaceTeam
                       key={issuer + ':' + subject + ':' + row.id}

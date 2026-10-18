@@ -1,0 +1,34 @@
+[WebServer] (node:203426) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --hostname 0.0.0.0 --port 3100
+[WebServer] (node:203441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 2 workers
+
+(node:203460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:203461) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [desktop] › tests/browser/ux02-discovery.spec.ts:47:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (4.6s)
+  ✓   2 [desktop] › tests/browser/ux02-discovery.spec.ts:9:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (4.8s)
+  ✓   3 [desktop] › tests/browser/ux02-discovery.spec.ts:88:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (2.4s)
+  ✓   5 [desktop] › tests/browser/ux02-discovery.spec.ts:148:1 › UX-02 blocked draft storage is visible and does not discard current form entries (1.8s)
+  ✓   6 [desktop] › tests/browser/ux02-discovery.spec.ts:175:1 › UX-02 situation cards preset the role, job and route and prefill the example request (3.3s)
+  ✓   4 [desktop] › tests/browser/ux02-discovery.spec.ts:116:1 › UX-02 route pages show their sections in full and account recovery keeps its real destinations (7.5s)
+  ✓   7 [desktop] › tests/browser/v3-objective-entry.spec.ts:4:1 › three V3 product entries open real validated requests without creating records (3.3s)
+(node:204049) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   8 [desktop] › tests/browser/v3-objective-entry.spec.ts:34:1 › V3 entry remains keyboard accessible and cannot replace an unfinished request (4.4s)
+(node:204194) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 [mobile] › tests/browser/ux02-discovery.spec.ts:9:1 › UX-02 Atlas selects an actual direction and synthetic example without creating records (3.7s)
+  ✓  11 [mobile] › tests/browser/ux02-discovery.spec.ts:88:1 › UX-02 expired and corrupt drafts recover to a usable form without claiming admission (2.3s)
+  ✓  10 [mobile] › tests/browser/ux02-discovery.spec.ts:47:1 › UX-02 saved draft choices survive reload and take precedence over entry suggestions (5.3s)
+  ✓  13 [mobile] › tests/browser/ux02-discovery.spec.ts:148:1 › UX-02 blocked draft storage is visible and does not discard current form entries (3.0s)
+  ✓  12 [mobile] › tests/browser/ux02-discovery.spec.ts:116:1 › UX-02 route pages show their sections in full and account recovery keeps its real destinations (5.6s)
+  ✓  14 [mobile] › tests/browser/ux02-discovery.spec.ts:175:1 › UX-02 situation cards preset the role, job and route and prefill the example request (3.4s)
+  ✓  15 [mobile] › tests/browser/v3-objective-entry.spec.ts:4:1 › three V3 product entries open real validated requests without creating records (2.9s)
+  ✓  16 [mobile] › tests/browser/v3-objective-entry.spec.ts:34:1 › V3 entry remains keyboard accessible and cannot replace an unfinished request (2.6s)
+
+  16 passed (35.0s)

@@ -1,0 +1,36 @@
+{
+  "result": "PARTIAL: implemented/local checks pass;exact-head CI and release pending;exposure off",
+  "baseline": "66cfbbc5653398a5cbcf94caac83da27ee264ecc (verified saved-request UI PR69)",
+  "requirements": [
+    "V3-06-004",
+    "V3-09-079",
+    "V3-09-080",
+    "V3-09-081",
+    "V3-09-085",
+    "V3-09-087",
+    "V3-09-088"
+  ],
+  "existing": "Existing contextual Intake/guided machinery fields and canonical private request API/atomic factory/receipt progress reused. Public endpoint,draft/receipt behavior and all original tests retained.",
+  "new": "Selected-workspace private sample submission route,scope-safe persisted exact command/payload recovery,malformed-ack/denial/storage safety,context/hide/restore handling;admitted creation links and private-only confirmed logout cleanup.",
+  "blastRadius": "No API/SQL/RLS/migration/money/event/provider-setting/dependency change. Auth-adjacent browser cleanup only after existing SDK logout confirms success;staff auth/MFA and public capabilities preserved. New page uses existing fresh authority before form;POST rechecks unchanged.",
+  "local": {
+    "componentAndOriginalCanonical": "11 passed(35.5s):10 new component protocols plus unchanged real public intake/money/retry/receipt case",
+    "publicEntryRegression": "16 passed(35.0s),original tests unchanged",
+    "actualClosedRoute": "2 passed(4.1s),desktop/mobile,no-store/no-referrer,no form",
+    "lint": "pass",
+    "types": "web/package pass",
+    "build": "pass",
+    "visual": "Compiled actual app CSS/font at1440/768/390,keyboard/axe/overflow pass;mobile actual image reviewed. Existing original-script/currency fields retained.",
+    "failure": "Initial standalone fixture9 failed due missing Next browser process.env;targeted browser error proved process is not defined. Added empty public environment in test bundler only;all original behavior/denial assertions retained and full10 pass. Not an application/provider bypass.",
+    "finalComponent": "10 passed(26.0s) after final privacy notice wording;no save is claimed before valid acknowledgement. Original canonical public test separately remains passed in11-case run.",
+    "unit": "19 JS passed/0 failed;7 Python OK",
+    "format": "All matched files use Prettier code style;git diff --check clean"
+  },
+  "states": "draft/restore,pending/reload/exact retry,storage denied/no-send,malformed ack,permission denied,abort/context change,hidden-page authority reload,saved metadata,explicit local forget,confirmed/failed logout,unavailable gated route",
+  "preservation": "806 original/863 current controls,only2 accepted prior OTP differences,zero new loss;45routes/29core hashes/6sources/18expertIDs PASS;119command/70dispatch entries span32files/29unchanged. Current source preserves original public receipt visibility/defaults;private mode hides that separate receipt panel contextually,account/public paths retained.",
+  "flags": "Both gates default-off/synthetic-only/production hard-disabled. No cloud module3/intake/admission/provider change. D01-D06/D08 closed.",
+  "remaining": "Actual private provider/OTP/session/HTTP creation/reload/logout/revocation acceptance;full customer commercial mission workspace;canonical organisations;independent delegation/participants/economics;full legacy dynamic acceptance.",
+  "rollout": "Current disabled source remains core-only compatible. Optional module3/intake/admission readiness must precede any isolated exposure. Deploy exact accepted source with flags off.",
+  "rollback": "Keep exposure off/redeploy compatible66cf source. Preserve all additive backend/original sources/evidence/money/history;no down migration.",
+  "branchBudget": "Reuse existing branch;local5/remote6/distinct8/max8;preserve dependency PRs and required environments."
+}

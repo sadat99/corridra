@@ -622,6 +622,11 @@
       "path": "docs/v3/phase-3/customer-request-ui/bounded-plan.md",
       "classification": "Bounded UI implementation plan",
       "use": "Private saved request discovery/progress;scope,privacy,recovery,verification and separate creation gap"
+    },
+    {
+      "path": "docs/v3/phase-3/private-request-submission/bounded-plan.md",
+      "classification": "Bounded private submission plan",
+      "use": "Existing guided intake private port,exact scoped recovery,authority gates,logout cleanup,preservation and verification"
     }
   ]
 }

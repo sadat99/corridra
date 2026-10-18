@@ -1,0 +1,106 @@
+{
+  "result": "verified bounded gated account UI release;whole V3 PARTIAL",
+  "pr": 69,
+  "baseline": "c594bd92d0a3da709aaf5f45570f532f81446f77",
+  "testedHead": "a6616b8db855d4775e0b4febe1661046088f2420",
+  "testedTree": "cf5143e041a38d38471aaa38b9867bddb8afb0a2",
+  "merge": "66cfbbc5653398a5cbcf94caac83da27ee264ecc",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39085338486,
+    "job": 117550571307,
+    "result": "success",
+    "integrationFiles": 31,
+    "integrationTests": 261,
+    "publicBrowsers": 104,
+    "protectedBrowsers": 38,
+    "newUICases": 7,
+    "build": "pass",
+    "staticSecurityUnit": "pass",
+    "CodeQL": "skipped;D04 open"
+  },
+  "ciOutput": [
+    "2026-10-18T01:08:41.1095411Z {\"scanner\":\"gitleaks\",\"version\":\"8.30.1\",\"archiveSha256\":\"551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb\",\"findings\":0,\"scope\":\"Git history; reports redacted\"}",
+    "2026-10-18T01:09:18.4322658Z All matched files use Prettier code style!",
+    "2026-10-18T01:15:37.3218520Z  Test Files  31 passed (31)",
+    "2026-10-18T01:15:37.3228666Z       Tests  261 passed (261)",
+    "2026-10-18T01:19:27.7333879Z   104 passed (2.4m)",
+    "2026-10-18T01:19:27.7368530Z ##[notice]  104 passed (2.4m)",
+    "2026-10-18T01:29:18.4102099Z   38 passed (9.8m)",
+    "2026-10-18T01:29:18.4149411Z ##[notice]  38 passed (9.8m)"
+  ],
+  "artifact": {
+    "id": 12120533067,
+    "digest": "sha256:3812eb458e335aa1e78b32b61bbc8117095d6902a25c3d57373e69da90c98822",
+    "sizeInBytes": 19931247,
+    "expiresAt": "2026-10-21T01:29:19Z",
+    "scope": "Synthetic component before/after1440/768/390,keyboard,axe,overflow;actual compiled CSS/font. Local mobile/desktop reviewed. Not private provider/account evidence."
+  },
+  "production": {
+    "id": "dpl_9H8SqmQUjLG7jBDiwmF4VWWL2Jaw",
+    "url": "corridra-94i3k66e1-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "66cfbbc5653398a5cbcf94caac83da27ee264ecc",
+    "regions": ["fra1"],
+    "aliases": ["c.obsidianglobal.studio", "corridra.vercel.app"],
+    "target": "production"
+  },
+  "preview": {
+    "id": "dpl_BtYjqXtb1egsPYczseJvWj37thMQ",
+    "url": "corridra-ic73vsum9-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "66cfbbc5653398a5cbcf94caac83da27ee264ecc",
+    "regions": ["fra1"],
+    "checks": [
+      {
+        "path": "/api/customer-requests",
+        "status": 503,
+        "privateHeaders": true
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "codeInput": true
+      }
+    ]
+  },
+  "live": {
+    "checks": [
+      ["page", "/account", "GET", 200, "/signin"],
+      ["anonymous-session", "/api/auth/get-session", "GET", 200, true],
+      ["gate", "/api/customer-requests", "POST", 503, "Customer requests are unavailable"],
+      ["gate", "/api/customer-requests", "GET", 503, "Customer requests are unavailable"],
+      ["gate", "/api/customer-workspace-access", "GET", 503, "Customer workspaces are unavailable"],
+      ["gate", "/api/customer-workspaces", "GET", 503, "Customer workspaces are unavailable"],
+      ["staff-denial", "/api/workspace/tenants", "GET", 401, "Sign in to continue"],
+      ["no-root-resource", "/api/workspace", "GET", 404, null],
+      ["old-host", "/operator/setup", "GET", 307, "https://c.obsidianglobal.studio/operator/setup"],
+      ["page", "/operator/setup", "GET", 200, "/operator/setup"],
+      ["page", "/", "GET", 200, "/"],
+      ["old-host", "/signin", "GET", 307, "https://c.obsidianglobal.studio/signin"],
+      ["page", "/signin", "GET", 200, "/signin"],
+      ["page", "/signup", "GET", 200, "/signup"],
+      ["page", "/verify-email", "GET", 200, "/verify-email"]
+    ],
+    "count": 15,
+    "result": "pass",
+    "command": {
+      "id": "cmd_5ac3845d7ba04297bc71e1706972",
+      "exitCode": 0
+    },
+    "sandbox": {
+      "id": "sbx_S0SryxSkIr65CMHuH1lvdCZ9J4tf",
+      "status": "stopped",
+      "persistent": false,
+      "duration": 8505,
+      "source": "none",
+      "env": "none",
+      "snapshots": "none"
+    }
+  },
+  "featureFlags": "Customer/request exposure off;synthetic-only and production hard-disabled. No cloud module3,intake/admission or provider change. Real D01-D06/D08 remain closed.",
+  "preservation": "806 original/855 checked-source controls;only2 accepted prior OTP binding changes;45routes/29core hashes/6sources/18expertIDs retained;original119command/70dispatch entries span32files/29unchanged. No old assertion altered.",
+  "remaining": "Actual private provider/OTP/session/reload/signout/revocation;private submission/full mission UI;canonical organisations;independent delegation/participants/economics and exhaustive legacy dynamic acceptance.",
+  "rollback": "Keep exposure off or redeploy compatible c594;preserve additive schema,original sources/evidence/money/history. No down migration.",
+  "branchBudget": "local5/remote6/distinct8/max8;existing name reused;current private submission source stashed for clean release and restored/dropped afterward."
+}
