@@ -8,6 +8,7 @@ import { OperatorInvitationHint } from '../../components/operator-invitation-hin
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
 import { readNeonAuthConfig } from '@corridra/config';
+import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
@@ -124,6 +125,7 @@ export default async function Page() {
           {requestIssuer && (
             <div id="customer-requests" tabIndex={-1}>
               <CustomerRequests
+                detailsEnabled={customerRequestDetailsEnabled()}
                 subject={data.user.id}
                 issuer={requestIssuer}
                 statuses={missionStatus.options}

@@ -42,10 +42,13 @@ export function FounderOverview() {
           Sample customer workspace provisioning and membership have a tested backend. Sample
           workspace screens remain <StatusBadge tone="caution">GATED</StatusBadge>. Private sample
           request progress has a tested backend; its account view is implemented with exposure
-          closed. Full customer mission administration, company linking and independent delegation
-          administration remain <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must
-          implement and verify these separately. The owner and relevant legal, infrastructure,
-          security and provider reviewers must supply the independent activation evidence in{' '}
+          closed. Original submitted requirements can be reopened through a separately gated
+          creator-only detail workspace. These are unverified customer inputs, not research or
+          accepted commercial outcomes. Full customer mission administration, company linking and
+          independent delegation administration remain{' '}
+          <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must implement and verify
+          these separately. The owner and relevant legal, infrastructure, security and provider
+          reviewers must supply the independent activation evidence in{' '}
           <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped sharing
           remains available.
         </dd>

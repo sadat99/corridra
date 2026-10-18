@@ -53,3 +53,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Under pipefail, bound output with sed -n rather than head so SIGPIPE cannot abort a verification batch.
 - Assert each scripted replacement matched before writing; a silent no-op must not start verification.
 - Derive live API probe URLs from the actual handler/action inventory; a directory name alone is not an endpoint.
+- Build live API probe paths from discovered route files before execution;verify header directives when production frameworks add stricter cache-control values.

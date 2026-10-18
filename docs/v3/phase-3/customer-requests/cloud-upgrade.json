@@ -1,0 +1,44 @@
+{
+  "result": "verified bounded optional customer module3 install on isolated child only",
+  "project": "odd-pond-26265871",
+  "branch": "br-silent-tree-b18dmm1n",
+  "parent": "br-lingering-sea-b1eob57e",
+  "database": "corridra",
+  "role": "corridra_migrator",
+  "canonicalModule": "packages/db/customer-migrations/0003_private_customer_requests.sql",
+  "moduleSha256": "f5ce0b4dd4bb652dd50f53ab5f48b5c2a827c238a4ecc200124e920c34ef2def",
+  "guardedSqlSha256": "54de68f860dcbf494f6b635245e6936c7d7a414491cf1db37c063bb93459f8cb",
+  "preflight": "Read-only DO succeeded before mutation",
+  "apply": "Guarded DO succeeded atomically;all preservation assertions passed",
+  "repeat": "Same exact guarded DO succeeded without changing receipts",
+  "preserved": [
+    "29 exact core source hashes and full receipts",
+    "Both prior customer source hashes and full receipts",
+    "All old app/identity/customer/customer_private table row digests",
+    "All old function definitions and ACLs",
+    "All old table ACLs/RLS/policies"
+  ],
+  "after": {
+    "coreCount": 29,
+    "customerCount": 3,
+    "principals": 0,
+    "workspaces": 0,
+    "requestAdmissions": 0,
+    "ownedRequests": 0,
+    "newRLSTables": 4,
+    "runtimeReadPort": true,
+    "authReadPort": false,
+    "runtimePrivateTableRead": false
+  },
+  "restrictedTests": {
+    "result": "pass",
+    "transport": "Existing private0600 restricted credentials/sessionful WSS with managed proxy/TLS;no credentials logged",
+    "runtimeNoProof": "42501",
+    "runtimePrivateTableRead": "42501",
+    "authReadPort": "42501",
+    "failedPreliminaryProbes": "Connector role-group login had no password;not counted as app denial. Migration role cannot SET ROLE runtime;not bypassed. Actual existing restricted logins then verified expected42501."
+  },
+  "blastRadius": "Only empty isolated new module3 objects and receipt. No production/default/sterile branch,provider/user/session/OTP,admission,intake destination,flags,money or existing events changed.",
+  "actualProviderAcceptance": "NOT VERIFIED;no controlled tester credentials/session available;no provider token/OTP extraction or administrative verification",
+  "rollback": "Leave flags off;retain additive module/history. No destructive down migration."
+}

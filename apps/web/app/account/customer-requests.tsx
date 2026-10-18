@@ -95,6 +95,7 @@ export function CustomerRequests(props: {
   issuer: string;
   statuses: readonly string[];
   canSubmit?: boolean;
+  detailsEnabled?: boolean;
 }) {
   return <PrivateRequests key={props.issuer + ':' + props.subject} {...props} />;
 }
@@ -103,11 +104,13 @@ function PrivateRequests({
   issuer,
   statuses,
   canSubmit = false,
+  detailsEnabled = false,
 }: {
   subject: string;
   issuer: string;
   statuses: readonly string[];
   canSubmit?: boolean;
+  detailsEnabled?: boolean;
 }) {
   const [status, setStatus] = useState<Status>('loading');
   const [requests, setRequests] = useState<RequestRow[]>([]);
@@ -234,6 +237,11 @@ function PrivateRequests({
             aria-label={'Sample request saved ' + time(request.createdAt)}
           >
             <h3>Sample request</h3>
+            {detailsEnabled && (
+              <a className="text-link" href={'/account/requests/' + request.id}>
+                Open request details
+              </a>
+            )}
             <p>
               Saved <time dateTime={request.createdAt}>{time(request.createdAt)}</time>
             </p>

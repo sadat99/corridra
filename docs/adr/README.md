@@ -38,3 +38,5 @@ ADR 014 preview-only deployment was amended by ADR 015 for the retained syntheti
 Forward status, 17 October 2026: ADR032's original test-policy conflict was resolved by its documented independently optional customer module, with full original core tests retained. Synthetic provisioning/collaboration backends are verified; exposure and private provider acceptance remain gated. Read its forward amendments and the V3 ledger instead of treating the historical index label as current implementation state.
 
 [ADR034](0034-custom-production-origin.md) records the owner-reported navigation repair:owned production subdomain as the exact canonical origin,provider allowlist preservation,host-scoped cookie implications and rollback. This is an origin configuration change,not a new identity or commercial activation.
+
+| [0035](0035-private-original-request-details.md) | Creator-only original submitted request details;separate opt-in module |
