@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL: implemented/local acceptance passed;full exact-head CI/merge/release pending;whole V3 unfinished",
+  "result": "PARTIAL: bounded source scope verified,merged and deployed with exposure closed;whole V3 unfinished",
   "baseline": "3ad4e8de6d43f85a4f701f0241bcdcd162110197 (verified PR71 original request detail release)",
   "requirements": ["V3-06-004", "V3-04-015", "V3-04-046", "V3-05-019", "V3-05-023", "V3-02-041"],
   "existing": "Unchanged V2 delivery_authorized/delivery_report/delivery_respond;MissionPassport/MissionExperienceView/comparison and original monetary formatting;fresh customer proof boundary",
@@ -14,9 +14,9 @@
     "integration": "12 passed(3.63s):real restricted PG,canonical report equality,creator/type/SQL denial,revocation/expiry/locked late read,save/remove/reply idempotency,immutable records,audit,populated old state preservation,27entry exhaustive pagination",
     "ui": "11 passed(17.8s):actual component protocols,including malformed quotation currency/meeting timezone safe failure;all prior10protocol assertions retained",
     "gate": "2 passed(4.1s),actual current compiled production page/API defaultoff,desktop/mobile/privateheaders",
-    "lintTypesBuild": "Final current-source lint/types/build pass after currency/time-zone validation and pagination hardening;full required exact-head CI pending",
+    "lintTypesBuild": "Full exact-head CI passed format/lint/typecheck/unit/build/security;see release.json",
     "visual": "Actual compiled brand CSS/font;mobile original-script/quotation/currency/comparison inspected. Uses existing professional components;no performance/UX improvement claim.",
-    "runtime": "Installed local Chromium151;CI pinned Chromium verification pending",
+    "runtime": "LocalChromium151 and required CI pinnedChromium passed;real managed-provider acceptance still NOT VERIFIED",
     "failures": [
       "Initial two declaration protocols exposed controlled textarea nested-label lookup drift on remount;fixed product with explicit stable label/id,all unchanged assertions pass.",
       "Initial defaultoff gate tests used preceding compiled app and returned404;unchanged503 assertion passes after rebuilding new route manifest. No test weakened."
@@ -34,5 +34,6 @@
   "featureFlags": "CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED defaultoff;workspace/delivery flags required;synthetic-only/production hard-disabled;D01-D06/D08 closed",
   "actualProviderAcceptance": "NOT VERIFIED;controlled tester credential/session unavailable. Independent engineering continues.",
   "remaining": "Full customer commercial authoring and standalone company portfolios/canonical organisation authority;independent delegation/participants/onboarding/confidentiality;organiser fees/costs/refunds/settlements and Corridra packaging;full legacy/security/usability and independent live-operation approvals",
-  "rollback": "Keep exposure off or deploy compatible3ad4 source. Preserve additive schema,canonical business records and immutable command/history receipts;no down migration."
+  "rollback": "Keep exposure off or deploy compatible3ad4 source. Preserve additive schema,canonical business records and immutable command/history receipts;no down migration.",
+  "release": "release.json"
 }
