@@ -1,0 +1,102 @@
+{
+  "result": "verified bounded gated private-submission source release;actual private-provider journey NOT VERIFIED;whole V3 PARTIAL",
+  "pr": 70,
+  "baseline": "66cfbbc5653398a5cbcf94caac83da27ee264ecc",
+  "testedHead": "a5a394b6e3836bb006d15acec0a05d430e8e1e58",
+  "testedTree": "4441b70e0cb1383837a44316441dfdc0a6902ec2",
+  "merge": "9b213510eeeca38ab4f91cfe2d9133c0cb712613",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39087997045,
+    "job": 117558513895,
+    "result": "success",
+    "integrationFiles": 31,
+    "integrationTests": 261,
+    "publicBrowsers": 106,
+    "protectedBrowsers": 48,
+    "formatLintTypesUnitBuildSecurity": "pass",
+    "CodeQL": "skipped;D04 remains open",
+    "quotes": [
+      "Test Files 31 passed (31)",
+      "Tests 261 passed (261)",
+      "106 passed (2.8m)",
+      "48 passed (10.9m)"
+    ]
+  },
+  "artifact": {
+    "id": 12122675047,
+    "digest": "sha256:385f434a89e752f5389d47699445cbcd3eb2b5c0854e6be23e22bbc3ee107bd4",
+    "sizeInBytes": 20291628,
+    "expiresAt": "2026-10-21T02:16:14Z",
+    "scope": "Synthetic browser component and actual local route evidence;not actual managed provider authentication"
+  },
+  "production": {
+    "id": "dpl_HQYX1RdPJhirMMJJPMVVfBPrNiuF",
+    "url": "corridra-qmpf3ytgs-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "9b213510eeeca38ab4f91cfe2d9133c0cb712613",
+    "regions": ["fra1"],
+    "aliases": ["c.obsidianglobal.studio", "corridra.vercel.app"],
+    "target": "production"
+  },
+  "preview": {
+    "id": "dpl_9cumkaFp3UPLqoSPWthbaWaYKke1",
+    "url": "corridra-ldy2ajwp2-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "9b213510eeeca38ab4f91cfe2d9133c0cb712613",
+    "regions": ["fra1"],
+    "checks": [
+      "/api/customer-requests:503,no-store/no-referrer",
+      "/account/request/[workspaceId]:200,unavailable,no-store/no-referrer",
+      "/verify-email:200,one-time-code input"
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 16,
+    "checks": [
+      ["/", 200, "same-origin"],
+      ["/signup", 200, "same-origin"],
+      ["/signin", 200, "same-origin"],
+      ["/verify-email", 200, "same-origin"],
+      ["/operator/setup", 200, "same-origin"],
+      ["/account", 200, "same-origin"],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["staff", 401],
+      ["nonendpoint", 404],
+      ["anonymous-session", 200],
+      ["hosting/signin", 307],
+      ["hosting/operator/setup", 307],
+      ["private-page", 200, "closed"],
+      ["hosting-private-page", 307]
+    ],
+    "command": {
+      "id": "cmd_595e480e92b04f23b59f7c3b373e",
+      "exitCode": 0,
+      "durationMs": 1369
+    },
+    "sandbox": {
+      "id": "sbx_8bAjI0AVpm5uATHSeeOQZmz7RhYB",
+      "status": "stopped",
+      "independentReadback": true,
+      "persistent": false,
+      "source": "none",
+      "env": "none",
+      "snapshots": "none"
+    },
+    "probeCorrections": "Initial guessed workspace/access path returned404;correct actual /api/customer-workspace-access route preserved503 assertion. Dynamic production page correctly adds private,no-cache,no-store,max-age=0,must-revalidate;checked exact no-store directive rather than literal header equality. Follow-up probe regex escaping error corrected with directive parsing. Original application tests/permissions unchanged;failed probes not counted as acceptance.",
+    "discardedProbes": [
+      "sbx_cyTCh3fuJYEcTPCBj7jHDH4R7Orr",
+      "sbx_EDjK1OLIkb0t4U3cPvJyDcyrh4X3",
+      "sbx_aK11pq3oqAyeVTy9Cs8UrkJGX9Zg"
+    ],
+    "allDiscardedStoppedReadback": true
+  },
+  "featureFlags": "Both exposure flags off;synthetic-only/production hard-disabled;D01-D06/D08 independently closed.",
+  "isolatedDatabase": "Reviewed optional0003 installed only isolated child with guarded original data/function/ACL/RLS/policy/history preservation. No customer admissions,intake destination,provider identities or flags changed. See ../customer-requests/cloud-upgrade.json.",
+  "remaining": "Actual private provider/OTP/session/reload/signout/revocation acceptance blocked by unavailable controlled tester credentials/session. Private request intake/progress is not complete customer commercial administration. Canonical organisations,buyer/supplier research/shortlists/qualification/quotations/meetings/decisions/results,independent delegation/participants/economics and exhaustive dynamic legacy acceptance remain unfinished.",
+  "rollback": "Keep flags off or redeploy compatible66cf source;preserve additive schema,original source/evidence/money/history. No down migration.",
+  "branchBudget": "local5/remote6/distinct8/max8;reused existing branch,dependency PRs and necessary environments retained."
+}

@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL: implemented/local checks pass;exact-head CI and release pending;exposure off",
+  "result": "VERIFIED bounded gated source release PR70;actual private-provider acceptance NOT VERIFIED;whole V3 PARTIAL",
   "baseline": "66cfbbc5653398a5cbcf94caac83da27ee264ecc (verified saved-request UI PR69)",
   "requirements": [
     "V3-06-004",
@@ -28,9 +28,10 @@
   },
   "states": "draft/restore,pending/reload/exact retry,storage denied/no-send,malformed ack,permission denied,abort/context change,hidden-page authority reload,saved metadata,explicit local forget,confirmed/failed logout,unavailable gated route",
   "preservation": "806 original/863 current controls,only2 accepted prior OTP differences,zero new loss;45routes/29core hashes/6sources/18expertIDs PASS;119command/70dispatch entries span32files/29unchanged. Current source preserves original public receipt visibility/defaults;private mode hides that separate receipt panel contextually,account/public paths retained.",
-  "flags": "Both gates default-off/synthetic-only/production hard-disabled. No cloud module3/intake/admission/provider change. D01-D06/D08 closed.",
-  "remaining": "Actual private provider/OTP/session/HTTP creation/reload/logout/revocation acceptance;full customer commercial mission workspace;canonical organisations;independent delegation/participants/economics;full legacy dynamic acceptance.",
-  "rollout": "Current disabled source remains core-only compatible. Optional module3/intake/admission readiness must precede any isolated exposure. Deploy exact accepted source with flags off.",
+  "flags": "Both gates default-off/synthetic-only/production hard-disabled. Reviewed optional cloud module3 installed only isolated synthetic child;no intake/admission/provider/flag change. D01-D06/D08 closed.",
+  "remaining": "Actual managed-provider OTP/session/HTTP/reload/logout/revocation acceptance blocked by unavailable controlled tester credentials/session. Full customer commercial workspace,canonical organisations,independent delegation/participants/economics and full legacy dynamic acceptance remain unfinished.",
+  "rollout": "Exact checked merge9b21351 deployed READY to production and configured acceptance preview with flags off. Reviewed optional module3 installed only isolated child;no intake destination/admissions or feature activation.",
   "rollback": "Keep exposure off/redeploy compatible66cf source. Preserve all additive backend/original sources/evidence/money/history;no down migration.",
-  "branchBudget": "Reuse existing branch;local5/remote6/distinct8/max8;preserve dependency PRs and required environments."
+  "branchBudget": "Reuse existing branch;local5/remote6/distinct8/max8;preserve dependency PRs and required environments.",
+  "releaseEvidence": "release.json;../customer-requests/cloud-upgrade.json"
 }
