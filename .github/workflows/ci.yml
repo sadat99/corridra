@@ -84,6 +84,7 @@ jobs:
             .cache/v3-invitation-ui/after/
             .cache/v3-owner-team-ui/after/
             .cache/v3-request-ui/after/
+            .cache/v3-private-intake/after/
           if-no-files-found: ignore
           retention-days: 3
       - uses: actions/upload-artifact@v7

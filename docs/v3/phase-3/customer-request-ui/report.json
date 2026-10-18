@@ -1,5 +1,5 @@
 {
-  "result": "PARTIAL: focused UI/database verification passed; exact-head CI/merge/deploy pending",
+  "result": "verified bounded gated UI release;whole V3 PARTIAL",
   "baseline": "backend PR68 bd3f7e566b924a99869e06aadfe8764f66afe674 pending merge",
   "requirements": [
     "V3-06-004",
@@ -42,5 +42,7 @@
   "missing": "New private account submission form/full mission administration are explicitly unavailable; no fake creation button. Actual private managed-provider session/OTP/reload/sign-out/revocation walkthrough remains NOT VERIFIED. Canonical organisations, independent organiser/participant/economics and full legacy role/action/state coverage remain separate gaps.",
   "flags": "CORRIDRA_CUSTOMER_REQUESTS_ENABLED remains default-off/synthetic-only/production hard-disabled. No cloud module3,intake configuration,admission or activation. D01-D06/D08 remain closed.",
   "rollback": "Disable exposure/redeploy compatible source; preserve all additive backend/original sources/evidence/money/history. No schema rollback.",
-  "evidence": "verification/component-local.txt;verification/database-local.txt;self-audit-14.json; CI retains only synthetic fixture screenshots3days,not private auth screens."
+  "evidence": "verification/component-local.txt;verification/database-local.txt;self-audit-14.json; CI retains only synthetic fixture screenshots3days,not private auth screens.",
+  "exactHeadCI": "a661/full treecf514:CI39085338486/job117550571307 SUCCESS,31files261integration/104public/38protected/build/static/security/unit;CodeQL skipped,D04 open",
+  "release": "PR69 normal merge66cf matches full tree;production9H8/configuredpreviewBtY READY/exact66cf/fra1;15live+2preview checks pass;see release.json"
 }

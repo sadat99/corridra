@@ -1,0 +1,13 @@
+# Private request submission through the existing guided intake
+
+Status: implemented and locally verified;exact-head CI/merge/release pending. V3-06-004 remains PARTIAL. This is sample request creation/persistent receipt progress,not full customer commercial mission administration.
+
+Reuse canonical customer request API/module3 and the existing contextual `Intake` component. Public defaults,original technical/commercial fields,receipt capability,old commands and all original assertions remain intact. The selected-workspace page requires both closed flags,fresh verified provider identity,independent request admission and active selected membership. Creation links require admitted request access. POST retains its unchanged independent proof/admission/member checks and shared intake budgets. No new API/SQL/RLS/migration/money/event/provider or dependency.
+
+Private browser draft/pending keys are scoped by pinned issuer,subject and workspace. Persist exact normalized input and command before HTTP;freeze uncertain submissions for same-command retry across lost responses/reload. Storage failure sends no new command;malformed acknowledgement cannot claim success. Browser forget explicitly does not cancel a server request. Denial clears this scope;context changes abort old reads/writes. Hiding/restoring reloads server authority before resuming a private draft. Original source retention and independent revocation remain binding. No receipt bearer is returned or stored by this private flow.
+
+After the unchanged provider SDK confirms logout,clear only this feature's private browser keys. Failed logout retains recovery;public receipt/draft and staff identity/MFA are independent. New account subpaths have no-store/no-referrer. Default-off page returns honest unavailable state without optional provider/schema access.
+
+Local10 new component cases,one unchanged actual public/canonical intake case,two actual closed-page browser checks and16 unchanged public intake/entry regressions pass. Source gate is closed in all cloud environments;actual private provider/OTP/session/logout acceptance remains NOT VERIFIED. Before enabling isolated sample use,install optional module3 and separately evidence intake destination/admission readiness. D01-D06/D08 remain closed;no real missions,outreach,inference,payments or provider/account changes.
+
+Exact-head CI must run format/lint/types/unit/security/database/permissions/build/public/protected checks. Preserve source/history and all role/deep-link controls. Release only exact checked merge,verify actual READY/aliases and bounded live closed-route checks. Roll back exposure/compatible source;never down-migrate or rewrite canonical records.

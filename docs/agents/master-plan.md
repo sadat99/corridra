@@ -149,3 +149,7 @@ Separate UI packet on ledger54 uses private creator-only GET with canonical stat
 ### 18 October 2026: verified private request foundation release
 
 PR68 mergedc594 with exactbd3 full-tree CI260/104/31,production4tBn READY and configured previewHxR READY.15 production/2preview checks pass;all customer/request flags remain off,production hard-disabled,no cloud module3/admission/intake change. Ledger55/release.json is current memory. Separate saved-request discovery UI is locally verified but unpublished;private submission/full mission/organisation/delegation/participant/economics and actual private-provider acceptance remain pending.
+
+### 18 October2026: saved-request UI release and private submission candidate
+
+Ledger58 is current:69 merged/deployed66cf with CI261/104/38,15live/2preview checks and exposure closed. Private submission through existing contextual Intake is locally verified11/2/16 with exact retry/storage/context/logout safeguards;full source acceptance pending. No cloud module3/admission/intake/provider/real activation. Full mission/organisation/delegation/participant/economics and private-provider acceptance remain separate.

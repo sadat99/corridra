@@ -94,6 +94,7 @@ export function CustomerRequests(props: {
   subject: string;
   issuer: string;
   statuses: readonly string[];
+  canSubmit?: boolean;
 }) {
   return <PrivateRequests key={props.issuer + ':' + props.subject} {...props} />;
 }
@@ -101,10 +102,12 @@ function PrivateRequests({
   subject,
   issuer,
   statuses,
+  canSubmit = false,
 }: {
   subject: string;
   issuer: string;
   statuses: readonly string[];
+  canSubmit?: boolean;
 }) {
   const [status, setStatus] = useState<Status>('loading');
   const [requests, setRequests] = useState<RequestRow[]>([]);
@@ -281,10 +284,18 @@ function PrivateRequests({
           Load more saved requests
         </button>
       )}
-      <p>
-        New account request submission is not available here yet. Requests sent through the public
-        form still need their private receipt.
-      </p>
+      {canSubmit ? (
+        <p>
+          <a className="text-link" href="/account#customer-workspaces">
+            Choose a workspace to send a private sample request
+          </a>
+        </p>
+      ) : (
+        <p>
+          New account request submission is not available here yet. Requests sent through the public
+          form still need their private receipt.
+        </p>
+      )}
     </section>
   );
 }
