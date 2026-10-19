@@ -90,7 +90,7 @@
   "rollback": "dpl_EdF8jdWxohcntZe93LBa5nU4hgMt (PR84 release)",
   "vercel": {
     "ignoredBuildStep": "set to bash \"$(git rev-parse --show-toplevel)/scripts/vercel-ignore-build.sh\" after PR87; prior value unreadable through the API; rollback is clearing the setting",
-    "verification": "pending: first docs-only push after this receipt"
+    "verification": "First docs-only push (6626002) was NOT skipped: the step ran and printed 'build: no usable previous deployment commit', so it failed open as designed but never reached a docs-only decision. Fixed in the same PR by fetching the previous commit by SHA and falling back to a tree comparison with main. Confirmation of an actual skip is pending the next documentation-only push."
   },
   "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed; profile, draft and economics modules are not installed in any cloud database",
   "probeSandboxes": "two ephemeral fra1 sandboxes, each independently stopped"
