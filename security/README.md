@@ -10,7 +10,7 @@ See the [current control boundaries](../docs/implementation/deferred-controls.md
 
 CodeQL is a separate analysis/upload control. The local scanners above are not substitutes. For a private repository, confirm GitHub Code Security entitlement and activation before setting `CODEQL_ENABLED=true`; do not activate a paid plan without the owner's decision.
 
-1. An account administrator opens <https://github.com/sadat99/corridra/settings/security_analysis> and verifies Code Security/code scanning is available and enabled.
+1. An account administrator opens <https://github.com/sadat99/corridra/settings/security_analysis> and verifies Code Security/code scanning is available and enabled. This repository uses the existing advanced workflow. Keep GitHub Default setup disabled for these same analyses; if Default setup was enabled, switch back to Advanced setup before using this workflow to avoid conflicting uploads.
 2. Open <https://github.com/sadat99/corridra/settings/variables/actions> and create/update the repository variable `CODEQL_ENABLED` to `true`. It is a non-secret activation flag, not a credential. No tokens belong in source, chat or evidence.
 3. Run <https://github.com/sadat99/corridra/actions/workflows/security.yml> against the intended source after the workflow's manual trigger reaches main. PRs, main pushes and the existing weekly schedule also trigger it.
 4. Inspect the actual `analyze` job, analysis upload and <https://github.com/sadat99/corridra/security/code-scanning>. Record exact source/run, both JavaScript/TypeScript and Python results, and reviewed findings. A configuration summary, skipped job, queued run or successful checkout is not a successful scan. D04 stays open until this evidence exists.
