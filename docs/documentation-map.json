@@ -724,6 +724,16 @@
       "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
     },
     {
+      "path": "docs/adr/0046-private-organiser-programme-economics.md",
+      "classification": "Architecture contract/index",
+      "use": "Organiser-recorded programme fees, costs and margins; separate from Corridra revenue; no money moves"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Organiser economics: requirement IDs, paths, states covered, gaps and rollback"
+    },
+    {
       "path": "docs/adr/0044-private-customer-organisation-profiles.md",
       "classification": "Architecture contract/index",
       "use": "Private self-reported customer organisation profiles; never written to the global catalogue"
@@ -797,6 +807,16 @@
       "path": "docs/v3/history/ledger-chunk-115.md",
       "classification": "Exact historical execution entry",
       "use": "Completed chunk115 PR83 merge and organisation-profile entry; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-116.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk116 PR84 merge and production release entry; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-117.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk117 guided request drafts entry; hash-verified, not current state"
     }
   ]
 }

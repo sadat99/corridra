@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react'
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
 );
+const ProgrammeEconomics = lazy(() =>
+  import('./programme-economics').then((module) => ({ default: module.ProgrammeEconomics })),
+);
 type Programme = {
   id: string;
   workspaceId: string;
@@ -26,6 +29,7 @@ type Props = {
   participantsEnabled?: boolean;
   missionSharesEnabled?: boolean;
   contextEnabled?: boolean;
+  economicsEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -62,8 +66,10 @@ function ScopedProgrammes({
   participantsEnabled = false,
   missionSharesEnabled = false,
   contextEnabled = false,
+  economicsEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
+  const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
@@ -348,6 +354,29 @@ function ScopedProgrammes({
                             issuer={issuer}
                             workspaceId={workspaceId}
                             missionSharesEnabled={missionSharesEnabled}
+                            programmeId={p.id}
+                          />
+                        </Suspense>
+                      )}
+                    </>
+                  )}
+                  {participantsEnabled && economicsEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => setFinanceProgramme(financeProgramme === p.id ? null : p.id)}
+                      >
+                        {financeProgramme === p.id
+                          ? 'Hide sample finances'
+                          : 'Record sample fees and costs'}
+                      </button>
+                      {financeProgramme === p.id && (
+                        <Suspense fallback={<p role="status">Loading sample finance tools…</p>}>
+                          <ProgrammeEconomics
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
                             programmeId={p.id}
                           />
                         </Suspense>
