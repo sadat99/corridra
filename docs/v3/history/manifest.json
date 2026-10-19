@@ -115,6 +115,24 @@
       "kind": "ledger-chunks",
       "throughChunk": 117,
       "meaning": "Exact completed guided-request-drafts implementation entry; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-118.md",
+      "bytes": 501,
+      "sha256": "812610d4897d5daddaec46c63b35d5d708504d925edc649cf0501439c5cd48cb",
+      "kind": "ledger-chunks",
+      "throughChunk": 118,
+      "meaning": "Exact completed PR86 merge entry; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-119.md",
+      "bytes": 1018,
+      "sha256": "c4dc37bad2cb04157dd22de735041d0dae68ed834ffa63b6afec8872c164ef97",
+      "kind": "ledger-chunks",
+      "throughChunk": 119,
+      "meaning": "Exact completed organiser programme economics implementation entry; historical, not live status"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

@@ -1,0 +1,5 @@
+## Chunk119: organiser programme economics (source, local evidence)
+
+Built ADR046: optional module customer-programme-economics-migrations (append-only ledger of fees, payments, planned or actual expenses, obligations and Corridra service fees; exact bigint amounts; compensating corrections; owner and admin only through the existing participant management check), service, /api/customer-programme-economics and a finance panel on each programme in the planner. Recorded money is the organiser's own and unverified; Corridra revenue and trade values are not touched, nothing is collected, nothing is converted. [Acceptance record](v3/phase-3/customer-programme-economics/bounded-plan.md).
+
+Local results (PostgreSQL16): economics integration 20 passed; component spec 25 passed incl. axe at 320, 390, 768, 1440; typecheck clean. 11 requirements moved to PARTIAL with evidence (V3-06-007 from MISSING); V3-02-075 stays NOT VERIFIED; none marked verified. Exact-head CI, preview and real-user usability are unverified.

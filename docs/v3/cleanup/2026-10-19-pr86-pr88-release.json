@@ -1,0 +1,97 @@
+{
+  "scope": "PR85 documentation, PR86 guided request drafts, PR87 Ignored Build Step script and PR88 organiser programme economics; product remains PARTIAL, every new feature flag off",
+  "prs": {
+    "86": {
+      "mergedSource": "e31566ed47a64c4d44fa7628830d1e247569412c",
+      "testedHead": "246f7a5bcd5e40a2b68c819b5d116a2b1d008e8b",
+      "baseAtMerge": "7f699c84b884b41887cdec87bff16740d6805139",
+      "mergeTreeMatches": true,
+      "ci": {
+        "run": 39234573020,
+        "job": 118000425495,
+        "conclusion": "success"
+      },
+      "codeQL": {
+        "run": 39234573097,
+        "conclusion": "success",
+        "analyses": ["actions", "javascript-typescript", "python"]
+      }
+    },
+    "87": {
+      "mergedSource": "8bbbca25ddc9a28224254f851d1c1702aa377402",
+      "testedHead": "5316f2d7baf4337750ad494e95637054bba6aaf7",
+      "baseAtMerge": "e31566ed47a64c4d44fa7628830d1e247569412c",
+      "mergeTreeMatches": true,
+      "ci": {
+        "run": 39237715566,
+        "job": 118010747355,
+        "conclusion": "success"
+      },
+      "codeQL": {
+        "run": 39237715809,
+        "conclusion": "success",
+        "analyses": ["actions", "javascript-typescript", "python"]
+      }
+    },
+    "88": {
+      "mergedSource": "aebb527a35bc5b06819797be884baeedd30dd4d7",
+      "testedHead": "ac54b69e0eb184021bee4dbf7fefad5c6e0ffd05",
+      "baseAtMerge": "8bbbca25ddc9a28224254f851d1c1702aa377402",
+      "mergeTreeMatches": true,
+      "ci": {
+        "run": 39240188866,
+        "job": 118018858870,
+        "conclusion": "success"
+      },
+      "codeQL": {
+        "run": 39240188823,
+        "conclusion": "success",
+        "analyses": ["actions", "javascript-typescript", "python"]
+      },
+      "localEvidence": "economics integration 20 passed; component UI 25 passed with axe at four widths; planner specs 22 passed; closed-gate 14 passed; full integration 443 of 447 locally with the four ClamAV-dependent failures also failing on pristine main (exact-head CI is the authority and passed)"
+    }
+  },
+  "production": [
+    {
+      "id": "dpl_7R9Lixk92paBHLGyJs2WxNrdJhDB",
+      "state": "READY",
+      "source": "8bbbca25ddc9a28224254f851d1c1702aa377402",
+      "live": {
+        "count": 61,
+        "result": "pass",
+        "meaning": "56 prior checks plus 5 guided-draft checks"
+      },
+      "superseded": true
+    },
+    {
+      "id": "dpl_9ZxfddkTcqhPoMexsCeUvgu1pVqH",
+      "url": "corridra-82cnh02q4-sadat-os.vercel.app",
+      "state": "READY",
+      "source": "aebb527a35bc5b06819797be884baeedd30dd4d7",
+      "regions": ["fra1"],
+      "aliases": [
+        "corridra.vercel.app",
+        "c.obsidianglobal.studio",
+        "corridra-sadat-os.vercel.app",
+        "corridra-git-main-sadat-os.vercel.app"
+      ],
+      "aliasError": null,
+      "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+      "live": {
+        "count": 64,
+        "result": "pass",
+        "command": "cmd_99703c0619ed4603b0ba5ddabdc9",
+        "exitCode": 0,
+        "meaning": "61 prior checks plus 3 economics checks (APIs closed 503 with private headers)",
+        "assertions": "closed APIs answer 503 with no-store and no-referrer; private pages 200; hosting redirects answer 307 on corridra.vercel.app"
+      }
+    }
+  ],
+  "rollback": "dpl_EdF8jdWxohcntZe93LBa5nU4hgMt (PR84 release)",
+  "vercel": {
+    "ignoredBuildStep": "set to bash \"$(git rev-parse --show-toplevel)/scripts/vercel-ignore-build.sh\" after PR87; prior value unreadable through the API; rollback is clearing the setting",
+    "verification": "pending: first docs-only push after this receipt"
+  },
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed; profile, draft and economics modules are not installed in any cloud database",
+  "probeSandboxes": "two ephemeral fra1 sandboxes, each independently stopped"
+}

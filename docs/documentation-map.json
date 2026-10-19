@@ -817,6 +817,16 @@
       "path": "docs/v3/history/ledger-chunk-117.md",
       "classification": "Exact historical execution entry",
       "use": "Completed chunk117 guided request drafts entry; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-118.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk118 PR86 merge entry; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-119.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk119 organiser programme economics entry; hash-verified, not current state"
     }
   ]
 }
