@@ -68,6 +68,8 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 
 ## Bounded V3 context
 
+- Keep the existing shared handoff continuously resumable: update the ledger at meaningful checkpoints, before long waits and before stopping or switching branches. Record exact branch/base, dirty files, implemented versus planned scope, running checks, blockers and the next concrete action. Push reviewable checkpoints; never claim a pending or unverified capability shipped. Do not create competing handoff documents.
+
 - Start every work chunk with `node scripts/v3-context.mjs`; follow `docs/v3/CONTEXT.md`. Keep the active ledger within 12 KiB and preserve older evidence in linked, hashed archives before retiring it from the active index.
 - Read the full contract once per new session; check its hash and reread changed or relevant sections afterward. Reuse unchanged skills already read in the session. This never waives governing instructions or required verification.
 - Query only affected requirement IDs or one historical chunk. Never print full historical ledgers, PR diffs, raw provider configurations or tool catalogues for routine status work.

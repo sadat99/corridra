@@ -25,3 +25,12 @@ V1 Parts 1-8 remain the foundation; the revised five-part V2 programme and UX-01
 The [implementation matrix](implementation-matrix.json) is a dated handoff index. Its linked legacy UX-06 coverage snapshot contains 773 NOT_YET_VERIFIED,3 VERIFIED and 1 PARTIAL records. These are historical static-ledger labels, not current V3 runtime acceptance. Compare fresh source/tests and retain unresolved gaps.
 
 The entire previous current-plan document and dated forward notes are preserved in [historical programme text](../v3/history/implementation-plan-before-shared-handoff.md), hash-verified by the [history manifest](../v3/history/manifest.json). Originals and source uploads remain unchanged. Use the [shared handoff](../START_HERE.md) and [verification guide](../verification-guide.md) to reproduce checks; append work-log/ledger results before finishing.
+
+## Next implementation packet: organisation profiles
+
+Implement now under the owner's standing request; no profile product code exists yet. Use the active ledger checkpoint and preserve PR83 independently.
+
+- Authority: customer-session.ts/customer-workspaces.ts, customer-migrations0001/0002 and ADR032/038. app.organisation is globally readable: never insert private profile input there or merge identity by name/email.
+- Write the ADR, optional additive profile migration/installer, fresh-session service, same-origin API and account UI. Reuse the existing workspace, event/audit/outbox authority. Private append-only revisions, expected-version conflicts, exact retries, owner/admin write, active-member read and explicit self-reported provenance. Global canonical linking stays partial until rights-safe implementation exists.
+- Prove populated-upgrade preservation, tenant/role/session/direct-SQL denial, revocation/expiry, concurrency/history/events, changed account/issuer, recovery, keyboard/axe/widths and private headers. Follow existing programme-context patterns. Keep all original tests and mandatory exact-head release gates; no provider/admission/live activation.
+- Continue customer commercial authoring and independent organiser coordination/reporting/economics afterward. Private tester steps must not block engineering.
