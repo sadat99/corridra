@@ -3,6 +3,14 @@ import {
   customerMissionDraftsEnabled,
 } from '@corridra/auth/customer-mission-drafts';
 import {
+  CustomerProgrammeTemplateService,
+  customerProgrammeTemplatesEnabled,
+} from '@corridra/auth/customer-programme-templates';
+import {
+  CustomerProgrammeCoordinationService,
+  customerProgrammeCoordinationEnabled,
+} from '@corridra/auth/customer-programme-coordination';
+import {
   CustomerProgrammeEconomicsService,
   customerProgrammeEconomicsEnabled,
 } from '@corridra/auth/customer-programme-economics';
@@ -213,6 +221,28 @@ function createServices() {
       authPool,
       {
         enabled: customerParticipantsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerProgrammeTemplates: new CustomerProgrammeTemplateService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammeTemplatesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerProgrammeCoordination: new CustomerProgrammeCoordinationService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammeCoordinationEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
