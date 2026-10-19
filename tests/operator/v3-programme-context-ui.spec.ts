@@ -148,6 +148,41 @@ test('owner saves exact scope, date offsets, version and explicit participant sh
   });
   expect(command).not.toHaveProperty('ownerId');
 });
+test('short change reason stays editable without sending a rejected save', async ({ page }) => {
+  const commands: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-context**', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: snapshot() });
+    const body = route.request().postDataJSON();
+    commands.push(body);
+    return route.fulfill({
+      json: {
+        ...snapshot(),
+        commandId: body.commandId,
+        currentVersion: 2,
+        context: { ...context, version: 2 },
+      },
+    });
+  });
+  await page.goto(origin);
+  const reason = page.getByLabel('Reason for change', { exact: true });
+  await reason.fill('');
+  await reason.pressSequentially('ab');
+  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  expect(await reason.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true);
+  expect(commands).toHaveLength(0);
+  await expect(reason).toHaveValue('ab');
+  await reason.pressSequentially('c');
+  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Programme details saved.');
+  expect(commands).toHaveLength(1);
+  expect(commands[0]).toMatchObject({
+    reason: 'abc',
+    workspaceId,
+    programmeId,
+    expectedVersion: 1,
+  });
+});
 test('wrong acknowledgement retains exact command for safe retry', async ({ page }) => {
   const commands: Record<string, unknown>[] = [];
   await page.route('**/api/customer-programme-context**', (route) => {

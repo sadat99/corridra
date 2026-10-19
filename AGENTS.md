@@ -62,3 +62,4 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Keep live-probe stdout compact and map indexed results to the versioned path inventory so connector string limits cannot truncate release evidence.
 - Register each new private API in the framework private-header overrides before checking the compiled route; handler headers alone can be overridden.
 - Discover customer migration directories with `rg --files packages/db`; never infer a directory from a module name.
+- After pnpm metadata drift, use the explicit CLI warn option or pinned installed executables; an environment-only option did not suppress bootstrap in this managed runtime.
