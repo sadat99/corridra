@@ -14,6 +14,7 @@ import { migrateCustomerProgrammeEconomics } from '../packages/db/src/customer-p
 import { migrateCustomerProgrammeCoordination } from '../packages/db/src/customer-programme-coordination-migrate';
 import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-programme-templates-migrate';
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
+import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -53,6 +54,7 @@ const registries = [
   'customer_programme_coordination_migrations',
   'customer_programme_templates_migrations',
   'customer_mission_share_migrations',
+  'customer_admission_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -71,6 +73,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['programme coordination', migrateCustomerProgrammeCoordination],
   ['programme templates', migrateCustomerProgrammeTemplates],
   ['mission sharing', migrateCustomerMissionShares],
+  ['open synthetic admission', migrateCustomerAdmission],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);

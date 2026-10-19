@@ -32,6 +32,8 @@ export type CustomerWorkspaceOptions = {
   synthetic: boolean;
   production: boolean;
   issuer: string;
+  // Owner opt-in, default off: admit a fresh email-verified account on first use.
+  openAdmission?: boolean;
 };
 
 // Server-only boundary. Identity comes exclusively from a fresh provider response.
@@ -113,6 +115,9 @@ export class CustomerSessionBoundary {
     );
     let db: DatabaseClient | undefined;
     try {
+      // The admission function re-checks the fresh attestation in the database; the proof is removed below.
+      if (this.options.openAdmission === true)
+        await this.auth.query('SELECT customer_private.admit_verified_subject($1)', [hash]);
       db = await this.runtime.connect();
       await db.query('BEGIN');
       await db.query(

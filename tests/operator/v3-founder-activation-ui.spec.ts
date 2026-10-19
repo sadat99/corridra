@@ -100,7 +100,12 @@ const module_ = (key: string, label: string, state: string) => ({
 });
 const body = (over: Record<string, unknown> = {}) => ({
   role: 'owner',
-  environment: { deployment: 'preview', data: 'synthetic' },
+  environment: {
+    deployment: 'preview',
+    data: 'synthetic',
+    productionUnlocked: false,
+    openAdmission: false,
+  },
   modules: [
     module_('workspaces', 'Customer workspaces', 'ON'),
     module_('requests', 'Private requests', 'OFF'),
@@ -150,6 +155,39 @@ test('shows the environment, the count and each module with a plain reason', asy
   await expect(page.getByText('checked separately by the owner')).toBeVisible();
   expect(seen).toHaveLength(1);
   expect(new URL(seen[0]!.url).searchParams.get('tenant')).toBe(tenant);
+});
+
+test('says plainly when production is unlocked and accounts are admitted automatically', async ({
+  page,
+}) => {
+  await mock(page, () => ({
+    json: body({
+      environment: {
+        deployment: 'production',
+        data: 'synthetic',
+        productionUnlocked: true,
+        openAdmission: true,
+      },
+    }),
+  }));
+  await page.goto(origin);
+  const summary = page.getByText(/This deployment is/);
+  await expect(summary).toContainText('production');
+  await expect(summary).toContainText('Production is unlocked for synthetic use by the owner.');
+  await expect(summary).toContainText('Any email-verified account is admitted automatically.');
+});
+
+test('an older response without the unlock fields still renders and claims nothing', async ({
+  page,
+}) => {
+  await mock(page, () => ({
+    json: body({ environment: { deployment: 'preview', data: 'synthetic' } }),
+  }));
+  await page.goto(origin);
+  const summary = page.getByText(/This deployment is/);
+  await expect(summary).toContainText('preview');
+  await expect(summary).not.toContainText('unlocked');
+  await expect(summary).not.toContainText('admitted automatically');
 });
 
 test('a failed request shows an error and assumes nothing is on', async ({ page }) => {
