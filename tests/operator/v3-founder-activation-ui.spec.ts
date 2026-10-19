@@ -125,9 +125,12 @@ async function mock(page: Page, respond: () => { status?: number; json: unknown 
 test('shows the environment, the count and each module with a plain reason', async ({ page }) => {
   const seen = await mock(page, () => ({ json: body() }));
   await page.goto(origin);
-  await expect(page.getByRole('status').first()).toContainText('preview');
-  await expect(page.getByRole('status').first()).toContainText('synthetic');
-  await expect(page.getByRole('status').first()).toContainText('1 of 5 customer modules are on');
+  const summary = page.getByText(/This deployment is/);
+  await expect(summary).toContainText('preview');
+  await expect(summary).toContainText('synthetic');
+  await expect(summary).toContainText('1 of 5 customer modules are on');
+  // Another panel on the page owns the single status region, so this one must not add one.
+  await expect(page.getByRole('status')).toHaveCount(0);
   const table = page.getByRole('region', { name: 'Customer modules' });
   await expect(table.getByRole('row')).toHaveCount(6);
   await expect(table.getByRole('row', { name: /Customer workspaces/ })).toContainText('On');

@@ -74,7 +74,7 @@ export function FounderActivation({ tenant }: { tenant: string }) {
       });
     return () => controller.abort();
   }, [tenant]);
-  if (view.status === 'loading') return <p role="status">Checking which modules are on.</p>;
+  if (view.status === 'loading') return <p aria-live="polite">Checking which modules are on.</p>;
   if (view.status === 'error')
     return (
       <p role="alert">
@@ -84,7 +84,7 @@ export function FounderActivation({ tenant }: { tenant: string }) {
   const { data } = view;
   return (
     <div>
-      <p role="status">
+      <p aria-live="polite">
         This deployment is <strong>{data.environment.deployment}</strong> with{' '}
         <strong>{data.environment.data}</strong> data. {data.counts.on} of {data.counts.total}{' '}
         customer modules are on.
