@@ -32,7 +32,7 @@ Merged as PR86 (chunk118, ADR045, bounded plan under docs/v3/phase-3/customer-mi
 
 ## Organiser economics packet
 
-Implemented as source in chunk119 (ADR046, bounded plan under docs/v3/phase-3/customer-programme-economics) and awaiting exact-head CI and release. Delegation OS coordination and reporting (capacity, satisfaction, consented outcomes) and programme templates are next.
+Merged as PR88 (ADR046, bounded plan under docs/v3/phase-3/customer-programme-economics); the ledger records the release state. Flag unset, module not installed in any cloud database. Programme coordination and reporting (ADR047) and programme templates (ADR048) are next.
 
 ## Organisation profiles packet
 
