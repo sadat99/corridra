@@ -615,6 +615,13 @@ test("a draft becomes a submitted request only against the creator's own current
   // One request can close only one draft.
   const d2 = await make();
   expect((await rejected(close('alice', d2, mine))).code).toBe('42501');
+  // The database itself refuses a second draft claiming the same request, even past the function checks.
+  await expect(
+    f.owner.query(
+      "INSERT INTO customer_private.mission_draft_close(draft_id,outcome,request_id,actor_id,command_id) VALUES($1,'SUBMITTED',$2,$3,$4)",
+      [d2, mine, principals.alice, randomUUID()],
+    ),
+  ).rejects.toMatchObject({ code: '23505' });
   // A revoked request is no longer a valid link.
   const revoked = await submitRequest('alice');
   await revokeSyntheticCustomerRequest(f.owner, {

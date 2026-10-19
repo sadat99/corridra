@@ -29,7 +29,7 @@ CREATE TABLE customer_private.mission_draft_close (
  actor_id uuid NOT NULL REFERENCES customer_private.principal(id),
  command_id uuid NOT NULL,
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
- CHECK((outcome='SUBMITTED')=(request_id IS NOT NULL)),UNIQUE(actor_id,command_id)
+ CHECK((outcome='SUBMITTED')=(request_id IS NOT NULL)),UNIQUE(actor_id,command_id),UNIQUE(request_id)
 );
 CREATE TRIGGER mission_draft_immutable BEFORE UPDATE OR DELETE ON customer_private.mission_draft FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
 CREATE TRIGGER mission_draft_revision_immutable BEFORE UPDATE OR DELETE ON customer_private.mission_draft_revision FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
