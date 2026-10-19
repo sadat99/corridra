@@ -2,7 +2,7 @@
 
 The contract and release requirements remain authoritative. This workflow reduces repeated context, not verification.
 
-- Read the full contract at the start of a new session. Within that session, check for changes before rereading it; inspect affected sections when necessary.
+- Before substantive product work, read the full contract and governing product vision once in the session. Then check for changes before rereading unchanged content; inspect affected sections as needed. Documentation maintenance preserves these sources and checks its relevant authorities.
 - Start every work chunk with `node scripts/v3-context.mjs`. Update the active ledger at the end. Never infer state from chat memory.
 - Keep the active ledger within 12 KiB: current source/deployment, active work, blockers, evidence links, next action and recent results. Archive older results forward with exact hashes and links before removing them from the active file.
 - The complete current requirement register is `phase-0/requirements.json`. Query only affected IDs: `node scripts/v3-context.mjs requirement V3-02-046`.

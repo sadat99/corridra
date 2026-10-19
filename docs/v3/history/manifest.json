@@ -9,5 +9,60 @@
   "requirementCount": 507,
   "requirementIdentitySha256": "ffd2b76c57b08fabaaca94735183f63dfa0d630e748a9bf137bd90ef1f5c1d60",
   "baselineCommit": "7aa9396d880412c1cf7c2af60fef2c4e121a8619",
-  "meaning": "Archive is an exact historical snapshot,not current acceptance. Status/evidence may advance;requirement identity/text and historical evidence remain preserved."
+  "meaning": "Archive is an exact historical snapshot,not current acceptance. Status/evidence may advance;requirement identity/text and historical evidence remain preserved.",
+  "additionalArchives": [
+    {
+      "sourcePath": "CLAUDE.md",
+      "archive": "docs/v3/history/claude-entry-before-shared-handoff.md",
+      "bytes": 1668,
+      "sha256": "44adef2cfe2ffad5fbd1b90e4d3d3946f8bbd6441244f7f1abf96a9766767582",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/START_HERE.md",
+      "archive": "docs/v3/history/start-here-before-shared-handoff.md",
+      "bytes": 6863,
+      "sha256": "4c4359f68073a4e536805ca934284c362b5b4015f8885af733ddb45bf3425d9b",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/agents/README.md",
+      "archive": "docs/v3/history/agent-protocol-before-shared-handoff.md",
+      "bytes": 3841,
+      "sha256": "ba0f62e9fecf00082b0d00de6572d3c8610af1a19e3e7673323e6040fb1dc8eb",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/agents/master-plan.md",
+      "archive": "docs/v3/history/agents-master-plan-before-shared-handoff.md",
+      "bytes": 66460,
+      "sha256": "f40bed4a946793b81f44c142d335f77d2198aaa83572aaf817f249824c6e9f05",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/implementation/current-plan.md",
+      "archive": "docs/v3/history/implementation-plan-before-shared-handoff.md",
+      "bytes": 26635,
+      "sha256": "8ff22d4d0785c8990a7701420b429bc348eec86588829c8c9ce8c5f7f15f5b20",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/v3/STATUS.md",
+      "archive": "docs/v3/history/v3-status-before-shared-handoff.md",
+      "bytes": 10074,
+      "sha256": "63b84c4112a5475a7cd48a39445aa1d98869220c788541d4da0f732784ae6808",
+      "meaning": "Exact dated working-document snapshot;relative links use original sourcePath;not current execution state"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunks-110-111.md",
+      "bytes": 4306,
+      "sha256": "e5ccd9cc840cb11a8ef78f03f994b260d676945a357ce59daef53dbc6a1b2de2",
+      "kind": "ledger-chunks",
+      "throughChunk": 111,
+      "meaning": "Exact completed chunk110-111 bytes;historical results and next steps are not current state"
+    }
+  ],
+  "productVision": "docs/product/corridra-product-vision-v2.1.md",
+  "productVisionSha256": "86d6546576068a4deb38a60965cc1388e70dc98f11bdc6f133adacc94caee395"
 }

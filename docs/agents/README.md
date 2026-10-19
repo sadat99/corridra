@@ -1,41 +1,17 @@
-# Working with more than one agent
+# Shared agent protocol
 
-Corridra is built by two coding agents plus the owner: **Claude Code** (web and desktop) and **Codex** (web). Both read this repository and neither remembers the other's session. The repository is the only shared memory. This file is the protocol that keeps both agents aligned with one product vision.
+Claude Code and Codex share this repository, not memory. Both start with the existing [developer handoff](../START_HERE.md) and compact [current ledger](../V3_LEDGER.md). The ledger owns live state; the [current plan](../implementation/current-plan.md) owns work order; the contract and governing product vision own requirements. Historical next-step prose is not current instruction.
 
-## Rules for every agent, every task
+1. Inspect current main, working changes and open PRs before editing. Read the latest ledger before each chunk and update it afterward. Consult relevant work-log/history entries for affected work or conflicts rather than loading the entire log or ten unrelated entries.
+2. Read the full contract and product vision once per session before substantive product changes. Follow relevant ADR/module/nested instructions and [UI direction](ui-direction.md) for every visible change. Preserve original supplied documents.
+3. Work in one bounded concern: files, risks, existing/new behavior, requirement IDs, positive/denial/recovery checks. Existing backend and authority are not UI scope. Never fabricate controls or outcomes.
+4. Keep fewer than nine Git branches. Run the branch-budget script before publishing; preserve open dependencies, bound environments and unfinished work. Use the existing checkout; no worktree unless requested. Never overwrite another active branch or force shared history.
+5. Append your own [work-log](work-log.md) entry and update the ledger in the same PR. Never rewrite another agent's entries. Preserve exact dated documents when reorganising guides. If decisions conflict, record both positions and leave the choice to the owner.
+6. Report exact commands, process exits, source/environment and observed limits. Old tests, component fixtures and anonymous responses do not prove actual managed-provider acceptance. Keep designed, implemented, tested, deployed, enabled and commercially approved separate.
+7. All required checks and security/privacy/money/readiness constraints remain binding. Read [deployment and rollback](../runbooks/deployment.md) before release. Use one saved-output CI watcher; never skip required checks to save tokens.
 
-1. **Read first.** `AGENTS.md`, the [master plan](master-plan.md) (the single current plan and its revision history), [product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) (what Corridra is, for whom and why), `docs/START_HERE.md`, [UI direction](ui-direction.md) for any visible change, and the last ten entries of the [work log](work-log.md). Fetch `origin/main` and check open PRs before editing.
-2. **One design authority.** All visible work follows [ui-direction.md](ui-direction.md). Do not invent a new colour, font, spacing value, component or tone. If the direction is missing something, add it there in the same PR, with the reason, instead of improvising locally.
-3. **Document as you finish, in the same PR.** Append one entry to [work-log.md](work-log.md) using the template below, and update [master-plan.md](master-plan.md) if scope, order, a decision or a status changed. An entry that says what changed but not why, or that overstates what was verified, is a defect.
-4. **Never rewrite the other agent's history.** The log is append-only. To correct an earlier entry, add a new entry that references it.
-5. **Report evidence, not intent.** Name the exact commands run and their results. State what was not run. Keep "implemented", "tested", "deployed" and "externally approved" separate.
-6. **When the two agents conflict,** do not pick silently. Record both positions in the log and leave the decision to the owner.
-7. **Keep fewer than nine Git branches, including main.** Delete a branch as soon as it no longer affects the system: fully merged, no open PR, no environment bound to it. Run `node scripts/check-git-branch-budget.mjs <branch>` before publishing; it refuses a ninth. Never delete unfinished work or open dependency PRs to meet the limit.
-8. **The backbone is not UI scope.** Domain packages, API handlers, authentication, RLS, migrations, money, evidence and permission rules, and the production gates change only with an explicit owner request and an ADR where `AGENTS.md` requires one.
+## Work-log entry
 
-## Work log entry template
+Record request, why, changed files/behavior, exact verification and omissions, preserved contracts, decisions/risks, next action, and PR/tested head. Append a correction if earlier evidence is superseded; do not silently replace failures or another agent's history.
 
-```
-## YYYY-MM-DD, <agent>, <short title>
-- Request: what the owner asked, in their words where possible.
-- Why: the problem or decision behind it.
-- What changed: files and behaviour, grouped by purpose.
-- How it was verified: exact commands and results. Not run: ...
-- Preserved: contracts, tests, routes, permissions that were deliberately left alone.
-- Decisions and trade-offs: including options rejected and why.
-- Open items and risks: what is still wrong or unverified.
-- Next step: one concrete action for whoever picks this up.
-- PR / commit: link and head SHA.
-```
-
-## Where things live
-
-| Need                                  | File                                    |
-| ------------------------------------- | --------------------------------------- |
-| Current programme status              | `docs/implementation/current-plan.md`   |
-| What the UI must look and behave like | `docs/agents/ui-direction.md`           |
-| What each agent did and why           | `docs/agents/work-log.md`               |
-| The plan, decisions and open items    | `docs/agents/master-plan.md`            |
-| SaaS readiness audit (15 Oct 2026)    | `docs/agents/saas-readiness-audit.md`   |
-| Full UX10X requirement set            | `docs/ux10x/master-handoff.md`          |
-| Coverage evidence                     | `docs/ux10x/reconciliation-2026-10-15/` |
+The [master-plan pointer](master-plan.md),[working product summary](product-vision.md),[documentation catalogue](../documentation-map.md) and [bounded-context workflow](../v3/CONTEXT.md) provide targeted navigation. The original protocol is preserved in the history manifest.
