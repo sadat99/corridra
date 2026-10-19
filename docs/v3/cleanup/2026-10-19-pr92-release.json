@@ -1,0 +1,52 @@
+{
+  "scope": "PR92 founder activation view in the Business overview; product remains PARTIAL, every customer feature flag off",
+  "pr": {
+    "number": 92,
+    "mergedSource": "58ac24dfca308f2ac96c26d44faa7a7d44ee0f5e",
+    "testedHead": "c81b0b1688560e6dc39d32ce17b438d0b305c843",
+    "baseAtMerge": "d76ca4e799a64d552ccb10f7daa2a61deb389b88",
+    "mergeTreeMatches": true,
+    "ci": {
+      "run": 39266586088,
+      "job": 118107632813,
+      "conclusion": "success",
+      "note": "full operator suite including the founder journey and the governance spec"
+    },
+    "codeQL": {
+      "run": 39266586157,
+      "conclusion": "success",
+      "analyses": ["actions", "javascript-typescript", "python"]
+    },
+    "earlierRedHead": {
+      "head": "0e9f0704d2090409bc85d5a18938af43c3434345",
+      "run": 39262635555,
+      "cause": "the new panel added role=status text; the governance spec expects one status element in the operations region, and the founder journey then found no operator membership",
+      "fix": "aria-live instead of role=status, plus a component assertion that the panel adds none"
+    }
+  },
+  "production": {
+    "id": "dpl_BsKPfaEVuwqGzZzUk37BLDJdjB1T",
+    "url": "corridra-b8dbxefwy-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "58ac24dfca308f2ac96c26d44faa7a7d44ee0f5e",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "live": {
+      "count": 72,
+      "result": "pass",
+      "command": "cmd_fc4806ae5d60415bab5b81af4404",
+      "exitCode": 0,
+      "meaning": "71 prior checks plus the founder activation read answering 401 without a session"
+    }
+  },
+  "rollback": "dpl_BwunTCzxWSk6trofUqTrvrUsutVP (PR90 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed",
+  "probeSandboxes": "one ephemeral fra1 sandbox sbx_duW2aqwk1a57Xo7ClUFi296ZrVw3, stopped with readback"
+}
