@@ -1,4 +1,8 @@
 import {
+  CustomerOrganisationProfileService,
+  customerOrganisationProfilesEnabled,
+} from '@corridra/auth/customer-organisation-profiles';
+import {
   CustomerProgrammeContextService,
   customerProgrammeContextEnabled,
 } from '@corridra/auth/customer-programme-context';
@@ -201,6 +205,17 @@ function createServices() {
       authPool,
       {
         enabled: customerParticipantsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerOrganisationProfiles: new CustomerOrganisationProfileService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerOrganisationProfilesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
