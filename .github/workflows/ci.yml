@@ -52,6 +52,8 @@ jobs:
         run: pnpm typecheck
       - name: Source document integrity
         run: pnpm test
+      - name: Bounded shared handoff and historical integrity
+        run: node scripts/v3-context.mjs verify
       - name: Isolated PostgreSQL
         run: pnpm db:local
       - name: Reviewed database migrations and roles

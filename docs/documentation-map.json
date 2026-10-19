@@ -596,7 +596,7 @@
     {
       "path": "docs/V3_LEDGER.md",
       "classification": "Current execution ledger",
-      "use": "Re-read for each V3 work chunk; requirement IDs, evidence, next actions and exact test results"
+      "use": "Compact current state,evidence links,active chunk and next action;current507requirement register and exact historical archives are linked"
     },
     {
       "path": "docs/v3/STATUS.md",
@@ -717,6 +717,51 @@
       "path": "docs/v3/phase-3/customer-programme-context/bounded-plan.md",
       "classification": "Current bounded implementation plan",
       "use": "Optional synthetic programme details; acceptance evidence and remaining gaps"
+    },
+    {
+      "path": "docs/v3/CONTEXT.md",
+      "classification": "Current execution workflow",
+      "use": "Bounded context reads and exact historical preservation;never substitutes for verification or release gates"
+    },
+    {
+      "path": "docs/v3/history/ledger-through-109.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact ledger bytes through chunk109;manifest hashes preserve evidence;superseded statuses are not current acceptance"
+    },
+    {
+      "path": "docs/v3/history/claude-entry-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior CLAUDE.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/start-here-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior docs/START_HERE.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/agent-protocol-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior docs/agents/README.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/agents-master-plan-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior docs/agents/master-plan.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/implementation-plan-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior docs/implementation/current-plan.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/v3-status-before-shared-handoff.md",
+      "classification": "Immutable historical working-document snapshot",
+      "use": "Exact prior docs/v3/STATUS.md;original relative-link base is in history manifest;not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunks-110-111.md",
+      "classification": "Exact historical execution entries",
+      "use": "Completed chunks110-111,hash-verified;use current ledger for live state"
     }
   ]
 }

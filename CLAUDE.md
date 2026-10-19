@@ -1,11 +1,9 @@
 # Corridra developer entry
 
-Read and follow [AGENTS.md](AGENTS.md), applicable nested instructions and [docs/START_HERE.md](docs/START_HERE.md) before editing.
+Follow [AGENTS.md](AGENTS.md), applicable nested instructions and the existing shared [developer handoff](docs/START_HERE.md).
 
-The authoritative current status is [docs/implementation/current-plan.md](docs/implementation/current-plan.md). Original V1 Parts 1–8 are the retained foundation; the revised five-part V2 programme was subsequently implemented, followed by UX-01 through UX-05 and bounded UX-06/access repairs. Do not resume old V1 Parts 9–12 or restart completed V2 tasks. Full UX10X action/state coverage remains unverified.
+Start with `git status --short`, fetch current main/open PR metadata, then `node scripts/v3-context.mjs` and `node scripts/v3-context.mjs verify`. The compact ledger is current state; historical plans and old next-task prose are not.
 
-Use the [implementation matrix](docs/implementation/implementation-matrix.json), complete source requirements, applicable ADRs and [verification guide](docs/verification-guide.md) to audit actual code and tests. Historical packets retain dated results and old next-step prose; the [documentation catalogue](docs/documentation-map.md) explains their role.
+Before substantive product work, read the full V3 contract and governing product vision once in the session. Query affected requirements and relevant ADR/module/UI instructions before editing. Preserve all original actions, authority, sources, exact money/history and closed real-operation gates. Never infer acceptance from a plan, deployed code or old test totals.
 
-Preserve originals, additive migrations/history, exact currencies and evidence semantics, configurable corridors, RLS, staff MFA, scoped capabilities and production-readiness gates. Customer identity alone grants no staff role. Use existing services rather than domain forks. Keep secrets and personal data out of source/test artifacts.
-
-Use isolated synthetic checks. Do not activate real customer operations, outreach, AI inference, payments or payouts. Follow current user instructions and the [deployment runbook](docs/runbooks/deployment.md): standing owner authorization permits correct checked merges and immediate exact-merge deployment, without waiving checks or external gates. Report actual evidence, limits and next action.
+Record exact verification and next action in the shared ledger/work log. Do not load full archives, full PR diffs or unrelated logs merely to resume. All mandatory release checks remain required.
