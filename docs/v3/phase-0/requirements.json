@@ -1007,9 +1007,11 @@
       "tests/integration/customer-programme-coordination.test.ts",
       "tests/operator/v3-programme-coordination-ui.spec.ts",
       "tests/operator/v3-participant-results-ui.spec.ts",
-      "tests/browser/v3-programme-coordination-gate.spec.ts"
+      "tests/browser/v3-programme-coordination-gate.spec.ts",
+      "docs/adr/0048-private-programme-templates.md",
+      "docs/v3/phase-3/customer-programme-templates/bounded-plan.md"
     ],
-    "nextAction": "A scoped programme report and participant feedback exist (ADR047). Repeatable programme templates are the next packet (ADR048) and are not built."
+    "nextAction": "A scoped programme report and participant feedback (ADR047) and repeatable programme templates (ADR048) exist as source and local tests. Exact-head CI, release and real-user usability remain unverified."
   },
   {
     "id": "V3-02-058",
@@ -3676,9 +3678,19 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 499,
     "requirement": "| Repeatable delegation templates and programmes | Recurring organiser value | P1 |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0048-private-programme-templates.md",
+      "docs/v3/phase-3/customer-programme-templates/bounded-plan.md",
+      "packages/db/customer-programme-templates-migrations/0001_repeatable_programme_templates.sql",
+      "packages/auth/src/customer-programme-templates.ts",
+      "tests/integration/customer-programme-templates.test.ts",
+      "tests/operator/v3-programme-templates-ui.spec.ts",
+      "tests/browser/v3-programme-templates-gate.spec.ts"
+    ],
+    "nextAction": "Organiser templates (a default purpose, capacity, task checklist and planned costs) can be written or captured, versioned, retired and applied to an empty or new programme as source and local tests (ADR048). Series, recurrence, cross-workspace sharing, a public library and cloning participants are not built."
   },
   {
     "id": "V3-06-011",

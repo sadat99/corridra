@@ -724,6 +724,16 @@
       "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
     },
     {
+      "path": "docs/adr/0048-private-programme-templates.md",
+      "classification": "Architecture contract/index",
+      "use": "Repeatable programme templates applied only to an empty programme; no participants, fees or payments"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-programme-templates/bounded-plan.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Programme templates: requirement IDs, paths, states covered, gaps and rollback"
+    },
+    {
       "path": "docs/adr/0047-private-programme-coordination-and-reporting.md",
       "classification": "Architecture contract/index",
       "use": "Programme tasks, capacity, attendance and consented participant results with a scoped organiser report; sends nothing"

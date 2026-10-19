@@ -8,8 +8,6 @@ import AxeBuilder from '@axe-core/playwright';
 const issuer = 'https://ep-coord-ui-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const workspaceId = '00000000-0000-4000-8000-000000000006';
 const programmeId = '00000000-0000-4000-8000-000000000007';
-const regA = '00000000-0000-4000-8000-0000000000a1';
-const regB = '00000000-0000-4000-8000-0000000000a2';
 let server: Server, origin: string;
 test.beforeAll(async () => {
   const result = await build({
