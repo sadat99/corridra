@@ -26,23 +26,23 @@
     "test:infrastructure": "python -B -m unittest discover -s tests -p neon_projects_test.py"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
+    "@axe-core/playwright": "4.14.0",
     "@neondatabase/serverless": "1.2.0",
-    "@playwright/test": "1.64.0",
+    "@playwright/test": "1.64.1",
     "@types/node": "24.10.1",
     "@types/pg": "8.23.1",
     "@types/ws": "8.18.2",
-    "@vercel/blob": "2.8.1",
+    "@vercel/blob": "2.8.2",
     "esbuild": "0.28.2",
     "eslint": "10.12.0",
     "https-proxy-agent": "9.1.0",
-    "prettier": "3.9.9",
+    "prettier": "3.9.10",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "undici": "8.11.2",
-    "vitest": "5.0.3",
+    "undici": "8.12.2",
+    "vitest": "5.0.5",
     "ws": "8.22.0",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   },
   "type": "module"
 }
