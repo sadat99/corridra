@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react'
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
 );
+const ProgrammeCoordination = lazy(() =>
+  import('./programme-coordination').then((module) => ({ default: module.ProgrammeCoordination })),
+);
 const ProgrammeEconomics = lazy(() =>
   import('./programme-economics').then((module) => ({ default: module.ProgrammeEconomics })),
 );
@@ -30,6 +33,7 @@ type Props = {
   missionSharesEnabled?: boolean;
   contextEnabled?: boolean;
   economicsEnabled?: boolean;
+  coordinationEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -67,9 +71,11 @@ function ScopedProgrammes({
   missionSharesEnabled = false,
   contextEnabled = false,
   economicsEnabled = false,
+  coordinationEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
+  const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
@@ -354,6 +360,33 @@ function ScopedProgrammes({
                             issuer={issuer}
                             workspaceId={workspaceId}
                             missionSharesEnabled={missionSharesEnabled}
+                            programmeId={p.id}
+                          />
+                        </Suspense>
+                      )}
+                    </>
+                  )}
+                  {participantsEnabled && coordinationEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() =>
+                          setCoordinationProgramme(coordinationProgramme === p.id ? null : p.id)
+                        }
+                      >
+                        {coordinationProgramme === p.id
+                          ? 'Hide coordination and report'
+                          : 'Coordinate and report'}
+                      </button>
+                      {coordinationProgramme === p.id && (
+                        <Suspense
+                          fallback={<p role="status">Loading sample coordination tools…</p>}
+                        >
+                          <ProgrammeCoordination
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
                             programmeId={p.id}
                           />
                         </Suspense>

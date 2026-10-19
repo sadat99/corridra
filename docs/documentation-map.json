@@ -724,6 +724,16 @@
       "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
     },
     {
+      "path": "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "classification": "Architecture contract/index",
+      "use": "Programme tasks, capacity, attendance and consented participant results with a scoped organiser report; sends nothing"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Programme coordination and reporting: requirement IDs, paths, states covered, gaps and rollback"
+    },
+    {
       "path": "docs/adr/0046-private-organiser-programme-economics.md",
       "classification": "Architecture contract/index",
       "use": "Organiser-recorded programme fees, costs and margins; separate from Corridra revenue; no money moves"

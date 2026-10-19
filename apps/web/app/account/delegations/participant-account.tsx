@@ -1,15 +1,24 @@
 'use client';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
+import { ParticipantResults } from './participant-results';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 export function ParticipantAccount(
-  props: ParticipantScope & { missionSharesEnabled?: boolean; contextEnabled?: boolean },
+  props: ParticipantScope & {
+    missionSharesEnabled?: boolean;
+    contextEnabled?: boolean;
+    coordinationEnabled?: boolean;
+  },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
 }
 function ScopedAccount(
-  props: ParticipantScope & { missionSharesEnabled?: boolean; contextEnabled?: boolean },
+  props: ParticipantScope & {
+    missionSharesEnabled?: boolean;
+    contextEnabled?: boolean;
+    coordinationEnabled?: boolean;
+  },
 ) {
   const [token, setToken] = useState(''),
     [label, setLabel] = useState(''),
@@ -184,6 +193,13 @@ function ScopedAccount(
                           issuer={props.issuer}
                           registrationId={r.id}
                           view="own"
+                        />
+                      )}
+                      {props.coordinationEnabled && (
+                        <ParticipantResults
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          registrationId={r.id}
                         />
                       )}
                       <button

@@ -56,3 +56,4 @@ ADR044: [Private organisation profiles](0044-private-customer-organisation-profi
 
 ADR045: [Private mission drafts](0045-private-customer-mission-drafts.md), optional creator-only guided request drafts that send through the unchanged private request path.
 ADR046: [Private organiser programme economics](0046-private-organiser-programme-economics.md), an optional organiser-recorded ledger of fees, payments, costs and margins that moves no money.
+ADR047: [Private programme coordination and reporting](0047-private-programme-coordination-and-reporting.md), an optional task board, capacity, attendance and consented participant feedback with a scoped organiser report that sends nothing and verifies nothing.

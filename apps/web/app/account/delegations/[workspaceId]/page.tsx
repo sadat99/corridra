@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammeEconomicsEnabled } from '@corridra/auth/customer-programme-economics';
+import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-programme-coordination';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
@@ -47,6 +48,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         workspaceId={id.data}
         participantsEnabled={customerParticipantsEnabled()}
         economicsEnabled={customerProgrammeEconomicsEnabled()}
+        coordinationEnabled={customerProgrammeCoordinationEnabled()}
       />
     </WorkspaceShell>
   );

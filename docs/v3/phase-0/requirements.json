@@ -925,9 +925,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 140,
     "requirement": "9. Assign responsibilities, local support and coordination tasks.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "A programme task board with titles, status, due dates and free-text assignee labels exists as source and local tests (ADR047). Account-linked assignment, reminders and participant-visible tasks are not built."
   },
   {
     "id": "V3-02-054",
@@ -936,8 +946,11 @@
     "line": 141,
     "requirement": "10. Manage participant communications, schedules and changes.",
     "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md"
+    ],
+    "nextAction": "Remains NOT VERIFIED and not built. Participant messaging is outreach and the gates stay closed; the coordination screen says messages, schedules and change notices are unavailable (ADR047)."
   },
   {
     "id": "V3-02-055",
@@ -964,9 +977,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 143,
     "requirement": "12. Track participant activity, consented outcomes and overall programme results.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "Organiser-recorded attendance and participant-reported, consented outcomes and feedback feed a scoped report (ADR047). Outcomes are unverified; qualified meetings from the commercial engine are not connected."
   },
   {
     "id": "V3-02-057",
@@ -974,9 +997,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 144,
     "requirement": "13. Produce scoped reporting, feedback and repeatable programme templates.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "A scoped programme report and participant feedback exist (ADR047). Repeatable programme templates are the next packet (ADR048) and are not built."
   },
   {
     "id": "V3-02-058",
@@ -1033,9 +1066,17 @@
     "status": "PARTIAL",
     "evidence": [
       "docs/v3/phase-3/participant-commercial-missions/release.json",
-      "docs/v3/phase-3/customer-programme-context/release.json"
+      "docs/v3/phase-3/customer-programme-context/release.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
     ],
-    "nextAction": "PR77-79 scoped consent/revocation/current-version projection and creator authority verified without organiser private commercial access. Full retention/legal/provider/all-audience acceptance remains unverified."
+    "nextAction": "Feedback and results are the participant's own, shared only by explicit choice, revisable and withdrawable, and have no money field (ADR047). Other participant controls are unchanged."
   },
   {
     "id": "V3-02-063",
@@ -1043,9 +1084,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 156,
     "requirement": "Organisers see programme activity and expressly permitted commercial information, not automatic access to private offers, contacts, contract values or individual negotiations.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "The organiser report shows only records the participant chose to share and no offers, contacts, contract values or negotiations (ADR047, role and consent behaviour tested)."
   },
   {
     "id": "V3-02-064",
@@ -1159,9 +1210,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 168,
     "requirement": "- Capacity, attendance and participant satisfaction.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "Capacity plan against active participants, organiser-recorded attendance and participant-shared satisfaction ratings are reported (ADR047). Real-user usability is unverified."
   },
   {
     "id": "V3-02-072",
@@ -1169,9 +1230,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 169,
     "requirement": "- Qualified meetings and documented business outcomes.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "Participant-reported outcomes by fixed kind, shared by consent, are reported (ADR047). They are not confirmed by Corridra and carry no commercial value; qualified meetings are not connected."
   },
   {
     "id": "V3-02-073",
@@ -1179,9 +1250,19 @@
     "heading": "Product 3 — Delegation OS",
     "line": 170,
     "requirement": "- Repeat business and programme performance.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0047-private-programme-coordination-and-reporting.md",
+      "docs/v3/phase-3/customer-programme-coordination/bounded-plan.md",
+      "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql",
+      "packages/auth/src/customer-programme-coordination.ts",
+      "tests/integration/customer-programme-coordination.test.ts",
+      "tests/operator/v3-programme-coordination-ui.spec.ts",
+      "tests/operator/v3-participant-results-ui.spec.ts",
+      "tests/browser/v3-programme-coordination-gate.spec.ts"
+    ],
+    "nextAction": "A count of returning participants across programmes of the same workspace and a programme report exist (ADR047). Revenue-based repeat business and benchmarks are not built."
   },
   {
     "id": "V3-02-074",
