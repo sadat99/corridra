@@ -1,0 +1,40 @@
+name: Install customer modules
+
+# Manual owner-run job. Reads the migrator login from the protected `customer-modules-install`
+# environment, so the credential never appears in chat, logs or the repository. The default input is a
+# read-only report; installing needs the exact word `yes`.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Type yes to install. Anything else only reports what is installed.'
+        required: true
+        default: 'no'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: install-customer-modules
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: customer-modules-install
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Report or install the customer modules
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          MIGRATION_DATABASE_HOST: ${{ vars.MIGRATION_DATABASE_HOST }}
+          INSTALL_APPLY: ${{ inputs.apply }}
+        run: pnpm exec tsx scripts/install-customer-modules.ts
