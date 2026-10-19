@@ -1,4 +1,5 @@
 'use client';
+import { ProgrammeContext } from './programme-context';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
@@ -24,6 +25,7 @@ type Props = {
   workspaceId: string;
   participantsEnabled?: boolean;
   missionSharesEnabled?: boolean;
+  contextEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -59,6 +61,7 @@ function ScopedProgrammes({
   workspaceId,
   participantsEnabled = false,
   missionSharesEnabled = false,
+  contextEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
@@ -317,6 +320,14 @@ function ScopedProgrammes({
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
                   <p>Planning record only · Sample data</p>
+                  {contextEnabled && (
+                    <ProgrammeContext
+                      subject={subject}
+                      issuer={issuer}
+                      workspaceId={workspaceId}
+                      programmeId={p.id}
+                    />
+                  )}
                   {participantsEnabled && (
                     <>
                       <button

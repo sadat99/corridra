@@ -1,0 +1,63 @@
+{
+  "audit": 30,
+  "chunk": 104,
+  "sourceControlsBefore": 806,
+  "sourceControlsAfter": 998,
+  "intentionalOriginalBindingChanges": "Only two previously accepted OTP bindings",
+  "unaccountedOriginalActions": [],
+  "hardReleaseConditions": [
+    {
+      "condition": "Original authorised actions reachable",
+      "evidence": "Source guard passes45routes29core6sources18expertIDs;AST806original/998current controls,no newly unaccounted loss. Full corrected-head browser CI pending."
+    },
+    {
+      "condition": "Authority and privacy preserved",
+      "evidence": "Optional exact canonical context grant;original function fallback/attributes/ACL/RLS preserved and tested. Active registration and explicit current-head sharing only. Read and write take the same canonical programme lock after workspace authority;proof rechecked after waits."
+    },
+    {
+      "condition": "Sources,money,evidence and history preserved",
+      "evidence": "Approved migration/source hashes retained;append-only canonical context and private immutable command/consent receipt. No original monetary/evidence/history rewrites. Original event/audit/outbox attribution verified."
+    },
+    {
+      "condition": "Commercial requirements retained",
+      "evidence": "Old company/quotation/currency/meeting/opportunity/export/staff paths unchanged. New context is programme planning,not a confirmed meeting or commercial outcome."
+    },
+    {
+      "condition": "Full organiser journey before SaaS acceptance",
+      "evidence": "Dates/market/purpose/time-zone authoring now local;eligibility/capacity/profiles/activities/coordination/economics/reporting and real provider acceptance remain partial/missing/unverified. No full SaaS acceptance claim."
+    },
+    {
+      "condition": "Canonical organisation and role correctness",
+      "evidence": "No identity or organisation merge,duplicate mission,staff impersonation or commercial authority transfer. Explicit CUSTOMER responsibility preserves old staff-owner meaning."
+    },
+    {
+      "condition": "Advanced operations discoverable",
+      "evidence": "All18expert destinations preserved;new lazy contextual tools under existing programme and own registration cards. No old export/recovery/action removed."
+    },
+    {
+      "condition": "Synthetic truth and activation",
+      "evidence": "Flag off by default,synthetic/nonproduction prerequisites and production hard off. No cloud DDL/provider/admission/intake orD01–D06/D08 activation;no live KPI/payments/outreach/inference."
+    },
+    {
+      "condition": "Browser/security/deployment evidence",
+      "evidence": "Local11PG pass including canonical read/write lock expiry and non-synthetic workspace denial;12finalUI and2compiled-route checks,format/lint/types/unit/build/source checks pass. Superseded first two heads deliberately cancelled for read-lock and reused synthetic-scope corrections;final fullCI/merge/deployment pending. Managed provider and full security/usability NOT VERIFIED."
+    },
+    {
+      "condition": "Complexity measured and bounded",
+      "evidence": "Actual320screenshot inspected/corrected,12UI cases cover keyboard/axe at320/390/768/1440;no measured improvement claim. Targeted date/timezone/context controls only;no fake agenda/finance controls."
+    }
+  ],
+  "wholeV3": "PARTIAL;Phase5GATED;actual managed-provider/full organiser acceptance NOT VERIFIED",
+  "currentIncrement": {
+    "status": "Local bounded source;corrected exact-head CI/release pending",
+    "supersededHead": "d366d1e76355302cfb88e7d12539f91e1529b9e9",
+    "supersededCI": 39176656074,
+    "lostHiddenFake": [],
+    "supersededHeads": [
+      "d366d1e76355302cfb88e7d12539f91e1529b9e9",
+      "99ef0e4831cb02f4eee5e02df77643da46d1535f"
+    ],
+    "supersededCIs": [39176656074, 39176925147]
+  },
+  "rollback": "Disable new port,retain additive canonical context,command and event history;compatible PR78 source;no down migration."
+}

@@ -1,6 +1,6 @@
 # ADR042: Participant-owned commercial missions and explicit programme summaries
 
-Status: bounded synthetic implementation; full exact-head acceptance pending. Requirements V3-02-049/V3-02-059/V3-02-061/V3-02-062/V3-02-063 remain PARTIAL/NOT VERIFIED as recorded in the ledger. Independent programme economics,coordination and real operation are not enabled.
+Status: bounded synthetic source verified via PR78; exact-head CI and matching gated source deployment recorded in participant-commercial-missions/release.json. Actual managed-provider and full organiser acceptance remain unverified. Requirements V3-02-049/V3-02-059/V3-02-061/V3-02-062/V3-02-063 remain PARTIAL/NOT VERIFIED as recorded in the ledger. Independent programme economics,coordination and real operation are not enabled.
 
 ## Actual preservation mapping
 

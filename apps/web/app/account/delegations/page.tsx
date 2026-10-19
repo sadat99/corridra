@@ -1,3 +1,4 @@
+import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
 import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { redirect } from 'next/navigation';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
@@ -34,6 +35,7 @@ export default async function Page() {
   return (
     <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="My sample delegations">
       <ParticipantAccount
+        contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
         subject={session.data.user.id}
         issuer={issuer}
