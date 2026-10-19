@@ -856,9 +856,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 134,
     "requirement": "3. Establish participant pricing, expected expenses and commercial objectives.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Participant fees due and planned expenses are recorded per programme (ADR046). Objectives are separate (PR79 context). No measured usability, no pricing templates, no real payment."
   },
   {
     "id": "V3-02-048",
@@ -936,9 +945,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 142,
     "requirement": "11. Record costs, payments and organiser economics where authorized.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Costs, receipts and organiser margins are recorded by owners and admins only (ADR046), as the organiser's own unverified entries. No payment is collected or held."
   },
   {
     "id": "V3-02-056",
@@ -1065,9 +1083,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 164,
     "requirement": "- Participant fees and payment status.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Fee due, payment recorded and a per-participant status are derived exactly per currency (ADR046). Status reflects organiser entries, not a confirmed payment."
   },
   {
     "id": "V3-02-068",
@@ -1075,9 +1102,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 165,
     "requirement": "- Organiser expenses and obligations.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Organiser expenses and obligations are recorded as planned or actual and separated from participant fees (ADR046)."
   },
   {
     "id": "V3-02-069",
@@ -1085,9 +1121,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 166,
     "requirement": "- Corridra platform/service fees.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "A Corridra service fee the organiser owes is recorded as an organiser cost (ADR046). It never writes to Corridra's own service ledger."
   },
   {
     "id": "V3-02-070",
@@ -1095,9 +1140,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 167,
     "requirement": "- Contribution margin per programme.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Margin if costs are as planned, margin on actual costs and cash margin are shown per currency with no conversion (ADR046). Not verified by real users."
   },
   {
     "id": "V3-02-071",
@@ -1135,9 +1189,18 @@
     "heading": "Product 3 — Delegation OS",
     "line": 172,
     "requirement": "Accounting separation is mandatory: Organiser revenue is not Corridra revenue. Participant trade values are not organiser revenue. Contributor obligations and supplier payments are not automatically Corridra expenses.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "The programme ledger holds only the organiser's own records. Participant trade values are not recorded, supplier and contributor obligations stay organiser costs, and Corridra revenue is untouched (ADR046, direct-SQL and role denial tested)."
   },
   {
     "id": "V3-02-075",
@@ -1146,8 +1209,11 @@
     "line": 174,
     "requirement": "Fees, refunds, cancellations and payment collections require explicit contracting, provider integration and applicable legal review before activation.",
     "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md"
+    ],
+    "nextAction": "Remains NOT VERIFIED. The organiser ledger records the organiser's own entries only and collects, holds and moves no money (ADR046); contracting, provider integration and legal review stay open before any activation."
   },
   {
     "id": "V3-02-076",
@@ -3489,9 +3555,19 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 496,
     "requirement": "| Delegation pricing, costs and organiser economics | Organiser business value | P0 for paid delegation offering |",
-    "status": "MISSING",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Organiser-recorded fees, payments, planned and actual costs, obligations, Corridra service fees and per-currency margins exist as source and local tests (ADR046, synthetic only, unverified, no money moved). Capacity, satisfaction and outcome reporting, templates, bulk pricing, refunds, invoicing and any real collection remain missing or gated."
   },
   {
     "id": "V3-06-008",
@@ -4264,9 +4340,18 @@
     "heading": "Financial truth",
     "line": 614,
     "requirement": "Keep separate:",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Organiser economics are kept in a private ledger separate from the commercial and service ledgers (ADR046). Other categories are unchanged."
   },
   {
     "id": "V3-08-017",
@@ -4284,9 +4369,18 @@
     "heading": "Financial truth",
     "line": 617,
     "requirement": "2. The delegation organiser's own revenue, costs and obligations.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "The organiser's own revenue, costs and obligations are recorded privately per programme (ADR046), unverified."
   },
   {
     "id": "V3-08-019",
@@ -4324,9 +4418,18 @@
     "heading": "Financial truth",
     "line": 622,
     "requirement": "Do not double-count financial flows. Record original currencies exactly. Derived conversions require sourced rates and explicit dates and rounding methods.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0046-private-organiser-programme-economics.md",
+      "docs/v3/phase-3/customer-programme-economics/bounded-plan.md",
+      "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql",
+      "packages/auth/src/customer-programme-economics.ts",
+      "tests/integration/customer-programme-economics.test.ts",
+      "tests/operator/v3-programme-economics-ui.spec.ts",
+      "tests/browser/v3-programme-economics-gate.spec.ts"
+    ],
+    "nextAction": "Organiser amounts are exact bigint minor units in the original currency, corrections are compensating entries, and totals are per currency with no conversion (ADR046). Derived conversions are not implemented."
   },
   {
     "id": "V3-08-023",

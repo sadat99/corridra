@@ -97,6 +97,24 @@
       "kind": "ledger-chunks",
       "throughChunk": 115,
       "meaning": "Exact completed PR83 merge and organisation-profile implementation entry; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-116.md",
+      "bytes": 825,
+      "sha256": "6cac74199842f3549d707a4aedf13652bda4331af16bc2506420e2ecc2a38b71",
+      "kind": "ledger-chunks",
+      "throughChunk": 116,
+      "meaning": "Exact completed PR84 merge and production release entry; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-117.md",
+      "bytes": 1336,
+      "sha256": "0ab3e9fb82864ba84d992640b9df7afdb79dcaed11fb4ea6bb1d43c7865b6a91",
+      "kind": "ledger-chunks",
+      "throughChunk": 117,
+      "meaning": "Exact completed guided-request-drafts implementation entry; historical, not live status"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

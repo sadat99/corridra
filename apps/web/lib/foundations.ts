@@ -3,6 +3,10 @@ import {
   customerMissionDraftsEnabled,
 } from '@corridra/auth/customer-mission-drafts';
 import {
+  CustomerProgrammeEconomicsService,
+  customerProgrammeEconomicsEnabled,
+} from '@corridra/auth/customer-programme-economics';
+import {
   CustomerOrganisationProfileService,
   customerOrganisationProfilesEnabled,
 } from '@corridra/auth/customer-organisation-profiles';
@@ -209,6 +213,17 @@ function createServices() {
       authPool,
       {
         enabled: customerParticipantsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerProgrammeEconomics: new CustomerProgrammeEconomicsService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammeEconomicsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',

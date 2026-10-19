@@ -668,3 +668,7 @@ Merged PR84 (248884b) after exact-head CI and CodeQL passed, deployed that commi
 ## 2026-10-19, Claude Code, PR85 merged and guided request drafts
 
 Merged PR85 (7f699c8) after exact-head CI. Built guided request drafts (ADR045): creator-only append-only drafts, sourcing-context prompts from the V3 contract tables, optional saved-profile prefill, and sending through the unchanged private request path. Preserved: the single-page request form, the request factory, app.mission, app.organisation, RLS, money, staff identity and gates D01-D06/D08. Local: drafts integration 19, guided UI 21, gates 10, typecheck/lint clean. Not verified: exact-head CI, preview, real users, cloud install. Next: push, PR, CI, then organiser economics (V3-06-007).
+
+## 2026-10-19, Claude Code, PR86 merged and organiser economics
+
+Merged PR86 (e31566e) after exact-head CI and CodeQL passed at 246f7a5. Opened PR87 for scripts/vercel-ignore-build.sh. Built organiser programme economics (ADR046): private append-only ledger, exact per-currency fees, payments, planned and actual costs, obligations, Corridra service fees and margins, owner and admin only, nothing collected or converted. Preserved: the planner and every earlier module, commercial and service ledgers, app.currency, RLS, staff identity and gates D01-D06/D08. Local: economics integration 20, component spec 25, typecheck clean. Not verified: exact-head CI, preview, usability, cloud module install. Next: merge PR87 on green, set the Ignored Build Step, then ship economics.

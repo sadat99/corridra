@@ -55,3 +55,4 @@ ADR043: [Canonical programme context](0043-customer-canonical-programme-context.
 ADR044: [Private organisation profiles](0044-private-customer-organisation-profiles.md), optional append-only self-reported customer profile; the globally readable catalogue is untouched.
 
 ADR045: [Private mission drafts](0045-private-customer-mission-drafts.md), optional creator-only guided request drafts that send through the unchanged private request path.
+ADR046: [Private organiser programme economics](0046-private-organiser-programme-economics.md), an optional organiser-recorded ledger of fees, payments, costs and margins that moves no money.

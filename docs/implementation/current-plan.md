@@ -28,7 +28,11 @@ The entire previous current-plan document and dated forward notes are preserved 
 
 ## Guided request drafts packet
 
-Implemented as source in chunk117 (ADR045, bounded plan under docs/v3/phase-3/customer-mission-drafts) and awaiting exact-head CI and release. Organiser economics (V3-06-007) and Delegation OS coordination are next.
+Merged as PR86 (chunk118, ADR045, bounded plan under docs/v3/phase-3/customer-mission-drafts); not deployed, flag unset.
+
+## Organiser economics packet
+
+Implemented as source in chunk119 (ADR046, bounded plan under docs/v3/phase-3/customer-programme-economics) and awaiting exact-head CI and release. Delegation OS coordination and reporting (capacity, satisfaction, consented outcomes) and programme templates are next.
 
 ## Organisation profiles packet
 
