@@ -307,7 +307,9 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
                 <input
                   id={id + key}
                   required
-                  minLength={key === 'organiser' || key === 'purpose' ? 11 : 2}
+                  minLength={
+                    key === 'organiser' || key === 'purpose' ? 11 : key === 'reason' ? 3 : 2
+                  }
                   maxLength={1000}
                   placeholder={
                     key === 'startsAt' || key === 'endsAt'
