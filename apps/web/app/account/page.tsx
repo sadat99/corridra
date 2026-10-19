@@ -12,6 +12,7 @@ import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaces } from './customer-workspaces';
+import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -133,6 +134,7 @@ export default async function Page() {
                 issuer={workspaceIssuer}
                 requestsEnabled={requestCreationEnabled}
                 programmesEnabled={customerProgrammesEnabled()}
+                profilesEnabled={customerOrganisationProfilesEnabled()}
               />
             </div>
           )}

@@ -70,6 +70,24 @@
       "kind": "ledger-chunks",
       "throughChunk": 112,
       "meaning": "Exact completed chunk snapshot; history only, not current state"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-113.md",
+      "bytes": 3847,
+      "sha256": "024bcd39fe0893ec505cfe1886f19dd400ade2bd0d894d9087e35e5be5153a94",
+      "kind": "ledger-chunks",
+      "throughChunk": 113,
+      "meaning": "Exact completed maintenance/CodeQL observations; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-114.md",
+      "bytes": 2536,
+      "sha256": "c691a9deaf025b2637c3bd431ce1c3890a0b2fd559f4069d6c6a11c04655d4b4",
+      "kind": "ledger-chunks",
+      "throughChunk": 114,
+      "meaning": "Exact completed credit-limit takeover checkpoint; historical, not live status"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

@@ -714,6 +714,11 @@
       "use": "Customer programme-context authority; preserve original staff and agenda semantics"
     },
     {
+      "path": "docs/adr/0044-private-customer-organisation-profiles.md",
+      "classification": "Architecture contract/index",
+      "use": "Private self-reported customer organisation profiles; never written to the global catalogue"
+    },
+    {
       "path": "docs/v3/phase-3/customer-programme-context/bounded-plan.md",
       "classification": "Current bounded implementation plan",
       "use": "Optional synthetic programme details; acceptance evidence and remaining gaps"
@@ -767,6 +772,16 @@
       "path": "docs/v3/history/ledger-chunk-112.md",
       "classification": "Exact historical execution entry",
       "use": "Completed shared-handoff chunk112 evidence, hash-verified; not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-113.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk113 CodeQL and release evidence; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-114.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk114 credit-limit takeover checkpoint; hash-verified, not current state"
     }
   ]
 }

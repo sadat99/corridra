@@ -1,0 +1,74 @@
+{
+  "source": "0333aafb8687d44b8f6a470f13cef6fe37de7976",
+  "run": 39201929530,
+  "analysisAndUploads": "Actions, JavaScript/TypeScript, Python jobs all success",
+  "reports": [
+    {
+      "artifact": "codeql-findings-javascript-typescript.zip",
+      "sarif": "javascript.sarif",
+      "sarifSha256": "cacd8eab9ce2e87314fe601454e94fe24edeb57cbd14e18037c97871d6ed6ca5",
+      "results": 1,
+      "findings": [
+        {
+          "rule": "js/disabling-certificate-validation",
+          "level": null,
+          "file": "security/corridra.test.ts",
+          "line": 9,
+          "message": "Disabling certificate validation is strongly discouraged."
+        }
+      ],
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ]
+    },
+    {
+      "artifact": "codeql-findings-actions.zip",
+      "sarif": "actions.sarif",
+      "sarifSha256": "ce1953c8311e0beed478f5f4ba73b1c355a04d97c2927a4ec504ef78f68cdd28",
+      "results": 0,
+      "findings": [],
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ]
+    },
+    {
+      "artifact": "codeql-findings-python.zip",
+      "sarif": "python.sarif",
+      "sarifSha256": "0ab5e0a5b99915afc80866191b0e9de67f5a1a53fb927b5e8817798442196a37",
+      "results": 0,
+      "findings": [],
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ]
+    }
+  ],
+  "review": {
+    "finding": "js/disabling-certificate-validation at security/corridra.test.ts:9",
+    "assessment": "Deliberately unsafe Semgrep negative fixture, marked ruleid corridra-no-insecure-tls. Not application runtime; Vitest includes tests/integration/**/*.test.ts only. Keep unsafe fixture to verify scanner detection.",
+    "action": "Preserved unchanged; no CodeQL exclusion, query suppression or server dismissal applied.",
+    "limits": "Scan success is not comprehensive security or commercial readiness. PR83 full CI/release still pending."
+  },
+  "artifacts": [
+    {
+      "id": 12164162471,
+      "language": "python",
+      "digest": "sha256:78de011f58c8cfedd394af5a7ccedac6928567ed7aaa3aa21460dee432b51b7f"
+    },
+    {
+      "id": 12164008269,
+      "language": "javascript-typescript",
+      "digest": "sha256:93461d7eb7cd8841a12bd1247423baaae59e71a1cf4c95eaf0da52edb59fb1e6"
+    },
+    {
+      "id": 12163639487,
+      "language": "actions",
+      "digest": "sha256:1f7c951bba8475e3faf3bdac04c88af4547f6b2519b3d92bc00b38c3e02b1a93"
+    }
+  ]
+}

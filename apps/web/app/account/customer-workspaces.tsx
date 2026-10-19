@@ -87,11 +87,13 @@ export function CustomerWorkspaces({
   issuer,
   requestsEnabled = false,
   programmesEnabled = false,
+  profilesEnabled = false,
 }: {
   subject: string;
   issuer: string;
   requestsEnabled?: boolean;
   programmesEnabled?: boolean;
+  profilesEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -319,6 +321,15 @@ export function CustomerWorkspaces({
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role} · Test data
+                  {profilesEnabled && (
+                    <p>
+                      <a className="text-link" href={'/account/profile/' + row.id}>
+                        {['owner', 'admin'].includes(row.role)
+                          ? 'Edit sample company profile'
+                          : 'View sample company profile'}
+                      </a>
+                    </p>
+                  )}
                   {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
                     <p>
                       <a className="text-link" href={'/account/delegations/' + row.id}>
