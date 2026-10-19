@@ -23,6 +23,12 @@ Never place Vercel/Neon management credentials in application runtime. Keep prod
 
 Use runtime logs only within a bounded deployment/time query and sanitize them. Capture no personal auth screens, reset URLs, credentials or MFA setup. Current UI/auth entry is documented in [the access guide](v2-access-and-launch.md). Identity mail acceptance is separate from outreach, AI, payments and payouts; leave those operations closed.
 
+## Preview build skipping
+
+Vercel's free tier counts stored function output for every deployment, and each push to a branch creates a preview. `scripts/vercel-ignore-build.sh` is the project's Ignored Build Step. It skips a preview only when it can prove nothing application-related changed: the branch starts with `dependabot/`, or every file changed since the last built commit on that branch is under `docs/`, `security/` or `.github/` or ends in `.md`. Production deployments are never skipped. A missing previous commit, a shallow clone, an empty change list or any git error all build. `tests/vercel-ignore-build.test.mjs` covers each case and runs in `pnpm test:docs`.
+
+Set the project's Ignored Build Step command to `bash "$(git rev-parse --show-toplevel)/scripts/vercel-ignore-build.sh"`. The script must be on the commit being built, so merge it before changing the setting. Verify with one documentation-only push: the preview should be skipped and a push touching `apps/` should build. To roll back, clear the Ignored Build Step setting; no repository change is needed. Explicit production deployments created through the API are unaffected by design.
+
 ## Rollback and cleanup
 
 Disable the affected feature only where that is an existing reviewed control, and promote/redeploy a known compatible revision. Verify alias and behavior afterward. Preserve identities, MFA, original data, histories and additive migrations. A pre-migration application may need a reviewed forward fix; do not down-migrate or drop audit/evidence/financial history.
