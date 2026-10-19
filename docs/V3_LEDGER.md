@@ -48,3 +48,7 @@ Staff-only table in the Business overview showing which of 16 customer modules a
 ## Chunk123: plain-language front door (source, local evidence)
 
 Home headline, intro and request page heading rewritten without idioms. Copy only; no behavior, route, flag or gate changed. Local: format, lint, typecheck clean, build exit 0, 74 browser specs passed including axe. Unverified: CI, deployment, reader comprehension. Blocked on the branch budget (would be the ninth branch). [Work log](agents/work-log.md).
+
+## Chunk124: Guided experience standard locked (documentation)
+
+Owner approved and locked the Guided UX v2 style in docs/agents/ui-direction.md (eight rules, locked navigation, 36-screen map, ship conditions, open decisions). No code or behavior change. All 36 screens are design only; ease-of-use and blind-access claims stay unproven until real-user and screen-reader tests. Next: owner chooses the first build PR. [Work log](agents/work-log.md).

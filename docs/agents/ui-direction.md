@@ -144,8 +144,99 @@ Natural, concrete English. No em dashes. No fake urgency, counts, logos, testimo
 | D     | Delegation programme report, helper and account screens                                                                        | Not started                                                                                                                 |
 | E     | Other routes one by one: sell in Spain or the EU, enter a market, business trips                                               | Mostly done (PRs 50, 52, 55). Remaining: data-driven corridors list                                                         |
 | F     | Core noun pass (needs owner confirmation), empty and error states, motion, accessibility and performance, Fusion parity review | Partly done (wording). Remaining: empty and error states, motion, performance, Fusion parity review                         |
+| G     | Guided experience standard: 36 designed screens, eight binding rules, locked navigation (see the Guided section below)         | Style locked 2026-10-19. Nothing built yet. Build order is in that section                                                  |
 
 The [master plan](master-plan.md) is the authority for status. This table is a summary and must match it.
+
+## Guided experience standard (LOCKED, owner decision 2026-10-19)
+
+The owner approved the Guided UX v2 mockups (36 screens, a private design canvas titled "Corridra Guided UX v2") as the visual and interaction style for all of V3. This section sits on top of everything above. Where it is stricter, it wins. Changing anything in it needs the owner's approval, and this file is changed first, with the reason.
+
+### Who it is for
+
+Business owners and organisers in Bangladesh and China, mostly on phones, often reading English as a second language, some with low reading skill or low comfort with tech tools, some blind or low vision. Long forms and many steps put them off, so every necessary step is split, saved and explained. A screen that needs explaining is a wrong screen.
+
+### The eight rules (binding)
+
+| #   | Rule                     | What it means in the build                                                                                                                                        |
+| --- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | One question, one button | One question per screen and one main action. Everything else is quieter or behind a disclosure.                                                                   |
+| 2   | Always say where you are | Step number, time left and what comes next on every flow screen. Work items show the journey bar.                                                                 |
+| 3   | Language first           | English, বাংলা, 中文 are chosen first and remembered. Company names and original text are never translated. Every language is reviewed by a native speaker.       |
+| 4   | Read aloud everywhere    | A Listen button on every screen. Hidden, not broken, where the phone cannot speak that language.                                                                  |
+| 5   | Tap more than type       | Big choices, plus and minus steppers, tappable examples. "I am not sure yet" is always allowed.                                                                   |
+| 6   | Never lose work          | Each answer is saved as it is given. Back always works. Nothing is sent until the person presses the send button, and a plain sentence summary comes first.       |
+| 7   | Help is one tap away     | "I am stuck" opens: read it to me, show an example, ask the Corridra team, skip for now.                                                                          |
+| 8   | Honest, never pushy      | Every fact shows its trust label with an icon and a word. Example data says Example. Unknown says "Not measured yet". No fake urgency. Progress is the only hook. |
+
+### Locked parts (use these names in code and reviews)
+
+| Part               | Locked behavior                                                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top bar            | Back, title with step and time left, Listen, Help. Language chip beside them on public and home screens.                                     |
+| Journey bar        | Done, now, later, with the words under every step. Current step has a ring and is announced to screen readers.                               |
+| Big choice         | At least 76 px tall, icon plus word, selected state has a check and a tinted fill. A real radio input inside a label, never a clickable div. |
+| Next-step card     | The dark green card with one light button. One per screen, always first on Home and on a piece of work.                                      |
+| Action bar         | Primary button at least 60 px tall at the bottom of flow screens, one quiet "Back" or "Not now" below it.                                    |
+| Fact label         | The five fixed trust names, each with an icon and its plain line. Colour is never the only signal.                                           |
+| Four states        | Loading, nothing here yet, something went wrong (answers are safe), no internet (keep going, send later). Every screen designs all four.     |
+| Counts             | Always out of a total ("12 of 20"). Unknown is "Not measured yet", never zero.                                                               |
+| Help sheet         | The four options above, in that order.                                                                                                       |
+| Accessibility menu | In More: language, text size (three steps), read aloud automatically, stronger colours, less movement.                                       |
+
+### Navigation (locked, at most five)
+
+| Audience      | Items                                                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public header | How it works, Routes, Sign in, one button "Start a request", plus language and Listen. The old Solutions list and "Start here" move into the footer under "Ways to work". Nothing is deleted. |
+| Customer      | Home, My Work, Companies, Results, More. Bottom tab bar on phones, top bar on desktop.                                                                                                        |
+| Corridra team | Today, Missions, Companies, Delivery, Outcomes, and "All tools and settings", which keeps every original section reachable.                                                                   |
+| Founder       | Business, Operations, Routes and settings, People and access, Ready to start?                                                                                                                 |
+
+### Words added to the glossary
+
+| Plain title shown to people | Contract name kept as a small label under it |
+| --------------------------- | -------------------------------------------- |
+| Sell my products            | Find Buyers & Partners                       |
+| Buy products or machines    | Find Suppliers & Products                    |
+| Lead a group trip           | Organise a Delegation                        |
+
+Also: "Ready to start?" for readiness gates, "Routes and settings" for corridors and policies, "Work the next case" for the team queue.
+
+### Screen map (all 36 are design only, none built)
+
+| Group                  | Screens                                                                                                                                                      | Pattern                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| Kit                    | The Guide kit                                                                                                                                                | Reference              |
+| Public                 | Choose language, home (phone, desktop), how it works, sign in                                                                                                | Landing, Flow          |
+| Request                | What to expect, pick one, a number, type or speak, check it, sent                                                                                            | Flow                   |
+| Customer               | Home (phone, desktop), My Work, one piece of work, choose companies one by one, company in plain words, price quotes, meeting time, Companies, Results, More | Landing, Record, Queue |
+| Delegation             | Home, create, review one sign-up, programme days, money, participant "My trip"                                                                               | Record, Flow           |
+| Corridra team, founder | Today, work one case, Missions, Companies, Delivery, Outcomes, founder page                                                                                  | Queue, Report          |
+
+### Token rules for the build
+
+The mockups use larger sizes than the current token layer. Add these to the "Design system layer" in `apps/web/app/globals.css` before use, and nowhere else: guided control radius 14 px, guided card 16 px, hero card 20 px, guided body text 18 px, touch targets 48 px and 60 px for the main action. Mockup spacing that fell between steps (18, 22, 28) snaps to the 4 px scale when built. No raw colours, as before.
+
+### Before any guided screen ships
+
+1. Passes the checks in "Verification for every UI change", with axe clean at 320, 390, 768 and 1440 px.
+2. Works with a keyboard and with 200 percent text zoom. Focus moves to the question heading on each step and the screen reader says its number.
+3. Copy for each language chip is written and reviewed by a native speaker. A language without reviewed copy is not offered.
+4. Tested with real people: a five-person task test from the target audience, and blind users with TalkBack, VoiceOver and NVDA. Until then the claims "easy for any literacy" and "usable without sight" are not made anywhere, in the product or in marketing.
+5. Every control works. A control without a working backend is marked missing, not shipped.
+
+### Open decisions (not locked, owner to settle)
+
+1. Where "Ask the Corridra team" goes. In-app request thread is the safe default. Any outside channel is real outreach and stays gated.
+2. How answers are saved before an account exists (this device, or an account draft).
+3. Language screen: preselect from the browser language, show it once on a first visit, and allow skipping to English.
+4. Voice input stays optional and is hidden where the phone does not support it.
+5. Staff keyboard shortcut for the next case.
+
+### Build order
+
+One PR per step, each behind its existing flag where the module is optional, with no change to routes, forms, permissions, money or evidence: 1 language, public home and request flow; 2 customer Home, My Work, one piece of work; 3 company choice, price quotes, meeting time; 4 delegation; 5 team Today and one case; 6 founder; 7 team area lists.
 
 ## Hard limits (the backbone)
 
