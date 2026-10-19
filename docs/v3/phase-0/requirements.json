@@ -310,9 +310,18 @@
     "heading": "Product 1 — Find Buyers & Business Partners",
     "line": 69,
     "requirement": "1. Define offering, capacity, commercial objectives and target markets.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-005",
@@ -320,9 +329,18 @@
     "heading": "Product 1 — Find Buyers & Business Partners",
     "line": 70,
     "requirement": "2. Identify event, intended visit, preferred dates and meeting location when relevant.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-006",
@@ -330,9 +348,18 @@
     "heading": "Product 1 — Find Buyers & Business Partners",
     "line": 71,
     "requirement": "3. Establish target buyer/distributor/customer profiles.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-007",
@@ -480,9 +507,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 95,
     "requirement": "1. Define product or procurement objective.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-022",
@@ -490,9 +526,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 96,
     "requirement": "2. Capture relevant technical, commercial, regulatory and delivery requirements.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-023",
@@ -617,9 +662,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 112,
     "requirement": "| Machinery/equipment | Application, capacity, power, installation, commissioning, acceptance tests, warranties, spares, maintenance and after-sales support |",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-035",
@@ -627,9 +681,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 113,
     "requirement": "| Finished products | Specifications, quality, packaging, certifications where applicable, MOQ, lead times and delivery |",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-036",
@@ -637,9 +700,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 114,
     "requirement": "| Raw materials/components | Grades, tolerances, consistency, testing, supply continuity and traceability |",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-037",
@@ -647,9 +719,18 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 115,
     "requirement": "| OEM/custom manufacturing | Drawings, tooling, samples, IP/confidentiality, production capacity and quality acceptance |",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-02-038",
@@ -658,8 +739,17 @@
     "line": 116,
     "requirement": "| Other procurement | Relevant category-specific criteria under reviewed configuration |",
     "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Authoring offers free requirement lines and states that suggested questions are unavailable; reviewed category configuration does not exist."
   },
   {
     "id": "V3-02-039",
@@ -730,9 +820,16 @@
     "status": "PARTIAL",
     "evidence": [
       "docs/v3/phase-3/customer-programmes/release.json",
-      "docs/v3/phase-3/customer-programme-context/release.json"
+      "docs/v3/phase-3/customer-programme-context/release.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
     ],
-    "nextAction": "PR76 create/list and PR79 canonical dates/market/purpose/timezone source releases verified,exposure off. Full eligibility/capacity/terms/coordination/economics and actual provider acceptance unfinished."
+    "nextAction": "PR76 create/list and PR79 canonical dates/market/purpose/timezone source releases verified,exposure off. Full eligibility/capacity/terms/coordination/economics and actual provider acceptance unfinished. Guided authoring adds delegation prompts only (ADR045); programme administration is unchanged."
   },
   {
     "id": "V3-02-046",
@@ -741,8 +838,17 @@
     "line": 133,
     "requirement": "2. Define objectives, sectors, dates, eligibility, capacity and participation terms.",
     "status": "PARTIAL",
-    "evidence": ["docs/v3/phase-3/customer-programme-context/release.json"],
-    "nextAction": "PR79 owner/admin context and shared participant projection verified392PG/124public/141protected,51live/fourpreview. Eligibility,capacity,sectors,versioned terms and actual provider acceptance remain missing or unverified."
+    "evidence": [
+      "docs/v3/phase-3/customer-programme-context/release.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "PR79 owner/admin context and shared participant projection verified392PG/124public/141protected,51live/fourpreview. Eligibility,capacity,sectors,versioned terms and actual provider acceptance remain missing or unverified. Guided authoring adds delegation prompts only (ADR045); programme administration is unchanged."
   },
   {
     "id": "V3-02-047",
@@ -1459,9 +1565,18 @@
     "heading": "Level 1 — Guided",
     "line": 253,
     "requirement": "- The current objective.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-006",
@@ -1469,9 +1584,18 @@
     "heading": "Level 1 — Guided",
     "line": 254,
     "requirement": "- Only essential questions.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-007",
@@ -1479,9 +1603,18 @@
     "heading": "Level 1 — Guided",
     "line": 255,
     "requirement": "- Relevant options.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-008",
@@ -1489,9 +1622,18 @@
     "heading": "Level 1 — Guided",
     "line": 256,
     "requirement": "- What will happen next.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-009",
@@ -1499,9 +1641,18 @@
     "heading": "Level 1 — Guided",
     "line": 257,
     "requirement": "- The next useful result.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-010",
@@ -1739,9 +1890,18 @@
     "heading": "Guided request",
     "line": 305,
     "requirement": "The system asks for the minimum required to produce a meaningful next step:",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-034",
@@ -1809,9 +1969,18 @@
     "heading": "Guided request",
     "line": 314,
     "requirement": "Save or reuse authorized information. Support draft continuation where permitted, safe retries and clear recovery.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-041",
@@ -1819,9 +1988,18 @@
     "heading": "Guided request",
     "line": 316,
     "requirement": "Do not demand a full organisational profile, arbitrary document uploads or mandatory AI inference before providing a legitimate initial result.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-042",
@@ -2176,9 +2354,18 @@
     "heading": "The contextual workspace pattern",
     "line": 373,
     "requirement": "A simple buyer mission should not display machinery commissioning controls. A machinery mission must expose them when relevant.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
+    ],
+    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
   },
   {
     "id": "V3-04-077",
@@ -3259,9 +3446,16 @@
       "docs/adr/0040-reviewed-delivery-to-requesting-customer.md",
       "tests/integration/customer-delivery.test.ts",
       "tests/operator/v3-customer-delivery-ui.spec.ts",
-      "docs/v3/phase-3/customer-mission-delivery/release.json"
+      "docs/v3/phase-3/customer-mission-delivery/release.json",
+      "docs/adr/0045-private-customer-mission-drafts.md",
+      "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql",
+      "packages/domain/src/mission-drafts.ts",
+      "tests/integration/customer-mission-drafts.test.ts",
+      "tests/operator/v3-guided-request-ui.spec.ts",
+      "tests/browser/v3-guided-request-gate.spec.ts"
     ],
-    "nextAction": "PR75 exact CI331PG/116public/91protected,matching merge and READY production/preview verified;35live+3preview checks. Actual provider/full customer commercial/organisation authority remain unfinished."
+    "nextAction": "PR75 exact CI331PG/116public/91protected,matching merge and READY production/preview verified;35live+3preview checks. Actual provider/full customer commercial/organisation authority remain unfinished. Creator-owned guided drafts added (ADR045), source only."
   },
   {
     "id": "V3-06-005",

@@ -26,6 +26,10 @@ The [implementation matrix](implementation-matrix.json) is a dated handoff index
 
 The entire previous current-plan document and dated forward notes are preserved in [historical programme text](../v3/history/implementation-plan-before-shared-handoff.md), hash-verified by the [history manifest](../v3/history/manifest.json). Originals and source uploads remain unchanged. Use the [shared handoff](../START_HERE.md) and [verification guide](../verification-guide.md) to reproduce checks; append work-log/ledger results before finishing.
 
+## Guided request drafts packet
+
+Implemented as source in chunk117 (ADR045, bounded plan under docs/v3/phase-3/customer-mission-drafts) and awaiting exact-head CI and release. Organiser economics (V3-06-007) and Delegation OS coordination are next.
+
 ## Organisation profiles packet
 
 Implemented as source in chunk115 (ADR044) and awaiting exact-head CI, merge and gated deployment; see the ledger for evidence. Canonical linking, verification and per-mission snapshots remain open. The original packet text follows.

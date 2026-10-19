@@ -714,6 +714,16 @@
       "use": "Customer programme-context authority; preserve original staff and agenda semantics"
     },
     {
+      "path": "docs/adr/0045-private-customer-mission-drafts.md",
+      "classification": "Architecture contract/index",
+      "use": "Creator-only guided request drafts; sending reuses the unchanged private request path"
+    },
+    {
+      "path": "docs/v3/phase-3/customer-mission-drafts/bounded-plan.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
+    },
+    {
       "path": "docs/adr/0044-private-customer-organisation-profiles.md",
       "classification": "Architecture contract/index",
       "use": "Private self-reported customer organisation profiles; never written to the global catalogue"
@@ -782,6 +792,11 @@
       "path": "docs/v3/history/ledger-chunk-114.md",
       "classification": "Exact historical execution entry",
       "use": "Completed chunk114 credit-limit takeover checkpoint; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-115.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk115 PR83 merge and organisation-profile entry; hash-verified, not current state"
     }
   ]
 }

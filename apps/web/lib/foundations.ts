@@ -1,4 +1,8 @@
 import {
+  CustomerMissionDraftService,
+  customerMissionDraftsEnabled,
+} from '@corridra/auth/customer-mission-drafts';
+import {
   CustomerOrganisationProfileService,
   customerOrganisationProfilesEnabled,
 } from '@corridra/auth/customer-organisation-profiles';
@@ -205,6 +209,17 @@ function createServices() {
       authPool,
       {
         enabled: customerParticipantsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: process.env.VERCEL_ENV === 'production',
+        issuer: process.env.NEON_AUTH_BASE_URL ?? '',
+      },
+      readCustomerSession,
+    ),
+    customerMissionDrafts: new CustomerMissionDraftService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerMissionDraftsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: process.env.VERCEL_ENV === 'production',
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
