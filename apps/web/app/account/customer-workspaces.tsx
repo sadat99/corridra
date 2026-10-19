@@ -88,12 +88,14 @@ export function CustomerWorkspaces({
   requestsEnabled = false,
   programmesEnabled = false,
   profilesEnabled = false,
+  draftsEnabled = false,
 }: {
   subject: string;
   issuer: string;
   requestsEnabled?: boolean;
   programmesEnabled?: boolean;
   profilesEnabled?: boolean;
+  draftsEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -334,6 +336,13 @@ export function CustomerWorkspaces({
                     <p>
                       <a className="text-link" href={'/account/delegations/' + row.id}>
                         Plan sample delegations
+                      </a>
+                    </p>
+                  )}
+                  {draftsEnabled && (
+                    <p>
+                      <a className="text-link" href={'/account/drafts/' + row.id}>
+                        Start or continue a guided request
                       </a>
                     </p>
                   )}

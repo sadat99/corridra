@@ -664,3 +664,7 @@ Merged PR83 (d77be23) on the owner's instruction after exact-head CI and three-l
 ## 2026-10-19, Claude Code, PR84 merged and production release
 
 Merged PR84 (248884b) after exact-head CI and CodeQL passed, deployed that commit to production (dpl_EdF8jdWxohcntZe93LBa5nU4hgMt, READY, fra1) and passed 56 live read-only checks. Recorded in docs/v3/cleanup/2026-10-19-pr83-pr84-release.json. PR83 shipped in the same deployment. The profile flag stays unset, so nothing customer-visible changed. Vercel Function Storage hit 100 percent of the free tier; the owner deleted five superseded previews. Next: customer commercial authoring on top of the saved profile, then Delegation OS coordination and economics.
+
+## 2026-10-19, Claude Code, PR85 merged and guided request drafts
+
+Merged PR85 (7f699c8) after exact-head CI. Built guided request drafts (ADR045): creator-only append-only drafts, sourcing-context prompts from the V3 contract tables, optional saved-profile prefill, and sending through the unchanged private request path. Preserved: the single-page request form, the request factory, app.mission, app.organisation, RLS, money, staff identity and gates D01-D06/D08. Local: drafts integration 19, guided UI 21, gates 10, typecheck/lint clean. Not verified: exact-head CI, preview, real users, cloud install. Next: push, PR, CI, then organiser economics (V3-06-007).

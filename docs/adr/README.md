@@ -53,3 +53,5 @@ Forward status, 17 October 2026: ADR032's original test-policy conflict was reso
 ADR043: [Canonical programme context](0043-customer-canonical-programme-context.md), optional customer command and explicit participant sharing; original staff/agenda authorities preserved.
 
 ADR044: [Private organisation profiles](0044-private-customer-organisation-profiles.md), optional append-only self-reported customer profile; the globally readable catalogue is untouched.
+
+ADR045: [Private mission drafts](0045-private-customer-mission-drafts.md), optional creator-only guided request drafts that send through the unchanged private request path.
