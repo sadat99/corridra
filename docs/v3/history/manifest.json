@@ -61,6 +61,15 @@
       "kind": "ledger-chunks",
       "throughChunk": 111,
       "meaning": "Exact completed chunk110-111 bytes;historical results and next steps are not current state"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-112.md",
+      "bytes": 2395,
+      "sha256": "c0deac939a9be17c0b788e17263fb4d31a1b6e9c7f6130eeb8965064ba1cd783",
+      "kind": "ledger-chunks",
+      "throughChunk": 112,
+      "meaning": "Exact completed chunk snapshot; history only, not current state"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
