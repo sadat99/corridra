@@ -26,9 +26,9 @@ The [implementation matrix](implementation-matrix.json) is a dated handoff index
 
 The entire previous current-plan document and dated forward notes are preserved in [historical programme text](../v3/history/implementation-plan-before-shared-handoff.md), hash-verified by the [history manifest](../v3/history/manifest.json). Originals and source uploads remain unchanged. Use the [shared handoff](../START_HERE.md) and [verification guide](../verification-guide.md) to reproduce checks; append work-log/ledger results before finishing.
 
-## Next implementation packet: organisation profiles
+## Organisation profiles packet
 
-Implement now under the owner's standing request; no profile product code exists yet. Use the active ledger checkpoint and preserve PR83 independently.
+Implemented as source in chunk115 (ADR044) and awaiting exact-head CI, merge and gated deployment; see the ledger for evidence. Canonical linking, verification and per-mission snapshots remain open. The original packet text follows.
 
 - Authority: customer-session.ts/customer-workspaces.ts, customer-migrations0001/0002 and ADR032/038. app.organisation is globally readable: never insert private profile input there or merge identity by name/email.
 - Write the ADR, optional additive profile migration/installer, fresh-session service, same-origin API and account UI. Reuse the existing workspace, event/audit/outbox authority. Private append-only revisions, expected-version conflicts, exact retries, owner/admin write, active-member read and explicit self-reported provenance. Global canonical linking stays partial until rights-safe implementation exists.

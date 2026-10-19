@@ -777,6 +777,11 @@
       "path": "docs/v3/history/ledger-chunk-113.md",
       "classification": "Exact historical execution entry",
       "use": "Completed chunk113 CodeQL and release evidence; hash-verified, not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-114.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk114 credit-limit takeover checkpoint; hash-verified, not current state"
     }
   ]
 }
