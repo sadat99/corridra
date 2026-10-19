@@ -8,6 +8,9 @@ on:
     - cron: '17 6 * * 1'
 permissions:
   contents: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   configuration:
     name: CodeQL configuration status
@@ -47,3 +50,13 @@ jobs:
         with:
           languages: javascript-typescript,python
       - uses: github/codeql-action/analyze@v4
+        with:
+          output: codeql-results
+      - name: Private CodeQL findings for review
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: codeql-findings
+          path: codeql-results/*.sarif
+          if-no-files-found: warn
+          retention-days: 3
