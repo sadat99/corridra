@@ -676,3 +676,7 @@ Merged PR86 (e31566e) after exact-head CI and CodeQL passed at 246f7a5. Opened P
 ## 2026-10-19, Claude Code, PR86 to PR88 released
 
 Merged PR86, PR87 and PR88 on green exact-head CI and deployed 8bbbca2 then aebb527 to production (dpl_9ZxfddkTcqhPoMexsCeUvgu1pVqH READY, 64 of 64 live checks). Set the Vercel Ignored Build Step; its effect is unverified until a docs-only push is seen to skip. Preserved: all earlier modules, flags off, no cloud schema change, gates D01-D06/D08 closed. Recorded in docs/v3/cleanup/2026-10-19-pr86-pr88-release.json. Next: coordination and reporting (ADR047) and programme templates (ADR048).
+
+## 2026-10-19, Claude Code, coordination, reporting and templates
+
+Merged PR89 (Ignored Build Step now finds the last built commit by SHA or compares trees with main; release receipt for PR86 to PR88). Built programme coordination and reporting (ADR047) and repeatable programme templates (ADR048) and shipped them in one PR at the owner's request to merge and deploy everything pending. Preserved: all earlier modules, flags off, no cloud schema change, gates D01-D06/D08 closed. Local: coordination integration 19, templates 16, component specs 21, 20 and 23, gates, lint, typecheck and docs tests clean. Not verified: exact-head CI, preview, usability, cloud module install. Next: merge on green, deploy the exact commit, confirm the build-skip on the docs-only ledger push.
