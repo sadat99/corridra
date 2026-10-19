@@ -463,6 +463,10 @@ export class OperationsService {
       },
     );
   }
+  // Owner and admin only, the same authority as the Control Center. Returns the role, nothing else.
+  founderAccess(ctx: RequestContext) {
+    return withTenant(this.pool, ctx, 'audit.read', async ({ role }) => ({ role }));
+  }
   controlCenter(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'audit.read', async ({ db, role }) => {
       const data: Record<string, Record<string, unknown>[]> = {};

@@ -684,3 +684,7 @@ Merged PR89 (Ignored Build Step now finds the last built commit by SHA or compar
 ## 2026-10-19, Claude Code, PR90 released
 
 Merged PR90 (d19e4c8) on green exact-head CI and CodeQL at 4355c2d and deployed that exact commit (dpl_BwunTCzxWSk6trofUqTrvrUsutVP READY, four aliases, 71 of 71 live checks from an ephemeral fra1 sandbox, stopped). Preserved: all earlier modules, flags off, no cloud schema change, gates D01-D06/D08 closed. Recorded in docs/v3/cleanup/2026-10-19-pr90-release.json. Not verified: preview, usability, cloud module install. Next: confirm the Ignored Build Step skips on this docs-only push.
+
+## 2026-10-19, Claude Code, founder activation view
+
+Merged PR91 (d76ca4e, documentation only). Built the founder activation view: a staff-only table in the Business overview showing which customer modules this deployment serves and why, from configuration only. Corrected stale overview text. Did not install modules or set flags: production is hard-locked for customer modules by design, and this session has no access to the Corridra Frankfurt Neon project or the migrator credential. Preserved: all modules and gates, no schema change, D01-D06/D08 closed. Local: integration 7, component specs 9, build clean. Not verified: exact-head CI, deployment. Next: merge on green, deploy the exact commit, then the owner runs the isolated preview install.
