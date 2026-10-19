@@ -1,0 +1,49 @@
+{
+  "scope": "PR90 programme coordination, reporting and repeatable templates (ADR-047, ADR-048); product remains PARTIAL, every new feature flag off",
+  "pr": {
+    "number": 90,
+    "mergedSource": "d19e4c8505ced239617874844d9021a41f6a6a84",
+    "testedHead": "4355c2db8d99dd47fbc7f81f75858b141b4a322b",
+    "baseAtMerge": "e142cc94f5f19f5cfe37eedec7b750a43be5a18f",
+    "mergeTreeMatches": true,
+    "tree": "2577c66e73d4af6832bd6084d43ce43cd51d8d2b",
+    "ci": {
+      "run": 39248175004,
+      "job": 118045117540,
+      "conclusion": "success"
+    },
+    "codeQL": {
+      "run": 39248174893,
+      "conclusion": "success",
+      "analyses": ["actions", "javascript-typescript", "python"]
+    },
+    "localEvidence": "coordination integration 19 passed, templates integration 16 passed; component specs organiser 21, participant 20, templates 23 with axe at four widths; closed-gate specs added; typecheck, lint, format, docs tests and context verify clean; production build exit 0; four ClamAV-dependent integration tests fail in the local sandbox only (exact-head CI is the authority and passed)"
+  },
+  "production": {
+    "id": "dpl_BwunTCzxWSk6trofUqTrvrUsutVP",
+    "url": "corridra-rdm617hx5-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "d19e4c8505ced239617874844d9021a41f6a6a84",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "live": {
+      "count": 71,
+      "result": "pass",
+      "command": "cmd_2bdb8e80b31b4ab88689d0949e15",
+      "exitCode": 0,
+      "meaning": "64 prior checks plus 7 new checks (coordination report, tasks, records and POST; templates list, capture and POST) closed with 503",
+      "assertions": "closed APIs answer 503 with no-store and no-referrer; private pages 200; hosting redirects answer 307 on corridra.vercel.app"
+    }
+  },
+  "rollback": "dpl_9ZxfddkTcqhPoMexsCeUvgu1pVqH (PR88 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed; profile, draft, economics, coordination and templates modules are not installed in any cloud database",
+  "ignoredBuildStep": "docs-only push c93bd7f built: log said no usable comparison commit (previous sha set). The branch had been force-pushed so the previous built commit was gone and neither fetch worked inside the Vercel build. The next push, 31419a4 (fast-forward), was skipped: log 'skip: documentation-only change since the last built commit', deployment dpl_Ffh7SLi5TKiFCXz2LL7NAy9mESCk CANCELED by the Ignored Build Step (exit code 0).",
+  "probeSandboxes": "one ephemeral fra1 sandbox sbx_PJAtgll9MSFT14kUrbMLNBXT5yIc, stopped with readback"
+}

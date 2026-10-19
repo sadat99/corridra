@@ -680,3 +680,7 @@ Merged PR86, PR87 and PR88 on green exact-head CI and deployed 8bbbca2 then aebb
 ## 2026-10-19, Claude Code, coordination, reporting and templates
 
 Merged PR89 (Ignored Build Step now finds the last built commit by SHA or compares trees with main; release receipt for PR86 to PR88). Built programme coordination and reporting (ADR047) and repeatable programme templates (ADR048) and shipped them in one PR at the owner's request to merge and deploy everything pending. Preserved: all earlier modules, flags off, no cloud schema change, gates D01-D06/D08 closed. Local: coordination integration 19, templates 16, component specs 21, 20 and 23, gates, lint, typecheck and docs tests clean. Not verified: exact-head CI, preview, usability, cloud module install. Next: merge on green, deploy the exact commit, confirm the build-skip on the docs-only ledger push.
+
+## 2026-10-19, Claude Code, PR90 released
+
+Merged PR90 (d19e4c8) on green exact-head CI and CodeQL at 4355c2d and deployed that exact commit (dpl_BwunTCzxWSk6trofUqTrvrUsutVP READY, four aliases, 71 of 71 live checks from an ephemeral fra1 sandbox, stopped). Preserved: all earlier modules, flags off, no cloud schema change, gates D01-D06/D08 closed. Recorded in docs/v3/cleanup/2026-10-19-pr90-release.json. Not verified: preview, usability, cloud module install. Next: confirm the Ignored Build Step skips on this docs-only push.
