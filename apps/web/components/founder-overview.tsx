@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { StatusBadge } from './access-state';
+import { FounderActivation } from './founder-activation';
 
 /** Capability descriptions, never live metrics. Mounted only inside the existing admin panel. */
-export function FounderOverview() {
+export function FounderOverview({ tenant }: { tenant: string }) {
   return (
     <section aria-labelledby="founder-overview-title" className="detail-card">
       <h4 id="founder-overview-title">Business overview</h4>
@@ -23,7 +24,9 @@ export function FounderOverview() {
         <dd>
           Synthetic mission operations only. Real mission admission, outreach, production AI
           inference and contributor payments remain <StatusBadge tone="caution">GATED</StatusBadge>.
-          Check the route-specific evidence before making any availability claim.
+          Check the route-specific evidence before making any availability claim. The table below is
+          read from this deployment&apos;s configuration, not from memory.
+          <FounderActivation tenant={tenant} />
         </dd>
         <dt>What are customers and operators doing?</dt>
         <dd>
@@ -34,8 +37,9 @@ export function FounderOverview() {
         <dd>
           Read the service economics and customer trade sections below. Customer trade value,
           Corridra fee revenue, delivery costs and contributor obligations stay separate. Missing
-          financial evidence means unknown, not zero. Organiser economics remain{' '}
-          <StatusBadge tone="unknown">MISSING</StatusBadge>.
+          financial evidence means unknown, not zero. Organiser programme economics, coordination
+          and templates are built behind closed gates and stay{' '}
+          <StatusBadge tone="caution">PARTIAL</StatusBadge> until verified.
         </dd>
         <dt>What is blocked, and who acts next?</dt>
         <dd>
@@ -51,12 +55,12 @@ export function FounderOverview() {
           consented registrations and programme access changes have another synthetic gate. Private
           participant objective sharing has its own closed gate and exposes only expressly consented
           text. Full participant missions, agendas, meetings and financial operations remain
-          unavailable there. Full customer mission administration, company linking and independent
-          delegation administration remain <StatusBadge tone="unknown">MISSING</StatusBadge>.
-          Engineering must implement and verify these separately. The owner and relevant legal,
-          infrastructure, security and provider reviewers must supply the independent activation
-          evidence in <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped
-          sharing remains available.
+          unavailable there. Full customer mission administration and company linking remain{' '}
+          <StatusBadge tone="unknown">MISSING</StatusBadge>. Engineering must implement and verify
+          these separately. The owner and relevant legal, infrastructure, security and provider
+          reviewers must supply the independent activation evidence in{' '}
+          <a href="#ops-gates">Review activation blockers</a>. Existing approved scoped sharing
+          remains available.
         </dd>
       </dl>
       <Link prefetch={false} className="text-link" href="/#mission-example">

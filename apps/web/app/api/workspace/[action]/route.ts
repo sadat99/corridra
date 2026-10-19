@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { founderActivation } from '@corridra/auth/founder-activation';
 import { queueFilters } from '@corridra/missions';
 import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
@@ -36,6 +37,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         intelligence: () => s.intelligence.workspace(ctx),
         network: () => s.network.workspace(ctx),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
+        'founder-activation': async () => ({
+          ...(await s.operations.founderAccess(ctx)),
+          ...founderActivation(),
+        }),
         'operations-controls': () => s.operations.controlCenter(ctx),
         'operations-health': () => s.operations.reliability(ctx),
         'operations-dashboard': () =>

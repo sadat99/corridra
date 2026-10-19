@@ -609,6 +609,11 @@
       "use": "Current static inventory mapping and limitations; not runtime acceptance"
     },
     {
+      "path": "docs/v3/phase-4/founder/activation-plan.md",
+      "classification": "Bounded implementation plan",
+      "use": "Founder activation view: which customer modules a deployment serves and why; configuration only, no live figures or secrets"
+    },
+    {
       "path": "docs/v3/phase-3/customer-requests/bounded-plan.md",
       "classification": "Bounded implementation plan",
       "use": "Bounded synthetic customer request backend;inspected ports,privacy,preservation and required tests;read current ledger for exact release"

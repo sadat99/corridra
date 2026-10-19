@@ -2642,9 +2642,16 @@
     "heading": "The founder's clarity layer",
     "line": 397,
     "requirement": "2. What is actually activated?",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-4/founder/activation-plan.md",
+      "packages/auth/src/founder-activation.ts",
+      "apps/web/components/founder-activation.tsx",
+      "tests/integration/founder-activation.test.ts",
+      "tests/operator/v3-founder-activation-ui.spec.ts"
+    ],
+    "nextAction": "The Business overview lists each customer module as on, off, waiting or locked from this deployment configuration (staff only). Database installation state, real activation evidence and role-state runtime acceptance remain unverified."
   },
   {
     "id": "V3-04-090",
@@ -3734,7 +3741,15 @@
     "line": 503,
     "requirement": "| Founder overview and guided product exploration | Owner clarity and control | P1 |",
     "status": "PARTIAL",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-4/founder/activation-plan.md",
+      "packages/auth/src/founder-activation.ts",
+      "apps/web/components/founder-activation.tsx",
+      "tests/integration/founder-activation.test.ts",
+      "tests/operator/v3-founder-activation-ui.spec.ts"
+    ],
     "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
   },
   {
@@ -5040,9 +5055,16 @@
     "heading": "Phase 4 — Founder controls and end-to-end verification",
     "line": 718,
     "requirement": "- Real versus synthetic status.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-4/founder/activation-plan.md",
+      "packages/auth/src/founder-activation.ts",
+      "apps/web/components/founder-activation.tsx",
+      "tests/integration/founder-activation.test.ts",
+      "tests/operator/v3-founder-activation-ui.spec.ts"
+    ],
+    "nextAction": "The founder view states deployment kind and synthetic data. Real-versus-synthetic status per record type and runtime acceptance remain unverified."
   },
   {
     "id": "V3-09-036",
@@ -5050,9 +5072,16 @@
     "heading": "Phase 4 — Founder controls and end-to-end verification",
     "line": 719,
     "requirement": "- Product and service availability.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/v3/phase-4/founder/activation-plan.md",
+      "packages/auth/src/founder-activation.ts",
+      "apps/web/components/founder-activation.tsx",
+      "tests/integration/founder-activation.test.ts",
+      "tests/operator/v3-founder-activation-ui.spec.ts"
+    ],
+    "nextAction": "Customer module availability is shown with reasons. Staff tool availability, service availability and runtime acceptance remain unverified."
   },
   {
     "id": "V3-09-037",
