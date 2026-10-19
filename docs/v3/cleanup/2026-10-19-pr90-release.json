@@ -44,5 +44,6 @@
   },
   "rollback": "dpl_9ZxfddkTcqhPoMexsCeUvgu1pVqH (PR88 release)",
   "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed; profile, draft, economics, coordination and templates modules are not installed in any cloud database",
+  "ignoredBuildStep": "docs-only push c93bd7f built: log said no usable comparison commit (previous sha set). The branch had been force-pushed so the previous built commit was gone and neither fetch worked inside the Vercel build. A fast-forward push is the untested case.",
   "probeSandboxes": "one ephemeral fra1 sandbox sbx_PJAtgll9MSFT14kUrbMLNBXT5yIc, stopped with readback"
 }
