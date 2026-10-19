@@ -762,6 +762,11 @@
       "path": "docs/v3/history/ledger-chunks-110-111.md",
       "classification": "Exact historical execution entries",
       "use": "Completed chunks110-111,hash-verified;use current ledger for live state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-112.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed shared-handoff chunk112 evidence, hash-verified; not current state"
     }
   ]
 }

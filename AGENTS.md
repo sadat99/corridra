@@ -35,6 +35,8 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Never change auth, RLS, migrations history, money or event records without stating the blast radius first. Migrations are additive only.
 - Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.
 - Same mistake twice: add one line here.
+- Run repository context/lint/type helpers from the repository root; run the Next application build from apps/web.
+- Discover connector names with a bounded result first; shared description boilerplate can match every tool and defeat filtering.
 - Use discovered file paths and navigation IDs in inventories and verification; never guess them.
 - After a patch context mismatch, read the exact target lines before retrying.
 - Before publishing, verify the Git author matches the authenticated repository owner and established accepted release identity; correct inherited local configuration forward without rewriting pushed history.
