@@ -20,7 +20,12 @@ test('with no flags set every customer module is off and nothing is claimed on',
   const view = founderActivation(synthetic);
   expect(view.counts).toEqual({ on: 0, total: view.modules.length });
   expect(view.modules.every((m) => m.state === 'OFF')).toBe(true);
-  expect(view.environment).toEqual({ deployment: 'preview', data: 'synthetic' });
+  expect(view.environment).toEqual({
+    deployment: 'preview',
+    data: 'synthetic',
+    productionUnlocked: false,
+    openAdmission: false,
+  });
   expect(view.note).toContain('No real customer data');
 });
 

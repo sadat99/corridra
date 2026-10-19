@@ -26,6 +26,10 @@ import {
   CustomerMissionShareService,
   customerMissionSharesEnabled,
 } from '@corridra/auth/customer-mission-shares';
+import {
+  customerOpenAdmission,
+  customerProductionLocked,
+} from '@corridra/auth/customer-production';
 import 'server-only';
 import { recoverableResource } from './recoverable-resource';
 import { localFixtureAdapter } from '@corridra/intelligence/local-fixture';
@@ -165,7 +169,8 @@ function createServices() {
       {
         enabled: customerWorkspacesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -177,7 +182,8 @@ function createServices() {
       {
         enabled: customerDecisionsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -189,7 +195,8 @@ function createServices() {
       {
         enabled: customerDeliveryEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -200,7 +207,8 @@ function createServices() {
       {
         enabled: customerCompaniesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -211,7 +219,8 @@ function createServices() {
       {
         enabled: customerMissionSharesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -222,7 +231,8 @@ function createServices() {
       {
         enabled: customerParticipantsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -233,7 +243,8 @@ function createServices() {
       {
         enabled: customerProgrammeTemplatesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -244,7 +255,8 @@ function createServices() {
       {
         enabled: customerProgrammeCoordinationEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -255,7 +267,8 @@ function createServices() {
       {
         enabled: customerProgrammeEconomicsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -266,7 +279,8 @@ function createServices() {
       {
         enabled: customerMissionDraftsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -277,7 +291,8 @@ function createServices() {
       {
         enabled: customerOrganisationProfilesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -288,7 +303,8 @@ function createServices() {
       {
         enabled: customerProgrammeContextEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -299,7 +315,8 @@ function createServices() {
       {
         enabled: customerProgrammesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -310,7 +327,8 @@ function createServices() {
       {
         enabled: customerRequestsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -321,7 +339,8 @@ function createServices() {
       {
         enabled: customerSavedMissionsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,
@@ -332,7 +351,8 @@ function createServices() {
       {
         enabled: customerRequestDetailsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
-        production: process.env.VERCEL_ENV === 'production',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
         issuer: process.env.NEON_AUTH_BASE_URL ?? '',
       },
       readCustomerSession,

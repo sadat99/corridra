@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { customerProductionLocked } from './customer-production';
 import { briefSchema } from '@corridra/domain/missions';
 import { CustomerSessionBoundary } from './customer-session';
 
@@ -31,7 +32,7 @@ export function customerRequestsEnabled(env: NodeJS.ProcessEnv = process.env) {
   return (
     env.CORRIDRA_CUSTOMER_REQUESTS_ENABLED === 'true' &&
     env.DATA_ENVIRONMENT === 'synthetic' &&
-    env.VERCEL_ENV !== 'production'
+    !customerProductionLocked(env)
   );
 }
 
