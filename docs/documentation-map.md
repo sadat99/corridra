@@ -130,6 +130,8 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 
 ## V3 execution documents
 
+Use [bounded context](v3/CONTEXT.md) for current-state and requirement queries. The [historical ledger](v3/history/ledger-through-109.md) is preserved byte-for-byte, with identity hashes in `v3/history/manifest.json`; it is not current acceptance.
+
 | Document                                                                                                       | Classification                  | Use                                                                                                                                      |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | [V3_CONTRACT.md](V3_CONTRACT.md)                                                                               | Governing V3 contract           | Owner-supplied V3 product, preservation and acceptance contract; existing security/legal authority remains binding                       |

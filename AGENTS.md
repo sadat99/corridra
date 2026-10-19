@@ -63,3 +63,11 @@ Claude Code and Codex both work in this repository and share no memory beyond it
 - Register each new private API in the framework private-header overrides before checking the compiled route; handler headers alone can be overridden.
 - Discover customer migration directories with `rg --files packages/db`; never infer a directory from a module name.
 - After pnpm metadata drift, use the explicit CLI warn option or pinned installed executables; an environment-only option did not suppress bootstrap in this managed runtime.
+
+## Bounded V3 context
+
+- Start every work chunk with `node scripts/v3-context.mjs`; follow `docs/v3/CONTEXT.md`. Keep the active ledger within 12 KiB and preserve older evidence in linked, hashed archives before retiring it from the active index.
+- Read the full contract once per new session; check its hash and reread changed or relevant sections afterward. Reuse unchanged skills already read in the session. This never waives governing instructions or required verification.
+- Query only affected requirement IDs or one historical chunk. Never print full historical ledgers, PR diffs, raw provider configurations or tool catalogues for routine status work.
+- Set tool output budgets and select fields before execution. Save full logs to work/; report exact exits, final totals, relevant failures and evidence paths. Use one `gh run watch RUN --exit-status --interval 60` process with output saved locally instead of repeated model-driven polling.
+- Focus checks during implementation; run all mandatory gates on the frozen revision. Repeat only after relevant changes or failures. Token savings never authorize weakening tests, permissions, data fidelity or release gates.

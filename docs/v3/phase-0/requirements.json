@@ -729,13 +729,10 @@
     "requirement": "1. Create a delegation for a supported destination, market, event or programme.",
     "status": "PARTIAL",
     "evidence": [
-      "docs/adr/0037-customer-programme-command-authority.md",
-      "docs/v3/phase-3/customer-programmes/report.json",
-      "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql",
-      "tests/integration/customer-programmes.test.ts",
-      "docs/v3/phase-3/customer-programmes/release.json"
+      "docs/v3/phase-3/customer-programmes/release.json",
+      "docs/v3/phase-3/customer-programme-context/release.json"
     ],
-    "nextAction": "PR76 exact CI346PG/118public/101protected,matching merge/READY production-preview and39live+3preview checks verified. Participant increment locally tested separately;full organiser/private mission/coordination/economics acceptance unfinished."
+    "nextAction": "PR76 create/list and PR79 canonical dates/market/purpose/timezone source releases verified,exposure off. Full eligibility/capacity/terms/coordination/economics and actual provider acceptance unfinished."
   },
   {
     "id": "V3-02-046",
@@ -743,9 +740,9 @@
     "heading": "Product 3 — Delegation OS",
     "line": 133,
     "requirement": "2. Define objectives, sectors, dates, eligibility, capacity and participation terms.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": ["docs/v3/phase-3/customer-programme-context/release.json"],
+    "nextAction": "PR79 owner/admin context and shared participant projection verified392PG/124public/141protected,51live/fourpreview. Eligibility,capacity,sectors,versioned terms and actual provider acceptance remain missing or unverified."
   },
   {
     "id": "V3-02-047",
@@ -764,13 +761,8 @@
     "line": 135,
     "requirement": "4. Publish controlled invitations and register participants.",
     "status": "PARTIAL",
-    "evidence": [
-      "docs/v3/phase-3/customer-participants/report.json",
-      "docs/adr/0041-private-delegation-participant-onboarding.md",
-      "tests/integration/customer-participants.test.ts",
-      "tests/operator/v3-customer-participants-ui.spec.ts"
-    ],
-    "nextAction": "Synthetic programme invitations/consented registration/revocation locally verified;full exact-head CI/release pending. Actual provider,full participant profiles/private missions,coordination/economics and organiser acceptance unfinished."
+    "evidence": ["docs/v3/phase-3/customer-participants/release.json"],
+    "nextAction": "PR77 gated invitations/consent/registration/revocation source release verified365PG/120public/113protected,44live. Full profiles/private missions/coordination/economics and actual provider acceptance unfinished."
   },
   {
     "id": "V3-02-049",
@@ -914,9 +906,12 @@
     "heading": "Product 3 — Delegation OS",
     "line": 154,
     "requirement": "Participants retain appropriate privacy and control over their individual information.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-3/participant-commercial-missions/release.json",
+      "docs/v3/phase-3/customer-programme-context/release.json"
+    ],
+    "nextAction": "PR77-79 scoped consent/revocation/current-version projection and creator authority verified without organiser private commercial access. Full retention/legal/provider/all-audience acceptance remains unverified."
   },
   {
     "id": "V3-02-063",
@@ -3291,13 +3286,8 @@
     "line": 495,
     "requirement": "| Participant invitation/onboarding workflows | Delegation SaaS viability | P0 |",
     "status": "PARTIAL",
-    "evidence": [
-      "docs/v3/phase-3/customer-participants/report.json",
-      "docs/adr/0041-private-delegation-participant-onboarding.md",
-      "tests/integration/customer-participants.test.ts",
-      "tests/operator/v3-customer-participants-ui.spec.ts"
-    ],
-    "nextAction": "Synthetic programme invitations/consented registration/revocation locally verified;full exact-head CI/release pending. Actual provider,full participant profiles/private missions,coordination/economics and organiser acceptance unfinished."
+    "evidence": ["docs/v3/phase-3/customer-participants/release.json"],
+    "nextAction": "PR77 gated invitations/consent/registration/revocation source release verified365PG/120public/113protected,44live. Full profiles/private missions/coordination/economics and actual provider acceptance unfinished."
   },
   {
     "id": "V3-06-007",
