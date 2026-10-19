@@ -70,6 +70,15 @@
       "kind": "ledger-chunks",
       "throughChunk": 112,
       "meaning": "Exact completed chunk snapshot; history only, not current state"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunk-113.md",
+      "bytes": 3847,
+      "sha256": "024bcd39fe0893ec505cfe1886f19dd400ade2bd0d894d9087e35e5be5153a94",
+      "kind": "ledger-chunks",
+      "throughChunk": 113,
+      "meaning": "Exact completed maintenance/CodeQL observations; historical, not live status"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

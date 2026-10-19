@@ -772,6 +772,11 @@
       "path": "docs/v3/history/ledger-chunk-112.md",
       "classification": "Exact historical execution entry",
       "use": "Completed shared-handoff chunk112 evidence, hash-verified; not current state"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunk-113.md",
+      "classification": "Exact historical execution entry",
+      "use": "Completed chunk113 CodeQL and release evidence; hash-verified, not current state"
     }
   ]
 }
