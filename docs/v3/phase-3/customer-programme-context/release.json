@@ -1,0 +1,280 @@
+{
+  "result": "verified bounded gated canonical programme-context source release;whole V3/independent Delegation OS PARTIAL;actual managed-provider acceptance NOT VERIFIED",
+  "pr": 79,
+  "baseline": "f447b2108c82ddf203e2fe54f30789b13df32b01",
+  "testedHead": "665840bb5e70ae69ed8d3634a6c29e7b00d3879c",
+  "testedTree": "30304fd76d9ec6fde2bdf38bfec6c123aa7566e4",
+  "merge": "36ba423738655a766db2ff32d0efa1ecf69d1803",
+  "mergeTreeMatches": true,
+  "ci": {
+    "run": 39177345921,
+    "job": 117822636444,
+    "result": "success",
+    "integrationFiles": 40,
+    "integrationTests": 392,
+    "publicBrowsers": 124,
+    "protectedBrowsers": 141,
+    "quotes": [
+      "Test Files 40 passed (40)",
+      "Tests 392 passed (392)",
+      "124 passed (3.1m)",
+      "141 passed (11.7m)"
+    ],
+    "requiredSteps": "All validate steps succeeded, including format/lint/types/unit/source/security/dependency/roles/scanner/build/browsers",
+    "CodeQL": "skipped;D04 remains closed"
+  },
+  "artifact": {
+    "id": 12155990496,
+    "digest": "sha256:6bd5e6f2db3a3c11f505f6a125aba939ac2a3bc31220c7fe0e6e5947d52400e4",
+    "sizeInBytes": 25655181,
+    "expiresAt": "2026-10-22T00:05:14Z"
+  },
+  "production": {
+    "id": "dpl_CxRFHPYhLrXLZtuXajuyb2JoHfno",
+    "url": "corridra-3tzfi7onu-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "36ba423738655a766db2ff32d0efa1ecf69d1803",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-36ba423738655a766db2ff32d0efa1ecf69d1803-sadat-os.vercel.app"
+    ]
+  },
+  "isolatedPreview": {
+    "id": "dpl_QpZwvgEgK6vDQqp4CX9bXLyh3KJz",
+    "url": "corridra-hsv10jmur-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "36ba423738655a766db2ff32d0efa1ecf69d1803",
+    "regions": ["fra1"],
+    "aliases": ["corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app"],
+    "checks": [
+      {
+        "path": "/api/customer-programme-context?registrationId=00000000-0000-4000-8000-000000000004",
+        "status": 503,
+        "privateHeaders": true
+      },
+      {
+        "path": "/api/customer-programme-context?workspaceId=00000000-0000-4000-8000-000000000006&programmeId=00000000-0000-4000-8000-000000000005",
+        "status": 503,
+        "privateHeaders": true
+      },
+      {
+        "path": "/account/delegations",
+        "status": 200,
+        "privateHeaders": true,
+        "closedPage": true
+      },
+      {
+        "path": "/verify-email",
+        "status": 200,
+        "privateHeaders": true,
+        "visibleOtp": true
+      }
+    ]
+  },
+  "live": {
+    "result": "pass",
+    "count": 51,
+    "checks": [
+      ["/", "GET", 200],
+      ["/signup", "GET", 200],
+      ["/signin", "GET", 200],
+      ["/verify-email", "GET", 200],
+      ["/operator/setup", "GET", 200],
+      ["/account", "GET", 200],
+      ["/api/customer-requests", "GET", 503],
+      ["/api/customer-requests", "POST", 503],
+      ["/api/customer-workspace-access", "GET", 503],
+      ["/api/customer-saved-missions", "GET", 503],
+      ["/api/customer-saved-missions", "POST", 503],
+      ["/api/customer-companies", "GET", 503],
+      ["/api/customer-requests/00000000-0000-4000-8000-000000000001", "GET", 503],
+      ["/api/customer-decisions?resourceId=00000000-0000-4000-8000-000000000001", "GET", 503],
+      [
+        "/api/workspace/customer-decision-disclosures?tenant=00000000-0000-4000-8000-000000000001",
+        "GET",
+        503
+      ],
+      ["/api/workspace/customer-decision-disclosures", "POST", 503],
+      ["/api/customer-assigned-missions", "GET", 503],
+      ["/api/customer-assigned-missions", "POST", 503],
+      ["/api/workspace/customer-mission-delivery", "GET", 503],
+      ["/api/workspace/customer-mission-delivery", "POST", 503],
+      ["/api/customer-companies", "POST", 405],
+      ["/api/customer-decisions", "POST", 405],
+      ["/api/workspace/tenants", "GET", 401],
+      ["/api/workspace", "GET", 404],
+      ["/api/auth/get-session", "GET", 200],
+      ["/signin", "hosting GET", 307],
+      ["/operator/setup", "hosting GET", 307],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "GET", 200],
+      ["/account/request/00000000-0000-4000-8000-000000000010", "hosting GET", 307],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/requests/00000000-0000-4000-8000-000000000001", "hosting GET", 307],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/missions/00000000-0000-4000-8000-000000000001", "hosting GET", 307],
+      ["/account/companies", "GET", 200],
+      ["/account/companies", "hosting GET", 307],
+      ["/api/customer-programmes", "GET", 503],
+      ["/api/customer-programmes", "POST", 503],
+      ["/account/delegations/00000000-0000-4000-8000-000000000001", "GET", 200],
+      ["/account/delegations/00000000-0000-4000-8000-000000000001", "hosting GET", 307],
+      ["/api/customer-programme-participants?view=own", "GET", 503],
+      ["/api/customer-programme-participants?view=manage", "GET", 503],
+      ["/api/customer-programme-participants", "POST", 503],
+      ["/account/delegations", "GET", 200],
+      ["/account/delegations", "hosting GET", 307],
+      ["/api/customer-programme-objectives?view=own", "GET", 503],
+      ["/api/customer-programme-objectives?view=manage", "GET", 503],
+      ["/api/customer-programme-objectives?view=choices", "GET", 503],
+      ["/api/customer-programme-objectives", "POST", 503],
+      [
+        "/api/customer-programme-context?registrationId=00000000-0000-4000-8000-000000000004",
+        "GET",
+        503
+      ],
+      [
+        "/api/customer-programme-context?workspaceId=00000000-0000-4000-8000-000000000006&programmeId=00000000-0000-4000-8000-000000000005",
+        "GET",
+        503
+      ],
+      ["/api/customer-programme-context", "POST", 503]
+    ],
+    "stdout": {
+      "result": "pass",
+      "count": 51,
+      "checks": [
+        [0, "GET", 200],
+        [1, "GET", 200],
+        [2, "GET", 200],
+        [3, "GET", 200],
+        [4, "GET", 200],
+        [5, "GET", 200],
+        [6, "GET", 503],
+        [7, "POST", 503],
+        [8, "GET", 503],
+        [9, "GET", 503],
+        [10, "POST", 503],
+        [11, "GET", 503],
+        [12, "GET", 503],
+        [13, "GET", 503],
+        [14, "GET", 503],
+        [15, "POST", 503],
+        [16, "GET", 503],
+        [17, "POST", 503],
+        [18, "GET", 503],
+        [19, "POST", 503],
+        [20, "POST", 405],
+        [21, "POST", 405],
+        [22, "GET", 401],
+        [23, "GET", 404],
+        [24, "GET", 200],
+        [25, "hosting GET", 307],
+        [26, "hosting GET", 307],
+        [27, "GET", 200],
+        [28, "hosting GET", 307],
+        [29, "GET", 200],
+        [30, "hosting GET", 307],
+        [31, "GET", 200],
+        [32, "hosting GET", 307],
+        [33, "GET", 200],
+        [34, "hosting GET", 307],
+        [35, "GET", 503],
+        [36, "POST", 503],
+        [37, "GET", 200],
+        [38, "hosting GET", 307],
+        [39, "GET", 503],
+        [40, "GET", 503],
+        [41, "POST", 503],
+        [42, "GET", 200],
+        [43, "hosting GET", 307],
+        [44, "GET", 503],
+        [45, "GET", 503],
+        [46, "GET", 503],
+        [47, "POST", 503],
+        [48, "GET", 503],
+        [49, "GET", 503],
+        [50, "POST", 503]
+      ]
+    },
+    "command": "cmd_90686b1ae3a845b3ace8b01c03ad",
+    "exitCode": 0,
+    "assertions": "Private headers on configured private pages/customer APIs;closed503/readonly405/staff401;anonymous null session;visible OTP;same-origin final navigation;canonical307;closed account subpages without active forms.",
+    "priorProbeFailures": "First probe incorrectly required no-referrer on auth SDK session endpoint;source config intentionally uses global strict-origin-when-cross-origin there. Second used manual canonical redirects and observed expected anonymous /account\u2192signin307. Corrected collector uses same-origin final navigation for canonical paths and manual checks for hosting redirects;no product/test assertion changed. First short sandbox expired/stopped independently verified."
+  },
+  "probe": {
+    "session": "sbx_t1EdpWcBFOm18jfOQRPIU9XuhMc0",
+    "persistent": false,
+    "status": "stopped",
+    "stopIndependentlyVerified": true,
+    "region": "fra1",
+    "vcpus": 1,
+    "timeout": 60000,
+    "env": "none",
+    "source": "none",
+    "network": ["c.obsidianglobal.studio", "corridra.vercel.app"],
+    "stdoutCollectedBeforeStop": true
+  },
+  "observability": "Exact-production error/fatal grouped query over 10m returned no matching groups;bounded snapshot,not full security assurance.",
+  "activation": "No optional cloud module install,provider/admission/intake/flags or D01-D06/D08 activation. Context defaults off;production hard off.",
+  "rollback": "Compatible PR78 sourcef447b21;preserve additive canonical context versions,commands,consent and events. No down migration.",
+  "remaining": "Actual managed-provider controlled session/inbox and full role flow;full independent organiser coordination/economics/organisation/customer authoring/notifications/templates/reporting;full UX/security/usability acceptance. Separate reason minLength UI mismatch repair remains outside this source release.",
+  "localCleanup": {
+    "retiredLocalRefs": [
+      {
+        "branch": "docs/part-02-release",
+        "sha": "5c4e8450541d48b64d703eb85fa6f55168a3f7e3",
+        "proof": "all unique patches equivalent to origin/main"
+      },
+      {
+        "branch": "docs/part-03-live-release-evidence",
+        "sha": "17ad6d018455f709dcbdac8d3dd0b2148ff142fe",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "docs/part-04-live-evidence",
+        "sha": "815d43f7e56ad6cccb857361837549c73d3bbcfd",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "docs/part-05-accepted-release",
+        "sha": "98b6b995a557123254110d538e1cae00b95e77bd",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "docs/part-05-live-evidence",
+        "sha": "2d3e2f628d40a351b24bab19795b3eb20489629f",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "feat/part-03-foundations",
+        "sha": "2a82303ce643173ae0738657763e2bc961c5c78a",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "feat/part-04-missions",
+        "sha": "4c9dbfd4ae4a7bf5cc1e821bee792b5b3e92e602",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "feat/part-05-counterparties",
+        "sha": "1540e7f765a6a673dbd7b394b708161477938a9a",
+        "proof": "ancestor of origin/main"
+      },
+      {
+        "branch": "feat/public-experience",
+        "sha": "2af94e406575b2eb5c155e2af0ab5ce266a9c7e5",
+        "proof": "all unique patches equivalent to origin/main"
+      }
+    ],
+    "remoteRefsDeleted": 0,
+    "openPRsPreserved": [10, 32, 80],
+    "branchBudget": {
+      "localCount": 2,
+      "remoteCount": 7,
+      "distinctCount": 8
+    }
+  }
+}
