@@ -1,0 +1,78 @@
+{
+  "scope": "PR83 CodeQL/handoff and PR84 private organisation profiles; product remains PARTIAL, profile feature flag off",
+  "prs": {
+    "83": {
+      "mergedSource": "d77be23aed4043c8862566c8e7ce6b781350fdd2",
+      "testedHead": "0333aafb8687d44b8f6a470f13cef6fe37de7976",
+      "testedTree": "71122640af3f42cafb2cf5b9908cf7b0da306e04",
+      "ci": { "run": 39201929515, "conclusion": "success" },
+      "codeQL": {
+        "run": 39201929530,
+        "conclusion": "success",
+        "analyses": ["actions", "javascript-typescript", "python"],
+        "finding": "one retained negative TLS test fixture; no exclusion or dismissal"
+      },
+      "scope": "workflows, docs, ledger and release receipts only; no application code"
+    },
+    "84": {
+      "mergedSource": "248884bd467a4e75c4e7bb14af02063b53c74d64",
+      "testedHead": "a7468ca44c25c1760cc8840d8947a8d78ecb6827",
+      "testedTree": "ad958558d3af6498e8a7d5861ec1b53239c7a7ce",
+      "mergeTreeMatches": true,
+      "ci": { "run": 39225397746, "job": 117970323184, "conclusion": "success" },
+      "codeQL": {
+        "run": 39225397775,
+        "conclusion": "success",
+        "analyses": ["actions", "javascript-typescript", "python"]
+      },
+      "localEvidence": "new integration 16 passed; component UI 18 passed with axe at four widths; closed-gate 4 passed; docs 19 pass; full integration 404 of 408 locally with the four ClamAV-dependent failures also failing on pristine main (full exact-head CI is the authority and passed)"
+    }
+  },
+  "production": {
+    "id": "dpl_EdF8jdWxohcntZe93LBa5nU4hgMt",
+    "url": "corridra-hl88gce92-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "248884bd467a4e75c4e7bb14af02063b53c74d64",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-248884bd467a4e75c4e7bb14af02063b53c74d64-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled"
+  },
+  "live": {
+    "result": "pass",
+    "count": 56,
+    "meaning": "51 prior inventory checks plus 5 new organisation-profile checks",
+    "direct": { "count": 47, "command": "cmd_d0948fbd2ca549c49bab68065536", "exitCode": 0 },
+    "hostingRedirects": {
+      "count": 9,
+      "command": "cmd_cc7ae96b342c473195c36828d30b",
+      "exitCode": 0,
+      "assertion": "corridra.vercel.app answers 307 to the identical path on c.obsidianglobal.studio"
+    },
+    "assertions": "private cache-control no-store and referrer-policy no-referrer on private pages and customer APIs; closed 503, read-only 405, staff 401, 404; profile API GET, history GET and POST closed 503; profile page 200 with a bounded unavailable state",
+    "priorProbeFailure": "First collector ran the 9 hosting-redirect checks against the custom domain, which correctly answered 200 instead of 307; corrected to the vercel.app host in the second command. No product assertion changed.",
+    "sandbox": {
+      "id": "sbx_2SJZyzfYOIGFnfhb57wbhtd0FGrN",
+      "persistent": false,
+      "region": "fra1",
+      "stoppedIndependentReadback": true
+    }
+  },
+  "activation": "CORRIDRA_CUSTOMER_ORGANISATION_PROFILES_ENABLED is unset; the code also refuses to run on Vercel production. No flag, admission, provider or real-operation gate changed. D01-D06 and D08 remain closed.",
+  "rollback": {
+    "previousSource": "bb826896e4070d7eaece0c0fca6aa14b64765c67",
+    "previousDeployment": "dpl_9MbSd2wCxAsosfVvFJGnvCv1nEtW",
+    "procedure": "Existing exact-source release runbook; additive schema and history retained, no database rollback"
+  },
+  "limits": [
+    "No isolated preview of this exact source was deployed or checked.",
+    "The profile module is not installed in any cloud database and no customer admission exists, so profile behaviour is verified only against local PostgreSQL and CI.",
+    "Registered-account reset and private managed-provider acceptance remain unverified.",
+    "Vercel reported Function Storage at 100 percent of the free tier; five superseded previews were deleted by the owner. Meter state afterwards is unverified."
+  ]
+}
