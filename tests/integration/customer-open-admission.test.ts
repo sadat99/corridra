@@ -10,12 +10,18 @@ import {
   CustomerWorkspaceService,
   type CustomerSession,
 } from '../../packages/auth/src/customer-workspaces';
+import type { CustomerWorkspaceOptions } from '../../packages/auth/src/customer-session';
 
 const issuer =
   'https://ep-autumn-scene-b17sgino.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 let f: Awaited<ReturnType<typeof fixture>>;
-const closed = { enabled: true, synthetic: true, production: false, issuer };
-const open = { ...closed, openAdmission: true };
+const closed: CustomerWorkspaceOptions = {
+  enabled: true,
+  synthetic: true,
+  production: false,
+  issuer,
+};
+const open: CustomerWorkspaceOptions = { ...closed, openAdmission: true };
 const session = (subject: string, emailVerified = true): CustomerSession => ({
   subject,
   expiresAt: new Date(Date.now() + 3600000),
