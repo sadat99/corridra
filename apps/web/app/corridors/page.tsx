@@ -2,6 +2,7 @@ import { PublicShell } from '../../components/public-shell';
 import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
 import { corridorPages } from '../../content/corridors';
+import { Arrow } from '../../components/arrow';
 import { MarketSelector } from '../../components/market-selector';
 export const metadata = { title: 'Commercial corridors | Corridra' };
 export default function Page() {
@@ -15,7 +16,7 @@ export default function Page() {
           follow-up use the same mission workflow.
         </p>
       </section>
-      <DiscoveryExperience overview />
+      <DiscoveryExperience />
       <section className="detail-section">
         <div className="detail-grid">
           {Object.entries(corridorPages).map(([slug, c]) => (
@@ -34,6 +35,11 @@ export default function Page() {
                 Corridra is built for any route between countries. Pick two countries on the map
                 above, or use the selector below, and start a mission from there.
               </p>
+            </div>
+            <div className="ux-route-other-actions">
+              <Link prefetch={false} className="button-secondary" href="/plan">
+                Plan a mission on another route <Arrow />
+              </Link>
             </div>
           </article>
         </div>

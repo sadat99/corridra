@@ -89,9 +89,10 @@ test('job-first navigation exposes machinery and commercial trips with real entr
   isMobile,
 }) => {
   await page.goto('/');
-  if (isMobile) await page.getByRole('button', { name: /^Menu/ }).click();
-  await page.getByText('Solutions', { exact: true }).click();
-  await page.getByRole('link', { name: 'Procure machinery', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Footer solutions' })
+    .getByRole('link', { name: 'Procure machinery', exact: true })
+    .click();
   await expect(page).toHaveURL('/machinery');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'A machine is useful only if it fits the work.',

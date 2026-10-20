@@ -7,7 +7,7 @@ async function openFineTune(page: Page) {
   if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
 }
 
-test('UX-06 discovery prioritizes exploration and preserves the complete mission guide', async ({
+test('UX-06 the home is one question, and the route explorer and mission guide keep every destination', async ({
   page,
 }) => {
   const writes: string[] = [];
@@ -15,19 +15,18 @@ test('UX-06 discovery prioritizes exploration and preserves the complete mission
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(request.method());
   });
   await page.goto('/');
-  const explore = page.getByRole('link', { name: 'Explore a commercial direction' });
-  await explore.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#commercial-objective')).toBeInViewport();
-  await openFineTune(page);
+  await expect(page.locator('.ux-guide-home h1')).toHaveCount(1);
   await expect(
-    page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
-  ).toBeVisible();
-  const guide = page.locator('.ux-home-guide');
-  await expect(guide).not.toHaveAttribute('open', '');
-  await guide.locator('summary').focus();
-  await page.keyboard.press('Enter');
-  await expect(guide).toHaveAttribute('open', '');
+    page.getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link'),
+  ).toHaveCount(3);
+  await expect(page.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
+    4,
+  );
+  await expect(page.getByRole('link', { name: 'How we label facts' })).toHaveAttribute(
+    'href',
+    '/trust',
+  );
+  // Every way to work and every guide page stays reachable from the footer.
   for (const href of [
     '/sell',
     '/source',
@@ -37,26 +36,36 @@ test('UX-06 discovery prioritizes exploration and preserves the complete mission
     '/trust',
     '/network',
     '/institutions',
-    '/plan',
-  ]) {
-    await expect(guide.locator(`a[href="${href}"]`).first()).toBeVisible();
-  }
-  await expect(
-    guide.getByRole('heading', { name: 'A meeting is not a sale. A contract is not cash.' }),
-  ).toBeVisible();
-  await expect(guide.locator('.outcome-path li')).toHaveCount(11);
+  ])
+    await expect(page.locator(`footer a[href="${href}"]`).first()).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await guide.locator('summary').focus();
-  await page.keyboard.press('Enter');
-  await expect(guide).not.toHaveAttribute('open', '');
-  await expect(guide.locator('summary')).toBeFocused();
+  await page.goto('/corridors');
+  await openFineTune(page);
+  await expect(
+    page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
+  ).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.goto('/trust');
+  await expect(
+    page.getByRole('heading', { name: 'A meeting is not a sale. A contract is not cash.' }),
+  ).toBeVisible();
+  await expect(page.locator('.outcome-path li')).toHaveCount(11);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
+});
+
+test('UX-06 the old sample mission link on the home page still arrives at the sample mission', async ({
+  page,
+}) => {
+  await page.goto('/#mission-example');
+  await expect(page).toHaveURL(/\/corridors#mission-example$/);
+  await expect(page.getByRole('region', { name: 'Sample mission' })).toBeVisible();
 });
 
 test('UX-06 legacy example fragment opens the real synthetic flow and close restores focus', async ({
   page,
 }) => {
-  await page.goto('/#mission-example');
+  await page.goto('/corridors#mission-example');
   const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example.getByRole('button', { name: '2. Inspect the evidence' })).toBeVisible();
   await example.getByRole('button', { name: '2. Inspect the evidence' }).focus();

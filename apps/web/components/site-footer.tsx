@@ -1,5 +1,6 @@
 import { Arrow } from './arrow';
 import Link from 'next/link';
+import { waysToWork } from './ways-to-work';
 export function SiteFooter() {
   return (
     <footer className="public-footer">
@@ -12,21 +13,15 @@ export function SiteFooter() {
           <span>Initial product directions: Bangladesh → China / Spain / EU</span>
         </div>
         <nav aria-label="Footer solutions">
-          <Link prefetch={false} href="/sell">
-            Sell in a new market
-          </Link>
-          <Link prefetch={false} href="/source">
-            Source suppliers
-          </Link>
-          <Link prefetch={false} href="/enter-market">
-            Enter a new market
-          </Link>
-          <Link prefetch={false} href="/trade-missions">
-            Run a trade mission
-          </Link>
+          <p className="label">WAYS TO WORK</p>
+          {waysToWork.map(({ href, label }) => (
+            <Link prefetch={false} key={href} href={href}>
+              {label}
+            </Link>
+          ))}
         </nav>
         <nav aria-label="About Corridra">
-          <Link prefetch={false} href="/#mission-example">
+          <Link prefetch={false} href="/corridors#mission-example">
             Sample mission
           </Link>
           <Link prefetch={false} href="/workspace">

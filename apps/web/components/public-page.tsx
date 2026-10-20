@@ -93,6 +93,25 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           </ul>
         </section>
       )}
+      {content.progress && (
+        <section className="outcomes-section" aria-labelledby="outcomes-title">
+          <p className="label">{content.progress.label}</p>
+          <h2 id="outcomes-title">
+            {content.progress.title.map((line, index) => (
+              <span key={line}>
+                {index > 0 && <br />}
+                {line}
+              </span>
+            ))}
+          </h2>
+          <p>{content.progress.text}</p>
+          <ol className="outcome-path">
+            {content.progress.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </section>
+      )}
       <section className="closing public-closing" id="page-next">
         <p className="label">WHAT TO EXPECT</p>
         <h2>{content.closing.title}</h2>

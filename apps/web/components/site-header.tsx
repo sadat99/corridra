@@ -1,27 +1,17 @@
 'use client';
 import { Arrow } from './arrow';
+import { ListenButton } from './listen-button';
 
 import Link from 'next/link';
 
 import { useRef, useState } from 'react';
 
-export const solutions = [
-  { href: '/source', label: 'Source products/suppliers' },
-  { href: '/machinery', label: 'Procure machinery' },
-  { href: '/trade-missions', label: 'Run a trade mission' },
-  { href: '/business-trips', label: 'Plan a business trip' },
-  { href: '/sell', label: 'Sell in a new market' },
-  { href: '/enter-market', label: 'Enter a new market' },
-];
-
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
-  const details = useRef<HTMLDetailsElement>(null);
   const header = useRef<HTMLElement>(null);
   function close() {
     setOpen(false);
-    if (details.current) details.current.open = false;
   }
   return (
     <header
@@ -32,10 +22,8 @@ export function SiteHeader() {
       }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
-          const expanded = details.current?.open;
           close();
-          if (expanded && !open) details.current?.querySelector('summary')?.focus();
-          else toggle.current?.focus();
+          toggle.current?.focus();
         }
       }}
     >
@@ -63,34 +51,18 @@ export function SiteHeader() {
         className={open ? 'public-nav is-open' : 'public-nav'}
         aria-label="Main navigation"
       >
-        <details className="solutions-menu" ref={details}>
-          <summary>
-            Solutions{' '}
-            <span aria-hidden="true">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="m3 4 3 3 3-3" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </span>
-          </summary>
-          <div className="solutions-list">
-            {solutions.map(({ href, label }) => (
-              <Link prefetch={false} key={href} href={href} onClick={close}>
-                {label}
-              </Link>
-            ))}
-          </div>
-        </details>
         <Link prefetch={false} href="/how-it-works" onClick={close}>
           How it works
+        </Link>
+        <Link prefetch={false} href="/corridors" onClick={close}>
+          Routes
         </Link>
         <Link prefetch={false} href="/signin" onClick={close}>
           Sign in
         </Link>
-        <Link prefetch={false} href="/workspace" onClick={close}>
-          Start here
-        </Link>
+        <ListenButton />
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
-          Plan a mission <span className="sr-only">(test intake)</span>
+          Start a request <span className="sr-only">(sample request)</span>
           <span aria-hidden="true">
             <Arrow />
           </span>

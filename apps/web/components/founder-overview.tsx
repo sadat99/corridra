@@ -63,7 +63,7 @@ export function FounderOverview({ tenant }: { tenant: string }) {
           remains available.
         </dd>
       </dl>
-      <Link prefetch={false} className="text-link" href="/#mission-example">
+      <Link prefetch={false} className="text-link" href="/corridors#mission-example">
         Synthetic product explorer
       </Link>
       <p>

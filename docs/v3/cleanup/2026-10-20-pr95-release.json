@@ -1,0 +1,46 @@
+{
+  "scope": "PR95 plain-language home headline and request heading, the locked Guided experience standard (documentation), and the home headline layout fix. Product remains PARTIAL. Deployed main also carries PR93 and PR94 code that was merged but not yet deployed; it is inert while the production settings are unset.",
+  "pr": {
+    "number": 95,
+    "mergedSource": "29d76d6904f16b65fc4b5e0792e86865b2a405c6",
+    "testedHead": "decce4e6f834952b2e816fcc4655479e72bfea6b",
+    "baseAtMerge": "e7603985364499e07c1717c31174139a81eb11c5",
+    "mergeTreeMatches": true,
+    "mergeTree": "3f2db4e385951e30ff3d76e02d15578fec301f52",
+    "ci": {
+      "run": 39354313664,
+      "job": 118405484912,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including the browser specs"
+    },
+    "codeQL": {
+      "run": 39354313559,
+      "conclusion": "success",
+      "analyses": ["actions", "javascript-typescript", "python"]
+    }
+  },
+  "production": {
+    "id": "dpl_EyaoxSv8cHni5KBq4kiWoDyF3zru",
+    "url": "corridra-l1jtaqokf-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "29d76d6904f16b65fc4b5e0792e86865b2a405c6",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "deploymentHome": "the new headline and intro are present and the old strings are absent",
+      "customDomainPlan": "https://c.obsidianglobal.studio/plan answered 200 with the heading 'What do you want to do?'",
+      "hostingAlias": "the hosting address redirects to the custom domain by design (ADR034)"
+    },
+    "notRun": "the 72-check live probe from an ephemeral sandbox was not run for this release; only the observations above were made"
+  },
+  "productionSettings": "names only were read: no CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK, no CORRIDRA_CUSTOMER_OPEN_ADMISSION and no customer module flag exist for Production, so the ADR049 code runs in its default locked state",
+  "rollback": "dpl_BsKPfaEVuwqGzZzUk37BLDJdjB1T (PR92 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
+}

@@ -55,42 +55,38 @@ for (const [route, heading] of routes) {
   });
 }
 
-test('navigation opens, closes with Escape and takes visitors to a solution', async ({
+test('the menu opens, closes with Escape and the footer takes visitors to a way to work', async ({
   page,
   isMobile,
 }) => {
   await page.goto('/');
   const menu = page.getByRole('button', { name: /^(Menu|Close menu)$/ });
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
   if (isMobile) {
-    await expect(page.getByRole('navigation', { name: 'Main navigation' })).not.toBeVisible();
+    await expect(nav).not.toBeVisible();
     await menu.click();
     await expect(menu).toHaveAttribute('aria-expanded', 'true');
-  }
-  const solutions = page.getByRole('navigation', { name: 'Main navigation' }).locator('summary');
-  await solutions.focus();
-  await page.keyboard.press('Enter');
-  await expect(
-    page.getByRole('link', { name: 'Sell in a new market', exact: true }).first(),
-  ).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(
-    page
-      .getByRole('navigation', { name: 'Main navigation', includeHidden: true })
-      .locator('details'),
-  ).not.toHaveAttribute('open', '');
-  if (isMobile) {
+    await expect(nav.getByRole('link', { name: 'How it works' })).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(menu).toBeFocused();
     await expect(menu).toHaveAttribute('aria-expanded', 'false');
-    await menu.click();
-  } else await expect(solutions).toBeFocused();
-  await solutions.click();
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Source products/suppliers' })
-    .click();
+  } else {
+    await expect(nav.getByRole('link', { name: 'Routes', exact: true })).toBeVisible();
+  }
+  // Every way to work stays one tap away in the footer of every page.
+  const ways = page.getByRole('navigation', { name: 'Footer solutions' });
+  for (const [name, href] of [
+    ['Source products/suppliers', '/source'],
+    ['Procure machinery', '/machinery'],
+    ['Run a trade mission', '/trade-missions'],
+    ['Plan a business trip', '/business-trips'],
+    ['Sell in a new market', '/sell'],
+    ['Enter a new market', '/enter-market'],
+  ])
+    await expect(ways.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+  await ways.getByRole('link', { name: 'Source products/suppliers' }).click();
   await expect(page).toHaveURL('/source');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Visit fewer suppliers.');
-  if (isMobile) await expect(menu).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('open navigation passes accessibility checks and remains usable at narrow widths', async ({
@@ -102,7 +98,6 @@ test('open navigation passes accessibility checks and remains usable at narrow w
     await page.setViewportSize({ width: 320, height: 740 });
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
   }
-  await page.getByRole('navigation', { name: 'Main navigation' }).locator('summary').click();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -117,7 +112,7 @@ test('open navigation passes accessibility checks and remains usable at narrow w
   ).toEqual([]);
   await page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Plan a mission' })
+    .getByRole('link', { name: 'Start a request' })
     .click();
   await expect(page).toHaveURL('/plan');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('What do you want to do?');

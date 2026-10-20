@@ -65,6 +65,6 @@ test('V3 entry remains keyboard accessible and cannot replace an unfinished requ
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
   ).toBeLessThanOrEqual(1);
   await expect(
-    page.getByRole('link', { name: 'Other international business objective' }),
+    page.getByRole('link', { name: 'Something else? Tell us your business goal' }),
   ).toHaveAttribute('href', '/plan');
 });

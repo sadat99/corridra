@@ -19,10 +19,14 @@ test('the start page offers three plain choices and links each kind of person to
   page,
 }) => {
   await page.goto('/');
-  const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  if (await page.getByRole('button', { name: 'Menu', exact: true }).isVisible())
-    await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await nav.getByRole('link', { name: 'Start here', exact: true }).click();
+  const start = page
+    .getByRole('navigation', { name: 'Main navigation', includeHidden: true })
+    .getByRole('link', { name: 'Start a request', includeHidden: true });
+  await expect(start).toHaveAttribute('href', '/plan');
+  await page
+    .getByRole('navigation', { name: 'About Corridra' })
+    .getByRole('link', { name: 'Start here', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/workspace$/);
   await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
   const main = page.getByRole('main');
@@ -32,7 +36,7 @@ test('the start page offers three plain choices and links each kind of person to
   );
   await expect(
     main.getByRole('link', { name: 'See a sample mission', exact: true }),
-  ).toHaveAttribute('href', '/#mission-example');
+  ).toHaveAttribute('href', '/corridors#mission-example');
   await expect(main.getByRole('link', { name: 'Open my account', exact: true })).toHaveAttribute(
     'href',
     '/account',
