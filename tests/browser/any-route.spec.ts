@@ -4,22 +4,20 @@ import AxeBuilder from '@axe-core/playwright';
 // The platform is multi-corridor. Two routes are spotlighted, but any pair of countries works.
 async function openAnyRoute(page: import('@playwright/test').Page) {
   await page.goto('/corridors');
-  const atlas = page.getByLabel('Corridor Atlas', { exact: true });
-  await atlas.getByText('Another route? Pick any two countries', { exact: true }).click();
-  return atlas;
+  return page.getByLabel('Corridor Atlas', { exact: true });
 }
 
 test('any pair of countries shows on the world map with an honest, non-operating status', async ({
   page,
 }) => {
   const atlas = await openAnyRoute(page);
-  await atlas.getByLabel('Your company is in', { exact: true }).selectOption('JP');
-  await atlas.getByLabel('You want to reach', { exact: true }).selectOption('KE');
+  await page.getByLabel('My company is in', { exact: true }).selectOption('JP');
+  await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
   await expect(atlas.getByRole('heading', { name: 'Japan → Kenya' })).toBeVisible();
   await expect(atlas).toContainText('No operating offer is announced for this route yet.');
   await expect(atlas.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
     'href',
-    '/plan?companyCountry=JP&marketCode=KE',
+    '/plan?companyCountry=JP&marketCode=KE&job=sourcing',
   );
   // The world outline loads on demand and highlights both countries.
   await expect(atlas.locator('.ux-map-from')).toHaveCount(1);
@@ -27,7 +25,7 @@ test('any pair of countries shows on the world map with an honest, non-operating
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // The plan link keeps both countries.
   await atlas.getByRole('link', { name: 'Plan a mission on this route' }).click();
-  await expect(page).toHaveURL('/plan?companyCountry=JP&marketCode=KE');
+  await expect(page).toHaveURL('/plan?companyCountry=JP&marketCode=KE&job=sourcing');
   const summary = page.getByRole('complementary', { name: 'Your example request' });
   await expect(summary).toContainText('Japan');
   await expect(summary).toContainText('Kenya');
@@ -37,15 +35,15 @@ test('the European Union is drawn as its member states and a small country still
   page,
 }) => {
   const atlas = await openAnyRoute(page);
-  await atlas.getByLabel('Your company is in', { exact: true }).selectOption('JP');
-  await atlas.getByLabel('You want to reach', { exact: true }).selectOption('EU');
+  await page.getByLabel('My company is in', { exact: true }).selectOption('JP');
+  await page.getByLabel('I want to reach', { exact: true }).selectOption('EU');
   await expect(atlas.getByRole('heading', { name: 'Japan → European Union' })).toBeVisible();
   // 26 members have an outline. Malta is too small at this scale and is shown as a marker.
   await expect(atlas.locator('.ux-map-to')).toHaveCount(26);
   await expect(atlas.locator('.ux-map-to-point')).toHaveCount(1);
   // Singapore has no outline at this scale, so it is shown as a point.
-  await atlas.getByLabel('Your company is in', { exact: true }).selectOption('SG');
-  await atlas.getByLabel('You want to reach', { exact: true }).selectOption('KE');
+  await page.getByLabel('My company is in', { exact: true }).selectOption('SG');
+  await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
   await expect(atlas.getByRole('heading', { name: 'Singapore → Kenya' })).toBeVisible();
   await expect(atlas.locator('.ux-map-from')).toHaveCount(0);
   await expect(atlas.locator('.ux-map-pin')).toHaveCount(2);
@@ -55,21 +53,20 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
   page,
 }) => {
   const atlas = await openAnyRoute(page);
-  await atlas.getByLabel('Your company is in', { exact: true }).selectOption('BD');
-  await atlas.getByLabel('You want to reach', { exact: true }).selectOption('CN');
+  await page.getByLabel('My company is in', { exact: true }).selectOption('BD');
+  await page.getByLabel('I want to reach', { exact: true }).selectOption('CN');
   await expect(atlas.getByRole('heading', { name: 'Bangladesh → China' })).toBeVisible();
   await expect(atlas.getByRole('link', { name: /Read this corridor.s scope/ })).toHaveAttribute(
     'href',
     '/corridors/bangladesh-china',
   );
-  await atlas.getByLabel('Your company is in', { exact: true }).selectOption('JP');
-  await atlas.getByLabel('You want to reach', { exact: true }).selectOption('KE');
-  await atlas.getByRole('button', { name: 'Clear', exact: true }).click();
+  await page.getByLabel('My company is in', { exact: true }).selectOption('JP');
+  await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
   await expect(atlas.getByRole('heading', { name: 'Bangladesh → China' })).toBeVisible();
-  await expect(atlas.getByRole('button', { name: 'Bangladesh and China' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(
+    page.getByRole('button', { name: 'Bangladesh → China', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('the corridors page offers a third wing for any other route', async ({ page }) => {

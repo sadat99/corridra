@@ -1,0 +1,44 @@
+{
+  "scope": "PR97 Guided public front door (UI only) plus the PR95 release record. Product remains PARTIAL. Deployed main also carries PR96 code (issuer allowance and authority pin) that was merged but not yet deployed; it is inert while the production settings are unset.",
+  "pr": {
+    "number": 97,
+    "mergedSource": "7b05bf9d04e647cd153c4c8191b0379480b1a987",
+    "testedHead": "d25d732b37734d5828b5ad3a99ddfda888a0101b",
+    "baseAtMerge": "191ed9d34c6205a1c299beff3a9a4cbdf51342c9",
+    "ci": {
+      "run": 39361469225,
+      "job": 118428403738,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including browser and operator specs. The first run on 13c59af failed in one operator spec that still opened the route explorer from the home page; fixed in d25d732"
+    },
+    "codeQL": {
+      "run": 39361469265,
+      "conclusion": "success",
+      "analyses": ["actions", "javascript-typescript", "python"]
+    }
+  },
+  "production": {
+    "id": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R",
+    "url": "corridra-j6x30pbwc-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "7b05bf9d04e647cd153c4c8191b0379480b1a987",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "home": "https://c.obsidianglobal.studio/ answered 200 with the three-line headline, three choices, four steps, five fact labels, the footer Ways to work list and no Solutions menu",
+      "trust": "/trust answered 200 and shows the 11-step progress path under 'A meeting is not a sale. A contract is not cash.'",
+      "corridors": "/corridors answered 200 and holds the route explorer, the sample mission section and the any-other-route action",
+      "notObserved": "the Listen button (rendered in the browser only), the /#mission-example redirect (runs in the browser) and the 72-check live probe were not run against production"
+    }
+  },
+  "productionSettings": "not re-read for this release; the last read (PR95 receipt) showed no CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK, no CORRIDRA_CUSTOMER_OPEN_ADMISSION and no customer module flag for Production",
+  "rollback": "dpl_EyaoxSv8cHni5KBq4kiWoDyF3zru (PR95 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
+}

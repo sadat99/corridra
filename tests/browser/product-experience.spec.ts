@@ -31,11 +31,12 @@ test('global selector retains an unsupported operating direction and opens the a
   page,
 }, info) => {
   await page.goto('/corridors');
-  await page.getByRole('combobox', { name: 'Company country', exact: true }).selectOption('JP');
-  await page.getByRole('combobox', { name: 'Target market', exact: true }).selectOption('KE');
-  await expect(page.getByRole('status')).toContainText('No operating offer is announced');
-  await page.getByRole('link', { name: 'Prepare an example request', exact: true }).click();
-  await page.getByLabel('Source suppliers', { exact: true }).check();
+  await page.getByRole('combobox', { name: 'My company is in', exact: true }).selectOption('JP');
+  await page.getByRole('combobox', { name: 'I want to reach', exact: true }).selectOption('KE');
+  await expect(page.getByLabel('Corridor Atlas', { exact: true })).toContainText(
+    'No operating offer is announced',
+  );
+  await page.getByRole('link', { name: 'Plan a mission on this route', exact: true }).click();
   await page
     .getByRole('combobox', { name: 'Commercial job', exact: true })
     .selectOption('machinery_procurement');
