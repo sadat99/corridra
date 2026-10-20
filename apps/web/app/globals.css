@@ -140,9 +140,6 @@ h1 {
   line-height: 1.04;
   letter-spacing: -3.7px;
 }
-h1 span {
-  color: var(--accent);
-}
 .hero-description {
   max-width: 425px;
   margin: 29px 0 31px;
@@ -3274,7 +3271,7 @@ th {
   justify-items: start;
 }
 .guide-page-hero h1 {
-  max-width: 24ch;
+  max-width: 40ch;
   color: var(--text-1);
   font-size: var(--text-h1);
 }
@@ -4866,4 +4863,127 @@ th {
 .guide-page-actions .primary-link,
 .guide-page-actions .button-secondary {
   text-align: center;
+}
+
+/* How it works: two phases, each a panel with numbered dots joined by a line. */
+.guide-journey {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+.guide-phase {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+.guide-phase header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.guide-phase h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.guide-phase header p {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-3);
+}
+.guide-phase ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-phase li {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.guide-phase li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 1.25rem;
+  left: 3.25rem;
+  right: calc(var(--space-5) * -1 + 0.5rem);
+  height: 2px;
+  background: var(--line);
+}
+.guide-phase li h3 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xl);
+  line-height: 1.25;
+}
+.guide-phase li p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.guide-step-name {
+  color: var(--text-3);
+}
+.guide-page-steps .guide-step-name {
+  margin: 0;
+}
+@media (max-width: 1000px) {
+  .guide-phase ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--space-6);
+  }
+  .guide-phase li:nth-child(2n)::after {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .guide-phase {
+    padding: var(--space-5);
+  }
+  .guide-phase ol {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+  .guide-phase li {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    column-gap: var(--space-4);
+    padding-bottom: var(--space-5);
+  }
+  .guide-phase li .guide-step-number {
+    grid-row: span 3;
+  }
+  .guide-phase li h3 {
+    margin-top: 0;
+  }
+  .guide-phase li:not(:last-child)::after,
+  .guide-phase li:nth-child(2n)::after {
+    display: block;
+    top: 2.625rem;
+    bottom: 0;
+    left: 1.1875rem;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+}
+
+.ux-public :is(h1, h2, h3) {
+  text-wrap: balance;
 }
