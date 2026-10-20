@@ -1,0 +1,41 @@
+{
+  "scope": "PR103 How it works redesign and the fix for washed-out headlines on every guide page, plus the PR101 release record. UI and documentation only. Product remains PARTIAL.",
+  "pr": {
+    "number": 103,
+    "mergedSource": "5a3e1232ae1dd1f5f57f1c549e27290de298c670",
+    "testedHead": "a86054065ee53288adbbbf3317252ac435929e42",
+    "baseAtMerge": "b8af3a984fd8952b796ef3e41e88706d91f78116",
+    "ci": {
+      "run": 39388178819,
+      "job": 118513017781,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including browser and operator specs"
+    },
+    "codeQL": {
+      "run": 39388178699,
+      "conclusion": "success"
+    }
+  },
+  "production": {
+    "id": "dpl_5w2n5XW4RMHCkHHYivRVyo8Tkebu",
+    "url": "corridra-5cfxpnnwl-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "5a3e1232ae1dd1f5f57f1c549e27290de298c670",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "howItWorks": "https://c.obsidianglobal.studio/how-it-works answered 200 with the three headline lines, two phase panels, plain step titles with the contract name as a small label, the expectations section and the closing Start a request band",
+      "notObserved": "the Trust, Sell and other guide pages after the headline colour fix, the Listen button (browser only) and the 72-check live probe were not run against production"
+    }
+  },
+  "productionSettings": "not re-read for this release; the customer unlock release (PR100 receipt) recorded the 19 Production settings, and this deploy changed none of them",
+  "rollback": "dpl_DmDyG2SnGDRu2fMffeMYKzoGj5sw (b8af3a9, PR101 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
+}
