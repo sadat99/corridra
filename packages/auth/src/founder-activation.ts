@@ -1,6 +1,7 @@
 import { customerCompaniesEnabled } from './customer-companies';
 import { customerDeliveryEnabled } from './customer-assigned-missions';
 import { customerDecisionsEnabled } from './customer-decisions';
+import { customerMemberRolesEnabled } from './customer-member-roles';
 import { customerMissionDraftsEnabled } from './customer-mission-drafts';
 import { customerMissionSharesEnabled } from './customer-mission-shares';
 import { customerOrganisationProfilesEnabled } from './customer-organisation-profiles';
@@ -88,6 +89,12 @@ const modules: {
     label: 'Assigned missions',
     flag: 'CORRIDRA_CUSTOMER_DELIVERY_ENABLED',
     enabled: customerDeliveryEnabled,
+  },
+  {
+    key: 'member-roles',
+    label: 'Team roles and leaving',
+    flag: 'CORRIDRA_CUSTOMER_MEMBER_ROLES_ENABLED',
+    enabled: customerMemberRolesEnabled,
   },
   {
     key: 'organisation-profiles',

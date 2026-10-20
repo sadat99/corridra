@@ -729,6 +729,11 @@
       "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
     },
     {
+      "path": "docs/adr/0050-member-roles-and-leaving.md",
+      "classification": "Architecture contract/index",
+      "use": "Owner-managed admin and member roles and voluntary leaving for invited workspace members; append-only history; default off"
+    },
+    {
       "path": "docs/adr/0049-synthetic-production-opt-in-and-open-admission.md",
       "classification": "Architecture contract/index",
       "use": "Owner-accepted production opt-in and open admission for synthetic use; deferred scanning, legal and security controls"

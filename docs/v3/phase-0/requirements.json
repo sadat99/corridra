@@ -3586,9 +3586,13 @@
       "packages/auth/src/customer-workspaces.ts",
       "apps/web/app/api/customer-workspaces/route.ts",
       "tests/integration/customer-workspaces.test.ts",
-      "docs/adr/0032-customer-workspace-authority.md"
+      "docs/adr/0032-customer-workspace-authority.md",
+      "docs/adr/0050-member-roles-and-leaving.md",
+      "packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql",
+      "tests/integration/customer-member-roles.test.ts",
+      "tests/operator/v3-member-roles-ui.spec.ts"
     ],
-    "nextAction": "Immutable initial customer owner grant and principal disablement are locally tested. Invitations, membership changes/revocation and collaborative browser acceptance remain missing; no self-service collaboration release is claimed."
+    "nextAction": "Invitations, acceptance and revocation exist with UI and tests (ADR032). Owner-managed admin and member roles and voluntary leaving are source and local tests (ADR050), default off and not installed or released. Ownership transfer, a viewer role and managed-provider browser acceptance remain missing or unverified; no self-service collaboration release is claimed."
   },
   {
     "id": "V3-06-004",

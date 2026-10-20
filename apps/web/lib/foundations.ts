@@ -19,6 +19,10 @@ import {
   customerOrganisationProfilesEnabled,
 } from '@corridra/auth/customer-organisation-profiles';
 import {
+  CustomerMemberRoleService,
+  customerMemberRolesEnabled,
+} from '@corridra/auth/customer-member-roles';
+import {
   CustomerProgrammeContextService,
   customerProgrammeContextEnabled,
 } from '@corridra/auth/customer-programme-context';
@@ -279,6 +283,18 @@ function createServices() {
       authPool,
       {
         enabled: customerMissionDraftsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerMemberRoles: new CustomerMemberRoleService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerMemberRolesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),

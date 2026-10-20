@@ -19,6 +19,13 @@ const when = (value: string) =>
   }).format(new Date(value)) + ' UTC';
 type Invite = { version: 1; commandId: string; label: string };
 type Cursor = { invitationAfter?: string; memberAfter?: string };
+type RoleChange = {
+  memberId: string;
+  label: string;
+  role: 'admin' | 'member';
+  expectedRole: 'admin' | 'member';
+  commandId: string;
+};
 type Removal = {
   kind: 'invitation' | 'membership';
   targetId: string;
@@ -52,7 +59,8 @@ function validPage(v: unknown, id: string): v is CustomerAccessPage {
         validId(r.id) &&
         label(r.label) &&
         date(r.createdAt) &&
-        r.role === 'member' &&
+        (r.role === 'member' || r.role === 'admin') &&
+        (r.roleVersion === undefined || (Number.isInteger(r.roleVersion) && r.roleVersion >= 0)) &&
         ['active', 'revoked', 'account-disabled'].includes(r.status),
     )
   );
@@ -72,11 +80,13 @@ export function CustomerWorkspaceTeam({
   subject,
   issuer,
   onDenied,
+  memberRolesEnabled = false,
 }: {
   workspace: CustomerWorkspace;
   subject: string;
   issuer: string;
   onDenied: (status: number) => void;
+  memberRolesEnabled?: boolean;
 }) {
   const [page, setPage] = useState<CustomerAccessPage | null>(null);
   const [loading, setLoading] = useState(false),
@@ -92,6 +102,7 @@ export function CustomerWorkspaceTeam({
     expiresAt: string;
   } | null>(null);
   const [removal, setRemoval] = useState<Removal | null>(null);
+  const [roleChange, setRoleChange] = useState<RoleChange | null>(null);
   const alive = useRef(false),
     inFlight = useRef(false),
     sequence = useRef(0);
@@ -116,6 +127,7 @@ export function CustomerWorkspaceTeam({
     setPage(null);
     setIssued(null);
     setRemoval(null);
+    setRoleChange(null);
     onDenied(status);
   }
   async function load(cursor: Cursor = {}) {
@@ -126,6 +138,7 @@ export function CustomerWorkspaceTeam({
     setPage(null);
     setLoading(true);
     setRemoval(null);
+    setRoleChange(null);
     try {
       const params = new URLSearchParams({ workspaceId: workspace.id, pageSize: '25', ...cursor });
       const response = await fetch('/api/customer-workspace-access?' + params, {
@@ -367,6 +380,95 @@ export function CustomerWorkspaceTeam({
       });
     }
   }
+  function askRole(memberId: string, name: string, expectedRole: 'admin' | 'member') {
+    if (inFlight.current) return;
+    if (typeof crypto.randomUUID !== 'function') {
+      setMessage({ text: 'Use a current browser to change team access securely.', error: true });
+      return;
+    }
+    setRoleChange({
+      memberId,
+      label: name,
+      expectedRole,
+      role: expectedRole === 'member' ? 'admin' : 'member',
+      commandId: crypto.randomUUID(),
+    });
+    setRemoval(null);
+    setMessage(null);
+  }
+  async function applyRole() {
+    if (!roleChange || inFlight.current || !page) return;
+    const command = roleChange;
+    inFlight.current = true;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const request = new AbortController();
+      mutation.current = request;
+      const response = await fetch('/api/customer-workspace-members', {
+        method: 'POST',
+        signal: request.signal,
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'set_role',
+          commandId: command.commandId,
+          workspaceId: workspace.id,
+          memberId: command.memberId,
+          role: command.role,
+          expectedRole: command.expectedRole,
+        }),
+      });
+      if (!alive.current) return;
+      if (!response.ok) {
+        if ([401, 403].includes(response.status)) denied(response.status);
+        else if (response.status === 409) {
+          const loaded = await load(cursors.current);
+          if (loaded && alive.current)
+            setMessage({
+              text: 'This role had already changed, so nothing was changed now. The team list is reloaded.',
+              error: true,
+            });
+        } else
+          setMessage({
+            text:
+              response.status === 503
+                ? 'Team role changes are unavailable right now.'
+                : 'The role change was not confirmed. Retry this same change or reload the history.',
+            error: true,
+          });
+        return;
+      }
+      const result = (await response.json()) as Record<string, unknown>;
+      if (!alive.current) return;
+      if (
+        !result ||
+        result.workspaceId !== workspace.id ||
+        result.memberId !== command.memberId ||
+        result.role !== command.role ||
+        !Number.isInteger(result.roleVersion)
+      )
+        throw Error('Invalid role response');
+      if (await load(cursors.current))
+        setMessage({
+          text:
+            command.role === 'admin'
+              ? 'The member is now an admin. The change is recorded in the history.'
+              : 'The member is now a regular member. The change is recorded in the history.',
+          error: false,
+        });
+    } catch {
+      if (alive.current)
+        setMessage({
+          text: 'The role change was not confirmed. Retry this same change or reload the history.',
+          error: true,
+        });
+    } finally {
+      inFlight.current = false;
+      if (alive.current) setBusy(false);
+    }
+  }
   function confirm(kind: Removal['kind'], targetId: string, name: string) {
     if (inFlight.current) return;
     if (typeof crypto.randomUUID !== 'function') {
@@ -374,6 +476,7 @@ export function CustomerWorkspaceTeam({
       return;
     }
     setRemoval({ kind, targetId, label: name, commandId: crypto.randomUUID() });
+    setRoleChange(null);
     setMessage(null);
   }
   return (
@@ -458,11 +561,25 @@ export function CustomerWorkspaceTeam({
                       <summary>Membership reference</summary>
                       <p>{r.id}</p>
                     </details>
+                    {memberRolesEnabled &&
+                      typeof r.roleVersion === 'number' &&
+                      r.status === 'active' && (
+                        <button
+                          type="button"
+                          className="text-link"
+                          disabled={busy || !!removal || !!roleChange}
+                          onClick={() => askRole(r.id, r.label, r.role)}
+                        >
+                          {r.role === 'member'
+                            ? 'Make ' + r.label + ' an admin'
+                            : 'Make ' + r.label + ' a regular member'}
+                        </button>
+                      )}
                     {r.status !== 'revoked' && (
                       <button
                         type="button"
                         className="text-link"
-                        disabled={busy || !!removal}
+                        disabled={busy || !!removal || !!roleChange}
                         onClick={() => confirm('membership', r.id, r.label)}
                       >
                         Remove invited membership for {r.label}
@@ -495,6 +612,37 @@ export function CustomerWorkspaceTeam({
             >
               Refresh team history
             </button>
+            {roleChange && (
+              <div className="ux-draft-notice">
+                <p>
+                  {roleChange.role === 'admin'
+                    ? 'Make ' + roleChange.label + ' an admin?'
+                    : 'Make ' + roleChange.label + ' a regular member?'}{' '}
+                  {roleChange.role === 'admin'
+                    ? 'An admin can edit the company profile and plan delegations in this sample workspace. Only the owner can manage the team.'
+                    : 'A regular member can view but not edit the company profile or plan delegations.'}{' '}
+                  The change is recorded in the history.
+                </p>
+                <button
+                  type="button"
+                  className="primary-link"
+                  disabled={busy}
+                  onClick={() => void applyRole()}
+                >
+                  {roleChange.role === 'admin'
+                    ? 'Confirm admin role'
+                    : 'Confirm regular member role'}
+                </button>
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={busy}
+                  onClick={() => setRoleChange(null)}
+                >
+                  Close role confirmation
+                </button>
+              </div>
+            )}
             {removal && (
               <div className="ux-draft-notice">
                 <p>

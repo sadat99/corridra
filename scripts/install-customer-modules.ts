@@ -14,6 +14,7 @@ import { migrateCustomerProgrammeEconomics } from '../packages/db/src/customer-p
 import { migrateCustomerProgrammeCoordination } from '../packages/db/src/customer-programme-coordination-migrate';
 import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-programme-templates-migrate';
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
+import { migrateCustomerMemberRoles } from '../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
 import { z } from 'zod';
@@ -59,6 +60,7 @@ const registries = [
   'customer_programme_templates_migrations',
   'customer_mission_share_migrations',
   'customer_admission_migrations',
+  'customer_member_role_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -78,6 +80,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['programme templates', migrateCustomerProgrammeTemplates],
   ['mission sharing', migrateCustomerMissionShares],
   ['open synthetic admission', migrateCustomerAdmission],
+  ['member roles and leaving', migrateCustomerMemberRoles],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);

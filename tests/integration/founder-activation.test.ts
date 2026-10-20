@@ -112,3 +112,18 @@ test('owners and admins reach the founder view and an operator is denied', async
   expect(await s.founderAccess(f.users.owner.ctx)).toEqual({ role: 'owner' });
   await expect(s.founderAccess(f.users.operator.ctx)).rejects.toThrow();
 });
+
+test('team roles report their own flag and wait for the workspace flag', () => {
+  const roles = { ...synthetic, CORRIDRA_CUSTOMER_MEMBER_ROLES_ENABLED: 'true' };
+  expect(state(roles, 'member-roles')).toBe('WAITING_PREREQUISITE');
+  expect(state({ ...roles, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true' }, 'member-roles')).toBe(
+    'ON',
+  );
+  expect(state(synthetic, 'member-roles')).toBe('OFF');
+  expect(
+    state(
+      { ...roles, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true', VERCEL_ENV: 'production' },
+      'member-roles',
+    ),
+  ).toBe('LOCKED_PRODUCTION');
+});
