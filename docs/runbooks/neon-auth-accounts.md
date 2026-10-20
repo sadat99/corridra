@@ -72,3 +72,7 @@ The statements above that customer flags are hard-disabled in Vercel production 
 ### Team roles and leaving (optional module, ADR051)
 
 Install with the `Install customer modules` workflow (it now includes `customer-member-role-migrations`), then set `CORRIDRA_CUSTOMER_MEMBER_ROLES_ENABLED=true` and deploy. The owner can then make an invited member an admin or a regular member from the team screen, and any non-owner can leave from the workspace list. Admins can edit the company profile and plan delegations; only the owner manages the team. To withdraw an admin right before switching the flag off, demote the member first, because the role readers keep honouring recorded roles.
+
+### Company links (optional module, ADR052)
+
+Install with the `Install customer modules` workflow (it now includes `customer-organisation-link-migrations`, after profiles and team roles), then set `CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED=true` and deploy. Owners and admins then request a company link from the company profile page; staff with the owner, admin or reviewer role in the intake workspace decide from Companies and research in the operator console, with a fresh authenticator check. A link never writes to the company list: to add a new company, approve it for creation, create the record in the existing research screens, then link it. Roll back by unsetting the flag; recorded requests and links are kept.
