@@ -27,7 +27,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     }).toPass({ timeout: 30000 });
     const email = `ux02-${randomUUID()}@example.invalid`;
     await page.setViewportSize({ width: 390, height: 1000 });
-    await page.goto('http://127.0.0.1:3450/');
+    await page.goto('http://127.0.0.1:3450/corridors');
     await openFineTune(page);
     await page
       .getByRole('combobox', { name: "I'm trying to" })
