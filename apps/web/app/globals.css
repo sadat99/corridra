@@ -2344,8 +2344,8 @@ summary:hover {
   padding-block: 24px;
 }
 .ux-home .ux-editorial-copy h1 {
-  font-size: clamp(42px, 5.45vw, 88px);
-  line-height: 1.06;
+  font-size: clamp(34px, 3.9vw, 56px);
+  line-height: 1.1;
   letter-spacing: -0.06em;
   text-wrap: initial;
 }
@@ -2360,6 +2360,7 @@ summary:hover {
   max-width: 47ch;
   font-size: 16px;
   line-height: 1.8;
+  text-wrap: balance;
 }
 .ux-home .ux-atlas {
   display: flex;
@@ -2603,7 +2604,7 @@ summary:hover {
     padding-block: 0;
   }
   .ux-home .ux-editorial-copy h1 {
-    font-size: clamp(36px, 10.8vw, 59px);
+    font-size: clamp(26px, 8.4vw, 56px);
   }
   .ux-home .ux-atlas {
     min-height: 360px;
