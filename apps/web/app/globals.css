@@ -2086,9 +2086,9 @@ summary:hover {
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
-  --text-h2: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
-  --text-h1: clamp(1.875rem, 4vw, 3rem);
-  --text-display: clamp(2.125rem, 5vw, 3.75rem);
+  --text-h2: clamp(1.5rem, 1.1rem + 1vw, 2rem);
+  --text-h1: clamp(1.875rem, 3vw, 2.5rem);
+  --text-display: clamp(2.125rem, 4vw, 3.25rem);
   --space-5: 1.25rem;
   --space-12: 3rem;
   --space-18: 4.5rem;
@@ -5400,10 +5400,14 @@ th {
 .ux-request-page {
   display: grid;
   gap: var(--space-4);
-  justify-items: start;
+  min-width: 0;
+}
+.ux-request-page > :is(a, button) {
+  justify-self: start;
 }
 .ux-request-page > * {
-  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .ux-request-page > p,
 .ux-request-page details > p {
@@ -5412,9 +5416,28 @@ th {
   line-height: 1.55;
   color: var(--text-2);
 }
-.ux-request-page > :is(section, details) {
-  justify-self: stretch;
-}
 .ux-fact-row li {
   font-size: var(--text-base);
+}
+
+/* Laptop rhythm: a short, even gap from the header to the first heading on every page. */
+.operator-page.ux-workspace {
+  padding-block: var(--space-6) var(--space-12);
+}
+.ux-page-heading {
+  padding-block: 0 var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.guide-page-hero {
+  padding-block: var(--space-6);
+}
+.guide-hero {
+  padding-top: var(--space-6);
+}
+.ux-fact-row .ux-fact-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.ux-fact-row .ux-fact-row > dt {
+  font-weight: 600;
 }
