@@ -1,62 +1,18 @@
 import { expect, test } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
 
-test('public page states the proposition and launch status without making up proof', async ({
-  page,
-}) => {
-  const failures: string[] = [];
-  page.on('pageerror', (error) => failures.push(error.message));
-  const response = await page.goto('/coming-soon');
-  expect(response?.status()).toBe(200);
-  await expect(page).toHaveTitle('Coming soon | Corridra');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Going into a new market?Know who is worth meeting.',
-  );
-  await expect(page.getByText('Coming soon', { exact: true })).toHaveCount(2);
-  await expect(page.getByText('Bangladesh', { exact: true })).toBeVisible();
-  await expect(page.getByText('China, Spain & EU', { exact: true })).toBeVisible();
-  expect(await page.locator('body').innerText()).not.toContain('\u2014');
-  expect(await page.locator('body').innerText()).not.toMatch(
-    /trusted by|guaranteed orders|global coverage/i,
-  );
-  await expect(page.locator('input')).toHaveCount(0);
-  expect(failures).toEqual([]);
+test('the retired launch page sends old links to the home page', async ({ page, request }) => {
+  const response = await request.get('/coming-soon', { maxRedirects: 0 });
+  expect(response.status()).toBe(308);
+  expect(response.headers()['location']).toBe('/');
+  await page.goto('/coming-soon');
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('navigation leads to real content and supports keyboard access', async ({ page }) => {
-  await page.goto('/coming-soon');
-  await page.keyboard.press('Tab');
-  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#main')).toBeFocused();
-  await page.getByRole('link', { name: 'See what’s taking shape' }).click();
-  await expect(page).toHaveURL(/#approach$/);
-  await expect(
-    page.getByRole('heading', { name: /A meeting is a start\.\s*What follows matters\./ }),
-  ).toBeInViewport();
-  await page.getByRole('link', { name: 'Back to top' }).click();
-  await expect(page).toHaveURL(/#main$/);
-});
-
-test('layout fits the viewport and respects reduced motion', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/coming-soon');
-  const size = await page.evaluate(() => ({
-    content: document.documentElement.scrollWidth,
-    viewport: document.documentElement.clientWidth,
-    scroll: getComputedStyle(document.documentElement).scrollBehavior,
-  }));
-  expect(size.content).toBeLessThanOrEqual(size.viewport);
-  expect(size.scroll).toBe('auto');
-  await expect(page.getByRole('link', { name: 'See what’s taking shape' })).toBeVisible();
-});
-
-test('page passes relevant WCAG accessibility checks', async ({ page }) => {
-  await page.goto('/coming-soon');
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-    .analyze();
-  expect(results.violations).toEqual([]);
+test('the footer no longer links to the retired launch page', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'The original launch page' })).toHaveCount(0);
+  await expect(page.locator('a[href="/coming-soon"]')).toHaveCount(0);
 });
 
 test('security headers and local assets are served', async ({ request }) => {

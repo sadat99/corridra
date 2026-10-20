@@ -113,7 +113,7 @@ async function openOwnerTeam(page: Page, memberships: Member[], query = '') {
     route.fulfill({ json: access(owned.id, memberships) }),
   );
   await page.goto(origin + '/' + query);
-  await page.getByText('Manage test team', { exact: true }).click();
+  await page.getByText('Manage team', { exact: true }).click();
   return page.getByRole('region', { name: 'Test team for ' + owned.name, exact: true });
 }
 
@@ -199,7 +199,7 @@ test('role controls are absent without the flag, or when the module is not insta
     route.fulfill({ json: access(owned.id, [legacy]) }),
   );
   await page.goto(origin + '/');
-  await page.getByText('Manage test team', { exact: true }).click();
+  await page.getByText('Manage team', { exact: true }).click();
   const on = page.getByRole('region', { name: 'Test team for ' + owned.name, exact: true });
   await expect(on.getByText('Synthetic Dhaka buyer lead · member · active')).toBeVisible();
   await expect(on.getByRole('button', { name: /Make Synthetic/ })).toHaveCount(0);
@@ -286,9 +286,9 @@ test('a non-owner confirms before leaving, sends one exact request, and the work
     });
   });
   await page.goto(origin + '/');
-  await expect(page.getByText(joined.name + ' · member · Test data')).toBeVisible();
+  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
   // The owner-only team section is not offered to a member.
-  await expect(page.getByText('Manage test team')).toHaveCount(0);
+  await expect(page.getByText('Manage team')).toHaveCount(0);
   await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
   expect(posts).toHaveLength(0);
   await expect(page.getByText(/You lose access to it straight away/)).toBeVisible();
@@ -299,7 +299,7 @@ test('a non-owner confirms before leaving, sends one exact request, and the work
   expect(posts).toHaveLength(0);
   await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
-  await expect(page.getByText('No test workspaces yet.')).toBeVisible();
+  await expect(page.getByText('No workspaces yet. Create your first one below.')).toBeVisible();
   await expect(page.getByText('You have left the workspace')).toBeVisible();
   expect(posts).toHaveLength(1);
   expect(Object.keys(posts[0]!).sort()).toEqual(['action', 'commandId', 'workspaceId']);
@@ -324,18 +324,18 @@ test('leaving is retried with the same command, an unconfirmed leave keeps the w
   await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(page.getByRole('alert')).toContainText('Leaving was not confirmed');
-  await expect(page.getByText(joined.name + ' · member · Test data')).toBeVisible();
+  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
   status = 503;
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(page.getByRole('alert')).toContainText('unavailable');
   status = 200;
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
-  await expect(page.getByText('No test workspaces yet.')).toBeVisible();
+  await expect(page.getByText('No workspaces yet. Create your first one below.')).toBeVisible();
   expect(new Set(ids).size).toBe(1);
   expect(ids).toHaveLength(3);
   // Flag off: no leave control for a member.
   await page.goto(origin + '/?roles=off');
-  await expect(page.getByText(joined.name + ' · member · Test data')).toBeVisible();
+  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Leave / })).toHaveCount(0);
   // The owner never gets a leave control.
   await page.unroute('**/api/customer-workspaces');
@@ -343,7 +343,7 @@ test('leaving is retried with the same command, an unconfirmed leave keeps the w
     route.fulfill({ json: { synthetic: true, workspaces: [owned] } }),
   );
   await page.goto(origin + '/');
-  await expect(page.getByText(owned.name + ' · owner · Test data')).toBeVisible();
+  await expect(page.getByText(owned.name + ' · owner')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Leave / })).toHaveCount(0);
 });
 

@@ -52,12 +52,12 @@ export function CustomerNav({
 }) {
   const items: { tab: CustomerTab; label: string; href: string }[] = [
     { tab: 'home', label: 'Home', href: '/account' },
-    { tab: 'work', label: 'My Work', href: '/account#my-work' },
+    { tab: 'work', label: 'My Work', href: '/account?view=work' },
     ...(companies
       ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
       : []),
-    { tab: 'results', label: 'Results', href: '/account#results' },
-    { tab: 'more', label: 'More', href: '/account#more' },
+    { tab: 'results', label: 'Results', href: '/account?view=results' },
+    { tab: 'more', label: 'More', href: '/account?view=more' },
   ];
   return (
     <nav className="guide-tabs" aria-label="Customer navigation">

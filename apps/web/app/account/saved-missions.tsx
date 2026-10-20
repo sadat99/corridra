@@ -1,4 +1,5 @@
 'use client';
+import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayDate } from '@corridra/domain/locale';
 export type SavedMissionScope = { subject: string; issuer: string };
@@ -246,13 +247,26 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
     }
   }
   return (
-    <section className="detail-card" aria-label="My saved commercial missions">
-      <h2>My saved commercial missions</h2>
+    <section className="detail-card" aria-label="Saved missions">
+      <div className="ux-section-head">
+        <h2>Saved missions</h2>
+        {status !== 'loading' && status !== 'denied' && (
+          <RefreshButton
+            label="saved commercial missions"
+            disabled={busy}
+            onClick={() => {
+              setData(null);
+              setStatus('loading');
+              load();
+            }}
+          />
+        )}
+      </div>
       <p>
         Keep approved private mission reports in this account across visits. Saving an invitation
-        does not extend its expiry or grant access to other people or records. Sample data only.
+        does not extend its expiry or grant access to other people or records.
       </p>
-      {status === 'loading' && <p role="status">Loading saved commercial missions…</p>}
+      {status === 'loading' && <p role="status">Loading your saved missions…</p>}
       {status === 'denied' && (
         <p role="alert">
           Your saved mission access could not be confirmed. Sign in again or ask the Corridra team
@@ -295,20 +309,6 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
             </button>
           </article>
         ))}
-      {status !== 'loading' && status !== 'denied' && (
-        <button
-          className="text-link"
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            setData(null);
-            setStatus('loading');
-            load();
-          }}
-        >
-          Refresh saved commercial missions
-        </button>
-      )}
       {status === 'ready' && data?.nextAfter && (
         <button
           className="text-link"
@@ -322,38 +322,41 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
         </button>
       )}
       {status === 'ready' && (
-        <form className="operator-form" ref={form} onSubmit={(event) => void save(event)}>
-          <fieldset disabled={busy || !!pending}>
-            <legend>Save an approved private invitation</legend>
-            <label className="field">
-              Private client mission invitation
-              <input name="invitation" type="text" autoComplete="off" maxLength={300} required />
-            </label>
-            <label>
-              <input name="acknowledged" type="checkbox" required /> Save this invitation to this
-              account with its existing access restrictions.
-            </label>
-          </fieldset>
-          <button className="primary-link" disabled={busy}>
-            {pending ? 'Retry same invitation' : 'Save invitation to this account'}
-          </button>
-          {pending && (
-            <button
-              type="button"
-              className="text-link"
-              disabled={busy}
-              onClick={() => {
-                setPending(null);
-                form.current?.reset();
-                setNotice(
-                  'Invitation cleared from this page. Refresh the saved list to check any earlier submission.',
-                );
-              }}
-            >
-              Clear invitation from this page
+        <details className="ux-journey-disclosure">
+          <summary>Save an invitation</summary>
+          <form className="operator-form" ref={form} onSubmit={(event) => void save(event)}>
+            <fieldset disabled={busy || !!pending}>
+              <legend>Save an approved private invitation</legend>
+              <label className="field">
+                Private client mission invitation
+                <input name="invitation" type="text" autoComplete="off" maxLength={300} required />
+              </label>
+              <label>
+                <input name="acknowledged" type="checkbox" required /> Save this invitation to this
+                account with its existing access restrictions.
+              </label>
+            </fieldset>
+            <button className="primary-link" disabled={busy}>
+              {pending ? 'Retry same invitation' : 'Save invitation to this account'}
             </button>
-          )}
-        </form>
+            {pending && (
+              <button
+                type="button"
+                className="text-link"
+                disabled={busy}
+                onClick={() => {
+                  setPending(null);
+                  form.current?.reset();
+                  setNotice(
+                    'Invitation cleared from this page. Refresh the saved list to check any earlier submission.',
+                  );
+                }}
+              >
+                Clear invitation from this page
+              </button>
+            )}
+          </form>
+        </details>
       )}
       {notice && <p role="status">{notice}</p>}
       <a className="text-link" href="/account#customer-missions">

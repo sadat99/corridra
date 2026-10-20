@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshButton } from './refresh-button';
 
 type RequestRow = {
   id: string;
@@ -201,8 +202,12 @@ function PrivateRequests({
       className="detail-card ux-account-missions"
       aria-busy={status === 'loading' || busy}
     >
-      <p className="label">SAMPLE REQUESTS</p>
-      <h2 id="private-requests-heading">My saved requests</h2>
+      <div className="ux-section-head">
+        <h2 id="private-requests-heading">Saved requests</h2>
+        {status !== 'loading' && status !== 'denied' && (
+          <RefreshButton label="saved requests" busy={busy} onClick={() => void load()} />
+        )}
+      </div>
       <p>
         Only requests saved privately to this account appear here. Team membership does not share
         private requests.
@@ -221,22 +226,24 @@ function PrivateRequests({
       )}
       {status === 'unavailable' && (
         <p role="status">
-          Saved sample request access is unavailable. Your existing receipts and shared mission
-          links are separate.
+          Saved request access is unavailable. Your existing receipts and shared mission links are
+          separate.
         </p>
       )}
       {status === 'failed' && (
         <p role="alert">Your saved requests could not be loaded. Try again.</p>
       )}
-      {status === 'ready' && requests.length === 0 && <p>No saved sample requests yet.</p>}
+      {status === 'ready' && requests.length === 0 && (
+        <p>No saved requests yet. Choose a workspace to send your first one.</p>
+      )}
       {status === 'ready' &&
         requests.map((request) => (
           <article
             key={request.id}
             className="detail-card"
-            aria-label={'Sample request saved ' + time(request.createdAt)}
+            aria-label={'Request saved ' + time(request.createdAt)}
           >
-            <h3>Sample request</h3>
+            <h3>Request</h3>
             {detailsEnabled && (
               <a className="text-link" href={'/account/requests/' + request.id}>
                 Open request details
@@ -277,11 +284,6 @@ function PrivateRequests({
             </details>
           </article>
         ))}
-      {status !== 'loading' && status !== 'denied' && (
-        <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-          {busy ? 'Loading…' : 'Refresh saved requests'}
-        </button>
-      )}
       {status === 'ready' && nextAfter && (
         <button
           type="button"
@@ -295,7 +297,7 @@ function PrivateRequests({
       {canSubmit ? (
         <p>
           <a className="text-link" href="/account#customer-workspaces">
-            Choose a workspace to send a private sample request
+            Choose a workspace to send a request
           </a>
         </p>
       ) : (

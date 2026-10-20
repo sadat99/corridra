@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
 import { CustomerWorkspaceTeam } from './customer-workspace-team';
+import { RefreshButton } from './refresh-button';
 import { CustomerWorkspaceLeave } from './customer-workspace-leave';
 
 type Draft = { version: 1; commandId: string; name: string };
@@ -56,11 +57,11 @@ function failure(status: number): Status {
           : 'error';
 }
 const messages: Record<Exclude<Status, 'loading' | 'ready'>, string> = {
-  'signed-out': 'Sign in again to access your test workspaces.',
-  denied: 'This account does not have access to test workspaces.',
+  'signed-out': 'Sign in again to see your workspaces.',
+  denied: 'This account cannot use workspaces yet.',
   changed: 'Your account or saved request changed. Reload your account before continuing.',
-  unavailable: 'Test workspaces are not available right now.',
-  error: 'Your test workspaces could not be loaded. Try again.',
+  unavailable: 'Workspaces are not available right now.',
+  error: 'Your workspaces could not be loaded. Try again.',
 };
 
 async function fetchWorkspaces(subject: string, issuer: string, signal: AbortSignal) {
@@ -178,7 +179,7 @@ export function CustomerWorkspaces({
     if (inFlight.current || status !== 'ready' || storageFailed) return;
     if (!pending && typeof crypto.randomUUID !== 'function') {
       setMessage({
-        text: 'A current browser is needed to start a test workspace securely.',
+        text: 'A current browser is needed to start a workspace securely.',
         error: true,
       });
       return;
@@ -194,7 +195,7 @@ export function CustomerWorkspaces({
       /[\u0000-\u001f\u007f]/u.test(proposed.name)
     ) {
       setMessage({
-        text: 'Enter a fictional test workspace name between 1 and 110 characters.',
+        text: 'Enter a fictional workspace name between 1 and 110 characters.',
         error: true,
       });
       return;
@@ -254,7 +255,7 @@ export function CustomerWorkspaces({
       }
       setPending(null);
       setName('');
-      if (await reload()) setMessage({ text: 'Your test workspace is confirmed.', error: false });
+      if (await reload()) setMessage({ text: 'Your workspace is confirmed.', error: false });
     } catch {
       if (mounted.current)
         setMessage({
@@ -287,16 +288,20 @@ export function CustomerWorkspaces({
   return (
     <section
       className="detail-card ux-account-missions"
-      aria-label="Your test workspaces"
+      aria-label="Workspaces"
       aria-busy={status === 'loading' || creating}
     >
-      <h2>Your test workspaces</h2>
+      <div className="ux-section-head">
+        <h2>Workspaces</h2>
+        {status === 'ready' && (
+          <RefreshButton label="workspaces" disabled={creating} onClick={() => void reload()} />
+        )}
+      </div>
       <p>
-        {programmesEnabled
-          ? 'Use fictional names only. Sample delegation planning is available to workspace owners and administrators. Company profiles and other project tools are not available here yet.'
-          : 'Use fictional names only. Company profiles and workspace projects are not available here yet.'}
+        A workspace is where you prepare and send requests.
+        {programmesEnabled && ' Owners and administrators can also plan delegations.'}
       </p>
-      {status === 'loading' && <p role="status">Loading your test workspaces…</p>}
+      {status === 'loading' && <p role="status">Loading your workspaces…</p>}
       {status !== 'loading' && status !== 'ready' && (
         <>
           <p role="alert" className="ux-error-summary">
@@ -320,26 +325,26 @@ export function CustomerWorkspaces({
       {status === 'ready' && (
         <>
           {rows.length === 0 ? (
-            <p>No test workspaces yet.</p>
+            <p>No workspaces yet. Create your first one below.</p>
           ) : (
             <ul>
               {rows.map((row) => (
                 <li key={row.id}>
-                  <strong>{row.name}</strong> · {row.role} · Test data
+                  <strong>{row.name}</strong> · {row.role}
                   <div className="guide-actions-row">
                     {profilesEnabled && (
                       <p>
                         <a className="text-link" href={'/account/profile/' + row.id}>
                           {['owner', 'admin'].includes(row.role)
-                            ? 'Edit sample company profile'
-                            : 'View sample company profile'}
+                            ? 'Edit company profile'
+                            : 'View company profile'}
                         </a>
                       </p>
                     )}
                     {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
                       <p>
                         <a className="text-link" href={'/account/delegations/' + row.id}>
-                          Plan sample delegations
+                          Plan delegations
                         </a>
                       </p>
                     )}
@@ -353,7 +358,7 @@ export function CustomerWorkspaces({
                     {requestsEnabled && (
                       <p>
                         <a className="text-link" href={'/account/request/' + row.id}>
-                          Send a private sample request
+                          Send a private request
                         </a>
                       </p>
                     )}
@@ -402,14 +407,6 @@ export function CustomerWorkspaces({
               ))}
             </ul>
           )}
-          <button
-            type="button"
-            className="text-link"
-            disabled={creating}
-            onClick={() => void reload()}
-          >
-            Refresh workspaces
-          </button>
           <CustomerWorkspaceInvitation
             key={issuer + ':' + subject}
             issuer={issuer}
@@ -418,7 +415,7 @@ export function CustomerWorkspaces({
               void reload().then((loaded) => {
                 if (loaded)
                   setMessage({
-                    text: 'Your test workspace membership is confirmed.',
+                    text: 'You have joined the workspace.',
                     error: false,
                   });
               });
@@ -432,11 +429,14 @@ export function CustomerWorkspaces({
               });
             }}
           />
-          <form className="operator-form" aria-label="Create a test workspace" onSubmit={create}>
-            <label className="field">
-              Test workspace name
+          <form className="operator-form" aria-label="Create a workspace" onSubmit={create}>
+            <h3>Create a workspace</h3>
+            <div className="field">
+              <label htmlFor="workspace-name">Workspace name</label>
               <input
+                id="workspace-name"
                 name="test-workspace-name"
+                aria-describedby="workspace-name-hint"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
@@ -445,7 +445,10 @@ export function CustomerWorkspaces({
                 readOnly={!!pending}
                 disabled={creating || storageFailed}
               />
-            </label>
+              <p id="workspace-name-hint" className="ux-hint">
+                Use a fictional name. We add “Synthetic” in front.
+              </p>
+            </div>
             {pending && (
               <p>
                 The previous request may already have succeeded. Retry uses the same request and
@@ -457,7 +460,7 @@ export function CustomerWorkspaces({
                 ? 'Please wait…'
                 : pending
                   ? 'Retry workspace creation'
-                  : 'Create test workspace'}
+                  : 'Create workspace'}
             </button>
           </form>
           {(pending || storageFailed) && (
@@ -483,7 +486,6 @@ export function CustomerWorkspaces({
           {message.text}
         </p>
       )}
-      <p>Your existing private mission invitations remain in the shared-mission section below.</p>
     </section>
   );
 }

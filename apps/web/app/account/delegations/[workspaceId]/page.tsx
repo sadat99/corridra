@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="Plan a sample delegation">
+    <CustomerShell tab="work" eyebrow="MY WORK" title="Plan delegations">
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}

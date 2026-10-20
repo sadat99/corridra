@@ -367,13 +367,13 @@ test('planning entry stays contextual to current owner/admin workspace cards and
     }),
   );
   await page.goto(origin + '/?mode=workspaces&enabled=true');
-  const links = page.getByRole('link', { name: 'Plan sample delegations' });
+  const links = page.getByRole('link', { name: 'Plan delegations' });
   await expect(links).toHaveCount(2);
   await expect(links.nth(0)).toHaveAttribute('href', '/account/delegations/' + ids[0]);
   await expect(links.nth(1)).toHaveAttribute('href', '/account/delegations/' + ids[1]);
-  await page.getByText('Manage test team', { exact: true }).click();
+  await page.getByText('Manage team', { exact: true }).click();
   await expect(page.getByText('No sample invitations on this page.')).toBeVisible();
   await page.goto(origin + '/?mode=workspaces&enabled=false');
   await expect(page.getByText('Synthetic owner workspace', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Plan sample delegations' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Plan delegations' })).toHaveCount(0);
 });

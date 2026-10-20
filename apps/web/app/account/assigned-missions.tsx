@@ -1,4 +1,5 @@
 'use client';
+import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -187,13 +188,16 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
   return (
     <section
       className="ux-mission-detail"
-      aria-label="Commercial work delivered to your account"
+      aria-label="Delivered to you"
       style={{ overflowWrap: 'anywhere' }}
     >
-      <h2>Commercial work delivered to your account</h2>
+      <div className="ux-section-head">
+        <h2>Delivered to you</h2>
+        <RefreshButton label="delivered missions" onClick={() => load()} disabled={busy} />
+      </div>
       <p>
         Reviewed reports for requests you created appear here. No private invitation link is needed.
-        These synthetic reports do not confirm a meeting, order or payment.
+        These reports do not confirm a meeting, order or payment.
       </p>
       {!data && (
         <p role="status">
@@ -208,9 +212,6 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
                   : 'Deliveries could not be checked. Try again.'}
         </p>
       )}
-      <button className="text-link" type="button" onClick={() => load()} disabled={busy}>
-        Refresh delivered missions
-      </button>
       {status === 'denied' && (
         <a href="/account" className="text-link">
           Return to your account

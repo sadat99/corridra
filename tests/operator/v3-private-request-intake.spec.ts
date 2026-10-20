@@ -44,12 +44,12 @@ test.beforeAll(async () => {
         name: 'controlled-logout-protocol',
         setup(builder) {
           builder.onResolve({ filter: /^next\/navigation$/ }, (args) =>
-            args.importer.endsWith('/app/account/signout.tsx')
+            /\/(app\/account\/signout\.tsx|components\/use-sign-out\.ts)$/.test(args.importer)
               ? { path: 'router', namespace: 'logout-fixture' }
               : undefined,
           );
           builder.onResolve({ filter: /neon-auth-client$/ }, (args) =>
-            args.importer.endsWith('/app/account/signout.tsx')
+            /\/(app\/account\/signout\.tsx|components\/use-sign-out\.ts)$/.test(args.importer)
               ? { path: 'provider', namespace: 'logout-fixture' }
               : undefined,
           );

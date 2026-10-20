@@ -11,12 +11,12 @@ import { ParticipantAccount } from './participant-account';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'My sample delegations | Corridra',
+  title: 'Delegation registrations | Corridra',
   robots: { index: false, follow: false },
 };
 function unavailable(message = 'Sample delegation participation is unavailable.') {
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="My sample delegations" compact>
+    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Delegation registrations" compact>
       <p role="status">{message}</p>
       <a className="text-link" href="/account">
         Return to your account
@@ -35,7 +35,7 @@ export default async function Page() {
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="My sample delegations">
+    <CustomerShell tab="work" eyebrow="MY WORK" title="Delegation registrations">
       <ParticipantAccount
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
