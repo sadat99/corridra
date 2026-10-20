@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import { customerProductionUnlocked } from './customer-production';
 import { DomainError } from '@corridra/domain';
 import {
   assertRestrictedPool,
@@ -8,6 +9,24 @@ import {
   type DatabasePool,
 } from '@corridra/db';
 
+// The original isolated acceptance issuer shape.
+function isolatedIssuer(url: URL) {
+  return (
+    url.hostname.endsWith('.neonauth.c-5.eu-central-1.aws.neon.tech') &&
+    url.pathname === '/corridra/auth'
+  );
+}
+// Owner opt-in (ADR-049): on an unlocked production deployment the exact issuer the owner configured in
+// CORRIDRA_CUSTOMER_ISSUER is accepted too. It must be an https Frankfurt Neon Auth address and equal
+// that setting character for character; nothing is derived from the request.
+function ownerIssuer(url: URL, value: string, env: NodeJS.ProcessEnv) {
+  return (
+    customerProductionUnlocked(env) &&
+    env.CORRIDRA_CUSTOMER_ISSUER === value &&
+    /^[a-z0-9-]+\.neonauth\.c-[56]\.eu-central-1\.aws\.neon\.tech$/.test(url.hostname) &&
+    /^\/[a-z0-9_]+\/auth$/.test(url.pathname)
+  );
+}
 export const customerIssuer = z.url().refine((value) => {
   let url: URL;
   try {
@@ -17,13 +36,12 @@ export const customerIssuer = z.url().refine((value) => {
   }
   return (
     url.protocol === 'https:' &&
-    url.hostname.endsWith('.neonauth.c-5.eu-central-1.aws.neon.tech') &&
     !url.username &&
     !url.password &&
     !url.port &&
     !url.search &&
     !url.hash &&
-    url.pathname === '/corridra/auth'
+    (isolatedIssuer(url) || ownerIssuer(url, value, process.env))
   );
 }, 'An isolated Frankfurt customer issuer is required');
 export type CustomerSession = { subject: string; expiresAt: Date; emailVerified: boolean };

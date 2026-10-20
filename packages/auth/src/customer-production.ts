@@ -27,3 +27,9 @@ export function customerOpenAdmission(env: NodeJS.ProcessEnv = process.env) {
     !customerProductionLocked(env)
   );
 }
+
+// The issuer label the customer modules pin. An explicit owner setting wins, so the exact string the
+// database pins is known; otherwise the provider address from the existing identity settings.
+export function customerIssuerFromEnv(env: NodeJS.ProcessEnv = process.env) {
+  return env.CORRIDRA_CUSTOMER_ISSUER || env.NEON_AUTH_BASE_URL || '';
+}

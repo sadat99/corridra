@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 // The platform is multi-corridor. Two routes are spotlighted, but any pair of countries works.
 async function openAnyRoute(page: import('@playwright/test').Page) {
-  await page.goto('/');
+  await page.goto('/corridors');
   const atlas = page.getByLabel('Corridor Atlas', { exact: true });
   await atlas.getByText('Another route? Pick any two countries', { exact: true }).click();
   return atlas;
@@ -72,17 +72,12 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
   );
 });
 
-test('home and corridors pages offer a third wing for any other route', async ({ page }) => {
-  await page.goto('/');
+test('the corridors page offers a third wing for any other route', async ({ page }) => {
+  await page.goto('/corridors');
+  await expect(page.getByRole('heading', { name: 'Any other route' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Plan a mission on another route' })).toHaveAttribute(
     'href',
     '/plan',
   );
-  await expect(page.getByRole('link', { name: 'Pick two countries on the map' })).toHaveAttribute(
-    'href',
-    '/corridors',
-  );
-  await page.goto('/corridors');
-  await expect(page.getByRole('heading', { name: 'Any other route' })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

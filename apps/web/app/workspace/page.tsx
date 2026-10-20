@@ -24,7 +24,7 @@ export default function Page() {
           <article className="detail-card">
             <h2>See how it works</h2>
             <p>Follow a sample mission from the first goal to the next step.</p>
-            <Link className="button-secondary" href="/#mission-example">
+            <Link className="button-secondary" href="/corridors#mission-example">
               See a sample mission
             </Link>
           </article>

@@ -80,7 +80,7 @@ const exampleSteps = [
 ] as const;
 
 /** Educational selectors only. No identity, readiness decision, persisted mission or API call. */
-export function DiscoveryExperience({ overview = false }: { overview?: boolean }) {
+export function DiscoveryExperience() {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
   const [other, setOther] = useState({ company: '', market: '' });
@@ -153,59 +153,10 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
   const briefUrl = `/plan?companyCountry=${route.company}&marketCode=${route.market}&job=${selectedJob.key}`;
   return (
     <section
-      className={'ux-discovery' + (overview ? ' ux-discovery-overview' : '')}
+      className="ux-discovery ux-discovery-overview"
       aria-label="Explore a commercial objective"
     >
       <div className="ux-discovery-grid">
-        {!overview && (
-          <div className="ux-editorial-copy">
-            <p className="label">CROSS-BORDER MARKET ACCESS</p>
-            <h1>
-              Find the right market.
-              <br />
-              Meet the right people.
-              <br />
-              <em>Know what to do next.</em>
-            </h1>
-            <p className="hero-description">
-              Say what you want to buy, sell or organise. See which companies fit, what is proven
-              about them, and what to do next.
-            </p>
-            <nav className="v3-product-choices" aria-label="Choose your commercial objective">
-              <Link prefetch={false} href="/plan?job=buyers">
-                <strong>Find Buyers &amp; Partners</strong>
-                <span>Reach relevant buyers, distributors and business partners.</span>
-                <Arrow />
-              </Link>
-              <Link prefetch={false} href="/plan?job=sourcing">
-                <strong>Find Suppliers &amp; Products</strong>
-                <span>Source products, materials or machinery with evidence and clear terms.</span>
-                <Arrow />
-              </Link>
-              <Link prefetch={false} href="/plan?job=delegations">
-                <strong>Organise a Delegation</strong>
-                <span>Plan the group programme and each participant&apos;s commercial needs.</span>
-                <Arrow />
-              </Link>
-            </nav>
-            <Link prefetch={false} className="text-link v3-other-objective" href="/plan">
-              Other international business objective <Arrow />
-            </Link>
-            <div className="ux-hero-actions">
-              <a className="text-link" href="#commercial-objective">
-                Explore a commercial direction <Arrow />
-              </a>
-              <a
-                ref={exampleTrigger}
-                className="text-link"
-                href="#mission-example"
-                onClick={openExample}
-              >
-                See a sample mission <Arrow />
-              </a>
-            </div>
-          </div>
-        )}
         <div className="ux-atlas" aria-label="Corridor Atlas">
           <div className="ux-atlas-heading">
             <h2>Corridor Atlas</h2>
@@ -395,20 +346,9 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
       </div>
       <div className="ux-discovery-actions">
         <p>Perspective describes the example. It does not grant account or workspace access.</p>
-        {overview ? (
-          <a
-            ref={exampleTrigger}
-            className="text-link"
-            href="#mission-example"
-            onClick={openExample}
-          >
-            See a sample mission <Arrow />
-          </a>
-        ) : (
-          <button className="text-link" onClick={openExample}>
-            Explore this objective <Arrow />
-          </button>
-        )}
+        <a ref={exampleTrigger} className="text-link" href="#mission-example" onClick={openExample}>
+          See a sample mission <Arrow />
+        </a>
         <Link className="primary-link" href={briefUrl}>
           Prepare this example request <Arrow />
         </Link>

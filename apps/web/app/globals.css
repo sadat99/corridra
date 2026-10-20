@@ -587,8 +587,7 @@ summary:focus-visible {
   align-items: center;
   font-size: 12px;
 }
-.public-nav > a,
-.solutions-menu summary {
+.public-nav > a {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -603,34 +602,6 @@ summary:hover {
 .nav-cta {
   padding: 13px 15px;
   gap: 12px;
-}
-.solutions-menu {
-  position: relative;
-}
-.solutions-menu summary {
-  cursor: pointer;
-  gap: 8px;
-  list-style: none;
-}
-.solutions-menu summary::-webkit-details-marker {
-  display: none;
-}
-.solutions-list {
-  position: absolute;
-  top: 48px;
-  left: -18px;
-  width: 245px;
-  padding: 10px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  box-shadow: 0 10px 24px #222d2910;
-}
-.solutions-list a {
-  display: block;
-  padding: 15px 10px;
-}
-.solutions-list a:hover {
-  background: #e8ebdf;
 }
 .menu-toggle {
   display: none;
@@ -659,7 +630,6 @@ summary:hover {
 }
 .section-heading h2,
 .editorial-intro h2,
-.feature-grid h2,
 .outcomes-section h2 {
   font-family: var(--serif);
   font-weight: 400;
@@ -668,44 +638,10 @@ summary:hover {
   font-size: clamp(32px, 3vw, 43px);
   margin: 16px 0 25px;
 }
-.jobs-section,
-.process-section,
 .outcomes-section {
   padding: 55px 0 64px;
   border-top: 1px solid var(--line);
 }
-.jobs-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border: 1px solid var(--line);
-  margin-top: 30px;
-}
-.job-card {
-  padding: 27px 24px 30px;
-  border-right: 1px solid var(--line);
-  transition: background 150ms ease;
-}
-.job-card:last-child {
-  border-right: 0;
-}
-.job-card:hover {
-  background: #e8ebdf;
-}
-.job-card .label {
-  display: flex;
-  justify-content: space-between;
-  color: var(--accent);
-}
-.job-card h3 {
-  font-family: var(--serif);
-  font-size: 25px;
-  font-weight: 400;
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-  margin: 35px 0 14px;
-}
-.job-card p,
-.process-list p,
 .detail-card p {
   font-size: 14px;
   line-height: 1.8;
@@ -725,7 +661,6 @@ summary:hover {
   margin: 0;
 }
 .editorial-intro p,
-.feature-grid p,
 .outcomes-section > p:not(.label),
 .public-closing > p:not(.label) {
   font-size: 15px;
@@ -733,30 +668,6 @@ summary:hover {
   color: var(--muted);
   max-width: 620px;
   margin: 0 0 16px;
-}
-.process-list {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  list-style: none;
-  margin: 34px 0 24px;
-  padding: 0;
-  gap: 25px;
-}
-.process-list h3 {
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 20px 0 12px;
-  font-weight: 600;
-}
-.feature-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 70px;
-  padding: 52px 40px;
-  background: #e8ebdf;
-}
-.feature-grid .label {
-  font-size: 10px;
 }
 .outcomes-section h2 {
   margin-bottom: 22px;
@@ -956,34 +867,13 @@ summary:hover {
     gap: 2px;
     padding: 12px 0 4px;
   }
-  .public-nav > a,
-  .solutions-menu summary {
+  .public-nav > a {
     padding: 12px 0;
   }
   .public-nav .nav-cta {
     padding: 14px 18px;
     margin-top: 10px;
     align-self: start;
-  }
-  .solutions-list {
-    position: static;
-    width: 100%;
-    border: 0;
-    box-shadow: none;
-    padding: 0 0 12px 18px;
-  }
-  .jobs-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .job-card:nth-child(2) {
-    border-right: 0;
-  }
-  .job-card:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--line);
-  }
-  .process-list {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
   }
   .editorial-intro {
     gap: 35px;
@@ -993,52 +883,13 @@ summary:hover {
   }
 }
 @media (max-width: 760px) {
-  .jobs-section,
-  .process-section,
   .outcomes-section {
     padding: 38px 0 42px;
   }
-  .jobs-grid {
-    grid-template-columns: 1fr;
-  }
-  .job-card {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 24px;
-  }
-  .job-card:last-child {
-    border-bottom: 0;
-  }
-  .job-card h3 {
-    margin-top: 24px;
-  }
-  .editorial-intro,
-  .feature-grid {
+  .editorial-intro {
     grid-template-columns: 1fr;
     gap: 24px;
     padding: 38px 0;
-  }
-  .feature-grid {
-    padding: 32px 24px;
-    gap: 35px;
-  }
-  .process-list {
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-  .process-list li {
-    display: grid;
-    grid-template-columns: 40px 1fr;
-    gap: 18px;
-    border-top: 1px solid var(--line);
-    padding-top: 20px;
-  }
-  .process-list .stage-number {
-    border: 0;
-    padding: 0;
-  }
-  .process-list h3 {
-    margin: 0 0 8px;
   }
   .page-hero {
     padding: 30px 0 45px;
@@ -1073,11 +924,6 @@ summary:hover {
   }
   .public-closing h2 {
     font-size: 35px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .job-card {
-    transition: none;
   }
 }
 .arrow-icon {
@@ -1778,7 +1624,6 @@ summary:hover {
 .ux-public .page-hero h1,
 .ux-public .section-heading h2,
 .ux-public .editorial-intro > h2,
-.ux-editorial-copy h1,
 .ux-example h2,
 .ux-objective-bar h2 {
   font-family: Georgia, 'Times New Roman', serif;
@@ -1797,19 +1642,6 @@ summary:hover {
 }
 .ux-discovery-grid > * {
   min-width: 0;
-}
-.ux-editorial-copy h1 {
-  font-size: clamp(42px, 4.5vw, 76px);
-  line-height: 1.08;
-  margin: 28px 0;
-}
-.ux-editorial-copy h1 em {
-  color: #526544;
-}
-.ux-editorial-copy .hero-description {
-  font-size: 18px;
-  max-width: 49ch;
-  margin-bottom: 28px;
 }
 .ux-reassurance {
   padding: 18px 0;
@@ -2335,55 +2167,12 @@ summary:hover {
 }
 
 /* UX-06 visual parity: compose actual scope and source records, never prototype facts. */
-.ux-home .ux-discovery-grid {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 48px;
-  align-items: stretch;
-}
-.ux-home .ux-editorial-copy {
-  padding-block: 24px;
-}
-.ux-home .ux-editorial-copy h1 {
-  font-size: clamp(34px, 3.9vw, 56px);
-  line-height: 1.1;
-  letter-spacing: -0.06em;
-  text-wrap: initial;
-}
-.ux-hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px 24px;
-  flex-wrap: wrap;
-}
-
-.ux-home .ux-editorial-copy .hero-description {
-  max-width: 47ch;
-  font-size: 16px;
-  line-height: 1.8;
-  text-wrap: balance;
-}
-.ux-home .ux-atlas {
-  display: flex;
-  flex-direction: column;
-  padding: 28px;
-  min-height: 580px;
-}
-.ux-home .ux-atlas-map {
-  flex: 1;
-  min-height: 250px;
-}
 .ux-atlas-stamp {
   text-align: right;
   font: 400 20px/1.3 var(--serif);
 }
 .ux-atlas-stamp em {
   color: #f4d399;
-}
-.ux-home .ux-atlas-facts {
-  margin-bottom: 8px;
-}
-.ux-home .ux-atlas-note {
-  font-size: 12px;
 }
 .ux-objective-bar {
   scroll-margin-top: 24px;
@@ -2402,52 +2191,6 @@ summary:hover {
 }
 .ux-example:not(.ux-example-open) button {
   flex-shrink: 0;
-}
-.ux-home-story {
-  display: grid;
-  grid-template-columns: 0.9fr 1.4fr;
-  gap: 48px;
-  padding-block: 48px;
-}
-.ux-home-story h2 {
-  font: 400 42px/1.15 var(--serif);
-  letter-spacing: -0.045em;
-}
-.ux-home-story h2 em {
-  color: var(--accent);
-}
-.ux-home-story ol {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-}
-.ux-home-story li {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
-}
-.ux-home-story h3 {
-  font-size: 16px;
-  margin-block: 20px 12px;
-}
-.ux-home-story p {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-block: 16px;
-}
-.ux-home-story .text-link {
-  font-size: 13px;
-}
-.ux-home-guide {
-  border-block: 1px solid var(--border-subtle);
-  margin-bottom: 48px;
-}
-.ux-home-guide > summary {
-  padding: 20px 0;
-  min-height: 44px;
-  cursor: pointer;
-  font-weight: 600;
 }
 .ux-workspace .detail-card {
   padding: var(--space-6);
@@ -2584,58 +2327,20 @@ summary:hover {
   font-family: var(--serif);
 }
 @media (max-width: 980px) {
-  .ux-home .ux-discovery-grid,
-  .ux-home-story,
   .ux-account-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .ux-home .ux-atlas {
-    min-height: 480px;
-  }
-  .ux-home-story {
-    gap: 24px;
-  }
 }
 @media (max-width: 640px) {
-  .ux-home .ux-discovery-grid {
-    gap: 28px;
-  }
-  .ux-home .ux-editorial-copy {
-    padding-block: 0;
-  }
-  .ux-home .ux-editorial-copy h1 {
-    font-size: clamp(26px, 8.4vw, 56px);
-  }
-  .ux-home .ux-atlas {
-    min-height: 360px;
-    padding: 20px;
-  }
-  .ux-home .ux-atlas-map {
-    min-height: 150px;
-  }
-  .ux-home .ux-atlas-facts {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: 12px;
-  }
-  .ux-home .ux-atlas-facts dd {
-    font-size: 14px;
-  }
   .ux-example:not(.ux-example-open) {
     display: block;
   }
   .ux-example:not(.ux-example-open) button {
     margin-top: 16px;
   }
-  .ux-home-story ol,
   .ux-mission-focus-grid,
   .ux-programme-heading {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .ux-home-story h2 {
-    font-size: 32px;
-  }
-  .ux-home-story h3 {
-    margin-block: 12px;
   }
   .ux-workspace .detail-card,
   .ux-mission-next,
@@ -3176,84 +2881,6 @@ th {
 }
 
 /* Lead journey (Bangladesh to China sourcing and delegations). Plain language, two choices first. */
-.ux-lead {
-  padding-block: var(--space-18) var(--space-12);
-}
-.ux-lead h2 {
-  max-width: 24ch;
-  margin: var(--space-2) 0 var(--space-3);
-  font-family: var(--serif);
-  font-size: clamp(1.9rem, 3.6vw, 2.75rem);
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-.ux-lead-note {
-  max-width: 40rem;
-  margin: 0 0 var(--space-8);
-  font-size: var(--text-lg);
-  color: var(--text-2);
-}
-.ux-lead-paths {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-6);
-}
-.ux-lead-paths .detail-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-8);
-}
-.ux-lead-paths h3 {
-  margin: 0;
-  font-size: var(--text-xl);
-  font-weight: 600;
-  line-height: 1.3;
-}
-.ux-lead-paths p {
-  flex: 1;
-  margin: 0 0 var(--space-3);
-  color: var(--text-2);
-}
-.ux-lead-steps {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-6);
-  margin: var(--space-12) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.ux-lead-steps li {
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
-}
-.ux-lead-steps h3 {
-  margin: var(--space-2) 0;
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-.ux-lead-steps p {
-  margin: 0;
-  font-size: var(--text-md);
-  color: var(--text-2);
-}
-@media (max-width: 900px) {
-  .ux-lead-paths,
-  .ux-lead-steps {
-    grid-template-columns: 1fr;
-  }
-  .ux-lead {
-    padding-block: var(--space-12) var(--space-8);
-  }
-}
-.ux-lead-boundary {
-  max-width: 40rem;
-  margin: var(--space-6) 0 0;
-  font-size: var(--text-md);
-  color: var(--text-2);
-}
 
 /* Dark navigation keeps its light text on hover (the older global summary hover colour fails contrast there). */
 .workspace-navigation summary:hover,
@@ -3528,11 +3155,6 @@ th {
   stroke-width: 1.5;
   opacity: 0.9;
 }
-@media (min-width: 1001px) {
-  .ux-home .ux-discovery-grid {
-    align-items: start;
-  }
-}
 
 /* Atlas lower half: one selected-direction block, one footnote. */
 .ux-atlas .ux-atlas-selected {
@@ -3562,16 +3184,8 @@ th {
   line-height: 1.5;
   color: var(--map-arc-china);
 }
-.ux-home .ux-atlas {
-  min-height: 0;
-}
 
 /* Lead cards: the route label keeps its own height so both titles start on the same line. */
-.ux-lead-paths .label {
-  flex: 0 0 auto;
-  margin: 0;
-  color: var(--brand);
-}
 
 /* Route pages: a real breadcrumb, the route next to the main action, sections shown in full, and what we record. */
 .ux-breadcrumb {
@@ -3977,12 +3591,6 @@ th {
 }
 
 /* Home routes: each route is its own card, coloured like its line on the map. */
-.ux-lead-paths .ux-route-china {
-  border-top: 4px solid var(--map-china);
-}
-.ux-lead-paths .ux-route-europe {
-  border-top: 4px solid var(--map-spain);
-}
 
 /* Any route: the two spotlight routes stay first, any other pair is one disclosure away. */
 .ux-atlas .ux-atlas-any {
@@ -4068,10 +3676,6 @@ th {
   gap: var(--space-4);
   border-style: dashed;
 }
-.ux-lead-paths .ux-route-other {
-  flex-direction: row;
-  align-items: center;
-}
 .ux-route-other h2,
 .ux-route-other h3 {
   margin: 0 0 var(--space-2);
@@ -4092,42 +3696,251 @@ th {
   gap: var(--space-4);
 }
 
-/* V3 objective entry reuses the existing request service and commercial job catalogue. */
-.v3-product-choices {
+/* Guided experience (locked, docs/agents/ui-direction.md). One question, one button, tokens only. */
+:root {
+  --guided-control-radius: 0.875rem;
+  --guided-card-radius: 1rem;
+  --guided-hero-radius: 1.25rem;
+  --guided-body: 1.125rem;
+  --guided-touch: 3rem;
+  --guided-touch-large: 3.75rem;
+  --guided-choice-min: 4.75rem;
+}
+.ux-guide-home {
   display: grid;
-  gap: 8px;
-  margin-block: 24px 16px;
+  gap: var(--space-18);
+  padding-block: var(--space-8) var(--space-18);
 }
-.v3-product-choices > a {
+.guide-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 16px;
-  padding: 16px;
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  background: var(--surface-0);
-  color: var(--text-1);
-  text-decoration: none;
+  gap: var(--space-4);
+  max-width: 44rem;
+  justify-items: start;
 }
-.v3-product-choices strong {
-  font-size: 16px;
+.guide-hero .label,
+.guide-steps .label,
+.guide-facts .label {
+  color: var(--brand);
 }
-.v3-product-choices span {
-  grid-column: 1;
+.guide-hero h1 {
+  font-size: clamp(2rem, 6.4vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  margin: 0;
+}
+.guide-hero h1 em {
+  font-style: normal;
+  color: var(--brand);
+}
+.guide-lead {
+  margin: 0;
+  max-width: 38rem;
+  font-size: var(--guided-body);
+  line-height: 1.6;
   color: var(--text-2);
-  font-size: 13px;
 }
-.v3-product-choices svg {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  align-self: center;
+.guide-choices {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-4);
 }
-.v3-product-choices > a:hover {
-  border-color: var(--brand);
-  background: var(--surface-1);
-}
-.v3-other-objective {
-  display: inline-flex;
-  gap: 8px;
+.guide-choices > a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: var(--space-4);
+  min-height: var(--guided-choice-min);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-card-radius);
+  box-shadow: var(--shadow-1);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+.guide-choices > a:hover {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+.guide-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  color: var(--brand-deep);
+  background: var(--surface-2);
+  border-radius: var(--guided-control-radius);
+}
+.guide-choice-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.guide-choice-text {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.guide-choice-text strong {
+  font-size: var(--text-xl);
+  line-height: 1.25;
+  color: var(--text-1);
+}
+.guide-choice-text > span:not(.label) {
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.guide-choice-text .label {
+  color: var(--text-3);
+}
+.guide-choice-go {
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+}
+.guide-other {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--guided-touch);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.guide-steps,
+.guide-facts {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 64rem;
+}
+.guide-steps h2,
+.guide-facts h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.guide-steps ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-steps li {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-card-radius);
+}
+.guide-steps h3 {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: 1.25;
+}
+.guide-steps li p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.guide-step-number {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 650;
+  color: var(--on-brand);
+  background: var(--brand);
+  border-radius: 50%;
+}
+.guide-boundary {
+  margin: var(--space-2) 0 0;
+  max-width: 44rem;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-radius: var(--guided-control-radius);
+}
+.guide-facts {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+.guide-facts > div {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.guide-facts ul {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-facts li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-control-radius);
+}
+@media (min-width: 900px) {
+  .guide-facts {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: var(--space-12);
+  }
+  .guide-choices > a {
+    padding-block: var(--space-5);
+  }
+}
+.listen-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--guided-touch);
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 550;
+  color: var(--brand-deep);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+  cursor: pointer;
+}
+.listen-button:hover,
+.listen-button[aria-pressed='true'] {
+  background: var(--surface-2);
+  border-color: var(--brand);
+}
+.listen-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-choices > a,
+  .guide-choices > a:hover {
+    transition: none;
+    transform: none;
+  }
 }

@@ -1,265 +1,150 @@
 import { Arrow } from '../components/arrow';
 import Link from 'next/link';
-import { DiscoveryExperience } from '../components/discovery-experience';
+import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 
-const jobs = [
+const starts = [
   {
-    href: '/sell',
-    title: 'Sell in a new market',
-    text: 'Find buyers, distributors and partners who fit what you offer.',
+    href: '/plan?job=buyers',
+    title: 'Sell my products',
+    text: 'Find buyers, distributors and partners who fit what you make.',
+    name: 'Find Buyers & Partners',
+    icon: (
+      <>
+        <path d="M5 8h14l-1 12H6z" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+      </>
+    ),
   },
   {
-    href: '/source',
-    title: 'Source suppliers',
-    text: 'Build a short list worth investigating and visiting.',
+    href: '/plan?job=sourcing',
+    title: 'Buy products or machines',
+    text: 'Find suppliers. Compare price quotes with clear terms.',
+    name: 'Find Suppliers & Products',
+    icon: (
+      <>
+        <path d="M2 21h20" />
+        <path d="M4 21V11l5 3v-3l5 3V5h6v16" />
+      </>
+    ),
   },
   {
-    href: '/enter-market',
-    title: 'Enter a new market',
-    text: 'Find the customers, distributors and local relationships you need.',
+    href: '/plan?job=delegations',
+    title: 'Lead a group trip',
+    text: "Plan the programme and each company's meetings.",
+    name: 'Organise a Delegation',
+    icon: (
+      <>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+        <circle cx="17" cy="9" r="2.5" />
+        <path d="M17 14c2.5 0 5 1.8 5 4.5" />
+      </>
+    ),
   },
-  {
-    href: '/trade-missions',
-    title: 'Run a trade mission',
-    text: 'Build commercial agendas and keep the next step in view.',
-  },
-];
+] as const;
+
 const steps = [
-  ['Define the objective', 'Start with what you need to achieve, where and when.'],
-  ['Find the right counterparties', 'Research beyond an attendee list or an existing database.'],
-  ['Qualify the fit', 'Record relevance, supporting evidence and open questions.'],
-  ['Create access', 'Prepare outreach, introductions and scoped local work.'],
-  ['Track what happens next', 'Follow the relationship through commercial decisions.'],
-];
+  ['Say what you need', 'What you want to buy, sell or organise, and when.'],
+  ['Find the right companies', 'We look at the whole market, not only who attends one fair.'],
+  ['Review before you meet', 'See why each company fits, what it states and what has evidence.'],
+  ['Meet and follow up', 'Plan meetings and visits. Track what happens next.'],
+] as const;
+
+const labels = [
+  ['Self-declared', 'unknown', 'Stated by the company'],
+  ['Evidence available', 'info', 'Proof was provided'],
+  ['Verified', 'positive', 'Checked by a defined process'],
+  ['Derived', 'caution', 'Worked out from available data'],
+  ['Outcome observed', 'positive', 'A real result was recorded'],
+] as const;
 
 export default function Home() {
   return (
-    <PublicShell className="ux-home">
-      <DiscoveryExperience />
-      <section className="ux-lead" aria-labelledby="lead-title">
-        <p className="label">TWO SEPARATE ROUTES</p>
-        <h2 id="lead-title">Choose the route that fits your business.</h2>
-        <p className="ux-lead-note">
-          Corridra works on two separate routes from Bangladesh. Each route works on its own, and
-          you can use either one without the other.
+    <PublicShell className="ux-guide-home">
+      <LegacyHashRedirect />
+      <section className="guide-hero" aria-labelledby="home-title">
+        <p className="label">CROSS-BORDER MARKET ACCESS</p>
+        <h1 id="home-title">
+          Find the right market.
+          <br />
+          Meet the right people.
+          <br />
+          <em>Know what to do next.</em>
+        </h1>
+        <p className="guide-lead">
+          Say what you want to buy, sell or organise. See which companies fit, what is proven about
+          them, and what to do next.
         </p>
-        <div className="ux-lead-paths">
-          <article className="detail-card ux-route-china">
-            <p className="label">BANGLADESH AND CHINA</p>
-            <h3>Visit fewer suppliers. Visit the ones that fit.</h3>
-            <p>
-              Tell us what you need to buy, or bring a delegation. We narrow the market and show
-              what is stated and what has evidence, before you travel.
-            </p>
-            <Link prefetch={false} className="primary-link" href="/source">
-              Plan a sourcing visit <Arrow />
+        <nav className="guide-choices" aria-label="Choose your commercial objective">
+          {starts.map((start) => (
+            <Link prefetch={false} key={start.href} href={start.href}>
+              <span className="guide-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {start.icon}
+                </svg>
+              </span>
+              <span className="guide-choice-text">
+                <strong>{start.title}</strong>
+                <span>{start.text}</span>
+                <span className="label">{start.name}</span>
+              </span>
+              <span className="guide-choice-go" aria-hidden="true">
+                <Arrow />
+              </span>
             </Link>
-            <Link prefetch={false} className="button-secondary" href="/trade-missions">
-              Plan a delegation <Arrow />
-            </Link>
-            <Link prefetch={false} className="text-link" href="/machinery">
-              Buying machinery? Start here
-            </Link>
-          </article>
-          <article className="detail-card ux-route-europe">
-            <p className="label">BANGLADESH AND SPAIN OR THE EU</p>
-            <h3>Reach the buyers that fit what you make.</h3>
-            <p>
-              Find importers and distributors in Spain and the EU. We show why each one fits and
-              what has evidence, before you spend time or money on the meeting.
-            </p>
-            <Link prefetch={false} className="primary-link" href="/sell">
-              Plan a selling mission <Arrow />
-            </Link>
-            <Link prefetch={false} className="button-secondary" href="/enter-market">
-              Enter Bangladesh <Arrow />
-            </Link>
-            <Link prefetch={false} className="text-link" href="/corridors/bangladesh-eu">
-              Read the Spain and EU scope
-            </Link>
-          </article>
-          <article className="detail-card ux-route-other">
-            <div>
-              <p className="label">ANY OTHER ROUTE</p>
-              <h3>Working somewhere else?</h3>
-              <p>
-                Corridra is built for any route between countries. Tell us where your company is and
-                where you want to go.
-              </p>
-            </div>
-            <div className="ux-route-other-actions">
-              <Link prefetch={false} className="button-secondary" href="/plan">
-                Plan a mission on another route <Arrow />
-              </Link>
-              <Link prefetch={false} className="text-link" href="/corridors">
-                Pick two countries on the map
-              </Link>
-            </div>
-          </article>
-        </div>
-        <p className="ux-lead-boundary">
+          ))}
+        </nav>
+        <Link prefetch={false} className="guide-other" href="/plan">
+          Something else? Tell us your business goal <Arrow />
+        </Link>
+      </section>
+
+      <section className="guide-steps" aria-labelledby="steps-title">
+        <p className="label">HOW IT WORKS</p>
+        <h2 id="steps-title">One mission, four clear steps.</h2>
+        <p className="guide-lead">
+          A mission is a planned piece of work to meet the right companies.
+        </p>
+        <ol aria-label="How a mission works">
+          {steps.map(([title, text], index) => (
+            <li key={title}>
+              <span className="guide-step-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="guide-boundary">
           Corridra does not promise orders. We work on what we can control: research, review,
           introductions and meetings.
         </p>
-        <ol className="ux-lead-steps" aria-label="How a mission works">
-          <li>
-            <span className="stage-number">1</span>
-            <h3>Say what you need</h3>
-            <p>What you want to buy or achieve, and when.</p>
-          </li>
-          <li>
-            <span className="stage-number">2</span>
-            <h3>Find the right companies</h3>
-            <p>We look at the whole market, not only who attends one fair.</p>
-          </li>
-          <li>
-            <span className="stage-number">3</span>
-            <h3>Review before you meet</h3>
-            <p>See why each company fits, what it states and what has evidence.</p>
-          </li>
-          <li>
-            <span className="stage-number">4</span>
-            <h3>Meet and follow up</h3>
-            <p>Plan meetings and visits. Track what happens next.</p>
-          </li>
-        </ol>
       </section>
-      <details className="ux-home-guide">
-        <summary>Explore the mission workflow, services and commercial outcomes</summary>
-        <section className="jobs-section" aria-labelledby="jobs-title">
-          <div className="section-heading">
-            <p className="label">START WITH YOUR OBJECTIVE</p>
-            <h2 id="jobs-title">What are you trying to make happen?</h2>
-          </div>
-          <div className="jobs-grid">
-            {jobs.map((job, index) => (
-              <Link prefetch={false} className="job-card" href={job.href} key={job.href}>
-                <span className="label">
-                  0{index + 1}{' '}
-                  <span aria-hidden="true">
-                    <Arrow />
-                  </span>
-                </span>
-                <h3>{job.title}</h3>
-                <p>{job.text}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-        <section className="editorial-intro">
-          <h2>A foreign trip is too expensive to leave to chance.</h2>
-          <div>
-            <p>
-              You can book the flight, attend the fair and still come home with a list of contacts
-              you do not know how to use.
-            </p>
-            <p>
-              The work starts before the meeting: why this company, why now and what would make the
-              conversation useful?
-            </p>
-            <Link prefetch={false} className="text-link" href="/sell">
-              Already travelling for business? <Arrow />
-            </Link>
-          </div>
-        </section>
-        <section className="process-section" aria-labelledby="process-title">
-          <div className="section-heading">
-            <p className="label">THE MISSION WORKFLOW</p>
-            <h2 id="process-title">More than a list of companies.</h2>
-          </div>
-          <ol className="process-list">
-            {steps.map(([title, text], index) => (
-              <li key={title}>
-                <span className="stage-number">0{index + 1}</span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <Link prefetch={false} className="text-link" href="/how-it-works">
-            Follow the full process <Arrow />
-          </Link>
-        </section>
-        <section className="feature-grid" aria-label="Evidence and local execution">
-          <article>
-            <p className="label">TRUST & EVIDENCE</p>
-            <h2>Claims are not the same as evidence.</h2>
-            <p>
-              The mission record distinguishes what a company has declared, what supporting evidence
-              exists and what has been checked.
-            </p>
-            <Link prefetch={false} className="text-link" href="/trust">
-              Understand the evidence labels <Arrow />
-            </Link>
-          </article>
-          <article>
-            <p className="label">CORRIDRA NETWORK</p>
-            <h2>Some questions need someone on the ground.</h2>
-            <p>
-              We’re building scoped local work around clear tasks, evidence requirements and
-              contribution terms.
-            </p>
-            <Link prefetch={false} className="text-link" href="/network">
-              See how participation will work <Arrow />
-            </Link>
-          </article>
-        </section>
-        <section className="editorial-intro">
-          <h2>A trade mission should produce more than attendance.</h2>
-          <div>
-            <p>
-              We’re building a way for institutions to connect participant objectives to qualified
-              agendas, then follow commercial progression after the delegation returns.
-            </p>
-            <Link prefetch={false} className="text-link" href="/institutions">
-              Explore the institutional approach <Arrow />
-            </Link>
-          </div>
-        </section>
-        <section className="outcomes-section" aria-labelledby="outcomes-title">
-          <p className="label">WHAT COUNTS AS PROGRESS</p>
-          <h2 id="outcomes-title">
-            A meeting is not a sale.
-            <br />A contract is not cash.
-          </h2>
-          <p>
-            The mission record follows distinct commercial events. Each step needs its own evidence.
+
+      <section className="guide-facts" aria-labelledby="facts-title">
+        <div>
+          <p className="label">WHAT WE SHOW YOU</p>
+          <h2 id="facts-title">Every fact says where it comes from.</h2>
+          <p className="guide-lead">
+            You always see whether a statement is only claimed, or has proof behind it.
           </p>
-          <ol className="outcome-path">
-            {[
-              'Identified',
-              'Qualified',
-              'Engaged',
-              'Meeting held',
-              'Opportunity',
-              'Quotation / sample',
-              'Proposal',
-              'Commitment',
-              'Contract',
-              'Invoice',
-              'Cash collected',
-            ].map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
           <Link prefetch={false} className="text-link" href="/trust">
-            See what an observed outcome means <Arrow />
+            How we label facts <Arrow />
           </Link>
-        </section>
-        <section className="closing public-closing">
-          <p className="label">INITIAL COMMERCIAL DIRECTIONS</p>
-          <h2>
-            Make market entry <em>deliberate.</em>
-          </h2>
-          <p>One shared mission workflow, from the first objective to the recorded outcome.</p>
-          <Link prefetch={false} className="text-link" href="/plan">
-            Plan a mission <Arrow />
-          </Link>
-        </section>
-      </details>
+        </div>
+        <ul>
+          {labels.map(([name, tone, line]) => (
+            <li key={name}>
+              <span className="ux-status" data-tone={tone}>
+                {name}
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </PublicShell>
   );
 }

@@ -20,6 +20,8 @@ export type PublicPageContent = {
   };
   /** What Corridra records, so a reader can see what can be proved later. */
   record?: { title: string; items: string[] };
+  /** The distinct commercial events a mission record follows, in order. */
+  progress?: { label: string; title: string[]; text: string; steps: string[] };
   related: { href: string; label: string };
 };
 
@@ -351,6 +353,24 @@ export const publicPages: Record<string, PublicPageContent> = {
     closing: {
       title: 'AI can help reason. It cannot redefine reality.',
       text: 'Planned AI assistance can support research and extraction. It cannot decide permissions, control money or declare a fact verified. Consequential actions will require the relevant controls and human review.',
+    },
+    progress: {
+      label: 'WHAT COUNTS AS PROGRESS',
+      title: ['A meeting is not a sale.', 'A contract is not cash.'],
+      text: 'The mission record follows distinct commercial events. Each step needs its own evidence.',
+      steps: [
+        'Identified',
+        'Qualified',
+        'Engaged',
+        'Meeting held',
+        'Opportunity',
+        'Quotation / sample',
+        'Proposal',
+        'Commitment',
+        'Contract',
+        'Invoice',
+        'Cash collected',
+      ],
     },
     related: { href: '/how-it-works', label: 'Follow the planned mission process' },
   },
