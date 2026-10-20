@@ -6,12 +6,20 @@ export type PublicPageContent = {
   description: string;
   introduction: { title: string; text: string };
   /** The steps of the approach. With a `tag`, each one is an evidence label row instead. */
-  sections: { title: string; text: string; tag?: (typeof factLabels)[number]['label'] }[];
+  sections: {
+    title: string;
+    text: string;
+    tag?: (typeof factLabels)[number]['label'];
+    /** The contract name, kept as a small label under a plain title. */
+    name?: string;
+  }[];
   /** Splits the steps into named groups of equal size. */
   groups?: string[];
   /** Short statements shown as cards in the closing section. */
   statements?: string[];
   closing: { title: string; text: string };
+  /** A last call to action under the closing section. */
+  band?: { title: string; text: string };
   cta?: string;
   intakeJob?: string;
   /** The commercial direction this page is about, shown next to the main action. */
@@ -227,30 +235,44 @@ export const publicPages: Record<string, PublicPageContent> = {
     },
     groups: ['Before you meet', 'Meet and follow up'],
     sections: [
-      { title: 'Intent', text: 'Say what you want and what a good result looks like.' },
       {
-        title: 'Market',
+        title: 'Say what you want',
+        name: 'Intent',
+        text: 'Say what a good result looks like and by when.',
+      },
+      {
+        title: 'Choose the market',
+        name: 'Market',
         text: 'Choose the market and window. Describe your offer or need.',
       },
       {
-        title: 'Counterparties',
+        title: 'Find companies that fit',
+        name: 'Counterparties',
         text: 'Research companies that could fit, beyond event lists and old contacts.',
       },
       {
-        title: 'Qualification',
+        title: 'Check what is proven',
+        name: 'Qualification',
         text: 'Separate claims, evidence, completed checks and open questions.',
       },
-      { title: 'Access', text: 'Prepare introductions with context for the other side.' },
       {
-        title: 'Execution',
+        title: 'Get introduced',
+        name: 'Access',
+        text: 'Prepare introductions with context for the other side.',
+      },
+      {
+        title: 'Hold the meetings',
+        name: 'Execution',
         text: 'Coordinate meetings and local work. Record what happened and what is next.',
       },
       {
-        title: 'Progression',
+        title: 'Follow each opportunity',
+        name: 'Progression',
         text: 'Follow opportunities, quotes, samples and proposals. Keep owners and timing visible.',
       },
       {
-        title: 'Outcome',
+        title: 'Record the result',
+        name: 'Outcome',
         text: 'Record commitments, contracts, invoices and cash separately.',
       },
     ],
@@ -263,6 +285,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'A meeting is a start. What follows matters.',
       text: 'Progress needs a clear record of what happened.',
     },
+    band: { title: 'Ready to try it?', text: 'Tell us your goal. No account needed.' },
     related: { href: '/trust', label: 'See how claims and evidence differ' },
   },
   network: {

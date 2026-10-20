@@ -1,0 +1,42 @@
+{
+  "scope": "PR101 request page, one type scale, other pages to the Guided standard, and the PR98 release record. UI and documentation only. Product remains PARTIAL.",
+  "pr": {
+    "number": 101,
+    "mergedSource": "b8af3a984fd8952b796ef3e41e88706d91f78116",
+    "testedHead": "558dfa6a0c4339e348b8af393e0de746b0c1dc3b",
+    "baseAtMerge": "3f7a70d14121d51259486a0c663f2da45fafcbe9",
+    "ci": {
+      "run": 39383618896,
+      "job": 118498403626,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including browser and operator specs. An earlier run on 2caf016 failed in two operator specs unrelated to the diff (a datetime-local fill and a missing operator membership) and passed on re-run"
+    },
+    "codeQL": {
+      "run": 39383618902,
+      "conclusion": "success"
+    }
+  },
+  "production": {
+    "id": "dpl_DmDyG2SnGDRu2fMffeMYKzoGj5sw",
+    "url": "corridra-fvhczptfz-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "b8af3a984fd8952b796ef3e41e88706d91f78116",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "privacy": "https://c.obsidianglobal.studio/privacy answered 200 with the two-column notice, the new footer and the corner dock Help button",
+      "notFound": "the not-found page served by the same deployment uses the new page hero with Back to Corridra and Start a request",
+      "notObserved": "the Listen button (browser only), the live /plan form, the live home page after this deploy and the 72-check live probe were not run against production"
+    }
+  },
+  "productionSettings": "not re-read for this release; the customer unlock release (PR100 receipt) recorded the 19 Production settings, and this deploy changed none of them",
+  "rollback": "dpl_5gFhpy3jX1NGFSW1KWCYygby18QX (454b8b3, PR98 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
+}
