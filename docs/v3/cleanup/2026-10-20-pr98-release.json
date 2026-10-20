@@ -1,0 +1,40 @@
+{
+  "scope": "PR98 Guided public site (UI only) plus the PR97 release record. Product remains PARTIAL. Deployed main also carries PR99 code (pin step validates the issuer structurally); it is inert while the production settings are unset.",
+  "pr": {
+    "number": 98,
+    "mergedSource": "454b8b36c2301dc5afdc2b229e233410a8d45eb7",
+    "testedHead": "eaf4e74bbaad6a2074aa1f0ac6426aea25fcdd1f",
+    "ci": {
+      "run": 39372535334,
+      "job": 118463392529,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including browser and operator specs. Earlier runs failed in one operator spec that still used the old route explorer path and link name; fixed before the tested head"
+    },
+    "codeQL": {
+      "run": 39372535326,
+      "conclusion": "success"
+    }
+  },
+  "production": {
+    "id": "dpl_5gFhpy3jX1NGFSW1KWCYygby18QX",
+    "state": "READY",
+    "source": "454b8b36c2301dc5afdc2b229e233410a8d45eb7",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "howItWorks": "/how-it-works answered 200 with the new template: one sentence per headline line, grouped numbered steps, the expectations list, the new footer and the corner dock Help button",
+      "corridors": "/corridors answered 200 with Pick your route, My company is in, Plan a mission on this route, Open the sample mission, Explore a direction, Any other route and the corner dock",
+      "notObserved": "the Listen button and the /#mission-example redirect (browser only), the live home page after this deploy, and the 72-check live probe were not run against production"
+    }
+  },
+  "productionSettings": "not re-read for this release; the last read (PR95 receipt) showed no CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK, no CORRIDRA_CUSTOMER_OPEN_ADMISSION and no customer module flag for Production",
+  "rollback": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R (PR97 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
+}
