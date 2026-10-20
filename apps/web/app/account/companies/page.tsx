@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { WorkspaceShell } from '../../../components/workspace-shell';
+import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
 import { CompanyPortfolio } from './company-portfolio';
 export const dynamic = 'force-dynamic';
@@ -35,8 +36,12 @@ export default async function Page() {
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="YOUR COMMERCIAL WORKSPACE" title="Your approved companies">
+    <CustomerShell
+      tab="companies"
+      eyebrow="YOUR COMMERCIAL WORKSPACE"
+      title="Your approved companies"
+    >
       <CompanyPortfolio subject={session.data.user.id} issuer={issuer} />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

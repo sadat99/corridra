@@ -323,36 +323,38 @@ export function CustomerWorkspaces({
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role} · Test data
-                  {profilesEnabled && (
-                    <p>
-                      <a className="text-link" href={'/account/profile/' + row.id}>
-                        {['owner', 'admin'].includes(row.role)
-                          ? 'Edit sample company profile'
-                          : 'View sample company profile'}
-                      </a>
-                    </p>
-                  )}
-                  {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
-                    <p>
-                      <a className="text-link" href={'/account/delegations/' + row.id}>
-                        Plan sample delegations
-                      </a>
-                    </p>
-                  )}
-                  {draftsEnabled && (
-                    <p>
-                      <a className="text-link" href={'/account/drafts/' + row.id}>
-                        Start or continue a guided request
-                      </a>
-                    </p>
-                  )}
-                  {requestsEnabled && (
-                    <p>
-                      <a className="text-link" href={'/account/request/' + row.id}>
-                        Send a private sample request
-                      </a>
-                    </p>
-                  )}
+                  <div className="guide-actions-row">
+                    {profilesEnabled && (
+                      <p>
+                        <a className="text-link" href={'/account/profile/' + row.id}>
+                          {['owner', 'admin'].includes(row.role)
+                            ? 'Edit sample company profile'
+                            : 'View sample company profile'}
+                        </a>
+                      </p>
+                    )}
+                    {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
+                      <p>
+                        <a className="text-link" href={'/account/delegations/' + row.id}>
+                          Plan sample delegations
+                        </a>
+                      </p>
+                    )}
+                    {draftsEnabled && (
+                      <p>
+                        <a className="text-link" href={'/account/drafts/' + row.id}>
+                          Start or continue a guided request
+                        </a>
+                      </p>
+                    )}
+                    {requestsEnabled && (
+                      <p>
+                        <a className="text-link" href={'/account/request/' + row.id}>
+                          Send a private sample request
+                        </a>
+                      </p>
+                    )}
+                  </div>
                   {row.role === 'owner' && (
                     <CustomerWorkspaceTeam
                       key={issuer + ':' + subject + ':' + row.id}

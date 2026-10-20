@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { JourneyBar } from '../../components/journey-bar';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -486,18 +487,11 @@ export function Intake({
           {!finished && (
             <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
               <p className="label">STEP {step + 1} OF 5</p>
-              <ol className="ux-intake-steps" aria-label="Request steps">
-                {['Goal', 'Where', 'Details', 'Results', 'Contact'].map((label, index) => (
-                  <li
-                    key={label}
-                    aria-current={index === step ? 'step' : undefined}
-                    data-done={index < step}
-                  >
-                    <span aria-hidden="true">{index < step ? '✓' : index + 1}</span>
-                    <b>{label}</b>
-                  </li>
-                ))}
-              </ol>
+              <JourneyBar
+                steps={['Goal', 'Where', 'Details', 'Results', 'Contact']}
+                current={step}
+                label="Request steps"
+              />
               <progress
                 className="sr-only"
                 value={step + 1}

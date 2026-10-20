@@ -9,6 +9,7 @@ import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-pr
 import { customerProgrammeTemplatesEnabled } from '@corridra/auth/customer-programme-templates';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerProgrammes } from '../customer-programmes';
 export const dynamic = 'force-dynamic';
@@ -40,7 +41,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="Plan a sample delegation">
+    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="Plan a sample delegation">
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
@@ -52,6 +53,6 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         coordinationEnabled={customerProgrammeCoordinationEnabled()}
         templatesEnabled={customerProgrammeTemplatesEnabled()}
       />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

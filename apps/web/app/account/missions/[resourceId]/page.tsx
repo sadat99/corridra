@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { SavedCommercialReport } from '../saved-commercial-report';
 export const dynamic = 'force-dynamic';
@@ -39,13 +40,13 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="APPROVED PRIVATE REPORT" title="Your commercial mission">
+    <CustomerShell tab="results" eyebrow="APPROVED PRIVATE REPORT" title="Your commercial mission">
       <SavedCommercialReport
         resourceId={id.data}
         subject={session.data.user.id}
         issuer={issuer}
         decisionsEnabled={customerDecisionsEnabled()}
       />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }
