@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
 
 /** One sentence per line, so a headline never wraps in the middle of a thought. */
-function Lines({ text }: { text: string }) {
+export function Lines({ text }: { text: string }) {
   const lines = text.split(/(?<=[.?!])\s+/);
   return (
     <>
