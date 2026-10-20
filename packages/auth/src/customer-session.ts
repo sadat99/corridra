@@ -16,34 +16,50 @@ function isolatedIssuer(url: URL) {
     url.pathname === '/corridra/auth'
   );
 }
-// Owner opt-in (ADR-049): on an unlocked production deployment the exact issuer the owner configured in
-// CORRIDRA_CUSTOMER_ISSUER is accepted too. It must be an https Frankfurt Neon Auth address and equal
-// that setting character for character; nothing is derived from the request.
-function ownerIssuer(url: URL, value: string, env: NodeJS.ProcessEnv) {
+// Shape of a Frankfurt Neon Auth issuer the owner may pin (ADR-049): https only, a c-5 or c-6 Frankfurt
+// host and a `/<database>/auth` path.
+function ownerIssuerShape(url: URL) {
   return (
-    customerProductionUnlocked(env) &&
-    env.CORRIDRA_CUSTOMER_ISSUER === value &&
     /^[a-z0-9-]+\.neonauth\.c-[56]\.eu-central-1\.aws\.neon\.tech$/.test(url.hostname) &&
     /^\/[a-z0-9_]+\/auth$/.test(url.pathname)
   );
 }
-export const customerIssuer = z.url().refine((value) => {
+function plainHttpsIssuer(value: string) {
   let url: URL;
   try {
     url = new URL(value);
   } catch {
-    return false;
+    return null;
   }
-  return (
-    url.protocol === 'https:' &&
+  return url.protocol === 'https:' &&
     !url.username &&
     !url.password &&
     !url.port &&
     !url.search &&
-    !url.hash &&
-    (isolatedIssuer(url) || ownerIssuer(url, value, process.env))
+    !url.hash
+    ? url
+    : null;
+}
+// Owner opt-in (ADR-049): on an unlocked production deployment the exact issuer the owner configured in
+// CORRIDRA_CUSTOMER_ISSUER is accepted too. It must equal that setting character for character; nothing is
+// derived from the request.
+function ownerIssuer(url: URL, value: string, env: NodeJS.ProcessEnv) {
+  return (
+    customerProductionUnlocked(env) &&
+    env.CORRIDRA_CUSTOMER_ISSUER === value &&
+    ownerIssuerShape(url)
   );
+}
+export const customerIssuer = z.url().refine((value) => {
+  const url = plainHttpsIssuer(value);
+  return !!url && (isolatedIssuer(url) || ownerIssuer(url, value, process.env));
 }, 'An isolated Frankfurt customer issuer is required');
+// Offline owner procedure only: the structural rule without the runtime environment, because the install
+// job runs outside the deployment. What the app later accepts is still decided by `customerIssuer`.
+export const pinnableCustomerIssuer = z.url().refine((value) => {
+  const url = plainHttpsIssuer(value);
+  return !!url && (isolatedIssuer(url) || ownerIssuerShape(url));
+}, 'A Frankfurt Neon Auth issuer over https is required');
 export type CustomerSession = { subject: string; expiresAt: Date; emailVerified: boolean };
 export type CustomerWorkspaceOptions = {
   enabled: boolean;
