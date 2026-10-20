@@ -87,7 +87,8 @@ export type CustomerAccessPage = {
   memberships: {
     id: string;
     label: string;
-    role: 'member';
+    role: 'admin' | 'member';
+    roleVersion?: number;
     createdAt: string;
     status: 'active' | 'revoked' | 'account-disabled';
   }[];
