@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const routes = [
-  ['/', 'The right market.'],
+  ['/', 'Find the right market.'],
   ['/sell', 'Make the trip commercially useful.'],
   ['/source', 'Visit fewer suppliers.'],
   ['/enter-market', 'without entering it blind.'],
@@ -12,7 +12,7 @@ const routes = [
   ['/institutions', 'Stop measuring trade missions by attendance.'],
   ['/trust', 'Know what is claimed.'],
   ['/about', 'Make market entry deliberate.'],
-  ['/plan', 'What needs to happen?'],
+  ['/plan', 'What do you want to do?'],
   ['/signin', 'Sign-in is coming soon.'],
   ['/privacy', 'Use test details for now.'],
 ];
@@ -120,7 +120,7 @@ test('open navigation passes accessibility checks and remains usable at narrow w
     .getByRole('link', { name: 'Plan a mission' })
     .click();
   await expect(page).toHaveURL('/plan');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What needs to happen?');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What do you want to do?');
 });
 
 test('every public link resolves and assets stay on the site', async ({

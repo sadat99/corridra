@@ -161,15 +161,15 @@ export function DiscoveryExperience({ overview = false }: { overview?: boolean }
           <div className="ux-editorial-copy">
             <p className="label">CROSS-BORDER MARKET ACCESS</p>
             <h1>
-              The right market.
+              Find the right market.
               <br />
-              The right people.
+              Meet the right people.
               <br />
-              <em>The next move.</em>
+              <em>Know what to do next.</em>
             </h1>
             <p className="hero-description">
-              Make the commercial objective clear. Understand the evidence behind a potential
-              relationship. Keep the next decision and its owner in view.
+              Say what you want to buy, sell or organise. See which companies fit, what is proven
+              about them, and what to do next.
             </p>
             <nav className="v3-product-choices" aria-label="Choose your commercial objective">
               <Link prefetch={false} href="/plan?job=buyers">
