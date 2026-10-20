@@ -69,5 +69,15 @@
     "notRun": "no signed-in customer flow was exercised from the sandbox and the earlier 72-check script was not re-run; first real use by the owner is the next check"
   },
   "rollback": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R (7b05bf9, previous production). Fastest exposure rollback: delete CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK in Vercel Production and redeploy. The pin and installed schema are additive and kept.",
-  "deferred": "D01 malware scanning (EVIDENCE_SCAN_MODE stays bypass), D08 privacy, legal basis, retention, terms and security hardening are required before any real customer data or outside pilot user; payments, outreach and production AI inference are unchanged and off."
+  "deferred": "D01 malware scanning (EVIDENCE_SCAN_MODE stays bypass), D08 privacy, legal basis, retention, terms and security hardening are required before any real customer data or outside pilot user; payments, outreach and production AI inference are unchanged and off.",
+  "correction": {
+    "what": "The issuer pinned by install run 39369082339 and set in CORRIDRA_CUSTOMER_ISSUER was wrong. It named the Neon Auth service of Neon project neon-corridra (ep-shiny-glade, c-6, /neondb/auth), which has never held a user. The production app signs users in through the Neon Auth service of the app database branch: https://ep-tiny-forest-b199wxno.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth (Neon project corridra-nonprod, branch corridra-live-synthetic, database corridra, email through Resend).",
+    "cause": "the issuer was taken from an assumption instead of the Neon Auth configuration of the branch the app database runs on, and no signed-in flow was exercised before the release was called done",
+    "found": "the owner's sign-up for an address that already had a verified account produced no code; diagnosing it located the real auth database",
+    "impact": "fail closed: customer sessions could not match the pin, so no customer principal, workspace or session proof was ever created (all counts 0 before the correction)",
+    "fix": "owner-approved one-time transaction on the production app database: guarded to run only with the customer tables empty, the single wrong row and an active service executor; disabled configuration_immutable, deleted the wrong row, inserted the c-5 issuer with the same executor 3f0f6baa-b7d8-48c1-9d12-b4070380f5ac, re-enabled the trigger. Independent SQL afterwards: one configuration row with the c-5 issuer, trigger enabled, 0 customer principals. CORRIDRA_CUSTOMER_ISSUER updated to the same value.",
+    "redeploy": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg, READY, same commit 73417de, four aliases, so the corrected variable applies. Rollback to dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz would restore the wrong variable; do not use it.",
+    "probeAccount": "synthetic-probe-20261020@example.com was created in production auth while diagnosing; it is unverified and cannot be admitted",
+    "stillNotRun": "a signed-in customer flow end to end"
+  }
 }
