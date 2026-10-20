@@ -10,6 +10,14 @@ on:
         description: 'Type yes to install. Anything else only reports what is installed.'
         required: true
         default: 'no'
+      customer_issuer:
+        description: 'Optional. The exact customer sign-in issuer to pin (https only). Pinned once; it cannot be changed later.'
+        required: false
+        default: ''
+      customer_executor_id:
+        description: 'Optional. UUID of the active service principal recorded as executor of customer events.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -37,4 +45,6 @@ jobs:
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
           MIGRATION_DATABASE_HOST: ${{ vars.MIGRATION_DATABASE_HOST }}
           INSTALL_APPLY: ${{ inputs.apply }}
+          CUSTOMER_ISSUER: ${{ inputs.customer_issuer }}
+          CUSTOMER_EXECUTOR_ID: ${{ inputs.customer_executor_id }}
         run: pnpm exec tsx scripts/install-customer-modules.ts
