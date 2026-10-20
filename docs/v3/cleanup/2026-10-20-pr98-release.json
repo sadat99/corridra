@@ -1,5 +1,5 @@
 {
-  "scope": "PR98 Guided public site (UI only) plus the PR97 release record. Product remains PARTIAL. Deployed main also carries PR99 code (pin step validates the issuer structurally); it is inert while the production settings are unset.",
+  "scope": "PR98 Guided public site (UI only) plus the PR97 release record. Product remains PARTIAL. Deployed main also carries PR99 code (pin step validates the issuer structurally).",
   "pr": {
     "number": 98,
     "mergedSource": "454b8b36c2301dc5afdc2b229e233410a8d45eb7",
@@ -34,7 +34,7 @@
       "notObserved": "the Listen button and the /#mission-example redirect (browser only), the live home page after this deploy, and the 72-check live probe were not run against production"
     }
   },
-  "productionSettings": "not re-read for this release; the last read (PR95 receipt) showed no CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK, no CORRIDRA_CUSTOMER_OPEN_ADMISSION and no customer module flag for Production",
-  "rollback": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R (PR97 release)",
+  "productionSettings": "not re-read for this release. The customer unlock release (PR100 receipt) recorded 19 Production settings added before this deploy (unlock, open admission, issuer, 16 module flags); this deploy changed none of them",
+  "rollback": "dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz (73417de, customer unlock release)",
   "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
 }
