@@ -13,6 +13,11 @@ import { customerProgrammesEnabled } from './customer-programmes';
 import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
+import {
+  customerOpenAdmission,
+  customerProductionLocked,
+  customerProductionUnlocked,
+} from './customer-production';
 import { customerWorkspacesEnabled } from './customer-workspaces';
 
 export type ActivationState =
@@ -27,6 +32,8 @@ export type FounderActivation = {
   environment: {
     deployment: 'production' | 'preview' | 'development' | 'unknown';
     data: 'synthetic' | 'not-synthetic';
+    productionUnlocked: boolean;
+    openAdmission: boolean;
   };
   modules: ModuleActivation[];
   counts: { on: number; total: number };
@@ -148,19 +155,24 @@ function deployment(env: NodeJS.ProcessEnv): FounderActivation['environment']['d
 // Reports which customer modules this running deployment would serve. It reads configuration only:
 // whether a database module is installed is verified separately and is never inferred here.
 export function founderActivation(env: NodeJS.ProcessEnv = process.env): FounderActivation {
-  const production = env.VERCEL_ENV === 'production';
+  const locked = customerProductionLocked(env);
   const synthetic = env.DATA_ENVIRONMENT === 'synthetic';
   const rows = modules.map((m): ModuleActivation => {
     let state: ActivationState;
     if (m.enabled(env)) state = 'ON';
-    else if (production) state = 'LOCKED_PRODUCTION';
+    else if (locked) state = 'LOCKED_PRODUCTION';
     else if (!synthetic) state = 'LOCKED_NOT_SYNTHETIC';
     else if (env[m.flag] !== 'true') state = 'OFF';
     else state = 'WAITING_PREREQUISITE';
     return { key: m.key, label: m.label, flag: m.flag, state };
   });
   return {
-    environment: { deployment: deployment(env), data: synthetic ? 'synthetic' : 'not-synthetic' },
+    environment: {
+      deployment: deployment(env),
+      data: synthetic ? 'synthetic' : 'not-synthetic',
+      productionUnlocked: customerProductionUnlocked(env),
+      openAdmission: customerOpenAdmission(env),
+    },
     modules: rows,
     counts: { on: rows.filter((r) => r.state === 'ON').length, total: rows.length },
     note: 'Configuration only. A module also needs its database installation, checked separately by the owner. No real customer data, outreach, payment or production inference is enabled by any of these.',

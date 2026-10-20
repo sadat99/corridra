@@ -729,6 +729,11 @@
       "use": "Guided request drafts: requirement IDs, paths, states covered, gaps and rollback"
     },
     {
+      "path": "docs/adr/0049-synthetic-production-opt-in-and-open-admission.md",
+      "classification": "Architecture contract/index",
+      "use": "Owner-accepted production opt-in and open admission for synthetic use; deferred scanning, legal and security controls"
+    },
+    {
       "path": "docs/adr/0048-private-programme-templates.md",
       "classification": "Architecture contract/index",
       "use": "Repeatable programme templates applied only to an empty programme; no participants, fees or payments"

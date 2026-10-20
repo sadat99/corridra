@@ -4,9 +4,9 @@ Source of truth: [contract](V3_CONTRACT.md) and this current-state index. Read t
 
 ## Resume immediately
 
-- State: main 58ac24d (PR92 over PR91 d76ca4e). Production serves 58ac24d (dpl_BsKPfaEVuwqGzZzUk37BLDJdjB1T, READY, fra1, four aliases, 72 of 72 live checks). [Receipt](v3/cleanup/2026-10-19-pr92-release.json). Rollback dpl_BwunTCzxWSk6trofUqTrvrUsutVP. All customer flags are unset and no optional module is installed in any cloud database.
-- Owner request open (19 Oct): run the platform in production with random test data; scanning, legal and security deferred; all flags on; open to all accounts. Blockers: (1) customer modules are hard-locked when VERCEL_ENV is production, and the unlock edit (stash `production unlock`) was refused by the permission classifier; (2) install needs the corridra_migrator login. Production app DB is Neon project corridra-nonprod, branch corridra-live-synthetic, database corridra (29 core migrations, no customer schemas). Installer and manual workflow: scripts/install-customer-modules.ts, .github/workflows/install-customer-modules.yml (environment customer-modules-install, secret MIGRATION_DATABASE_URL).
-- Next concrete action: owner sets the GitHub environment secret and permission mode; then unlock PR, install (report then apply), flags, exact-commit deploy and probe.
+- State: main 58ac24d (PR92 over PR91 d76ca4e). Production serves 58ac24d (dpl_BsKPfaEVuwqGzZzUk37BLDJdjB1T, READY, fra1, four aliases, 72 of 72 live checks). [Receipt](v3/cleanup/2026-10-19-pr92-release.json). Rollback dpl_BwunTCzxWSk6trofUqTrvrUsutVP. All customer flags are unset. The 15 optional customer module registries are now installed in the production application database (Neon corridra-nonprod, branch corridra-live-synthetic): runs 39274940561 (report) and 39275450416 (apply), verified by read-only SQL, existing tenants and principals unchanged. [Install receipt](v3/cleanup/2026-10-19-customer-modules-install.json). Installed but unreachable: flags unset and production still locks customer modules.
+- Active work, chunk123: owner-approved production opt-in and open admission for synthetic use ([ADR049](adr/0049-synthetic-production-opt-in-and-open-admission.md)): `CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK`, `CORRIDRA_CUSTOMER_OPEN_ADMISSION`, optional module `customer-admission-migrations` (not yet installed). Scanning (D01), privacy and legal (D08) and security hardening are DEFERRED by owner decision and required before any real customer data. Production app DB: Neon corridra-nonprod, branch corridra-live-synthetic.
+- Next concrete action: merge the opt-in PR on green, run the install workflow again (report, then apply) to add the admission module, set Vercel Production settings and the 16 module flags, deploy the exact commit, probe, and record it.
 - Owner standing rules: correct checked merges and exact-commit deployments are pre-authorised; keep fewer than nine Git branches always; follow the V3 contract exactly; D01-D06 and D08 stay closed.
 - Preview builds: the Ignored Build Step skips documentation-only fast-forward pushes (proven in a build log); two leftover previews (corridra-i30disroz, corridra-elppm5r4l) remain deletable; whether the Function Storage meter recovered is unverified.
 
@@ -47,7 +47,7 @@ Staff-only table in the Business overview showing which of 16 customer modules a
 
 ## Chunk123: plain-language front door (source, local evidence)
 
-Home headline, intro and request page heading rewritten without idioms. Copy only; no behavior, route, flag or gate changed. Local: format, lint, typecheck clean, build exit 0, 74 browser specs passed including axe. Unverified: CI, deployment, reader comprehension. Blocked on the branch budget (would be the ninth branch). [Work log](agents/work-log.md).
+Home headline, intro and request page heading rewritten without idioms. Copy only; no behavior, route, flag or gate changed. Local: format, lint, typecheck clean, build exit 0, 74 browser specs passed including axe. Unverified: CI, deployment, reader comprehension. Published after the owner deleted a merged branch to meet the branch budget. [Work log](agents/work-log.md).
 
 ## Chunk124: Guided experience standard locked (documentation)
 

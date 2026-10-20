@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { customerProductionLocked } from './customer-production';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { sessionHash } from '@corridra/db';
@@ -98,7 +99,7 @@ export function customerWorkspacesEnabled(env: NodeJS.ProcessEnv = process.env) 
   return (
     env.CORRIDRA_CUSTOMER_WORKSPACES_ENABLED === 'true' &&
     env.DATA_ENVIRONMENT === 'synthetic' &&
-    env.VERCEL_ENV !== 'production'
+    !customerProductionLocked(env)
   );
 }
 

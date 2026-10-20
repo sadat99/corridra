@@ -4,7 +4,12 @@ import { StatusBadge } from './access-state';
 
 type State = 'ON' | 'OFF' | 'WAITING_PREREQUISITE' | 'LOCKED_PRODUCTION' | 'LOCKED_NOT_SYNTHETIC';
 type Activation = {
-  environment: { deployment: string; data: string };
+  environment: {
+    deployment: string;
+    data: string;
+    productionUnlocked: boolean;
+    openAdmission: boolean;
+  };
   modules: { key: string; label: string; flag: string; state: State }[];
   counts: { on: number; total: number };
   note: string;
@@ -48,7 +53,12 @@ function parse(value: unknown): Activation | null {
     modules.push({ key: m.key, label: m.label, flag: m.flag, state: m.state as State });
   }
   return {
-    environment: { deployment: env.deployment, data: env.data },
+    environment: {
+      deployment: env.deployment,
+      data: env.data,
+      productionUnlocked: env.productionUnlocked === true,
+      openAdmission: env.openAdmission === true,
+    },
     modules,
     counts: { on: counts.on as number, total: counts.total as number },
     note: v.note,
@@ -88,6 +98,12 @@ export function FounderActivation({ tenant }: { tenant: string }) {
         This deployment is <strong>{data.environment.deployment}</strong> with{' '}
         <strong>{data.environment.data}</strong> data. {data.counts.on} of {data.counts.total}{' '}
         customer modules are on.
+        {data.environment.productionUnlocked
+          ? ' Production is unlocked for synthetic use by the owner.'
+          : ''}
+        {data.environment.openAdmission
+          ? ' Any email-verified account is admitted automatically.'
+          : ''}
       </p>
       <div className="operations-table" tabIndex={0} role="region" aria-label="Customer modules">
         <table>

@@ -1,0 +1,39 @@
+{
+  "scope": "Install of the 15 optional customer module registries into the production application database; no flag, unlock or admission change",
+  "target": {
+    "neonProject": "corridra-nonprod (odd-pond-26265871)",
+    "branch": "corridra-live-synthetic (br-lucky-darkness-b1ppj8en)",
+    "database": "corridra",
+    "endpoint": "direct (non-pooled) read-write endpoint",
+    "confirmedBy": "Neon branch compute listing matched the workflow host variable to this branch"
+  },
+  "runs": [
+    {
+      "run": 39274940561,
+      "apply": "no",
+      "result": "success",
+      "report": "29 core migrations applied; all 15 customer registries not installed"
+    },
+    {
+      "run": 39275450416,
+      "apply": "yes",
+      "result": "success",
+      "approvedBy": "repository owner through the protected customer-modules-install environment",
+      "source": "b26654e3c57d64454e6f7a3c6957e0fbc67c98d2",
+      "report": "customer_migrations 3 applied; the other 14 module registries 1 applied each; core migrations 29"
+    }
+  ],
+  "independentVerification": {
+    "method": "read-only SQL through the Neon connection after the run",
+    "customerSchemas": 17,
+    "customerTables": 62,
+    "customerFunctions": 50,
+    "coreMigrations": 29,
+    "tenantsBefore": 6,
+    "tenantsAfter": 6,
+    "principalsBefore": 19,
+    "principalsAfter": 19
+  },
+  "rollback": "Additive and not dropped. Disabling flags (already unset) is the exposure rollback. Neon keeps 6 hours of point-in-time history on this project for a restore if ever needed.",
+  "notChanged": "no feature flag, production unlock, admission or Vercel setting changed; modules are installed but unreachable because every flag is unset and customer modules are still locked on production deployments; D01-D06 and D08 remain open and are recorded as deferred by owner decision"
+}
