@@ -117,7 +117,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     .selectOption('offer');
   await ops.getByRole('combobox', { name: 'Readiness status', exact: true }).selectOption('PASS');
   await ops.getByLabel('Readiness evidence source ID', { exact: true }).fill(source);
-  const until = new Date(Date.now() + 10000).toISOString();
+  // Chromium shortens a datetime-local value that ends in :00 seconds and Playwright then rejects the
+  // fill as malformed, so a run that lands on a whole minute failed about one time in sixty.
+  const validUntil = new Date(Date.now() + 10000);
+  if (validUntil.getUTCSeconds() === 0) validUntil.setUTCSeconds(1);
+  const until = validUntil.toISOString();
   await ops.getByLabel('Readiness valid until', { exact: true }).fill(until.slice(0, 19));
   await ops.getByLabel('Readiness rationale', { exact: true }).fill(reason);
   await ops.getByRole('button', { name: 'Record readiness', exact: true }).click();
