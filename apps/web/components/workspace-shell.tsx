@@ -7,6 +7,7 @@ export function WorkspaceShell({
   children,
   compact = false,
   nav,
+  notice,
 }: {
   eyebrow: string;
   title: string;
@@ -14,6 +15,8 @@ export function WorkspaceShell({
   compact?: boolean;
   /** Navigation shown under the heading, for example the customer tabs. */
   nav?: ReactNode;
+  /** A standing notice shown above the navigation, for example the test-mode banner. */
+  notice?: ReactNode;
 }) {
   return (
     <main
@@ -25,6 +28,7 @@ export function WorkspaceShell({
         <p className="label">{eyebrow}</p>
         <h1>{title}</h1>
       </header>
+      {notice}
       {nav}
       {children}
     </main>

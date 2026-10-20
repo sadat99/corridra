@@ -30,15 +30,12 @@ export function CustomerMissions() {
     }
   }
   return (
-    <section className="detail-card ux-account-missions" aria-label="My shared missions">
-      <h2>My missions</h2>
+    <section className="detail-card ux-account-missions" aria-label="Shared missions">
+      <h2>Shared missions</h2>
       <p>
         Missions are shared with you by private invitation. Paste your invitation below to open it.
-        An invitation can expire or be withdrawn.
-      </p>
-      <p>
-        Missions here use test data. Invitations you open stay on this page only and clear when you
-        leave or sign out.
+        An invitation can expire or be withdrawn, and an opened mission clears when you leave or
+        sign out.
       </p>
       <form className="operator-form" onSubmit={open}>
         <label className="field">
@@ -52,7 +49,7 @@ export function CustomerMissions() {
           {error}
         </p>
       )}
-      {missions.length === 0 && <p>No mission invitations have been opened in this session.</p>}
+      {missions.length === 0 && <p>No shared missions opened yet.</p>}
       {missions.map((m) => (
         <article key={m.token}>
           <h3>{m.label}</h3>

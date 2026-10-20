@@ -138,7 +138,7 @@ test('private saved requests show canonical status, original-script replies, exp
     });
   });
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: 'My saved requests', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Saved requests', exact: true })).toBeVisible();
   await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
   await expect(page.getByText(id('1'), { exact: true })).toBeHidden();
   await page.getByText('Request reference', { exact: true }).first().click();
@@ -182,13 +182,17 @@ test('failed reads recover to empty and unavailable without pretending a request
   );
   status = 200;
   await page.getByRole('button', { name: 'Refresh saved requests', exact: true }).click();
-  await expect(page.getByText('No saved sample requests yet.', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('No saved requests yet. Choose a workspace to send your first one.', {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: /create|submit|send/i })).toHaveCount(0);
   status = 503;
   await page.getByRole('button', { name: 'Refresh saved requests', exact: true }).click();
   await expect(
     page.getByText(
-      'Saved sample request access is unavailable. Your existing receipts and shared mission links are separate.',
+      'Saved request access is unavailable. Your existing receipts and shared mission links are separate.',
     ),
   ).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(0);
@@ -248,9 +252,7 @@ test('saved request views retain keyboard access and fit three widths with acces
     await expect(
       page.getByRole('heading', { name: 'Existing shared mission section', exact: true }),
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'My saved requests', exact: true })).toHaveCount(
-      0,
-    );
+    await expect(page.getByRole('heading', { name: 'Saved requests', exact: true })).toHaveCount(0);
     await page.screenshot({
       path: '.cache/v3-request-ui/after/before-requests-' + width + '.png',
       fullPage: true,
