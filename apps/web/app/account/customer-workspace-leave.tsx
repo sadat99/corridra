@@ -61,9 +61,9 @@ export function CustomerWorkspaceLeave({
       });
       if (!alive.current) return;
       if (!response.ok) {
-        // 403 also means the membership is already gone, which is the outcome the person asked for.
-        if (response.status === 403) onLeft(workspace.id);
-        else if ([401, 409].includes(response.status)) onDenied(response.status);
+        // A 403 does not prove the membership was removed (it also covers an unverified session and a rejected
+        // origin), so only a validated success response removes the workspace; denials reload the account.
+        if ([401, 403, 409].includes(response.status)) onDenied(response.status);
         else
           setMessage(
             response.status === 503

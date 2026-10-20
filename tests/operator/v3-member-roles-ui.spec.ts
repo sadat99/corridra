@@ -347,9 +347,7 @@ test('leaving is retried with the same command, an unconfirmed leave keeps the w
   await expect(page.getByRole('button', { name: /^Leave / })).toHaveCount(0);
 });
 
-test('a leave answered with access denied treats the membership as already gone', async ({
-  page,
-}) => {
+test('a leave answered with access denied is not shown as a completed leave', async ({ page }) => {
   await page.route('**/api/customer-workspaces', (route) =>
     route.fulfill({ json: { synthetic: true, workspaces: [joined] } }),
   );
@@ -359,5 +357,8 @@ test('a leave answered with access denied treats the membership as already gone'
   await page.goto(origin + '/');
   await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
-  await expect(page.getByText('No test workspaces yet.')).toBeVisible();
+  await expect(
+    page.getByText('Your access could not be confirmed. Reload your account'),
+  ).toBeVisible();
+  await expect(page.getByText('You have left the workspace')).toHaveCount(0);
 });
