@@ -9,7 +9,7 @@ export default function Page() {
     <PublicShell className="ux-intake-page">
       <section className="page-hero intake-page">
         <p className="label">PLAN A MISSION</p>
-        <h1>What needs to happen?</h1>
+        <h1>What do you want to do?</h1>
         <p className="page-description">A short request is enough to start. No account required.</p>
         <Intake />
       </section>
