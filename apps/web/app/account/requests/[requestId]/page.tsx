@@ -39,7 +39,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="PRIVATE SAMPLE REQUEST" title="Your saved request">
+    <CustomerShell tab="work" eyebrow="MY WORK" title="Your saved request">
       <CustomerRequestDetail
         requestId={parsed.data}
         subject={session.data.user.id}

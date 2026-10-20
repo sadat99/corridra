@@ -196,7 +196,7 @@ test('owner issues a real scoped command,shows the secret once and follows a rel
   ).toEqual({ local: 0, session: 0 });
   expect(page.url()).not.toContain(token);
   page.on('dialog', (dialog) => dialog.accept());
-  await page.getByRole('link', { name: 'My sample delegations', exact: true }).click();
+  await page.getByRole('link', { name: 'Delegation registrations', exact: true }).click();
   await expect(page).toHaveURL(origin + '/account/delegations');
   await expect(page.getByRole('heading', { name: 'Inspect a sample invitation' })).toBeVisible();
   expect(page.url()).not.toContain(token);

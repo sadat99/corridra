@@ -327,7 +327,7 @@ function ScopedParticipants(props: Props) {
                 Select and copy this code privately. It is shown once and clears when this view is
                 hidden or expires. The recipient can use{' '}
                 <Link className="text-link" href="/account/delegations">
-                  My sample delegations
+                  Delegation registrations
                 </Link>{' '}
                 to inspect and accept it.
               </p>

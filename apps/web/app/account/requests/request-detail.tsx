@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshButton } from '../refresh-button';
 import { briefSchema, missionStatus, type MissionBrief } from '@corridra/domain/missions';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 
@@ -51,7 +52,7 @@ function OriginalFields({ value }: { value: Record<string, unknown> }) {
   return (
     <dl className="ux-request-original">
       {Object.entries(value).map(([key, item]) => (
-        <div key={key} className="detail-card" style={{ overflowWrap: 'anywhere' }}>
+        <div key={key} className="ux-fact-row">
           <dt>
             <strong>{label(key)}</strong>
           </dt>
@@ -177,7 +178,7 @@ function PrivateDetail({ requestId, subject, issuer }: Scope) {
   const original = detail?.original;
   const requirements = original?.experience?.requirements;
   return (
-    <section aria-label="Private saved request">
+    <section aria-label="Private saved request" className="ux-request-page">
       <a className="text-link" href="/account#customer-requests">
         Back to my saved requests
       </a>
@@ -254,17 +255,14 @@ function PrivateDetail({ requestId, subject, issuer }: Scope) {
           </>
         ))}
       {status !== 'loading' && status !== 'denied' && (
-        <button
-          type="button"
-          className="text-link"
+        <RefreshButton
+          label="request details"
           onClick={() => {
             setDetail(null);
             setStatus('loading');
             read();
           }}
-        >
-          Refresh request details
-        </button>
+        />
       )}
       <details className="ux-journey-disclosure">
         <summary>Request reference</summary>

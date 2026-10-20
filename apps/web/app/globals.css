@@ -5351,3 +5351,70 @@ th {
 .ux-customer .operator-form h3 {
   margin: 0;
 }
+
+/* Saved request detail: the submitted fields as one readable list, not a box per field. */
+.ux-customer dl.ux-request-original {
+  display: grid;
+  margin: var(--space-4) 0 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-card-radius);
+  overflow: hidden;
+}
+.ux-fact-row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--line);
+}
+.ux-fact-row:first-child {
+  border-top: 0;
+}
+.ux-fact-row > dt {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+.ux-fact-row > dd {
+  margin: 0;
+  font-size: var(--text-base);
+  white-space: pre-wrap;
+  color: var(--text-1);
+}
+.ux-customer .ux-fact-row dl.ux-request-original {
+  margin: 0;
+  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--guided-control-radius);
+}
+.ux-fact-row ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+@media (max-width: 700px) {
+  .ux-fact-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.ux-request-page {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+.ux-request-page > * {
+  max-width: 100%;
+}
+.ux-request-page > p,
+.ux-request-page details > p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.ux-request-page > :is(section, details) {
+  justify-self: stretch;
+}
+.ux-fact-row li {
+  font-size: var(--text-base);
+}
