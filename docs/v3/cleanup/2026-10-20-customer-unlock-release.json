@@ -1,0 +1,73 @@
+{
+  "scope": "Owner-approved synthetic production unlock (ADR049): customer issuer and executor pinned in the production application database, 19 Production settings added, exact-commit deployment and live probe. Scanning (D01), privacy and legal (D08) and security hardening remain deferred by owner decision; real customer data is not permitted.",
+  "source": {
+    "mainCommit": "73417de9e2a5d6b307c935a86f44c6160e4a3c65",
+    "prs": [
+      {
+        "number": 96,
+        "squash": "191ed9d34c6205a1c299beff3a9a4cbdf51342c9",
+        "note": "owner issuer allowance and once-only authority pin; CI green on the tested head after a main merge"
+      },
+      {
+        "number": 99,
+        "squash": "73417de9e2a5d6b307c935a86f44c6160e4a3c65",
+        "note": "pin step validates the issuer structurally; full validate and CodeQL green on 26b588b"
+      }
+    ]
+  },
+  "installRuns": [
+    {
+      "run": 39359136113,
+      "source": "191ed9d",
+      "result": "failure at the pin step only",
+      "cause": "the pin reused the runtime issuer rule, which needs the production unlock in the process environment; the install job has none. All 16 module installers had already run and were current. Nothing was pinned or written by the failed step."
+    },
+    {
+      "run": 39369082339,
+      "source": "73417de",
+      "inputs": "apply=yes with the production Neon Auth issuer and an existing active service principal as executor",
+      "approvedBy": "repository owner through the protected customer-modules-install environment",
+      "result": "success"
+    }
+  ],
+  "independentVerification": {
+    "method": "read-only SQL through the Neon connection after the run (corridra-nonprod, branch corridra-live-synthetic)",
+    "customerPrivateConfiguration": "one row: issuer https://ep-shiny-glade-b2if1xhk.neonauth.c-6.eu-central-1.aws.neon.tech/neondb/auth, executor 3f0f6baa-b7d8-48c1-9d12-b4070380f5ac, synthetic true",
+    "identityPrincipals": 19,
+    "customerPrincipals": 0
+  },
+  "productionSettings": {
+    "added": [
+      "CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK=synthetic-only",
+      "CORRIDRA_CUSTOMER_OPEN_ADMISSION=synthetic-only",
+      "CORRIDRA_CUSTOMER_ISSUER (the exact pinned issuer)",
+      "16 CORRIDRA_CUSTOMER_*_ENABLED=true module flags"
+    ],
+    "target": "Production only; Preview and Development unchanged",
+    "alreadyPresent": "DATA_ENVIRONMENT=synthetic, CORRIDRA_DELIVERY_ENABLED, the Neon Auth settings"
+  },
+  "production": {
+    "id": "dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz",
+    "url": "corridra-po1wwultw-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "73417de9e2a5d6b307c935a86f44c6160e4a3c65",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled"
+  },
+  "liveProbe": {
+    "from": "ephemeral fra1 Vercel sandbox, stopped afterwards",
+    "customDomainAndVercelApp": "home and /plan 200; founder activation 401 without a session; customer-workspaces, requests, saved-missions 401; workspace-access, organisation-profiles, mission-drafts and all programme routes 400 on validation; companies, decisions and assigned-missions 429 on the second pass of repeated requests (rate limit active); POST without an allowed origin 403; security headers set",
+    "hostingAliases": "both team aliases redirect (302) to the custom domain by design (ADR034)",
+    "meaning": "the customer modules now answer as live, authenticated endpoints instead of closed ones",
+    "notRun": "no signed-in customer flow was exercised from the sandbox and the earlier 72-check script was not re-run; first real use by the owner is the next check"
+  },
+  "rollback": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R (7b05bf9, previous production). Fastest exposure rollback: delete CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK in Vercel Production and redeploy. The pin and installed schema are additive and kept.",
+  "deferred": "D01 malware scanning (EVIDENCE_SCAN_MODE stays bypass), D08 privacy, legal basis, retention, terms and security hardening are required before any real customer data or outside pilot user; payments, outreach and production AI inference are unchanged and off."
+}
