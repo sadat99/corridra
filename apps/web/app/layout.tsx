@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import { readNeonAuthConfig } from '@corridra/config';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
 import { CornerDock } from '../components/corner-dock';
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Skip to content
         </a>
         <div className="site-shell">
-          <SiteHeader />
+          <SiteHeader accounts={readNeonAuthConfig() !== null} />
           {children}
           <SiteFooter />
           <CornerDock />

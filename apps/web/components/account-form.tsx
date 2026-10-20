@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
+import { announceSessionChange } from './session-events';
 export type AccountFormMode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 export function AccountForm({ mode }: { mode: AccountFormMode }) {
   const router = useRouter();
@@ -38,6 +39,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         const result = await accountClient.signIn.email({ email, password });
         if (result.error) throw new Error('Sign-in failed. Check your details and try again.');
         setPassword('');
+        announceSessionChange();
         router.replace('/account');
         router.refresh();
       } else if (mode === 'signup') {
