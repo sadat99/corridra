@@ -4322,7 +4322,7 @@ th {
 }
 
 /* Steps: numbered dots joined by a line. Phone shows only the current label. */
-.ux-intake-steps {
+.guide-journey-bar {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
@@ -4330,7 +4330,7 @@ th {
   padding: 0;
   list-style: none;
 }
-.ux-intake-steps li {
+.guide-journey-bar li {
   position: relative;
   display: grid;
   gap: var(--space-2);
@@ -4338,7 +4338,7 @@ th {
   font-size: var(--text-sm);
   color: var(--text-3);
 }
-.ux-intake-steps li::after {
+.guide-journey-bar li::after {
   content: '';
   position: absolute;
   top: 1rem;
@@ -4347,13 +4347,13 @@ th {
   height: 2px;
   background: var(--line);
 }
-.ux-intake-steps li:last-child::after {
+.guide-journey-bar li:last-child::after {
   display: none;
 }
-.ux-intake-steps li[data-done='true']::after {
+.guide-journey-bar li[data-done='true']::after {
   background: var(--brand);
 }
-.ux-intake-steps span {
+.guide-journey-bar span {
   display: grid;
   place-items: center;
   width: 2rem;
@@ -4365,24 +4365,24 @@ th {
   border: 2px solid var(--border-strong);
   border-radius: 50%;
 }
-.ux-intake-steps b {
+.guide-journey-bar b {
   font-weight: 600;
 }
-.ux-intake-steps li[data-done='true'] span {
+.guide-journey-bar li[data-done='true'] span {
   color: var(--on-brand);
   background: var(--brand);
   border-color: var(--brand);
 }
-.ux-intake-steps li[aria-current='step'] {
+.guide-journey-bar li[aria-current='step'] {
   color: var(--text-1);
 }
-.ux-intake-steps li[aria-current='step'] span {
+.guide-journey-bar li[aria-current='step'] span {
   color: var(--on-brand);
   background: var(--brand-deep);
   border-color: var(--brand-deep);
   box-shadow: 0 0 0 4px var(--ring);
 }
-.ux-intake-steps li[aria-current='step'] b {
+.guide-journey-bar li[aria-current='step'] b {
   font-weight: 700;
 }
 
@@ -4569,7 +4569,7 @@ th {
   .intake-form {
     padding: var(--space-5);
   }
-  .ux-intake-steps li:not([aria-current='step']) b {
+  .guide-journey-bar li:not([aria-current='step']) b {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -4577,7 +4577,7 @@ th {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .ux-intake-steps li::after {
+  .guide-journey-bar li::after {
     left: 2.5rem;
   }
   .guide-options,
@@ -4986,4 +4986,219 @@ th {
 
 .ux-public :is(h1, h2, h3) {
   text-wrap: balance;
+}
+
+/* Customer kit: tab bar, areas, one card style. Shared by every signed-in customer page. */
+.guide-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.guide-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-2);
+  text-decoration: none;
+  border-radius: 999px;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.guide-tabs a:hover {
+  color: var(--brand-deep);
+  background: var(--surface-2);
+}
+.guide-tabs a[aria-current='page'] {
+  color: var(--on-brand);
+  background: var(--brand-deep);
+}
+.guide-tabs svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.guide-next .label {
+  margin: 0 0 var(--space-2);
+  color: color-mix(in srgb, var(--on-brand) 70%, transparent);
+}
+.ux-account-groups {
+  display: grid;
+  gap: var(--space-12);
+  padding-block: var(--space-12);
+}
+.guide-area {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  scroll-margin-top: 7rem;
+}
+.guide-area > h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.ux-customer .detail-card,
+.ux-customer .operator-form,
+.ux-customer .ux-account-profile {
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+.ux-customer .operator-form .operator-form,
+.ux-customer .detail-card .detail-card,
+.ux-customer .detail-card .operator-form {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.ux-customer .ux-account-sidebar {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
+}
+.ux-customer .ux-account-sidebar > p {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-2);
+}
+.ux-customer .ux-account-profile {
+  margin: 0;
+}
+.ux-customer .ux-account-profile h3 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-xl);
+}
+.ux-customer .ux-account-profile p {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-base);
+  color: var(--text-2);
+}
+@media (max-width: 700px) {
+  .guide-tabs {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 45;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom));
+    background: var(--surface-1);
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+    box-shadow: var(--shadow-2);
+  }
+  .guide-tabs a {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+    min-height: 3.5rem;
+    padding: 0 var(--space-1);
+    font-size: var(--text-xs);
+    border-radius: var(--guided-control-radius);
+  }
+  .ux-customer {
+    padding-bottom: 5rem;
+  }
+  .ux-account-groups {
+    gap: var(--space-8);
+    padding-block: var(--space-8);
+  }
+  body:has(.guide-tabs) .corner-dock {
+    bottom: 5.5rem;
+  }
+  .ux-customer .detail-card,
+  .ux-customer .operator-form,
+  .ux-customer .ux-account-profile {
+    padding: var(--space-5);
+  }
+}
+
+/* Customer kit, second pass: readable body text, clear heading levels, actions as buttons. */
+.guide-area > h2 {
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.ux-customer .detail-card h2,
+.ux-customer .detail-card h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.ux-customer .detail-card :is(p, li, dd, summary),
+.ux-customer .operator-form :is(p, li, dd, summary, label) {
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+.ux-customer .detail-card .detail-card {
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--guided-card-radius);
+}
+.ux-customer .detail-card .detail-card h3 {
+  font-size: var(--text-lg);
+}
+.ux-customer .detail-card :is(.primary-link, .button) + .text-link {
+  margin-left: var(--space-4);
+}
+.guide-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-3);
+}
+.guide-actions-row p {
+  margin: 0;
+}
+.guide-actions-row .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+}
+.guide-actions-row .text-link:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
+}
+.ux-customer .check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+.ux-customer .check-field input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
 }

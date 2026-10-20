@@ -37,6 +37,6 @@
     }
   },
   "productionSettings": "not re-read for this release; the customer unlock release (PR100 receipt) recorded the 19 Production settings, and this deploy changed none of them",
-  "rollback": "dpl_5gFhpy3jX1NGFSW1KWCYygby18QX (454b8b3, PR98 release)",
+  "rollback": "dpl_4MqMDJkgAn2FBpE5yvrL2GkbRcbb (3f7a70d, correct issuer). Never dpl_5gFhpy3jX1NGFSW1KWCYygby18QX (454b8b3): built with the wrong customer issuer variable",
   "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
 }

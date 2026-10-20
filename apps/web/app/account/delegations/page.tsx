@@ -5,6 +5,7 @@ import { customerParticipantsEnabled } from '@corridra/auth/customer-participant
 import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-programme-coordination';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
+import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
 import { ParticipantAccount } from './participant-account';
 export const runtime = 'nodejs';
@@ -34,7 +35,7 @@ export default async function Page() {
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="My sample delegations">
+    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="My sample delegations">
       <ParticipantAccount
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
@@ -42,6 +43,6 @@ export default async function Page() {
         subject={session.data.user.id}
         issuer={issuer}
       />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

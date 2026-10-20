@@ -259,6 +259,21 @@ One scale, set as tokens in `apps/web/app/globals.css`. Do not add a raw size; p
 
 Phone headlines use a smaller range so each sentence stays on one line. Form controls stay at 16 px so phones never zoom on focus.
 
+### Customer kit (built 2026-10-20, phase 1 of the signed-in pass)
+
+One set of parts for every signed-in customer page, built once in `apps/web/components` and the Design system layer of `globals.css`. A page does not style itself.
+
+| Part                | Where                                    | Notes                                                                                                                                                                |
+| ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer navigation | `customer-nav.tsx`, `customer-shell.tsx` | Home, My Work, Companies, Results, More. Top row on desktop, bottom tab bar on phones. Companies shows only where the module is on. Every item is a real destination |
+| Next-step card      | `next-step-card.tsx`                     | The dark card with one light button. One per screen, first on Home                                                                                                   |
+| Journey bar         | `journey-bar.tsx`                        | Done, now, later with words. The request steps use it                                                                                                                |
+| Area                | `.guide-area`                            | A group on the account page with a serif heading. Home holds My work, Results, More                                                                                  |
+| Card                | `.ux-customer .detail-card`              | One card style for every customer section. A card inside a card is a tinted block                                                                                    |
+| Action row          | `.guide-actions-row`                     | Several links to the same kind of place read as buttons in one row                                                                                                   |
+
+`WorkspaceShell` stays client-safe and layout only; `CustomerShell` is the server wrapper that adds the navigation. Every page in `app/account` uses `CustomerShell` with its tab. My Work and Results are anchors on the account page until phase 2 gives them their own pages.
+
 ### Request page (built 2026-10-20)
 
 - One calm form card beside a sticky summary on wide screens; on phones the form comes first, then the summary, then receipt lookup.

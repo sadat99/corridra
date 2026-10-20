@@ -35,6 +35,6 @@
     }
   },
   "productionSettings": "not re-read for this release. The customer unlock release (PR100 receipt) recorded 19 Production settings added before this deploy (unlock, open admission, issuer, 16 module flags); this deploy changed none of them",
-  "rollback": "dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz (73417de, customer unlock release)",
+  "rollback": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg (73417de, correct issuer). Never dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz: built with the wrong customer issuer variable",
   "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed"
 }

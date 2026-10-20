@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
 export const dynamic = 'force-dynamic';
@@ -38,12 +39,12 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="PRIVATE SAMPLE REQUEST" title="Your saved request">
+    <CustomerShell tab="work" eyebrow="PRIVATE SAMPLE REQUEST" title="Your saved request">
       <CustomerRequestDetail
         requestId={parsed.data}
         subject={session.data.user.id}
         issuer={issuer}
       />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }
