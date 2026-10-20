@@ -77,7 +77,7 @@
     "impact": "fail closed: customer sessions could not match the pin, so no customer principal, workspace or session proof was ever created (all counts 0 before the correction)",
     "fix": "owner-approved one-time transaction on the production app database: guarded to run only with the customer tables empty, the single wrong row and an active service executor; disabled configuration_immutable, deleted the wrong row, inserted the c-5 issuer with the same executor 3f0f6baa-b7d8-48c1-9d12-b4070380f5ac, re-enabled the trigger. Independent SQL afterwards: one configuration row with the c-5 issuer, trigger enabled, 0 customer principals. CORRIDRA_CUSTOMER_ISSUER updated to the same value.",
     "redeploy": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg, READY, same commit 73417de, four aliases, so the corrected variable applies. Rollback to dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz would restore the wrong variable; do not use it.",
-    "probeAccount": "synthetic-probe-20261020@example.com was created in production auth while diagnosing; it is unverified and cannot be admitted",
+    "probeAccount": "synthetic-probe-20261020@example.com was created in production auth while diagnosing and removed again the same day by exact email (one transaction, guarded so only an unverified account with that email could go); the only account left is the owner's. The three Neon preview branches of the merged and deleted Git branches were deleted.",
     "stillNotRun": "a signed-in customer flow end to end"
   }
 }
