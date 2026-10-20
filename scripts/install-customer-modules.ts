@@ -15,6 +15,7 @@ import { migrateCustomerProgrammeCoordination } from '../packages/db/src/custome
 import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-programme-templates-migrate';
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
+import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -25,6 +26,9 @@ const v = z
     MIGRATION_DATABASE_URL: z.url(),
     MIGRATION_DATABASE_HOST: z.string().min(1),
     INSTALL_APPLY: z.string().optional(),
+    // Optional: pin the customer issuer and event executor after the modules are installed.
+    CUSTOMER_ISSUER: z.string().optional(),
+    CUSTOMER_EXECUTOR_ID: z.string().optional(),
   })
   .parse(process.env);
 const url = new URL(v.MIGRATION_DATABASE_URL);
@@ -104,6 +108,15 @@ try {
     for (const [name, install] of installers) {
       await install(pool);
       console.log(`installed or already current: ${name}`);
+    }
+    if (v.CUSTOMER_ISSUER || v.CUSTOMER_EXECUTOR_ID) {
+      if (!v.CUSTOMER_ISSUER || !v.CUSTOMER_EXECUTOR_ID)
+        throw new Error('Pinning needs both CUSTOMER_ISSUER and CUSTOMER_EXECUTOR_ID');
+      const result = await pinCustomerAuthority(pool, {
+        issuer: v.CUSTOMER_ISSUER,
+        executorId: v.CUSTOMER_EXECUTOR_ID,
+      });
+      console.log(`customer issuer and executor: ${result.pinned}`);
     }
     await report('After install');
     console.log('Install complete. No secret values were written to output.');
