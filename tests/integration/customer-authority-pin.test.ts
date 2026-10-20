@@ -36,10 +36,8 @@ afterAll(async () => {
 });
 
 test('pinning creates the issuer and executor once and is repeatable', async () => {
-  process.env.VERCEL_ENV = 'production';
-  process.env.DATA_ENVIRONMENT = 'synthetic';
-  process.env.CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK = 'synthetic-only';
-  process.env.CORRIDRA_CUSTOMER_ISSUER = production;
+  // The install job runs outside the deployment, so none of the runtime variables are set.
+  for (const k of keys) delete process.env[k];
   const input = { issuer: production, executorId: f.serviceId };
   expect(await pinCustomerAuthority(f.owner, input)).toEqual({ pinned: 'created' });
   expect(await pinCustomerAuthority(f.owner, input)).toEqual({ pinned: 'unchanged' });
@@ -50,26 +48,29 @@ test('pinning creates the issuer and executor once and is repeatable', async () 
 });
 
 test('a different issuer or executor is refused once pinned', async () => {
-  process.env.VERCEL_ENV = 'production';
-  process.env.DATA_ENVIRONMENT = 'synthetic';
-  process.env.CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK = 'synthetic-only';
-  process.env.CORRIDRA_CUSTOMER_ISSUER = production;
+  // The install job runs outside the deployment, so none of the runtime variables are set.
+  for (const k of keys) delete process.env[k];
   await expect(
     pinCustomerAuthority(f.owner, { issuer: production, executorId: randomUUID() }),
   ).rejects.toThrow(/active service executor|pinned/);
 });
 
-test('the issuer must pass the customer issuer rule before anything is written', async () => {
-  await expect(
-    pinCustomerAuthority(f.owner, { issuer: production, executorId: f.serviceId }),
-  ).rejects.toThrow();
+test('only a Frankfurt Neon Auth https issuer can be pinned, and nothing is written otherwise', async () => {
+  for (const issuer of [
+    'http://ep-shiny-glade-b2if1xhk.neonauth.c-6.eu-central-1.aws.neon.tech/neondb/auth',
+    'https://ep-shiny-glade-b2if1xhk.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth',
+    'https://example.com/neondb/auth',
+    production + '?x=1',
+    'https://user:pw@ep-shiny-glade-b2if1xhk.neonauth.c-6.eu-central-1.aws.neon.tech/neondb/auth',
+  ])
+    await expect(
+      pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId }),
+    ).rejects.toThrow();
 });
 
 test('a person principal or a non-owner database role cannot pin', async () => {
-  process.env.VERCEL_ENV = 'production';
-  process.env.DATA_ENVIRONMENT = 'synthetic';
-  process.env.CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK = 'synthetic-only';
-  process.env.CORRIDRA_CUSTOMER_ISSUER = production;
+  // The install job runs outside the deployment, so none of the runtime variables are set.
+  for (const k of keys) delete process.env[k];
   await expect(
     pinCustomerAuthority(f.owner, { issuer: production, executorId: f.users.owner.id }),
   ).rejects.toThrow();
