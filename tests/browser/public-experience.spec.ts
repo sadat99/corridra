@@ -76,7 +76,7 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
   // Every way to work stays one tap away in the footer of every page.
   const ways = page.getByRole('navigation', { name: 'Footer solutions' });
   for (const [name, href] of [
-    ['Source products/suppliers', '/source'],
+    ['Source products and suppliers', '/source'],
     ['Procure machinery', '/machinery'],
     ['Run a trade mission', '/trade-missions'],
     ['Plan a business trip', '/business-trips'],
@@ -84,7 +84,7 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
     ['Enter a new market', '/enter-market'],
   ])
     await expect(ways.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
-  await ways.getByRole('link', { name: 'Source products/suppliers' }).click();
+  await ways.getByRole('link', { name: 'Source products and suppliers' }).click();
   await expect(page).toHaveURL('/source');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Visit fewer suppliers.');
 });

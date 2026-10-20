@@ -135,16 +135,16 @@ Natural, concrete English. No em dashes. No fake urgency, counts, logos, testimo
 
 ## Programme phases
 
-| Phase | Scope                                                                                                                          | Status                                                                                                                      |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Design foundation: tokens, type, controls, forms, surfaces, header                                                             | Done (PR 48)                                                                                                                |
-| A     | Front door: home lead section for both routes, five-item header, footer keeps every destination                                | Done (PRs 48, 50, 51, 54)                                                                                                   |
-| B     | Request flow and the customer project screen, in plain words, for sourcing and delegations                                     | In progress. Remaining: finish the customer mission view with machinery quotation comparison                                |
-| C     | Operator: one landing queue and five job areas instead of 19 sections                                                          | In progress. Directory in five job areas and the Today panel are done. Remaining: buyer replies and evidence review sources |
-| D     | Delegation programme report, helper and account screens                                                                        | Not started                                                                                                                 |
-| E     | Other routes one by one: sell in Spain or the EU, enter a market, business trips                                               | Mostly done (PRs 50, 52, 55). Remaining: data-driven corridors list                                                         |
-| F     | Core noun pass (needs owner confirmation), empty and error states, motion, accessibility and performance, Fusion parity review | Partly done (wording). Remaining: empty and error states, motion, performance, Fusion parity review                         |
-| G     | Guided experience standard: 36 designed screens, eight binding rules, locked navigation (see the Guided section below)         | Style locked 2026-10-19. Nothing built yet. Build order is in that section                                                  |
+| Phase | Scope                                                                                                                          | Status                                                                                                                                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | Design foundation: tokens, type, controls, forms, surfaces, header                                                             | Done (PR 48)                                                                                                                                                                                                 |
+| A     | Front door: home lead section for both routes, five-item header, footer keeps every destination                                | Done (PRs 48, 50, 51, 54)                                                                                                                                                                                    |
+| B     | Request flow and the customer project screen, in plain words, for sourcing and delegations                                     | In progress. Remaining: finish the customer mission view with machinery quotation comparison                                                                                                                 |
+| C     | Operator: one landing queue and five job areas instead of 19 sections                                                          | In progress. Directory in five job areas and the Today panel are done. Remaining: buyer replies and evidence review sources                                                                                  |
+| D     | Delegation programme report, helper and account screens                                                                        | Not started                                                                                                                                                                                                  |
+| E     | Other routes one by one: sell in Spain or the EU, enter a market, business trips                                               | Mostly done (PRs 50, 52, 55). Remaining: data-driven corridors list                                                                                                                                          |
+| F     | Core noun pass (needs owner confirmation), empty and error states, motion, accessibility and performance, Fusion parity review | Partly done (wording). Remaining: empty and error states, motion, performance, Fusion parity review                                                                                                          |
+| G     | Guided experience standard: 36 designed screens, eight binding rules, locked navigation (see the Guided section below)         | Style locked 2026-10-19. Public site built 2026-10-20 (home, header, footer, corner dock, how it works, routes, trust, ways to work, about, network, institutions). Request flow and later screens not built |
 
 The [master plan](master-plan.md) is the authority for status. This table is a summary and must match it.
 
@@ -233,6 +233,13 @@ The mockups use larger sizes than the current token layer. Add these to the "Des
 3. Language screen: preselect from the browser language, show it once on a first visit, and allow skipping to English.
 4. Voice input stays optional and is hidden where the phone does not support it.
 5. Staff keyboard shortcut for the next case.
+
+### Public site rules (built 2026-10-20)
+
+- The corner dock is two 44 px icon buttons, bottom-right on every page and screen size: Help (a short sheet) and Listen (reads the page aloud; hidden, not broken, where the browser has no voice). Listen is never in the header.
+- Words are the cost. A block is one idea in at most two short sentences. A headline puts each sentence on its own line. No essay paragraphs.
+- "Start a request" has no arrow. The phone shows all three home choices in the first screen, with contract names kept for screen readers.
+- The Help sheet has no contact channel until the owner decides one (open decision).
 
 ### Build order
 

@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
+import { CornerDock } from '../components/corner-dock';
 
 // Self-hosted variable Inter (SIL OFL, see fonts/INTER-LICENSE.txt). Latin only; Bangla and Han
 // text keeps the system fallbacks declared in --font-ui.
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeader />
           {children}
           <SiteFooter />
+          <CornerDock />
         </div>
       </body>
     </html>

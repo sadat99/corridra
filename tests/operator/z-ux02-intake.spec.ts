@@ -35,7 +35,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await page
       .getByRole('combobox', { name: 'Commercial direction', exact: true })
       .selectOption('bangladesh-china');
-    await page.getByRole('link', { name: 'Prepare this example request' }).click();
+    await page.getByRole('link', { name: 'Plan a mission on this route' }).click();
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
       'machinery_procurement',
     );

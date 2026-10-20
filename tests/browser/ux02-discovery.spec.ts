@@ -22,10 +22,10 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     .selectOption('bangladesh-eu');
   const atlas = page.getByLabel('Corridor Atlas', { exact: true });
   await expect(atlas).toContainText('EU is a trade-bloc scope');
-  await page.getByRole('link', { name: 'See a sample mission' }).click();
+  await page.getByRole('button', { name: 'Open the sample mission' }).click();
   const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example).toContainText('Run a multi-company mission');
-  await expect(example).toContainText('Give each participant an independent objective');
+  await expect(example).toContainText('Give each participant their own goal');
   await example.getByRole('button', { name: '2. Inspect the evidence' }).focus();
   await page.keyboard.press('Enter');
   await expect(example).toContainText('Evidence not established');
@@ -118,8 +118,8 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
 }) => {
   await page.goto('/machinery');
   await expect(page.locator('.ux-public-disclosure')).toHaveCount(0);
-  await expect(page.locator('.detail-card p').first()).toBeVisible();
-  await page.getByRole('link', { name: 'Next step', exact: true }).click();
+  await expect(page.locator('.guide-page-steps li p').first()).toBeVisible();
+  await page.locator('#page-next').scrollIntoViewIfNeeded();
   await expect(page.locator('#page-next')).toBeInViewport();
   for (const route of [
     '/signup',
@@ -180,6 +180,7 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/corridors');
+  await openFineTune(page);
   const group = page.getByRole('group', { name: 'Choose your situation' });
   await expect(group.getByRole('button', { name: /Source from suppliers/ })).toHaveAttribute(
     'aria-pressed',
@@ -190,12 +191,12 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
     'aria-pressed',
     'true',
   );
-  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=BD&marketCode=CN&job=delegations',
   );
   await group.getByRole('button', { name: /Enter Bangladesh/ }).click();
-  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=ES&marketCode=BD&job=market_entry',
   );

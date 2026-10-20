@@ -3,47 +3,50 @@ import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
 import { corridorPages } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
-import { MarketSelector } from '../../components/market-selector';
 export const metadata = { title: 'Commercial corridors | Corridra' };
 export default function Page() {
   return (
     <PublicShell>
-      <section className="page-hero">
-        <p className="label">COMMERCIAL CORRIDORS</p>
-        <h1>The job comes first. The route gives it context.</h1>
-        <p className="page-description">
-          Choose the company country and market involved. Requirements, evidence, access and
-          follow-up use the same mission workflow.
-        </p>
+      <section className="guide-page-hero">
+        <div>
+          <nav className="guide-crumb" aria-label="Breadcrumb">
+            <Link prefetch={false} href="/">
+              Corridra
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">Routes</span>
+          </nav>
+          <p className="label">COMMERCIAL CORRIDORS</p>
+          <h1>The job comes first. The route gives it context.</h1>
+          <p className="guide-lead">
+            Choose the company country and the market. Requirements, evidence, access and follow-up
+            use the same mission workflow.
+          </p>
+        </div>
       </section>
       <DiscoveryExperience />
-      <section className="detail-section">
-        <div className="detail-grid">
+      <section className="guide-directions" aria-labelledby="directions-title">
+        <h2 id="directions-title">Explore a direction</h2>
+        <ul>
           {Object.entries(corridorPages).map(([slug, c]) => (
-            <article className="detail-card" key={slug}>
-              <h2>{c.title}</h2>
+            <li key={slug}>
+              <h3>{c.title}</h3>
               <p>{c.description}</p>
-              <Link href={`/corridors/${slug}`} className="text-link">
-                Explore this direction
+              <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
+                Explore this direction <Arrow />
               </Link>
-            </article>
+            </li>
           ))}
-          <article className="detail-card ux-route-other">
-            <div>
-              <h2>Any other route</h2>
-              <p>
-                Corridra is built for any route between countries. Pick two countries on the map
-                above, or use the selector below, and start a mission from there.
-              </p>
-            </div>
-            <div className="ux-route-other-actions">
-              <Link prefetch={false} className="button-secondary" href="/plan">
-                Plan a mission on another route <Arrow />
-              </Link>
-            </div>
-          </article>
+        </ul>
+        <div className="guide-other-route">
+          <div>
+            <h3>Any other route</h3>
+            <p>Corridra is built for any route. Pick two countries above, or start a mission.</p>
+          </div>
+          <Link prefetch={false} className="button-secondary" href="/plan">
+            Plan a mission on another route <Arrow />
+          </Link>
         </div>
-        <MarketSelector />
       </section>
     </PublicShell>
   );
