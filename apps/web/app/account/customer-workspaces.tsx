@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
 import { CustomerWorkspaceTeam } from './customer-workspace-team';
+import { CustomerWorkspaceLeave } from './customer-workspace-leave';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
@@ -89,6 +90,7 @@ export function CustomerWorkspaces({
   programmesEnabled = false,
   profilesEnabled = false,
   draftsEnabled = false,
+  memberRolesEnabled = false,
 }: {
   subject: string;
   issuer: string;
@@ -96,6 +98,7 @@ export function CustomerWorkspaces({
   programmesEnabled?: boolean;
   profilesEnabled?: boolean;
   draftsEnabled?: boolean;
+  memberRolesEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -355,12 +358,36 @@ export function CustomerWorkspaces({
                       </p>
                     )}
                   </div>
+                  {memberRolesEnabled && row.role !== 'owner' && (
+                    <CustomerWorkspaceLeave
+                      key={'leave:' + issuer + ':' + subject + ':' + row.id}
+                      workspace={row}
+                      subject={subject}
+                      issuer={issuer}
+                      onLeft={(id) => {
+                        setRows((current) => current.filter((r) => r.id !== id));
+                        setMessage({
+                          text: 'You have left the workspace. The owner can invite you again.',
+                          error: false,
+                        });
+                      }}
+                      onDenied={(status) => {
+                        setRows([]);
+                        setStatus(status === 403 ? 'changed' : failure(status));
+                        setMessage({
+                          text: 'Your access could not be confirmed. Reload your account before continuing.',
+                          error: true,
+                        });
+                      }}
+                    />
+                  )}
                   {row.role === 'owner' && (
                     <CustomerWorkspaceTeam
                       key={issuer + ':' + subject + ':' + row.id}
                       workspace={row}
                       subject={subject}
                       issuer={issuer}
+                      memberRolesEnabled={memberRolesEnabled}
                       onDenied={(status) => {
                         setRows([]);
                         setStatus(status === 403 ? 'changed' : failure(status));
