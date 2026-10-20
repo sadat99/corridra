@@ -57,9 +57,6 @@ export function SiteFooter() {
           <Link prefetch={false} href="/privacy">
             Test intake notice
           </Link>
-          <Link prefetch={false} href="/coming-soon">
-            The original launch page
-          </Link>
           <Link prefetch={false} href="#main">
             Back to top
           </Link>
