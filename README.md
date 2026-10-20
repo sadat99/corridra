@@ -58,6 +58,6 @@ Docker is required for local PostgreSQL/ClamAV. `pnpm check` runs formatting, li
 
 ## Release
 
-Use reviewable PRs and passing checks on the intended revision. Under standing owner authorization, correctly checked merges are deployed immediately. Vercel Git auto-deployment for `main` is explicitly disabled in `apps/web/vercel.json`; deploy the exact merged SHA and verify READY, alias bindings and bounded live behavior. See [deployment and rollback](docs/runbooks/deployment.md). Repository enforcement and CodeQL entitlement retain their separately documented limitations.
+Use reviewable PRs and passing checks on the intended revision. Under standing owner authorization, correctly checked merges are deployed immediately. Vercel Git auto-deployment for `main` is on (owner decision, 2026-10-20): every push to `main` deploys to production, so `main` is production. Do not deploy by hand; verify that the deployment for the merged SHA is READY, holds the production aliases and passes bounded live checks. The preview branches listed in `apps/web/vercel.json` stay off. See [deployment and rollback](docs/runbooks/deployment.md). Repository enforcement and CodeQL entitlement retain their separately documented limitations.
 
 Builds never migrate. Preserve additive migrations, original owners/MFA, history and readiness gates. Retire only proven completed temporary branches/previews under the cleanup rules in `AGENTS.md`, preserving open dependency PRs, unfinished work, production and sterile parents. No background cleanup scheduler is installed.

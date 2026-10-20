@@ -7,7 +7,6 @@
     "deploymentEnabled": {
       "feat/part-03-foundations": false,
       "feat/ux-01-foundations": false,
-      "main": false,
       "feat/ux-02-public-experience": false,
       "feat/ux-03-participant-journeys": false,
       "feat/ux-04-operator-experience": false,
