@@ -79,5 +79,25 @@
     "redeploy": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg, READY, same commit 73417de, four aliases, so the corrected variable applies. Rollback to dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz would restore the wrong variable; do not use it.",
     "probeAccount": "synthetic-probe-20261020@example.com was created in production auth while diagnosing and removed again the same day by exact email (one transaction, guarded so only an unverified account with that email could go); the only account left is the owner's. The three Neon preview branches of the merged and deleted Git branches were deleted.",
     "stillNotRun": "a signed-in customer flow end to end"
-  }
+  },
+  "laterDeployments": [
+    {
+      "id": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg",
+      "source": "73417de",
+      "why": "corrected CORRIDRA_CUSTOMER_ISSUER applied"
+    },
+    {
+      "id": "dpl_4MqMDJkgAn2FBpE5yvrL2GkbRcbb",
+      "source": "3f7a70d",
+      "why": "deployed what was merged (PR98 Guided public site, PR100 record)",
+      "state": "READY",
+      "aliases": [
+        "corridra.vercel.app",
+        "c.obsidianglobal.studio",
+        "corridra-sadat-os.vercel.app",
+        "corridra-git-main-sadat-os.vercel.app"
+      ],
+      "smoke": "public pages 200 with the Guided headings, /account 307 to /signin, customer endpoints 401 or 400, founder view 401, security headers set; /start and /robots.txt answer 404 (not checked against the previous deployment)"
+    }
+  ]
 }
