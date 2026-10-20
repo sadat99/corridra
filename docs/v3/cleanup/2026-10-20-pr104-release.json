@@ -1,0 +1,46 @@
+{
+  "scope": "PR104 customer kit phase 1: customer navigation, next-step card, shared journey bar and one card style for the signed-in account pages. UI only. Product remains PARTIAL.",
+  "pr": {
+    "number": 104,
+    "mergedSource": "1d9f1157c08d38a6e31e37f4fd8bbfa98bd7109b",
+    "testedHead": "70153dfc0dcd993d4a8c69f3737f1c21952d8bbd",
+    "baseAtMerge": "29e59c483c37cf575b43dcd9ce8d612a50ee203c",
+    "ci": {
+      "run": 39398067014,
+      "job": 118545634148,
+      "conclusion": "success",
+      "note": "full validate job on the tested head, including browser and operator specs; the branch already contained the base, so the merge tree equals the tested tree"
+    },
+    "codeQL": {
+      "run": 39398067019,
+      "conclusion": "success"
+    }
+  },
+  "localOperatorRun": {
+    "result": "280 of 281 passed",
+    "failure": "workspace.spec.ts:2082 (governed SDK fixture review) reported 'The record or policy changed' during the full run. Run alone on the same build it passed. CI passed it on the tested head. Treated as a timing flake in a long test, not caused by this diff"
+  },
+  "production": {
+    "id": "dpl_FebHM6qsSyYTRox4PhjbLy77WGNN",
+    "url": "corridra-gkr85fpin-sadat-os.vercel.app",
+    "state": "READY",
+    "source": "1d9f1157c08d38a6e31e37f4fd8bbfa98bd7109b",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "aliasError": null,
+    "deployedBy": "explicit exact-commit deployment; main Git auto-deploy remains disabled",
+    "observed": {
+      "howItWorks": "https://c.obsidianglobal.studio/how-it-works answered 200 with the redesigned page on this deployment",
+      "account": "https://c.obsidianglobal.studio/account answered 200 with the sign-in form for a signed-out visitor (served by /signin), with the page heading and footer in the new style",
+      "notObserved": "the signed-in account view with the new navigation and next-step card was not seen on production (no signed-in session was used); the Listen button and the 72-check live probe were not run"
+    }
+  },
+  "productionSettings": "not re-read for this release; this deploy was made after the customer issuer variable correction recorded with PR102 and changed no setting",
+  "rollback": "dpl_5w2n5XW4RMHCkHHYivRVyo8Tkebu (5a3e123, PR103 release)",
+  "notChanged": "no cloud schema, optional module install, flag, admission, provider or gate (D01-D06, D08) changed; no route, link destination, form field, request, permission or money display changed"
+}
