@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { OrganisationProfile } from '../organisation-profile';
 export const dynamic = 'force-dynamic';
@@ -34,8 +35,8 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="Your sample company profile">
+    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="Your sample company profile">
       <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

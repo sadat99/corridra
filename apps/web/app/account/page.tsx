@@ -1,6 +1,8 @@
 import { AssignedMissions } from './assigned-missions';
 import { customerDeliveryEnabled } from '@corridra/auth/customer-assigned-missions';
 import { WorkspaceShell } from '../../components/workspace-shell';
+import { CustomerShell } from '../../components/customer-shell';
+import { NextStepCard } from '../../components/next-step-card';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
@@ -81,53 +83,20 @@ export default async function Page() {
       }
   }
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
-      <div className="ux-account-layout">
-        <aside className="ux-account-sidebar" aria-label="Account and access">
-          <section className="ux-account-profile" aria-label="Your verified profile">
-            <span className="ux-status" data-tone="positive">
-              Verified account email
-            </span>
-            <h2>{data.user.name}</h2>
-            <p>{data.user.email}</p>
-            <p>Your email address is verified. This does not verify your company.</p>
-          </section>
-          <OperatorInvitationHint key={data.user.id} />
-          <Link className="primary-link" href="/plan">
-            Plan a mission
-          </Link>
-          <p>
-            Keep the receipt we give you after you send a request. You can use it to check progress
-            and replies.
-          </p>
-          <nav className="access-options" aria-label="Account sections">
-            {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
-            {requestIssuer && <a href="#customer-requests">My saved requests</a>}
-            {savedMissionIssuer && (
-              <a href="#saved-commercial-missions">My saved commercial missions</a>
-            )}
-            <a href="#customer-missions">My shared missions</a>
-            <Link className="text-link" href="/plan#receipt-check">
-              Check a request receipt
-            </Link>
-          </nav>
-          <details className="ux-journey-disclosure">
-            <summary>Other ways in</summary>
-            <nav className="access-options" aria-label="Other account access">
-              <Link className="text-link" href="/operator/setup">
-                Accept a team invitation
-              </Link>
-              <Link className="text-link" href="/workspace">
-                Start page
-              </Link>
-              <Link className="text-link" href="/contributor">
-                Local helper tasks
-              </Link>
-            </nav>
-          </details>
-          <AccountSignout />
-        </aside>
-        <div>
+    <CustomerShell tab="home" eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
+      <NextStepCard
+        title={requestCreationEnabled ? 'Start a request' : 'Plan a mission'}
+        text={
+          requestCreationEnabled
+            ? 'Choose a test workspace, then say what you want to achieve.'
+            : 'Tell us your goal. It takes a few minutes.'
+        }
+        action={requestCreationEnabled ? 'Choose a workspace' : 'Plan a mission'}
+        href={requestCreationEnabled ? '#customer-workspaces' : '/plan'}
+      />
+      <div className="ux-account-groups">
+        <section id="my-work" tabIndex={-1} className="guide-area" aria-labelledby="my-work-title">
+          <h2 id="my-work-title">My work</h2>
           {workspaceIssuer && (
             <div id="customer-workspaces" tabIndex={-1}>
               <CustomerWorkspaces
@@ -160,6 +129,9 @@ export default async function Page() {
               />
             </div>
           )}
+        </section>
+        <section id="results" tabIndex={-1} className="guide-area" aria-labelledby="results-title">
+          <h2 id="results-title">Results</h2>
           <div id="customer-missions" tabIndex={-1}>
             {savedMissionIssuer && (
               <div id="saved-commercial-missions">
@@ -178,8 +150,55 @@ export default async function Page() {
             )}
             <CustomerMissions key={data.user.id} />
           </div>
-        </div>
+        </section>
+        <section id="more" tabIndex={-1} className="guide-area" aria-labelledby="more-title">
+          <h2 id="more-title">More</h2>
+          <aside className="ux-account-sidebar" aria-label="Account and access">
+            <section className="ux-account-profile" aria-label="Your verified profile">
+              <span className="ux-status" data-tone="positive">
+                Verified account email
+              </span>
+              <h3>{data.user.name}</h3>
+              <p>{data.user.email}</p>
+              <p>Your email address is verified. This does not verify your company.</p>
+            </section>
+            <OperatorInvitationHint key={data.user.id} />
+            <Link className="primary-link" href="/plan">
+              Plan a mission
+            </Link>
+            <p>
+              Keep the receipt we give you after you send a request. You can use it to check
+              progress and replies.
+            </p>
+            <nav className="access-options" aria-label="Account sections">
+              {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
+              {requestIssuer && <a href="#customer-requests">My saved requests</a>}
+              {savedMissionIssuer && (
+                <a href="#saved-commercial-missions">My saved commercial missions</a>
+              )}
+              <a href="#customer-missions">My shared missions</a>
+              <Link className="text-link" href="/plan#receipt-check">
+                Check a request receipt
+              </Link>
+            </nav>
+            <details className="ux-journey-disclosure">
+              <summary>Other ways in</summary>
+              <nav className="access-options" aria-label="Other account access">
+                <Link className="text-link" href="/operator/setup">
+                  Accept a team invitation
+                </Link>
+                <Link className="text-link" href="/workspace">
+                  Start page
+                </Link>
+                <Link className="text-link" href="/contributor">
+                  Local helper tasks
+                </Link>
+              </nav>
+            </details>
+            <AccountSignout />
+          </aside>
+        </section>
       </div>
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

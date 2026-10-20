@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { redirect, notFound } from 'next/navigation';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -56,9 +57,9 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     );
   }
   return (
-    <WorkspaceShell eyebrow="PRIVATE SAMPLE REQUEST" title="What do you want to achieve?">
+    <CustomerShell tab="work" eyebrow="PRIVATE SAMPLE REQUEST" title="What do you want to achieve?">
       <p>Workspace: {name}</p>
       <PrivateRequestIntake issuer={issuer} subject={data.user.id} workspaceId={id.data} />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

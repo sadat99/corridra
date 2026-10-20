@@ -241,6 +241,46 @@ The mockups use larger sizes than the current token layer. Add these to the "Des
 - "Start a request" has no arrow. The phone shows all three home choices in the first screen, with contract names kept for screen readers.
 - The Help sheet has no contact channel until the owner decides one (open decision).
 
+### Type scale (built 2026-10-20)
+
+One scale, set as tokens in `apps/web/app/globals.css`. Do not add a raw size; pick the nearest step.
+
+| Step             | Size        | Use                                                           |
+| ---------------- | ----------- | ------------------------------------------------------------- |
+| `--text-xs`      | 12 px       | Captions, small labels, status words                          |
+| `--text-sm`      | 14 px       | Notes, hints, footer bottom row, table cells                  |
+| `--text-base`    | 16 px       | Buttons, links, form controls and labels, footer links, cards |
+| `--text-lg`      | 18 px       | Reading text and lead paragraphs, large buttons               |
+| `--text-xl`      | 20 px       | Card and step titles                                          |
+| `--text-2xl`     | 24 px       | Form step titles, key figures                                 |
+| `--text-h2`      | 24 to 36 px | Section headings                                              |
+| `--text-h1`      | 30 to 48 px | Page headline                                                 |
+| `--text-display` | 34 to 60 px | Home headline only                                            |
+
+Phone headlines use a smaller range so each sentence stays on one line. Form controls stay at 16 px so phones never zoom on focus.
+
+### Customer kit (built 2026-10-20, phase 1 of the signed-in pass)
+
+One set of parts for every signed-in customer page, built once in `apps/web/components` and the Design system layer of `globals.css`. A page does not style itself.
+
+| Part                | Where                                    | Notes                                                                                                                                                                |
+| ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer navigation | `customer-nav.tsx`, `customer-shell.tsx` | Home, My Work, Companies, Results, More. Top row on desktop, bottom tab bar on phones. Companies shows only where the module is on. Every item is a real destination |
+| Next-step card      | `next-step-card.tsx`                     | The dark card with one light button. One per screen, first on Home                                                                                                   |
+| Journey bar         | `journey-bar.tsx`                        | Done, now, later with words. The request steps use it                                                                                                                |
+| Area                | `.guide-area`                            | A group on the account page with a serif heading. Home holds My work, Results, More                                                                                  |
+| Card                | `.ux-customer .detail-card`              | One card style for every customer section. A card inside a card is a tinted block                                                                                    |
+| Action row          | `.guide-actions-row`                     | Several links to the same kind of place read as buttons in one row                                                                                                   |
+
+`WorkspaceShell` stays client-safe and layout only; `CustomerShell` is the server wrapper that adds the navigation. Every page in `app/account` uses `CustomerShell` with its tab. My Work and Results are anchors on the account page until phase 2 gives them their own pages.
+
+### Request page (built 2026-10-20)
+
+- One calm form card beside a sticky summary on wide screens; on phones the form comes first, then the summary, then receipt lookup.
+- Steps are numbered dots joined by a line; the phone shows only the current label. The progress element stays for screen readers.
+- Choices are whole-card targets; the checked card is marked by border, tint and weight, not colour alone.
+- Every field name, label, heading, alert and button name is unchanged, so tests and assistive tools see the same page.
+
 ### Build order
 
 One PR per step, each behind its existing flag where the module is optional, with no change to routes, forms, permissions, money or evidence: 1 language, public home and request flow; 2 customer Home, My Work, one piece of work; 3 company choice, price quotes, meeting time; 4 delegation; 5 team Today and one case; 6 founder; 7 team area lists.

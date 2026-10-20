@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { foundations } from '../../../../lib/foundations';
 import { GuidedRequest } from '../guided-request';
@@ -55,7 +56,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     return unavailable('Access could not be confirmed. Reload your account before continuing.');
   }
   return (
-    <WorkspaceShell eyebrow="SYNTHETIC WORKSPACE" title="Start a request">
+    <CustomerShell tab="work" eyebrow="SYNTHETIC WORKSPACE" title="Start a request">
       <p>Workspace: {name}</p>
       <GuidedRequest
         subject={session.data.user.id}
@@ -63,6 +64,6 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         workspaceId={id.data}
         profilesEnabled={customerOrganisationProfilesEnabled()}
       />
-    </WorkspaceShell>
+    </CustomerShell>
   );
 }

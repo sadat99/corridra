@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
 
 /** One sentence per line, so a headline never wraps in the middle of a thought. */
-function Lines({ text }: { text: string }) {
+export function Lines({ text }: { text: string }) {
   const lines = text.split(/(?<=[.?!])\s+/);
   return (
     <>
@@ -19,38 +19,62 @@ function Lines({ text }: { text: string }) {
   );
 }
 
+function StepItem({
+  section,
+  number,
+}: {
+  section: PublicPageContent['sections'][number];
+  number: number;
+}) {
+  return (
+    <li>
+      <span className="guide-step-number" aria-hidden="true">
+        {number}
+      </span>
+      <h3>{section.title}</h3>
+      {section.name && <p className="label guide-step-name">{section.name}</p>}
+      <p>{section.text}</p>
+    </li>
+  );
+}
+
 function Steps({ content }: { content: PublicPageContent }) {
   const { sections, groups } = content;
-  const groupSize = groups ? Math.ceil(sections.length / groups.length) : sections.length;
-  const chunks = groups
-    ? groups.map((title, index) => ({
-        title,
-        start: index * groupSize,
-        items: sections.slice(index * groupSize, (index + 1) * groupSize),
-      }))
-    : [{ title: '', start: 0, items: sections }];
-  return (
-    <section className="guide-page-steps" aria-label="The approach">
-      {chunks.map((chunk) => (
-        <div key={chunk.title || 'steps'}>
-          {chunk.title && (
-            <p className="guide-group">
-              <span>{chunk.title}</span>
-            </p>
-          )}
-          <ol data-count={chunk.items.length}>
-            {chunk.items.map((section, index) => (
-              <li key={section.title}>
-                <span className="guide-step-number" aria-hidden="true">
-                  {chunk.start + index + 1}
-                </span>
-                <h3>{section.title}</h3>
-                <p>{section.text}</p>
-              </li>
+  if (!groups) {
+    return (
+      <section className="guide-page-steps" aria-label="The approach">
+        <div>
+          <ol data-count={sections.length}>
+            {sections.map((section, index) => (
+              <StepItem key={section.title} section={section} number={index + 1} />
             ))}
           </ol>
         </div>
-      ))}
+      </section>
+    );
+  }
+  const size = Math.ceil(sections.length / groups.length);
+  return (
+    <section className="guide-journey" aria-label="The approach">
+      {groups.map((title, index) => {
+        const start = index * size;
+        const items = sections.slice(start, start + size);
+        return (
+          <div className="guide-phase" key={title}>
+            <header>
+              <h3>{title}</h3>
+              <p>
+                Steps {start + 1} to {start + items.length}
+              </p>
+            </header>
+            <ol data-count={items.length}>
+              {items.map((section, i) => (
+                <StepItem key={section.title} section={section} number={start + i + 1} />
+              ))}
+            </ol>
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -191,6 +215,22 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           </div>
           <Link prefetch={false} className="primary-link" href={content.related.href}>
             {content.related.label}
+          </Link>
+        </section>
+      )}
+
+      {content.band && (
+        <section className="guide-band" aria-labelledby="band-title">
+          <div>
+            <h2 id="band-title">{content.band.title}</h2>
+            <p>{content.band.text}</p>
+          </div>
+          <Link
+            prefetch={false}
+            className="primary-link"
+            href={content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan'}
+          >
+            {content.cta ?? 'Start a request'}
           </Link>
         </section>
       )}

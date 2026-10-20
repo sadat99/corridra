@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { JourneyBar } from '../../components/journey-bar';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -448,443 +449,479 @@ export function Intake({
     ) : null;
   return (
     <div className="ux-intake-layout">
-      <aside className="intake-notice">
-        <strong>Test intake is open. Real customer mission admission is unavailable.</strong> Use
-        invented details and an email ending in @example.invalid.{' '}
-        {privateMode
-          ? 'Submitted sample requests stay private to this account. '
-          : 'Keep your receipt to read operator replies here. '}
-        Email delivery is not enabled. <Link href="/privacy">Read the test intake notice</Link>.
-      </aside>
-      <details lang="bn">
-        <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
-        <p>
-          আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
-          যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও গোপন
-          তথ্য আলাদা রাখা হয়।
-        </p>
-        <p>
-          শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের
-          কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।
-        </p>
-      </details>
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
-      {draftNotice && (
-        <p className="ux-draft-notice" aria-live="polite">
-          {draftNotice}
-        </p>
-      )}
-      {!finished && (
-        <aside className="ux-brief-summary" aria-label="Your example request">
-          <p className="label">YOUR EXAMPLE REQUEST</p>
-          <dl>
-            <div>
-              <dt>Objective</dt>
-              <dd>
-                {missionCatalogue.find((item) => item.key === draft.job)?.label ?? 'Not chosen'}
-              </dd>
-            </div>
-            <div>
-              <dt>Company country</dt>
-              <dd>
-                {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
-                  ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.companyCountry)
-                  : 'Not chosen'}
-              </dd>
-            </div>
-            <div>
-              <dt>Target market</dt>
-              <dd>
-                {draft.marketCode === 'EU'
-                  ? 'European Union (trade bloc)'
-                  : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-                    ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.marketCode)
-                    : 'Not chosen'}
-              </dd>
-            </div>
-            <div>
-              <dt>Original budget</dt>
-              <dd>
-                {draft.budgetAmount
-                  ? `${draft.budgetAmount} ${draft.currency || '(currency not chosen)'}`
-                  : 'Not supplied'}
-              </dd>
-            </div>
-          </dl>
-          <p>Draft only. No admission, quotation, verification or payment is implied.</p>
+      <div className="guide-plan-top">
+        <aside className="intake-notice">
+          <span className="guide-pill">Test mode</span>
+          <p>
+            <strong>Test intake is open. Real customer mission admission is unavailable.</strong>{' '}
+            Use invented details and an email ending in @example.invalid.{' '}
+            {privateMode
+              ? 'Sample requests stay private to this account. '
+              : 'Keep your receipt to read replies. '}
+            Email delivery is not enabled. <Link href="/privacy">Read the test intake notice</Link>.
+          </p>
         </aside>
-      )}
-      {!finished && (
-        <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
-          <p className="label">STEP {step + 1} OF 5</p>
-          <ol className="ux-intake-steps" aria-label="Request steps">
-            {['Goal', 'Where', 'Details', 'Results', 'Contact'].map((label, index) => (
-              <li key={label} aria-current={index === step ? 'step' : undefined}>
-                <span>{index + 1}</span>
-                {label}
-              </li>
-            ))}
-          </ol>
-          <progress value={step + 1} max={5} aria-label="Request progress" />
-          <h2 ref={heading} tabIndex={-1}>
-            {titles[step]}
-          </h2>
-          {Object.values(errors).some((messages) => messages.length) && (
-            <div ref={errorSummary} className="ux-error-summary" tabIndex={-1} role="alert">
-              <strong>Check this step.</strong>
-              <p>Review the highlighted fields before continuing. Your entries are still here.</p>
-            </div>
-          )}
-          {step === 0 && (
-            <fieldset>
-              <legend className="sr-only">Mission objective</legend>
-              {objectiveOptions.map((v) => (
-                <label className="choice" key={v}>
-                  <input
-                    type="radio"
-                    name="objective"
-                    value={v}
-                    checked={draft.objective === v}
-                    onChange={() => change('objective', v)}
-                  />
-                  {v}
-                </label>
-              ))}
-              {error('objective')}
-              <label className="field">
-                Commercial job
-                <select value={draft.job} onChange={(e) => change('job', e.target.value)} required>
-                  <option value="">Choose the job</option>
-                  {missionCatalogue.map((job) => (
-                    <option key={job.key} value={job.key}>
-                      {job.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {error('job')}
-            </fieldset>
-          )}
-          {step === 1 && (
-            <>
-              <label className="field">
-                Where is the company based?
-                <select
-                  value={draft.companyCountry}
-                  onChange={(e) => change('companyCountry', e.target.value)}
-                  required
-                >
-                  <option value="">Choose a country</option>
-                  {countryCodes.map((code) => (
-                    <option key={code} value={code}>
-                      {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {error('companyCountry')}
-              <label className="field">
-                Which market is involved?
-                <select
-                  value={draft.marketCode}
-                  onChange={(e) => change('marketCode', e.target.value)}
-                  required
-                >
-                  <option value="">Choose a market</option>
-                  <option value="EU">European Union (trade bloc)</option>
-                  {countryCodes.map((code) => (
-                    <option key={code} value={code}>
-                      {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {error('marketCode')}
-              <p>
-                Company country and target market do not define shipment or meeting location.{' '}
-                {draft.companyCountry &&
-                  draft.marketCode &&
-                  !(
-                    draft.companyCountry === 'BD' && ['CN', 'ES', 'EU'].includes(draft.marketCode)
-                  ) &&
-                  'No operating offer is announced for this direction. You can still describe an invented test mission.'}
-              </p>
-              {field('whenNeeded', 'When is the activity needed? (optional)', 'date')}
-              <fieldset>
-                <legend>Will you be there in person?</legend>
-                {['Yes', 'No', 'Not decided'].map((v) => (
-                  <label className="choice" key={v}>
-                    <input
-                      type="radio"
-                      name="attendance"
-                      checked={draft.attendance === v}
-                      onChange={() => change('attendance', v)}
-                    />
-                    {v}
-                  </label>
-                ))}
-                {error('attendance')}
-              </fieldset>
-              {draft.attendance === 'Yes' && (
-                <>
-                  {field('startDate', 'From', 'date')}
-                  {field('endDate', 'To', 'date')}
-                  {field('timezone', 'Visit timezone')}
-                </>
-              )}
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <label className="field">
-                Your offer or requirement
-                <textarea
-                  rows={6}
-                  maxLength={1000}
-                  value={draft.offer}
-                  onChange={(e) => change('offer', e.target.value)}
-                  placeholder="Example: We manufacture hotel towels in Bangladesh and want to meet Spanish hospitality distributors buying private-label products."
-                  aria-invalid={!!errors.offer?.length}
-                  aria-describedby={errors.offer?.length ? 'offer-error' : undefined}
-                />
-                {error('offer')}
-              </label>
-              {draft.job === 'machinery_procurement' && (
-                <>
-                  {field('technicalPurpose', 'Technical purpose (optional)')}
-                  {field('parameters', 'Key technical parameters (optional)')}
-                  {field('preferences', 'Site, integration or after-sales constraints (optional)')}
-                </>
-              )}
-              {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) && (
-                <>
-                  {field('parameters', 'Product specifications (optional)')}
-                  {field('quantity', 'Required quantity (optional)')}
-                  {field('unit', 'Quantity unit (required with quantity)')}
-                  {field('preferences', 'Supplier preferences and constraints (optional)')}
-                </>
-              )}
-              {[
-                'buyers',
-                'distributors',
-                'customers',
-                'market_entry',
-                'export_market_access',
-              ].includes(draft.job) && (
-                <>
-                  {field('parameters', 'Target buyer or distributor (optional)')}
-                  {field('preferences', 'Commercial readiness and constraints (optional)')}
-                </>
-              )}
-              {draft.job === 'delegations' && (
-                <>
-                  {field('organiser', 'Delegation organiser (optional)')}
-                  {field(
-                    'participants',
-                    'Participating organisations and individual needs (optional)',
-                  )}
+        <details lang="bn" className="guide-bn">
+          <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
+          <p>
+            আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
+            যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও
+            গোপন তথ্য আলাদা রাখা হয়।
+          </p>
+          <p>
+            শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের
+            কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।
+          </p>
+        </details>
+        <p role="status" aria-live="polite" className="guide-status" hidden={!message}>
+          {message}
+        </p>
+        {draftNotice && (
+          <p className="ux-draft-notice" aria-live="polite">
+            {draftNotice}
+          </p>
+        )}
+      </div>
+      <div className="guide-plan-body">
+        <div className="guide-plan-main">
+          {!finished && (
+            <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
+              <p className="label">STEP {step + 1} OF 5</p>
+              <JourneyBar
+                steps={['Goal', 'Where', 'Details', 'Results', 'Contact']}
+                current={step}
+                label="Request steps"
+              />
+              <progress
+                className="sr-only"
+                value={step + 1}
+                max={5}
+                aria-label="Request progress"
+              />
+              <h2 ref={heading} tabIndex={-1}>
+                {titles[step]}
+              </h2>
+              {Object.values(errors).some((messages) => messages.length) && (
+                <div ref={errorSummary} className="ux-error-summary" tabIndex={-1} role="alert">
+                  <strong>Check this step.</strong>
                   <p>
-                    Each participant receives an independent mission. Private offers and contacts
-                    are not shared with the organiser automatically.
+                    Review the highlighted fields before continuing. Your entries are still here.
                   </p>
-                </>
+                </div>
               )}
-              {['sourcing', 'machinery_procurement'].includes(draft.job) && (
-                <details>
-                  <summary>Budget context (optional)</summary>
-                  {field('budgetAmount', 'Budget in original currency (optional)')}
-                  <label className="field">
-                    Original currency
+              {step === 0 && (
+                <fieldset>
+                  <legend className="sr-only">Mission objective</legend>
+                  <div className="guide-options">
+                    {objectiveOptions.map((v) => (
+                      <label className="choice" key={v}>
+                        <input
+                          type="radio"
+                          name="objective"
+                          value={v}
+                          checked={draft.objective === v}
+                          onChange={() => change('objective', v)}
+                        />
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                  {error('objective')}
+                  <label className="field guide-more">
+                    Commercial job
                     <select
-                      value={draft.currency}
-                      onChange={(e) => change('currency', e.target.value)}
+                      value={draft.job}
+                      onChange={(e) => change('job', e.target.value)}
+                      required
+                      aria-describedby="job-hint"
                     >
-                      <option value="">No budget supplied</option>
-                      {Object.entries(currencies).map(([code, places]) => (
-                        <option value={code} key={code}>
-                          {code} ({places} decimal places)
+                      <option value="">Choose the job</option>
+                      {missionCatalogue.map((job) => (
+                        <option key={job.key} value={job.key}>
+                          {job.label}
                         </option>
                       ))}
                     </select>
                   </label>
-                  {field('budgetBasis', 'Budget basis, such as total equipment budget')}
-                  <p>
-                    Enter the amount as quoted, such as CNY 12.00 or BHD 1.234. Use the selected
-                    currency’s decimal places. No currency conversion is performed.
+                  <p id="job-hint" className="guide-hint">
+                    Choose a more exact job if you know it.
                   </p>
-                </details>
+                  {error('job')}
+                </fieldset>
               )}
-              {error('requirements')}
-              {field('website', 'Website or catalogue URL (optional)', 'url')}
-              <p>
-                Share a public link if it helps explain the request. We do not fetch it
-                automatically. Documents can be requested after review.
-              </p>
-            </>
-          )}
-          {step === 3 && (
-            <>
-              {field('worthwhile', 'What outcome would make the engagement worthwhile? (optional)')}
-              <fieldset>
-                <legend>Desired outcomes</legend>
-                {outcomeOptions.map((v) => (
-                  <label className="choice" key={v}>
+              {step === 1 && (
+                <>
+                  <label className="field">
+                    Where is the company based?
+                    <select
+                      value={draft.companyCountry}
+                      onChange={(e) => change('companyCountry', e.target.value)}
+                      required
+                    >
+                      <option value="">Choose a country</option>
+                      {countryCodes.map((code) => (
+                        <option key={code} value={code}>
+                          {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {error('companyCountry')}
+                  <label className="field">
+                    Which market is involved?
+                    <select
+                      value={draft.marketCode}
+                      onChange={(e) => change('marketCode', e.target.value)}
+                      required
+                    >
+                      <option value="">Choose a market</option>
+                      <option value="EU">European Union (trade bloc)</option>
+                      {countryCodes.map((code) => (
+                        <option key={code} value={code}>
+                          {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {error('marketCode')}
+                  <p className="guide-hint">
+                    Company country and target market do not define shipment or meeting location.{' '}
+                    {draft.companyCountry &&
+                      draft.marketCode &&
+                      !(
+                        draft.companyCountry === 'BD' &&
+                        ['CN', 'ES', 'EU'].includes(draft.marketCode)
+                      ) &&
+                      'No operating offer is announced for this direction. You can still describe an invented test mission.'}
+                  </p>
+                  {field('whenNeeded', 'When is the activity needed? (optional)', 'date')}
+                  <fieldset>
+                    <legend>Will you be there in person?</legend>
+                    <div className="guide-options guide-options-row">
+                      {['Yes', 'No', 'Not decided'].map((v) => (
+                        <label className="choice" key={v}>
+                          <input
+                            type="radio"
+                            name="attendance"
+                            checked={draft.attendance === v}
+                            onChange={() => change('attendance', v)}
+                          />
+                          {v}
+                        </label>
+                      ))}
+                    </div>
+                    {error('attendance')}
+                  </fieldset>
+                  {draft.attendance === 'Yes' && (
+                    <>
+                      <div className="guide-pair">
+                        {field('startDate', 'From', 'date')}
+                        {field('endDate', 'To', 'date')}
+                      </div>
+                      {field('timezone', 'Visit timezone')}
+                    </>
+                  )}
+                </>
+              )}
+              {step === 2 && (
+                <>
+                  <label className="field">
+                    Your offer or requirement
+                    <textarea
+                      rows={6}
+                      maxLength={1000}
+                      value={draft.offer}
+                      onChange={(e) => change('offer', e.target.value)}
+                      placeholder="Example: We manufacture hotel towels in Bangladesh and want to meet Spanish hospitality distributors buying private-label products."
+                      aria-invalid={!!errors.offer?.length}
+                      aria-describedby={errors.offer?.length ? 'offer-error' : undefined}
+                    />
+                    {error('offer')}
+                  </label>
+                  {draft.job === 'machinery_procurement' && (
+                    <>
+                      {field('technicalPurpose', 'Technical purpose (optional)')}
+                      {field('parameters', 'Key technical parameters (optional)')}
+                      {field(
+                        'preferences',
+                        'Site, integration or after-sales constraints (optional)',
+                      )}
+                    </>
+                  )}
+                  {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) && (
+                    <>
+                      {field('parameters', 'Product specifications (optional)')}
+                      {field('quantity', 'Required quantity (optional)')}
+                      {field('unit', 'Quantity unit (required with quantity)')}
+                      {field('preferences', 'Supplier preferences and constraints (optional)')}
+                    </>
+                  )}
+                  {[
+                    'buyers',
+                    'distributors',
+                    'customers',
+                    'market_entry',
+                    'export_market_access',
+                  ].includes(draft.job) && (
+                    <>
+                      {field('parameters', 'Target buyer or distributor (optional)')}
+                      {field('preferences', 'Commercial readiness and constraints (optional)')}
+                    </>
+                  )}
+                  {draft.job === 'delegations' && (
+                    <>
+                      {field('organiser', 'Delegation organiser (optional)')}
+                      {field(
+                        'participants',
+                        'Participating organisations and individual needs (optional)',
+                      )}
+                      <p className="guide-hint">
+                        Each participant receives an independent mission. Private offers and
+                        contacts are not shared with the organiser automatically.
+                      </p>
+                    </>
+                  )}
+                  {['sourcing', 'machinery_procurement'].includes(draft.job) && (
+                    <details>
+                      <summary>Budget context (optional)</summary>
+                      {field('budgetAmount', 'Budget in original currency (optional)')}
+                      <label className="field">
+                        Original currency
+                        <select
+                          value={draft.currency}
+                          onChange={(e) => change('currency', e.target.value)}
+                        >
+                          <option value="">No budget supplied</option>
+                          {Object.entries(currencies).map(([code, places]) => (
+                            <option value={code} key={code}>
+                              {code} ({places} decimal places)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {field('budgetBasis', 'Budget basis, such as total equipment budget')}
+                      <p className="guide-hint">
+                        Enter the amount as quoted, such as CNY 12.00 or BHD 1.234. Use the selected
+                        currency’s decimal places. No currency conversion is performed.
+                      </p>
+                    </details>
+                  )}
+                  {error('requirements')}
+                  {field('website', 'Website or catalogue URL (optional)', 'url')}
+                  <p className="guide-hint">
+                    A public link helps. We do not open it automatically. Documents can be requested
+                    after review.
+                  </p>
+                </>
+              )}
+              {step === 3 && (
+                <>
+                  {field(
+                    'worthwhile',
+                    'What outcome would make the engagement worthwhile? (optional)',
+                  )}
+                  <fieldset>
+                    <legend>Desired outcomes</legend>
+                    <div className="guide-options">
+                      {outcomeOptions.map((v) => (
+                        <label className="choice" key={v}>
+                          <input
+                            type="checkbox"
+                            checked={draft.outcomes.includes(v)}
+                            onChange={(e) =>
+                              change(
+                                'outcomes',
+                                e.target.checked
+                                  ? [...draft.outcomes, v]
+                                  : draft.outcomes.filter((o) => o !== v),
+                              )
+                            }
+                          />
+                          {v}
+                        </label>
+                      ))}
+                    </div>
+                    {error('outcomes')}
+                  </fieldset>
+                  <label className="field">
+                    Anything specific we should know? (optional)
+                    <textarea
+                      rows={3}
+                      maxLength={1000}
+                      value={draft.notes}
+                      onChange={(e) => change('notes', e.target.value)}
+                    />
+                    {error('notes')}
+                  </label>
+                </>
+              )}
+              {step === 4 && (
+                <>
+                  {field('name', 'Name')}
+                  {field('company', 'Company')}
+                  {field('email', 'Work email', 'email')}
+                  <label className="choice">
                     <input
                       type="checkbox"
-                      checked={draft.outcomes.includes(v)}
-                      onChange={(e) =>
-                        change(
-                          'outcomes',
-                          e.target.checked
-                            ? [...draft.outcomes, v]
-                            : draft.outcomes.filter((o) => o !== v),
-                        )
-                      }
+                      checked={draft.acknowledged}
+                      onChange={(e) => change('acknowledged', e.target.checked)}
                     />
-                    {v}
+                    I have read the test intake notice and am submitting invented test details.
                   </label>
-                ))}
-                {error('outcomes')}
-              </fieldset>
-              <label className="field">
-                Anything specific we should know? (optional)
-                <textarea
-                  rows={3}
-                  maxLength={1000}
-                  value={draft.notes}
-                  onChange={(e) => change('notes', e.target.value)}
-                />
-                {error('notes')}
-              </label>
-            </>
-          )}
-          {step === 4 && (
-            <>
-              {field('name', 'Name')}
-              {field('company', 'Company')}
-              {field('email', 'Work email', 'email')}
-              <label className="choice">
-                <input
-                  type="checkbox"
-                  checked={draft.acknowledged}
-                  onChange={(e) => change('acknowledged', e.target.checked)}
-                />
-                I have read the test intake notice and am submitting invented test details.
-              </label>
-              {error('acknowledged')}
-              <p>
-                No account required. Corridra will review the request before proposing next steps.
-                Check your receipt here for replies.
+                  {error('acknowledged')}
+                  <p className="guide-hint">
+                    No account needed. We review your request first, then propose next steps. Use
+                    your receipt to read replies.
+                  </p>
+                </>
+              )}
+              <div className="guide-actions">
+                {step > 0 && (
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => move(step - 1)}
+                    disabled={busy}
+                  >
+                    Back
+                  </button>
+                )}
+                <button className="primary-link" disabled={!ready || busy}>
+                  {busy ? 'Saving…' : step === 4 ? 'Submit mission request' : 'Continue'}
+                </button>
+              </div>
+              <p className="guide-hint guide-draft-line">
+                Drafts stay in this tab for 24 hours.{' '}
+                <button
+                  className="text-link"
+                  type="button"
+                  onClick={() => {
+                    key.current = crypto.randomUUID();
+                    setDraft(empty);
+                    setDraftNotice('');
+                    setStep(0);
+                    setErrors({});
+                    persist(empty, 0);
+                  }}
+                >
+                  Clear draft
+                </button>
               </p>
-            </>
+            </form>
           )}
-          <div className="hero-actions">
-            {step > 0 && (
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => move(step - 1)}
-                disabled={busy}
-              >
-                Back
-              </button>
-            )}
-            <button className="primary-link" disabled={!ready || busy}>
-              {busy ? 'Saving…' : step === 4 ? 'Submit mission request' : 'Continue'}
-            </button>
-          </div>
-          <p>
-            When browser storage is available, drafts stay in this tab for up to 24 hours.{' '}
+          {receipt && (
+            <div className="detail-card">
+              <h2>Keep your private receipt.</h2>
+              <p>
+                Anyone with this code can read the mission status and replies. Save it before
+                closing this tab. It expires after 30 days.
+              </p>
+              <label className="field">
+                Private receipt code
+                <input readOnly value={receipt} />
+              </label>
+            </div>
+          )}
+          {finished && (
             <button
-              className="text-link"
               type="button"
+              className="text-link"
               onClick={() => {
+                submitted.current = false;
                 key.current = crypto.randomUUID();
-                setDraft(empty);
+                setFinished(false);
                 setDraftNotice('');
+                setReceipt('');
+                setDraft(empty);
                 setStep(0);
+                setMessage('');
                 setErrors({});
+                try {
+                  sessionStorage.removeItem('corridra-mission-receipt');
+                } catch {}
                 persist(empty, 0);
               }}
             >
-              Clear draft
+              Start another request (save your receipt first)
             </button>
-          </p>
-        </form>
-      )}
-      {receipt && (
-        <div className="detail-card">
-          <h2>Keep your private receipt.</h2>
-          <p>
-            Anyone with this code can read the mission status and replies. Save it before closing
-            this tab. It expires after 30 days.
-          </p>
-          <label className="field">
-            Private receipt code
-            <input readOnly value={receipt} />
-          </label>
-        </div>
-      )}
-      {finished && (
-        <button
-          type="button"
-          className="text-link"
-          onClick={() => {
-            submitted.current = false;
-            key.current = crypto.randomUUID();
-            setFinished(false);
-            setDraftNotice('');
-            setReceipt('');
-            setDraft(empty);
-            setStep(0);
-            setMessage('');
-            setErrors({});
-            try {
-              sessionStorage.removeItem('corridra-mission-receipt');
-            } catch {}
-            persist(empty, 0);
-          }}
-        >
-          Start another request (save your receipt first)
-        </button>
-      )}
-      <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
-        <h2>Check a mission request.</h2>
-        <form className="operator-form" onSubmit={check}>
-          <label className="field">
-            Receipt code
-            <input
-              required
-              value={checkCode}
-              onChange={(e) => setCheckCode(e.target.value)}
-              autoComplete="off"
-              maxLength={64}
-            />
-          </label>
-          <button className="primary-link" disabled={!ready || busy}>
-            Check status and replies
-          </button>
-        </form>
-        {result && (
-          <div>
-            <p>
-              Status: <strong>{result.status.replaceAll('_', ' ')}</strong>
-            </p>
-            {result.replies.length ? (
-              result.replies.map((r, i) => (
-                <article className="detail-card" key={i}>
-                  <p>{r.body}</p>
-                  <time dateTime={r.createdAt}>{new Date(r.createdAt).toLocaleString()}</time>
-                </article>
-              ))
-            ) : (
-              <p>No operator reply yet.</p>
+          )}
+          <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
+            <h2>Check a mission request.</h2>
+            <form className="operator-form" onSubmit={check}>
+              <label className="field">
+                Receipt code
+                <input
+                  required
+                  value={checkCode}
+                  onChange={(e) => setCheckCode(e.target.value)}
+                  autoComplete="off"
+                  maxLength={64}
+                />
+              </label>
+              <button className="primary-link" disabled={!ready || busy}>
+                Check status and replies
+              </button>
+            </form>
+            {result && (
+              <div>
+                <p>
+                  Status: <strong>{result.status.replaceAll('_', ' ')}</strong>
+                </p>
+                {result.replies.length ? (
+                  result.replies.map((r, i) => (
+                    <article className="detail-card" key={i}>
+                      <p>{r.body}</p>
+                      <time dateTime={r.createdAt}>{new Date(r.createdAt).toLocaleString()}</time>
+                    </article>
+                  ))
+                ) : (
+                  <p>No operator reply yet.</p>
+                )}
+              </div>
             )}
-          </div>
+          </section>
+        </div>
+        {!finished && (
+          <aside className="ux-brief-summary" aria-label="Your example request">
+            <p className="label">YOUR EXAMPLE REQUEST</p>
+            <dl>
+              <div>
+                <dt>Objective</dt>
+                <dd>
+                  {missionCatalogue.find((item) => item.key === draft.job)?.label ?? 'Not chosen'}
+                </dd>
+              </div>
+              <div>
+                <dt>Company country</dt>
+                <dd>
+                  {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
+                    ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.companyCountry)
+                    : 'Not chosen'}
+                </dd>
+              </div>
+              <div>
+                <dt>Target market</dt>
+                <dd>
+                  {draft.marketCode === 'EU'
+                    ? 'European Union (trade bloc)'
+                    : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+                      ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.marketCode)
+                      : 'Not chosen'}
+                </dd>
+              </div>
+              <div>
+                <dt>Original budget</dt>
+                <dd>
+                  {draft.budgetAmount
+                    ? `${draft.budgetAmount} ${draft.currency || '(currency not chosen)'}`
+                    : 'Not supplied'}
+                </dd>
+              </div>
+            </dl>
+            <p>Draft only. Nothing here is an offer, a quote or a promise.</p>
+          </aside>
         )}
-      </section>
+      </div>
     </div>
   );
 }

@@ -6,22 +6,26 @@ export function WorkspaceShell({
   title,
   children,
   compact = false,
+  nav,
 }: {
   eyebrow: string;
   title: string;
   children: ReactNode;
   compact?: boolean;
+  /** Navigation shown under the heading, for example the customer tabs. */
+  nav?: ReactNode;
 }) {
   return (
     <main
       id="main"
       tabIndex={-1}
-      className={`operator-page ux-workspace${compact ? ' ux-access' : ''}`}
+      className={`operator-page ux-workspace${compact ? ' ux-access' : ''}${nav ? ' ux-customer' : ''}`}
     >
       <header className="ux-page-heading">
         <p className="label">{eyebrow}</p>
         <h1>{title}</h1>
       </header>
+      {nav}
       {children}
     </main>
   );

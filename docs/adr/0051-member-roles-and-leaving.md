@@ -1,4 +1,4 @@
-# ADR-050: Team roles and leaving for invited workspace members
+# ADR-051: Team roles and leaving for invited workspace members
 
 Status: bounded implementation, synthetic only, default off (`CORRIDRA_CUSTOMER_MEMBER_ROLES_ENABLED`). V3-06-003 and V3-06-002 stay PARTIAL for the whole product.
 

@@ -14,34 +14,38 @@ export default function Page() {
   if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
   return (
     <PublicShell>
-      <section className="page-hero status-page">
-        <p className="label">COMING SOON</p>
-        <h1>Sign-in is coming soon.</h1>
-        <p className="page-description">
-          Customer accounts are not open yet. You can still plan a mission without an account. Team
-          members sign in separately.
-        </p>
-        <Link className="text-link" href="/plan">
-          Prepare an example request without an account
-        </Link>
-        <div className="hero-actions">
-          <Link prefetch={false} className="primary-link" href="/how-it-works">
-            See how Corridra will work{' '}
-            <span aria-hidden="true">
-              <Arrow />
-            </span>
-          </Link>
-          <Link prefetch={false} className="text-link" href="/operator">
-            Team sign-in
-          </Link>
-          <Link prefetch={false} className="text-link" href="/contributor">
-            Local helper tasks
-          </Link>
-          <Link prefetch={false} className="text-link" href="/">
-            Back to Corridra
-          </Link>
+      <section className="guide-page-hero">
+        <div>
+          <p className="label">COMING SOON</p>
+          <h1>Sign-in is coming soon.</h1>
+          <p className="guide-lead">
+            Customer accounts are not open yet. You can still plan a mission without an account.
+            Team members sign in separately.
+          </p>
+          <div className="guide-page-actions">
+            <Link prefetch={false} className="primary-link" href="/plan">
+              Prepare an example request without an account
+            </Link>
+            <Link prefetch={false} className="button-secondary" href="/how-it-works">
+              See how Corridra will work{' '}
+              <span aria-hidden="true">
+                <Arrow />
+              </span>
+            </Link>
+          </div>
         </div>
       </section>
+      <nav className="guide-links" aria-label="Other ways in">
+        <Link prefetch={false} className="text-link" href="/operator">
+          Team sign-in
+        </Link>
+        <Link prefetch={false} className="text-link" href="/contributor">
+          Local helper tasks
+        </Link>
+        <Link prefetch={false} className="text-link" href="/">
+          Back to Corridra
+        </Link>
+      </nav>
     </PublicShell>
   );
 }
