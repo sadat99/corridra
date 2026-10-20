@@ -2,6 +2,7 @@ import { PublicShell } from '../../../components/public-shell';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { corridorPages } from '../../../content/corridors';
+import { Lines } from '../../../components/public-page';
 export function generateStaticParams() {
   return Object.keys(corridorPages).map((corridor) => ({ corridor }));
 }
@@ -19,59 +20,73 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
   const c = await content(params);
   return (
     <PublicShell>
-      <section className="page-hero">
-        <Link href="/corridors" className="text-link breadcrumb">
-          Commercial corridors /
-        </Link>
-        <p className="label">{c.title}</p>
-        <h1>{c.heading}</h1>
-        <p className="page-description">{c.description}</p>
-        <Link className="primary-link" href={`/plan?companyCountry=BD&marketCode=${c.market}`}>
-          Prepare a test mission request
-        </Link>
-      </section>
-      <section className="detail-section">
-        <div className="detail-grid">
-          <article className="detail-card">
-            <h2>Commercial jobs</h2>
-            <ul>
-              {c.jobs.map((job) => (
-                <li key={job}>{job}</li>
-              ))}
-            </ul>
-          </article>
-          <article className="detail-card">
-            <h2>Current availability</h2>
-            <dl>
-              <dt>Structurally supported</dt>
-              <dd>
-                Versioned routes and shared mission requirements, supplier offers and actual meeting
-                records.
-              </dd>
-              <dt>Being piloted</dt>
-              <dd>
-                No customer pilot is announced here. Operator validation uses invented records.
-              </dd>
-              <dt>Operationally available</dt>
-              <dd>Customer account access and scoped synthetic test journeys.</dd>
-              <dt>Not yet available</dt>
-              <dd>
-                Real customer mission admission, verified local coverage, automatic outreach and
-                confirmed visit services.
-              </dd>
-            </dl>
-          </article>
-          <article className="detail-card">
-            <h2>Geography and evidence</h2>
-            <p>{c.qualification}</p>
-            <p>{c.reverse}</p>
-          </article>
+      <section className="guide-page-hero">
+        <div>
+          <nav className="guide-crumb" aria-label="Breadcrumb">
+            <Link prefetch={false} href="/">
+              Corridra
+            </Link>
+            <span aria-hidden="true">/</span>
+            <Link prefetch={false} href="/corridors">
+              Routes
+            </Link>
+          </nav>
+          <p className="label">{c.title}</p>
+          <h1>
+            <Lines text={c.heading} />
+          </h1>
+          <p className="guide-lead">{c.description}</p>
+          <div className="guide-page-actions">
+            <Link
+              prefetch={false}
+              className="primary-link"
+              href={`/plan?companyCountry=BD&marketCode=${c.market}`}
+            >
+              Prepare a test mission request
+            </Link>
+          </div>
         </div>
+      </section>
+      <section className="guide-detail" aria-label="About this route">
+        <article className="guide-detail-card">
+          <h2>Commercial jobs</h2>
+          <ul>
+            {c.jobs.map((job) => (
+              <li key={job}>{job}</li>
+            ))}
+          </ul>
+        </article>
+        <article className="guide-detail-card">
+          <h2>Current availability</h2>
+          <dl>
+            <dt data-tone="info">Structurally supported</dt>
+            <dd>
+              Versioned routes and shared mission requirements, supplier offers and actual meeting
+              records.
+            </dd>
+            <dt data-tone="caution">Being piloted</dt>
+            <dd>No customer pilot is announced here. Operator validation uses invented records.</dd>
+            <dt data-tone="positive">Operationally available</dt>
+            <dd>Customer account access and scoped synthetic test journeys.</dd>
+            <dt data-tone="unknown">Not yet available</dt>
+            <dd>
+              Real customer mission admission, verified local coverage, automatic outreach and
+              confirmed visit services.
+            </dd>
+          </dl>
+        </article>
+        <article className="guide-detail-card">
+          <h2>Geography and evidence</h2>
+          <p>{c.qualification}</p>
+          <p>{c.reverse}</p>
+        </article>
+      </section>
+      <section className="guide-note">
         <p>
           Counterparties and operators are evaluated for an explicitly agreed scope. No supplier
           network, guaranteed buyer or certification is asserted.
         </p>
-        <Link href="/trust" className="text-link">
+        <Link prefetch={false} href="/trust" className="text-link">
           How evidence and uncertainty are handled
         </Link>
       </section>
