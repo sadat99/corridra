@@ -105,7 +105,14 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
       {mode === 'verify' && (
         <p>
           Enter the email address you used to sign up and the six-digit code from your email. You do
-          not need a verification link. If you need another code, request one below.
+          not need a verification link. If you need another code, request one below. If this address
+          already has a verified account, no code is sent: sign in, or reset your password.
+        </p>
+      )}
+      {mode === 'signup' && (
+        <p>
+          Already have an account? Sign in, or reset your password. Signing up again with the same
+          address does not create a second account and no code is sent.
         </p>
       )}
       {mode === 'signup' && (
@@ -240,6 +247,11 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
             Invited operator sign-in
           </Link>
         </>
+      )}
+      {(mode === 'signup' || mode === 'verify') && (
+        <Link className="text-link" href="/forgot-password">
+          Forgot your password?
+        </Link>
       )}
       {mode !== 'signin' && (
         <Link className="text-link" href="/signin">
