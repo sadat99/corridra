@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import type { DatabasePool } from '@corridra/db';
-import { customerIssuer } from './customer-workspaces';
+import { pinnableCustomerIssuer } from './customer-session';
 
 // Offline schema-owner procedure, never imported by a request handler. Pins the one issuer the customer
 // modules accept and the service principal that is recorded as the executor of customer events. It is
 // idempotent for identical values and refuses to change an existing pin.
 export async function pinCustomerAuthority(pool: DatabasePool, input: unknown) {
-  const value = z.object({ issuer: customerIssuer, executorId: z.uuid() }).strict().parse(input);
+  const value = z
+    .object({ issuer: pinnableCustomerIssuer, executorId: z.uuid() })
+    .strict()
+    .parse(input);
   const db = await pool.connect();
   try {
     await db.query('BEGIN');
