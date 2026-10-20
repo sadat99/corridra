@@ -72,7 +72,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   await page.keyboard.press('Enter');
   await expect(example.getByText('Evidence not established', { exact: true })).toBeVisible();
   await example.getByRole('button', { name: 'Close the example' }).click();
-  await expect(page.getByRole('link', { name: 'See a sample mission' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Open the sample mission' })).toBeFocused();
   await expect(example.getByRole('button', { name: '2. Inspect the evidence' })).toHaveCount(0);
   await page.keyboard.press('Enter');
   await expect(example.getByRole('button', { name: '1. Define the objective' })).toHaveAttribute(
@@ -86,7 +86,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   await expect(page.getByLabel('Corridor Atlas', { exact: true })).toContainText(
     'China → Bangladesh',
   );
-  await expect(page.getByRole('link', { name: 'Prepare this example request' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',
   );

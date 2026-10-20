@@ -4,7 +4,7 @@ export const corridorPages = {
     market: 'CN',
     heading: 'Start with the requirement. Make each supplier conversation count.',
     description:
-      'Product sourcing, machinery evaluation and commercial visits need a clear specification, evidence of fit and a responsible next step.',
+      'Source products and machinery with a clear specification, evidence of fit and a named next step.',
     jobs: [
       'Product and component sourcing',
       'Machinery and technical evaluation',
@@ -21,7 +21,7 @@ export const corridorPages = {
     market: 'ES',
     heading: 'Find a reason for the right buyer or distributor to meet you.',
     description:
-      'Build buyer access around the offer, commercial readiness and evidence. Carry each conversation into an owned follow-up after the fair or visit.',
+      'Build buyer access around your offer and evidence. Carry each conversation into an owned follow-up.',
     jobs: [
       'Buyer and distributor access',
       'Export market validation',
@@ -38,7 +38,7 @@ export const corridorPages = {
     market: 'EU',
     heading: 'Choose the market inside the broader opportunity.',
     description:
-      'Use the EU scope to frame an export objective, then identify the member countries, counterparty profiles and country-specific questions that matter.',
+      'Frame an export goal at EU level, then pick the member countries and counterparties that matter.',
     jobs: [
       'Export market access',
       'Buyer and distributor research',

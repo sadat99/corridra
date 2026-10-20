@@ -1,4 +1,5 @@
 import { Arrow } from '../components/arrow';
+import { FactLabel, factLabels } from '../components/fact-label';
 import Link from 'next/link';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
@@ -7,7 +8,7 @@ const starts = [
   {
     href: '/plan?job=buyers',
     title: 'Sell my products',
-    text: 'Find buyers, distributors and partners who fit what you make.',
+    text: 'Find buyers and partners.',
     name: 'Find Buyers & Partners',
     icon: (
       <>
@@ -19,7 +20,7 @@ const starts = [
   {
     href: '/plan?job=sourcing',
     title: 'Buy products or machines',
-    text: 'Find suppliers. Compare price quotes with clear terms.',
+    text: 'Find suppliers. Compare price quotes.',
     name: 'Find Suppliers & Products',
     icon: (
       <>
@@ -31,7 +32,7 @@ const starts = [
   {
     href: '/plan?job=delegations',
     title: 'Lead a group trip',
-    text: "Plan the programme and each company's meetings.",
+    text: 'Plan the programme and meetings.',
     name: 'Organise a Delegation',
     icon: (
       <>
@@ -46,36 +47,60 @@ const starts = [
 
 const steps = [
   ['Say what you need', 'What you want to buy, sell or organise, and when.'],
-  ['Find the right companies', 'We look at the whole market, not only who attends one fair.'],
-  ['Review before you meet', 'See why each company fits, what it states and what has evidence.'],
-  ['Meet and follow up', 'Plan meetings and visits. Track what happens next.'],
+  ['Find the right companies', 'We look at the whole market, not only one fair.'],
+  ['Review before you meet', 'See why each company fits and what has evidence.'],
+  ['Meet and follow up', 'Plan meetings. Track what happens next.'],
 ] as const;
 
-const labels = [
-  ['Self-declared', 'unknown', 'Stated by the company'],
-  ['Evidence available', 'info', 'Proof was provided'],
-  ['Verified', 'positive', 'Checked by a defined process'],
-  ['Derived', 'caution', 'Worked out from available data'],
-  ['Outcome observed', 'positive', 'A real result was recorded'],
+const example = [
+  ['Makes cotton knitwear', 'Self-declared'],
+  ['Factory certificate on file', 'Evidence available'],
+  ['Business address checked', 'Verified'],
+  ['Likely fit for a first order', 'Derived'],
+  ['Meeting held, sample requested', 'Outcome observed'],
 ] as const;
+
+function ExampleCard({ className }: { className: string }) {
+  return (
+    <aside className={`guide-example ${className}`} aria-label="Example of a company card">
+      <p className="label">EXAMPLE ONLY, NOT A REAL COMPANY</p>
+      <h2>What you see for each company</h2>
+      <ul>
+        {example.map(([text, label]) => (
+          <li key={label}>
+            <span>{text}</span>
+            <FactLabel label={label} />
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}
 
 export default function Home() {
   return (
     <PublicShell className="ux-guide-home">
       <LegacyHashRedirect />
       <section className="guide-hero" aria-labelledby="home-title">
-        <p className="label">CROSS-BORDER MARKET ACCESS</p>
-        <h1 id="home-title">
-          Find the right market.
-          <br />
-          Meet the right people.
-          <br />
-          <em>Know what to do next.</em>
-        </h1>
-        <p className="guide-lead">
-          Say what you want to buy, sell or organise. See which companies fit, what is proven about
-          them, and what to do next.
-        </p>
+        <div className="guide-hero-copy">
+          <p className="label">CROSS-BORDER MARKET ACCESS</p>
+          <h1 id="home-title">
+            Find the right market.
+            <br />
+            Meet the right people.
+            <br />
+            <em>Know what to do next.</em>
+          </h1>
+          <p className="guide-lead">
+            Say what you want to buy, sell or organise. We show which companies fit, what is proven
+            about them and what to do next.
+          </p>
+        </div>
+        <ExampleCard className="guide-example-hero" />
+      </section>
+
+      <section className="guide-start" aria-label="Choose what you want to do">
+        <p className="label">CHOOSE ONE TO START</p>
         <nav className="guide-choices" aria-label="Choose your commercial objective">
           {starts.map((start) => (
             <Link prefetch={false} key={start.href} href={start.href}>
@@ -87,7 +112,10 @@ export default function Home() {
               <span className="guide-choice-text">
                 <strong>{start.title}</strong>
                 <span>{start.text}</span>
-                <span className="label">{start.name}</span>
+                <span className="label guide-choice-name">{start.name}</span>
+              </span>
+              <span className="guide-choice-start" aria-hidden="true">
+                Start <Arrow />
               </span>
               <span className="guide-choice-go" aria-hidden="true">
                 <Arrow />
@@ -95,9 +123,14 @@ export default function Home() {
             </Link>
           ))}
         </nav>
-        <Link prefetch={false} className="guide-other" href="/plan">
-          Something else? Tell us your business goal <Arrow />
-        </Link>
+        <div className="guide-start-more">
+          <Link prefetch={false} className="button-secondary" href="/plan">
+            Something else? Tell us your business goal <Arrow />
+          </Link>
+          <p>
+            Corridra does not promise orders. We do research, review, introductions and meetings.
+          </p>
+        </div>
       </section>
 
       <section className="guide-steps" aria-labelledby="steps-title">
@@ -117,33 +150,39 @@ export default function Home() {
             </li>
           ))}
         </ol>
-        <p className="guide-boundary">
-          Corridra does not promise orders. We work on what we can control: research, review,
-          introductions and meetings.
-        </p>
+        <Link prefetch={false} className="text-link" href="/how-it-works">
+          See the full process <Arrow />
+        </Link>
       </section>
 
       <section className="guide-facts" aria-labelledby="facts-title">
-        <div>
-          <p className="label">WHAT WE SHOW YOU</p>
-          <h2 id="facts-title">Every fact says where it comes from.</h2>
-          <p className="guide-lead">
-            You always see whether a statement is only claimed, or has proof behind it.
-          </p>
-          <Link prefetch={false} className="text-link" href="/trust">
-            How we label facts <Arrow />
-          </Link>
-        </div>
+        <p className="label">WHAT WE SHOW YOU</p>
+        <h2 id="facts-title">Every fact says where it comes from.</h2>
+        <p className="guide-lead">
+          You always see whether a statement is only claimed, or has proof behind it.
+        </p>
+        <ExampleCard className="guide-example-phone" />
         <ul>
-          {labels.map(([name, tone, line]) => (
-            <li key={name}>
-              <span className="ux-status" data-tone={tone}>
-                {name}
-              </span>
-              <span>{line}</span>
+          {factLabels.map((fact) => (
+            <li key={fact.label}>
+              <FactLabel label={fact.label} />
+              <span>{fact.line}</span>
             </li>
           ))}
         </ul>
+        <Link prefetch={false} className="text-link" href="/trust">
+          How we label facts <Arrow />
+        </Link>
+      </section>
+
+      <section className="guide-band" aria-label="Start a request">
+        <div>
+          <h2>Not sure where to start?</h2>
+          <p>Tell us your goal in your own words. You do not need an account to begin.</p>
+        </div>
+        <Link prefetch={false} className="primary-link" href="/plan">
+          Start a request
+        </Link>
       </section>
     </PublicShell>
   );

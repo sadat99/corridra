@@ -1,6 +1,4 @@
 'use client';
-import { Arrow } from './arrow';
-import { ListenButton } from './listen-button';
 
 import Link from 'next/link';
 
@@ -60,12 +58,8 @@ export function SiteHeader() {
         <Link prefetch={false} href="/signin" onClick={close}>
           Sign in
         </Link>
-        <ListenButton />
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
           Start a request <span className="sr-only">(sample request)</span>
-          <span aria-hidden="true">
-            <Arrow />
-          </span>
         </Link>
       </nav>
     </header>

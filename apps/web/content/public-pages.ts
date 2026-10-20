@@ -1,9 +1,16 @@
+import type { factLabels } from '../components/fact-label';
+
 export type PublicPageContent = {
   label: string;
   title: string;
   description: string;
   introduction: { title: string; text: string };
-  sections: { title: string; text: string }[];
+  /** The steps of the approach. With a `tag`, each one is an evidence label row instead. */
+  sections: { title: string; text: string; tag?: (typeof factLabels)[number]['label'] }[];
+  /** Splits the steps into named groups of equal size. */
+  groups?: string[];
+  /** Short statements shown as cards in the closing section. */
+  statements?: string[];
   closing: { title: string; text: string };
   cta?: string;
   intakeJob?: string;
@@ -28,30 +35,30 @@ export type PublicPageContent = {
 export const publicPages: Record<string, PublicPageContent> = {
   sell: {
     label: 'SELL IN A NEW MARKET',
-    title: 'You are already paying to be in the market. Make the trip commercially useful.',
+    title: 'Make the trip commercially useful.',
     description:
-      'We’re building a way for a Bangladesh company to identify and qualify buyers, distributors and partners in Spain and the EU before it arrives, then follow the relationship after it leaves.',
+      'We are building a way to find and qualify buyers in Spain and the EU before you arrive, and to follow up after you leave.',
     introduction: {
-      title: 'A booth can give you visibility. It cannot decide who you should meet.',
-      text: 'The right conversation starts with your offer, the market you want to reach and a reason for the other company to take an interest. An attendee list is only one place to look.',
+      title: 'A booth gives visibility. It does not decide who you meet.',
+      text: 'Start with your offer and the buyer you want. An attendee list is only one place to look.',
     },
     sections: [
       {
         title: 'Before the trip',
-        text: 'Define the target profile. Research beyond the attendee list. Qualify fit, record the evidence and prepare outreach with a clear reason to meet.',
+        text: 'Define your target buyer. Check fit and evidence. Prepare a reason to meet.',
       },
       {
         title: 'While you are there',
-        text: 'Build an agenda around relevant conversations. Capture what was discussed, what is still uncertain and the next action.',
+        text: 'Meet the right people. Note what was said, what is open and the next step.',
       },
       {
         title: 'After you return',
-        text: 'Follow requests for quotations, samples and proposals through to a decision. Keep the owner and next step visible.',
+        text: 'Follow quotes, samples and proposals to a decision. Give each next step one owner.',
       },
     ],
     closing: {
       title: 'Fewer irrelevant meetings. More reason to meet.',
-      text: 'Corridra will not promise orders. Research, qualification and execution will be scoped around the objective agreed for each mission.',
+      text: 'Corridra does not promise orders.',
     },
     cta: 'Plan my mission',
     route: {
@@ -61,7 +68,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     },
     reverse: {
       title: 'It also works the other way.',
-      text: 'Most missions start with a Bangladesh company selling in Spain and the EU. The same method works in reverse: a Spanish or EU seller can reach suitable buyers in Bangladesh, with products chosen to fit the Bangladesh market. Spain to Bangladesh work is set up and reviewed separately for each case.',
+      text: 'A Spanish or EU seller can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
       cta: 'Plan a mission from Spain or the EU',
       href: '/plan?companyCountry=ES&marketCode=BD&job=buyers',
       scopeLabel: 'Read the Spain to Bangladesh scope',
@@ -72,8 +79,8 @@ export const publicPages: Record<string, PublicPageContent> = {
       items: [
         'Who the buyer is and why they fit your offer.',
         'What the buyer stated, and what has evidence.',
-        'What was discussed in the meeting and what is still uncertain.',
-        'Who owns the next step, and what became business afterwards.',
+        'What was discussed and what is still open.',
+        'Who owns the next step, and what became business.',
       ],
     },
     related: { href: '/how-it-works', label: 'See the planned process' },
@@ -82,28 +89,28 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'SOURCE SUPPLIERS',
     title: 'Visit fewer suppliers. Visit the ones that fit.',
     description:
-      'Start with your requirements. We’re building sourcing missions around a short list worth investigating, rather than a directory to work through.',
+      'Start with your requirements. We are building sourcing around a short list worth visiting, not a directory.',
     introduction: {
       title: 'Requirements before introductions.',
-      text: 'Product, capacity, order size, evidence and timing all matter. A supplier can look relevant on paper and still be wrong for the work you need done.',
+      text: 'A supplier can look right on paper and still be wrong for the work.',
     },
     sections: [
       {
         title: 'Define what fits',
-        text: 'Set out the product, volume, delivery window and evidence you need. Keep the requirements specific enough to rule out unsuitable companies.',
+        text: 'Set the product, volume, delivery window and evidence you need.',
       },
       {
         title: 'Understand the shortlist',
-        text: 'See why a supplier fits, what it has declared, which supporting evidence is available and what remains unverified.',
+        text: 'See why a supplier fits, what it claims and what is still unverified.',
       },
       {
         title: 'Make factory days count',
-        text: 'Plan visits around relevant factories, travel time and open questions. Record sample decisions, evidence gaps and next steps while the details are fresh.',
+        text: 'Plan visits around the right factories. Record samples, gaps and next steps.',
       },
     ],
     closing: {
       title: 'A visit should answer a question.',
-      text: 'Qualification cannot remove every sourcing risk. The planned process makes the gaps visible so you can decide what to inspect, request or confirm.',
+      text: 'Qualification cannot remove every risk. We make the gaps visible.',
     },
     cta: 'Plan a sourcing mission',
     route: {
@@ -126,28 +133,28 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'ENTER A NEW MARKET',
     title: 'Enter an unfamiliar market without entering it blind.',
     description:
-      'We’re building support for finding customers, distributors and local relationships, with local execution when remote research is not enough.',
+      'We are building support for finding customers and partners, with local help when remote research is not enough.',
     introduction: {
-      title: 'You do not need a local office to start learning like you have one.',
-      text: 'A first market visit should test something concrete: who needs your offer, how buying works, which partners fit and what it will take to move forward.',
+      title: 'You do not need a local office to start learning.',
+      text: 'A first visit should test something concrete: who needs your offer, how buying works and which partners fit.',
     },
     sections: [
       {
         title: 'Find the right relationships',
-        text: 'Define the customer or distributor you need. Research the fit before treating an introduction as an opportunity.',
+        text: 'Define the customer or distributor you need. Check fit before calling it an opportunity.',
       },
       {
         title: 'Validate the market',
-        text: 'Use a business visit to test assumptions and collect useful evidence. Keep observations separate from conclusions.',
+        text: 'Use a visit to test assumptions. Keep what you saw apart from what you conclude.',
       },
       {
         title: 'Follow the opportunity',
-        text: 'Keep the conversation, introduction credit and next action connected after the visit. Local follow-through is part of the planned approach.',
+        text: 'Keep the conversation and the next action connected after the visit.',
       },
     ],
     closing: {
       title: 'Bangladesh without the usual black box.',
-      text: 'Reverse market-entry directions can be configured selectively. Define the actual country and commercial objective. Each operating offer needs its own reviewed scope.',
+      text: 'Reverse directions are set up case by case. Each offer needs its own reviewed scope.',
     },
     cta: 'Plan a market-entry mission',
     route: {
@@ -160,7 +167,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       items: [
         'What you set out to test, and what was observed.',
         'Who you met and why they fit.',
-        'What you concluded, kept separate from what you observed.',
+        'What you concluded, kept apart from what you observed.',
         'Who owns the next step.',
       ],
     },
@@ -170,28 +177,28 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'RUN A TRADE MISSION',
     title: 'Give every participant a reason to be in the room.',
     description:
-      'We’re building trade missions around participant objectives, qualified commercial agendas and follow-through after the delegation returns.',
+      'We are building missions around each participant’s goal, a qualified agenda and follow-up after the trip.',
     introduction: {
       title: 'A shared itinerary is not a shared objective.',
-      text: 'Each participant brings a different offer, requirement or target market. A useful programme connects those objectives to relevant companies and clear next steps.',
+      text: 'Each participant has a different goal. A good programme links each goal to the right companies.',
     },
     sections: [
       {
         title: 'Start with each participant',
-        text: 'Understand the commercial objective, then define a target profile. Programme research should follow those profiles.',
+        text: 'Learn each goal, then define who they should meet.',
       },
       {
         title: 'Build the commercial agenda',
-        text: 'Qualify fit, prepare the context for introductions and coordinate meetings around a reason for both sides to participate.',
+        text: 'Check fit, prepare introductions and plan meetings with a reason for both sides.',
       },
       {
         title: 'Report what followed',
-        text: 'Track held meetings, opportunities, quotation requests and proposals. Keep contracts, invoices and collected cash as distinct outcomes.',
+        text: 'Track meetings, quotes and proposals. Keep contracts, invoices and cash separate.',
       },
     ],
     closing: {
       title: 'A trade mission should produce more than attendance.',
-      text: 'The planned approach gives organisers visibility into commercial progression without requiring them to replace their institutional relationships.',
+      text: 'Organisers see commercial progress without replacing their own relationships.',
     },
     cta: 'Plan a trade mission',
     route: {
@@ -213,49 +220,48 @@ export const publicPages: Record<string, PublicPageContent> = {
   'how-it-works': {
     label: 'HOW IT WORKS',
     title: 'One commercial objective. One mission. A clear record of what happens next.',
-    description:
-      'This is the process we’re building, from the first objective to the recorded outcome.',
+    description: 'The process we are building, from first goal to recorded outcome.',
     introduction: {
       title: 'Begin with a decision you need to make.',
-      text: 'Selling, sourcing and entering a market need different targets. A mission gives the work a clear objective, scope and travel or delivery window.',
+      text: 'A mission gives the work a clear goal, scope and window.',
     },
+    groups: ['Before you meet', 'Meet and follow up'],
     sections: [
+      { title: 'Intent', text: 'Say what you want and what a good result looks like.' },
       {
-        title: '01 / Intent',
-        text: 'Define what you want to achieve and what a useful result would look like.',
+        title: 'Market',
+        text: 'Choose the market and window. Describe your offer or need.',
       },
       {
-        title: '02 / Market',
-        text: 'Choose the market and window. Record the offer or requirement in enough detail to guide the work.',
+        title: 'Counterparties',
+        text: 'Research companies that could fit, beyond event lists and old contacts.',
       },
       {
-        title: '03 / Counterparties',
-        text: 'Research companies that could fit. Look beyond event lists and existing contacts.',
+        title: 'Qualification',
+        text: 'Separate claims, evidence, completed checks and open questions.',
+      },
+      { title: 'Access', text: 'Prepare introductions with context for the other side.' },
+      {
+        title: 'Execution',
+        text: 'Coordinate meetings and local work. Record what happened and what is next.',
       },
       {
-        title: '04 / Qualification',
-        text: 'Assess relevance. Separate declarations, supporting evidence, completed checks and open questions.',
+        title: 'Progression',
+        text: 'Follow opportunities, quotes, samples and proposals. Keep owners and timing visible.',
       },
       {
-        title: '05 / Access',
-        text: 'Prepare relevant outreach and introductions with context for the other party.',
+        title: 'Outcome',
+        text: 'Record commitments, contracts, invoices and cash separately.',
       },
-      {
-        title: '06 / Execution',
-        text: 'Coordinate meetings and scoped local work. Capture what happened and the next agreed action.',
-      },
-      {
-        title: '07 / Progression',
-        text: 'Follow opportunities, quotations, samples and proposals. Keep responsibility and timing visible.',
-      },
-      {
-        title: '08 / Outcome',
-        text: 'Record commitments, contracts, invoices and collected cash separately. Report the outcome the evidence supports.',
-      },
+    ],
+    statements: [
+      'A database contact is not a buyer.',
+      'A meeting is not a sale.',
+      'A contract is not cash.',
     ],
     closing: {
       title: 'A meeting is a start. What follows matters.',
-      text: 'A database contact is not a buyer. A meeting is not a sale. A contract is not cash. Progress needs a clear record of what actually happened.',
+      text: 'Progress needs a clear record of what happened.',
     },
     related: { href: '/trust', label: 'See how claims and evidence differ' },
   },
@@ -263,28 +269,28 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'CORRIDRA NETWORK',
     title: 'Your local knowledge can have commercial value.',
     description:
-      'We’re building a network for scoped local work, with a clear task, evidence requirement and reward before anyone accepts.',
+      'We are building a network for scoped local work, with a clear task, evidence and reward before you accept.',
     introduction: {
       title: 'Some market intelligence cannot be collected from a desk.',
-      text: 'A local business check, a visit or a relevant introduction can answer questions that remote research cannot. The task needs to be specific enough to know when it is done.',
+      text: 'A local check, visit or introduction can answer what remote research cannot.',
     },
     sections: [
       {
         title: 'See the task before you say yes',
-        text: 'The planned task record will explain the location, timing, required capability, evidence and reward terms. No task should depend on a vague promise.',
+        text: 'Each task will state place, timing, evidence and reward. No vague promises.',
       },
       {
         title: 'Contribute what you can support',
-        text: 'Work may include business checks, visits, samples, meeting support or introductions. Eligibility and evidence requirements will depend on the task.',
+        text: 'Work may include checks, visits, samples or introductions. Eligibility depends on the task.',
       },
       {
         title: 'Your relationship remains your relationship',
-        text: 'The planned approach preserves selective visibility and introduction attribution. Having a valuable relationship should not require handing over a contact list.',
+        text: 'You control who sees your contacts, and you keep the credit for introductions.',
       },
     ],
     closing: {
       title: 'Useful work. Clear terms.',
-      text: 'Paid participation will depend on local law, work status and tax requirements. There are no open tasks or published reward terms at this stage.',
+      text: 'There are no open tasks or published rewards yet. Paid work will depend on local law and tax.',
     },
     cta: 'See what is coming',
     related: { href: '/trust', label: 'Read the evidence approach' },
@@ -293,28 +299,28 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'FOR INSTITUTIONS',
     title: 'Stop measuring trade missions by attendance.',
     description:
-      'We’re building a way to turn participant objectives into qualified agendas and to track commercial progression after the programme ends.',
+      'We are building a way to turn participant goals into qualified agendas and to track business progress after the programme.',
     introduction: {
-      title: 'A programme can be busy and still produce very little business.',
-      text: 'Attendance and meetings show activity. They do not explain whether relevant opportunities progressed or whether any cash was collected.',
+      title: 'A programme can be busy and still produce little business.',
+      text: 'Attendance shows activity. It does not show whether opportunities progressed or cash was collected.',
     },
     sections: [
       {
         title: 'Before the programme',
-        text: 'Capture participant objectives, define target profiles and research relevant companies. Qualify fit before setting the meeting agenda.',
+        text: 'Capture each participant’s goal. Research and qualify companies before setting the agenda.',
       },
       {
         title: 'During and after',
-        text: 'Record held meetings, follow-up owners and open decisions. Keep the programme connected to what participants do next.',
+        text: 'Record meetings, owners and open decisions. Stay connected to what participants do next.',
       },
       {
         title: 'Measure the progression',
-        text: 'Report participation, held meetings, qualified opportunities, quotation requests, proposals and contracts. Attributable cash needs its own evidence and denominator.',
+        text: 'Report meetings, qualified opportunities, quotes, proposals and contracts. Cash needs its own evidence.',
       },
     ],
     closing: {
       title: 'Keep your institutional relationships. Add execution visibility.',
-      text: 'The planned service supports programme delivery and outcome reporting. It does not promise sales or claim results from programmes that have not taken place.',
+      text: 'We support delivery and reporting. We do not promise sales or claim results from programmes that have not taken place.',
     },
     cta: 'Plan an institutional mission',
     related: { href: '/trade-missions', label: 'Explore trade missions' },
@@ -322,42 +328,42 @@ export const publicPages: Record<string, PublicPageContent> = {
   trust: {
     label: 'TRUST & EVIDENCE',
     title: 'Know what is claimed. Know what is evidenced. Know the difference.',
-    description:
-      'These are the distinctions Corridra is being built around. A repeated claim does not become a verified fact.',
+    description: 'A repeated claim does not become a verified fact.',
     introduction: {
       title: 'Claims are not the same as evidence.',
-      text: 'The planned record keeps the source, assertion, supporting material and checks visible. An evidence label explains the status of information, rather than replacing your judgement.',
+      text: 'Every label shows the status of a fact. It does not replace your judgement.',
     },
     sections: [
       {
         title: 'Self-declared',
-        text: 'A company or person has made an assertion. It has not been established by an independent check.',
+        tag: 'Self-declared',
+        text: 'The company said so. Nobody independent has checked.',
       },
       {
         title: 'Evidence available',
-        text: 'Supporting material has been identified. Its existence alone does not mean the claim is verified.',
+        tag: 'Evidence available',
+        text: 'Proof was provided. That alone does not make the claim verified.',
       },
       {
         title: 'Verified',
-        text: 'A defined verification process has been completed. The scope, method and limits of that check still matter.',
+        tag: 'Verified',
+        text: 'A defined check was completed. Its scope and limits still matter.',
       },
       {
         title: 'Derived',
-        text: 'A conclusion has been drawn from other information. It is an inference, not a directly observed fact.',
+        tag: 'Derived',
+        text: 'Worked out from other information. It is an inference, not an observed fact.',
       },
       {
         title: 'Outcome observed',
-        text: 'A real commercial event has been recorded with supporting evidence. A meeting, contract, invoice and cash receipt remain different events.',
+        tag: 'Outcome observed',
+        text: 'A real commercial event was recorded with proof. A meeting, contract, invoice and cash receipt are different events.',
       },
     ],
-    closing: {
-      title: 'AI can help reason. It cannot redefine reality.',
-      text: 'Planned AI assistance can support research and extraction. It cannot decide permissions, control money or declare a fact verified. Consequential actions will require the relevant controls and human review.',
-    },
     progress: {
       label: 'WHAT COUNTS AS PROGRESS',
       title: ['A meeting is not a sale.', 'A contract is not cash.'],
-      text: 'The mission record follows distinct commercial events. Each step needs its own evidence.',
+      text: 'Each step needs its own evidence.',
       steps: [
         'Identified',
         'Qualified',
@@ -372,34 +378,38 @@ export const publicPages: Record<string, PublicPageContent> = {
         'Cash collected',
       ],
     },
-    related: { href: '/how-it-works', label: 'Follow the planned mission process' },
+    closing: {
+      title: 'AI can help reason. It cannot redefine reality.',
+      text: 'AI can support research. It cannot decide permissions, handle money or declare a fact verified. Consequential actions need human review.',
+    },
+    related: { href: '/how-it-works', label: 'Follow the planned process' },
   },
   about: {
     label: 'ABOUT CORRIDRA',
     title: 'Make market entry deliberate.',
     description:
-      'Corridra is being built for cross-border market access: finding relevant companies, creating access and following the commercial relationship.',
+      'Corridra is being built for cross-border market access: find the right companies, get access, follow the relationship.',
     introduction: {
-      title: 'The difficult work sits between intention and outcome.',
-      text: 'Companies already travel, attend fairs and collect contacts. The questions remain: who is worth meeting, why would they meet you and what happens afterwards?',
+      title: 'The hard work sits between intention and outcome.',
+      text: 'Companies travel, attend fairs and collect contacts. Who is worth meeting, and what happens next?',
     },
     sections: [
       {
         title: 'Start with a commercial objective',
-        text: 'Selling, sourcing and market entry are different jobs. The work should start with what the company needs to achieve.',
+        text: 'Selling, sourcing and entering a market are different jobs.',
       },
       {
         title: 'Earn depth before claiming breadth',
-        text: 'Initial directions include Bangladesh–China, Bangladesh–Spain and Bangladesh–EU. Each requires its own reviewed scope. No operational global coverage is claimed.',
+        text: 'We start with Bangladesh to China, Spain and the EU. Each needs its own reviewed scope. We claim no global coverage.',
       },
       {
         title: 'Keep the evidence close',
-        text: 'Record the reason for a selection, what is known and what remains uncertain. Measure progress using actual commercial events.',
+        text: 'Record why a company was chosen, what is known and what is open.',
       },
     ],
     closing: {
       title: 'Start with one objective.',
-      text: 'Explore the planned approach, then plan a mission when you are ready.',
+      text: 'Explore the approach, then plan a mission when you are ready.',
     },
     related: { href: '/how-it-works', label: 'See how it will work' },
   },
@@ -408,29 +418,28 @@ export const publicPages: Record<string, PublicPageContent> = {
 publicPages.machinery = {
   label: 'PROCURE MACHINERY',
   title: 'A machine is useful only if it fits the work.',
-  description:
-    'Define the application, capacity, site constraints and acceptance questions before comparing suppliers or planning a technical visit.',
+  description: 'Define the application, capacity and site limits before comparing suppliers.',
   introduction: {
     title: 'Specification before price.',
-    text: 'Original offers remain separate from derived comparisons. Installation, training, spares, warranty and unanswered technical questions stay visible.',
+    text: 'Keep original offers apart from comparisons. Keep installation, spares, warranty and open questions visible.',
   },
   sections: [
     {
       title: 'Define the requirement',
-      text: 'Start with purpose, key parameters, budget and timing. Add utilities, integration and acceptance criteria as the discussion develops.',
+      text: 'Start with purpose, key parameters, budget and timing.',
     },
     {
       title: 'Compare the actual offers',
-      text: 'Retain the original currency and terms. Missing quantities, specifications or shipping scope make a comparison incomplete.',
+      text: 'Keep each original currency and term. Missing scope makes a comparison incomplete.',
     },
     {
       title: 'Use visits to resolve questions',
-      text: 'A factory or technical discussion needs a named owner, an agreed purpose and an actual confirmed meeting. Interest alone does not confirm a visit.',
+      text: 'A visit needs a named owner, a purpose and a confirmed meeting. Interest alone is not a visit.',
     },
   ],
   closing: {
     title: 'A documented decision, with its limits.',
-    text: 'Record the evidence behind a selection and what is still unknown. Corridra does not certify a machine or place an order for you.',
+    text: 'Record the evidence behind a choice and what is unknown. Corridra does not certify a machine or place an order.',
   },
   intakeJob: 'machinery_procurement',
   cta: 'Prepare a machinery example request',
@@ -439,29 +448,28 @@ publicPages.machinery = {
 publicPages['business-trips'] = {
   label: 'PLAN A BUSINESS TRIP',
   title: 'Give each day a commercial purpose.',
-  description:
-    'Work backwards from the conversations, evidence and decisions the trip should produce.',
+  description: 'Work backwards from the conversations and decisions the trip should produce.',
   introduction: {
     title: 'An itinerary is part of a mission.',
-    text: 'Company location, target market, meeting venue and shipment route are different facts. Keep each in its proper context.',
+    text: 'Company location, target market, venue and shipment route are different facts. Keep each separate.',
   },
   sections: [
     {
       title: 'Before departure',
-      text: 'Define the objective, shortlist relevant counterparties and identify the questions that need a conversation or site visit.',
+      text: 'Set the objective, shortlist companies and list the questions to answer.',
     },
     {
       title: 'During the visit',
-      text: 'Separate proposed engagements from confirmed meetings. Record what happened and the person responsible for the next action.',
+      text: 'Separate proposed from confirmed meetings. Record who owns each next action.',
     },
     {
       title: 'After the trip',
-      text: 'Follow the relationship through requests, offers and observed outcomes. Attendance alone is not commercial progress.',
+      text: 'Follow requests, offers and outcomes. Attendance is not progress.',
     },
   ],
   closing: {
     title: 'Plan the work around the journey.',
-    text: 'No travel booking or guaranteed meeting service is available. The current test flow lets you describe the commercial mission using invented details.',
+    text: 'No travel booking or guaranteed meetings. This test flow lets you describe a mission with invented details.',
   },
   intakeJob: 'business_trips',
   cta: 'Prepare a business-trip example request',
