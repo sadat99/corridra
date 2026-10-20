@@ -4597,3 +4597,273 @@ th {
     margin-left: 0;
   }
 }
+
+/* Other pages: one page heading, start page, route detail, notice, not found. Tokens only. */
+.ux-page-heading {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-bottom: var(--space-4);
+  padding-block: var(--space-12) var(--space-6);
+  border-bottom: 0;
+}
+.ux-page-heading h1 {
+  max-width: 24ch;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-h1);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+}
+.ux-page-heading .label {
+  margin: 0;
+  color: var(--brand-deep);
+}
+.guide-lost {
+  min-height: 50vh;
+  align-items: center;
+}
+.guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  padding-block: var(--space-4) var(--space-12);
+}
+.guide-links .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+/* Start here: two big choices, then who signs in where. */
+.ux-start {
+  gap: var(--space-8);
+  max-width: none;
+  padding-bottom: var(--space-12);
+}
+.ux-start-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ux-start-grid .detail-card {
+  padding: var(--space-8);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+  box-shadow: var(--shadow-1);
+}
+.ux-start-grid h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.ux-start-grid p {
+  font-size: var(--text-lg);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.ux-start-grid .primary-link,
+.ux-start-grid .button-secondary {
+  min-height: var(--guided-touch-large);
+}
+.ux-start-signin {
+  padding: var(--space-6) var(--space-8);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+.ux-start-signin h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+.ux-start-signin ul {
+  border-top: 1px solid var(--line);
+}
+.ux-start-signin li {
+  border-bottom: 1px solid var(--line);
+}
+.ux-start-signin li:last-child {
+  border-bottom: 0;
+}
+.ux-start-signin h3 {
+  font-size: var(--text-xl);
+  font-weight: 650;
+}
+.ux-start-signin li p {
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+.ux-start-foot .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+/* Route detail: three equal cards and one quiet note. */
+.guide-detail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  padding-block: var(--space-6);
+}
+.guide-detail-card {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+.guide-detail-card h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.guide-detail-card ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-detail-card li {
+  padding-block: var(--space-3);
+  font-size: var(--text-base);
+  border-top: 1px solid var(--line);
+}
+.guide-detail-card li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.guide-detail-card p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.guide-detail-card dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.guide-detail-card dt {
+  justify-self: start;
+  margin-top: var(--space-3);
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--unknown);
+  background: var(--unknown-surface);
+}
+.guide-detail-card dt:first-child {
+  margin-top: 0;
+}
+.guide-detail-card dt[data-tone='info'] {
+  color: var(--info);
+  background: var(--info-surface);
+}
+.guide-detail-card dt[data-tone='caution'] {
+  color: var(--caution);
+  background: var(--caution-surface);
+}
+.guide-detail-card dt[data-tone='positive'] {
+  color: var(--positive);
+  background: var(--positive-surface);
+}
+.guide-detail-card dd {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.guide-note {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-bottom: var(--space-12);
+  padding: var(--space-5) var(--space-6);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}
+.guide-note p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* Notice document: heading left, text right, hairlines between. */
+.guide-doc {
+  display: grid;
+  margin-bottom: var(--space-12);
+  border-top: 1px solid var(--line);
+}
+.guide-doc article {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(0, 3fr);
+  gap: var(--space-8);
+  padding-block: var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+.guide-doc h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.guide-doc article > div {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 68ch;
+}
+.guide-doc p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.guide-doc a {
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+@media (max-width: 1000px) {
+  .guide-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-doc article {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+}
+@media (max-width: 700px) {
+  .ux-page-heading {
+    padding-block: var(--space-6) var(--space-4);
+  }
+  .ux-start-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-start-grid .detail-card,
+  .ux-start-signin {
+    padding: var(--space-5);
+  }
+  .ux-start-grid .primary-link,
+  .ux-start-grid .button-secondary {
+    width: 100%;
+  }
+}
+
+.guide-note .text-link {
+  margin-top: 0;
+}
+.guide-page-actions .primary-link,
+.guide-page-actions .button-secondary {
+  text-align: center;
+}
