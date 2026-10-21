@@ -1,0 +1,104 @@
+{
+  "prs": [114, 117],
+  "pr114": {
+    "merge": "92d11881618ddd6481e8c942de1265b2ae24a180",
+    "testedHead": "a4a616ad2f62db944d905d123dbbf71e0d1803b0",
+    "treeEqual": true,
+    "ci": 39534003098,
+    "codeql": 39534003257,
+    "deployment": "dpl_HkTBCDbGy4D8xZw8FktCTGcZ4zTT"
+  },
+  "pr117": {
+    "merge": "f189c79ed1c1d6da12da693632c72307514371b9",
+    "testedHead": "334176c8c91c1a660ab8ba66b9dbdab3808539bd",
+    "treeEqual": true,
+    "ci": 39555096753,
+    "codeql": 39555097039,
+    "deployment": "dpl_ZTPe5UrVaXpYYiqxNENdwesVNiXb"
+  },
+  "production": {
+    "state": "READY",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "manualDeploy": false
+  },
+  "liveReadOnlyProbes": {
+    "origin": "https://corridra.vercel.app",
+    "observedAt": "2026-10-21T06:41:55.994Z",
+    "results": [
+      {
+        "path": "/",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/how-it-works",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/corridors",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/trust",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/account",
+        "status": 307,
+        "expected": 307,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": "https://c.obsidianglobal.studio/account"
+      },
+      {
+        "path": "/api/customer-workspaces",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-programme-terms",
+        "status": 503,
+        "expected": 503,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/workspace/delivery",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      }
+    ]
+  },
+  "limits": [
+    "Authenticated managed-provider and screen-reader acceptance unverified",
+    "Source release does not install modules or enable real admission"
+  ]
+}

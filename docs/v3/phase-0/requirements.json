@@ -3661,7 +3661,7 @@
       "tests/operator/v3-programme-economics-ui.spec.ts",
       "tests/browser/v3-programme-economics-gate.spec.ts"
     ],
-    "nextAction": "Organiser-recorded fees, payments, planned and actual costs, obligations, Corridra service fees and per-currency margins exist as source and local tests (ADR046), and fill rate, waiting list length, terms acceptance rate and shared satisfaction and outcome figures exist as an organiser report computed from the programme's own records (ADR053, synthetic, unverified, no money moved). Bulk pricing, refunds, invoicing and any real collection remain missing or gated."
+    "nextAction": "Organiser-recorded fees, payments, planned and actual costs, obligations, Corridra service fees and per-currency margins exist as source and local tests (ADR046); fill rate, waiting list, terms acceptance and shared satisfaction and outcome figures exist as an organiser report (ADR053); versioned fee schedules, all-or-nothing bulk fees into the ledger, per-currency repeat revenue across editions and audited owner and admin CSV exports exist as default-off source and local tests (ADR054). All synthetic, unverified, no money moved. Refunds, invoicing, tax, currency conversion and any real collection remain missing or gated."
   },
   {
     "id": "V3-06-008",
@@ -3701,7 +3701,7 @@
       "tests/operator/v3-programme-templates-ui.spec.ts",
       "tests/browser/v3-programme-templates-gate.spec.ts"
     ],
-    "nextAction": "Organiser templates (a default purpose, capacity, task checklist and planned costs) can be written or captured, versioned, retired and applied to an empty or new programme as source and local tests (ADR048). Series, recurrence, cross-workspace sharing, a public library and cloning participants are not built."
+    "nextAction": "Organiser templates (ADR048) and now programme series with an explicit date list, editions created through programme creation and template application without copying participants, fees or personal data, and per-currency repeat revenue (ADR054) exist as default-off source and local tests. Rule-based recurrence, cross-workspace sharing, a public library, attaching existing programmes to a series and a qualified-meetings view (no safe read path exists) are not built."
   },
   {
     "id": "V3-06-011",

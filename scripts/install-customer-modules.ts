@@ -13,6 +13,7 @@ import { migrateCustomerProgrammeContext } from '../packages/db/src/customer-pro
 import { migrateCustomerProgrammeEconomics } from '../packages/db/src/customer-programme-economics-migrate';
 import { migrateCustomerProgrammeCoordination } from '../packages/db/src/customer-programme-coordination-migrate';
 import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-programme-templates-migrate';
+import { migrateCustomerProgrammePricing } from '../packages/db/src/customer-programme-pricing-migrate';
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
 import { migrateCustomerMemberRoles } from '../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerOrganisationLinks } from '../packages/db/src/customer-organisation-link-migrate';
@@ -61,6 +62,7 @@ const registries = [
   'customer_programme_economics_migrations',
   'customer_programme_coordination_migrations',
   'customer_programme_templates_migrations',
+  'customer_programme_pricing_migrations',
   'customer_mission_share_migrations',
   'customer_admission_migrations',
   'customer_member_role_migrations',
@@ -84,6 +86,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['programme economics', migrateCustomerProgrammeEconomics],
   ['programme coordination', migrateCustomerProgrammeCoordination],
   ['programme templates', migrateCustomerProgrammeTemplates],
+  ['programme pricing, series and exports', migrateCustomerProgrammePricing],
   ['mission sharing', migrateCustomerMissionShares],
   ['open synthetic admission', migrateCustomerAdmission],
   ['member roles and leaving', migrateCustomerMemberRoles],

@@ -7,6 +7,10 @@ import {
   customerProgrammeTemplatesEnabled,
 } from '@corridra/auth/customer-programme-templates';
 import {
+  CustomerProgrammePricingService,
+  customerProgrammePricingEnabled,
+} from '@corridra/auth/customer-programme-pricing';
+import {
   CustomerProgrammeCoordinationService,
   customerProgrammeCoordinationEnabled,
 } from '@corridra/auth/customer-programme-coordination';
@@ -268,6 +272,18 @@ function createServices() {
       authPool,
       {
         enabled: customerProgrammeTermsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerProgrammePricing: new CustomerProgrammePricingService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammePricingEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),

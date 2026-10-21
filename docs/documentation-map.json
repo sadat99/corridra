@@ -744,6 +744,11 @@
       "use": "Versioned programme terms and eligibility criteria, enforced places with an ordered waiting list, task owners and in-app reminders for independent organisers; default off"
     },
     {
+      "path": "docs/adr/0054-pricing-templates-series-and-exports.md",
+      "classification": "Architecture contract/index",
+      "use": "Pricing templates, all-or-nothing bulk fees, programme series, per-currency repeat revenue and audited CSV exports; moves no money"
+    },
+    {
       "path": "docs/adr/0051-member-roles-and-leaving.md",
       "classification": "Architecture contract/index",
       "use": "Owner-managed admin and member roles and voluntary leaving for invited workspace members; append-only history; default off"

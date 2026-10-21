@@ -6063,3 +6063,32 @@ th {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
+
+/* Pricing, series and exports: a calm three-way switch inside the planner. */
+.pricing-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-4) 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.pricing-tabs [role='tab'] {
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-2);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pricing-tabs [role='tab']:hover {
+  color: var(--brand-deep);
+  background: var(--surface-2);
+}
+.pricing-tabs [role='tab'][aria-selected='true'] {
+  color: var(--on-brand);
+  background: var(--brand-deep);
+}
