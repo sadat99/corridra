@@ -32,12 +32,14 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
     '/source',
     '/enter-market',
     '/trade-missions',
-    '/how-it-works',
     '/trust',
     '/network',
     '/institutions',
   ])
     await expect(page.locator(`footer a[href="${href}"]`).first()).toBeVisible();
+  // How it works and Routes live in the header, so the footer does not repeat them.
+  await expect(page.locator('footer a[href="/how-it-works"]')).toHaveCount(0);
+  await expect(page.locator('footer a[href="/corridors"]')).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/corridors');
   await openFineTune(page);

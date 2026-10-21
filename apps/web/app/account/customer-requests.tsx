@@ -234,7 +234,9 @@ function PrivateRequests({
         <p role="alert">Your saved requests could not be loaded. Try again.</p>
       )}
       {status === 'ready' && requests.length === 0 && (
-        <p>No saved requests yet. Choose a workspace to send your first one.</p>
+        <p className="ux-empty">
+          No saved requests yet. Choose a workspace to send your first one.
+        </p>
       )}
       {status === 'ready' &&
         requests.map((request) => (
@@ -260,7 +262,7 @@ function PrivateRequests({
                 <p>A saved request is not an accepted engagement, confirmed meeting or deal.</p>
                 <h4>Replies from the Corridra team</h4>
                 {request.progress.replies.length === 0 ? (
-                  <p>No replies yet.</p>
+                  <p className="ux-empty">No replies yet.</p>
                 ) : (
                   request.progress.replies.map((reply, index) => (
                     <div key={index}>

@@ -616,7 +616,7 @@ function ScopedCoordination(props: Props) {
 
           <h5>Attendance</h5>
           {report.participants.length === 0 ? (
-            <p>No registered participants yet.</p>
+            <p className="ux-empty">No registered participants yet.</p>
           ) : (
             <ul>
               {report.participants.map((p) => (
@@ -659,7 +659,7 @@ function ScopedCoordination(props: Props) {
 
           <h5>Tasks</h5>
           {tasks.length === 0 ? (
-            <p>No tasks yet.</p>
+            <p className="ux-empty">No tasks yet.</p>
           ) : (
             <ul>
               {tasks.map((t) => (

@@ -145,7 +145,7 @@ function ScopedAccount(
       className="delivery-view ux-saved-commercial-report"
       aria-label="My sample delegation participation"
     >
-      <a className="text-link" href="/account">
+      <a className="text-link ux-back" href="/account">
         Back to my account
       </a>
       <p>
@@ -169,7 +169,7 @@ function ScopedAccount(
         <>
           <h2>Your sample registrations</h2>
           {view.data.registrations.length === 0 ? (
-            <p>No sample registrations yet.</p>
+            <p className="ux-empty">No sample registrations yet.</p>
           ) : (
             <ul>
               {view.data.registrations.map((r) => (

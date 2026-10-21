@@ -168,7 +168,7 @@ function ScopedParticipants(props: Props) {
         <>
           <h4>Invitations</h4>
           {view.data.invitations.length === 0 ? (
-            <p>No sample invitations yet.</p>
+            <p className="ux-empty">No sample invitations yet.</p>
           ) : (
             <ul>
               {view.data.invitations.map((i) => (
@@ -212,7 +212,7 @@ function ScopedParticipants(props: Props) {
           )}
           <h4>Consented registrations</h4>
           {view.data.registrations.length === 0 ? (
-            <p>No consented registrations yet.</p>
+            <p className="ux-empty">No consented registrations yet.</p>
           ) : (
             <ul>
               {view.data.registrations.map((r) => (

@@ -49,7 +49,7 @@ export function CustomerMissions() {
           {error}
         </p>
       )}
-      {missions.length === 0 && <p>No shared missions opened yet.</p>}
+      {missions.length === 0 && <p className="ux-empty">No shared missions opened yet.</p>}
       {missions.map((m) => (
         <article key={m.token}>
           <h3>{m.label}</h3>

@@ -283,7 +283,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
         <p role="alert">Your saved commercial missions could not be loaded. Try again.</p>
       )}
       {status === 'ready' && data?.missions.length === 0 && (
-        <p>No commercial mission invitations saved yet.</p>
+        <p className="ux-empty">No commercial mission invitations saved yet.</p>
       )}
       {status === 'ready' &&
         data?.missions.map((m) => (

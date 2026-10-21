@@ -257,7 +257,7 @@ function ScopedPortfolio({ subject, issuer }: Props) {
       className="delivery-view ux-saved-commercial-report"
       aria-label="Your approved company portfolio"
     >
-      <a className="text-link" href="/account#saved-commercial-missions">
+      <a className="text-link ux-back" href="/account#saved-commercial-missions">
         Back to my commercial missions
       </a>
       <p>
