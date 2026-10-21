@@ -60,6 +60,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/contributor/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/account/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
