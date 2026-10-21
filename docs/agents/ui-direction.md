@@ -203,7 +203,9 @@ Business owners and organisers in Bangladesh and China, mostly on phones, often 
 
 Also: "Ready to start?" for readiness gates, "Routes and settings" for corridors and policies, "Work the next case" for the team queue.
 
-### Screen map (all 36 are design only, none built)
+### Original 36-screen design map (19 October snapshot)
+
+This is the planned map at approval, not current implementation status. The dated built sections below and the current V3 ledger record later increments; full screen-by-screen acceptance remains unverified.
 
 | Group                  | Screens                                                                                                                                                      | Pattern                |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |

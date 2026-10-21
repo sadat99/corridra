@@ -3592,7 +3592,7 @@
       "tests/integration/customer-member-roles.test.ts",
       "tests/operator/v3-member-roles-ui.spec.ts"
     ],
-    "nextAction": "Invitations, acceptance and revocation exist with UI and tests (ADR032). Owner-managed admin and member roles and voluntary leaving are source and local tests (ADR051), default off and not installed or released. Ownership transfer, a viewer role and managed-provider browser acceptance remain missing or unverified; no self-service collaboration release is claimed."
+    "nextAction": "Invitations, acceptance and revocation exist with UI and tests (ADR032). Owner-managed admin and member roles and voluntary leaving were merged in PR109; owner-run install 39524758195 on b6a483a reports one applied member-role migration. Flag exposure and managed-provider browser acceptance are not established by that install receipt. Ownership transfer, a viewer role and managed-provider browser acceptance remain missing or unverified; no self-service collaboration release is claimed."
   },
   {
     "id": "V3-06-004",
@@ -3631,7 +3631,7 @@
       "tests/integration/customer-programmes.test.ts",
       "docs/v3/phase-3/customer-programmes/release.json"
     ],
-    "nextAction": "PR76 exact CI346PG/118public/101protected,matching merge/READY production-preview and39live+3preview checks verified. Participant increment locally tested separately;full organiser/private mission/coordination/economics acceptance unfinished."
+    "nextAction": "Organisers can now set versioned terms, eligibility criteria and a place limit with a waiting list, give tasks to workspace members and see in-app reminders (ADR053, source and local tests, synthetic only, default off); full organiser, private mission and economics acceptance is unfinished."
   },
   {
     "id": "V3-06-006",
@@ -3641,7 +3641,7 @@
     "requirement": "| Participant invitation/onboarding workflows | Delegation SaaS viability | P0 |",
     "status": "PARTIAL",
     "evidence": ["docs/v3/phase-3/customer-participants/release.json"],
-    "nextAction": "PR77 gated invitations/consent/registration/revocation source release verified365PG/120public/113protected,44live. Full profiles/private missions/coordination/economics and actual provider acceptance unfinished."
+    "nextAction": "Participants can apply against versioned eligibility criteria, accept the exact terms version and hold a place or a waiting-list spot, with a plain reason when not eligible (ADR053, source and local tests); full profiles, private missions and actual provider acceptance are unfinished."
   },
   {
     "id": "V3-06-007",
@@ -3661,7 +3661,7 @@
       "tests/operator/v3-programme-economics-ui.spec.ts",
       "tests/browser/v3-programme-economics-gate.spec.ts"
     ],
-    "nextAction": "Organiser-recorded fees, payments, planned and actual costs, obligations, Corridra service fees and per-currency margins exist as source and local tests (ADR046, synthetic only, unverified, no money moved). Capacity, satisfaction and outcome reporting, templates, bulk pricing, refunds, invoicing and any real collection remain missing or gated."
+    "nextAction": "Organiser-recorded fees, payments, planned and actual costs, obligations, Corridra service fees and per-currency margins exist as source and local tests (ADR046), and fill rate, waiting list length, terms acceptance rate and shared satisfaction and outcome figures exist as an organiser report computed from the programme's own records (ADR053, synthetic, unverified, no money moved). Bulk pricing, refunds, invoicing and any real collection remain missing or gated."
   },
   {
     "id": "V3-06-008",

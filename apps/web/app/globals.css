@@ -6001,3 +6001,30 @@ th {
   background: var(--surface-2);
   border-color: var(--brand);
 }
+.terms-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.terms-tabs button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.terms-tabs button[aria-selected='true'] {
+  border-color: var(--line);
+  background: var(--surface-subtle);
+  font-weight: 650;
+}
+.terms-tabs button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}

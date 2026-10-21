@@ -10,6 +10,9 @@ const ProgrammeTemplates = lazy(() =>
 const ProgrammeCoordination = lazy(() =>
   import('./programme-coordination').then((module) => ({ default: module.ProgrammeCoordination })),
 );
+const ProgrammeTerms = lazy(() =>
+  import('./programme-terms').then((module) => ({ default: module.ProgrammeTerms })),
+);
 const ProgrammeEconomics = lazy(() =>
   import('./programme-economics').then((module) => ({ default: module.ProgrammeEconomics })),
 );
@@ -38,6 +41,7 @@ type Props = {
   economicsEnabled?: boolean;
   coordinationEnabled?: boolean;
   templatesEnabled?: boolean;
+  termsEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -77,10 +81,12 @@ function ScopedProgrammes({
   economicsEnabled = false,
   coordinationEnabled = false,
   templatesEnabled = false,
+  termsEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
+  const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
@@ -393,6 +399,30 @@ function ScopedProgrammes({
                             issuer={issuer}
                             workspaceId={workspaceId}
                             programmeId={p.id}
+                          />
+                        </Suspense>
+                      )}
+                    </>
+                  )}
+                  {participantsEnabled && termsEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => setTermsProgramme(termsProgramme === p.id ? null : p.id)}
+                      >
+                        {termsProgramme === p.id
+                          ? 'Hide terms, eligibility and places'
+                          : 'Terms, eligibility and places'}
+                      </button>
+                      {termsProgramme === p.id && (
+                        <Suspense fallback={<p role="status">Loading terms and places…</p>}>
+                          <ProgrammeTerms
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                            coordinationEnabled={coordinationEnabled}
                           />
                         </Suspense>
                       )}

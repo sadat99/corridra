@@ -11,6 +11,7 @@ import { customerProgrammeContextEnabled } from './customer-programme-context';
 import { customerProgrammeCoordinationEnabled } from './customer-programme-coordination';
 import { customerProgrammeEconomicsEnabled } from './customer-programme-economics';
 import { customerProgrammeTemplatesEnabled } from './customer-programme-templates';
+import { customerProgrammeTermsEnabled } from './customer-programme-terms';
 import { customerProgrammesEnabled } from './customer-programmes';
 import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
@@ -156,6 +157,12 @@ const modules: {
     label: 'Repeatable programme templates',
     flag: 'CORRIDRA_CUSTOMER_PROGRAMME_TEMPLATES_ENABLED',
     enabled: customerProgrammeTemplatesEnabled,
+  },
+  {
+    key: 'programme-terms',
+    label: 'Programme terms, eligibility and places',
+    flag: 'CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED',
+    enabled: customerProgrammeTermsEnabled,
   },
 ];
 
