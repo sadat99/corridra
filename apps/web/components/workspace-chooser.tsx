@@ -2,27 +2,19 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../lib/foundations';
+import {
+  workspaceDestinations,
+  workspacePath,
+  workspacesFor,
+  type WorkspaceKind,
+} from '../lib/workspace-choice';
 
-const destinations = {
-  profile: {
-    path: 'profile',
-    description: 'Your company details, supporting statements and reviewed company links.',
-  },
-  programmes: {
-    path: 'delegations',
-    description: 'Programme participants, terms, places, fee schedules and delivery.',
-  },
-  services: {
-    path: 'service-requests',
-    description: 'Help requests, questions and quotes for work in this workspace.',
-  },
-} as const;
 /** A choice of workspace grants nothing; destination APIs repeat the fresh identity and role checks. */
 export async function WorkspaceChooser({
   kind,
   enabled,
 }: {
-  kind: keyof typeof destinations;
+  kind: WorkspaceKind;
   enabled: boolean;
 }) {
   if (!enabled)
@@ -64,24 +56,18 @@ export async function WorkspaceChooser({
       </p>
     );
   }
-  const visible =
-    kind === 'programmes'
-      ? workspaces.filter((workspace) => ['owner', 'admin'].includes(workspace.role))
-      : workspaces;
+  const visible = workspacesFor(kind, workspaces);
+  // One workspace leaves nothing to choose: go straight to it.
+  if (visible.length === 1) redirect(workspacePath(kind, visible[0]!.id));
   return (
     <section aria-labelledby="workspace-choice-title">
       <h2 id="workspace-choice-title">Choose a workspace</h2>
-      <p>{destinations[kind].description}</p>
+      <p>{workspaceDestinations[kind].description}</p>
       {visible.length ? (
         <ul className="ux-quick-links">
           {visible.map((workspace) => (
             <li key={workspace.id}>
-              <Link
-                prefetch={false}
-                href={
-                  '/account/' + destinations[kind].path + '/' + encodeURIComponent(workspace.id)
-                }
-              >
+              <Link prefetch={false} href={workspacePath(kind, workspace.id)}>
                 <strong>{workspace.name}</strong>
                 <span>
                   {workspace.synthetic ? 'Example workspace. ' : ''}
