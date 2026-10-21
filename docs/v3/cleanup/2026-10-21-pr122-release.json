@@ -1,0 +1,305 @@
+{
+  "pr": 122,
+  "checkedHead": "dfef478814221aec6f2d219c81769e4d5c00a09b",
+  "checkedTree": "08a1702e853d722000d6a81f5d3e031b7b645c3a",
+  "visualInspection": "docs/v3/cleanup/2026-10-21-pr122-signed-in-inspection.json",
+  "localChecks": {
+    "format": 0,
+    "lint": 0,
+    "typecheck": 0,
+    "documents": {
+      "exit": 0,
+      "passed": 30
+    },
+    "integration": {
+      "exit": 0,
+      "passed": 672,
+      "files": 66
+    },
+    "focusedOperatorRecovery": {
+      "exit": 0,
+      "passed": 4
+    },
+    "publicBrowser": {
+      "exit": 0,
+      "passed": 160,
+      "applicationBytesUnchangedSinceInspection": true,
+      "head": "f8dace079ab558be0e1639b02babb7089a4da4f4"
+    }
+  },
+  "ci": {
+    "run": 39652709167,
+    "head": "dfef478814221aec6f2d219c81769e4d5c00a09b",
+    "jobsPassed": 6,
+    "attempt": 2,
+    "retryReason": "Microsoft runner package repository HTTP403 prevented browser installation in shard1; retried failed jobs only, all passed"
+  },
+  "codeql": {
+    "run": 39652709417,
+    "analysesPassed": 3,
+    "uploadsComplete": 3,
+    "review": [
+      {
+        "artifact": 12370292980,
+        "file": "javascript.sarif",
+        "results": 1,
+        "findings": [
+          {
+            "rule": "js/disabling-certificate-validation",
+            "paths": ["security/corridra.test.ts"]
+          }
+        ]
+      },
+      {
+        "artifact": 12369199471,
+        "file": "actions.sarif",
+        "results": 0,
+        "findings": []
+      },
+      {
+        "artifact": 12369049491,
+        "file": "python.sarif",
+        "results": 0,
+        "findings": []
+      }
+    ]
+  },
+  "preview": {
+    "id": "dpl_AkAWJ1AvukhfhT8kVAt5FfmnGuYs",
+    "state": "READY"
+  },
+  "productionSessionInspected": false,
+  "realAdmission": "awaiting protected environment review of run39645923089",
+  "mergedMain": "fb9f34a9a771afaf02d93d4bf644a60589f26405",
+  "identicalTree": true,
+  "production": {
+    "id": "dpl_A3oMvMXiAAKNNGaNUui7gkAqJsJg",
+    "source": "fb9f34a9a771afaf02d93d4bf644a60589f26405",
+    "state": "READY",
+    "regions": ["fra1"],
+    "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"],
+    "automatic": true,
+    "liveProbes": {
+      "origin": "https://corridra.vercel.app",
+      "observedAt": "2026-10-21T18:45:16.399Z",
+      "results": [
+        {
+          "path": "/",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/plan",
+          "status": 307,
+          "expected": 307,
+          "cacheControl": "no-store",
+          "pass": true,
+          "testModeVisible": false,
+          "realAccountCopy": false
+        },
+        {
+          "path": "/about",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/privacy",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/how-it-works",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/corridors",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/trust",
+          "status": 200,
+          "expected": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "pass": true
+        },
+        {
+          "path": "/api/customer-workspaces",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        },
+        {
+          "path": "/api/customer-programme-terms?view=state&workspaceId=00000000-0000-4000-8000-000000000001&programmeId=00000000-0000-4000-8000-000000000002",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        },
+        {
+          "path": "/api/customer-programme-pricing?view=templates&workspaceId=00000000-0000-4000-8000-000000000001",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        },
+        {
+          "path": "/api/customer-organisation-links?scope=overview",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        },
+        {
+          "path": "/api/customer-service-requests?scope=catalogue",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        },
+        {
+          "path": "/api/workspace/delivery",
+          "status": 401,
+          "expected": 401,
+          "cacheControl": "no-store",
+          "pass": true
+        }
+      ],
+      "total": 13,
+      "passed": 13
+    }
+  },
+  "cleanup": {
+    "additionalCompletedPreviews": [
+      {
+        "id": "dpl_CdMsLtsMzQuEMeL9wPAzUp2p81wn",
+        "branch": "fix/real-use-activation",
+        "sha": "e4b401340978fbfd23d88aa4c6d055037066b263",
+        "retiredPreviewAliases": ["corridra-git-fix-real-use-activation-sadat-os.vercel.app"],
+        "state": "DELETED",
+        "closedMergedPr": true,
+        "branchScopedEnvironmentSettings": 0
+      },
+      {
+        "id": "dpl_7rArxTS5nUW8YbDcCjV3ZMWwUXuv",
+        "branch": "docs/after-install",
+        "sha": "bc0fce5837aab22d3c73fcf6f77192df8a7eccc8",
+        "retiredPreviewAliases": ["corridra-git-docs-after-install-sadat-os.vercel.app"],
+        "state": "DELETED",
+        "closedMergedPr": true,
+        "branchScopedEnvironmentSettings": 0
+      },
+      {
+        "id": "dpl_5vyhXKNfXTJA7TiKmJ2y7JvjGJ6V",
+        "branch": "ui/checkbox-and-link-affordance",
+        "sha": "71d30ed10fedd1fe5cc355e6858f84ec961d9515",
+        "retiredPreviewAliases": [
+          "corridra-git-ui-checkbox-and-link-affordance-sadat-os.vercel.app"
+        ],
+        "state": "DELETED",
+        "closedMergedPr": true,
+        "branchScopedEnvironmentSettings": 0
+      },
+      {
+        "id": "dpl_Gjnz1Q36Rb9joHLE2TCiUCNm3Jyb",
+        "branch": "docs/ledger-after-pr118",
+        "sha": "f2ec52d2e236241e37d0fc00a9f7e7a7433657ee",
+        "retiredPreviewAliases": ["corridra-git-docs-ledger-after-pr118-sadat-os.vercel.app"],
+        "state": "DELETED",
+        "closedMergedPr": true,
+        "branchScopedEnvironmentSettings": 0
+      }
+    ],
+    "remoteBranches": {
+      "retired": [
+        {
+          "id": "dpl_CdMsLtsMzQuEMeL9wPAzUp2p81wn",
+          "branch": "fix/real-use-activation",
+          "sha": "e4b401340978fbfd23d88aa4c6d055037066b263",
+          "retiredPreviewAliases": ["corridra-git-fix-real-use-activation-sadat-os.vercel.app"],
+          "state": "DELETED",
+          "closedMergedPr": true,
+          "branchScopedEnvironmentSettings": 0
+        },
+        {
+          "id": "dpl_7rArxTS5nUW8YbDcCjV3ZMWwUXuv",
+          "branch": "docs/after-install",
+          "sha": "bc0fce5837aab22d3c73fcf6f77192df8a7eccc8",
+          "retiredPreviewAliases": ["corridra-git-docs-after-install-sadat-os.vercel.app"],
+          "state": "DELETED",
+          "closedMergedPr": true,
+          "branchScopedEnvironmentSettings": 0
+        },
+        {
+          "id": "dpl_5vyhXKNfXTJA7TiKmJ2y7JvjGJ6V",
+          "branch": "ui/checkbox-and-link-affordance",
+          "sha": "71d30ed10fedd1fe5cc355e6858f84ec961d9515",
+          "retiredPreviewAliases": [
+            "corridra-git-ui-checkbox-and-link-affordance-sadat-os.vercel.app"
+          ],
+          "state": "DELETED",
+          "closedMergedPr": true,
+          "branchScopedEnvironmentSettings": 0
+        },
+        {
+          "id": "dpl_Gjnz1Q36Rb9joHLE2TCiUCNm3Jyb",
+          "branch": "docs/ledger-after-pr118",
+          "sha": "f2ec52d2e236241e37d0fc00a9f7e7a7433657ee",
+          "retiredPreviewAliases": ["corridra-git-docs-ledger-after-pr118-sadat-os.vercel.app"],
+          "state": "DELETED",
+          "closedMergedPr": true,
+          "branchScopedEnvironmentSettings": 0
+        }
+      ],
+      "remainingRemoteNames": 4,
+      "preserved": [
+        "main",
+        "claude/happy-feynman-i66amw",
+        "dependabot/npm_and_yarn/types/node-26.6.5",
+        "dependabot/npm_and_yarn/typescript-7.0.2"
+      ],
+      "archivedUnder": "refs/archive/completed-remote/"
+    },
+    "disposableRehearsal": {
+      "projectId": "odd-pond-26265871",
+      "deletedBranch": "br-delicate-butterfly-b1ago6e5",
+      "parent": "br-lingering-sea-b1eob57e",
+      "default": false,
+      "protected": false,
+      "children": 0,
+      "deploymentBindingCreated": false,
+      "evidencePreserved": true,
+      "deletionVerified": true,
+      "remaining": [
+        "br-lucky-darkness-b1ppj8en",
+        "br-silent-tree-b18dmm1n",
+        "br-lingering-sea-b1eob57e"
+      ],
+      "observedAt": "2026-10-21T18:21:04.034489+00:00"
+    },
+    "earlierTwelvePreviewsReceipt": "2026-10-21-vercel-unused-previews.json"
+  },
+  "productionCustomerModuleFlags": {
+    "enabled": 21,
+    "encryptedMemberRoleFlagIndependentlyVerified": true,
+    "realAdmissionEnabled": false
+  },
+  "limitations": [
+    "No attached authenticated production browser; custom domain blocked by executor network policy.",
+    "No managed email delivery or genuine private provider acceptance claimed.",
+    "Real admission remains OFF pending protected review of run39645923089.",
+    "Whole V3 remains PARTIAL; billing remains MISSING."
+  ]
+}
