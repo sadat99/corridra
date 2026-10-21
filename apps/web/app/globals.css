@@ -5441,3 +5441,37 @@ th {
 .ux-fact-row .ux-fact-row > dt {
   font-weight: 600;
 }
+
+/* Home choices follow the same scale as the step cards below them: 1px border, h3-sized title,
+   the phone icon size and a Start button one step below the page-level calls to action. */
+@media (min-width: 701px) {
+  .guide-choices {
+    gap: var(--space-4);
+  }
+  .guide-choices > a {
+    gap: var(--space-4);
+    min-height: 0;
+    border-width: 1px;
+  }
+  .guide-choice-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--guided-control-radius);
+  }
+  .guide-choice-icon svg {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+  .guide-choice-text strong {
+    font-size: var(--text-xl);
+    letter-spacing: -0.01em;
+  }
+  .guide-choice-start {
+    min-height: var(--guided-touch);
+  }
+}
+@media (min-width: 1001px) {
+  .site-header {
+    background: var(--paper);
+  }
+}
