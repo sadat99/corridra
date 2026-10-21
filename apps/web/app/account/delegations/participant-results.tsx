@@ -501,7 +501,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
 
           <h5>My results</h5>
           {outcomes.length === 0 ? (
-            <p>No results added yet.</p>
+            <p className="ux-empty">No results added yet.</p>
           ) : (
             <ul>
               {outcomes.map((o) => (

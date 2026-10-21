@@ -170,7 +170,7 @@ export default async function Page({
           )}
           {workspaceIssuer && customerParticipantsEnabled() && (
             <p>
-              <Link className="text-link" href="/account/delegations">
+              <Link className="text-link ux-action" href="/account/delegations">
                 Delegation registrations
               </Link>
             </p>
@@ -199,7 +199,7 @@ export default async function Page({
                 <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
                 {customerCompaniesEnabled() && (
                   <p>
-                    <Link className="text-link" href="/account/companies">
+                    <Link className="text-link ux-action" href="/account/companies">
                       Browse approved companies
                     </Link>
                   </p>
@@ -212,44 +212,63 @@ export default async function Page({
       )}
       {view === 'more' && (
         <div id="more" tabIndex={-1} className="ux-account-groups">
-          <aside className="ux-account-sidebar" aria-label="Account and access">
-            <section className="ux-account-profile" aria-label="Your verified profile">
-              <span className="ux-status" data-tone="positive">
-                Verified account email
-              </span>
-              <h2>{data.user.name}</h2>
-              <p>{data.user.email}</p>
-              <p>Your email address is verified. This does not verify your company.</p>
+          <div className="ux-more-grid">
+            <aside className="ux-account-sidebar" aria-label="Account and access">
+              <section className="ux-account-profile" aria-label="Your verified profile">
+                <span className="ux-status" data-tone="positive">
+                  Verified account email
+                </span>
+                <h2>{data.user.name}</h2>
+                <p>{data.user.email}</p>
+                <p>Your email address is verified. This does not verify your company.</p>
+                <div className="ux-profile-actions">
+                  <AccountSignout />
+                </div>
+              </section>
+              <OperatorInvitationHint key={data.user.id} />
+            </aside>
+            <section className="detail-card" aria-label="Help and other ways in">
+              <h2>Start something</h2>
+              <ul className="ux-link-list">
+                <li>
+                  <Link prefetch={false} href="/plan">
+                    <strong>Plan a mission</strong>
+                    <span>Tell us your goal. It takes a few minutes.</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link prefetch={false} href="/plan#receipt-check">
+                    <strong>Check a request receipt</strong>
+                    <span>
+                      Keep the receipt we give you after you send a request. Use it to check
+                      progress and replies.
+                    </span>
+                  </Link>
+                </li>
+              </ul>
+              <h2>Other ways in</h2>
+              <ul className="ux-link-list">
+                <li>
+                  <Link prefetch={false} href="/operator/setup">
+                    <strong>Accept a team invitation</strong>
+                    <span>For invited Corridra team members.</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link prefetch={false} href="/workspace">
+                    <strong>Start page</strong>
+                    <span>All the ways to use Corridra.</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link prefetch={false} href="/contributor">
+                    <strong>Local helper tasks</strong>
+                    <span>For local helpers with assigned tasks.</span>
+                  </Link>
+                </li>
+              </ul>
             </section>
-            <OperatorInvitationHint key={data.user.id} />
-            <nav className="access-options" aria-label="Account sections">
-              <Link className="text-link" href="/plan">
-                Plan a mission
-              </Link>
-              <Link className="text-link" href="/plan#receipt-check">
-                Check a request receipt
-              </Link>
-              <p>
-                Keep the receipt we give you after you send a request. You can use it to check
-                progress and replies.
-              </p>
-            </nav>
-            <details className="ux-journey-disclosure">
-              <summary>Other ways in</summary>
-              <nav className="access-options" aria-label="Other account access">
-                <Link className="text-link" href="/operator/setup">
-                  Accept a team invitation
-                </Link>
-                <Link className="text-link" href="/workspace">
-                  Start page
-                </Link>
-                <Link className="text-link" href="/contributor">
-                  Local helper tasks
-                </Link>
-              </nav>
-            </details>
-            <AccountSignout />
-          </aside>
+          </div>
         </div>
       )}
     </CustomerShell>

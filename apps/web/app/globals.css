@@ -3576,7 +3576,7 @@ th {
 }
 .guide-footer-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr));
   gap: var(--space-12);
 }
 .guide-footer-brand {
@@ -3914,6 +3914,9 @@ th {
   }
   .guide-footer-top {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .guide-footer-brand {
+    grid-column: 1 / -1;
   }
 }
 /* Routes */
@@ -4522,10 +4525,41 @@ th {
   font-size: var(--text-xl);
   font-weight: 700;
 }
+.receipt-panel > p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.receipt-panel .field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.receipt-panel .field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  border-radius: var(--guided-control-radius);
+}
+.receipt-panel .button-secondary,
+.guide-receipt-reset {
+  justify-self: start;
+  min-height: 2.75rem;
+}
 .receipt-panel .operator-form {
   display: grid;
   gap: var(--space-4);
-  max-width: 28rem;
+  min-width: 0;
+}
+.receipt-panel .primary-link {
+  min-height: 3rem;
+  font-size: var(--text-base);
 }
 @media (max-width: 1000px) {
   .guide-plan-body,
@@ -4551,7 +4585,8 @@ th {
   .ux-brief-summary {
     order: 2;
   }
-  .receipt-panel {
+  .receipt-panel,
+  .guide-receipt-reset {
     order: 3;
   }
 }
@@ -5440,6 +5475,566 @@ th {
 }
 .ux-fact-row .ux-fact-row > dt {
   font-weight: 600;
+}
+
+/* Home choices follow the same scale as the step cards below them: 1px border, h3-sized title,
+   the phone icon size and a Start button one step below the page-level calls to action. */
+@media (min-width: 701px) {
+  .guide-choices {
+    gap: var(--space-4);
+  }
+  .guide-choices > a {
+    gap: var(--space-4);
+    min-height: 0;
+    border-width: 1px;
+  }
+  .guide-choice-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--guided-control-radius);
+  }
+  .guide-choice-icon svg {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+  .guide-choice-text strong {
+    font-size: var(--text-xl);
+    letter-spacing: -0.01em;
+  }
+  .guide-choice-start {
+    min-height: var(--guided-touch);
+  }
+}
+@media (min-width: 1001px) {
+  .site-header {
+    background: var(--paper);
+  }
+}
+
+/* Customer kit, third pass. One set of rules for every signed-in customer page, so a new
+   section looks right without its own styling: page rhythm, cards, type, forms, actions and
+   notices. Each value is a token or a size already used by the home and step cards. */
+.ux-customer {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.ux-customer > * {
+  min-width: 0;
+  margin-block: 0;
+}
+.ux-customer > .ux-page-heading,
+.ux-customer > .guide-tabs,
+.ux-customer > .ux-testmode {
+  margin-block: 0;
+}
+.ux-customer > :is(a, button) {
+  justify-self: start;
+}
+.ux-customer > p:not(.ux-testmode) {
+  max-width: 48rem;
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* Cards: any section a page puts straight under the tabs is one card. */
+.ux-customer
+  > :is(section, article):not(.detail-card):not(.guide-band):not(.guide-area):not(
+    .ux-request-page
+  ) {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+.ux-customer .detail-card {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.ux-customer .detail-card > * {
+  margin-block: 0;
+}
+.ux-customer .detail-card > ul {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.ux-customer .detail-card > ul > li {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}
+.ux-customer .detail-card > ul > li > * {
+  margin-block: 0;
+}
+
+/* Type inside cards */
+.ux-customer :is(section, article, details, aside):not(.guide-band) :is(p, li, dd, dt, label) {
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+.ux-customer :is(section, article, aside):not(.guide-band) h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.ux-customer :is(section, article, aside, details):not(.guide-band) h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.ux-customer :is(section, article, aside, details):not(.guide-band) h4 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.ux-empty,
+.ux-customer .ux-empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}
+
+/* Forms */
+.ux-customer .operator-form {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.ux-customer fieldset {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ux-customer legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.ux-customer .field,
+.ux-customer label.field {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 40rem;
+  margin-block: 0;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-customer label {
+  margin-block: 0;
+}
+.ux-customer
+  :is(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+    select,
+    textarea
+  ) {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--guided-touch);
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+}
+.ux-customer textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+.ux-customer :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.ux-customer label:has(> input[type='checkbox']),
+.ux-customer label:has(> input[type='radio']),
+.ux-customer .check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: 40rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+.ux-customer input[type='checkbox'],
+.ux-customer input[type='radio'] {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.125rem 0 0;
+  accent-color: var(--brand-deep);
+}
+.ux-customer .primary-link {
+  justify-self: start;
+  align-self: start;
+}
+
+/* Actions: a standalone link or button is one outlined button; "Back" is a quiet link. */
+.ux-customer
+  :is(section, div, form, article, nav, aside, details, fieldset)
+  > :is(a, button).text-link,
+.ux-customer button:not([class]),
+.ux-customer a.ux-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  justify-self: start;
+  align-self: start;
+  width: auto;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+  cursor: pointer;
+}
+.ux-customer
+  :is(section, div, form, article, nav, aside, details, fieldset)
+  > :is(a, button).text-link:hover,
+.ux-customer button:not([class]):hover,
+.ux-customer a.ux-action:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
+}
+.ux-customer
+  :is(section, div, form, article, nav, aside, details, fieldset)
+  > button.text-link:disabled,
+.ux-customer button:not([class]):disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ux-customer .text-link.ux-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  min-height: 2.75rem;
+  padding: 0;
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: none;
+  border: 0;
+}
+.ux-customer .text-link.ux-back::before {
+  content: '←';
+}
+.ux-customer .text-link.ux-back:hover {
+  text-decoration: underline;
+  background: none;
+}
+.ux-customer .access-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+}
+.ux-customer .access-options > p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-2);
+}
+
+/* Notices */
+.ux-customer :is(p, div)[role='alert'],
+.ux-customer .ux-error-summary {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-1);
+  background: var(--critical-surface);
+  border: 1px solid var(--critical);
+  border-radius: var(--guided-control-radius);
+}
+.ux-customer p[role='status'],
+.ux-customer .ux-draft-notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-1);
+  background: var(--info-surface);
+  border: 0;
+  border-radius: var(--guided-control-radius);
+}
+.ux-customer :is(p, div)[role='alert'] > * {
+  margin-block: 0;
+}
+.ux-customer :is(p, div)[role='alert'] > * + * {
+  margin-top: var(--space-2);
+}
+
+/* Disclosures are quiet panels */
+.ux-customer .ux-journey-disclosure {
+  padding: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-card-radius);
+}
+.ux-customer .ux-journey-disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--guided-touch);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-customer .ux-journey-disclosure > :not(summary) {
+  margin: var(--space-3) var(--space-4) 0;
+}
+.ux-customer .ux-journey-disclosure > :last-child {
+  margin-bottom: var(--space-4);
+}
+.ux-customer .ux-journey-disclosure > div {
+  padding-top: 0;
+}
+
+/* Footer: two equal link columns of six, and equal space above and below. */
+@media (min-width: 701px) {
+  .guide-footer {
+    padding-bottom: var(--space-12);
+  }
+}
+
+/* More tab: profile on the left, ways in on the right; links are rows, not loose text. */
+.ux-more-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.ux-customer .ux-more-grid .ux-account-sidebar {
+  max-width: none;
+}
+.ux-profile-actions {
+  display: grid;
+  margin-top: var(--space-4);
+}
+.ux-link-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ux-customer .ux-link-list li {
+  display: block;
+  padding: 0;
+  background: none;
+}
+.ux-link-list a {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-control-radius);
+  transition: border-color var(--dur) var(--ease);
+}
+.ux-link-list a:hover {
+  border-color: var(--brand);
+}
+.ux-link-list strong {
+  font-size: var(--text-base);
+  color: var(--text-1);
+}
+.ux-link-list span {
+  font-size: var(--text-base);
+  color: var(--text-2);
+}
+@media (max-width: 700px) {
+  .ux-more-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Customer kit, fixes from review: even gaps, nested panels, row titles. */
+.ux-customer .ux-account-groups {
+  gap: var(--space-4);
+}
+.ux-customer .ux-account-groups > div,
+.ux-customer #customer-missions,
+.ux-customer #saved-commercial-missions {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.ux-customer .ux-mission-detail {
+  margin-block: 0;
+}
+.ux-customer .detail-card :is(.primary-link, .button) + .text-link {
+  margin-left: 0;
+}
+.ux-customer .ux-row-title {
+  margin: 0;
+}
+.ux-customer .ux-journey-disclosure > summary {
+  text-decoration: none;
+}
+.ux-customer .ux-journey-disclosure > :is(section, form, div) {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+.ux-customer .ux-journey-disclosure ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ux-customer .ux-journey-disclosure li {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--guided-control-radius);
+}
+.ux-customer li > :is(a, button).text-link {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+  cursor: pointer;
+}
+
+.ux-customer .detail-card > form.operator-form {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+/* Routes page on the page scale: card titles are 20 px sans bold (as the step cards), in-card
+   actions are outlined 44 px buttons, call-to-action buttons are 48 px, one corner radius. */
+.guide-route-box h2,
+.guide-route-result h3,
+.guide-directions li h3,
+.guide-other-route h3,
+.ux-example h2,
+.ux-example:not(.ux-example-open) h2,
+.guide-example h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.guide-route-actions > a,
+.guide-other-route > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--guided-touch);
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 600;
+  border-radius: var(--guided-control-radius);
+}
+.guide-route-quick button {
+  min-height: 2.75rem;
+}
+.guide-fine > summary {
+  min-height: var(--guided-touch);
+  border-radius: var(--guided-control-radius);
+}
+.ux-situation {
+  border-radius: var(--guided-card-radius);
+}
+.guide-directions li > .text-link,
+.ux-example > .text-link,
+.ux-example > div > .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  align-self: start;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+  cursor: pointer;
+}
+.guide-directions li > .text-link:hover,
+.ux-example > .text-link:hover,
+.ux-example > div > .text-link:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
+}
+.ux-example .label {
+  margin-bottom: var(--space-2);
+}
+
+/* Guide pages: secondary labels one size, standalone links one outlined button. */
+.guide-choice-name,
+.guide-step-name,
+.guide-page-steps .guide-step-name {
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+}
+.ux-public :is(.guide-statements, .guide-steps, .guide-facts, .guide-progress) > a.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+}
+.ux-public :is(.guide-statements, .guide-steps, .guide-facts, .guide-progress) > a.text-link:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
 }
 .terms-tabs {
   display: flex;

@@ -187,7 +187,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
   }
   return (
     <section
-      className="ux-mission-detail"
+      className="detail-card ux-mission-detail"
       aria-label="Delivered to you"
       style={{ overflowWrap: 'anywhere' }}
     >

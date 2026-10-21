@@ -559,7 +559,7 @@ function Guided(scope: Scope) {
         <p>
           <button
             type="button"
-            className="text-link"
+            className="text-link ux-back"
             onClick={() => reset('Loading your drafts…') ?? void loadList()}
           >
             Back to your drafts
@@ -1201,7 +1201,7 @@ function Guided(scope: Scope) {
         )}
         <button
           type="button"
-          className="text-link"
+          className="text-link ux-back"
           disabled={busy}
           onClick={() => {
             if (

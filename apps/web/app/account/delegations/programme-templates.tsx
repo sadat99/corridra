@@ -550,7 +550,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
           {notice && <p role="status">{notice}</p>}
           {error && <p role="alert">{error}</p>}
           {list.length === 0 ? (
-            <p>No templates yet.</p>
+            <p className="ux-empty">No templates yet.</p>
           ) : (
             <ul>
               {list.map((t) => (

@@ -1,15 +1,11 @@
 import Link from 'next/link';
 import { waysToWork } from './ways-to-work';
 
-const learn = [
-  ['/how-it-works', 'How it works'],
-  ['/corridors', 'Trade routes'],
-  ['/corridors#mission-example', 'Sample mission'],
-  ['/trust', 'Trust and evidence'],
-] as const;
-
+/** The header already carries How it works and Routes, so the footer repeats neither. */
 const company = [
   ['/workspace', 'Start here'],
+  ['/corridors#mission-example', 'Sample mission'],
+  ['/trust', 'Trust and evidence'],
   ['/about', 'About Corridra'],
   ['/network', 'Corridra Network'],
   ['/institutions', 'For institutions'],
@@ -34,14 +30,6 @@ export function SiteFooter() {
             </Link>
           ))}
         </nav>
-        <nav aria-label="Learn">
-          <p className="label">LEARN</p>
-          {learn.map(([href, label]) => (
-            <Link prefetch={false} key={href} href={href}>
-              {label}
-            </Link>
-          ))}
-        </nav>
         <nav aria-label="About Corridra">
           <p className="label">CORRIDRA</p>
           {company.map(([href, label]) => (
@@ -56,9 +44,6 @@ export function SiteFooter() {
         <span>
           <Link prefetch={false} href="/privacy">
             Test intake notice
-          </Link>
-          <Link prefetch={false} href="#main">
-            Back to top
           </Link>
         </span>
       </div>

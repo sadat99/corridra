@@ -33,7 +33,7 @@ An optional module installed by `migrateCustomerOrganisationLinks`. It first ins
 
 ## Synthetic-only boundary
 
-Free text from customers must begin with `Synthetic ` and URLs must use reserved example, test or invalid hosts. The module moves no money, sends no email or outreach, stores no file or document and reads no real registry. The flag needs the workspace flag, a synthetic environment and a non-production target. Gates D01 to D06 and D08 stay closed. Scanning, legal and security hardening remain deferred by owner decision.
+Free text from customers must begin with `Synthetic ` and URLs must use reserved example, test or invalid hosts. The module moves no money, sends no email or outreach, stores no file or document and reads no real registry. The flag needs the workspace flag, a synthetic environment and a deployment permitted by the explicit production opt-in in [ADR049](0049-synthetic-production-opt-in-and-open-admission.md). Gates D01 to D06 and D08 stay closed. Scanning, legal and security hardening remain deferred by owner decision.
 
 ## Blast radius and rollback
 

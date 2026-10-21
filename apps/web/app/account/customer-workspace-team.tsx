@@ -512,13 +512,15 @@ export function CustomerWorkspaceTeam({
           <>
             <h3>Invitations</h3>
             {page.invitations.length === 0 ? (
-              <p>No sample invitations on this page.</p>
+              <p className="ux-empty">No sample invitations on this page.</p>
             ) : (
               <ul>
                 {page.invitations.map((r) => (
                   <li key={r.id}>
-                    <strong>{r.label}</strong> · {r.status} · Expires{' '}
-                    <time dateTime={r.expiresAt}>{when(r.expiresAt)}</time>
+                    <p className="ux-row-title">
+                      <strong>{r.label}</strong> · {r.status} · Expires{' '}
+                      <time dateTime={r.expiresAt}>{when(r.expiresAt)}</time>
+                    </p>
                     <details className="ux-journey-disclosure">
                       <summary>Invitation reference</summary>
                       <p>{r.id}</p>
@@ -551,12 +553,14 @@ export function CustomerWorkspaceTeam({
             )}
             <h3>Invited members</h3>
             {page.memberships.length === 0 ? (
-              <p>No invited memberships on this page.</p>
+              <p className="ux-empty">No invited memberships on this page.</p>
             ) : (
               <ul>
                 {page.memberships.map((r) => (
                   <li key={r.id}>
-                    <strong>{r.label}</strong> · {r.role} · {r.status}
+                    <p className="ux-row-title">
+                      <strong>{r.label}</strong> · {r.role} · {r.status}
+                    </p>
                     <details className="ux-journey-disclosure">
                       <summary>Membership reference</summary>
                       <p>{r.id}</p>
