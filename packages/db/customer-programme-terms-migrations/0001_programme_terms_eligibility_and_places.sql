@@ -748,12 +748,13 @@ BEGIN
   AND (SELECT r.status FROM customer_private.programme_enrolment_revision r WHERE r.enrolment_id=e.id ORDER BY r.version DESC LIMIT 1)='PLACED'
   ORDER BY v.due_on,p.name,t.seq LIMIT 100) x;
  SELECT coalesce(jsonb_agg(jsonb_build_object('registrationId',x.registration_id,'programmeName',x.programme_name,'version',x.tv) ORDER BY x.programme_name,x.registration_id),'[]'::jsonb) INTO terms
- FROM (SELECT g.id registration_id,p.name programme_name,(SELECT max(t.version) FROM customer_private.programme_terms_revision t WHERE t.programme_id=g.programme_id) tv
+ FROM (SELECT y.registration_id,y.programme_name,y.tv FROM (SELECT g.id registration_id,p.name programme_name,(SELECT max(t.version) FROM customer_private.programme_terms_revision t WHERE t.programme_id=g.programme_id) tv
   FROM customer_private.programme_registration g JOIN customer_private.programme_enrolment e ON e.registration_id=g.id
   JOIN app.delivery_programme p ON p.tenant_id=g.workspace_id AND p.id=g.programme_id
   WHERE g.principal_id=actor AND customer_private.coordination_registration_state(g.id)='ACTIVE'
-  AND (SELECT r.status FROM customer_private.programme_enrolment_revision r WHERE r.enrolment_id=e.id ORDER BY r.version DESC LIMIT 1) IN ('PLACED','WAITLISTED')) x
- WHERE x.tv IS NOT NULL AND NOT EXISTS(SELECT FROM customer_private.programme_terms_acceptance a WHERE a.registration_id=x.registration_id AND a.terms_version=x.tv);
+  AND (SELECT r.status FROM customer_private.programme_enrolment_revision r WHERE r.enrolment_id=e.id ORDER BY r.version DESC LIMIT 1) IN ('PLACED','WAITLISTED')) y
+  WHERE y.tv IS NOT NULL AND NOT EXISTS(SELECT FROM customer_private.programme_terms_acceptance a WHERE a.registration_id=y.registration_id AND a.terms_version=y.tv)
+  ORDER BY y.programme_name,y.registration_id LIMIT 100) x;
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
  RETURN jsonb_build_object('asOf',to_char(today,'YYYY-MM-DD'),'windowDays',3,'expiresAt',customer_private.coordination_expiry(),'sendsMessages',false,
   'assignedToYou',assigned,'forParticipant',shared,'termsToAccept',terms);
