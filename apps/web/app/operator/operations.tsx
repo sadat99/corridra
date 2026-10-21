@@ -199,7 +199,20 @@ function Table({
     </p>
   );
 }
-export function Operations({ tenant, role }: { tenant: string; role: string }) {
+export function Operations({
+  tenant,
+  role,
+  section = 'ops-dashboard',
+  purpose,
+}: {
+  tenant: string;
+  role: string;
+  section?: string;
+  purpose?: string;
+}) {
+  const activeSection = ['ops-dashboard', 'ops-center', 'ops-health', 'ops-gates'].includes(section)
+    ? section
+    : 'ops-dashboard';
   const admin = ['owner', 'admin'].includes(role);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null),
     [controls, setControls] = useState<Controls | null>(null),
@@ -466,33 +479,40 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
       <OperatorWorkbench
         label="Operations workflow sections"
         sections={[
-          { label: 'Mission funnel', heading: 'Mission Operations dashboard' },
-          { label: 'Service economics', heading: 'Corridra fee revenue and delivery economics' },
-          { label: 'Customer trade', heading: 'Customer trade outcomes' },
+          {
+            label: 'Mission funnel',
+            panel: 'ops-dashboard',
+            heading: 'Mission Operations dashboard',
+          },
+          {
+            label: 'Service economics',
+            panel: 'ops-dashboard',
+            heading: 'Corridra fee revenue and delivery economics',
+          },
+          { label: 'Customer trade', panel: 'ops-dashboard', heading: 'Customer trade outcomes' },
           ...(admin
             ? [
-                { label: 'Readiness review', heading: 'Readiness review' },
+                { label: 'Readiness review', panel: 'ops-center', heading: 'Readiness review' },
                 {
                   label: 'Budgets, documents and effort',
+                  panel: 'ops-center',
                   heading: 'Financial, effort and case records',
                 },
               ]
             : []),
-          { label: 'Recovery queue', heading: 'Recovery and health' },
-          { label: 'Activation blockers', heading: 'Production readiness and activation' },
-        ]}
+          { label: 'Recovery queue', panel: 'ops-health', heading: 'Recovery and health' },
+          {
+            label: 'Activation blockers',
+            panel: 'ops-gates',
+            heading: 'Production readiness and activation',
+          },
+        ].filter((item) => item.panel === activeSection)}
       />
       <p>
-        Founder visibility, route readiness and accountable recovery. The current environment uses
-        synthetic missions. Account signup does not authorize real mission intake.
+        {purpose === 'commercial_qualification'
+          ? 'Founder visibility, route readiness and accountable recovery for this authorized workspace. Provider activation and independent approvals remain separate.'
+          : 'Founder visibility, route readiness and accountable recovery. The current environment uses synthetic missions. Account signup does not authorize real mission intake.'}
       </p>
-      <nav className="workspace-navigation" aria-label="Operations sections">
-        <a href="#ops-dashboard">Mission dashboard</a>
-        {admin && <a href="#ops-center">Corridor Control Center</a>}
-        <a href="#ops-health">Recovery and health</a>
-        <a href="#ops-gates">Production readiness</a>
-        <a href="#workspace-navigation">Workspace navigation</a>
-      </nav>
       <button
         className="button button-secondary"
         disabled={busy}
@@ -515,7 +535,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
           Retry original operational command
         </button>
       )}
-      <section id="ops-dashboard" tabIndex={-1}>
+      <section
+        id="ops-dashboard"
+        tabIndex={-1}
+        className="ux-operations-panel"
+        hidden={activeSection !== 'ops-dashboard'}
+      >
         <h3>Mission Operations dashboard</h3>
         <form onSubmit={filter} className="operator-form">
           <fieldset disabled={busy}>
@@ -764,7 +789,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
         )}
       </section>
       {admin && (
-        <section id="ops-center" tabIndex={-1}>
+        <section
+          id="ops-center"
+          tabIndex={-1}
+          className="ux-operations-panel"
+          hidden={activeSection !== 'ops-center'}
+        >
           <h3>Global Corridor Control Center</h3>
           <FounderOverview tenant={tenant} />
           <details>
@@ -1225,7 +1255,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
           />
         </section>
       )}
-      <section id="ops-health" tabIndex={-1}>
+      <section
+        id="ops-health"
+        tabIndex={-1}
+        className="ux-operations-panel"
+        hidden={activeSection !== 'ops-health'}
+      >
         <h3>Recovery and health</h3>
         <p>
           PostgreSQL events and receipts remain authoritative. Leases expire after 30 seconds;
@@ -1344,7 +1379,12 @@ export function Operations({ tenant, role }: { tenant: string; role: string }) {
           <a href="#workspace-delivery">Delivery</a>.
         </p>
       </section>
-      <section id="ops-gates" tabIndex={-1}>
+      <section
+        id="ops-gates"
+        tabIndex={-1}
+        className="ux-operations-panel"
+        hidden={activeSection !== 'ops-gates'}
+      >
         <h3>Production readiness and activation</h3>
         {admin && (
           <details className="detail-card">

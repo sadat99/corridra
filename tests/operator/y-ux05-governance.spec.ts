@@ -97,6 +97,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     reason,
   });
   await ops.getByRole('button', { name: 'Refresh operations', exact: true }).click();
+  await openSection(page, 'ops-center');
   await ops
     .getByRole('combobox', { name: 'Control Center route', exact: true })
     .selectOption(routeId);
@@ -256,9 +257,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   expect(sent[1]).toEqual(sent[0]);
   expect(sent[2]).toEqual(sent[0]);
   await page.unroute('**/api/workspace/operations?*');
+  await openSection(page, 'ops-health');
   await expect(
     ops.getByRole('region', { name: 'Owned recovery, privacy and fraud cases', exact: true }),
   ).toContainText(caseKey);
+  await openSection(page, 'ops-center');
   await ops
     .getByRole('textbox', { name: 'Operational command JSON', exact: true })
     .fill(JSON.stringify({ ...command, version: 2, state: 'RESOLVED' }));
@@ -290,6 +293,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   ).json();
   const missionId = dashboard.missions[0].id;
   const record = async (input: unknown) => {
+    await openSection(page, 'ops-center');
     await ops
       .getByRole('textbox', { name: 'Operational command JSON', exact: true })
       .fill(JSON.stringify(input));
@@ -297,6 +301,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       .getByRole('button', { name: 'Record reviewed operational command', exact: true })
       .click();
     await expect(ops.getByRole('status')).toContainText('Recorded.');
+    await openSection(page, 'ops-dashboard');
   };
   await record({
     action: 'ledger',

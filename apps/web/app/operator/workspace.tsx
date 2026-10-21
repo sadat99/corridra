@@ -426,7 +426,13 @@ function TenantWorkspace({
           </div>
           {['owner', 'admin', 'operator'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-operations'}>
-              <Operations key={`operations-${tenant}`} tenant={tenant} role={data.role} />
+              <Operations
+                key={`operations-${tenant}`}
+                tenant={tenant}
+                role={data.role}
+                section={fragment}
+                purpose={data.purpose}
+              />
             </div>
           )}
           {data.role !== 'viewer' && (

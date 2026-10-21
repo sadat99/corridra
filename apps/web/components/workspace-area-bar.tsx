@@ -45,19 +45,23 @@ export function WorkspaceAreaBar({ role, fragment }: { role: string; fragment: s
       </nav>
       {active && active.ids.length > 1 && (
         <nav aria-label={active.label + ' sections'} className="ux-area-sections">
-          {active.ids.map((id) => (
-            <a
-              key={id}
-              href={'#' + id}
-              aria-current={
-                id === fragment || (id === current && !fragment.startsWith('ops-'))
-                  ? 'location'
-                  : undefined
-              }
-            >
-              {label(id)}
-            </a>
-          ))}
+          {active.ids
+            .filter((id) => id !== 'workspace-operations')
+            .map((id) => (
+              <a
+                key={id}
+                href={'#' + id}
+                aria-current={
+                  id === fragment ||
+                  (fragment === 'workspace-operations' && id === 'ops-dashboard') ||
+                  (id === current && !fragment.startsWith('ops-'))
+                    ? 'location'
+                    : undefined
+                }
+              >
+                {label(id)}
+              </a>
+            ))}
         </nav>
       )}
     </div>

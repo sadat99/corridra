@@ -181,6 +181,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   ).toBe(true);
   await sectionNav.getByRole('link', { name: 'Global operations', exact: true }).click();
   const operations = page.locator('#workspace-operations');
+  const operationNavigation = page.getByRole('navigation', { name: 'Operations sections' });
+  await expect(operationNavigation.getByRole('link')).toHaveCount(4);
   await expect(
     operations.getByRole('button', { name: 'Refresh operations', exact: true }),
   ).toBeVisible();
@@ -191,18 +193,24 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     ),
   ).toBeVisible();
   expect(
-    await operations
-      .locator('nav a')
+    await operationNavigation
+      .locator('a')
       .evaluateAll((links) =>
         links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
       ),
   ).toBe(true);
-  await operations.getByRole('link', { name: 'Production readiness', exact: true }).click();
+  await operationNavigation
+    .getByRole('link', { name: 'Production readiness', exact: true })
+    .click();
   await expect(page.locator('#ops-gates')).toBeFocused();
+  await expect(operations.locator('.ux-operations-panel:visible')).toHaveCount(1);
+  await expect(page.locator('#ops-dashboard')).toBeHidden();
   await expect(
     operations.getByRole('region', { name: 'External production prerequisites' }),
   ).toContainText('BLOCKED: external prerequisite');
-  await operations.getByRole('link', { name: 'Mission dashboard', exact: true }).click();
+  await operationNavigation
+    .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
+    .click();
   await operations
     .getByRole('textbox', { name: 'Recorded industry', exact: true })
     .fill('unrecorded synthetic sector');
@@ -553,7 +561,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.getByText('Operational workspace', { exact: true })).toBeVisible();
   await expect(page.getByRole('note')).toContainText('Evidence scanning is deferred');
   await expect(page.locator('.ux-testmode')).toHaveCount(0);
-  await page.unroute('**/api/workspace/workspace?*');
+  await page.unrouteAll({ behavior: 'wait' });
   await page.reload();
   await openSection(page, 'main');
   await expect(page.getByText('Synthetic workspace', { exact: true })).toBeVisible();
@@ -3019,6 +3027,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   );
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  await openSection(page, 'main');
   await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
   await expect(
     page.getByRole('navigation', { name: 'Administration', includeHidden: true, exact: true }),
@@ -3037,7 +3046,9 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
       })
     ).status(),
   ).toBe(403);
+  await openSection(page, 'workspace-missions');
   await expect(page.getByText('No mission requests yet.', { exact: true })).toBeVisible();
+  await openSection(page, 'main');
   let release!: () => void;
   let reached!: () => void;
   const held = new Promise<void>((resolve) => {
