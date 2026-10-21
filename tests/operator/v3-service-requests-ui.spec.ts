@@ -998,9 +998,12 @@ test('staff progress notes and internal notes are separate messages, and the cat
   page,
 }) => {
   const posts: Record<string, unknown>[] = [];
+  // Every saved command moves the request on, so the next action must use the refreshed sequence.
+  let seq = 3;
   await serveStaff(page, (url, method, body) => {
     if (method === 'POST') {
       posts.push(body!);
+      if (body!.action === 'start' || body!.action === 'note') seq += 1;
       return { json: summary() };
     }
     const scope = url.searchParams.get('scope');
@@ -1013,7 +1016,7 @@ test('staff progress notes and internal notes are separate messages, and the cat
             workspaceName: 'Synthetic paid-service workspace',
             claimedByThisTeam: true,
           },
-          lastSeq: 3,
+          lastSeq: seq,
           events: [
             {
               seq: 1,
@@ -1075,6 +1078,7 @@ test('staff progress notes and internal notes are separate messages, and the cat
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts[1]).toMatchObject({
     action: 'note',
+    expectedSeq: 4,
     internalNote: 'Synthetic internal note: supplier gave a discount',
   });
   expect(Object.keys(posts[1]!).sort()).toEqual([

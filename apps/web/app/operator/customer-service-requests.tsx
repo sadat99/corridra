@@ -239,7 +239,9 @@ function Scoped({ tenant }: { tenant: string }) {
     setMessage('Saved.');
     setNote(starter);
     setInternal(starter);
-    await Promise.all([open(detail.request.id), loadList()]);
+    // One request at a time: the shared call helper cancels the previous one.
+    await open(detail.request.id);
+    await loadList();
   }
   const base = () =>
     detail
