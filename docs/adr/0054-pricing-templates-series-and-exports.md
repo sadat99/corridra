@@ -33,7 +33,7 @@ The register asks to show qualified meetings per programme if a safe read path e
 
 ## Synthetic-only boundary
 
-All free text must begin with `Synthetic `. The routes are off unless the workspace, programme, participant, economics, coordination and templates flags and `CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED` are set, the environment is synthetic and Vercel production is not the target. Fee records are the organiser's own unverified bookkeeping. D01 to D06 and D08 stay closed.
+All free text must begin with `Synthetic `. The routes are off unless the workspace, programme, participant, economics, coordination and templates flags and `CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED` are set, the environment is synthetic, with production requiring the explicit ADR049 synthetic-production opt-in. Real-use admission remains a separate owner-authorized implementation packet. Fee records are the organiser's own unverified bookkeeping. D01 to D06 and D08 stay closed.
 
 ## Not included
 

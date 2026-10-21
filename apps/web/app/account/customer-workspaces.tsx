@@ -334,12 +334,14 @@ export function CustomerWorkspaces({
       {status === 'ready' && (
         <>
           {rows.length === 0 ? (
-            <p>No workspaces yet. Create your first one below.</p>
+            <p className="ux-empty">No workspaces yet. Create your first one below.</p>
           ) : (
             <ul>
               {rows.map((row) => (
                 <li key={row.id}>
-                  <strong>{row.name}</strong> · {row.role}
+                  <p className="ux-row-title">
+                    <strong>{row.name}</strong> · {row.role}
+                  </p>
                   {linksEnabled && <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />}
                   <div className="guide-actions-row">
                     {profilesEnabled && (

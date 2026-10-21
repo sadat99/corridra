@@ -32,12 +32,14 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
     '/source',
     '/enter-market',
     '/trade-missions',
-    '/how-it-works',
     '/trust',
     '/network',
     '/institutions',
   ])
     await expect(page.locator(`footer a[href="${href}"]`).first()).toBeVisible();
+  // How it works and Routes live in the header, so the footer does not repeat them.
+  await expect(page.locator('footer a[href="/how-it-works"]')).toHaveCount(0);
+  await expect(page.locator('footer a[href="/corridors"]')).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/corridors');
   await openFineTune(page);
@@ -164,4 +166,34 @@ test('UX-06 discovery preserves keyboard and content at all required widths and 
       2,
     ) + '\n',
   );
+});
+
+test('footer keeps equal link groups together on tablets and stacks them on phones', async ({
+  page,
+}) => {
+  for (const width of [1440, 1000, 768, 701, 700, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/');
+    const footer = page.locator('footer');
+    const first = footer.getByRole('navigation', { name: 'Footer solutions', exact: true });
+    const second = footer.getByRole('navigation', { name: 'About Corridra', exact: true });
+    await expect(first.getByRole('link')).toHaveCount(6);
+    await expect(second.getByRole('link')).toHaveCount(6);
+    const a = (await first.boundingBox())!;
+    const b = (await second.boundingBox())!;
+    if (width > 700) {
+      expect(Math.abs(a.y - b.y), `link groups share a row at ${width}px`).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(a.width - b.width),
+        `link columns are equal at ${width}px`,
+      ).toBeLessThanOrEqual(1);
+      expect(b.x).toBeGreaterThanOrEqual(a.x + a.width);
+      if (width <= 1000) {
+        const brand = (await footer.locator('.guide-footer-brand').boundingBox())!;
+        expect(a.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+      }
+    } else {
+      expect(b.y).toBeGreaterThanOrEqual(a.y + a.height);
+    }
+  }
 });

@@ -30,7 +30,7 @@ Add an optional additive module installed by `migrateCustomerProgrammeTerms`. It
 
 ## Synthetic-only boundary
 
-The route is off unless the workspace, programme, participant, economics and coordination flags and `CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED` are set, the environment is synthetic and Vercel production is not the target. D01 to D06 and D08 stay closed. No money moves, no invoice or refund exists, nothing is sent and no file is stored.
+The route is off unless the workspace, programme, participant, economics and coordination flags and `CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED` are set, the environment is synthetic and the deployment passes the explicit production opt-in in [ADR049](0049-synthetic-production-opt-in-and-open-admission.md). D01 to D06 and D08 stay closed. No money moves, no invoice or refund exists, nothing is sent and no file is stored.
 
 ## Blast radius and rollback
 

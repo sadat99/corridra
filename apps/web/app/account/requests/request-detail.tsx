@@ -179,7 +179,7 @@ function PrivateDetail({ requestId, subject, issuer }: Scope) {
   const requirements = original?.experience?.requirements;
   return (
     <section aria-label="Private saved request" className="ux-request-page">
-      <a className="text-link" href="/account#customer-requests">
+      <a className="text-link ux-back" href="/account#customer-requests">
         Back to my saved requests
       </a>
       <p>Sample data only. A request is not an accepted engagement, confirmed meeting or deal.</p>
@@ -225,7 +225,7 @@ function PrivateDetail({ requestId, subject, issuer }: Scope) {
             <section aria-label="Team replies" className="detail-card">
               <h2>Replies from the Corridra team</h2>
               {detail.progress?.replies.length === 0 ? (
-                <p>No replies yet.</p>
+                <p className="ux-empty">No replies yet.</p>
               ) : (
                 detail.progress?.replies.map((reply, index) => (
                   <article key={index}>
