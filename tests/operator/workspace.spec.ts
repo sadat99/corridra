@@ -627,6 +627,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     dueAt: tomorrow,
   });
   await page.reload();
+  await openSection(page, 'workspace-meetings');
   await page.getByText('Approved communication policy and templates', { exact: true }).click();
   const policy = page.getByRole('form', { name: 'Approve communication policy' });
   await policy
@@ -900,6 +901,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     retentionUntil: new Date(Date.now() + 86400000).toISOString(),
     aiPolicy: 'DENY',
   });
+  await openSection(page, 'workspace-commercial');
   const section = page.getByRole('region', { name: 'Commercial progress' }),
     status = page.getByRole('status', { name: 'Commercial status' });
   await page.getByRole('button', { name: 'Refresh commercial progress', exact: true }).click();
@@ -1124,6 +1126,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  await openSection(page, 'workspace-delivery');
   const panel = page.locator('.delivery-ops');
   await panel.locator('summary').filter({ hasText: 'Create programme' }).click();
   await panel.getByLabel('Programme name', { exact: true }).fill('Part Eight Browser Programme');
@@ -1557,15 +1560,18 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     dueAt,
   });
   await page.reload();
+  await openSection(page, 'workspace-missions');
   const card = page.locator('.mission-card').filter({
     has: page.getByRole('heading', { name: 'Synthetic Machinery Browser', exact: true }),
   });
   await expect(card.getByRole('combobox', { name: 'Structured market', exact: true })).toHaveValue(
     'CN',
   );
+  await openSection(page, 'workspace-research');
   await page.getByText('Record a research source and company', { exact: true }).click();
   await page.getByRole('combobox', { name: 'Company country', exact: true }).selectOption('CN');
   await page.getByText('Record a research source and company', { exact: true }).click();
+  await openSection(page, 'workspace-missions');
   await card.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
   await expect(card.getByText('BD → CN', { exact: false })).toBeVisible();
   await card
@@ -2337,6 +2343,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       reason,
     });
     await page.reload();
+    await openSection(page, 'workspace-ai');
     const aiPanel = page.getByRole('region', { name: 'Governed AI review' });
     await aiPanel.getByLabel('Mission reference', { exact: true }).fill(missionId);
     await aiPanel.getByLabel('Reviewed model policy').selectOption(policyId);
@@ -2638,6 +2645,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       '/operator/signin',
     );
     await expect(reviewerPage.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+    await openSection(reviewerPage, 'workspace-network');
     const networkPanel = reviewerPage
       .getByRole('region', { name: 'Execution network' })
       .locator('article')
