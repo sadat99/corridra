@@ -427,8 +427,12 @@ test('stale, unavailable, denied and malformed answers are never shown as succes
   });
   const withdraw = async () => {
     const open = panel.getByRole('button', { name: 'Withdraw this request' });
-    if (await open.count()) await open.click();
-    await panel.getByRole('button', { name: 'Confirm withdrawal' }).click();
+    const confirm = panel.getByRole('button', { name: 'Confirm withdrawal' });
+    // Wait for the panel to settle in either state before choosing: an immediate count can read zero
+    // while the panel is still redrawing after the previous answer.
+    await expect(open.or(confirm)).toBeVisible();
+    if (await open.isVisible()) await open.click();
+    await confirm.click();
   };
   await withdraw();
   await expect(panel.getByRole('alert')).toContainText('changed');
