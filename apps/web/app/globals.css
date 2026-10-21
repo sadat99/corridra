@@ -3915,6 +3915,9 @@ th {
   .guide-footer-top {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .guide-footer-brand {
+    grid-column: 1 / -1;
+  }
 }
 /* Routes */
 .guide-routes {
