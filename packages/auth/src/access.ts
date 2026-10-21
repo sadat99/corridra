@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DomainError, role } from '@corridra/domain';
 import { withTenant, sessionHash, type Pool, type RequestContext } from '@corridra/db';
+import { realUseEnabled } from './customer-production';
 export class AccessService {
   constructor(
     private pool: Pool,
@@ -14,7 +15,11 @@ export class AccessService {
         "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.purpose','synthetic_validation',true)",
         [sessionHash(token)],
       );
-      const r = await db.query('SELECT * FROM app.my_tenants()');
+      const r = await db.query(
+        realUseEnabled()
+          ? 'SELECT * FROM app.my_tenants() ORDER BY app.tenant_is_synthetic(id),id'
+          : 'SELECT * FROM app.my_tenants()',
+      );
       await db.query('COMMIT');
       return r.rows as { id: string; name: string; role: string }[];
     } catch (e) {

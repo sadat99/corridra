@@ -73,6 +73,7 @@ test('real staff discover their authorized scope and preserve exact quote and ac
   const ctx = { ...f.users.owner.ctx, tenantId: intakeTenantId };
   const tenants = await new AccessService(f.runtime).tenants(f.users.owner.token);
   expect(tenants.some((row) => row.id === intakeTenantId)).toBe(true);
+  expect(tenants[0].id).toBe(intakeTenantId);
   expect(tenants.some((row) => row.id === f.tenantA)).toBe(true);
   const services = new CustomerServiceRequestService(f.runtime, f.auth, options, session);
   const workspaceId = (
