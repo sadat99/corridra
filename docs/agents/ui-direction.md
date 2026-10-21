@@ -292,3 +292,25 @@ A UI change may not alter domain packages, API handlers, authentication, RLS, mi
 ## Verification for every UI change
 
 `pnpm format:check`, `lint`, `typecheck`, `test`, `build`, `test:e2e`, and `test:operator` where a protected surface changed. Capture screenshots at 1440, 768 and 390 px before and after. Axe must stay clean. Record all of it, and what was not run, in `docs/agents/work-log.md`.
+
+## Sizes in use (checked on the live pages, 21 October 2026)
+
+One scale for every page. Use these before inventing a size; all are tokens or values already in `globals.css`.
+
+| Thing                              | Size                                      | Notes                                                                                  |
+| ---------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| Page headline                      | 30 to 40 px serif                         | `--text-h1`. Home headline 34 to 52 px.                                                |
+| Section heading                    | 24 to 32 px serif                         | `--text-h2`.                                                                           |
+| Card or panel title                | 20 px sans bold                           | Choice cards, step cards, route cards, customer cards.                                 |
+| Body text                          | 16 px                                     | Lead paragraphs 18 px; captions and secondary labels 14 px; eyebrow labels 12 px.      |
+| Page call to action                | 56 px tall, 18 px text                    | Hero and closing band only.                                                            |
+| In-card call to action             | 48 px tall, 16 px text                    | Home Start, route buttons.                                                             |
+| Standalone action (link or button) | 44 px tall, outlined, 14 px corners       | Refresh, Back to, Explore, Cancel and the like. Customer pages get this from one rule. |
+| Inputs                             | 48 px tall, full width up to 40 rem       | Customer pages.                                                                        |
+| Card                               | 24 px padding, 1 px border, 20 px corners | Choice cards and step cards match.                                                     |
+| Gap from header to first heading   | 24 px                                     | Do not add page padding on top.                                                        |
+| Footer                             | Two equal link columns of six             | Repeat nothing the header already carries.                                             |
+
+Customer pages (everything under the Home, My Work, Companies, Results, More tabs) are styled by one layer at the end of `globals.css` ("Customer kit, third pass"). New sections need no styling of their own: put a section directly under the tabs, use `.field`, `.primary-link`, `.text-link`, `role="alert"` and `role="status"`, and `ux-empty` for empty states.
+
+How to check a page without a signed-in account: build (`pnpm build`), run `next start --port 3100` from `apps/web`, then measure or screenshot with Playwright at 1366, 1536, 1920 and 390 wide. Signed-in components can be mounted with esbuild and mocked `fetch` routes, as the operator specs do.
