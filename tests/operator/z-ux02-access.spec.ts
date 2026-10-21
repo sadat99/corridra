@@ -200,6 +200,66 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     await page.getByRole('button', { name: 'Verify email', exact: true }).click();
     await expect(page).toHaveURL('http://127.0.0.1:3401/signin');
     expect(calls.filter((call) => call.path.includes('verify-email'))).toHaveLength(1);
+    // Submission-first account access keeps a permitted destination across every identity stage.
+    await page.goto('http://127.0.0.1:3401/signin?returnTo=%2Fplan');
+    await page.getByRole('link', { name: 'Create an account', exact: true }).click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === '/signup' && url.searchParams.get('returnTo') === '/plan',
+    );
+    await page.getByLabel('Name', { exact: true }).fill('Synthetic Request Owner');
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
+    const requestPassword = 'Synthetic request account password';
+    await page.getByLabel('Password', { exact: true }).fill(requestPassword);
+    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === '/verify-email' && url.searchParams.get('returnTo') === '/plan',
+    );
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
+    await page.getByLabel('Verification code', { exact: true }).fill('123456');
+    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
+    );
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(requestPassword);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page).toHaveURL('http://127.0.0.1:3401/plan');
+    const stored = await page.evaluate(() =>
+      [localStorage, sessionStorage].flatMap((storage) =>
+        Object.keys(storage).map((key) => storage.getItem(key)),
+      ),
+    );
+    expect(JSON.stringify(stored)).not.toContain(requestPassword);
+
+    // Recovery retains the destination, while consuming and removing the reset token.
+    await page.goto('http://127.0.0.1:3401/forgot-password?returnTo=%2Fplan');
+    await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
+    await page.getByRole('button', { name: 'Request reset email', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('If an account uses this address');
+    const resetCall = calls.filter((call) => call.path.includes('request-password-reset')).at(-1);
+    expect(JSON.parse(resetCall!.body).redirectTo).toBe(
+      'http://127.0.0.1:3401/reset-password?returnTo=%2Fplan',
+    );
+    await page.goto(
+      'http://127.0.0.1:3401/reset-password?token=synthetic-reset-token&returnTo=%2Fplan',
+    );
+    await page.getByLabel('New password', { exact: true }).fill(requestPassword);
+    await page.getByRole('button', { name: 'Set new password', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Your password has been changed');
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === '/reset-password' &&
+        url.searchParams.get('returnTo') === '/plan' &&
+        !url.searchParams.has('token'),
+    );
+    await page.getByRole('link', { name: 'Back to sign-in', exact: true }).click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
+    );
+    await page.goto('http://127.0.0.1:3401/signin?returnTo=https%3A%2F%2Fexample.invalid');
+    await expect(
+      page.getByRole('link', { name: 'Create an account', exact: true }),
+    ).toHaveAttribute('href', '/signup');
   } finally {
     server.kill('SIGTERM');
   }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 
 const control = /[\u0000-\u001f\u007f]/u;
@@ -6,9 +7,9 @@ const synthetic = (max: number) =>
   z
     .string()
     .trim()
-    .min(11)
+    .min(2)
     .max(max)
-    .regex(/^Synthetic /)
+    .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
     .refine((v) => !control.test(v), 'Control characters are not allowed');
 const plain = (min: number, max: number) =>
   z

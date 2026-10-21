@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   composeBrief,
@@ -84,7 +85,7 @@ function blank(family: MissionDraftFamily): DraftFormValues {
     /* A fixed fallback keeps the form usable when the browser hides its time zone. */
   }
   return {
-    title: `Synthetic ${familyShort[family]} request`,
+    title: `${realCustomerInput() ? '' : 'Synthetic '}${familyShort[family]} request`,
     family,
     objective: missionDraftObjectives[family][0] ?? null,
     market: '',
@@ -207,7 +208,11 @@ function Guided(scope: Scope) {
         return true;
       }
       if (status === 503) {
-        reset('Sample request drafts are unavailable.');
+        reset(
+          realCustomerInput()
+            ? 'Request drafts are unavailable.'
+            : 'Sample request drafts are unavailable.',
+        );
         return true;
       }
       return false;
@@ -572,8 +577,9 @@ function Guided(scope: Scope) {
     return (
       <section aria-label="Guided request drafts">
         <p>
-          Start a request in a few questions, save it and come back later. Everything you enter is
-          self-declared and unverified. This is test mode: start your text with the word Synthetic.
+          {realCustomerInput()
+            ? 'Enter a clear description with at least two characters.'
+            : 'Start a request in a few questions, save it and come back later. Everything you enter is self-declared and unverified. This is test mode: start your text with the word Synthetic.'}{' '}
         </p>
         <p role="status">{message}</p>
         <h2 ref={heading} tabIndex={-1}>
@@ -740,7 +746,7 @@ function Guided(scope: Scope) {
           ))}
           {field(
             'title',
-            'Name this request (start with Synthetic)',
+            realCustomerInput() ? 'Name this request' : 'Name this request (start with Synthetic)',
             <input
               {...common('title')}
               value={form.title}
@@ -853,8 +859,12 @@ function Guided(scope: Scope) {
           {field(
             'offer',
             form.family === 'SUPPLIERS_PRODUCTS'
-              ? 'What do you need to buy? (start with Synthetic)'
-              : 'What do you offer or need? (start with Synthetic)',
+              ? realCustomerInput()
+                ? 'What do you need to buy?'
+                : 'What do you need to buy? (start with Synthetic)'
+              : realCustomerInput()
+                ? 'What do you offer or need?'
+                : 'What do you offer or need? (start with Synthetic)',
             <textarea
               {...common('offer')}
               rows={4}
@@ -906,7 +916,8 @@ function Guided(scope: Scope) {
                   }
                 />
                 <label htmlFor={id + 'rv' + i}>
-                  Requirement {i + 1} detail (start with Synthetic)
+                  Requirement {i + 1}{' '}
+                  {realCustomerInput() ? 'detail' : 'detail (start with Synthetic)'}{' '}
                 </label>
                 <input
                   id={id + 'rv' + i}
@@ -966,7 +977,7 @@ function Guided(scope: Scope) {
                         onClick={() =>
                           set('requirements', [
                             ...form.requirements,
-                            { label: p, value: 'Synthetic ' },
+                            { label: p, value: realCustomerInput() ? '' : 'Synthetic ' },
                           ])
                         }
                       >
@@ -980,7 +991,10 @@ function Guided(scope: Scope) {
                   className="text-link"
                   disabled={busy || locked}
                   onClick={() =>
-                    set('requirements', [...form.requirements, { label: '', value: 'Synthetic ' }])
+                    set('requirements', [
+                      ...form.requirements,
+                      { label: '', value: realCustomerInput() ? '' : 'Synthetic ' },
+                    ])
                   }
                 >
                   Add my own line
@@ -1010,7 +1024,9 @@ function Guided(scope: Scope) {
           </fieldset>
           {field(
             'notes',
-            'Anything else? (optional, start with Synthetic)',
+            realCustomerInput()
+              ? 'Anything else? (optional)'
+              : 'Anything else? (optional, start with Synthetic)',
             <textarea
               {...common('notes')}
               rows={2}
@@ -1042,7 +1058,7 @@ function Guided(scope: Scope) {
           )}
           {field(
             'companyName',
-            'Company name (start with Synthetic)',
+            realCustomerInput() ? 'Company name' : 'Company name (start with Synthetic)',
             <input
               {...common('companyName')}
               value={form.companyName}
@@ -1142,7 +1158,9 @@ function Guided(scope: Scope) {
                 disabled={busy}
                 onChange={(e) => setAck(e.target.checked)}
               />
-              I confirm these are fictional test details.
+              {realCustomerInput()
+                ? 'I confirm these request details are accurate to the best of my knowledge.'
+                : 'I confirm these are fictional test details.'}{' '}
             </label>
           )}
           {!locked && (

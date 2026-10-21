@@ -1,3 +1,4 @@
+import { customerLabelAllowed, customerWebsiteAllowed } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerWorkspacesEnabled } from './customer-workspaces';
@@ -21,18 +22,22 @@ const syntheticText = (max: number) =>
   z
     .string()
     .trim()
-    .min(11)
+    .min(2)
     .max(max)
-    .regex(/^Synthetic /)
+    .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
     .refine((v) => !control.test(v), 'Control characters are not allowed');
 // Only reserved example hosts are accepted, so no real company site can be entered.
 const reservedWebsite = z
   .string()
   .trim()
   .max(200)
-  .regex(
-    /^https:\/\/[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.(example|test|invalid)(\/[A-Za-z0-9._~/-]*)?$/,
-    'Use a reserved example, test or invalid host',
+  .refine(
+    (v) =>
+      customerWebsiteAllowed(v) ||
+      /^https:\/\/[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.(example|test|invalid)(\/[A-Za-z0-9._~/-]*)?$/.test(
+        v,
+      ),
+    'Enter an HTTPS company website',
   );
 export const customerOrganisationProfileDetails = z
   .object({

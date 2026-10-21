@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type OutcomeKind =
@@ -23,7 +24,9 @@ type Props = { subject: string; issuer: string; registrationId: string };
 export const outcomeLabels: Record<OutcomeKind, string> = {
   MEETING_HELD: 'A meeting was held',
   FOLLOW_UP_AGREED: 'A follow-up was agreed',
-  SAMPLE_OR_QUOTE_REQUESTED: 'A sample or quote was requested',
+  SAMPLE_OR_QUOTE_REQUESTED: realCustomerInput()
+    ? 'A or quote was requested'
+    : 'A sample or quote was requested',
   PRELIMINARY_AGREEMENT: 'A preliminary agreement was reached',
   NO_PROGRESS: 'No progress yet',
 };
@@ -109,12 +112,12 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('Synthetic ');
+  const [comment, setComment] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [fbShared, setFbShared] = useState(false);
   const [fbConfirm, setFbConfirm] = useState(false);
   const [kind, setKind] = useState<OutcomeKind>('MEETING_HELD');
   const [occurredOn, setOccurredOn] = useState(today());
-  const [note, setNote] = useState('Synthetic ');
+  const [note, setNote] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [ocShared, setOcShared] = useState(false);
   const [ocConfirm, setOcConfirm] = useState(false);
   const active = useRef(true);
@@ -129,8 +132,8 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
   const clear = useCallback(() => {
     setFeedback(null);
     setOutcomes([]);
-    setComment('Synthetic ');
-    setNote('Synthetic ');
+    setComment(realCustomerInput() ? '' : 'Synthetic ');
+    setNote(realCustomerInput() ? '' : 'Synthetic ');
     setRating(0);
     setFbConfirm(false);
     setOcConfirm(false);
@@ -176,7 +179,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
         setOutcomes(v.outcomes);
         if (v.feedback && !v.feedback.retracted) {
           setRating(v.feedback.rating ?? 0);
-          setComment(v.feedback.note ?? 'Synthetic ');
+          setComment(v.feedback.note ?? (realCustomerInput() ? '' : 'Synthetic '));
           setFbShared(v.feedback.shared);
         }
         if (timer.current) clearTimeout(timer.current);
@@ -262,16 +265,24 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
       setBusy(false);
     }
   }
-  const textOk = (v: string) => /^Synthetic .{3,}/.test(v.trim());
+  const textOk = (v: string) =>
+    realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
 
   function saveFeedback() {
     setError('');
     if (rating < 1) return setError('Choose a rating from 1 to 5.');
     if (comment.trim() !== 'Synthetic' && !textOk(comment))
       return setError(
-        'Start the comment with the word Synthetic and add a few words, or leave it empty.',
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the comment with the word Synthetic and add a few words, or leave it empty.',
       );
-    if (!fbConfirm) return setError('Confirm that this is fictional sample feedback.');
+    if (!fbConfirm)
+      return setError(
+        realCustomerInput()
+          ? 'Confirm that this feedback reflects your experience.'
+          : 'Confirm that this is fictional sample feedback.',
+      );
     void send(
       {
         kind: 'FEEDBACK',
@@ -294,8 +305,17 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
     setError('');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) return setError('Choose a date.');
     if (!textOk(note))
-      return setError('Start the note with the word Synthetic and add a few words.');
-    if (!ocConfirm) return setError('Confirm that this is a fictional sample result.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the note with the word Synthetic and add a few words.',
+      );
+    if (!ocConfirm)
+      return setError(
+        realCustomerInput()
+          ? 'Confirm that this is your own reported result.'
+          : 'Confirm that this is a fictional sample result.',
+      );
     void send(
       {
         kind: 'OUTCOME',
@@ -309,7 +329,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
         retracted: false,
       },
       () => {
-        setNote('Synthetic ');
+        setNote(realCustomerInput() ? '' : 'Synthetic ');
         setOcConfirm(false);
         setOcShared(false);
       },
@@ -346,9 +366,9 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
     <div className="operator-form" aria-busy={busy || status === 'loading'}>
       <h4>My feedback and results</h4>
       <p>
-        This is your own fictional sample record. The organiser sees an item only if you choose to
-        share it, and you can stop sharing or withdraw it at any time. Do not enter prices, contract
-        values or contact details. Corridra does not confirm what you report.
+        {realCustomerInput()
+          ? 'This is your own reported record. The organiser sees an item only if you choose to share it, and you can stop sharing or withdraw it at any time. Do not enter prices, contract values or contact details. Corridra does not confirm what you report.'
+          : 'This is your own fictional sample record. The organiser sees an item only if you choose to share it, and you can stop sharing or withdraw it at any time. Do not enter prices, contract values or contact details. Corridra does not confirm what you report.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Loading your feedback and results…</p>}
       {status === 'unavailable' && <p role="status">{notice}</p>}
@@ -388,7 +408,9 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
               ))}
             </fieldset>
             <label className="field">
-              Comment (optional, start with Synthetic)
+              {realCustomerInput()
+                ? 'Comment (optional)'
+                : 'Comment (optional, start with Synthetic)'}{' '}
               <input
                 type="text"
                 maxLength={500}
@@ -413,7 +435,9 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                 disabled={busy || !!feedback?.retracted}
                 onChange={(e) => setFbConfirm(e.target.checked)}
               />
-              This is fictional sample feedback.
+              {realCustomerInput()
+                ? 'I confirm this feedback reflects my experience.'
+                : 'This is fictional sample feedback.'}{' '}
             </label>
             {feedback?.retracted ? (
               <p>You withdrew your feedback. It is kept for your own history and is not shared.</p>
@@ -467,7 +491,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
               />
             </label>
             <label className="field">
-              Note (start with Synthetic)
+              {realCustomerInput() ? 'Note' : 'Note (start with Synthetic)'}{' '}
               <input
                 type="text"
                 maxLength={500}
@@ -492,7 +516,9 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                 disabled={busy}
                 onChange={(e) => setOcConfirm(e.target.checked)}
               />
-              This is a fictional sample result.
+              {realCustomerInput()
+                ? 'I confirm this is my reported result. It has not been independently verified.'
+                : 'This is a fictional sample result.'}{' '}
             </label>
             <button type="submit" className="primary-link" disabled={busy}>
               Add result

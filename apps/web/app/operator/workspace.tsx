@@ -34,6 +34,7 @@ type RecordRow = {
   value?: { enabled: boolean };
 };
 type Snapshot = {
+  purpose?: string;
   uploadsConfigured: boolean;
   scanMode: 'required' | 'bypass';
   role: string;
@@ -208,7 +209,7 @@ function TenantWorkspace({
         locator: f.get('locator'),
         observedAt: new Date().toISOString(),
         classification: f.get('classification'),
-        purpose: 'synthetic_validation',
+        purpose: data?.purpose ?? 'synthetic_validation',
         retentionUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
         aiPolicy: f.get('aiPolicy'),
       }),
@@ -351,6 +352,7 @@ function TenantWorkspace({
           </div>
           <div id="workspace-research" tabIndex={-1} className="workspace-panel">
             <Counterparties
+              purpose={data.purpose ?? 'synthetic_validation'}
               key={`research-${tenant}`}
               tenant={tenant}
               missionRevision={missionRevision}

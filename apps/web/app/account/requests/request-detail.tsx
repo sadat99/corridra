@@ -1,7 +1,14 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshButton } from '../refresh-button';
-import { briefSchema, missionStatus, type MissionBrief } from '@corridra/domain/missions';
+import {
+  briefSchema,
+  realBriefSchema,
+  missionStatus,
+  type MissionBrief,
+} from '@corridra/domain/missions';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 
 type Detail = {
@@ -34,7 +41,9 @@ const labels: Record<string, string> = {
   name: 'Contact name',
   company: 'Company',
   email: 'Contact email',
-  acknowledged: 'Sample-data notice acknowledged',
+  acknowledged: realCustomerInput()
+    ? 'Privacy and request notice acknowledged'
+    : 'Sample-data notice acknowledged',
   experience: 'Commercial requirements',
   schemaVersion: 'Request format version',
   companyCountry: 'Company country',
@@ -89,12 +98,18 @@ function OriginalFields({ value }: { value: Record<string, unknown> }) {
 }
 function checked(value: unknown, requestId: string): Detail {
   const d = value as Partial<Detail> | null;
-  if (!d || d.id !== requestId || (value as { synthetic?: unknown }).synthetic !== true)
+  if (
+    !d ||
+    d.id !== requestId ||
+    !customerProvenanceAllowed((value as { synthetic?: unknown }).synthetic)
+  )
     throw new Error('failed');
   if (d.available === false && d.original === null && d.progress === null) return d as Detail;
   if (
     d.available !== true ||
-    !briefSchema.safeParse(d.original).success ||
+    !((value as { synthetic?: boolean }).synthetic ? briefSchema : realBriefSchema).safeParse(
+      d.original,
+    ).success ||
     !d.progress ||
     !missionStatus.options.includes(d.progress.status as (typeof missionStatus.options)[number]) ||
     !Number.isFinite(Date.parse(d.progress.receivedAt)) ||
@@ -187,7 +202,12 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
       <a className="text-link ux-back" href="/account#customer-requests">
         Back to my saved requests
       </a>
-      <p>Sample data only. A request is not an accepted engagement, confirmed meeting or deal.</p>
+      <p>
+        {' '}
+        {realCustomerInput()
+          ? 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'
+          : 'Sample data only. A request is not an accepted engagement, confirmed meeting or deal.'}{' '}
+      </p>
       {status === 'loading' && <p role="status">Loading your saved request…</p>}
       {status === 'denied' && (
         <div role="alert">
@@ -199,8 +219,9 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
       )}
       {status === 'unavailable' && (
         <p role="status">
-          Saved sample request details are unavailable. Your receipts and shared mission links are
-          separate.
+          {realCustomerInput()
+            ? 'Saved request details are unavailable. Your receipts and shared mission links are separate.'
+            : 'Saved sample request details are unavailable. Your receipts and shared mission links are separate.'}{' '}
         </p>
       )}
       {status === 'failed' && <p role="alert">Your request could not be loaded. Try again.</p>}

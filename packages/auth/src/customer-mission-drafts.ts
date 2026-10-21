@@ -1,3 +1,8 @@
+import {
+  customerLabelAllowed,
+  customerWebsiteAllowed,
+  realCustomerInput,
+} from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { objectiveOptions, outcomeOptions } from '@corridra/domain/missions';
 import { missionDraftObjectives } from '@corridra/domain/mission-drafts';
@@ -29,7 +34,7 @@ const plain = (max: number, min = 0) =>
 // Free text stays synthetic while real-data gates are closed. An empty value means "not yet written".
 const syntheticOrEmpty = (max: number) =>
   plain(max).refine(
-    (v) => v === '' || (v.length >= 11 && v.startsWith('Synthetic ')),
+    (v) => v === '' || customerLabelAllowed(v),
     'Start with Synthetic and use at least 11 characters',
   );
 const date = z
@@ -48,9 +53,9 @@ export const missionDraftRequirement = z
     value: z
       .string()
       .trim()
-      .min(11)
+      .min(2)
       .max(300)
-      .regex(/^Synthetic /)
+      .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
       .refine((v) => !control.test(v)),
   })
   .strict()
@@ -60,9 +65,9 @@ export const missionDraftDetails = z
     title: z
       .string()
       .trim()
-      .min(11)
+      .min(2)
       .max(120)
-      .regex(/^Synthetic /)
+      .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
       .refine((v) => !control.test(v)),
     family: z.enum(missionDraftFamilies),
     objective: z.enum(objectiveOptions).nullable(),
@@ -79,6 +84,7 @@ export const missionDraftDetails = z
       .refine(
         (v) =>
           v === '' ||
+          customerWebsiteAllowed(v) ||
           /^https:\/\/[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.(example|test|invalid)(\/[A-Za-z0-9._~/-]*)?$/.test(
             v,
           ),
@@ -100,7 +106,13 @@ export const missionDraftDetails = z
     contactEmail: z
       .string()
       .max(254)
-      .refine((v) => v === '' || /^[a-z0-9._+-]+@example\.invalid$/.test(v), 'Use a test address'),
+      .refine(
+        (v) =>
+          v === '' ||
+          (realCustomerInput() && z.email().safeParse(v).success) ||
+          /^[a-z0-9._+-]+@example\.invalid$/.test(v),
+        'Use a test address',
+      ),
     profileVersion: z.number().int().min(1).max(999999999).nullable(),
     sourcingContext: z
       .enum([

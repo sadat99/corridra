@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -144,12 +145,13 @@ function ScopedParticipants(props: Props) {
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
-      aria-label="Sample programme participants"
+      aria-label={realCustomerInput() ? 'Programme participants' : 'Sample programme participants'}
     >
-      <h3>Sample participants</h3>
+      <h3> {realCustomerInput() ? 'Participants' : 'Sample participants'} </h3>
       <p>
-        Use fictional information only. A registration records interest and permission to share a
-        display name. Eligibility, private missions, meetings and fees are not managed here.
+        {realCustomerInput()
+          ? 'A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'
+          : 'Use fictional information only. A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'}{' '}
       </p>
       {view.status === 'loading' && <p role="status">Checking programme participant access…</p>}
       {view.status === 'denied' && (
@@ -159,7 +161,12 @@ function ScopedParticipants(props: Props) {
         </p>
       )}
       {view.status === 'unavailable' && (
-        <p role="status">Sample delegation participation is unavailable.</p>
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation participation is unavailable.'
+            : 'Sample delegation participation is unavailable.'}{' '}
+        </p>
       )}
       {view.status === 'failed' && (
         <p role="alert">Participant details could not be confirmed. Reload to check access.</p>
@@ -168,7 +175,10 @@ function ScopedParticipants(props: Props) {
         <>
           <h4>Invitations</h4>
           {view.data.invitations.length === 0 ? (
-            <p className="ux-empty">No sample invitations yet.</p>
+            <p className="ux-empty">
+              {' '}
+              {realCustomerInput() ? 'No invitations yet.' : 'No sample invitations yet.'}{' '}
+            </p>
           ) : (
             <ul>
               {view.data.invitations.map((i) => (
@@ -268,13 +278,15 @@ function ScopedParticipants(props: Props) {
                 event.preventDefault();
                 setError('');
                 if (
-                  !label.trim().startsWith('Synthetic ') ||
-                  label.trim().length < 11 ||
+                  (!realCustomerInput() && !label.trim().startsWith('Synthetic ')) ||
+                  label.trim().length < (realCustomerInput() ? 2 : 11) ||
                   label.trim().length > 120 ||
                   !issueAck
                 ) {
                   setError(
-                    'Use a fictional label beginning with Synthetic and confirm sample use.',
+                    realCustomerInput()
+                      ? 'Enter a display label and confirm permission to share it.'
+                      : 'Use a fictional label beginning with Synthetic and confirm sample use.',
                   );
                   return;
                 }
@@ -289,13 +301,16 @@ function ScopedParticipants(props: Props) {
                 setIssueAck(false);
               }}
             >
-              <h4>Create a sample invitation</h4>
+              <h4>
+                {' '}
+                {realCustomerInput() ? 'Create a invitation' : 'Create a sample invitation'}{' '}
+              </h4>
               <label className="field">
                 Invitation label
                 <input
                   value={label}
                   required
-                  minLength={11}
+                  minLength={realCustomerInput() ? 2 : 11}
                   maxLength={120}
                   disabled={view.busy}
                   onChange={(e) => setLabel(e.target.value)}
@@ -309,18 +324,21 @@ function ScopedParticipants(props: Props) {
                   disabled={view.busy}
                   onChange={(e) => setIssueAck(e.target.checked)}
                 />
-                I will share this sample code only with an approved test participant. No message is
-                sent.
+                {realCustomerInput()
+                  ? 'I will share this code only with an approved test participant. No message is sent.'
+                  : 'I will share this sample code only with an approved test participant. No message is sent.'}{' '}
               </label>
               <button className="primary-link" disabled={view.busy}>
-                Create sample invitation code
+                {realCustomerInput()
+                  ? 'Create invitation code'
+                  : 'Create sample invitation code'}{' '}
               </button>
             </form>
           )}
           {view.result?.action === 'invite' && view.result.issued === true && (
             <div>
               <label className="field">
-                Private sample invitation code
+                {realCustomerInput() ? 'Private invitation code' : 'Private sample invitation code'}{' '}
                 <input readOnly autoComplete="off" value={String(view.result.token)} />
               </label>
               <p>

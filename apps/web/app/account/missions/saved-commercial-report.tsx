@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
@@ -350,8 +352,9 @@ function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }
         Back to my saved commercial missions
       </a>
       <p>
-        Sample data only. This is the operator-approved report scope,not automatic access to every
-        company,contact,offer or participant record.
+        {realCustomerInput()
+          ? 'Your submitted information. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'
+          : 'Sample data only. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Opening your approved commercial report…</p>}
       {status === 'denied' && (

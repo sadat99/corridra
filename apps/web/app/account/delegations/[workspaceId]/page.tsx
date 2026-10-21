@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
 import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { redirect, notFound } from 'next/navigation';
@@ -18,12 +19,22 @@ import { CustomerProgrammes } from '../customer-programmes';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Sample delegation planning | Corridra',
+  title: realCustomerInput()
+    ? 'Delegation planning | Corridra'
+    : 'Sample delegation planning | Corridra',
   robots: { index: false, follow: false },
 };
-function unavailable(message = 'Sample delegation planning is unavailable.') {
+function unavailable(
+  message = realCustomerInput()
+    ? 'Delegation planning is unavailable.'
+    : 'Sample delegation planning is unavailable.',
+) {
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Sample delegation planning" compact>
+    <WorkspaceShell
+      eyebrow="YOUR ACCOUNT"
+      title={realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}
+      compact
+    >
       <p role="status">{message}</p>
       <a className="text-link" href="/account">
         Return to your account

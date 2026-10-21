@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput, customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
@@ -17,12 +19,11 @@ function workspace(value: unknown): value is CustomerWorkspace {
     typeof w.id === 'string' &&
     uuid.test(w.id) &&
     typeof w.name === 'string' &&
-    w.name.startsWith('Synthetic ') &&
-    w.name.length >= 11 &&
+    customerLabelAllowed(w.name) &&
     w.name.length <= 120 &&
     !/[\u0000-\u001f\u007f]/u.test(w.name) &&
     ['owner', 'admin', 'member'].includes(w.role) &&
-    w.synthetic === true &&
+    customerProvenanceAllowed(w.synthetic) &&
     w.organisationId === null
   );
 }
@@ -38,8 +39,8 @@ function readDraft(key: string): Draft | null {
     typeof d.commandId !== 'string' ||
     !uuid.test(d.commandId) ||
     typeof d.name !== 'string' ||
-    !d.name.startsWith('Synthetic ') ||
-    d.name.length < 11 ||
+    !customerLabelAllowed(d.name) ||
+    d.name.length < (realCustomerInput() ? 2 : 11) ||
     d.name.length > 120 ||
     /[\u0000-\u001f\u007f]/u.test(d.name)
   )
@@ -77,7 +78,7 @@ async function fetchWorkspaces(subject: string, issuer: string, signal: AbortSig
   if (!value || typeof value !== 'object') throw new Error('Invalid workspace response');
   const body = value as { synthetic?: unknown; workspaces?: unknown };
   if (
-    body.synthetic !== true ||
+    !customerProvenanceAllowed(body.synthetic) ||
     !Array.isArray(body.workspaces) ||
     !body.workspaces.every(workspace)
   )
@@ -142,7 +143,8 @@ export function CustomerWorkspaces({
         try {
           const saved = readDraft(storageKey);
           setPending(saved);
-          if (saved) setName(saved.name.slice('Synthetic '.length));
+          if (saved)
+            setName(realCustomerInput() ? saved.name : saved.name.slice('Synthetic '.length));
           setStorageFailed(false);
           return true;
         } catch {
@@ -198,15 +200,17 @@ export function CustomerWorkspaces({
     const proposed = pending ?? {
       version: 1 as const,
       commandId: crypto.randomUUID(),
-      name: `Synthetic ${name.trim()}`,
+      name: realCustomerInput() ? name.trim() : `Synthetic ${name.trim()}`,
     };
     if (
-      proposed.name.length < 11 ||
+      !customerLabelAllowed(proposed.name) ||
       proposed.name.length > 120 ||
       /[\u0000-\u001f\u007f]/u.test(proposed.name)
     ) {
       setMessage({
-        text: 'Enter a fictional workspace name between 1 and 110 characters.',
+        text: realCustomerInput()
+          ? 'Enter a workspace name between 2 and 120 characters.'
+          : 'Enter a fictional workspace name between 1 and 110 characters.',
         error: true,
       });
       return;
@@ -461,13 +465,15 @@ export function CustomerWorkspaces({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
-                maxLength={110}
+                maxLength={realCustomerInput() ? 120 : 110}
                 autoComplete="off"
                 readOnly={!!pending}
                 disabled={creating || storageFailed}
               />
               <p id="workspace-name-hint" className="ux-hint">
-                Use a fictional name. We add “Synthetic” in front.
+                {realCustomerInput()
+                  ? 'Use a name you and your team will recognise.'
+                  : 'Use a fictional name. We add “Synthetic” in front.'}
               </p>
             </div>
             {pending && (

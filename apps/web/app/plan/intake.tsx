@@ -1,5 +1,8 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { accountClient } from '../../lib/neon-auth-client';
+import { accountAccessPath } from '../../lib/account-return';
 import { JourneyBar } from '../../components/journey-bar';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
@@ -9,6 +12,8 @@ import { originalAmountToMinor } from '@corridra/domain/locale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   briefSchema,
+  realBriefSchema,
+  realIntakeSteps,
   intakeSteps,
   objectiveOptions,
   outcomeOptions,
@@ -109,11 +114,53 @@ export type PrivateIntakeSubmission = {
   draftStorageKey: string;
   submit: (commandId: string, brief: unknown) => Promise<void>;
 };
-export function Intake({
+async function claimSavedRequest(storageKey: string, navigate: (path: string) => void) {
+  const response = await fetch('/api/intake/pending/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  const body = await response.json();
+  if (!response.ok)
+    throw new Error(body.error ?? 'Your request could not be submitted. Try again.');
+  if (typeof body.id !== 'string' || !/^[a-f0-9-]{36}$/.test(body.id))
+    throw new Error('The request response could not be read. Open your account to check it.');
+  try {
+    sessionStorage.removeItem(storageKey);
+  } catch {
+    /* Navigation still works when tab storage is blocked. */
+  }
+  navigate('/account/requests/' + encodeURIComponent(body.id));
+}
+type IntakeProps = { privateSubmission?: PrivateIntakeSubmission; realMode?: boolean };
+export function Intake(props: IntakeProps = {}) {
+  return props.realMode && !props.privateSubmission ? (
+    <RegisteredIntake {...props} />
+  ) : (
+    <IntakeForm {...props} />
+  );
+}
+function RegisteredIntake(props: IntakeProps) {
+  const router = useRouter();
+  return <IntakeForm {...props} navigate={router.replace} />;
+}
+function missingNavigation() {
+  throw new Error('Request navigation is unavailable. Open your account to continue.');
+}
+function IntakeForm({
   privateSubmission,
-}: { privateSubmission?: PrivateIntakeSubmission } = {}) {
+  realMode = false,
+  navigate = missingNavigation,
+}: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
-  const draftStorageKey = privateSubmission?.draftStorageKey ?? 'corridra-mission-draft';
+  const draftStorageKey =
+    privateSubmission?.draftStorageKey ??
+    (realMode ? 'corridra-real-mission-draft' : 'corridra-mission-draft');
+  const [password, setPassword] = useState('');
+  const [account, setAccount] = useState<{ email: string; emailVerified: boolean } | null>(null);
+  const [accountChecked, setAccountChecked] = useState(!realMode || privateMode);
+  const [pendingReady, setPendingReady] = useState(false);
+  const [intakeAvailable, setIntakeAvailable] = useState(true);
   const [draft, setDraft] = useState<Draft>(empty),
     [step, setStep] = useState(0),
     [errors, setErrors] = useState<Record<string, string[]>>({}),
@@ -141,7 +188,9 @@ export function Intake({
           saved = JSON.parse(sessionStorage.getItem(draftStorageKey) ?? 'null');
         } catch {
           setDraftNotice(
-            'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
+            realMode
+              ? 'A saved draft could not be restored. Keep a copy of your request before leaving this tab.'
+              : 'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
           );
         }
         if (
@@ -189,7 +238,8 @@ export function Intake({
                 : (new Intl.DisplayNames(['en'], { type: 'region' }).of(marketCode) ?? marketCode),
           }));
         }
-        const token = privateMode ? null : sessionStorage.getItem('corridra-mission-receipt');
+        const token =
+          privateMode || realMode ? null : sessionStorage.getItem('corridra-mission-receipt');
         if (token) {
           setReceipt(token);
           setCheckCode(token);
@@ -198,13 +248,61 @@ export function Intake({
         }
       } catch {
         setDraftNotice(
-          'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
+          realMode
+            ? 'A saved draft could not be restored. Keep a copy of your request before leaving this tab.'
+            : 'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
         );
       } finally {
         setReady(true);
       }
     });
-  }, [draftStorageKey, privateMode]);
+  }, [draftStorageKey, privateMode, realMode]);
+  useEffect(() => {
+    if (!realMode || privateMode) return;
+    let active = true;
+    const controller = new AbortController();
+    Promise.all([
+      accountClient.getSession(),
+      fetch('/api/intake/pending', { cache: 'no-store', signal: controller.signal }),
+    ])
+      .then(async ([identity, response]) => {
+        if (!active) return;
+        if (identity.error)
+          throw new Error('Account status could not be checked. Sign in or try again.');
+        if (!response.ok) throw new Error('Saved request status could not be checked. Try again.');
+        const user = identity.data?.user;
+        setAccount(user ? { email: user.email, emailVerified: user.emailVerified } : null);
+        if (user)
+          setDraft((previous) => ({
+            ...previous,
+            email: previous.email || user.email,
+            name: previous.name || user.name || '',
+          }));
+        const pending = await response.json();
+        if (!active) return;
+        setPendingReady(pending.pending === true);
+        setIntakeAvailable(pending.available !== false);
+        if (pending.available === false)
+          setMessage(
+            'New requests are paused. Existing requests remain available in your account.',
+          );
+        if (pending.pending === true && user?.emailVerified) {
+          setMessage('Opening your private request…');
+          await claimSavedRequest(draftStorageKey, navigate);
+        }
+      })
+      .catch((error) => {
+        if (active)
+          setMessage(error instanceof Error ? error.message : 'Your account could not be checked.');
+      })
+      .finally(() => {
+        if (active) setAccountChecked(true);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [realMode, privateMode, draftStorageKey, navigate]);
   useEffect(() => {
     if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
   }, [errors]);
@@ -214,7 +312,9 @@ export function Intake({
       saveDraft(v, n, key.current, draftStorageKey);
     } catch {
       setDraftNotice(
-        'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
+        realMode
+          ? 'This browser could not save the draft. Keep this tab open and copy your request before leaving.'
+          : 'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
       );
     }
   }
@@ -260,10 +360,49 @@ export function Intake({
     persist(v, step);
     setErrors((e) => ({ ...e, [field]: [] }));
   }
+  function canonicalDraft() {
+    const {
+      objective,
+      market,
+      attendance,
+      startDate,
+      endDate,
+      timezone,
+      offer,
+      website,
+      outcomes,
+      notes,
+      name,
+      company,
+      email,
+      acknowledged,
+    } = draft;
+    return {
+      objective,
+      market,
+      attendance,
+      startDate,
+      endDate,
+      timezone,
+      offer,
+      website,
+      outcomes,
+      notes,
+      name,
+      company,
+      email,
+      acknowledged,
+      experience: experience(),
+    };
+  }
   function validate(fields: string[]) {
-    const p = (fields.length === groups.flat().length ? briefSchema : intakeSteps[step]).safeParse(
-      draft,
-    );
+    const p = (
+      fields.length === groups.flat().length
+        ? realMode
+          ? realBriefSchema
+          : briefSchema
+        : (realMode ? realIntakeSteps : intakeSteps)[step]
+    ).safeParse(fields.length === groups.flat().length && realMode ? canonicalDraft() : draft);
     const next: Record<string, string[]> = {};
     if (!p.success)
       for (const e of p.error.issues) {
@@ -355,10 +494,59 @@ export function Intake({
     setMessage('');
     persist(draft, step);
     try {
+      if (realMode && !privateSubmission) {
+        if (!intakeAvailable)
+          throw new Error('New requests are paused. Open your account for existing work.');
+        if (!accountChecked) throw new Error('Wait for your account status to finish loading.');
+        if (account && draft.email.trim().toLowerCase() !== account.email.trim().toLowerCase())
+          throw new Error(
+            'Use the email address on your signed-in account, or sign out to use a different account.',
+          );
+        if (!account && password.length < 14)
+          throw new Error('Choose an account password with at least 14 characters.');
+        const response = await fetch('/api/intake/pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: key.current,
+            brief: realBriefSchema.parse(canonicalDraft()),
+          }),
+        });
+        const saved = await response.json();
+        if (!response.ok)
+          throw new Error(
+            saved.error ?? 'Your request could not be saved. Your input is still here.',
+          );
+        setPendingReady(true);
+        submitted.current = true;
+        if (account?.emailVerified) {
+          await claimSavedRequest(draftStorageKey, navigate);
+          return;
+        }
+        if (!account) {
+          try {
+            const result = await accountClient.signUp.email({
+              name: draft.name,
+              email: draft.email,
+              password,
+            });
+            if (result.error)
+              throw new Error(
+                'Your request is saved for 24 hours. Your account could not be created. Try signing in or creating your account below.',
+              );
+          } finally {
+            setPassword('');
+          }
+        }
+        navigate(accountAccessPath('/verify-email', '/plan'));
+        return;
+      }
       if (privateSubmission) {
         await privateSubmission.submit(
           key.current,
-          briefSchema.parse({ ...draft, experience: experience() }),
+          (realMode ? realBriefSchema : briefSchema).parse(
+            realMode ? canonicalDraft() : { ...draft, experience: experience() },
+          ),
         );
         submitted.current = true;
         return;
@@ -442,7 +630,7 @@ export function Intake({
         aria-invalid={!!errors[name]?.length}
         aria-describedby={errors[name]?.length ? `${name}-error` : undefined}
       />
-      {errors[name]?.length && (
+      {!!errors[name]?.length && (
         <span id={`${name}-error`} className="field-error">
           {errors[name][0]}
         </span>
@@ -458,17 +646,29 @@ export function Intake({
   return (
     <div className="ux-intake-layout">
       <div className="guide-plan-top">
-        <aside className="intake-notice">
-          <span className="guide-pill">Test mode</span>
-          <p>
-            <strong>Test intake is open. Real customer mission admission is unavailable.</strong>{' '}
-            Use invented details and an email ending in @example.invalid.{' '}
-            {privateMode
-              ? 'Sample requests stay private to this account. '
-              : 'Keep your receipt to read replies. '}
-            Email delivery is not enabled. <Link href="/privacy">Read the test intake notice</Link>.
-          </p>
-        </aside>
+        {realMode ? (
+          <aside className="intake-notice">
+            <span className="guide-pill">YOUR REQUEST</span>
+            <p>
+              <strong>Start with the work you need.</strong> At the final step, create an account or
+              sign in to keep your request and replies private.{' '}
+              <Link href="/privacy">Read the privacy and request notice</Link>.
+            </p>
+          </aside>
+        ) : (
+          <aside className="intake-notice">
+            <span className="guide-pill">Test mode</span>
+            <p>
+              <strong>Test intake is open. Real customer mission admission is unavailable.</strong>{' '}
+              Use invented details and an email ending in @example.invalid.{' '}
+              {privateMode
+                ? 'Sample requests stay private to this account. '
+                : 'Keep your receipt to read replies. '}
+              Email delivery is not enabled.{' '}
+              <Link href="/privacy">Read the test intake notice</Link>.
+            </p>
+          </aside>
+        )}
         <details lang="bn" className="guide-bn">
           <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
           <p>
@@ -477,8 +677,9 @@ export function Intake({
             গোপন তথ্য আলাদা রাখা হয়।
           </p>
           <p>
-            শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের
-            কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।
+            {realMode
+              ? 'শেষ ধাপে আপনার যোগাযোগের তথ্য দিন এবং অ্যাকাউন্ট তৈরি করুন বা সাইন ইন করুন। ইমেইল যাচাই করার পরে আপনার ব্যক্তিগত অ্যাকাউন্টে অনুরোধ এবং উত্তর দেখতে পারবেন। এখন নথি আপলোড করতে হবে না।'
+              : 'শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।'}
           </p>
         </details>
         <p role="status" aria-live="polite" className="guide-status" hidden={!message}>
@@ -492,7 +693,65 @@ export function Intake({
       </div>
       <div className="guide-plan-body">
         <div className="guide-plan-main">
-          {!finished && (
+          {realMode && pendingReady && (
+            <section className="receipt-saved" aria-labelledby="pending-request-title">
+              <h2 id="pending-request-title">Finish your request.</h2>
+              <p>
+                Your request is saved privately for 24 hours while you activate your account and
+                sign in. It is submitted to Corridra after that step.
+              </p>
+              <div className="guide-actions">
+                {account?.emailVerified ? (
+                  <button
+                    className="primary-link"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await claimSavedRequest(draftStorageKey, navigate);
+                      } catch (error) {
+                        setMessage(
+                          error instanceof Error
+                            ? error.message
+                            : 'Your request could not be opened.',
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    Open your request
+                  </button>
+                ) : (
+                  <Link
+                    className="primary-link"
+                    href={accountAccessPath(account ? '/verify-email' : '/signin', '/plan')}
+                  >
+                    {account ? 'Activate your account' : 'Sign in and continue'}
+                  </Link>
+                )}
+                {!account && (
+                  <Link className="text-link" href={accountAccessPath('/signup', '/plan')}>
+                    Create your account
+                  </Link>
+                )}
+                <button
+                  className="button-secondary"
+                  onClick={() => {
+                    key.current = crypto.randomUUID();
+                    submitted.current = false;
+                    setPendingReady(false);
+                    setPassword('');
+                    setMessage('');
+                    persist(draft, step);
+                  }}
+                >
+                  Return to the form
+                </button>
+              </div>
+            </section>
+          )}
+          {!finished && !pendingReady && (
             <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
               <p className="label">STEP {step + 1} OF 5</p>
               <JourneyBar
@@ -600,7 +859,9 @@ export function Intake({
                         draft.companyCountry === 'BD' &&
                         ['CN', 'ES', 'EU'].includes(draft.marketCode)
                       ) &&
-                      'No operating offer is announced for this direction. You can still describe an invented test mission.'}
+                      (realMode
+                        ? 'Tell us what you need. Availability and scope for this direction must be agreed after review.'
+                        : 'No operating offer is announced for this direction. You can still describe an invented test mission.')}
                   </p>
                   {field('whenNeeded', 'When is the activity needed? (optional)', 'date')}
                   <fieldset>
@@ -774,12 +1035,42 @@ export function Intake({
                       checked={draft.acknowledged}
                       onChange={(e) => change('acknowledged', e.target.checked)}
                     />
-                    I have read the test intake notice and am submitting invented test details.
+                    {realMode
+                      ? 'I have read the privacy and request notice and agree to Corridra handling this request.'
+                      : 'I have read the test intake notice and am submitting invented test details.'}
                   </label>
                   {error('acknowledged')}
+                  {realMode && !privateMode && !account && (
+                    <label className="field">
+                      Create an account password
+                      <input
+                        type="password"
+                        autoComplete="new-password"
+                        minLength={14}
+                        maxLength={128}
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        aria-describedby="intake-password-help"
+                      />
+                      <span id="intake-password-help" className="guide-hint">
+                        Use at least 14 characters. Your password goes only to the account provider.
+                      </span>
+                    </label>
+                  )}
+                  {realMode && !privateMode && (
+                    <p className="guide-hint">
+                      {account ? `Signed in as ${account.email}.` : 'Already have an account? '}{' '}
+                      {!account && (
+                        <Link className="text-link" href={accountAccessPath('/signin', '/plan')}>
+                          Sign in and return to this request
+                        </Link>
+                      )}
+                    </p>
+                  )}
                   <p className="guide-hint">
-                    No account needed. We review your request first, then propose next steps. Use
-                    your receipt to read replies.
+                    {realMode
+                      ? 'We review your request and propose next steps. Activate your account to submit it and read replies privately.'
+                      : 'No account needed. We review your request first, then propose next steps. Use your receipt to read replies.'}
                   </p>
                 </>
               )}
@@ -794,8 +1085,24 @@ export function Intake({
                     Back
                   </button>
                 )}
-                <button className="primary-link" disabled={!ready || busy}>
-                  {busy ? 'Saving…' : step === 4 ? 'Submit mission request' : 'Continue'}
+                <button
+                  className="primary-link"
+                  disabled={
+                    !ready ||
+                    busy ||
+                    (realMode &&
+                      !privateMode &&
+                      step === 4 &&
+                      (!accountChecked || !intakeAvailable))
+                  }
+                >
+                  {busy
+                    ? 'Saving…'
+                    : step === 4
+                      ? realMode && !privateMode && !account
+                        ? 'Create account and continue'
+                        : 'Submit mission request'
+                      : 'Continue'}
                 </button>
               </div>
               <p className="guide-hint guide-draft-line">
@@ -864,7 +1171,7 @@ export function Intake({
             </button>
           )}
           <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
-            <h2>Check a mission request.</h2>
+            <h2>{realMode ? 'Check an earlier receipt.' : 'Check a mission request.'}</h2>
             <form className="operator-form" onSubmit={check}>
               <label className="field">
                 Receipt code
@@ -900,8 +1207,11 @@ export function Intake({
           </section>
         </div>
         {!finished && (
-          <aside className="ux-brief-summary" aria-label="Your example request">
-            <p className="label">YOUR EXAMPLE REQUEST</p>
+          <aside
+            className="ux-brief-summary"
+            aria-label={realMode ? 'Your request' : 'Your example request'}
+          >
+            <p className="label">{realMode ? 'YOUR REQUEST' : 'YOUR EXAMPLE REQUEST'}</p>
             <dl>
               <div>
                 <dt>Objective</dt>

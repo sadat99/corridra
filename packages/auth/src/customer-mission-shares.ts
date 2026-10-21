@@ -1,3 +1,4 @@
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerParticipantsEnabled } from './customer-participants';
@@ -21,9 +22,9 @@ export const customerMissionShareInput = z.discriminatedUnion('action', [
       summary: z
         .string()
         .trim()
-        .min(11)
+        .min(2)
         .max(500)
-        .regex(/^Synthetic /)
+        .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
         .refine((v) => !/[\u0000-\u001f\u007f]/u.test(v)),
       consented: z.literal(true),
     })

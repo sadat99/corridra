@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { fromBuffer, type ZipFile } from 'yauzl';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { DomainError } from '@corridra/domain';
-import { briefSchema, type MissionBrief } from '@corridra/domain/missions';
+import { briefSchema, realBriefSchema, type MissionBrief } from '@corridra/domain/missions';
 
 export const importLimits = {
   bytes: 1048576,
@@ -316,7 +316,11 @@ async function excelRows(bytes: Buffer) {
   return rows;
 }
 
-export async function parseImport(bytes: Buffer, format: 'CSV' | 'XLSX'): Promise<ImportRow[]> {
+export async function parseImport(
+  bytes: Buffer,
+  format: 'CSV' | 'XLSX',
+  mode: 'synthetic' | 'real' = 'synthetic',
+): Promise<ImportRow[]> {
   if (!bytes.length || bytes.length > importLimits.bytes)
     invalid('Use a file between 1 byte and 1 MiB');
   const rows = format === 'CSV' ? csvRows(decode(bytes)) : await excelRows(bytes);
@@ -346,8 +350,14 @@ export async function parseImport(bytes: Buffer, format: 'CSV' | 'XLSX'): Promis
           'Use a participant reference of 1 to 80 letters, numbers, dots, underscores or hyphens',
         ],
       };
-    const parsed = briefSchema.safeParse({
-      ...input,
+    const canonical = Object.fromEntries(
+      Object.entries(input).filter(
+        ([key]) =>
+          !['participant_reference', 'companyCountry', 'marketCode', 'missionJob'].includes(key),
+      ),
+    );
+    const parsed = (mode === 'real' ? realBriefSchema : briefSchema).safeParse({
+      ...canonical,
       attendance: input.attendance || 'Not decided',
       timezone: input.timezone || 'Asia/Dhaka',
       outcomes: input.outcomes

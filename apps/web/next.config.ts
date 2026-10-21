@@ -46,6 +46,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/intake/pending/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
         source: '/operator/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

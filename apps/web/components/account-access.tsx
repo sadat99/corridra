@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountForm, type AccountFormMode } from './account-form';
+import { realUseEnabled } from '@corridra/auth/customer-production';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
   return (
@@ -22,15 +23,19 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           <AccessState kind="unavailable">
             <p>Account access is not available yet.</p>
             <Link className="text-link" href="/plan">
-              Prepare an example request without an account
+              {realUseEnabled()
+                ? 'Start a request without an account'
+                : 'Prepare an example request without an account'}
             </Link>
           </AccessState>
         )}
         {config && mode === 'signup' && (
           <p>
             Your name and email are used for account access, verification and recovery. Read the{' '}
-            <Link href="/privacy">account and test intake notice</Link> before creating an account.
-            Team access needs a separate invitation.
+            <Link href="/privacy">
+              {realUseEnabled() ? 'privacy and request notice' : 'account and test intake notice'}
+            </Link>{' '}
+            before creating an account. Team access needs a separate invitation.
           </p>
         )}
         {mode === 'signin' && (

@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
@@ -6,7 +7,7 @@ const org = z.object({ id: z.uuid(), name: z.string(), country: z.string() });
 const queueSchema = z
   .object({
     scope: z.enum(['open', 'closed']),
-    synthetic: z.literal(true),
+    synthetic: z.boolean().refine(customerProvenanceAllowed),
     nextAfter: z.uuid().nullable(),
     items: z
       .array(

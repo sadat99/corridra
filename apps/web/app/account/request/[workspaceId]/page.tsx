@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { redirect, notFound } from 'next/navigation';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
@@ -11,12 +12,20 @@ import { PrivateRequestIntake } from '../private-request-intake';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Private sample request | Corridra',
+  title: realCustomerInput() ? 'Private request | Corridra' : 'Private sample request | Corridra',
   robots: { index: false, follow: false },
 };
-function unavailable(message = 'Private sample requests are unavailable.') {
+function unavailable(
+  message = realCustomerInput()
+    ? 'Private requests are unavailable.'
+    : 'Private sample requests are unavailable.',
+) {
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Private sample request" compact>
+    <WorkspaceShell
+      eyebrow="YOUR ACCOUNT"
+      title={realCustomerInput() ? 'Private request' : 'Private sample request'}
+      compact
+    >
       <p role="status">{message}</p>
       <a className="text-link" href="/account">
         Return to your account
@@ -41,6 +50,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   const services = foundations();
   if (!services) return unavailable();
   let name: string;
+  let realMode = false;
   try {
     await services.ready;
     // Independent request admission and selected workspace membership are both
@@ -51,6 +61,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     if (!selected)
       return unavailable('Private request access for this workspace could not be confirmed.');
     name = selected.name;
+    realMode = selected.synthetic === false;
   } catch {
     return unavailable(
       'Private request access could not be confirmed. Reload your account before continuing.',
@@ -59,7 +70,12 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   return (
     <CustomerShell tab="work" eyebrow="MY WORK" title="What do you want to achieve?">
       <p>Workspace: {name}</p>
-      <PrivateRequestIntake issuer={issuer} subject={data.user.id} workspaceId={id.data} />
+      <PrivateRequestIntake
+        issuer={issuer}
+        subject={data.user.id}
+        workspaceId={id.data}
+        realMode={realMode}
+      />
     </CustomerShell>
   );
 }

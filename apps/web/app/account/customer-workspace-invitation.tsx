@@ -1,3 +1,5 @@
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -15,11 +17,10 @@ function accepted(value: unknown) {
     !!workspace &&
     workspace.id === result.workspaceId &&
     workspace.role === 'member' &&
-    workspace.synthetic === true &&
+    customerProvenanceAllowed(workspace.synthetic) &&
     workspace.organisationId === null &&
     typeof workspace.name === 'string' &&
-    workspace.name.startsWith('Synthetic ') &&
-    workspace.name.length >= 11 &&
+    customerLabelAllowed(workspace.name) &&
     workspace.name.length <= 120 &&
     !/[\u0000-\u001f\u007f]/u.test(workspace.name)
   );

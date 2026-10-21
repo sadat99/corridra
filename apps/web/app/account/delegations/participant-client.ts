@@ -1,4 +1,6 @@
 'use client';
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 export type ParticipantScope = {
   subject: string;
@@ -37,11 +39,11 @@ const text = (v: unknown, min: number, max: number): v is string =>
   typeof v === 'string' && v.length >= min && v.length <= max;
 const date = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));
 const syntheticLabel = (v: unknown): v is string =>
-  text(v, 11, 120) && v.startsWith('Synthetic ') && !/[\u0000-\u001f\u007f]/u.test(v);
+  text(v, 11, 120) && customerLabelAllowed(v) && !/[\u0000-\u001f\u007f]/u.test(v);
 export function parseParticipantView(value: unknown, scope: ParticipantScope): View {
   if (
     !object(value) ||
-    value.synthetic !== true ||
+    !customerProvenanceAllowed(value.synthetic) ||
     !Array.isArray(value.registrations) ||
     value.registrations.length > 25
   )
@@ -65,7 +67,8 @@ export function parseParticipantView(value: unknown, scope: ParticipantScope): V
         throw Error('Invalid registration');
       return { ...base, displayLabel: r.displayLabel, consentedAt: r.consentedAt };
     }
-    if (!isUuid(r.programmeId) || r.synthetic !== true) throw Error('Invalid own registration');
+    if (!isUuid(r.programmeId) || !customerProvenanceAllowed(r.synthetic))
+      throw Error('Invalid own registration');
     if (r.status !== 'REGISTERED') return { ...base, programmeId: r.programmeId };
     if (
       !text(r.name, 3, 160) ||
@@ -125,7 +128,7 @@ export function parseParticipantView(value: unknown, scope: ParticipantScope): V
   };
 }
 export function parseParticipantResult(value: unknown, payload: ParticipantCommand) {
-  if (!object(value) || value.synthetic !== true || !isUuid(value.programmeId))
+  if (!object(value) || !customerProvenanceAllowed(value.synthetic) || !isUuid(value.programmeId))
     throw Error('Unconfirmed participant response');
   if (payload.programmeId && value.programmeId !== payload.programmeId)
     throw Error('Unconfirmed programme scope');

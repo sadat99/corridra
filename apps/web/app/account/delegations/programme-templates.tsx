@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
 
@@ -104,14 +105,20 @@ function parseTemplate(t: unknown): Template {
   parseContent(t.content);
   return t as unknown as Template;
 }
-const blankTask = (): TaskRow => ({ title: 'Synthetic ', detail: '', offset: '', assignee: '' });
+const blankTask = (): TaskRow => ({
+  title: realCustomerInput() ? '' : 'Synthetic ',
+  detail: '',
+  offset: '',
+  assignee: '',
+});
 const blankCost = (): CostRow => ({
   kind: 'ORGANISER_EXPENSE',
-  description: 'Synthetic ',
+  description: realCustomerInput() ? '' : 'Synthetic ',
   currency: 'BDT',
   amount: '',
 });
-const syntheticOk = (v: string) => /^Synthetic .{3,}/.test(v.trim());
+const syntheticOk = (v: string) =>
+  realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
 
 export function ProgrammeTemplates(props: Props) {
   return (
@@ -132,15 +139,15 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'none' | 'edit' | 'use'>('none');
   const [editing, setEditing] = useState<Template | null>(null);
-  const [name, setName] = useState('Synthetic ');
+  const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
-  const [purpose, setPurpose] = useState('Synthetic ');
+  const [purpose, setPurpose] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [capacity, setCapacity] = useState('');
   const [taskRows, setTaskRows] = useState<TaskRow[]>([]);
   const [costRows, setCostRows] = useState<CostRow[]>([]);
   const [using, setUsing] = useState<Template | null>(null);
   const [target, setTarget] = useState<'new' | string>('new');
-  const [programmeName, setProgrammeName] = useState('Synthetic ');
+  const [programmeName, setProgrammeName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [startDate, setStartDate] = useState('');
   const [captureFrom, setCaptureFrom] = useState('');
   const active = useRef(true);
@@ -165,9 +172,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     setMode('none');
     setEditing(null);
     setUsing(null);
-    setName('Synthetic ');
+    setName(realCustomerInput() ? '' : 'Synthetic ');
     setDescription('');
-    setPurpose('Synthetic ');
+    setPurpose(realCustomerInput() ? '' : 'Synthetic ');
     setCapacity('');
     setTaskRows([]);
     setCostRows([]);
@@ -301,9 +308,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     setMode('edit');
     setEditing(t);
     const c = content ?? t?.content;
-    setName(t ? t.name : 'Synthetic ');
+    setName(t ? t.name : realCustomerInput() ? '' : 'Synthetic ');
     setDescription(t?.description ?? '');
-    setPurpose(c?.reportingPurpose ?? 'Synthetic ');
+    setPurpose(c?.reportingPurpose ?? (realCustomerInput() ? '' : 'Synthetic '));
     setCapacity(c?.capacity ? String(c.capacity) : '');
     setTaskRows(
       (c?.tasks ?? []).map((x) => ({
@@ -326,7 +333,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
   function buildContent(): Content | null {
     if (!syntheticOk(purpose))
       return fail(
-        'Start the default programme purpose with the word Synthetic and add a few words.',
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the default programme purpose with the word Synthetic and add a few words.',
       );
     if (capacity && (!/^[1-9][0-9]{0,4}$/.test(capacity) || Number(capacity) > 10000))
       return fail('Capacity must be a whole number from 1 to 10000, or empty.');
@@ -334,13 +343,27 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     for (const [i, t] of taskRows.entries()) {
       if (!syntheticOk(t.title))
         return fail(
-          'Task ' + (i + 1) + ': start the title with the word Synthetic and add a few words.',
+          'Task ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the title with the word Synthetic and add a few words.'),
         );
       if (t.detail.trim() && !syntheticOk(t.detail))
-        return fail('Task ' + (i + 1) + ': start the detail with the word Synthetic, or clear it.');
+        return fail(
+          'Task ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the detail with the word Synthetic, or clear it.'),
+        );
       if (t.assignee.trim() && !syntheticOk(t.assignee))
         return fail(
-          'Task ' + (i + 1) + ': start the assignee with the word Synthetic, or clear it.',
+          'Task ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the assignee with the word Synthetic, or clear it.'),
         );
       if (t.offset && (!/^(0|[1-9][0-9]{0,2})$/.test(t.offset) || Number(t.offset) > 730))
         return fail(
@@ -359,7 +382,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
         return fail(
           'Cost ' +
             (i + 1) +
-            ': start the description with the word Synthetic and add a few words.',
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the description with the word Synthetic and add a few words.'),
         );
       let amountMinor: string;
       try {
@@ -398,9 +423,17 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     const nm = source && contentOverride ? source.name : name;
     const ds = source && contentOverride ? source.description : description.trim() || null;
     if (!syntheticOk(nm))
-      return setError('Start the template name with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the template name with the word Synthetic and add a few words.',
+      );
     if (ds && !syntheticOk(ds))
-      return setError('Start the description with the word Synthetic, or clear it.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the description with the word Synthetic, or clear it.',
+      );
     const input = {
       expectedVersion: source ? source.version : 0,
       templateId: source ? source.id : null,
@@ -454,7 +487,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     setMode('use');
     setUsing(t);
     setTarget('new');
-    setProgrammeName('Synthetic ');
+    setProgrammeName(realCustomerInput() ? '' : 'Synthetic ');
     setStartDate('');
   }
   function apply() {
@@ -462,8 +495,17 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
     if (!using) return;
     if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate))
       return setError('Choose a valid start date or clear it.');
-    if (target === 'new' && !/^Synthetic .{3,}/.test(programmeName.trim()))
-      return setError('Start the programme name with the word Synthetic and add a few words.');
+    if (
+      target === 'new' &&
+      !(realCustomerInput()
+        ? programmeName.trim().length >= 2
+        : /^Synthetic .{3,}/.test(programmeName.trim()))
+    )
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the programme name with the word Synthetic and add a few words.',
+      );
     const t = using;
     void guard(async () => {
       let programmeId = target;
@@ -523,7 +565,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
   return (
     <section
       className="detail-card"
-      aria-label="Sample programme templates"
+      aria-label={realCustomerInput() ? 'Programme templates' : 'Sample programme templates'}
       aria-busy={busy || status === 'loading'}
     >
       <h4>Repeatable programme templates</h4>
@@ -533,7 +575,12 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
         results, and applying it sends nothing. It can only be applied to a programme that has no
         tasks, capacity or costs yet.
       </p>
-      {status === 'loading' && <p role="status">Loading sample templates…</p>}
+      {status === 'loading' && (
+        <p role="status">
+          {' '}
+          {realCustomerInput() ? 'Loading templates…' : 'Loading sample templates…'}{' '}
+        </p>
+      )}
       {status === 'unavailable' && <p role="status">{notice}</p>}
       {(status === 'denied' || status === 'failed') && (
         <>
@@ -640,7 +687,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
             >
               <h5>{editing ? 'Edit template' : 'New template'}</h5>
               <label className="field">
-                Template name (start with Synthetic)
+                {realCustomerInput() ? 'Template name' : 'Template name (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={120}
@@ -650,7 +697,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 />
               </label>
               <label className="field">
-                Description (optional, start with Synthetic)
+                {realCustomerInput()
+                  ? 'Description (optional)'
+                  : 'Description (optional, start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={500}
@@ -660,7 +709,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 />
               </label>
               <label className="field">
-                Default programme purpose (start with Synthetic)
+                {realCustomerInput()
+                  ? 'Default programme purpose'
+                  : 'Default programme purpose (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={500}
@@ -893,7 +944,9 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
               </label>
               {target === 'new' && (
                 <label className="field">
-                  New programme name (start with Synthetic)
+                  {realCustomerInput()
+                    ? 'New programme name'
+                    : 'New programme name (start with Synthetic)'}{' '}
                   <input
                     type="text"
                     maxLength={160}

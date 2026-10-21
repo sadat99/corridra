@@ -37,6 +37,7 @@ export class EvidenceService {
   async workspace(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'trust.read', async (t) => ({
       role: t.role,
+      purpose: t.purpose,
       actorId: t.actorId,
       tenantId: t.tenantId,
       freshMfa: t.freshMfa,

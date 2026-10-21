@@ -1,3 +1,4 @@
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import {
   CustomerMissionDraftService,
   customerMissionDraftsEnabled,
@@ -178,6 +179,7 @@ function createServices() {
     return {
       subject: data.user.id,
       emailVerified: data.user.emailVerified,
+      email: data.user.email,
       expiresAt: new Date(data.session.expiresAt),
     };
   };
@@ -192,6 +194,7 @@ function createServices() {
       {
         enabled: customerWorkspacesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -205,6 +208,7 @@ function createServices() {
       {
         enabled: customerDecisionsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -218,6 +222,7 @@ function createServices() {
       {
         enabled: customerDeliveryEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -230,6 +235,7 @@ function createServices() {
       {
         enabled: customerCompaniesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -242,6 +248,7 @@ function createServices() {
       {
         enabled: customerMissionSharesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -254,6 +261,7 @@ function createServices() {
       {
         enabled: customerParticipantsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -266,6 +274,7 @@ function createServices() {
       {
         enabled: customerProgrammeTemplatesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -278,6 +287,7 @@ function createServices() {
       {
         enabled: customerProgrammeTermsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -290,6 +300,7 @@ function createServices() {
       {
         enabled: customerProgrammePricingEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -302,6 +313,7 @@ function createServices() {
       {
         enabled: customerProgrammeCoordinationEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -314,6 +326,7 @@ function createServices() {
       {
         enabled: customerProgrammeEconomicsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -326,6 +339,7 @@ function createServices() {
       {
         enabled: customerMissionDraftsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -338,6 +352,7 @@ function createServices() {
       {
         enabled: customerMemberRolesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -350,6 +365,7 @@ function createServices() {
       {
         enabled: customerOrganisationLinksEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -364,6 +380,7 @@ function createServices() {
       {
         enabled: customerServiceRequestsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -376,6 +393,7 @@ function createServices() {
       {
         enabled: customerOrganisationProfilesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -388,6 +406,7 @@ function createServices() {
       {
         enabled: customerProgrammeContextEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -400,6 +419,7 @@ function createServices() {
       {
         enabled: customerProgrammesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -412,6 +432,7 @@ function createServices() {
       {
         enabled: customerRequestsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -424,6 +445,7 @@ function createServices() {
       {
         enabled: customerSavedMissionsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -436,6 +458,7 @@ function createServices() {
       {
         enabled: customerRequestDetailsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
         openAdmission: customerOpenAdmission(),
         issuer: customerIssuerFromEnv(),
@@ -445,10 +468,14 @@ function createServices() {
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
     network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
     counterparties: new CounterpartyService(runtimePool),
-    missions: new MissionService(runtimePool, config.AUTH_SECRET),
+    missions: new MissionService(
+      runtimePool,
+      config.AUTH_SECRET,
+      realUseEnabled() ? 'real' : 'synthetic',
+    ),
     delivery: new DeliveryService(
       runtimePool,
-      new MissionService(runtimePool, config.AUTH_SECRET),
+      new MissionService(runtimePool, config.AUTH_SECRET, realUseEnabled() ? 'real' : 'synthetic'),
       config.AUTH_SECRET,
     ),
     deliveryExperience: new DeliveryExperienceService(runtimePool),

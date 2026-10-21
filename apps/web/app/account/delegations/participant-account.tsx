@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
 import { ParticipantResults } from './participant-results';
@@ -110,9 +111,9 @@ function ScopedAccount(
           disabled={view.busy}
           onChange={(e) => setWithdrawAck(e.target.checked)}
         />
-        I confirm withdrawal. My registration history is retained, and this action does not change
-        separate commercial permissions. Rejoining this sample programme after withdrawal is not
-        available.
+        {realCustomerInput()
+          ? 'I confirm withdrawal. My registration history is retained, and this action does not change separate commercial permissions. Rejoining this programme after withdrawal is not available.'
+          : 'I confirm withdrawal. My registration history is retained, and this action does not change separate commercial permissions. Rejoining this sample programme after withdrawal is not available.'}{' '}
       </label>
       <button
         type="button"
@@ -147,15 +148,17 @@ function ScopedAccount(
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
-      aria-label="My sample delegation participation"
+      aria-label={
+        realCustomerInput() ? 'My delegation participation' : 'My sample delegation participation'
+      }
     >
       <a className="text-link ux-back" href="/account">
         Back to my account
       </a>
       <p>
-        Fictional sample registration only. An invitation grants no organiser workspace membership
-        or private commercial access. Only the display name you consent to share is visible to
-        programme organisers.
+        {realCustomerInput()
+          ? 'Fictional registration only. An invitation grants no organiser workspace membership or private commercial access. Only the display name you consent to share is visible to programme organisers.'
+          : 'Fictional sample registration only. An invitation grants no organiser workspace membership or private commercial access. Only the display name you consent to share is visible to programme organisers.'}{' '}
       </p>
       {props.termsEnabled && <MyReminders subject={props.subject} issuer={props.issuer} />}
       {view.status === 'loading' && <p role="status">Checking your programme access…</p>}
@@ -165,16 +168,24 @@ function ScopedAccount(
         </p>
       )}
       {view.status === 'unavailable' && (
-        <p role="status">Sample delegation participation is unavailable.</p>
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation participation is unavailable.'
+            : 'Sample delegation participation is unavailable.'}{' '}
+        </p>
       )}
       {view.status === 'failed' && (
         <p role="alert">Your programme details could not be checked. Reload to try again.</p>
       )}
       {view.status === 'ready' && view.data && (
         <>
-          <h2>Your sample registrations</h2>
+          <h2> {realCustomerInput() ? 'Your registrations' : 'Your sample registrations'} </h2>
           {view.data.registrations.length === 0 ? (
-            <p className="ux-empty">No sample registrations yet.</p>
+            <p className="ux-empty">
+              {' '}
+              {realCustomerInput() ? 'No registrations yet.' : 'No sample registrations yet.'}{' '}
+            </p>
           ) : (
             <ul>
               {view.data.registrations.map((r) => (
@@ -227,8 +238,12 @@ function ScopedAccount(
                   ) : (
                     <p>
                       {r.status === 'WITHDRAWN'
-                        ? 'You withdrew from this sample programme.'
-                        : 'Access to this sample programme was revoked.'}
+                        ? realCustomerInput()
+                          ? 'You withdrew from this programme.'
+                          : 'You withdrew from this sample programme.'
+                        : realCustomerInput()
+                          ? 'Access to this programme was revoked.'
+                          : 'Access to this sample programme was revoked.'}
                     </p>
                   )}
                 </li>
@@ -254,15 +269,26 @@ function ScopedAccount(
                   setError('');
                   setConsent(false);
                   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
-                    setError('Enter the complete private sample invitation code.');
+                    setError(
+                      realCustomerInput()
+                        ? 'Enter the complete private invitation code.'
+                        : 'Enter the complete private sample invitation code.',
+                    );
                     return;
                   }
                   void view.send({ action: 'preview', token });
                 }}
               >
-                <h2>Inspect a sample invitation</h2>
+                <h2>
+                  {' '}
+                  {realCustomerInput()
+                    ? 'Inspect a invitation'
+                    : 'Inspect a sample invitation'}{' '}
+                </h2>
                 <label className="field">
-                  Private sample invitation code
+                  {realCustomerInput()
+                    ? 'Private invitation code'
+                    : 'Private sample invitation code'}{' '}
                   <input
                     type="password"
                     autoComplete="off"
@@ -278,7 +304,7 @@ function ScopedAccount(
                   />
                 </label>
                 <button className="primary-link" disabled={view.busy}>
-                  Preview sample invitation
+                  {realCustomerInput() ? 'Preview invitation' : 'Preview sample invitation'}{' '}
                 </button>
               </form>
               {preview && (
@@ -288,13 +314,15 @@ function ScopedAccount(
                     e.preventDefault();
                     setError('');
                     if (
-                      !label.trim().startsWith('Synthetic ') ||
-                      label.trim().length < 11 ||
+                      (!realCustomerInput() && !label.trim().startsWith('Synthetic ')) ||
+                      label.trim().length < (realCustomerInput() ? 2 : 11) ||
                       label.trim().length > 120 ||
                       !consent
                     ) {
                       setError(
-                        'Use a fictional display name beginning with Synthetic and consent to sharing it.',
+                        realCustomerInput()
+                          ? 'Enter your display name and consent to sharing it.'
+                          : 'Use a fictional display name beginning with Synthetic and consent to sharing it.',
                       );
                       return;
                     }
@@ -315,11 +343,11 @@ function ScopedAccount(
                     eligibility, meetings and fees are not confirmed.
                   </p>
                   <label className="field">
-                    Fictional display name
+                    {realCustomerInput() ? 'Display name' : 'Fictional display name'}{' '}
                     <input
                       value={label}
                       required
-                      minLength={11}
+                      minLength={realCustomerInput() ? 2 : 11}
                       maxLength={120}
                       disabled={view.busy}
                       onChange={(e) => setLabel(e.target.value)}
@@ -333,11 +361,14 @@ function ScopedAccount(
                       disabled={view.busy}
                       onChange={(e) => setConsent(e.target.checked)}
                     />
-                    I consent to sharing this fictional display name with this programme&apos;s
-                    organisers.
+                    {realCustomerInput()
+                      ? 'I consent to sharing this display name with this programme’s organisers.'
+                      : 'I consent to sharing this fictional display name with this programme&apos;s organisers.'}{' '}
                   </label>
                   <button className="primary-link" disabled={view.busy}>
-                    Register for sample programme
+                    {realCustomerInput()
+                      ? 'Register for programme'
+                      : 'Register for sample programme'}{' '}
                   </button>
                 </form>
               )}
@@ -364,7 +395,7 @@ function ScopedAccount(
           disabled={view.busy}
           onClick={() => void view.load()}
         >
-          Reload my sample registrations
+          {realCustomerInput() ? 'Reload my registrations' : 'Reload my sample registrations'}{' '}
         </button>
       )}
     </section>

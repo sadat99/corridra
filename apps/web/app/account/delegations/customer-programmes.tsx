@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 const ProgrammeParticipants = lazy(() =>
@@ -25,7 +27,7 @@ type Programme = {
   name: string;
   reportingPurpose: string;
   createdAt: string;
-  synthetic: true;
+  synthetic: boolean;
 };
 type Command = {
   commandId: string;
@@ -57,7 +59,7 @@ function programme(value: unknown, workspaceId: string): value is Programme {
   return (
     uuid(p.id) &&
     p.workspaceId === workspaceId &&
-    p.synthetic === true &&
+    customerProvenanceAllowed(p.synthetic) &&
     typeof p.name === 'string' &&
     p.name.length >= 3 &&
     p.name.length <= 160 &&
@@ -153,7 +155,7 @@ function ScopedProgrammes({
         if (task.signal.aborted || !active.current) return;
         if (
           !data ||
-          data.synthetic !== true ||
+          !customerProvenanceAllowed(data.synthetic) ||
           data.workspaceId !== workspaceId ||
           !Array.isArray(data.programmes) ||
           data.programmes.length > 25 ||
@@ -239,7 +241,11 @@ function ScopedProgrammes({
         purpose.trim().length > 500 ||
         !ack
       ) {
-        setMessage('Use a fictional name and purpose, and confirm sample planning only.');
+        setMessage(
+          realCustomerInput()
+            ? 'Enter a programme name and purpose, and confirm the planning details.'
+            : 'Use a fictional name and purpose, and confirm sample planning only.',
+        );
         return;
       }
       command = {
@@ -294,7 +300,9 @@ function ScopedProgrammes({
       setPurpose('');
       setAck(false);
       setMessage(
-        'Your sample planning programme is saved. Participant and delivery operations are not available here.',
+        realCustomerInput()
+          ? 'Your planning programme is saved. Participant and delivery operations are not available here.'
+          : 'Your sample planning programme is saved. Participant and delivery operations are not available here.',
       );
       await load();
     } catch {
@@ -316,15 +324,19 @@ function ScopedProgrammes({
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
-      aria-label="Sample delegation planning"
+      aria-label={realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}
     >
       <a className="text-link ux-back" href="/account#customer-workspaces">
         Back to my workspaces
       </a>
       <p>
-        Fictional sample planning only. This creates a programme in your workspace. Participant{' '}
+        {realCustomerInput()
+          ? 'Fictional planning only. This creates a programme in your workspace. Participant'
+          : 'Fictional sample planning only. This creates a programme in your workspace. Participant'}{' '}
         {participantsEnabled
-          ? 'invitations and consented registrations have separate sample controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
+          ? realCustomerInput()
+            ? 'invitations and consented registrations have separate controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
+            : 'invitations and consented registrations have separate sample controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
           : 'invitations, private missions, dates, agendas, meetings, fees and costs are not available here yet.'}
       </p>
       {status === 'loading' && <p role="status">Checking programme access…</p>}
@@ -334,7 +346,14 @@ function ScopedProgrammes({
           administrators can use this page.
         </p>
       )}
-      {status === 'unavailable' && <p role="status">Sample delegation planning is unavailable.</p>}
+      {status === 'unavailable' && (
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation planning is unavailable.'
+            : 'Sample delegation planning is unavailable.'}{' '}
+        </p>
+      )}
       {status === 'failed' && (
         <p role="alert">Programmes could not be loaded. Reload to check access and try again.</p>
       )}
@@ -342,14 +361,22 @@ function ScopedProgrammes({
         <>
           <h2>Your planning programmes</h2>
           {rows.length === 0 ? (
-            <p className="ux-empty">No sample programmes yet.</p>
+            <p className="ux-empty">
+              {' '}
+              {realCustomerInput() ? 'No programmes yet.' : 'No sample programmes yet.'}{' '}
+            </p>
           ) : (
             <ul>
               {rows.map((p) => (
                 <li key={p.id}>
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
-                  <p>Planning record only · Sample data</p>
+                  <p>
+                    {' '}
+                    {realCustomerInput()
+                      ? 'Planning record only · data'
+                      : 'Planning record only · Sample data'}{' '}
+                  </p>
                   {serviceRequestsEnabled && (
                     <p>
                       <a
@@ -383,11 +410,24 @@ function ScopedProgrammes({
                         }
                       >
                         {selectedProgramme === p.id
-                          ? 'Hide sample participants'
-                          : 'Manage sample participants'}
+                          ? realCustomerInput()
+                            ? 'Hide participants'
+                            : 'Hide sample participants'
+                          : realCustomerInput()
+                            ? 'Manage participants'
+                            : 'Manage sample participants'}
                       </button>
                       {selectedProgramme === p.id && (
-                        <Suspense fallback={<p role="status">Loading sample participant tools…</p>}>
+                        <Suspense
+                          fallback={
+                            <p role="status">
+                              {' '}
+                              {realCustomerInput()
+                                ? 'Loading participant tools…'
+                                : 'Loading sample participant tools…'}{' '}
+                            </p>
+                          }
+                        >
                           <ProgrammeParticipants
                             subject={subject}
                             issuer={issuer}
@@ -414,7 +454,14 @@ function ScopedProgrammes({
                       </button>
                       {coordinationProgramme === p.id && (
                         <Suspense
-                          fallback={<p role="status">Loading sample coordination tools…</p>}
+                          fallback={
+                            <p role="status">
+                              {' '}
+                              {realCustomerInput()
+                                ? 'Loading coordination tools…'
+                                : 'Loading sample coordination tools…'}{' '}
+                            </p>
+                          }
                         >
                           <ProgrammeCoordination
                             subject={subject}
@@ -458,11 +505,24 @@ function ScopedProgrammes({
                         onClick={() => setFinanceProgramme(financeProgramme === p.id ? null : p.id)}
                       >
                         {financeProgramme === p.id
-                          ? 'Hide sample finances'
-                          : 'Record sample fees and costs'}
+                          ? realCustomerInput()
+                            ? 'Hide finances'
+                            : 'Hide sample finances'
+                          : realCustomerInput()
+                            ? 'Record fees and costs'
+                            : 'Record sample fees and costs'}
                       </button>
                       {financeProgramme === p.id && (
-                        <Suspense fallback={<p role="status">Loading sample finance tools…</p>}>
+                        <Suspense
+                          fallback={
+                            <p role="status">
+                              {' '}
+                              {realCustomerInput()
+                                ? 'Loading finance tools…'
+                                : 'Loading sample finance tools…'}{' '}
+                            </p>
+                          }
+                        >
                           <ProgrammeEconomics
                             subject={subject}
                             issuer={issuer}
@@ -478,7 +538,14 @@ function ScopedProgrammes({
             </ul>
           )}
           {templatesEnabled && (
-            <Suspense fallback={<p role="status">Loading sample templates…</p>}>
+            <Suspense
+              fallback={
+                <p role="status">
+                  {' '}
+                  {realCustomerInput() ? 'Loading templates…' : 'Loading sample templates…'}{' '}
+                </p>
+              }
+            >
               <ProgrammeTemplates
                 subject={subject}
                 issuer={issuer}
@@ -516,7 +583,7 @@ function ScopedProgrammes({
               void create();
             }}
           >
-            <h2>Create a sample programme</h2>
+            <h2>{realCustomerInput() ? 'Create a programme' : 'Create a sample programme'}</h2>
             <label className="field">
               Programme name
               <input
@@ -547,10 +614,16 @@ function ScopedProgrammes({
                 disabled={busy || !!pending}
                 onChange={(event) => setAck(event.target.checked)}
               />
-              I am using fictional information for sample planning only.
+              {realCustomerInput()
+                ? 'I confirm these planning details. Arrangements and costs need separate agreement.'
+                : 'I am using fictional information for sample planning only.'}
             </label>
             <button className="primary-link" disabled={busy}>
-              {pending ? 'Retry same planning request' : 'Save sample programme'}
+              {pending
+                ? 'Retry same planning request'
+                : realCustomerInput()
+                  ? 'Save programme'
+                  : 'Save sample programme'}
             </button>
           </form>
         </>

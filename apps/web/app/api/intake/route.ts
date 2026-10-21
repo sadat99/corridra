@@ -1,3 +1,4 @@
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../lib/foundations';
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
     const s = foundations();
     if (!s) throw new DomainError('Intake is unavailable', 503);
     await s.ready;
+    if (realUseEnabled())
+      throw new DomainError('Finish account activation to submit your request', 409);
     if (request.headers.get('origin') !== new URL(s.config.APP_ORIGIN).origin)
       throw new DomainError('Request origin is not allowed');
     if (!request.headers.get('content-type')?.startsWith('application/json'))

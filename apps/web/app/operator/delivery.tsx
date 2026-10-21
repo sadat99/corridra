@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import {
   OperatorWorkbench,
   useFormChangeGuard,
@@ -393,8 +394,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         ]}
       />
       <p>
-        Create a synthetic programme, review every intake row, then share only approved mission
-        information. Use invented participant addresses ending in example.invalid.
+        {realCustomerInput()
+          ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
+          : 'Create a synthetic programme, review every intake row, then share only approved mission information. Use invented participant addresses ending in example.invalid.'}
       </p>
       <p role="status" aria-label="Delivery status">
         {message}

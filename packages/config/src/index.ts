@@ -46,11 +46,18 @@ export function readFoundationConfig(env: NodeJS.ProcessEnv = process.env) {
       RUNTIME_DATABASE_URL: databaseUrl,
       AUTH_DATABASE_URL: databaseUrl,
       AUTH_SECRET: z.string().min(32),
-      DATA_ENVIRONMENT: z.literal('synthetic'),
+      DATA_ENVIRONMENT: z.enum(['synthetic', 'real']),
       EVIDENCE_SCAN_MODE: z.enum(['required', 'bypass']).default('required'),
       DATABASE_REGION: z.enum(['aws-eu-central-1', 'aws-eu-west-1', 'aws-eu-west-3', 'local']),
     })
     .parse(env);
+  if (
+    c.DATA_ENVIRONMENT === 'real' &&
+    (env.CORRIDRA_REAL_USE_ENABLED !== 'true' ||
+      (env.VERCEL_ENV === 'production' &&
+        env.CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK !== 'real-use-owner-approved'))
+  )
+    throw new Error('Explicit owner real-use authorization is required');
   for (const value of [c.RUNTIME_DATABASE_URL, c.AUTH_DATABASE_URL]) {
     const u = new URL(value);
     const local = ['127.0.0.1', 'localhost'].includes(u.hostname);

@@ -1,3 +1,4 @@
+import { customerLabelAllowed, realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerProgrammeCoordinationEnabled } from './customer-programme-coordination';
@@ -33,9 +34,10 @@ const synthetic = (min: number, max: number) =>
   z
     .string()
     .trim()
-    .min(min)
+    .min(2)
+    .refine((v) => realCustomerInput() || v.length >= min)
     .max(max)
-    .regex(/^Synthetic /)
+    .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
     .refine((v) => !control.test(v), 'Control characters are not allowed');
 const version = z.number().int().min(0).max(1000000);
 const scope = { commandId: z.uuid(), workspaceId: z.uuid(), programmeId: z.uuid() };

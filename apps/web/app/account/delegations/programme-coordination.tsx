@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { outcomeLabels } from './participant-results';
 
@@ -193,9 +194,9 @@ function ScopedCoordination(props: Props) {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [capacityReason, setCapacityReason] = useState('Synthetic ');
+  const [capacityReason, setCapacityReason] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [editing, setEditing] = useState<string | null>(null);
-  const [title, setTitle] = useState('Synthetic ');
+  const [title, setTitle] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [detail, setDetail] = useState('');
   const [taskStatus, setTaskStatus] = useState<Status>('OPEN');
   const [dueOn, setDueOn] = useState('');
@@ -215,9 +216,9 @@ function ScopedCoordination(props: Props) {
     setTasks([]);
     setNextAfter(null);
     setCapacity('');
-    setCapacityReason('Synthetic ');
+    setCapacityReason(realCustomerInput() ? '' : 'Synthetic ');
     setEditing(null);
-    setTitle('Synthetic ');
+    setTitle(realCustomerInput() ? '' : 'Synthetic ');
     setDetail('');
     setDueOn('');
     setAssignee('');
@@ -260,7 +261,12 @@ function ScopedCoordination(props: Props) {
             'Account or programme access changed. Private details were cleared.',
           );
         if ([a, b].some((r) => r.status === 503))
-          return lose('unavailable', 'Sample delegation coordination is unavailable.');
+          return lose(
+            'unavailable',
+            realCustomerInput()
+              ? 'Delegation coordination is unavailable.'
+              : 'Sample delegation coordination is unavailable.',
+          );
         if (!a.ok || !b.ok) throw Error('read failed');
         const scope = { subject, issuer, workspaceId, programmeId };
         const rep = parseReport(await a.json(), scope);
@@ -385,14 +391,19 @@ function ScopedCoordination(props: Props) {
       setBusy(false);
     }
   }
-  const textOk = (v: string) => /^Synthetic .{3,}/.test(v.trim());
+  const textOk = (v: string) =>
+    realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
 
   function saveCapacity() {
     setError('');
     if (!/^[1-9][0-9]{0,4}$/.test(capacity) || Number(capacity) > 10000)
       return setError('Enter a whole number from 1 to 10000.');
     if (!textOk(capacityReason))
-      return setError('Start the reason with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the reason with the word Synthetic and add a few words.',
+      );
     void send(
       'capacity',
       {
@@ -402,7 +413,7 @@ function ScopedCoordination(props: Props) {
       },
       () => {
         setCapacity('');
-        setCapacityReason('Synthetic ');
+        setCapacityReason(realCustomerInput() ? '' : 'Synthetic ');
       },
       'Capacity saved.',
     );
@@ -413,7 +424,7 @@ function ScopedCoordination(props: Props) {
   function startEdit(t: Task | null) {
     setError('');
     setEditing(t ? t.id : 'new');
-    setTitle(t ? t.title : 'Synthetic ');
+    setTitle(t ? t.title : realCustomerInput() ? '' : 'Synthetic ');
     setDetail(t?.detail ?? '');
     setTaskStatus(t ? t.status : 'OPEN');
     setDueOn(t?.dueOn ?? '');
@@ -423,12 +434,22 @@ function ScopedCoordination(props: Props) {
     setError('');
     const existing = editing && editing !== 'new' ? tasks.find((t) => t.id === editing) : null;
     if (!textOk(title))
-      return setError('Start the task title with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the task title with the word Synthetic and add a few words.',
+      );
     if (detail.trim() && !textOk(detail))
-      return setError('Start the detail with the word Synthetic and add a few words, or clear it.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the detail with the word Synthetic and add a few words, or clear it.',
+      );
     if (assignee.trim() && !textOk(assignee))
       return setError(
-        'Start the assignee with the word Synthetic and add a few words, or clear it.',
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the assignee with the word Synthetic and add a few words, or clear it.',
       );
     if (dueOn && !/^\d{4}-\d{2}-\d{2}$/.test(dueOn))
       return setError('Choose a valid due date or clear it.');
@@ -459,7 +480,7 @@ function ScopedCoordination(props: Props) {
   return (
     <section
       className="detail-card"
-      aria-label="Sample programme coordination"
+      aria-label={realCustomerInput() ? 'Programme coordination' : 'Sample programme coordination'}
       aria-busy={busy || status === 'loading'}
     >
       <h4>Coordinate and report</h4>
@@ -468,7 +489,12 @@ function ScopedCoordination(props: Props) {
         participants and shown only if they chose to share them. Nothing here is confirmed by
         Corridra, and no message is sent to anyone.
       </p>
-      {status === 'loading' && <p role="status">Loading sample coordination…</p>}
+      {status === 'loading' && (
+        <p role="status">
+          {' '}
+          {realCustomerInput() ? 'Loading coordination…' : 'Loading sample coordination…'}{' '}
+        </p>
+      )}
       {status === 'unavailable' && <p role="status">{notice}</p>}
       {(status === 'denied' || status === 'failed') && (
         <>
@@ -600,7 +626,7 @@ function ScopedCoordination(props: Props) {
               />
             </label>
             <label className="field">
-              Reason (start with Synthetic)
+              {realCustomerInput() ? 'Reason' : 'Reason (start with Synthetic)'}{' '}
               <input
                 type="text"
                 maxLength={300}
@@ -715,7 +741,7 @@ function ScopedCoordination(props: Props) {
             >
               <h5>{editing === 'new' ? 'New task' : 'Edit task'}</h5>
               <label className="field">
-                Title (start with Synthetic)
+                {realCustomerInput() ? 'Title' : 'Title (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={160}
@@ -725,7 +751,9 @@ function ScopedCoordination(props: Props) {
                 />
               </label>
               <label className="field">
-                Detail (optional, start with Synthetic)
+                {realCustomerInput()
+                  ? 'Detail (optional)'
+                  : 'Detail (optional, start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={1000}
@@ -762,7 +790,9 @@ function ScopedCoordination(props: Props) {
                 />
               </label>
               <label className="field">
-                Who is responsible (optional, start with Synthetic)
+                {realCustomerInput()
+                  ? 'Who is responsible (optional)'
+                  : 'Who is responsible (optional, start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={120}

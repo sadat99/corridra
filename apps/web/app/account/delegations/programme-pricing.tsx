@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { lazy, Suspense, useRef, useState, type KeyboardEvent } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
 import {
@@ -73,9 +74,17 @@ type Props = {
 type Section = 'pricing' | 'series' | 'exports';
 
 const codes = Object.keys(currencies) as Code[];
-const blankTier = () => ({ label: 'Synthetic ', amount: '' });
-const blankEarly = () => ({ label: 'Synthetic ', until: '', reduction: '' });
-const blankGroup = () => ({ label: 'Synthetic ', min: '', reduction: '' });
+const blankTier = () => ({ label: realCustomerInput() ? '' : 'Synthetic ', amount: '' });
+const blankEarly = () => ({
+  label: realCustomerInput() ? '' : 'Synthetic ',
+  until: '',
+  reduction: '',
+});
+const blankGroup = () => ({
+  label: realCustomerInput() ? '' : 'Synthetic ',
+  min: '',
+  reduction: '',
+});
 
 function checkContent(c: unknown): Content {
   if (
@@ -232,7 +241,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
   const [error, setError] = useState('');
   const writing = useRef(false);
   const [editing, setEditing] = useState<Template | 'new' | null>(null);
-  const [name, setName] = useState('Synthetic ');
+  const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
   const [currency, setCurrency] = useState<Code>('BDT');
   const [tiers, setTiers] = useState([blankTier()]);
@@ -259,7 +268,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     setError('');
     setNotice('');
     setEditing(t ?? 'new');
-    setName(t ? t.name : 'Synthetic ');
+    setName(t ? t.name : realCustomerInput() ? '' : 'Synthetic ');
     setDescription(t?.description ?? '');
     const c = t?.content;
     setCurrency(c?.currency ?? 'BDT');
@@ -296,9 +305,17 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
   }
   function build(): Content | null {
     if (!syntheticOk(name))
-      return fail('Start the schedule name with the word Synthetic and add a few words.');
+      return fail(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the schedule name with the word Synthetic and add a few words.',
+      );
     if (description.trim() && !syntheticOk(description))
-      return fail('Start the description with the word Synthetic, or clear it.');
+      return fail(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the description with the word Synthetic, or clear it.',
+      );
     const amount = (value: string, where: string) => {
       try {
         const minor = parseMoney(value, currency);
@@ -313,7 +330,11 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     for (const [i, t] of tiers.entries()) {
       if (!syntheticOk(t.label))
         return fail(
-          'Tier ' + (i + 1) + ': start the name with the word Synthetic and add a few words.',
+          'Tier ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the name with the word Synthetic and add a few words.'),
         );
       const minor = amount(t.amount, 'Tier ' + (i + 1));
       if (!minor) return null;
@@ -324,7 +345,13 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     const outEarly: Content['earlyBird'] = [];
     for (const [i, t] of early.entries()) {
       if (!syntheticOk(t.label))
-        return fail('Early booking ' + (i + 1) + ': start the name with the word Synthetic.');
+        return fail(
+          'Early booking ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the name with the word Synthetic.'),
+        );
       if (!/^\d{4}-\d{2}-\d{2}$/.test(t.until))
         return fail('Early booking ' + (i + 1) + ': choose the last day it applies.');
       const minor = amount(t.reduction, 'Early booking ' + (i + 1));
@@ -334,7 +361,13 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     const outGroups: Content['groupDiscounts'] = [];
     for (const [i, t] of groups.entries()) {
       if (!syntheticOk(t.label))
-        return fail('Group ' + (i + 1) + ': start the name with the word Synthetic.');
+        return fail(
+          'Group ' +
+            (i + 1) +
+            (realCustomerInput()
+              ? ': enter a name with at least two characters.'
+              : ': start the name with the word Synthetic.'),
+        );
       if (!/^[1-9][0-9]{0,4}$/.test(t.min) || Number(t.min) < 2 || Number(t.min) > 10000)
         return fail('Group ' + (i + 1) + ': the number of participants is a whole number from 2.');
       const minor = amount(t.reduction, 'Group ' + (i + 1));
@@ -621,7 +654,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
             >
               <h5>{editing === 'new' ? 'New fee schedule' : 'Edit fee schedule'}</h5>
               <label className="field">
-                Name (start with Synthetic)
+                {realCustomerInput() ? 'Name' : 'Name (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={120}
@@ -631,7 +664,9 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 />
               </label>
               <label className="field">
-                Description (optional, start with Synthetic)
+                {realCustomerInput()
+                  ? 'Description (optional)'
+                  : 'Description (optional, start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={500}
@@ -1082,7 +1117,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
         </>
       )}
       {templates.status === 'ready' && programme === '' && programmes.length === 0 && (
-        <p>Create a sample programme first to charge participants.</p>
+        <p>
+          {' '}
+          {realCustomerInput()
+            ? 'Create a programme first to charge participants.'
+            : 'Create a sample programme first to charge participants.'}{' '}
+        </p>
       )}
     </div>
   );

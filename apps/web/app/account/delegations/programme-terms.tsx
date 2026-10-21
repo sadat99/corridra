@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { PlacesReport, TermsState } from '@corridra/auth/customer-programme-terms';
 import { MyReminders } from './my-reminders';
@@ -58,25 +59,25 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   // Terms form
-  const [included, setIncluded] = useState('Synthetic ');
+  const [included, setIncluded] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [excluded, setExcluded] = useState('');
-  const [cancellation, setCancellation] = useState('Synthetic ');
-  const [changes, setChanges] = useState('Synthetic ');
+  const [cancellation, setCancellation] = useState(realCustomerInput() ? '' : 'Synthetic ');
+  const [changes, setChanges] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [feesApply, setFeesApply] = useState(false);
   const [feeNote, setFeeNote] = useState('');
-  const [termsReason, setTermsReason] = useState('Synthetic ');
+  const [termsReason, setTermsReason] = useState(realCustomerInput() ? '' : 'Synthetic ');
   // Eligibility form
   const [pickRoles, setPickRoles] = useState<string[]>([]);
   const [pickSizes, setPickSizes] = useState<string[]>([]);
   const [countries, setCountries] = useState('');
   const [sectors, setSectors] = useState('');
   const [minFields, setMinFields] = useState('0');
-  const [criteriaReason, setCriteriaReason] = useState('Synthetic ');
+  const [criteriaReason, setCriteriaReason] = useState(realCustomerInput() ? '' : 'Synthetic ');
   // Places form
   const [minimum, setMinimum] = useState('');
   const [maximum, setMaximum] = useState('');
   const [waitlist, setWaitlist] = useState(true);
-  const [placesReason, setPlacesReason] = useState('Synthetic ');
+  const [placesReason, setPlacesReason] = useState(realCustomerInput() ? '' : 'Synthetic ');
   // Task owners
   const [owners, setOwners] = useState<Record<string, { key: string; visible: boolean }>>({});
   const active = useRef(true);
@@ -90,22 +91,22 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
   const clear = useCallback(() => {
     setState(null);
     setReport(null);
-    setIncluded('Synthetic ');
+    setIncluded(realCustomerInput() ? '' : 'Synthetic ');
     setExcluded('');
-    setCancellation('Synthetic ');
-    setChanges('Synthetic ');
+    setCancellation(realCustomerInput() ? '' : 'Synthetic ');
+    setChanges(realCustomerInput() ? '' : 'Synthetic ');
     setFeesApply(false);
     setFeeNote('');
-    setTermsReason('Synthetic ');
+    setTermsReason(realCustomerInput() ? '' : 'Synthetic ');
     setPickRoles([]);
     setPickSizes([]);
     setCountries('');
     setSectors('');
     setMinFields('0');
-    setCriteriaReason('Synthetic ');
+    setCriteriaReason(realCustomerInput() ? '' : 'Synthetic ');
     setMinimum('');
     setMaximum('');
-    setPlacesReason('Synthetic ');
+    setPlacesReason(realCustomerInput() ? '' : 'Synthetic ');
     setOwners({});
     intent.current = null;
   }, []);
@@ -137,24 +138,24 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
         setPhase('ready');
         // Forms start from what is saved, so a new version is an edit of the last one.
         const t = st.terms.current;
-        setIncluded(t ? t.included : 'Synthetic ');
+        setIncluded(t ? t.included : realCustomerInput() ? '' : 'Synthetic ');
         setExcluded(t?.excluded ?? '');
-        setCancellation(t ? t.cancellationTerms : 'Synthetic ');
-        setChanges(t ? t.changeTerms : 'Synthetic ');
+        setCancellation(t ? t.cancellationTerms : realCustomerInput() ? '' : 'Synthetic ');
+        setChanges(t ? t.changeTerms : realCustomerInput() ? '' : 'Synthetic ');
         setFeesApply(t ? t.feesApply : false);
         setFeeNote(t?.feeNote ?? '');
-        setTermsReason('Synthetic ');
+        setTermsReason(realCustomerInput() ? '' : 'Synthetic ');
         const e = st.eligibility.current;
         setPickRoles(e ? e.roles : []);
         setPickSizes(e ? e.sizeBands : []);
         setCountries(e ? e.countries.join(', ') : '');
         setSectors(e ? e.sectors.join(', ') : '');
         setMinFields(e ? String(e.minProfileFields) : '0');
-        setCriteriaReason('Synthetic ');
+        setCriteriaReason(realCustomerInput() ? '' : 'Synthetic ');
         setMinimum(st.places.minimum === null ? '' : String(st.places.minimum));
         setMaximum(st.places.maximum === null ? '' : String(st.places.maximum));
         setWaitlist(st.places.version > 0 ? st.places.waitlist : true);
-        setPlacesReason('Synthetic ');
+        setPlacesReason(realCustomerInput() ? '' : 'Synthetic ');
         setOwners(
           Object.fromEntries(
             st.tasks.map((x) => [
@@ -233,12 +234,22 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
     setError('');
     if (![included, cancellation, changes, termsReason].every(syntheticOk))
       return setError(
-        'Start each text with the word Synthetic and add a few words: included, cancelling, changes and the reason.',
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start each text with the word Synthetic and add a few words: included, cancelling, changes and the reason.',
       );
     if (excluded.trim() && !syntheticOk(excluded))
-      return setError('Start the "not included" text with the word Synthetic, or clear it.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the "not included" text with the word Synthetic, or clear it.',
+      );
     if (feesApply && feeNote.trim() && !syntheticOk(feeNote))
-      return setError('Start the fee note with the word Synthetic, or clear it.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the fee note with the word Synthetic, or clear it.',
+      );
     void send(
       'terms',
       {
@@ -257,7 +268,11 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
   function saveCriteria() {
     setError('');
     if (!syntheticOk(criteriaReason))
-      return setError('Start the reason with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the reason with the word Synthetic and add a few words.',
+      );
     const cs = list(countries).map((c) => c.toUpperCase());
     if (cs.some((c) => !/^[A-Z]{2}$/.test(c)))
       return setError(
@@ -287,7 +302,11 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
     if (Number(minimum) > Number(maximum))
       return setError('The minimum cannot be more than the maximum.');
     if (!syntheticOk(placesReason))
-      return setError('Start the reason with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the reason with the word Synthetic and add a few words.',
+      );
     void send(
       'places',
       {

@@ -1,0 +1,153 @@
+{
+  "pr": 116,
+  "checkedHead": "6108c391e4a146f34528bc7691f28246ae33e6db",
+  "mergedMain": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+  "identicalTree": true,
+  "ci": {
+    "run": 39559258049,
+    "jobsPassed": 6
+  },
+  "codeql": {
+    "run": 39559256802,
+    "actualAnalysesPassed": 3
+  },
+  "focusedDatabase": {
+    "passed": 35
+  },
+  "focusedBrowser": {
+    "passed": 19
+  },
+  "automaticDeployment": {
+    "id": "dpl_4Mifr89V6fNBya6fjgU2SXEhhW1a",
+    "state": "READY",
+    "region": "fra1",
+    "postReadyProbesPassed": 8
+  },
+  "approvedInstallation": {
+    "run": 39561356047,
+    "job": 119093146088,
+    "source": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+    "result": "success",
+    "fourTablesPresent": true,
+    "fourRecordedMigrationHashesMatchSource": true
+  },
+  "configurationDeployment": {
+    "id": "dpl_CBx1qwTznhWj2EDXCWaBYV9F6VN6",
+    "source": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+    "lastState": "READY",
+    "reason": "Existing automatic deployment predates the four flag changes; refresh exact checked source for changed configuration.",
+    "region": "fra1",
+    "liveProbes": {
+      "total": 11,
+      "passed": 11,
+      "fourModuleApis": "401, no-store; authenticated acceptance still unverified"
+    }
+  },
+  "productionAliases": [
+    "corridra.vercel.app",
+    "c.obsidianglobal.studio",
+    "corridra-sadat-os.vercel.app",
+    "corridra-git-main-sadat-os.vercel.app"
+  ],
+  "activationProbes": {
+    "origin": "https://corridra.vercel.app",
+    "observedAt": "2026-10-21T07:37:29.636Z",
+    "results": [
+      {
+        "path": "/",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/how-it-works",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/corridors",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/trust",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/account",
+        "status": 307,
+        "expected": 307,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": "https://c.obsidianglobal.studio/account"
+      },
+      {
+        "path": "/api/customer-workspaces",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-programme-terms?view=state&workspaceId=00000000-0000-4000-8000-000000000001&programmeId=00000000-0000-4000-8000-000000000002",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-programme-pricing?view=templates&workspaceId=00000000-0000-4000-8000-000000000001",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-organisation-links?scope=overview",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-service-requests?scope=catalogue",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/workspace/delivery",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      }
+    ]
+  },
+  "limits": [
+    "Signed-in managed-provider acceptance remains unverified; custom account domain is blocked to this executor",
+    "Real admission and progressive signup remain draft PR118, not deployed or activated",
+    "Billing remains unimplemented",
+    "Sensitive runtime database URL was not retrieved; no independent host match claimed"
+  ],
+  "productionAliasesVerifiedOnConfigurationDeployment": true
+}

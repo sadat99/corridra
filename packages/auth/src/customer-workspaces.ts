@@ -1,3 +1,5 @@
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerDataEnvironmentAllowed } from './customer-production';
 import { randomBytes } from 'node:crypto';
 import { customerProductionLocked } from './customer-production';
 import { z } from 'zod';
@@ -16,9 +18,9 @@ export const customerWorkspaceInput = z
     name: z
       .string()
       .trim()
-      .min(11)
+      .min(2)
       .max(120)
-      .startsWith('Synthetic ')
+      .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
       .refine((value) => !/[\u0000-\u001f\u007f]/u.test(value)),
   })
   .strict();
@@ -26,7 +28,7 @@ export type CustomerWorkspace = {
   id: string;
   name: string;
   role: 'owner' | 'admin' | 'member';
-  synthetic: true;
+  synthetic: boolean;
   organisationId: null;
 };
 
@@ -99,7 +101,7 @@ export type CustomerAccessPage = {
 export function customerWorkspacesEnabled(env: NodeJS.ProcessEnv = process.env) {
   return (
     env.CORRIDRA_CUSTOMER_WORKSPACES_ENABLED === 'true' &&
-    env.DATA_ENVIRONMENT === 'synthetic' &&
+    customerDataEnvironmentAllowed(env) &&
     !customerProductionLocked(env)
   );
 }

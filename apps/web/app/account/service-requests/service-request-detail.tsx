@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import {
@@ -19,7 +21,7 @@ import {
 
 type Props = { subject: string; issuer: string; workspaceId: string; requestId: string };
 type Panel = 'accept' | 'decline' | 'question' | 'withdraw' | 'revise' | null;
-const starter = 'Synthetic ';
+const starter = realCustomerInput() ? '' : 'Synthetic ';
 
 function money(minor: string | null, currency: string) {
   if (minor === null) return 'Amount not stated';
@@ -288,11 +290,16 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 <form onSubmit={submitRevise} aria-label="Edit the request">
                   <fieldset disabled={busy}>
                     <div className="field">
-                      <label htmlFor={id + 'need'}>What do you need? (start with Synthetic)</label>
+                      <label htmlFor={id + 'need'}>
+                        {' '}
+                        {realCustomerInput()
+                          ? 'What do you need?'
+                          : 'What do you need? (start with Synthetic)'}{' '}
+                      </label>
                       <textarea
                         id={id + 'need'}
                         required
-                        minLength={11}
+                        minLength={realCustomerInput() ? 2 : 11}
                         maxLength={1000}
                         rows={4}
                         value={draft.need}
@@ -539,7 +546,12 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     aria-label="Decline the quote"
                   >
                     <div className="field">
-                      <label htmlFor={id + 'decline'}>Why? (optional, start with Synthetic)</label>
+                      <label htmlFor={id + 'decline'}>
+                        {' '}
+                        {realCustomerInput()
+                          ? 'Why? (optional)'
+                          : 'Why? (optional, start with Synthetic)'}{' '}
+                      </label>
                       <textarea
                         id={id + 'decline'}
                         maxLength={1000}
@@ -565,7 +577,12 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     aria-label="Withdraw the request"
                   >
                     <div className="field">
-                      <label htmlFor={id + 'withdraw'}>Why? (optional, start with Synthetic)</label>
+                      <label htmlFor={id + 'withdraw'}>
+                        {' '}
+                        {realCustomerInput()
+                          ? 'Why? (optional)'
+                          : 'Why? (optional, start with Synthetic)'}{' '}
+                      </label>
                       <textarea
                         id={id + 'withdraw'}
                         maxLength={1000}
@@ -585,11 +602,16 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 {panel === 'question' && (
                   <form onSubmit={submitQuestion} aria-label="Ask a question">
                     <div className="field">
-                      <label htmlFor={id + 'question'}>Your question (start with Synthetic)</label>
+                      <label htmlFor={id + 'question'}>
+                        {' '}
+                        {realCustomerInput()
+                          ? 'Your question'
+                          : 'Your question (start with Synthetic)'}{' '}
+                      </label>
                       <textarea
                         id={id + 'question'}
                         required
-                        minLength={11}
+                        minLength={realCustomerInput() ? 2 : 11}
                         maxLength={1000}
                         rows={3}
                         value={note}
@@ -602,7 +624,11 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     <button
                       type="submit"
                       className="button"
-                      disabled={busy || !note.startsWith('Synthetic ') || note.trim().length < 11}
+                      disabled={
+                        busy ||
+                        !customerLabelAllowed(note) ||
+                        note.trim().length < (realCustomerInput() ? 2 : 11)
+                      }
                     >
                       Send question
                     </button>

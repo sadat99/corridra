@@ -1,6 +1,8 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState } from 'react';
-import { briefSchema } from '@corridra/domain/missions';
+import { briefSchema, realBriefSchema } from '@corridra/domain/missions';
 import { Intake } from '../../plan/intake';
 import {
   privateRequestStorageKeys,
@@ -8,9 +10,9 @@ import {
 } from '../../../lib/private-request-storage';
 
 type Pending = { version: 1; commandId: string; workspaceId: string; brief: unknown; at: number };
-type Saved = { id: string; workspaceId: string; synthetic: true };
+type Saved = { id: string; workspaceId: string; synthetic: boolean };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
-function pendingValue(raw: string, workspaceId: string): Pending {
+function pendingValue(raw: string, workspaceId: string, realMode = false): Pending {
   const value: unknown = JSON.parse(raw);
   if (!value || typeof value !== 'object') throw new Error('Saved retry details are invalid.');
   const v = value as Partial<Pending>;
@@ -23,14 +25,14 @@ function pendingValue(raw: string, workspaceId: string): Pending {
     !Number.isFinite(v.at) ||
     v.at > Date.now() + 60000 ||
     Date.now() - v.at >= 86400000 ||
-    !briefSchema.safeParse(v.brief).success
+    !(realMode ? realBriefSchema : briefSchema).safeParse(v.brief).success
   )
     throw new Error(
       'Saved retry details could not be restored. Check your saved requests before starting another.',
     );
   return v as Pending;
 }
-export function PrivateRequestIntake(scope: PrivateRequestScope) {
+export function PrivateRequestIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
   return (
     <ScopedIntake
       key={JSON.stringify([scope.issuer, scope.subject, scope.workspaceId])}
@@ -38,7 +40,7 @@ export function PrivateRequestIntake(scope: PrivateRequestScope) {
     />
   );
 }
-function ScopedIntake(scope: PrivateRequestScope) {
+function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
   const keys = privateRequestStorageKeys(scope);
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -88,7 +90,7 @@ function ScopedIntake(scope: PrivateRequestScope) {
       if (!active) return;
       try {
         const raw = sessionStorage.getItem(keys.pending);
-        if (raw) setPending(pendingValue(raw, scope.workspaceId));
+        if (raw) setPending(pendingValue(raw, scope.workspaceId, scope.realMode));
       } catch (error) {
         setInvalid(true);
         setProblem(error instanceof Error ? error.message : 'Recovery details could not be read.');
@@ -99,7 +101,7 @@ function ScopedIntake(scope: PrivateRequestScope) {
       active = false;
       controller.current?.abort();
     };
-  }, [keys.pending, scope.workspaceId]);
+  }, [keys.pending, scope.workspaceId, scope.realMode]);
   function clear() {
     sessionStorage.removeItem(keys.pending);
     sessionStorage.removeItem(keys.draft);
@@ -170,7 +172,7 @@ function ScopedIntake(scope: PrivateRequestScope) {
         typeof ack.id !== 'string' ||
         !uuid.test(ack.id) ||
         ack.workspaceId !== scope.workspaceId ||
-        ack.synthetic !== true
+        !customerProvenanceAllowed(ack.synthetic)
       )
         throw new Error('The request acknowledgement could not be confirmed.');
       if (operation.signal.aborted) return;
@@ -180,7 +182,9 @@ function ScopedIntake(scope: PrivateRequestScope) {
         clear();
       } catch {
         setProblem(
-          'The sample request was saved, but this browser could not clear its local retry details.',
+          realCustomerInput()
+            ? 'The request was saved, but this browser could not clear its local retry details.'
+            : 'The sample request was saved, but this browser could not clear its local retry details.',
         );
       }
     } catch (error) {
@@ -201,7 +205,7 @@ function ScopedIntake(scope: PrivateRequestScope) {
       throw new Error('Reload your account and review the saved request first.');
     if (!uuid.test(commandId))
       throw new Error('The private request command is invalid. Reload your account.');
-    const normalized = briefSchema.parse(brief);
+    const normalized = (scope.realMode ? realBriefSchema : briefSchema).parse(brief);
     if (
       pending &&
       (pending.commandId !== commandId ||
@@ -258,10 +262,15 @@ function ScopedIntake(scope: PrivateRequestScope) {
       </section>
     );
   return (
-    <section className="detail-card" aria-label="Private sample request" aria-busy={busy}>
+    <section
+      className="detail-card"
+      aria-label={scope.realMode ? 'Private request' : 'Private sample request'}
+      aria-busy={busy}
+    >
       <p>
-        Use invented details only. Each request stays private to its creator; workspace membership
-        does not share it.
+        {scope.realMode
+          ? 'Each request stays private to its creator; workspace membership does not share it.'
+          : 'Use invented details only. Each request stays private to its creator; workspace membership does not share it.'}
       </p>
       {!loaded && <p role="status">Loading your private request draft…</p>}
       {problem && <p role="alert">{problem}</p>}
@@ -272,7 +281,11 @@ function ScopedIntake(scope: PrivateRequestScope) {
       )}
       {saved && (
         <div role="status">
-          <h2>Your private sample request is saved.</h2>
+          <h2>
+            {scope.realMode
+              ? 'Your private request is saved.'
+              : 'Your private sample request is saved.'}
+          </h2>
           <p>A saved request is not an accepted engagement, meeting or deal.</p>
           <p>Request reference: {saved.id}</p>
         </div>
@@ -293,7 +306,11 @@ function ScopedIntake(scope: PrivateRequestScope) {
       )}
       {(pending || invalid || saved) && !denied && (
         <button type="button" className="text-link" disabled={busy} onClick={forget}>
-          {saved ? 'Start another private sample request' : 'Forget local retry details'}
+          {saved
+            ? scope.realMode
+              ? 'Start another private request'
+              : 'Start another private sample request'
+            : 'Forget local retry details'}
         </button>
       )}
       <p>
@@ -303,7 +320,11 @@ function ScopedIntake(scope: PrivateRequestScope) {
       </p>
       {loaded && !invalid && !denied && (
         <div hidden={pending !== null || saved !== null}>
-          <Intake key={generation} privateSubmission={{ draftStorageKey: keys.draft, submit }} />
+          <Intake
+            key={generation}
+            realMode={scope.realMode}
+            privateSubmission={{ draftStorageKey: keys.draft, submit }}
+          />
         </div>
       )}
     </section>

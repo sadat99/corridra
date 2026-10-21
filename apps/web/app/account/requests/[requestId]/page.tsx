@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
@@ -17,7 +18,12 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!customerRequestDetailsEnabled())
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your saved request" compact>
-        <p role="status">Saved sample request details are unavailable.</p>
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Saved request details are unavailable.'
+            : 'Saved sample request details are unavailable.'}{' '}
+        </p>
         <a className="text-link" href="/account">
           Return to your account
         </a>

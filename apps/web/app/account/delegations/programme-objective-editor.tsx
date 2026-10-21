@@ -1,4 +1,8 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, useMemo, useId } from 'react';
 import Link from 'next/link';
 import { isUuid } from './participant-client';
@@ -30,7 +34,7 @@ function objectives(value: unknown, scope: ObjectiveScope) {
   if (
     !object(value) ||
     value.registrationId !== scope.registrationId ||
-    value.synthetic !== true ||
+    !customerProvenanceAllowed(value.synthetic) ||
     typeof value.active !== 'boolean' ||
     !Array.isArray(value.objectives) ||
     value.objectives.length > 25 ||
@@ -59,7 +63,7 @@ function objectives(value: unknown, scope: ObjectiveScope) {
     if (
       o.status === 'SHARED' &&
       (typeof o.summary !== 'string' ||
-        !o.summary.startsWith('Synthetic ') ||
+        !customerLabelAllowed(o.summary) ||
         o.summary.length > 500 ||
         /[\u0000-\u001f\u007f]/u.test(o.summary) ||
         o.claimStatus !== 'Self-declared' ||
@@ -285,7 +289,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
         if (
           !object(v) ||
           v.registrationId !== scope.registrationId ||
-          v.synthetic !== true ||
+          !customerProvenanceAllowed(v.synthetic) ||
           !Array.isArray(v.requests) ||
           v.requests.length > 25 ||
           (v.nextAfter !== null && !isUuid(v.nextAfter)) ||
@@ -363,7 +367,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
           !object(v) ||
           !isUuid(v.id) ||
           v.registrationId !== scope.registrationId ||
-          v.synthetic !== true ||
+          !customerProvenanceAllowed(v.synthetic) ||
           !Number.isInteger(v.version) ||
           Number(v.version) < 1 ||
           Number(v.version) < command.expectedVersion ||
@@ -399,8 +403,9 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
     <section aria-label="Shared commercial objectives" className="operator-form">
       <h4>Shared commercial objectives</h4>
       <p>
-        Sample objectives only. These are self-declared intentions, not qualification, confirmed
-        meetings or business outcomes.
+        {realCustomerInput()
+          ? 'Self-declared objectives. These are self-declared intentions, not qualification, confirmed meetings or business outcomes.'
+          : 'Sample objectives only. These are self-declared intentions, not qualification, confirmed meetings or business outcomes.'}{' '}
       </p>
       <p>
         Only explicitly shared text is visible to programme organisers. Original requests, contacts,
@@ -536,13 +541,15 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                     if (
                       !isUuid(requestId) ||
                       !consent ||
-                      !summary.startsWith('Synthetic ') ||
-                      summary.trim().length < 11 ||
+                      !customerLabelAllowed(summary) ||
+                      summary.trim().length < (realCustomerInput() ? 2 : 11) ||
                       summary.length > 500 ||
                       /[\u0000-\u001f\u007f]/u.test(summary)
                     ) {
                       setMessage(
-                        'Choose your private request, write a fictional objective beginning with Synthetic, and confirm sharing consent.',
+                        realCustomerInput()
+                          ? 'Choose your private request, describe your objective, and confirm sharing consent.'
+                          : 'Choose your private request, write a fictional objective beginning with Synthetic, and confirm sharing consent.',
                       );
                       return;
                     }
@@ -591,7 +598,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                     Fictional objective to share
                     <textarea
                       value={summary}
-                      minLength={11}
+                      minLength={realCustomerInput() ? 2 : 11}
                       maxLength={500}
                       required
                       placeholder="Synthetic supplier objective"

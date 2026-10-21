@@ -887,6 +887,16 @@
       "path": "docs/v3/history/ledger-chunk-119.md",
       "classification": "Exact historical execution entry",
       "use": "Completed chunk119 organiser programme economics entry; hash-verified, not current state"
+    },
+    {
+      "path": "docs/adr/0056-real-use-admission-and-progressive-registration.md",
+      "classification": "Architecture contract/index",
+      "use": "Owner real-use decision, both signup paths, pending handoff and preservation/acceptance requirements; not enabled"
+    },
+    {
+      "path": "docs/v3/history/ledger-chunks-120-126.md",
+      "classification": "Exact historical execution entries",
+      "use": "Chunks120 through126 preserved byte-for-byte with a manifest hash; not current state"
     }
   ]
 }

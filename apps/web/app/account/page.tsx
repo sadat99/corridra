@@ -152,6 +152,36 @@ export default async function Page({
       )}
       {view === 'work' && (
         <div id="my-work" tabIndex={-1} className="ux-account-groups">
+          <section aria-label="Manage your work">
+            <h2>Manage your work</h2>
+            <ul className="ux-quick-links">
+              {customerOrganisationProfilesEnabled() && (
+                <li>
+                  <Link prefetch={false} href="/account/profile">
+                    <strong>Company profiles and links</strong>
+                    <span>Keep company details current and request a reviewed company link.</span>
+                  </Link>
+                </li>
+              )}
+              {customerProgrammesEnabled() && (
+                <li>
+                  <Link prefetch={false} href="/account/delegations/organise">
+                    <strong>Manage programmes</strong>
+                    <span>Participants, terms, places, fee schedules and delivery.</span>
+                  </Link>
+                </li>
+              )}
+              {customerServiceRequestsEnabled() && (
+                <li>
+                  <Link prefetch={false} href="/account/service-requests">
+                    <strong>Service requests</strong>
+                    <span>Review requests for help, questions and quotes.</span>
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </section>
+
           {workspaceIssuer && (
             <div id="customer-workspaces" tabIndex={-1}>
               <CustomerWorkspaces
@@ -228,6 +258,33 @@ export default async function Page({
               <OperatorInvitationHint key={data.user.id} />
             </aside>
             <section className="detail-card" aria-label="Help and other ways in">
+              <h2>Manage your work</h2>
+              <ul className="ux-link-list">
+                {customerOrganisationProfilesEnabled() && (
+                  <li>
+                    <Link prefetch={false} href="/account/profile">
+                      <strong>Company profiles and links</strong>
+                      <span>Your company details and supporting statements.</span>
+                    </Link>
+                  </li>
+                )}
+                {customerProgrammesEnabled() && (
+                  <li>
+                    <Link prefetch={false} href="/account/delegations/organise">
+                      <strong>Manage programmes</strong>
+                      <span>Programme terms, places, pricing and coordination.</span>
+                    </Link>
+                  </li>
+                )}
+                {customerServiceRequestsEnabled() && (
+                  <li>
+                    <Link prefetch={false} href="/account/service-requests">
+                      <strong>Service requests</strong>
+                      <span>Help requests, questions and quotes.</span>
+                    </Link>
+                  </li>
+                )}
+              </ul>
               <h2>Start something</h2>
               <ul className="ux-link-list">
                 <li>
