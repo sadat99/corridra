@@ -30,5 +30,12 @@
     "Sensitive Vercel runtime URL not retrievable; runtime host match not independently established",
     "Read-only metadata checks; no personal records read",
     "Source presence, schema installation, flags and real-use admission are separate"
-  ]
+  ],
+  "installHostMatchesLiveSynthetic": true,
+  "productionManagedAuthMatchesCustomerIssuer": true,
+  "databaseIssuerMatchesProductionCustomerIssuer": true,
+  "installationEnvironment": {
+    "name": "customer-modules-install",
+    "requiredReviewers": 1
+  }
 }
