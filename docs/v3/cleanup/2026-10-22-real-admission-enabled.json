@@ -1,0 +1,188 @@
+{
+  "approvedEnableRun": 39645923089,
+  "attempt": 2,
+  "job": 119511061089,
+  "workflowSource": "c1a8f3754860a7254c75a0b1e0dc4493fb163b7b",
+  "result": "success",
+  "productionDatabaseVerification": {
+    "configurationCount": 1,
+    "admissionEnabled": true,
+    "originalAuthorityPreserved": true,
+    "evidenceScanDeferred": true
+  },
+  "productionFlags": {
+    "DATA_ENVIRONMENT": "real",
+    "CORRIDRA_REAL_USE_ENABLED": "true",
+    "CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK": "real-use-owner-approved",
+    "CORRIDRA_CUSTOMER_OPEN_ADMISSION": "real-use-owner-approved",
+    "NEXT_PUBLIC_CORRIDRA_REAL_USE_ENABLED": "true",
+    "EVIDENCE_SCAN_MODE": "bypass"
+  },
+  "existingCustomerModuleFlagsPreserved": 21,
+  "deployment": {
+    "id": "dpl_5pDWkmkykxHpqQ3ogzmwPeT8F9PF",
+    "source": "b69f0ffc8f6de1113ce97f5f049ab287a7e6aa4b",
+    "state": "READY",
+    "regions": ["fra1"],
+    "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"],
+    "reason": "Exact checked-source configuration refresh after coordinated public/server flag change; no code merge deployment duplicated."
+  },
+  "sourceReleaseChecks": {
+    "mainCi": 39658261469,
+    "allSixJobsPassed": true,
+    "codeql": 39658261257,
+    "allThreeAnalysesUploaded": true,
+    "sameApplicationBytesAsReviewedPr125": true
+  },
+  "liveAvailabilityAndPrivacy": {
+    "pendingStatus": 200,
+    "pending": false,
+    "available": true,
+    "noStore": true,
+    "privacyStatus": 200,
+    "realPrivacyCopy": true,
+    "realNoticeVersion": true,
+    "oldSyntheticPrivacyCopy": false,
+    "exampleAddressRequirement": false
+  },
+  "publicAndAuthenticationProbes": {
+    "origin": "https://corridra.vercel.app",
+    "observedAt": "2026-10-21T22:13:29.385Z",
+    "results": [
+      {
+        "path": "/",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/plan",
+        "status": 307,
+        "expected": 307,
+        "cacheControl": "no-store",
+        "pass": true,
+        "testModeVisible": false,
+        "realAccountCopy": false
+      },
+      {
+        "path": "/about",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/privacy",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/how-it-works",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/corridors",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/trust",
+        "status": 200,
+        "expected": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "pass": true
+      },
+      {
+        "path": "/api/customer-workspaces",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      },
+      {
+        "path": "/api/customer-programme-terms?view=state&workspaceId=00000000-0000-4000-8000-000000000001&programmeId=00000000-0000-4000-8000-000000000002",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      },
+      {
+        "path": "/api/customer-programme-pricing?view=templates&workspaceId=00000000-0000-4000-8000-000000000001",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      },
+      {
+        "path": "/api/customer-organisation-links?scope=overview",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      },
+      {
+        "path": "/api/customer-service-requests?scope=catalogue",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      },
+      {
+        "path": "/api/workspace/delivery",
+        "status": 401,
+        "expected": 401,
+        "cacheControl": "no-store",
+        "pass": true
+      }
+    ],
+    "total": 13,
+    "passed": 13
+  },
+  "limitations": [
+    "No authenticated production browser attached; live private screens unverified.",
+    "Genuine signup-first/submission-first email activation and customer acceptance remain unverified.",
+    "Billing remains MISSING; whole V3 remains PARTIAL.",
+    "Scanning and additional security integrations remain owner-deferred; no CLEAN or compliance claim.",
+    "No outreach, inference, payment or payout integration activated."
+  ],
+  "networkAccess": {
+    "public": "https://c.obsidianglobal.studio/network",
+    "staff": "https://c.obsidianglobal.studio/operator#workspace-network",
+    "staffNavigation": "Assistance \u2192 Execution network",
+    "contributor": "Reviewed invitation: /contributor?workspace=<issued-id>",
+    "productionFlagPresent": false,
+    "contributorPurpose": "synthetic_validation",
+    "realContributorWorkEnabled": false,
+    "readOnlyRouteProbes": [
+      {
+        "path": "/network",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/contributor",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/api/network/tasks?workspace=00000000-0000-4000-8000-000000000001",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store"
+      }
+    ]
+  }
+}

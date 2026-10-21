@@ -4,6 +4,14 @@ Module-specific guidance. Read [the current plan](../implementation/current-plan
 
 Start with the existing operator password/TOTP identity and tenant authority. Use only synthetic data. Customer Neon identities do not gain execution access through email matching.
 
+## Access Corridra Network
+
+- Public overview: [Corridra Network](https://c.obsidianglobal.studio/network), also linked in the public footer. This is an introduction, not a public task marketplace.
+- Invited staff: open [Execution network](https://c.obsidianglobal.studio/operator#workspace-network), sign in with the operator identity and authenticator, then select **Assistance → Execution network**. Navigation is offered to owner/admin/operator/reviewer roles; every API permission still applies. Customer registration grants no staff membership.
+- Invited contributors: use `/contributor?workspace=<the-issued-workspace-id>` from the reviewed invitation. The staff panel’s **Open assigned task access** link includes that workspace. Opening `/contributor` alone shows access help, not a workspace chooser or public enrolment.
+
+Observed 22 October 2026 (Dhaka): Production `CORRIDRA_NETWORK_ENABLED` is absent, and contributor task routes/service still use `synthetic_validation`. Real contributor onboarding/work is therefore not enabled. ADR056 real mission admission does not activate Network, override eligibility or enable paid work. Existing synthetic validation also needs the independent environment flag, tenant `network.enabled`, current MFA, reviewed contributor eligibility and explicit task assignment. Do not toggle a flag and claim real Network readiness. Genuine production Network acceptance remains unverified; it needs a separately bounded implementation/activation packet.
+
 ## AI preparation and review
 
 1. Record the actual public source and claim with current retention and an AI-permitting source policy. An existing source AI denial cannot be overridden.
@@ -33,4 +41,4 @@ Disabling either feature preserves history. Inspect owned blocked tasks, pending
 
 ## Release and Part 5 handoff
 
-Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Part 4 was merged in PR 34; for future changes use bounded reviewed PRs and the current release runbook; retain a maximum of ten Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. The next revised Part 5 needs a new owner packet; this release does not implement it.
+Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Part 4 was merged in PR 34; for future changes use bounded reviewed PRs and the current release runbook; retain a maximum of eight Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. Revised Part 5 subsequently merged; follow the ledger’s current sequence. This historical Part 4 receipt does not establish whole V3 readiness.
