@@ -3,6 +3,17 @@ import { randomUUID } from 'node:crypto';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { CustomerServiceStaffService } from '../../packages/delivery/src/customer-service-staff';
 import { AccessService } from '../../packages/auth/src/access';
+import { DeliveryService } from '../../packages/delivery/src/index';
+import { importColumns } from '../../packages/delivery/src/import';
+import { MissionService } from '../../packages/missions/src/index';
+import { CustomerMissionDraftService } from '../../packages/auth/src/customer-mission-drafts';
+import {
+  draftProblems,
+  draftReadiness,
+  composeBrief,
+} from '../../packages/domain/src/mission-drafts';
+import { CounterpartyService } from '../../packages/counterparties/src/index';
+import { EvidenceService } from '../../packages/evidence/src/index';
 import { fixture } from './support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
@@ -66,6 +77,157 @@ beforeAll(async () => {
 afterAll(async () => {
   await f?.close();
   vi.unstubAllEnvs();
+});
+test('real guided drafts accept ordinary company details and compose a normal contact email', async () => {
+  const details = {
+    title: 'Supplier discussions',
+    family: 'BUYERS_PARTNERS' as const,
+    objective: 'Sell in a new market' as const,
+    market: 'Spain',
+    attendance: 'No' as const,
+    startDate: '',
+    endDate: '',
+    timezone: 'Europe/Madrid',
+    offer: 'Supply hotel textiles to hospitality distributors',
+    website: 'https://business.test/catalogue',
+    outcomes: ['Relevant meetings'],
+    notes: '',
+    requirements: [{ label: 'Product', value: 'Hotel towels' }],
+    contactName: 'Company contact',
+    contactEmail: 'contact@business.test',
+    companyName: 'Hotel Textile Company',
+    profileVersion: null,
+    sourcingContext: null,
+  };
+  expect(draftProblems(details)).toEqual([]);
+  expect(draftReadiness(details).ready).toBe(true);
+  expect(composeBrief(details)?.email).toBe(details.contactEmail);
+  const saved = await new CustomerMissionDraftService(f.runtime, f.auth, options, session).save({
+    commandId: randomUUID(),
+    workspaceId,
+    draftId: null,
+    expectedVersion: 0,
+    details,
+    acknowledged: true,
+  });
+  expect(saved.draft.details.contactEmail).toBe(details.contactEmail);
+});
+test('real research preserves sourced company domains and private normal contact addresses', async () => {
+  const ctx = { ...f.users.owner.ctx, tenantId: intakeTenantId };
+  const unexpected = async () => {
+    throw new Error('This source-metadata test performs no file or scan operation');
+  };
+  const evidence = new EvidenceService(
+    f.runtime,
+    { put: unexpected, get: unexpected },
+    { scan: unexpected },
+  );
+  const until = new Date(Date.now() + 86400000).toISOString();
+  const source = await evidence.createSource(ctx, {
+    kind: 'public_record',
+    classification: 'PUBLIC',
+    locator: 'https://business.test/registry',
+    observedAt: new Date().toISOString(),
+    purpose: 'commercial_qualification',
+    retentionUntil: until,
+    aiPolicy: 'DENY',
+  });
+  const research = new CounterpartyService(f.runtime);
+  const org = await research.command(ctx, {
+    action: 'ingest',
+    commandId: randomUUID(),
+    sourceId: source.id,
+    name: 'Machinery Company',
+    country: 'BD',
+    domain: 'business.test',
+    address: 'Company business address',
+    identifierType: 'registry',
+    identifier: randomUUID(),
+  });
+  const relationship = await research.command(ctx, {
+    action: 'relationship',
+    commandId: randomUUID(),
+    organisationId: org.id,
+    ownerId: f.users.owner.id,
+    visibility: 'OWNER',
+    note: 'Prepare supplier discussions',
+  });
+  const contact = await research.command(ctx, {
+    action: 'contact',
+    commandId: randomUUID(),
+    relationshipId: relationship.id,
+    sourceId: source.id,
+    name: 'Company contact',
+    jobTitle: 'Commercial manager',
+    email: 'contact@business.test',
+    validUntil: until,
+  });
+  expect(contact.id).toMatch(/^[a-f0-9-]{36}$/);
+  const stored = (
+    await f.owner.query('SELECT email FROM app.private_contact_data WHERE id=$1', [contact.id])
+  ).rows[0];
+  expect(stored.email).toBe('contact@business.test');
+  expect(
+    (
+      await f.owner.query('SELECT synthetic FROM app.public_identifier WHERE organisation_id=$1', [
+        org.id,
+      ])
+    ).rows[0].synthetic,
+  ).toBe(false);
+});
+test('staff programme imports accept real participant contact details with the real notice', async () => {
+  const ctx = { ...f.users.owner.ctx, tenantId: intakeTenantId };
+  const delivery = new DeliveryService(
+    f.runtime,
+    new MissionService(f.runtime, 'real-delivery-fixture-secret', 'real'),
+    'real-delivery-fixture-secret',
+  );
+  const programme = await delivery.programme(ctx, {
+    commandId: randomUUID(),
+    name: 'Supplier visits',
+    reportingPurpose: 'Prepare the participating company for supplier discussions',
+  });
+  const values: Record<string, string> = {
+    participant_reference: 'company-1',
+    company: 'Machinery participant',
+    name: 'Participant contact',
+    email: 'participant@business.test',
+    objective: 'Source suppliers',
+    market: 'China',
+    offer: 'Find machinery suppliers for the planned factory expansion',
+    attendance: 'No',
+    startDate: '',
+    endDate: '',
+    timezone: 'Asia/Dhaka',
+    website: 'https://business.test/catalogue',
+    outcomes: 'Relevant meetings',
+    notes: '',
+    companyCountry: 'BD',
+    marketCode: 'CN',
+    missionJob: 'sourcing',
+  };
+  const csv = Buffer.from(
+    importColumns.join(',') + '\n' + importColumns.map((key) => values[key]).join(',') + '\n',
+  );
+  const preview = await delivery.preview(ctx, programme.id, randomUUID(), csv, 'CSV');
+  expect(preview.rows[0].status).toBe('READY');
+  expect(preview.rows[0].brief?.email).toBe(values.email);
+  const confirmed = await delivery.confirm(ctx, {
+    commandId: randomUUID(),
+    importId: preview.id,
+    ownerId: f.users.owner.id,
+    counts: preview.counts,
+    acknowledged: true,
+  });
+  expect(confirmed.rows).toHaveLength(1);
+  const row = (
+    await f.owner.query(
+      'SELECT notice_version,brief FROM app.mission_intake WHERE tenant_id=$1 AND id=$2',
+      [intakeTenantId, confirmed.rows[0].missionId],
+    )
+  ).rows[0];
+  expect(row.notice_version).toBe('real-intake-2026-10-21-v1');
+  expect(row.brief.email).toBe(values.email);
 });
 test('real staff discover their authorized scope and preserve exact quote and acceptance amounts', async () => {
   // This test creates its own request so no ordering against the other cases is required.

@@ -1,4 +1,9 @@
-import { briefSchema, type MissionBrief } from './missions';
+import { briefSchema, realBriefSchema, type MissionBrief } from './missions';
+import {
+  realCustomerInput,
+  customerLabelAllowed,
+  customerWebsiteAllowed,
+} from './customer-input-mode';
 
 // Names follow the V3 contract's three customer-facing products plus the secondary entry.
 export const missionDraftFamilyLabels = {
@@ -134,7 +139,7 @@ export function composeOffer(d: Pick<DraftForBrief, 'offer' | 'requirements'>) {
 // Judge whether a draft can become the existing request. Returns plain-language gaps, never a score.
 export function draftReadiness(d: DraftForBrief): { ready: boolean; gaps: string[] } {
   const gaps: string[] = [];
-  const parsed = briefSchema.safeParse({
+  const parsed = (realCustomerInput() ? realBriefSchema : briefSchema).safeParse({
     objective: d.objective ?? undefined,
     market: d.market,
     attendance: d.attendance,
@@ -179,7 +184,7 @@ export function draftReadiness(d: DraftForBrief): { ready: boolean; gaps: string
 }
 
 export function composeBrief(d: DraftForBrief): MissionBrief | null {
-  const parsed = briefSchema.safeParse({
+  const parsed = (realCustomerInput() ? realBriefSchema : briefSchema).safeParse({
     objective: d.objective ?? undefined,
     market: d.market,
     attendance: d.attendance,
@@ -229,23 +234,22 @@ const validDate = (v: string) =>
   (/^\d{4}-\d{2}-\d{2}$/.test(v) &&
     !Number.isNaN(Date.parse(v)) &&
     new Date(v).toISOString().slice(0, 10) === v);
-const syntheticOrEmpty = (v: string) =>
-  v === '' || (v.trim().length >= 11 && v.trim().startsWith('Synthetic '));
+const syntheticOrEmpty = (v: string) => v === '' || customerLabelAllowed(v.trim());
 
 // Saving rules only. A draft may be incomplete; readiness to send is judged by draftReadiness.
 // These rules mirror the server schema and database checks so a customer sees problems before saving.
 export function draftProblems(d: DraftFormValues): DraftProblem[] {
   const out: DraftProblem[] = [];
   const add = (field: string, message: string) => out.push({ field, message });
-  const synthetic = 'While Corridra is in test mode, start this with the word Synthetic.';
-  if (
-    d.title.trim().length < 11 ||
-    !d.title.trim().startsWith('Synthetic ') ||
-    control.test(d.title)
-  )
+  const synthetic = realCustomerInput()
+    ? 'Enter a clear description with at least two characters.'
+    : 'While Corridra is in test mode, start this with the word Synthetic.';
+  if (!customerLabelAllowed(d.title.trim()) || control.test(d.title))
     add(
       'title',
-      'Give the request a name that starts with Synthetic and has at least 11 characters.',
+      realCustomerInput()
+        ? 'Give the request a name with at least two characters.'
+        : 'Give the request a name that starts with Synthetic and has at least 11 characters.',
     );
   for (const [field, value] of [
     ['offer', d.offer],
@@ -261,13 +265,29 @@ export function draftProblems(d: DraftFormValues): DraftProblem[] {
   if (!validDate(d.endDate)) add('endDate', 'Enter a valid date.');
   if (d.startDate && d.endDate && d.endDate < d.startDate)
     add('endDate', 'The end date must follow the start date.');
-  if (d.website.trim() !== '' && !reservedHost.test(d.website.trim()))
+  if (
+    d.website.trim() !== '' &&
+    !reservedHost.test(d.website.trim()) &&
+    !customerWebsiteAllowed(d.website.trim())
+  )
     add(
       'website',
-      'While Corridra is in test mode, use an example, test or invalid website address.',
+      realCustomerInput()
+        ? 'Enter a valid HTTPS website address.'
+        : 'While Corridra is in test mode, use an example, test or invalid website address.',
     );
-  if (d.contactEmail !== '' && !/^[a-z0-9._+-]+@example\.invalid$/.test(d.contactEmail))
-    add('contactEmail', 'Use a test address ending in @example.invalid.');
+  if (
+    d.contactEmail !== '' &&
+    !(realCustomerInput()
+      ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contactEmail)
+      : /^[a-z0-9._+-]+@example\.invalid$/.test(d.contactEmail))
+  )
+    add(
+      'contactEmail',
+      realCustomerInput()
+        ? 'Enter a valid contact email address.'
+        : 'Use a test address ending in @example.invalid.',
+    );
   if (d.contactName.trim() !== '' && d.contactName.trim().length < 2)
     add('contactName', 'Enter at least 2 characters.');
   if (new Set(d.outcomes).size !== d.outcomes.length) add('outcomes', 'Choose each outcome once.');
@@ -281,13 +301,13 @@ export function draftProblems(d: DraftFormValues): DraftProblem[] {
       add('requirements.' + i + '.label', 'Use each label once.');
     labels.add(label.toLowerCase());
     const value = r.value.trim();
-    if (
-      value.length < 11 ||
-      value.length > 300 ||
-      !value.startsWith('Synthetic ') ||
-      control.test(value)
-    )
-      add('requirements.' + i + '.value', 'Start with Synthetic and use 11 to 300 characters.');
+    if (!customerLabelAllowed(value) || value.length > 300 || control.test(value))
+      add(
+        'requirements.' + i + '.value',
+        realCustomerInput()
+          ? 'Use 2 to 300 characters.'
+          : 'Start with Synthetic and use 11 to 300 characters.',
+      );
   });
   return out;
 }

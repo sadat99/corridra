@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
@@ -515,8 +516,9 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
         ]}
       />
       <p>
-        Connect held meetings to commercial evidence. Use invented records while customer controls
-        are completed.
+        {realCustomerInput()
+          ? 'Connect held meetings to commercial evidence. Record actual outcomes with their supporting information.'
+          : 'Connect held meetings to commercial evidence. Use invented records while customer controls are completed.'}
       </p>
       <p role="status" aria-live="polite" aria-label="Commercial status">
         {message}

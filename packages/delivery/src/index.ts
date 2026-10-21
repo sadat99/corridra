@@ -155,7 +155,11 @@ export class DeliveryService {
           expiresAt: old.expires_at,
         };
       }
-      const rows = await parseImport(bytes, format);
+      const rows = await parseImport(
+        bytes,
+        format,
+        tx.purpose === 'synthetic_validation' ? 'synthetic' : 'real',
+      );
       const existing = (
         await db.query(
           'SELECT reference,brief_hash,mission_id FROM app.delivery_participant WHERE tenant_id=$1 AND programme_id=$2',

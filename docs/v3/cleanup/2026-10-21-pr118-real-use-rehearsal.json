@@ -13,7 +13,7 @@
   },
   "originalCoreMigrations": 5,
   "core_migrations": 29,
-  "real_use_migrations": 5,
+  "real_use_migrations": 7,
   "control_versions": 2,
   "configuration_preserved": true,
   "actualInstaller": true,
@@ -41,6 +41,14 @@
     {
       "name": "0005_real_staff_scope.sql",
       "sha256": "530fab64fa1aa238865081a18af256a65e39f3b077d9a1dce38199e691ef2eba"
+    },
+    {
+      "name": "0006_real_programme_import.sql",
+      "sha256": "e583860cf6d255a8c289967ab36bac8410c7dcef973f07306fbf209895996351"
+    },
+    {
+      "name": "0007_real_private_contacts.sql",
+      "sha256": "ea835992cfd478118e789a6f97d40e2bf40e52626700e05889d8023f6248e2fe"
     }
   ],
   "latestSourceMigrationHashesMatch": true,
@@ -49,5 +57,11 @@
     "identifierProvenanceMismatches": 0,
     "readOnly": true
   },
-  "cleanup": "pending completion of PR118 checks; no deployment/environment binding was created"
+  "cleanup": "pending completion of PR118 checks; no deployment/environment binding was created",
+  "initialActualInstallerMigrations": 5,
+  "supplementalManagedRehearsal": "0006 and 0007 applied using exact guarded SQL in advisory-locked transactions; all seven registry hashes read back and matched source",
+  "focusedFinalFlows": {
+    "passed": 47,
+    "files": 4
+  }
 }

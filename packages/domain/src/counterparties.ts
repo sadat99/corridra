@@ -1,5 +1,6 @@
 import { countryCode } from './geography';
 import { z } from 'zod';
+import { realCustomerInput } from './customer-input-mode';
 const text = (max: number, min = 1) => z.string().trim().min(min).max(max);
 const uuid = z.uuid();
 const base = { commandId: uuid };
@@ -18,7 +19,15 @@ export const ingestOrganisation = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .regex(/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*example\.invalid$/),
+    .refine(
+      (value) =>
+        realCustomerInput()
+          ? value.length <= 253 &&
+            value.includes('.') &&
+            value.split('.').every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))
+          : /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*example\.invalid$/.test(value),
+      'Enter a valid company domain',
+    ),
   address: text(300),
   identifier: text(100).transform((v) => v.toUpperCase()),
   identifierType: z.enum(['registry', 'tax', 'source_id']),
@@ -40,7 +49,10 @@ export const contactInput = z.object({
   email: z
     .email()
     .toLowerCase()
-    .refine((v) => v.endsWith('@example.invalid'), 'Use an invented @example.invalid contact'),
+    .refine(
+      (v) => realCustomerInput() || v.endsWith('@example.invalid'),
+      'Use an invented @example.invalid contact',
+    ),
   sourceId: uuid,
   validUntil: date,
 });
