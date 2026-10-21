@@ -1,0 +1,124 @@
+{
+  "applicationSource": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
+  "contributorComponentsAt": "296ba7bc8d2f593fa5e05aca7ad359db6dc066be",
+  "canonicalPrivateHeadersAt": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
+  "browserJourney": {
+    "exitCode": 0,
+    "testsPassed": 1,
+    "externalCustomerProofFixture": true,
+    "actualWorkPasswordAndTotp": true,
+    "actualRestrictedDatabaseRoles": true,
+    "noMembership": true,
+    "privateCustomerEmailNotDisclosed": true,
+    "screens": 12,
+    "overflowViolations": 0,
+    "axeViolations": 0,
+    "captures": [
+      {
+        "path": "work/real-use/network-browser/contributor-assigned-1440.png",
+        "sha256": "7bc146f669a4d2d1fd88ec4c7314fa8e899f233d0aa65d493e419818d602c82c"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-assigned-390.png",
+        "sha256": "47edef3ff7274a0de1c7dd252962d24cb65e75325a9b75766432e549c48abb0e"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-empty-1440.png",
+        "sha256": "b33fa48a9223b9b8f2ed303f090c6c0da8a4579301c874739ec70b4c178a51cc"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-empty-390.png",
+        "sha256": "8b7d8df4914601b3f6625fc7e76caa20e13b226268188dbf14badb13740793b7"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-setup-1440.png",
+        "sha256": "d4b1e39f3cf7bd67e70de85c36d807034b88a2463a976a4e3d4fba4ebb9c8968"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-setup-390.png",
+        "sha256": "a53777eda90c23cc537a5c50c22072712731356f8aaa9e964513346aa31dee8d"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-submitted-1440.png",
+        "sha256": "8b7655d9af03ae1819a846e5edc279a3a25fdd937c5abadc7769724b4e2863bc"
+      },
+      {
+        "path": "work/real-use/network-browser/contributor-submitted-390.png",
+        "sha256": "d3f8c4770865c202ed16a23e8b98fcd9e184a7187fb05aeeff6410f7c758e126"
+      },
+      {
+        "path": "work/real-use/network-browser/owner-empty-1440.png",
+        "sha256": "c817491691b648d035f0e7a207eae2ca5e23b2ce63f3dd7bb7cf8eaf07d38c50"
+      },
+      {
+        "path": "work/real-use/network-browser/owner-empty-390.png",
+        "sha256": "6edd7499df2f7aa3e99feb147ab57e621b2d717288069a49dba836a9e00a752e"
+      },
+      {
+        "path": "work/real-use/network-browser/owner-invited-1440.png",
+        "sha256": "da37003810748a0514c39c85aabda19d70116f5444a75cf09dea17339ff69c54"
+      },
+      {
+        "path": "work/real-use/network-browser/owner-invited-390.png",
+        "sha256": "2c3da62c8ae02051173cee6d8e90dd864431fab29f7625b8316a46c52a3939db"
+      }
+    ]
+  },
+  "publicBrowser": {
+    "exitCode": 0,
+    "passed": 160,
+    "head": "c68a400dbacfff469a06bb5a31c01ac3f056aaab"
+  },
+  "compiledContributorSetupHeaders": {
+    "status": 200,
+    "cacheControl": "no-store",
+    "referrerPolicy": "no-referrer"
+  },
+  "formatLintTypecheckDocumentsInfrastructureBuild": {
+    "exitCode": 0,
+    "head": "c68a400dbacfff469a06bb5a31c01ac3f056aaab"
+  },
+  "codeql": {
+    "runId": 39692040838,
+    "head": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
+    "analysisJobs": [119540337243, 119540337286, 119540337294],
+    "actualUploadsComplete": true,
+    "sarifReviewed": [
+      {
+        "artifact": "network-c68-codeql-findings-python.zip",
+        "sarif": "python.sarif",
+        "results": []
+      },
+      {
+        "artifact": "network-c68-codeql-javascript.zip",
+        "sarif": "javascript.sarif",
+        "results": [
+          {
+            "rule": "js/disabling-certificate-validation",
+            "level": null,
+            "locations": [
+              {
+                "file": "security/corridra.test.ts",
+                "line": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "artifact": "network-c68-codeql-findings-actions.zip",
+        "sarif": "actions.sarif",
+        "results": []
+      }
+    ],
+    "newFindings": 0,
+    "unchangedNegativeFixture": "security/corridra.test.ts:9"
+  },
+  "productionNetworkEnabled": false,
+  "remaining": [
+    "Full database and existing protected operator regression in progress",
+    "Exact final PR CI required",
+    "Protected installation and Production setting/deployment verification",
+    "Genuine Production identity/email/private acceptance remains unverified"
+  ]
+}

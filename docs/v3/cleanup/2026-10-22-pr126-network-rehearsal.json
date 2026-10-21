@@ -1,0 +1,34 @@
+{
+  "projectId": "odd-pond-26265871",
+  "parentId": "br-lingering-sea-b1eob57e",
+  "branchId": "br-odd-shape-b1xuo4am",
+  "endpointId": "ep-silent-silence-b1d41jep",
+  "baseline": {
+    "tenants": 0,
+    "staff": 0,
+    "organisations": 0
+  },
+  "totals": {
+    "core": 29,
+    "real": 7,
+    "network": 2,
+    "control_versions": 2
+  },
+  "hashes": [
+    {
+      "name": "0001_real_invited_execution.sql",
+      "sha256": "bfb0f5cae591883134d85867438b1efc3b481082517a237aae06b3324f346233"
+    },
+    {
+      "name": "0002_reviewed_contributor_invitations.sql",
+      "sha256": "554ae501e5c21170e334b13418da76aa259d53d23329f0ecbdf6b113554e087a"
+    }
+  ],
+  "authorityPreserved": true,
+  "migrationReplay": true,
+  "enableRetryPause": true,
+  "productionWritten": false,
+  "completedAt": "2026-10-21T23:20:45.490Z",
+  "checkedApplicationSource": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
+  "scope": "Disposable managed PostgreSQL installation, immutable registry replay, enable/retry/pause and original authority preservation; not Production identity or email acceptance."
+}
