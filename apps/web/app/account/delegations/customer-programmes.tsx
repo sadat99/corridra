@@ -324,7 +324,7 @@ function ScopedProgrammes({
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
-      aria-label="Sample delegation planning"
+      aria-label={realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}
     >
       <a className="text-link ux-back" href="/account#customer-workspaces">
         Back to my workspaces
@@ -346,7 +346,14 @@ function ScopedProgrammes({
           administrators can use this page.
         </p>
       )}
-      {status === 'unavailable' && <p role="status">Sample delegation planning is unavailable.</p>}
+      {status === 'unavailable' && (
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation planning is unavailable.'
+            : 'Sample delegation planning is unavailable.'}{' '}
+        </p>
+      )}
       {status === 'failed' && (
         <p role="alert">Programmes could not be loaded. Reload to check access and try again.</p>
       )}
@@ -364,7 +371,12 @@ function ScopedProgrammes({
                 <li key={p.id}>
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
-                  <p>Planning record only · Sample data</p>
+                  <p>
+                    {' '}
+                    {realCustomerInput()
+                      ? 'Planning record only · data'
+                      : 'Planning record only · Sample data'}{' '}
+                  </p>
                   {serviceRequestsEnabled && (
                     <p>
                       <a

@@ -1,9 +1,19 @@
 // This public value selects validation/copy, never account, workspace or database authority.
-const publicRealMode = process.env.NEXT_PUBLIC_CORRIDRA_REAL_USE_ENABLED === 'true';
+const publicRealMode = (() => {
+  try {
+    // Next replaces this exact property at build time. Other browser consumers
+    // have no process global and retain the legacy default.
+    return process.env.NEXT_PUBLIC_CORRIDRA_REAL_USE_ENABLED === 'true';
+  } catch {
+    return false;
+  }
+})();
 export function realCustomerInput() {
   return (
     publicRealMode ||
-    (process.env.DATA_ENVIRONMENT === 'real' && process.env.CORRIDRA_REAL_USE_ENABLED === 'true')
+    (typeof process !== 'undefined' &&
+      process.env.DATA_ENVIRONMENT === 'real' &&
+      process.env.CORRIDRA_REAL_USE_ENABLED === 'true')
   );
 }
 export function customerLabelAllowed(value: string) {

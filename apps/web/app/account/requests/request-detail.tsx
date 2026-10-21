@@ -202,7 +202,12 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
       <a className="text-link ux-back" href="/account#customer-requests">
         Back to my saved requests
       </a>
-      <p>Sample data only. A request is not an accepted engagement, confirmed meeting or deal.</p>
+      <p>
+        {' '}
+        {realCustomerInput()
+          ? 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'
+          : 'Sample data only. A request is not an accepted engagement, confirmed meeting or deal.'}{' '}
+      </p>
       {status === 'loading' && <p role="status">Loading your saved request…</p>}
       {status === 'denied' && (
         <div role="alert">

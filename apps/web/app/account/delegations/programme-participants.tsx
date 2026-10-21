@@ -145,9 +145,9 @@ function ScopedParticipants(props: Props) {
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
-      aria-label="Sample programme participants"
+      aria-label={realCustomerInput() ? 'Programme participants' : 'Sample programme participants'}
     >
-      <h3>Sample participants</h3>
+      <h3> {realCustomerInput() ? 'Participants' : 'Sample participants'} </h3>
       <p>
         {realCustomerInput()
           ? 'A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'
@@ -161,7 +161,12 @@ function ScopedParticipants(props: Props) {
         </p>
       )}
       {view.status === 'unavailable' && (
-        <p role="status">Sample delegation participation is unavailable.</p>
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation participation is unavailable.'
+            : 'Sample delegation participation is unavailable.'}{' '}
+        </p>
       )}
       {view.status === 'failed' && (
         <p role="alert">Participant details could not be confirmed. Reload to check access.</p>

@@ -403,8 +403,9 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
     <section aria-label="Shared commercial objectives" className="operator-form">
       <h4>Shared commercial objectives</h4>
       <p>
-        Sample objectives only. These are self-declared intentions, not qualification, confirmed
-        meetings or business outcomes.
+        {realCustomerInput()
+          ? 'Self-declared objectives. These are self-declared intentions, not qualification, confirmed meetings or business outcomes.'
+          : 'Sample objectives only. These are self-declared intentions, not qualification, confirmed meetings or business outcomes.'}{' '}
       </p>
       <p>
         Only explicitly shared text is visible to programme organisers. Original requests, contacts,

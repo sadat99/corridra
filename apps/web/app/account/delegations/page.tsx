@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
 import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { redirect } from 'next/navigation';
@@ -15,7 +16,11 @@ export const metadata = {
   title: 'Delegation registrations | Corridra',
   robots: { index: false, follow: false },
 };
-function unavailable(message = 'Sample delegation participation is unavailable.') {
+function unavailable(
+  message = realCustomerInput()
+    ? 'Delegation participation is unavailable.'
+    : 'Sample delegation participation is unavailable.',
+) {
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Delegation registrations" compact>
       <p role="status">{message}</p>

@@ -132,11 +132,26 @@ async function claimSavedRequest(storageKey: string, navigate: (path: string) =>
   }
   navigate('/account/requests/' + encodeURIComponent(body.id));
 }
-export function Intake({
+type IntakeProps = { privateSubmission?: PrivateIntakeSubmission; realMode?: boolean };
+export function Intake(props: IntakeProps = {}) {
+  return props.realMode && !props.privateSubmission ? (
+    <RegisteredIntake {...props} />
+  ) : (
+    <IntakeForm {...props} />
+  );
+}
+function RegisteredIntake(props: IntakeProps) {
+  const router = useRouter();
+  return <IntakeForm {...props} navigate={router.replace} />;
+}
+function missingNavigation() {
+  throw new Error('Request navigation is unavailable. Open your account to continue.');
+}
+function IntakeForm({
   privateSubmission,
   realMode = false,
-}: { privateSubmission?: PrivateIntakeSubmission; realMode?: boolean } = {}) {
-  const router = useRouter();
+  navigate = missingNavigation,
+}: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
@@ -273,7 +288,7 @@ export function Intake({
           );
         if (pending.pending === true && user?.emailVerified) {
           setMessage('Opening your private request…');
-          await claimSavedRequest(draftStorageKey, router.replace);
+          await claimSavedRequest(draftStorageKey, navigate);
         }
       })
       .catch((error) => {
@@ -287,7 +302,7 @@ export function Intake({
       active = false;
       controller.abort();
     };
-  }, [realMode, privateMode, draftStorageKey, router]);
+  }, [realMode, privateMode, draftStorageKey, navigate]);
   useEffect(() => {
     if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
   }, [errors]);
@@ -505,7 +520,7 @@ export function Intake({
         setPendingReady(true);
         submitted.current = true;
         if (account?.emailVerified) {
-          await claimSavedRequest(draftStorageKey, router.replace);
+          await claimSavedRequest(draftStorageKey, navigate);
           return;
         }
         if (!account) {
@@ -523,7 +538,7 @@ export function Intake({
             setPassword('');
           }
         }
-        router.replace(accountAccessPath('/verify-email', '/plan'));
+        navigate(accountAccessPath('/verify-email', '/plan'));
         return;
       }
       if (privateSubmission) {
@@ -693,7 +708,7 @@ export function Intake({
                     onClick={async () => {
                       setBusy(true);
                       try {
-                        await claimSavedRequest(draftStorageKey, router.replace);
+                        await claimSavedRequest(draftStorageKey, navigate);
                       } catch (error) {
                         setMessage(
                           error instanceof Error

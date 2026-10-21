@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test('disabled pending request endpoints retain compiled private response headers', async ({
+  request,
+}) => {
+  const responses = [
+    await request.get('/api/intake/pending'),
+    await request.post('/api/intake/pending/claim', { data: {} }),
+  ];
+  for (const response of responses) {
+    expect(response.status()).toBe(503);
+    expect(response.headers()['cache-control']).toContain('no-store');
+    expect(response.headers()['referrer-policy']).toBe('no-referrer');
+  }
+});
+
 test('About explains the product, audience, process and commercial boundaries', async ({
   page,
 }, info) => {

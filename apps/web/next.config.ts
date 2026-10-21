@@ -35,13 +35,6 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: '/api/intake/pending/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store' },
-          { key: 'Referrer-Policy', value: 'no-referrer' },
-        ],
-      },
-      {
         source: '/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: csp },
@@ -50,6 +43,13 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+        ],
+      },
+      {
+        source: '/api/intake/pending/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
       },
       {

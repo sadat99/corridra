@@ -497,8 +497,9 @@ export function CustomerWorkspaceTeam({
       <summary>Manage team</summary>
       <section aria-label={'Test team for ' + workspace.name} aria-busy={loading || busy}>
         <p>
-          Sample workspace access only. No private mission, company or financial information is
-          shared.
+          {realCustomerInput()
+            ? 'Workspace access only. No private mission, company or financial information is shared.'
+            : 'Sample workspace access only. No private mission, company or financial information is shared.'}{' '}
         </p>
         <p>
           The initial workspace owner cannot be removed here. No email or other message is sent.
@@ -704,7 +705,7 @@ export function CustomerWorkspaceTeam({
               onSubmit={invite}
             >
               <label className="field">
-                Sample invitation label
+                {realCustomerInput() ? 'Invitation label' : 'Sample invitation label'}{' '}
                 <input
                   value={name}
                   onChange={(event) => setName(event.target.value)}

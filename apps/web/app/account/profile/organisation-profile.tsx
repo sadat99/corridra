@@ -310,10 +310,11 @@ export function OrganisationProfile(props: {
   };
   const profile = view?.profile ?? null;
   return (
-    <section aria-label="Sample company profile">
+    <section aria-label={realCustomerInput() ? 'Company profile' : 'Sample company profile'}>
       <p>
-        Sample details only, kept private to this test workspace. Everything here is self-reported
-        and unverified, and it is not linked to any company record.
+        {realCustomerInput()
+          ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
+          : 'Sample details only, kept private to this test workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'}{' '}
       </p>
       <p role="status">{message}</p>
       {profile && (

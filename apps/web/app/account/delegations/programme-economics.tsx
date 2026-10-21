@@ -273,7 +273,12 @@ function ScopedEconomics(props: Props) {
             'Account or programme access changed. Private details were cleared.',
           );
         if ([s, l].some((r) => r.status === 503))
-          return lose('unavailable', 'Sample delegation finances are unavailable.');
+          return lose(
+            'unavailable',
+            realCustomerInput()
+              ? 'Delegation finances are unavailable.'
+              : 'Sample delegation finances are unavailable.',
+          );
         if (!s.ok || !l.ok) throw Error('read failed');
         const scope = { subject, issuer, workspaceId, programmeId };
         const parsedSummary = parseSummary(await s.json(), scope);
@@ -463,10 +468,10 @@ function ScopedEconomics(props: Props) {
   return (
     <section
       className="detail-card"
-      aria-label="Sample programme finances"
+      aria-label={realCustomerInput() ? 'Programme finances' : 'Sample programme finances'}
       aria-busy={busy || status === 'loading'}
     >
-      <h4>Sample programme finances</h4>
+      <h4> {realCustomerInput() ? 'Programme finances' : 'Sample programme finances'} </h4>
       <p>
         This is your own bookkeeping, entered by you and not verified by Corridra. Corridra does not
         collect, hold or send any money. Each currency is shown separately and nothing is converted.

@@ -208,7 +208,11 @@ function Guided(scope: Scope) {
         return true;
       }
       if (status === 503) {
-        reset('Sample request drafts are unavailable.');
+        reset(
+          realCustomerInput()
+            ? 'Request drafts are unavailable.'
+            : 'Sample request drafts are unavailable.',
+        );
         return true;
       }
       return false;

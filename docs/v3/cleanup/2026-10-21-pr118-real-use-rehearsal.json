@@ -1,0 +1,53 @@
+{
+  "sourceHead": "b8df65f8cc7250d233b7efaa416e36723c6cdd54",
+  "projectId": "odd-pond-26265871",
+  "parentId": "br-lingering-sea-b1eob57e",
+  "branchId": "br-delicate-butterfly-b1ago6e5",
+  "endpointId": "ep-rapid-waterfall-b1ihecuq",
+  "role": "corridra_migrator",
+  "region": "aws-eu-central-1",
+  "baseline": {
+    "tenants": 0,
+    "staff": 0,
+    "organisations": 0
+  },
+  "originalCoreMigrations": 5,
+  "core_migrations": 29,
+  "real_use_migrations": 5,
+  "control_versions": 2,
+  "configuration_preserved": true,
+  "actualInstaller": true,
+  "enableRetryPausePassed": true,
+  "productionWritten": false,
+  "providerAcceptance": false,
+  "completedAt": "2026-10-21T12:28:25.010Z",
+  "migrationHashes": [
+    {
+      "name": "0001_verified_guest_handoff.sql",
+      "sha256": "4cb7a362e262323bc3d9b31b6be8ab0c95a3f580708e1942492f96804e7184ae"
+    },
+    {
+      "name": "0002_real_request_authority.sql",
+      "sha256": "fc002957a487bc19fbe0f672fb5904129bfff7cfe50851ec6aa47492ae6d11c1"
+    },
+    {
+      "name": "0003_real_customer_modules.sql",
+      "sha256": "550c5d05aa04e0ba7ca903e7b4c666b5b33124cb579bd95761d37adf959155bb"
+    },
+    {
+      "name": "0004_real_request_budgets.sql",
+      "sha256": "38a4bd4270275cf0a16ccb4eb020602785443c6dd6b8847ba034a42b3b4c2cf7"
+    },
+    {
+      "name": "0005_real_staff_scope.sql",
+      "sha256": "530fab64fa1aa238865081a18af256a65e39f3b077d9a1dce38199e691ef2eba"
+    }
+  ],
+  "latestSourceMigrationHashesMatch": true,
+  "productionPreflight": {
+    "existingRealTenants": 0,
+    "identifierProvenanceMismatches": 0,
+    "readOnly": true
+  },
+  "cleanup": "pending completion of PR118 checks; no deployment/environment binding was created"
+}

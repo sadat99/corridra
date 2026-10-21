@@ -312,6 +312,7 @@ test.beforeAll(async () => {
       );
     } catch (error) {
       res.statusCode = 500;
+      res.setHeader('content-type', 'text/plain; charset=utf-8');
       res.end(error instanceof Error ? error.message : 'Fixture failure');
     }
   });
@@ -405,6 +406,7 @@ for (const width of [1366, 390])
     await expect(
       page.getByRole('heading', { name: 'Source suppliers', exact: true }),
     ).toBeVisible();
+    await expect(page.getByText(/Sample data only/)).toHaveCount(0);
     const requests = (
       await owner.query(
         "SELECT brief FROM customer_private.pending_request WHERE brief->>'email'=$1",
@@ -436,4 +438,14 @@ test('standalone signup and activation can precede submission', async ({ page })
   await expect(page.getByLabel('Create an account password', { exact: false })).toHaveCount(0);
   await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
   await expect(page).toHaveURL(/\/account\/requests\/[a-f0-9-]{36}$/);
+});
+test('fixture exceptions are returned as text and cannot be interpreted as HTML', async ({
+  request,
+}) => {
+  const response = await request.post(origin + '/fixture/auth/verify', {
+    data: '<svg onload="alert(1)">',
+    headers: { 'content-type': 'application/json' },
+  });
+  expect(response.status()).toBe(500);
+  expect(response.headers()['content-type']).toBe('text/plain; charset=utf-8');
 });

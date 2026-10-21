@@ -261,7 +261,12 @@ function ScopedCoordination(props: Props) {
             'Account or programme access changed. Private details were cleared.',
           );
         if ([a, b].some((r) => r.status === 503))
-          return lose('unavailable', 'Sample delegation coordination is unavailable.');
+          return lose(
+            'unavailable',
+            realCustomerInput()
+              ? 'Delegation coordination is unavailable.'
+              : 'Sample delegation coordination is unavailable.',
+          );
         if (!a.ok || !b.ok) throw Error('read failed');
         const scope = { subject, issuer, workspaceId, programmeId };
         const rep = parseReport(await a.json(), scope);
@@ -475,7 +480,7 @@ function ScopedCoordination(props: Props) {
   return (
     <section
       className="detail-card"
-      aria-label="Sample programme coordination"
+      aria-label={realCustomerInput() ? 'Programme coordination' : 'Sample programme coordination'}
       aria-busy={busy || status === 'loading'}
     >
       <h4>Coordinate and report</h4>

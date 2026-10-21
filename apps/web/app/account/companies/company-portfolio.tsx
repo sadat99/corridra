@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 type Context = {
@@ -262,9 +264,9 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
         Back to my commercial missions
       </a>
       <p>
-        Sample data only. These companies come from your saved, approved mission reports. Each
-        mission keeps its own qualification and commercial purpose. Open its report for current
-        approved commercial detail.
+        {realCustomerInput()
+          ? 'Your submitted information. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'
+          : 'Sample data only. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Checking approved companies…</p>}
       {status === 'denied' && (

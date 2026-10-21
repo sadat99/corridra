@@ -22,6 +22,8 @@ import {
   customerOpenAdmission,
   customerProductionLocked,
   customerProductionUnlocked,
+  customerDataEnvironmentAllowed,
+  realUseEnabled,
 } from './customer-production';
 import { customerWorkspacesEnabled } from './customer-workspaces';
 
@@ -36,7 +38,7 @@ export type ModuleActivation = {
 export type FounderActivation = {
   environment: {
     deployment: 'production' | 'preview' | 'development' | 'unknown';
-    data: 'synthetic' | 'not-synthetic';
+    data: 'synthetic' | 'real' | 'not-synthetic';
     productionUnlocked: boolean;
     openAdmission: boolean;
   };
@@ -196,7 +198,7 @@ export function founderActivation(env: NodeJS.ProcessEnv = process.env): Founder
     let state: ActivationState;
     if (m.enabled(env)) state = 'ON';
     else if (locked) state = 'LOCKED_PRODUCTION';
-    else if (!synthetic) state = 'LOCKED_NOT_SYNTHETIC';
+    else if (!customerDataEnvironmentAllowed(env)) state = 'LOCKED_NOT_SYNTHETIC';
     else if (env[m.flag] !== 'true') state = 'OFF';
     else state = 'WAITING_PREREQUISITE';
     return { key: m.key, label: m.label, flag: m.flag, state };
@@ -204,12 +206,14 @@ export function founderActivation(env: NodeJS.ProcessEnv = process.env): Founder
   return {
     environment: {
       deployment: deployment(env),
-      data: synthetic ? 'synthetic' : 'not-synthetic',
+      data: realUseEnabled(env) ? 'real' : synthetic ? 'synthetic' : 'not-synthetic',
       productionUnlocked: customerProductionUnlocked(env),
       openAdmission: customerOpenAdmission(env),
     },
     modules: rows,
     counts: { on: rows.filter((r) => r.state === 'ON').length, total: rows.length },
-    note: 'Configuration only. A module also needs its database installation, checked separately by the owner. No real customer data, outreach, payment or production inference is enabled by any of these.',
+    note: realUseEnabled(env)
+      ? 'Configuration only. Real customer access also requires the installed real-use authority. Database installation is checked separately. Outreach, payments and inference retain their separate controls.'
+      : 'Configuration only. A module also needs its database installation, checked separately by the owner. No real customer data, outreach, payment or production inference is enabled by any of these.',
   };
 }

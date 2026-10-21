@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { redirect, notFound } from 'next/navigation';
@@ -11,12 +12,20 @@ import { CompanyLink } from '../company-link';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Sample company profile | Corridra',
+  title: realCustomerInput() ? 'Company profile | Corridra' : 'Sample company profile | Corridra',
   robots: { index: false, follow: false },
 };
-function unavailable(message = 'Sample company profile is unavailable.') {
+function unavailable(
+  message = realCustomerInput()
+    ? 'Company profile is unavailable.'
+    : 'Sample company profile is unavailable.',
+) {
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Sample company profile" compact>
+    <WorkspaceShell
+      eyebrow="YOUR ACCOUNT"
+      title={realCustomerInput() ? 'Company profile' : 'Sample company profile'}
+      compact
+    >
       <p role="status">{message}</p>
       <a className="text-link" href="/account">
         Return to your account

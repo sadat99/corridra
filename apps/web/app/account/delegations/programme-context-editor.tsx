@@ -152,7 +152,11 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
           return;
         }
         if (r.status === 503) {
-          clear('Sample programme details are unavailable.');
+          clear(
+            realCustomerInput()
+              ? 'Programme details are unavailable.'
+              : 'Sample programme details are unavailable.',
+          );
           return;
         }
         if (r.status === 400) {
@@ -262,7 +266,12 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
   ]);
   return (
     <section aria-label="Programme details">
-      <p>Sample planning only. A target market does not confirm local service availability.</p>
+      <p>
+        {' '}
+        {realCustomerInput()
+          ? 'Planning only. A target market does not confirm local service availability.'
+          : 'Sample planning only. A target market does not confirm local service availability.'}{' '}
+      </p>
       <p role="status">{message}</p>
       {snapshot?.context && (
         <dl>

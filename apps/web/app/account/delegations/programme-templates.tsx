@@ -565,7 +565,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
   return (
     <section
       className="detail-card"
-      aria-label="Sample programme templates"
+      aria-label={realCustomerInput() ? 'Programme templates' : 'Sample programme templates'}
       aria-busy={busy || status === 'loading'}
     >
       <h4>Repeatable programme templates</h4>

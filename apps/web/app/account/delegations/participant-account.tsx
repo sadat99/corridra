@@ -168,7 +168,12 @@ function ScopedAccount(
         </p>
       )}
       {view.status === 'unavailable' && (
-        <p role="status">Sample delegation participation is unavailable.</p>
+        <p role="status">
+          {' '}
+          {realCustomerInput()
+            ? 'Delegation participation is unavailable.'
+            : 'Sample delegation participation is unavailable.'}{' '}
+        </p>
       )}
       {view.status === 'failed' && (
         <p role="alert">Your programme details could not be checked. Reload to try again.</p>
