@@ -1,4 +1,5 @@
 import { operatorEvidence } from './operator-evidence';
+import { openSection } from './workspace-nav';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -120,6 +121,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await expect(page).toHaveURL(/\/operator#ops-gates$/);
   await expect(page.locator('#ops-gates')).toBeFocused();
+  await openSection(page, 'main');
   const shortcuts = page.getByRole('navigation', { name: 'Mission workflow' });
   await expect(shortcuts.getByRole('link')).toHaveCount(5);
   await expect(page.locator('#workspace-navigation details')).not.toHaveAttribute('open');
@@ -165,6 +167,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(
     page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
   ).toHaveCount(0);
+  await openSection(page, 'workspace-navigation');
   const sectionNav = page.getByRole('navigation', { name: 'Workspace sections' });
   await expect(sectionNav).toBeVisible();
   await expect(sectionNav.locator('details')).toHaveAttribute('open');
@@ -221,10 +224,10 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   expect(
     (await new AxeBuilder({ page }).include('#workspace-operations').analyze()).violations,
   ).toEqual([]);
-  await sectionNav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
+  await openSection(page, 'workspace-sources');
   await expect(page).toHaveURL(/#workspace-sources$/);
   await expect(page.locator('#workspace-sources')).toBeFocused();
-  await sectionNav.getByRole('link', { name: 'Corridors and policies' }).click();
+  await openSection(page, 'workspace-settings');
   const settings = page.getByRole('region', { name: 'Corridor and policy settings' });
   await settings.getByText('Create a directional corridor route', { exact: true }).click();
   await settings.getByLabel('Demand-origin market').selectOption('JP');
@@ -246,7 +249,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await settings.getByLabel('Reviewed command JSON').fill('{"unfinished":true}');
   await settings.getByLabel('Reviewed configuration action').selectOption('corridor-pack');
   await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
-  await sectionNav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
+  await openSection(page, 'workspace-sources');
   await page.getByLabel('Source description').fill('Synthetic browser inspection');
   await page.getByRole('button', { name: 'Record source', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
@@ -257,6 +260,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Record claim', exact: true }).click();
   await expect(page.getByText('Synthetic browser claim', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('No current verified facts.')).toBeVisible();
+  await openSection(page, 'workspace-missions');
   const mission = JSON.parse(await readFile('.cache/part04-browser-receipt.json', 'utf8'));
   const card = page.locator('.mission-card').filter({
     has: page.getByRole('heading', { name: 'Browser Mission Test Company', exact: true }),
@@ -290,6 +294,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     status: 'ACTIVE',
     replies: [{ body: 'Please confirm the synthetic target requirements.' }],
   });
+  await openSection(page, 'workspace-research');
   const research = page.locator('.research-workspace');
   await research.getByText('Record a research source and company', { exact: true }).click();
   await research
@@ -454,6 +459,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.reload();
+  await openSection(page, 'workspace-missions');
   await expect(card).toHaveCount(1);
   await page.getByLabel('Show missions').selectOption('all');
   await card.getByLabel('Mission action').selectOption('cancel');
@@ -487,20 +493,25 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   } finally {
     await db.end();
   }
+  await openSection(page, 'workspace-controls');
   await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'Verify your authenticator again to continue',
   );
+  await openSection(page, 'workspace-authenticator');
   await page.getByLabel('Current authenticator code').fill(totp(secret));
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
+  await openSection(page, 'workspace-controls');
   await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
   await expect(page.getByText('evidence.verification: enabled', { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByText('evidence.verification: enabled', { exact: true })).toBeVisible();
+  await openSection(page, 'workspace-evidence');
   await expect(
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
+  await openSection(page, 'workspace-controls');
   await expect(page.getByText('research.ingestion: enabled', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Change research.ingestion', exact: true }).click();
   await expect(page.getByText('research.ingestion: disabled', { exact: true })).toBeVisible();

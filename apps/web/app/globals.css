@@ -6424,9 +6424,11 @@ th {
 /* Link buttons, system wide. A link or button that stands alone (not inside a sentence) reads as
    a control: outlined, 44px tall, hover fill. Inline links in a paragraph keep the underline.
    :where() keeps this at the lowest weight, so a page rule above can still refine it. */
+main > :where(a, button).text-link:where(:not(.ux-back)),
 main
   :where(section, div, form, article, nav, aside, details, fieldset, header)
-  > :where(a, button).text-link:not(.ux-back) {
+  > :where(a, button).text-link:where(:not(.ux-back)),
+main :where(li) > :where(a, button).text-link:where(:not(.ux-back, :only-child)) {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -6445,15 +6447,19 @@ main
     background var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
 }
+main > :where(a, button).text-link:where(:not(.ux-back)):hover,
 main
   :where(section, div, form, article, nav, aside, details, fieldset, header)
-  > :where(a, button).text-link:not(.ux-back):hover {
+  > :where(a, button).text-link:where(:not(.ux-back)):hover,
+main :where(li) > :where(a, button).text-link:where(:not(.ux-back, :only-child)):hover:hover {
   background: var(--surface-2);
   border-color: var(--brand-deep);
 }
+main > :where(a, button).text-link:where(:not(.ux-back)):disabled,
 main
   :where(section, div, form, article, nav, aside, details, fieldset, header)
-  > :where(a, button).text-link:not(.ux-back):disabled {
+  > :where(a, button).text-link:where(:not(.ux-back)):disabled,
+main :where(li) > :where(a, button).text-link:where(:not(.ux-back, :only-child)):disabled:disabled {
   color: var(--text-3);
   border-color: var(--line);
   cursor: not-allowed;
