@@ -158,3 +158,24 @@ test('programme terms report their own flag and wait for the economics and coord
   expect(state(synthetic, 'programme-terms')).toBe('OFF');
   expect(state({ ...full, VERCEL_ENV: 'production' }, 'programme-terms')).toBe('LOCKED_PRODUCTION');
 });
+
+test('pricing, series and exports report their own flag and wait for the whole template chain', () => {
+  const own = { ...synthetic, CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED: 'true' };
+  expect(state(own, 'programme-pricing')).toBe('WAITING_PREREQUISITE');
+  const chain: NodeJS.ProcessEnv = {
+    ...own,
+    CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMME_ECONOMICS_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMME_COORDINATION_ENABLED: 'true',
+  };
+  // Templates are a prerequisite: without their flag the module still waits.
+  expect(state(chain, 'programme-pricing')).toBe('WAITING_PREREQUISITE');
+  const full = { ...chain, CORRIDRA_CUSTOMER_PROGRAMME_TEMPLATES_ENABLED: 'true' };
+  expect(state(full, 'programme-pricing')).toBe('ON');
+  expect(state(synthetic, 'programme-pricing')).toBe('OFF');
+  expect(state({ ...full, VERCEL_ENV: 'production' }, 'programme-pricing')).toBe(
+    'LOCKED_PRODUCTION',
+  );
+});

@@ -7,6 +7,9 @@ const ProgrammeParticipants = lazy(() =>
 const ProgrammeTemplates = lazy(() =>
   import('./programme-templates').then((module) => ({ default: module.ProgrammeTemplates })),
 );
+const ProgrammePricing = lazy(() =>
+  import('./programme-pricing').then((module) => ({ default: module.ProgrammePricing })),
+);
 const ProgrammeCoordination = lazy(() =>
   import('./programme-coordination').then((module) => ({ default: module.ProgrammeCoordination })),
 );
@@ -42,6 +45,7 @@ type Props = {
   coordinationEnabled?: boolean;
   templatesEnabled?: boolean;
   termsEnabled?: boolean;
+  pricingEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -82,6 +86,7 @@ function ScopedProgrammes({
   coordinationEnabled = false,
   templatesEnabled = false,
   termsEnabled = false,
+  pricingEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
@@ -458,6 +463,17 @@ function ScopedProgrammes({
           {templatesEnabled && (
             <Suspense fallback={<p role="status">Loading sample templates…</p>}>
               <ProgrammeTemplates
+                subject={subject}
+                issuer={issuer}
+                workspaceId={workspaceId}
+                programmes={rows.map((p) => ({ id: p.id, name: p.name }))}
+                onChanged={() => void load()}
+              />
+            </Suspense>
+          )}
+          {templatesEnabled && pricingEnabled && (
+            <Suspense fallback={<p role="status">Loading pricing and series…</p>}>
+              <ProgrammePricing
                 subject={subject}
                 issuer={issuer}
                 workspaceId={workspaceId}

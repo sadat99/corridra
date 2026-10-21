@@ -76,3 +76,7 @@ Install with the `Install customer modules` workflow (it now includes `customer-
 ### Company links (optional module, ADR052)
 
 Install with the `Install customer modules` workflow (it now includes `customer-organisation-link-migrations`, after profiles and team roles), then set `CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED=true` and deploy. Owners and admins then request a company link from the company profile page; staff with the owner, admin or reviewer role in the intake workspace decide from Companies and research in the operator console, with a fresh authenticator check. A link never writes to the company list: to add a new company, approve it for creation, create the record in the existing research screens, then link it. Roll back by unsetting the flag; recorded requests and links are kept.
+
+### Pricing, series and exports (optional module, ADR054)
+
+Install with the `Install customer modules` workflow (it now includes `customer-programme-pricing-migrations`, after programme templates), then set `CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED=true` next to the economics, coordination and templates flags and deploy. Owners and admins then see a Pricing, Series and Exports section on the planner page. Nothing is collected or sent; fees are the organiser's own records in the existing ledger. To stop, unset the flag; recorded schedules, editions and fees stay.
