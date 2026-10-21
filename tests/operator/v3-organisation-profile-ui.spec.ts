@@ -72,7 +72,7 @@ test.beforeAll(async () => {
     } else if (path === '/' || path === '/account/profile') {
       response.setHeader('Content-Type', 'text/html');
       response.end(
-        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic component protocol fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="operator-page ux-workspace" style="max-width:960px;margin:24px auto;padding:16px"><h1>Synthetic component protocol fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
+        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic component protocol fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="operator-page ux-workspace ux-customer" style="max-width:960px;margin:24px auto;padding:16px"><h1>Synthetic component protocol fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
       );
     } else {
       response.statusCode = 404;
@@ -181,6 +181,27 @@ test('an empty workspace invites the owner to add a profile and shows the unveri
   await expect(page.getByText('not linked to any company record', { exact: false })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Add sample company profile' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reload company profile' })).toBeVisible();
+});
+test('role choices render as compact rows with the box beside its label', async ({ page }) => {
+  await mock(page, { get: () => view({ empty: true }) });
+  await page.goto(origin);
+  const roles = page.getByRole('group', { name: 'Roles this company plays' });
+  const boxes = roles.getByRole('checkbox');
+  await expect(boxes.first()).toBeVisible();
+  expect(await boxes.count()).toBeGreaterThan(3);
+  const rows = await boxes.evaluateAll((inputs) =>
+    inputs.map((input) => {
+      const box = input.getBoundingClientRect();
+      const row = input.closest('label')!.getBoundingClientRect();
+      return { box: box.height, row: row.height, offset: box.top - row.top };
+    }),
+  );
+  for (const r of rows) {
+    // A 3rem generic input rule once made each row 56px tall with the text below the box.
+    expect(r.box).toBeLessThanOrEqual(24);
+    expect(r.row).toBeLessThanOrEqual(36);
+    expect(r.offset).toBeLessThanOrEqual(4);
+  }
 });
 test('owner saves the exact typed profile with the expected version and account headers', async ({
   page,

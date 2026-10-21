@@ -400,7 +400,7 @@ export function OrganisationProfile(props: {
             <fieldset>
               <legend>Roles this company plays</legend>
               {roleOptions.map(([value, label]) => (
-                <label key={value} style={{ display: 'block' }}>
+                <label key={value}>
                   <input
                     type="checkbox"
                     checked={draft.commercialRoles.includes(value)}
