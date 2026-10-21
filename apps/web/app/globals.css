@@ -5467,6 +5467,8 @@ th {
 .terms-tabs button:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
+}
+
 /* Pricing, series and exports: a calm three-way switch inside the planner. */
 .pricing-tabs {
   display: flex;
