@@ -15,6 +15,7 @@ import { migrateCustomerProgrammeCoordination } from '../packages/db/src/custome
 import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-programme-templates-migrate';
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
 import { migrateCustomerMemberRoles } from '../packages/db/src/customer-member-role-migrate';
+import { migrateCustomerOrganisationLinks } from '../packages/db/src/customer-organisation-link-migrate';
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { migrateCustomerRequestAdmission } from '../packages/db/src/customer-request-admission-migrate';
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
@@ -62,6 +63,7 @@ const registries = [
   'customer_mission_share_migrations',
   'customer_admission_migrations',
   'customer_member_role_migrations',
+  'customer_organisation_link_migrations',
   'customer_request_admission_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
@@ -83,6 +85,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['mission sharing', migrateCustomerMissionShares],
   ['open synthetic admission', migrateCustomerAdmission],
   ['member roles and leaving', migrateCustomerMemberRoles],
+  ['company links', migrateCustomerOrganisationLinks],
   ['request authority with open admission', migrateCustomerRequestAdmission],
 ];
 

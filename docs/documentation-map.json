@@ -734,6 +734,11 @@
       "use": "Owner decision that a merge to main deploys itself; verify the deployment of the merged SHA"
     },
     {
+      "path": "docs/adr/0052-canonical-organisation-linking.md",
+      "classification": "Architecture contract/index",
+      "use": "Canonical organisation linking: claims, text evidence, deduplication, protected staff review and an append-only link ledger; default off"
+    },
+    {
       "path": "docs/adr/0051-member-roles-and-leaving.md",
       "classification": "Architecture contract/index",
       "use": "Owner-managed admin and member roles and voluntary leaving for invited workspace members; append-only history; default off"

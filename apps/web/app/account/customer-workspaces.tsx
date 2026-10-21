@@ -5,6 +5,7 @@ import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
 import { CustomerWorkspaceTeam } from './customer-workspace-team';
 import { RefreshButton } from './refresh-button';
 import { CustomerWorkspaceLeave } from './customer-workspace-leave';
+import { CompanyLinkLine, useCompanyLinkOverview } from './company-link-status';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
@@ -92,6 +93,7 @@ export function CustomerWorkspaces({
   profilesEnabled = false,
   draftsEnabled = false,
   memberRolesEnabled = false,
+  linksEnabled = false,
 }: {
   subject: string;
   issuer: string;
@@ -100,6 +102,7 @@ export function CustomerWorkspaces({
   profilesEnabled?: boolean;
   draftsEnabled?: boolean;
   memberRolesEnabled?: boolean;
+  linksEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -109,6 +112,12 @@ export function CustomerWorkspaces({
   const [storageFailed, setStorageFailed] = useState(false);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const linkOverview = useCompanyLinkOverview(
+    linksEnabled && status === 'ready',
+    subject,
+    issuer,
+    rows,
+  );
   const feedback = useRef<HTMLParagraphElement>(null);
   const inFlight = useRef(false);
   const mounted = useRef(false);
@@ -331,6 +340,7 @@ export function CustomerWorkspaces({
               {rows.map((row) => (
                 <li key={row.id}>
                   <strong>{row.name}</strong> · {row.role}
+                  {linksEnabled && <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />}
                   <div className="guide-actions-row">
                     {profilesEnabled && (
                       <p>

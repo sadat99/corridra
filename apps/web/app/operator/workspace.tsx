@@ -8,6 +8,7 @@ import { AccessState, StatusBadge } from '../../components/access-state';
 import { RoleNavigation } from '../../components/role-navigation';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
+import { CompanyLinkReview } from './company-link-review';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
@@ -354,6 +355,9 @@ function TenantWorkspace({
               tenant={tenant}
               missionRevision={missionRevision}
             />
+            {['owner', 'admin', 'reviewer'].includes(data.role) && (
+              <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
+            )}
             <a className="text-link" href="#workspace-navigation">
               Back to workspace sections
             </a>

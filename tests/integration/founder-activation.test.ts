@@ -127,3 +127,18 @@ test('team roles report their own flag and wait for the workspace flag', () => {
     ),
   ).toBe('LOCKED_PRODUCTION');
 });
+
+test('company links report their own flag and wait for the workspace flag', () => {
+  const links = { ...synthetic, CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED: 'true' };
+  expect(state(links, 'organisation-links')).toBe('WAITING_PREREQUISITE');
+  expect(
+    state({ ...links, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true' }, 'organisation-links'),
+  ).toBe('ON');
+  expect(state(synthetic, 'organisation-links')).toBe('OFF');
+  expect(
+    state(
+      { ...links, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true', VERCEL_ENV: 'production' },
+      'organisation-links',
+    ),
+  ).toBe('LOCKED_PRODUCTION');
+});

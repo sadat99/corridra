@@ -23,6 +23,11 @@ import {
   customerMemberRolesEnabled,
 } from '@corridra/auth/customer-member-roles';
 import {
+  CustomerOrganisationLinkService,
+  StaffOrganisationLinkService,
+  customerOrganisationLinksEnabled,
+} from '@corridra/auth/customer-organisation-links';
+import {
   CustomerProgrammeContextService,
   customerProgrammeContextEnabled,
 } from '@corridra/auth/customer-programme-context';
@@ -302,6 +307,19 @@ function createServices() {
       },
       readCustomerSession,
     ),
+    customerOrganisationLinks: new CustomerOrganisationLinkService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerOrganisationLinksEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    staffOrganisationLinks: new StaffOrganisationLinkService(runtimePool),
     customerOrganisationProfiles: new CustomerOrganisationProfileService(
       runtimePool,
       authPool,

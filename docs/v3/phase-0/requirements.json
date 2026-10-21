@@ -3570,7 +3570,7 @@
       "tests/integration/customer-workspaces.test.ts",
       "docs/adr/0032-customer-workspace-authority.md"
     ],
-    "nextAction": "Synthetic admitted-customer tenant provisioning and owner listing have local restricted-role/upgrade acceptance. Verify exact-head CI and actual managed provider/browser flow; canonical organisation linking and production admission remain missing/gated."
+    "nextAction": "Optional organisation-link module (ADR052, synthetic only, default off): owners and admins claim a catalogue organisation or a proposed new one with text evidence, and reviewer-role staff approve, reject, request evidence, approve for creation or end the link, with append-only history. Source and local tests only: install it, enable CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED and accept the flow with real managed-provider customer and staff sessions; customer-initiated unlink and canonical creation remain open. Production admission stays gated."
   },
   {
     "id": "V3-06-003",
@@ -3716,7 +3716,7 @@
       "tests/integration/customer-companies.test.ts",
       "docs/v3/phase-3/customer-companies/release.json"
     ],
-    "nextAction": "Bounded approved-company continuity source verified in PR73;exposure stays off. Finish full commercial authoring,organisation authority,independent portfolios and controlled-provider acceptance."
+    "nextAction": "Bounded approved-company continuity source verified in PR73; exposure stays off. The reviewed organisation link (ADR052) can now be the organisation authority for portfolios once real-session acceptance of the link flow is recorded and a profile-to-portfolio design is approved. Full commercial authoring and independent portfolios remain open."
   },
   {
     "id": "V3-06-012",

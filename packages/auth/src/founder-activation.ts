@@ -4,6 +4,7 @@ import { customerDecisionsEnabled } from './customer-decisions';
 import { customerMemberRolesEnabled } from './customer-member-roles';
 import { customerMissionDraftsEnabled } from './customer-mission-drafts';
 import { customerMissionSharesEnabled } from './customer-mission-shares';
+import { customerOrganisationLinksEnabled } from './customer-organisation-links';
 import { customerOrganisationProfilesEnabled } from './customer-organisation-profiles';
 import { customerParticipantsEnabled } from './customer-participants';
 import { customerProgrammeContextEnabled } from './customer-programme-context';
@@ -101,6 +102,12 @@ const modules: {
     label: 'Organisation profiles',
     flag: 'CORRIDRA_CUSTOMER_ORGANISATION_PROFILES_ENABLED',
     enabled: customerOrganisationProfilesEnabled,
+  },
+  {
+    key: 'organisation-links',
+    label: 'Company links',
+    flag: 'CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED',
+    enabled: customerOrganisationLinksEnabled,
   },
   {
     key: 'mission-drafts',

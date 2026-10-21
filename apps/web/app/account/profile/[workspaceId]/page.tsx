@@ -1,3 +1,4 @@
+import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
@@ -6,6 +7,7 @@ import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { OrganisationProfile } from '../organisation-profile';
+import { CompanyLink } from '../company-link';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -37,6 +39,9 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   return (
     <CustomerShell tab="work" eyebrow="MY WORK" title="Company profile">
       <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+      {customerOrganisationLinksEnabled() && (
+        <CompanyLink subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+      )}
     </CustomerShell>
   );
 }
