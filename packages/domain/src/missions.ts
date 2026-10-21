@@ -19,6 +19,7 @@ export const outcomeOptions = [
   'Something else',
 ] as const;
 export const noticeVersion = 'synthetic-intake-2026-10-05-v1';
+export const realNoticeVersion = 'real-intake-2026-10-21-v1';
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -102,6 +103,18 @@ function validateWindow(
     });
 }
 export const briefSchema = briefFields.superRefine(validateWindow);
+// Selecting this schema grants no admission. The server and database must independently
+// enable real use; the legacy schema remains strict about invented email addresses.
+const realBriefFields = briefFields
+  .extend({
+    email: z
+      .email()
+      .max(254)
+      .transform((value) => value.toLowerCase()),
+    acknowledged: z.literal(true, { error: 'Read and acknowledge the request privacy notice' }),
+  })
+  .strict();
+export const realBriefSchema = realBriefFields.superRefine(validateWindow);
 export const intakeSteps = [
   briefFields.pick({ objective: true }),
   briefFields
@@ -110,6 +123,10 @@ export const intakeSteps = [
   briefFields.pick({ offer: true, website: true }),
   briefFields.pick({ outcomes: true, notes: true }),
   briefFields.pick({ name: true, company: true, email: true, acknowledged: true }),
+];
+export const realIntakeSteps = [
+  ...intakeSteps.slice(0, 4),
+  realBriefFields.pick({ name: true, company: true, email: true, acknowledged: true }).strip(),
 ];
 export type MissionBrief = z.infer<typeof briefSchema>;
 export const missionStatus = z.enum([

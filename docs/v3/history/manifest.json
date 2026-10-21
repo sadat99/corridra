@@ -133,6 +133,15 @@
       "kind": "ledger-chunks",
       "throughChunk": 119,
       "meaning": "Exact completed organiser programme economics implementation entry; historical, not live status"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "archive": "docs/v3/history/ledger-chunks-120-126.md",
+      "bytes": 4723,
+      "sha256": "b13f4f2ae2feca0422aeebd8f67757f485d868a8d48acd543771668b2fd25cb7",
+      "kind": "ledger-chunks",
+      "throughChunk": 126,
+      "meaning": "Exact previous active chunks120 through126, retained as historical implementation/release evidence; not live state"
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
