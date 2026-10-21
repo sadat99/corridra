@@ -23,7 +23,7 @@ type Page = {
   expiresAt: string | null;
   synthetic: true;
 };
-type Props = { subject: string; issuer: string };
+type Props = { subject: string; issuer: string; serviceRequestsEnabled?: boolean };
 const uuid = (s: unknown): s is string =>
   typeof s === 'string' &&
   /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(s);
@@ -97,7 +97,7 @@ function validPage(value: unknown): value is Page {
 export function CompanyPortfolio(props: Props) {
   return <ScopedPortfolio key={props.issuer + ':' + props.subject} {...props} />;
 }
-function ScopedPortfolio({ subject, issuer }: Props) {
+function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Props) {
   const [rows, setRows] = useState<Company[]>([]),
     [next, setNext] = useState<string | null>(null),
     [scopes, setScopes] = useState(0),
@@ -317,6 +317,19 @@ function ScopedPortfolio({ subject, issuer }: Props) {
                 {company.contexts.length} approved{' '}
                 {company.contexts.length === 1 ? 'report context' : 'report contexts'}
               </p>
+              {serviceRequestsEnabled && (
+                <p>
+                  <a
+                    className="text-link"
+                    href={
+                      '/account/service-requests/new?kind=company&ref=' +
+                      encodeURIComponent(company.id)
+                    }
+                  >
+                    Request help with this company
+                  </a>
+                </p>
+              )}
               {company.contexts.map((context) => (
                 <details key={context.resourceId + ':' + context.targetId}>
                   <summary>{context.missionTitle}</summary>

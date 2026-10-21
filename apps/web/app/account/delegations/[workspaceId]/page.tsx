@@ -9,6 +9,7 @@ import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-pr
 import { customerProgrammeTemplatesEnabled } from '@corridra/auth/customer-programme-templates';
 import { customerProgrammeTermsEnabled } from '@corridra/auth/customer-programme-terms';
 import { customerProgrammePricingEnabled } from '@corridra/auth/customer-programme-pricing';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
@@ -56,6 +57,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         templatesEnabled={customerProgrammeTemplatesEnabled()}
         termsEnabled={customerProgrammeTermsEnabled()}
         pricingEnabled={customerProgrammePricingEnabled()}
+        serviceRequestsEnabled={customerServiceRequestsEnabled()}
       />
     </CustomerShell>
   );

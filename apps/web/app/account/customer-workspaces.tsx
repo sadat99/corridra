@@ -94,6 +94,7 @@ export function CustomerWorkspaces({
   draftsEnabled = false,
   memberRolesEnabled = false,
   linksEnabled = false,
+  serviceRequestsEnabled = false,
 }: {
   subject: string;
   issuer: string;
@@ -103,6 +104,7 @@ export function CustomerWorkspaces({
   draftsEnabled?: boolean;
   memberRolesEnabled?: boolean;
   linksEnabled?: boolean;
+  serviceRequestsEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -362,6 +364,13 @@ export function CustomerWorkspaces({
                       <p>
                         <a className="text-link" href={'/account/drafts/' + row.id}>
                           Start or continue a guided request
+                        </a>
+                      </p>
+                    )}
+                    {serviceRequestsEnabled && (
+                      <p>
+                        <a className="text-link" href={'/account/service-requests/' + row.id}>
+                          Paid-service requests
                         </a>
                       </p>
                     )}

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
@@ -41,7 +42,11 @@ export default async function Page() {
       eyebrow="YOUR COMMERCIAL WORKSPACE"
       title="Your approved companies"
     >
-      <CompanyPortfolio subject={session.data.user.id} issuer={issuer} />
+      <CompanyPortfolio
+        subject={session.data.user.id}
+        issuer={issuer}
+        serviceRequestsEnabled={customerServiceRequestsEnabled()}
+      />
     </CustomerShell>
   );
 }

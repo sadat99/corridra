@@ -17,6 +17,7 @@ import { customerProgrammesEnabled } from './customer-programmes';
 import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
+import { customerServiceRequestsEnabled } from './customer-service-requests';
 import {
   customerOpenAdmission,
   customerProductionLocked,
@@ -170,6 +171,12 @@ const modules: {
     label: 'Pricing, series and exports',
     flag: 'CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED',
     enabled: customerProgrammePricingEnabled,
+  },
+  {
+    key: 'service-requests',
+    label: 'Paid-service requests',
+    flag: 'CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED',
+    enabled: customerServiceRequestsEnabled,
   },
 ];
 

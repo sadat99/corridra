@@ -179,3 +179,18 @@ test('pricing, series and exports report their own flag and wait for the whole t
     'LOCKED_PRODUCTION',
   );
 });
+
+test('paid-service requests report their own flag and wait for the workspace flag', () => {
+  const services = { ...synthetic, CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED: 'true' };
+  expect(state(services, 'service-requests')).toBe('WAITING_PREREQUISITE');
+  expect(
+    state({ ...services, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true' }, 'service-requests'),
+  ).toBe('ON');
+  expect(state(synthetic, 'service-requests')).toBe('OFF');
+  expect(
+    state(
+      { ...services, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true', VERCEL_ENV: 'production' },
+      'service-requests',
+    ),
+  ).toBe('LOCKED_PRODUCTION');
+});

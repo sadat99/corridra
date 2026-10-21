@@ -14,7 +14,12 @@ type Detail = {
     replies: { body: string; createdAt: string }[];
   };
 };
-type Scope = { requestId: string; subject: string; issuer: string };
+type Scope = {
+  requestId: string;
+  subject: string;
+  issuer: string;
+  serviceRequestsEnabled?: boolean;
+};
 const labels: Record<string, string> = {
   objective: 'Commercial objective',
   market: 'Target country or market',
@@ -109,7 +114,7 @@ export function CustomerRequestDetail(props: Scope) {
     />
   );
 }
-function PrivateDetail({ requestId, subject, issuer }: Scope) {
+function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = false }: Scope) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [status, setStatus] = useState('loading');
   const controller = useRef<AbortController | null>(null);
@@ -222,6 +227,19 @@ function PrivateDetail({ requestId, subject, issuer }: Scope) {
                 )}
               </p>
             </section>
+            {serviceRequestsEnabled && (
+              <p>
+                <a
+                  className="text-link"
+                  href={
+                    '/account/service-requests/new?kind=request&ref=' +
+                    encodeURIComponent(requestId)
+                  }
+                >
+                  Request help with this
+                </a>
+              </p>
+            )}
             <section aria-label="Team replies" className="detail-card">
               <h2>Replies from the Corridra team</h2>
               {detail.progress?.replies.length === 0 ? (

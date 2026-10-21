@@ -80,3 +80,7 @@ Install with the `Install customer modules` workflow (it now includes `customer-
 ### Pricing, series and exports (optional module, ADR054)
 
 Install with the `Install customer modules` workflow (it now includes `customer-programme-pricing-migrations`, after programme templates), then set `CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED=true` next to the economics, coordination and templates flags and deploy. Owners and admins then see a Pricing, Series and Exports section on the planner page. Nothing is collected or sent; fees are the organiser's own records in the existing ledger. To stop, unset the flag; recorded schedules, editions and fees stay.
+
+### Paid-service requests (optional module, ADR055)
+
+Install with the `Install customer modules` workflow (it now includes `customer-service-request-migrations`, after member roles, programmes and companies), then set `CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED=true` and deploy. Staff also need `CORRIDRA_DELIVERY_ENABLED=true`. Owners and admins then see "Request help" in programmes, private requests and the company portfolio, and staff see the queue, quote form and catalogue in the operator delivery section. Accepting a quote records an order intent only: nothing is charged and billing is not enabled. Rollback is unsetting the flag; requests, quotes and order intents are kept.
