@@ -271,6 +271,27 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await card
     .getByLabel('Target profile')
     .fill('Hospitality distributors for synthetic hotel towels');
+  const missionNavigation = page.getByRole('navigation', { name: 'Mission work sections' });
+  await missionNavigation
+    .getByRole('link', { name: 'Companies and research', exact: true })
+    .click();
+  const retainedCard = page.locator('.mission-card').filter({
+    has: page.getByRole('heading', {
+      name: 'Browser Mission Test Company',
+      exact: true,
+      includeHidden: true,
+    }),
+  });
+  await expect(retainedCard).toBeHidden();
+  await expect(retainedCard).toHaveCount(1);
+  await missionNavigation
+    .getByRole('link', { name: 'Missions and requirements', exact: true })
+    .click();
+  await expect(card.getByLabel('Target profile')).toHaveValue(
+    'Hospitality distributors for synthetic hotel towels',
+  );
+  await expect(page.locator('.ux-panel:visible')).toHaveCount(1);
+
   for (const action of ['qualify', 'activate', 'pause', 'resume']) {
     await card.getByLabel('Mission action').selectOption(action);
     await card.getByLabel('Reason for change').fill(`Synthetic browser ${action} decision`);
@@ -2966,10 +2987,10 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   await page
     .getByLabel('Source description', { exact: true })
     .fill('Unsaved synthetic source draft');
-  const nav = page.getByRole('navigation', { name: 'Workspace sections' });
-  await nav.getByText('All workspace tools and settings', { exact: true }).click();
-  await nav.getByRole('link', { name: 'Missions and requirements', exact: true }).click();
-  await nav.getByRole('link', { name: 'Sources and claims', exact: true }).click();
+  const nav = page.getByRole('navigation', { name: 'Workspace areas' });
+  await nav.getByRole('link', { name: 'Mission work', exact: true }).click();
+  await expect(page.locator('#workspace-missions')).toBeVisible();
+  await nav.getByRole('link', { name: 'Evidence', exact: true }).click();
   await expect(page.getByLabel('Source description', { exact: true })).toHaveValue(
     'Unsaved synthetic source draft',
   );

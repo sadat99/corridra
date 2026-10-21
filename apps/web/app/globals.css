@@ -5296,7 +5296,7 @@ th {
 }
 .ux-quick-links {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: var(--space-4);
   margin: 0;
   padding: 0;
@@ -6285,7 +6285,7 @@ th {
 .ux-workspace-body .workspace-panel form.operator-form {
   max-width: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: var(--space-4) var(--space-5);
   align-items: start;
 }

@@ -1,0 +1,74 @@
+{
+  "projectId": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+  "ownerAuthorized": true,
+  "deletedCount": 12,
+  "deleted": [
+    {
+      "id": "dpl_F9W8AqPapUh1Xu1mfqJLLRsZzrtf",
+      "sha": "a7468ca44c25c1760cc8840d8947a8d78ecb6827",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_5TrhVhSmpHoM23d55PZtG4KqqACf",
+      "sha": "f76bdf1b992e27c1a5a523fd18d601787af60a39",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_9yQiQompLd8wY9caiheMfjnvmWqZ",
+      "sha": "246f7a5bcd5e40a2b68c819b5d116a2b1d008e8b",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_ATRDJeibGJTaTAT8x2fxDEJA2LJb",
+      "sha": "5316f2d7baf4337750ad494e95637054bba6aaf7",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_C7iyKJpJbfs1UZuky33UrG6FuZKx",
+      "sha": "ac54b69e0eb184021bee4dbf7fefad5c6e0ffd05",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_oLZXc6TwUarJMgKr2Yx2Qhx7UEw9",
+      "sha": "6626002fb572c5b19c1bc4211e004465292a105b",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_G3PDhabhQaj7j3NWC3yci5pd11N5",
+      "sha": "4dbf518626df74ebcdcdfbcc4d42317b8ed2ac5b",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_E72NXEqvx71uVBtPGbjhnkfP9NdT",
+      "sha": "4355c2db8d99dd47fbc7f81f75858b141b4a322b",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_FcNPzCZzMaZg7V7GKZVWfTxd1gHK",
+      "sha": "c93bd7f7ffec9056ebb56305365e31c1d902f9a0",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_4KMh1JMBc5DQcWtrNYwfQpaACKgu",
+      "sha": "0e9f0704d2090409bc85d5a18938af43c3434345",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_DE3mVUTskohiY4XTPCLtFHpyAWYG",
+      "sha": "c81b0b1688560e6dc39d32ce17b438d0b305c843",
+      "state": "DELETED"
+    },
+    {
+      "id": "dpl_2xCsgDGtpcJwNm5GWMMvcgKqRv6n",
+      "sha": "26e6bbfc31442e1a55cfab6f6e15cfdbe4862127",
+      "state": "DELETED"
+    }
+  ],
+  "selection": "Old READY previews only, exact project, no aliases, no production target; rechecked immediately before deletion",
+  "productionDeleted": 0,
+  "aliasedDeleted": 0,
+  "activeWorkPreserved": true,
+  "absentFromListing": true,
+  "remainingListingCount": 83,
+  "quotaHeadroom": "not independently quantified"
+}

@@ -1,3 +1,4 @@
+import { openSection } from './workspace-nav';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
@@ -45,7 +46,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
-  await page.locator('#workspace-navigation summary').click();
+  await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
     .getByRole('link', { name: 'Global operations', exact: true })
@@ -406,7 +407,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await page.reload();
   page.once('dialog', (d) => d.accept());
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
-  await page.locator('#workspace-navigation summary').click();
+  await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
     .getByRole('link', { name: 'Global operations', exact: true })
