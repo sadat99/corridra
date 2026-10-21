@@ -1722,3 +1722,60 @@ test('the account-context guard, an unverified or expired session and a disabled
   }
   expect(await counts()).toEqual(before);
 });
+
+test('the terms reminder list is capped at the size the page accepts, in a fixed order', async () => {
+  const many = 101;
+  const capWorkspace = (
+    await workspaces('alice').provision({
+      commandId: randomUUID(),
+      name: 'Synthetic reminder cap workspace',
+    })
+  ).id;
+  const names: string[] = [];
+  for (let i = 0; i < many; i++) {
+    const name = 'Synthetic reminder cap ' + String(i).padStart(3, '0');
+    // The per workspace programme limit is 100, so spread across two workspaces.
+    const target = i < 90 ? capWorkspace : workspaceId;
+    const programme = (
+      await programmes().create({
+        commandId: randomUUID(),
+        workspaceId: target,
+        name,
+        reportingPurpose: 'Synthetic participant planning test only',
+        acknowledged: true,
+      })
+    ).id as string;
+    await terms().publishTerms(termsIn({ ...scope(target, programme) }));
+    const registration = await register(
+      programme,
+      'olga',
+      'Synthetic cap participant ' + i,
+      target,
+    );
+    const applied = await apply(
+      'olga',
+      { termsVersion: 1, profileWorkspaceId: null },
+      registration,
+    );
+    expect(['PLACED', 'WAITLISTED']).toContain(applied.status);
+    // A newer terms version leaves this registration waiting for fresh acceptance.
+    await terms().publishTerms(
+      termsIn({
+        ...scope(target, programme),
+        expectedVersion: 1,
+        cancellationTerms: 'Synthetic cancel up to twenty one days before for a full place back',
+        reason: 'Synthetic second version for the reminder cap',
+      }),
+    );
+    names.push(name);
+  }
+  const first = await terms('olga').reminders({ asOf: ASOF });
+  expect(first.termsToAccept.length).toBe(100);
+  const listed = first.termsToAccept.map((t) => t.programmeName);
+  expect(listed).toEqual([...listed].sort());
+  expect(new Set(first.termsToAccept.map((t) => t.registrationId)).size).toBe(100);
+  const second = await terms('olga').reminders({ asOf: ASOF });
+  expect(second.termsToAccept.map((t) => t.registrationId)).toEqual(
+    first.termsToAccept.map((t) => t.registrationId),
+  );
+}, 240000);
