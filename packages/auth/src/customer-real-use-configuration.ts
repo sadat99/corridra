@@ -29,6 +29,8 @@ export async function configureCustomerRealUse(pool: DatabasePool, input: unknow
     ).rows[0];
     if (!configuration) {
       if (!value.enabled) throw new Error('Real-use configuration has not been initialized');
+      // Customer events and public intake have independently pinned service identities.
+      // Validate both authorities without repinning or requiring them to be identical.
       const source = (
         await db.query<{
           issuer: string;
@@ -36,15 +38,17 @@ export async function configureCustomerRealUse(pool: DatabasePool, input: unknow
           tenant_id: string;
           owner_id: string;
         }>(`SELECT c.issuer,c.executor_id,d.tenant_id,d.owner_id
-        FROM customer_private.configuration c JOIN app.intake_destination d ON d.service_id=c.executor_id
+        FROM customer_private.configuration c JOIN app.intake_destination d ON d.singleton
         JOIN identity.principal executor ON executor.id=c.executor_id
+        JOIN identity.principal intake_service ON intake_service.id=d.service_id
         JOIN identity.principal owner ON owner.id=d.owner_id
         JOIN app.membership m ON m.tenant_id=d.tenant_id AND m.user_id=d.owner_id
         WHERE c.singleton AND d.singleton AND d.enabled AND executor.kind='service'
+        AND intake_service.kind='service' AND intake_service.disabled_at IS NULL
         AND executor.disabled_at IS NULL AND owner.disabled_at IS NULL
         AND m.revoked_at IS NULL AND m.role IN ('owner','admin')
         AND 'synthetic_validation'=ANY(m.allowed_purposes)
-        FOR SHARE OF c,d,m,executor,owner`)
+        FOR SHARE OF c,d,m,executor,intake_service,owner`)
       ).rows[0];
       if (!source)
         throw new Error('Pinned issuer, active executor and existing intake owner are required');
