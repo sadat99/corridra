@@ -1343,6 +1343,63 @@ test('the report is computed only from this programme data and says who reported
   expect((await rejected(report('harry'))).code).toBe('42501');
 });
 
+test('a retracted rating and an unshared result leave the report, because the latest revision decides', async () => {
+  const record = (over: Record<string, unknown>) =>
+    coord('gwen').submitRecord({
+      commandId: randomUUID(),
+      registrationId: reg.gwen,
+      recordId: null,
+      expectedVersion: 0,
+      rating: null,
+      outcomeKind: null,
+      occurredOn: null,
+      note: null,
+      shared: true,
+      retracted: false,
+      acknowledged: true,
+      ...over,
+    });
+  const before = await report();
+  const feedback = await record({
+    kind: 'FEEDBACK',
+    rating: 5,
+    note: 'Synthetic very useful week',
+  });
+  const outcome = await record({
+    kind: 'OUTCOME',
+    outcomeKind: 'MEETING_HELD',
+    occurredOn: '2026-10-02',
+    note: 'Synthetic met a buyer',
+  });
+  const during = await report();
+  expect(during.satisfaction).toMatchObject({
+    ratingCount: before.satisfaction.ratingCount + 1,
+    ratingSum: before.satisfaction.ratingSum + 5,
+    responses: before.satisfaction.responses + 1,
+  });
+  expect(during.outcomes.shared).toBe(before.outcomes.shared + 1);
+  await record({
+    kind: 'FEEDBACK',
+    recordId: feedback.record.recordId,
+    expectedVersion: feedback.record.version,
+    shared: false,
+    retracted: true,
+    note: null,
+  });
+  await record({
+    kind: 'OUTCOME',
+    recordId: outcome.record.recordId,
+    expectedVersion: outcome.record.version,
+    outcomeKind: 'MEETING_HELD',
+    occurredOn: '2026-10-02',
+    note: 'Synthetic met a buyer',
+    shared: false,
+  });
+  const after = await report();
+  expect(after.satisfaction).toEqual(before.satisfaction);
+  expect(after.outcomes).toEqual(before.outcomes);
+});
+
 test('places never overbook under concurrent applications, and the waiting list keeps a strict order', async () => {
   const people6 = ['x1', 'x2', 'x3', 'x4', 'x5', 'x6'];
   await terms().setPlaces({
@@ -1463,6 +1520,45 @@ test('places never overbook under concurrent applications, and the waiting list 
       )
     ).rows[0].n,
   ).toBe(1);
+});
+
+test('no writer, including the older capacity port, can set a maximum below the people who hold places', async () => {
+  const placed = (await report()).places.placed;
+  expect(placed).toBe(2);
+  const version = (await coord().report(scope())).capacity.version;
+  const before = await counts();
+  const lower = await rejected(
+    coord().setCapacity({
+      commandId: randomUUID(),
+      ...scope(),
+      expectedVersion: version,
+      capacity: placed - 1,
+      reason: 'Synthetic try to cut places below the people placed',
+    }),
+  );
+  expect(lower.code).toBe('23514');
+  expect(lower.message).toMatch(/fewer places/i);
+  expect(
+    (
+      await rejected(
+        f.owner.query(
+          `INSERT INTO customer_private.programme_capacity_revision(programme_id,workspace_id,version,capacity,reason,set_by)
+ SELECT $1,$2,$3,1,'Synthetic direct insert below the people placed',p.id FROM customer_private.principal p WHERE p.subject=$4`,
+          [programmeId, workspaceId, version + 1, subject('alice')],
+        ),
+      )
+    ).message,
+  ).toMatch(/fewer places/i);
+  expect(await counts()).toEqual(before);
+  // The older behaviour is otherwise unchanged: the same number, or a larger one, is accepted.
+  const same = await coord().setCapacity({
+    commandId: randomUUID(),
+    ...scope(),
+    expectedVersion: version,
+    capacity: placed,
+    reason: 'Synthetic keep the same number of places',
+  });
+  expect(same.capacity).toBe(placed);
 });
 
 test('the database itself refuses an overbooked place, an unlawful transition and out-of-order versions', async () => {

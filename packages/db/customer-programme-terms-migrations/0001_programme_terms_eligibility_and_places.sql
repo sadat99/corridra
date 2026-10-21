@@ -158,6 +158,17 @@ BEGIN
  RETURN NEW;
 END $$;
 CREATE TRIGGER programme_enrolment_revision_places BEFORE INSERT ON customer_private.programme_enrolment_revision FOR EACH ROW EXECUTE FUNCTION customer_private.terms_enrolment_guard();
+-- The older capacity writer (ADR-047) stays as it was, but no writer can set a maximum below the people who hold places.
+CREATE FUNCTION customer_private.terms_capacity_guard() RETURNS trigger
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.programme_places:'||NEW.programme_id::text,0));
+ IF NEW.capacity<customer_private.terms_taken(NEW.programme_id) THEN
+  RAISE EXCEPTION 'Fewer places than the people already placed' USING ERRCODE='23514';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER programme_capacity_revision_places BEFORE INSERT ON customer_private.programme_capacity_revision FOR EACH ROW EXECUTE FUNCTION customer_private.terms_capacity_guard();
 CREATE FUNCTION customer_private.terms_acceptance_guard() RETURNS trigger
  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
@@ -543,10 +554,10 @@ BEGIN
   rows AS(SELECT g.id,g.display_label,coalesce(en.status,'NOT_APPLIED') st,en.queue_no,coalesce(en.reasons,ARRAY[]::text[]) reasons,a.latest accepted_version,coalesce(a.current,false) accepted_current,
    CASE WHEN en.status='WAITLISTED' THEN row_number() OVER (PARTITION BY en.status ORDER BY en.queue_no) END position
    FROM regs g LEFT JOIN enr en ON en.registration_id=g.id LEFT JOIN acc a ON a.registration_id=g.id),
-  fb AS(SELECT DISTINCT ON (v.record_id) r.registration_id,v.shared,v.rating FROM customer_private.programme_participant_record r JOIN customer_private.programme_participant_record_revision v ON v.record_id=r.id
-   JOIN regs g ON g.id=r.registration_id WHERE r.programme_id=programme AND r.kind='FEEDBACK' AND NOT v.retracted ORDER BY v.record_id,v.version DESC),
-  oc AS(SELECT DISTINCT ON (v.record_id) r.registration_id,v.outcome_kind FROM customer_private.programme_participant_record r JOIN customer_private.programme_participant_record_revision v ON v.record_id=r.id
-   JOIN regs g ON g.id=r.registration_id WHERE r.programme_id=programme AND r.kind='OUTCOME' AND v.shared AND NOT v.retracted ORDER BY v.record_id,v.version DESC),
+  latest AS(SELECT DISTINCT ON (v.record_id) r.registration_id,r.kind,v.shared,v.retracted,v.rating,v.outcome_kind FROM customer_private.programme_participant_record r
+   JOIN customer_private.programme_participant_record_revision v ON v.record_id=r.id JOIN regs g ON g.id=r.registration_id WHERE r.programme_id=programme ORDER BY v.record_id,v.version DESC),
+  fb AS(SELECT registration_id,shared,rating FROM latest WHERE kind='FEEDBACK' AND NOT retracted),
+  oc AS(SELECT registration_id,outcome_kind FROM latest WHERE kind='OUTCOME' AND shared AND NOT retracted),
   n AS(SELECT count(*)::integer registered,count(*) FILTER(WHERE st='NOT_APPLIED')::integer not_applied,count(*) FILTER(WHERE st='PLACED')::integer placed,
    count(*) FILTER(WHERE st='WAITLISTED')::integer waiting,count(*) FILTER(WHERE st='NOT_ELIGIBLE')::integer not_eligible,count(*) FILTER(WHERE st='CANCELLED')::integer cancelled,
    count(*) FILTER(WHERE accepted_current)::integer accepted_now,
@@ -748,7 +759,7 @@ BEGIN
   'assignedToYou',assigned,'forParticipant',shared,'termsToAccept',terms);
 END $$;
 
-REVOKE ALL ON FUNCTION customer_private.terms_maximum(uuid),customer_private.terms_taken(uuid,uuid),customer_private.terms_enrolment_guard(),customer_private.terms_acceptance_guard(),
+REVOKE ALL ON FUNCTION customer_private.terms_maximum(uuid),customer_private.terms_taken(uuid,uuid),customer_private.terms_enrolment_guard(),customer_private.terms_acceptance_guard(),customer_private.terms_capacity_guard(),
  customer_private.terms_directory(uuid),customer_private.terms_plan_guard(),customer_private.terms_string_array(jsonb,integer,integer,integer),
  customer_private.terms_eligibility_reasons(customer_private.programme_eligibility_revision,jsonb),customer_private.terms_event(uuid,uuid,uuid,uuid,text,uuid),
  customer_private.terms_open(uuid,text,uuid,uuid,boolean,jsonb),customer_private.terms_close(uuid,text,uuid,uuid,uuid,jsonb,jsonb),customer_private.terms_replayed(jsonb,uuid,uuid,uuid),
