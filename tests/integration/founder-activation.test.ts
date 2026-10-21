@@ -141,6 +141,8 @@ test('company links report their own flag and wait for the workspace flag', () =
       'organisation-links',
     ),
   ).toBe('LOCKED_PRODUCTION');
+});
+
 test('programme terms report their own flag and wait for the economics and coordination flags', () => {
   const terms = { ...synthetic, CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED: 'true' };
   expect(state(terms, 'programme-terms')).toBe('WAITING_PREREQUISITE');
