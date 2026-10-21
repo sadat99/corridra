@@ -907,10 +907,10 @@ test('staff can page through a queue that has more than one page', async ({ page
   await page.goto(origin + '/?mode=staff');
   await page.getByText('Customer company link requests', { exact: true }).click();
   await page.getByRole('button', { name: 'Load company link requests' }).click();
-  await expect(page.getByText(/Synthetic Dhaka Textiles Ltd/)).toBeVisible();
+  await expect(page.getByText('Synthetic Dhaka Textiles Ltd', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Show more requests' }).click();
-  await expect(page.getByText(/Synthetic Chattogram Mills Ltd/)).toBeVisible();
-  await expect(page.getByText(/Synthetic Dhaka Textiles Ltd/)).toBeVisible();
+  await expect(page.getByText('Synthetic Chattogram Mills Ltd', { exact: true })).toBeVisible();
+  await expect(page.getByText('Synthetic Dhaka Textiles Ltd', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Show more requests' })).toHaveCount(0);
   expect(afters).toEqual([null, queueItem.claimId]);
 });
