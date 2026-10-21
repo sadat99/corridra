@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -54,6 +54,21 @@ jobs:
         run: pnpm test
       - name: Bounded shared handoff and historical integrity
         run: node scripts/v3-context.mjs verify
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
       - name: Isolated PostgreSQL
         run: pnpm db:local
       - name: Reviewed database migrations and roles
@@ -70,15 +85,54 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
-      - name: Protected operator browser tests
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: browser-failure-evidence
+          path: |
+            test-results/
+            !test-results/workspace-*/**
+          retention-days: 7
+
+  operator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Isolated PostgreSQL
+        run: pnpm db:local
+      - name: Reviewed database migrations and roles
+        run: pnpm db:prepare-local
+      - name: Real malware scanner readiness
+        run: pnpm scanner:local
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Browser runtime
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Protected operator browser tests (shard ${{ matrix.shard }} of 3)
         env:
           UX06_EVIDENCE_STAGE: after
-        run: pnpm test:operator
+        run: pnpm test:operator --shard=${{ matrix.shard }}/3
       - name: Synthetic UX browser evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: synthetic-ux-browser-evidence
+          name: synthetic-ux-browser-evidence-${{ matrix.shard }}
           path: |
             .cache/ux06/public-after/
             .cache/ux06/after/
@@ -101,8 +155,21 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: browser-failure-evidence
+          name: operator-failure-evidence-${{ matrix.shard }}
           path: |
             test-results/
             !test-results/workspace-*/**
           retention-days: 7
+
+  # One required check name for the whole run. Branch protection and the release steps read `validate`.
+  validate:
+    if: always()
+    needs: [checks, browser, operator]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job must have succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for r in $RESULTS; do [ "$r" = "success" ] || exit 1; done
