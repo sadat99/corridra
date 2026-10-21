@@ -4525,10 +4525,41 @@ th {
   font-size: var(--text-xl);
   font-weight: 700;
 }
+.receipt-panel > p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.receipt-panel .field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.receipt-panel .field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  border-radius: var(--guided-control-radius);
+}
+.receipt-panel .button-secondary,
+.guide-receipt-reset {
+  justify-self: start;
+  min-height: 2.75rem;
+}
 .receipt-panel .operator-form {
   display: grid;
   gap: var(--space-4);
-  max-width: 28rem;
+  min-width: 0;
+}
+.receipt-panel .primary-link {
+  min-height: 3rem;
+  font-size: var(--text-base);
 }
 @media (max-width: 1000px) {
   .guide-plan-body,
@@ -4554,7 +4585,8 @@ th {
   .ux-brief-summary {
     order: 2;
   }
-  .receipt-panel {
+  .receipt-panel,
+  .guide-receipt-reset {
     order: 3;
   }
 }
