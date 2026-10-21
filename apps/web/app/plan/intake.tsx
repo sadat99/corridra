@@ -402,6 +402,14 @@ export function Intake({
       setBusy(false);
     }
   }
+  async function copyReceipt() {
+    try {
+      await navigator.clipboard.writeText(receipt);
+      setMessage('Private receipt code copied.');
+    } catch {
+      setMessage('Could not copy the code. Select it and copy it before leaving this page.');
+    }
+  }
   async function check(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
@@ -810,22 +818,32 @@ export function Intake({
             </form>
           )}
           {receipt && (
-            <div className="detail-card">
-              <h2>Keep your private receipt.</h2>
+            <section className="receipt-panel" aria-labelledby="plan-receipt-title">
+              <p className="label">REQUEST SAVED</p>
+              <h2 id="plan-receipt-title">Keep your private receipt.</h2>
               <p>
                 Anyone with this code can read the mission status and replies. Save it before
                 closing this tab. It expires after 30 days.
               </p>
               <label className="field">
                 Private receipt code
-                <input readOnly value={receipt} />
+                <input
+                  readOnly
+                  value={receipt}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
               </label>
-            </div>
+              <button type="button" className="button-secondary" onClick={copyReceipt}>
+                Copy receipt code
+              </button>
+            </section>
           )}
           {finished && (
             <button
               type="button"
-              className="text-link"
+              className="button-secondary guide-receipt-reset"
               onClick={() => {
                 submitted.current = false;
                 key.current = crypto.randomUUID();

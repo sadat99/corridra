@@ -211,3 +211,83 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
 });
+
+test('saved request receipt uses the shared cards, copies safely, checks replies and starts a new request', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const code = 'a'.repeat(64);
+  await page.addInitScript((receipt) => {
+    if (!sessionStorage.getItem('receipt-ui-initialised')) {
+      sessionStorage.setItem('corridra-mission-receipt', receipt);
+      sessionStorage.setItem('receipt-ui-initialised', 'yes');
+    }
+  }, code);
+  await page.route('**/api/intake/receipt', async (route) => {
+    expect(route.request().postDataJSON()).toEqual({ receipt: code });
+    await route.fulfill({
+      json: {
+        status: 'REVIEW_PENDING',
+        replies: [{ body: 'We are reviewing your request.', createdAt: '2026-10-21T00:00:00Z' }],
+      },
+    });
+  });
+  await page.goto('/plan');
+  const saved = page.getByRole('region', { name: 'Keep your private receipt.', exact: true });
+  await expect(saved).toBeVisible();
+  await expect(saved.getByLabel('Private receipt code', { exact: true })).toHaveValue(code);
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(saved).toHaveCSS('padding', '24px');
+    await expect(saved.getByRole('heading', { level: 2 })).toHaveCSS('font-size', '20px');
+    const input = (await saved.getByLabel('Private receipt code', { exact: true }).boundingBox())!;
+    expect(input.height).toBeGreaterThanOrEqual(48);
+    const savedBox = (await saved.boundingBox())!;
+    const restart = (await page
+      .getByRole('button', { name: 'Start another request (save your receipt first)', exact: true })
+      .boundingBox())!;
+    const lookup = (await page.locator('#receipt-check').boundingBox())!;
+    expect(restart.y).toBeGreaterThanOrEqual(savedBox.y + savedBox.height);
+    expect(lookup.y).toBeGreaterThanOrEqual(restart.y + restart.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.screenshot({
+      path: `.cache/ux06/public-after/receipt-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await saved.getByRole('button', { name: 'Copy receipt code', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Private receipt code copied.');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error('Clipboard unavailable');
+        },
+      },
+    }),
+  );
+  await saved.getByRole('button', { name: 'Copy receipt code', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText(
+    'Could not copy the code. Select it and copy it before leaving this page.',
+  );
+  await saved.getByLabel('Private receipt code', { exact: true }).focus();
+  expect(
+    await saved
+      .getByLabel('Private receipt code', { exact: true })
+      .evaluate((input: HTMLInputElement) => [input.selectionStart, input.selectionEnd]),
+  ).toEqual([0, 64]);
+  await page.getByRole('button', { name: 'Check status and replies', exact: true }).click();
+  await expect(page.getByText('We are reviewing your request.', { exact: true })).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Start another request (save your receipt first)', exact: true })
+    .click();
+  await expect(saved).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem('corridra-mission-receipt'))).toBeNull();
+});
