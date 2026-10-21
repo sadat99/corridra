@@ -1,0 +1,98 @@
+{
+  "pr": 115,
+  "merge": "9f03668e1d8a86ba7c16893d2c62c3b9b3bcf0bf",
+  "testedHead": "f58a5ceadb48aa431e3412b62d1ada2029b4c8d8",
+  "treeEqual": true,
+  "ci": 39557135594,
+  "codeql": 39557135603,
+  "allSixCIJobsPassed": true,
+  "allThreeCodeQLAnalysesPassed": true,
+  "production": {
+    "id": "dpl_jven8z2zSVJwhkEQpKjNcYWNSn8m",
+    "state": "READY",
+    "source": "9f03668e1d8a86ba7c16893d2c62c3b9b3bcf0bf",
+    "regions": ["fra1"],
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app",
+      "corridra-git-main-sadat-os.vercel.app"
+    ],
+    "manualDeployment": false
+  },
+  "liveReadOnlyProbes": {
+    "origin": "https://corridra.vercel.app",
+    "observedAt": "2026-10-21T07:02:22.957Z",
+    "results": [
+      {
+        "path": "/",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/how-it-works",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/corridors",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/trust",
+        "status": 200,
+        "expected": 200,
+        "pass": true,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "redirect": null
+      },
+      {
+        "path": "/account",
+        "status": 307,
+        "expected": 307,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": "https://c.obsidianglobal.studio/account"
+      },
+      {
+        "path": "/api/customer-workspaces",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/customer-programme-terms",
+        "status": 503,
+        "expected": 503,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      },
+      {
+        "path": "/api/workspace/delivery",
+        "status": 401,
+        "expected": 401,
+        "pass": true,
+        "cacheControl": "no-store",
+        "redirect": null
+      }
+    ]
+  },
+  "limits": [
+    "Pricing source deployed; module installation and flag not yet applied",
+    "Billing and real-use admission not implemented by PR115",
+    "Authenticated managed-provider and screen-reader acceptance unverified"
+  ]
+}
