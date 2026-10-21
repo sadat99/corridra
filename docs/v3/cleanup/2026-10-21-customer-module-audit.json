@@ -52,8 +52,14 @@
     "configurationDeployment": {
       "id": "dpl_CBx1qwTznhWj2EDXCWaBYV9F6VN6",
       "source": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
-      "lastState": "BUILDING",
-      "reason": "Existing automatic deployment predates the four flag changes; refresh exact checked source for changed configuration."
+      "lastState": "READY",
+      "reason": "Existing automatic deployment predates the four flag changes; refresh exact checked source for changed configuration.",
+      "region": "fra1",
+      "liveProbes": {
+        "total": 11,
+        "passed": 11,
+        "fourModuleApis": "401, no-store; authenticated acceptance still unverified"
+      }
     },
     "limits": [
       "Real-use admission is still not implemented or activated",
