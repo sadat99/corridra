@@ -2,6 +2,8 @@
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
 import { ParticipantResults } from './participant-results';
+import { ParticipantPlace } from './participant-place';
+import { MyReminders } from './my-reminders';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 export function ParticipantAccount(
@@ -9,6 +11,7 @@ export function ParticipantAccount(
     missionSharesEnabled?: boolean;
     contextEnabled?: boolean;
     coordinationEnabled?: boolean;
+    termsEnabled?: boolean;
   },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
@@ -18,6 +21,7 @@ function ScopedAccount(
     missionSharesEnabled?: boolean;
     contextEnabled?: boolean;
     coordinationEnabled?: boolean;
+    termsEnabled?: boolean;
   },
 ) {
   const [token, setToken] = useState(''),
@@ -153,6 +157,7 @@ function ScopedAccount(
         or private commercial access. Only the display name you consent to share is visible to
         programme organisers.
       </p>
+      {props.termsEnabled && <MyReminders subject={props.subject} issuer={props.issuer} />}
       {view.status === 'loading' && <p role="status">Checking your programme access…</p>}
       {view.status === 'denied' && (
         <p role="alert">
@@ -193,6 +198,13 @@ function ScopedAccount(
                           issuer={props.issuer}
                           registrationId={r.id}
                           view="own"
+                        />
+                      )}
+                      {props.termsEnabled && (
+                        <ParticipantPlace
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          registrationId={r.id}
                         />
                       )}
                       {props.coordinationEnabled && (

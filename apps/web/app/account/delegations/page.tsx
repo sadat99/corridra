@@ -3,6 +3,7 @@ import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-sh
 import { redirect } from 'next/navigation';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-programme-coordination';
+import { customerProgrammeTermsEnabled } from '@corridra/auth/customer-programme-terms';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
@@ -40,6 +41,7 @@ export default async function Page() {
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
         coordinationEnabled={customerProgrammeCoordinationEnabled()}
+        termsEnabled={customerProgrammeTermsEnabled()}
         subject={session.data.user.id}
         issuer={issuer}
       />

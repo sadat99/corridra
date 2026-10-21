@@ -16,6 +16,7 @@ import { migrateCustomerProgrammeTemplates } from '../packages/db/src/customer-p
 import { migrateCustomerMissionShares } from '../packages/db/src/customer-mission-share-migrate';
 import { migrateCustomerMemberRoles } from '../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerOrganisationLinks } from '../packages/db/src/customer-organisation-link-migrate';
+import { migrateCustomerProgrammeTerms } from '../packages/db/src/customer-programme-terms-migrate';
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { migrateCustomerRequestAdmission } from '../packages/db/src/customer-request-admission-migrate';
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
@@ -65,6 +66,7 @@ const registries = [
   'customer_member_role_migrations',
   'customer_organisation_link_migrations',
   'customer_request_admission_migrations',
+  'customer_programme_terms_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -87,6 +89,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['member roles and leaving', migrateCustomerMemberRoles],
   ['company links', migrateCustomerOrganisationLinks],
   ['request authority with open admission', migrateCustomerRequestAdmission],
+  ['programme terms, eligibility and places', migrateCustomerProgrammeTerms],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);

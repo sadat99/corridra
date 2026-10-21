@@ -739,6 +739,11 @@
       "use": "Canonical organisation linking: claims, text evidence, deduplication, protected staff review and an append-only link ledger; default off"
     },
     {
+      "path": "docs/adr/0053-programme-terms-eligibility-and-places.md",
+      "classification": "Architecture contract/index",
+      "use": "Versioned programme terms and eligibility criteria, enforced places with an ordered waiting list, task owners and in-app reminders for independent organisers; default off"
+    },
+    {
       "path": "docs/adr/0051-member-roles-and-leaving.md",
       "classification": "Architecture contract/index",
       "use": "Owner-managed admin and member roles and voluntary leaving for invited workspace members; append-only history; default off"
