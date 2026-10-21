@@ -8,8 +8,10 @@ import {
 import { DomainError } from '@corridra/domain';
 import {
   briefSchema,
+  realBriefSchema,
   missionCommand,
   noticeVersion,
+  realNoticeVersion,
   missionStatus,
 } from '@corridra/domain/missions';
 import { z } from 'zod';
@@ -29,12 +31,13 @@ export class MissionService {
   constructor(
     private pool: DatabasePool,
     private secret: string,
+    private intakeMode: 'synthetic' | 'real' = 'synthetic',
   ) {}
   private hash(value: string) {
     return createHmac('sha256', this.secret).update(value).digest('hex');
   }
   async importBrief(tx: TenantTransaction, commandId: string, ownerId: string, input: unknown) {
-    const brief = briefSchema.parse(input);
+    const brief = (this.intakeMode === 'real' ? realBriefSchema : briefSchema).parse(input);
     const result = await tx.db.query('SELECT app.import_mission_brief($1,$2,$3,$4::jsonb) AS id', [
       tx.tenantId,
       commandId,
@@ -55,22 +58,24 @@ export class MissionService {
   // Pure canonical intake preparation, also used by the customer attestation boundary.
   // No database authority, receipt URL or customer ownership is granted here.
   prepareIntake(key: string, input: unknown) {
-    const brief = briefSchema.parse(input);
-    const receipt = this.hash(`intake-receipt:${key}`);
+    const brief = (this.intakeMode === 'real' ? realBriefSchema : briefSchema).parse(input);
+    const namespace = this.intakeMode === 'real' ? 'real:' : '';
+    const receipt = this.hash(`intake-receipt:${namespace}${key}`);
     return {
       brief,
       receipt,
-      payloadHash: this.hash(`intake-brief:${JSON.stringify(brief)}`),
+      payloadHash: this.hash(`intake-brief:${namespace}${JSON.stringify(brief)}`),
       receiptHash: digest(receipt),
-      noticeVersion,
+      noticeVersion: this.intakeMode === 'real' ? realNoticeVersion : noticeVersion,
     };
   }
   prepareCustomerIntake(
     context: { issuer: string; subject: string; workspaceId: string; commandId: string },
     input: unknown,
   ) {
+    const namespace = this.intakeMode === 'real' ? 'customer-intake-real-v1' : 'customer-intake-v1';
     const hex = this.hash(
-      `customer-intake-v1:${JSON.stringify([
+      `${namespace}:${JSON.stringify([
         context.issuer,
         context.subject,
         context.workspaceId,
@@ -93,13 +98,19 @@ export class MissionService {
     };
   }
   async submit(key: string, input: unknown) {
-    const { brief, receipt, payloadHash: h, receiptHash } = this.prepareIntake(key, input);
+    const {
+      brief,
+      receipt,
+      payloadHash: h,
+      receiptHash,
+      noticeVersion: submissionNotice,
+    } = this.prepareIntake(key, input);
     const r = await this.pool.query('SELECT app.submit_mission($1,$2,$3,$4::jsonb,$5) AS result', [
       key,
       h,
       receiptHash,
       JSON.stringify(brief),
-      noticeVersion,
+      submissionNotice,
     ]);
     const result = r.rows[0].result as { id?: string; duplicate: boolean };
     return { ...result, receipt: result.id ? receipt : undefined };
