@@ -2939,6 +2939,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
   await expect(page.locator('.mission-card')).toHaveCount(0);
   await page.unroute('**/api/workspace/workspace?*');
   await page.getByRole('button', { name: 'Retry workspace', exact: true }).click();
+  await openSection(page, 'main');
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
   const db = new Pool({
@@ -3027,6 +3028,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   );
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  await expect(page).toHaveURL(new RegExp('workspace=' + other));
   await openSection(page, 'main');
   await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
   await expect(

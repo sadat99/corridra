@@ -57,7 +57,17 @@
     "identifierProvenanceMismatches": 0,
     "readOnly": true
   },
-  "cleanup": "pending completion of PR118 checks; no deployment/environment binding was created",
+  "cleanup": {
+    "status": "deleted-and-verified",
+    "observedAt": "2026-10-21T18:21:04.034489+00:00",
+    "deploymentBindingCreated": false,
+    "preservedBranches": [
+      "br-lucky-darkness-b1ppj8en",
+      "br-silent-tree-b18dmm1n",
+      "br-lingering-sea-b1eob57e"
+    ],
+    "evidencePreserved": true
+  },
   "initialActualInstallerMigrations": 5,
   "supplementalManagedRehearsal": "0006 and 0007 applied using exact guarded SQL in advisory-locked transactions; all seven registry hashes read back and matched source",
   "focusedFinalFlows": {
