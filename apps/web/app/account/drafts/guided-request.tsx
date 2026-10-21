@@ -1005,7 +1005,7 @@ function Guided(scope: Scope) {
           <fieldset>
             <legend>What would you like from this?</legend>
             {outcomeOptions.map((o) => (
-              <label key={o} style={{ display: 'block' }}>
+              <label key={o}>
                 <input
                   type="checkbox"
                   checked={form.outcomes.includes(o)}

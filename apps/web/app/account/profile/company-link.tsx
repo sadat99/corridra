@@ -532,7 +532,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                   The request is based on your saved company profile (version{' '}
                   {view.currentProfileVersion}).
                 </p>
-                <label style={{ display: 'block' }}>
+                <label>
                   <input
                     type="radio"
                     name={id + 'kind'}
@@ -541,7 +541,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                   />{' '}
                   My company is already on the Corridra company list
                 </label>
-                <label style={{ display: 'block' }}>
+                <label>
                   <input
                     type="radio"
                     name={id + 'kind'}
@@ -576,7 +576,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                       <fieldset>
                         <legend>Choose your company</legend>
                         {found.map((o) => (
-                          <label key={o.id} style={{ display: 'block' }}>
+                          <label key={o.id}>
                             <input
                               type="radio"
                               name={id + 'org'}
