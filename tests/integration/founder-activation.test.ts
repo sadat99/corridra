@@ -142,3 +142,19 @@ test('company links report their own flag and wait for the workspace flag', () =
     ),
   ).toBe('LOCKED_PRODUCTION');
 });
+
+test('programme terms report their own flag and wait for the economics and coordination flags', () => {
+  const terms = { ...synthetic, CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED: 'true' };
+  expect(state(terms, 'programme-terms')).toBe('WAITING_PREREQUISITE');
+  const full: NodeJS.ProcessEnv = {
+    ...terms,
+    CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMME_ECONOMICS_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMME_COORDINATION_ENABLED: 'true',
+  };
+  expect(state(full, 'programme-terms')).toBe('ON');
+  expect(state(synthetic, 'programme-terms')).toBe('OFF');
+  expect(state({ ...full, VERCEL_ENV: 'production' }, 'programme-terms')).toBe('LOCKED_PRODUCTION');
+});
