@@ -728,6 +728,41 @@ test('a participant must accept the terms and choose a profile before applying, 
   });
 });
 
+test('criteria with every list empty and no minimum ask for no profile, and the request sends none', async ({
+  page,
+}) => {
+  const { posts } = await mock(page, {
+    views: {
+      place: () => ({
+        json: place({
+          criteria: criteria({
+            roles: [],
+            sectors: [],
+            countries: [],
+            sizeBands: [],
+            minProfileFields: 0,
+          }),
+        }),
+      }),
+    },
+    post: (b) => ({ json: { commandId: b.input.commandId, status: 'PLACED', position: null } }),
+  });
+  await organiser(page, '?c=participant');
+  const p = page.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
+  await expect(p.getByLabel('Organisation profile to check')).toHaveCount(0);
+  const apply = p.getByRole('button', { name: 'Apply for a place' });
+  await expect(apply).toBeDisabled();
+  await p.getByLabel(/I have read and accept version 2/).check();
+  await expect(apply).toBeEnabled();
+  await apply.click();
+  expect(posts).toHaveLength(1);
+  expect(posts[0]!.input).toMatchObject({
+    action: 'apply',
+    termsVersion: 2,
+    profileWorkspaceId: null,
+  });
+});
+
 test('a participant who is not eligible reads plain reasons and nothing from the profile', async ({
   page,
 }) => {

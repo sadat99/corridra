@@ -144,7 +144,14 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
   const canApply = status === 'NOT_APPLIED' || status === 'NOT_ELIGIBLE' || status === 'CANCELLED';
   const full = !!data && !data.placesAvailable && !data.waitlist;
   const needsTerms = !!data?.terms;
-  const needsProfile = !!data?.criteria;
+  // Matches the database: criteria with every list empty and no minimum accept anyone, so no profile is needed.
+  const needsProfile =
+    !!data?.criteria &&
+    (data.criteria.roles.length > 0 ||
+      data.criteria.sectors.length > 0 ||
+      data.criteria.countries.length > 0 ||
+      data.criteria.sizeBands.length > 0 ||
+      data.criteria.minProfileFields > 0);
   const applyReady =
     !!data && !busy && !full && (!needsTerms || agree) && (!needsProfile || profile !== '');
   const c = data?.criteria;
