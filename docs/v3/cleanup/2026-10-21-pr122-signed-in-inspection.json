@@ -1,0 +1,362 @@
+{
+  "environment": "Disposable loopback staff fixture with actual password/MFA, database and application handlers",
+  "productionSessionInspected": false,
+  "productionLimitation": "No attached authenticated production browser; custom domain blocked by executor network policy",
+  "browser": "Chromium",
+  "states": 38,
+  "viewports": [1440, 390],
+  "horizontalOverflow": 0,
+  "axeViolations": 0,
+  "emptyAndPopulatedMissionViews": true,
+  "oneWorkspacePanelAtATime": true,
+  "oneOperationalSubviewAtATime": true,
+  "localChecks": {
+    "visualInspection": "38 states passed; both bootstrap journeys passed",
+    "initialBroadSuite": {
+      "passed": 10,
+      "failed": 1,
+      "failure": "Role-switch driver assumed overview/list visible together"
+    },
+    "correctedScopeRecovery": "3/3 passed including both bootstrap journeys"
+  },
+  "sourceFileHashes": {
+    "apps/web/app/globals.css": "a6017727192baad105e8b4d0b450296b75c056d20deb0caf42ff5f8ae6e5a780",
+    "apps/web/app/operator/workspace.tsx": "40a4dee12e5cf9fb18ee30c5cd54684b13d0b3ec67e8bcd7891251cf0ed8c7fa",
+    "apps/web/app/operator/operations.tsx": "58dbbf32c2878e6972a3edbf7107a0c938a52ca860d1a316c47cfffc4b84f268",
+    "apps/web/components/workspace-area-bar.tsx": "df046dd6d87fdbb483266745cc002fd1e87c58482832fd1e67fbbf933634dc0b",
+    "tests/operator/workspace.spec.ts": "4beff8b849db94a1d0f6f3149f7eb1bbe809dd662e472f0489841be29b848b61",
+    "tests/operator/y-ux05-governance.spec.ts": "07b75be140bd21fe08b236a62eeeee2447145b51f16f2f5d7c3cb356b86ac9e9"
+  },
+  "measurements": [
+    {
+      "panel": "main",
+      "phase": "empty",
+      "height": 1727,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-missions",
+      "phase": "empty",
+      "height": 1850,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": [],
+      "control": {
+        "height": 44,
+        "border": 1
+      }
+    },
+    {
+      "panel": "workspace-research",
+      "phase": "empty",
+      "height": 2121,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-meetings",
+      "phase": "empty",
+      "height": 3786,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-commercial",
+      "phase": "empty",
+      "height": 2168,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-delivery",
+      "phase": "empty",
+      "height": 2879,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-sources",
+      "phase": "empty",
+      "height": 2127,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-evidence",
+      "phase": "empty",
+      "height": 1836,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-ai",
+      "phase": "empty",
+      "height": 2022,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-network",
+      "phase": "empty",
+      "height": 1927,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "ops-dashboard",
+      "phase": "empty",
+      "height": 4088,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "ops-center",
+      "phase": "empty",
+      "height": 5049,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "ops-health",
+      "phase": "empty",
+      "height": 1758,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "ops-gates",
+      "phase": "empty",
+      "height": 2958,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-settings",
+      "phase": "empty",
+      "height": 1575,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-audit",
+      "phase": "empty",
+      "height": 1332,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-controls",
+      "phase": "empty",
+      "height": 2341,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "workspace-authenticator",
+      "phase": "empty",
+      "height": 1387,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": []
+    },
+    {
+      "panel": "main",
+      "phase": "empty",
+      "height": 3221,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-missions",
+      "phase": "empty",
+      "height": 3413,
+      "width": 390,
+      "viewport": 390,
+      "violations": [],
+      "control": {
+        "height": 44,
+        "border": 1
+      }
+    },
+    {
+      "panel": "workspace-research",
+      "phase": "empty",
+      "height": 3565,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-meetings",
+      "phase": "empty",
+      "height": 5699,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-commercial",
+      "phase": "empty",
+      "height": 4031,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-delivery",
+      "phase": "empty",
+      "height": 4959,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-sources",
+      "phase": "empty",
+      "height": 3780,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-evidence",
+      "phase": "empty",
+      "height": 2996,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-ai",
+      "phase": "empty",
+      "height": 3635,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-network",
+      "phase": "empty",
+      "height": 3246,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "ops-dashboard",
+      "phase": "empty",
+      "height": 8827,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "ops-center",
+      "phase": "empty",
+      "height": 9503,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "ops-health",
+      "phase": "empty",
+      "height": 3145,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "ops-gates",
+      "phase": "empty",
+      "height": 5291,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-settings",
+      "phase": "empty",
+      "height": 2699,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-audit",
+      "phase": "empty",
+      "height": 2158,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-controls",
+      "phase": "empty",
+      "height": 3839,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    },
+    {
+      "panel": "workspace-authenticator",
+      "phase": "empty",
+      "height": 2131,
+      "width": 390,
+      "viewport": 390,
+      "violations": []
+    }
+  ],
+  "populatedMeasurements": [
+    {
+      "panel": "workspace-missions",
+      "phase": "populated",
+      "height": 3234,
+      "width": 1440,
+      "viewport": 1440,
+      "violations": [],
+      "control": {
+        "height": 44,
+        "border": 1
+      }
+    },
+    {
+      "panel": "workspace-missions",
+      "phase": "populated",
+      "height": 5600,
+      "width": 390,
+      "viewport": 390,
+      "violations": [],
+      "control": {
+        "height": 44,
+        "border": 1
+      }
+    }
+  ],
+  "visualReview": [
+    "Desktop overview, populated mission, Control Center",
+    "Mobile overview, mission, Recovery and health"
+  ],
+  "screenshots": "work/real-use/operator-screens (local untracked captures, read-only/password inputs masked)",
+  "providerAcceptance": false,
+  "outlinedControlsVerified": true,
+  "oneOperationalNavigation": true
+}

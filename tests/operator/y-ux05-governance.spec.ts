@@ -1,3 +1,4 @@
+import { openSection } from './workspace-nav';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
@@ -45,7 +46,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
-  await page.locator('#workspace-navigation summary').click();
+  await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
     .getByRole('link', { name: 'Global operations', exact: true })
@@ -96,6 +97,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     reason,
   });
   await ops.getByRole('button', { name: 'Refresh operations', exact: true }).click();
+  await openSection(page, 'ops-center');
   await ops
     .getByRole('combobox', { name: 'Control Center route', exact: true })
     .selectOption(routeId);
@@ -242,9 +244,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await expect
     .poll(() => Date.now(), { timeout: 35000, intervals: [1000] })
     .toBeGreaterThanOrEqual(nextCounter);
+  await openSection(page, 'workspace-authenticator');
   await page.getByLabel('Current authenticator code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
+  await openSection(page, 'workspace-operations');
   await ops
     .getByRole('button', { name: 'Retry original operational command', exact: true })
     .click();
@@ -253,9 +257,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   expect(sent[1]).toEqual(sent[0]);
   expect(sent[2]).toEqual(sent[0]);
   await page.unroute('**/api/workspace/operations?*');
+  await openSection(page, 'ops-health');
   await expect(
     ops.getByRole('region', { name: 'Owned recovery, privacy and fraud cases', exact: true }),
   ).toContainText(caseKey);
+  await openSection(page, 'ops-center');
   await ops
     .getByRole('textbox', { name: 'Operational command JSON', exact: true })
     .fill(JSON.stringify({ ...command, version: 2, state: 'RESOLVED' }));
@@ -287,6 +293,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   ).json();
   const missionId = dashboard.missions[0].id;
   const record = async (input: unknown) => {
+    await openSection(page, 'ops-center');
     await ops
       .getByRole('textbox', { name: 'Operational command JSON', exact: true })
       .fill(JSON.stringify(input));
@@ -294,6 +301,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       .getByRole('button', { name: 'Record reviewed operational command', exact: true })
       .click();
     await expect(ops.getByRole('status')).toContainText('Recorded.');
+    await openSection(page, 'ops-dashboard');
   };
   await record({
     action: 'ledger',
@@ -365,6 +373,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     ['workspace-settings', 'reviewed-policies'],
     ['workspace-audit', 'audit'],
   ] as const) {
+    await openSection(page, id);
     if (id === 'workspace-audit')
       await page
         .getByRole('button', { name: 'Load access and recent changes', exact: true })
@@ -406,7 +415,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await page.reload();
   page.once('dialog', (d) => d.accept());
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
-  await page.locator('#workspace-navigation summary').click();
+  await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
     .getByRole('link', { name: 'Global operations', exact: true })

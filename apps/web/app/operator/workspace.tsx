@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { RoleNavigation } from '../../components/role-navigation';
+import { WorkspaceAreaBar, panelFor } from '../../components/workspace-area-bar';
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { CompanyLinkReview } from './company-link-review';
@@ -78,7 +79,6 @@ function TenantWorkspace({
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [missionRevision, setMissionRevision] = useState(0);
-  const [unavailableSection, setUnavailableSection] = useState(false);
   const [readFailure, setReadFailure] = useState<'denied' | 'unavailable'>('unavailable');
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
@@ -149,33 +149,36 @@ function TenantWorkspace({
   }, [tenant]);
   const loaded = !!data;
   const currentRole = data?.role;
+  const realWorkspace = data?.purpose === 'commercial_qualification';
+  const [fragment, setFragment] = useState('');
   useEffect(() => {
     if (!loaded) return;
-    function navigate() {
-      const fragment = window.location.hash.slice(1);
-      const allowed =
-        fragment === 'main' ||
-        fragment === 'workspace-navigation' ||
-        workspaceSections.some(
-          (section) =>
-            section.id === fragment &&
-            (section.roles as readonly string[]).includes(currentRole ?? ''),
-        );
-      const target = allowed ? document.getElementById(fragment) : null;
-      setUnavailableSection(!!fragment && !target);
-      const destination =
-        target ?? (fragment ? document.getElementById('workspace-navigation') : null);
-      if (destination?.id === 'workspace-navigation') {
-        const directory = destination.querySelector('details');
-        if (directory) directory.open = true;
-      }
-      destination?.scrollIntoView();
-      destination?.focus({ preventScroll: true });
+    const read = () => setFragment(window.location.hash.slice(1));
+    read();
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, [loaded]);
+  const sectionAllowed = workspaceSections.some(
+    (section) =>
+      section.id === fragment && (section.roles as readonly string[]).includes(currentRole ?? ''),
+  );
+  // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
+  const view = sectionAllowed ? panelFor(fragment) : 'overview';
+  const unavailableSection =
+    !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
+  useEffect(() => {
+    if (!loaded) return;
+    const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
+    const target = allowed ? document.getElementById(fragment) : null;
+    const destination =
+      target ?? (fragment ? document.getElementById('workspace-navigation') : null);
+    if (destination?.id === 'workspace-navigation') {
+      const directory = destination.querySelector('details');
+      if (directory) directory.open = true;
     }
-    navigate();
-    window.addEventListener('hashchange', navigate);
-    return () => window.removeEventListener('hashchange', navigate);
-  }, [loaded, currentRole]);
+    destination?.scrollIntoView();
+    destination?.focus({ preventScroll: true });
+  }, [loaded, fragment, sectionAllowed]);
   async function retryRead() {
     setBusy(true);
     setMessage('');
@@ -265,14 +268,26 @@ function TenantWorkspace({
             ))}
           </select>
         </label>
+        <Link className="text-link" href="/workspace">
+          All workspaces and access help
+        </Link>
         <button className="text-link" disabled={busy} onClick={signOut}>
           Sign out
         </button>
       </div>
-      <p>Use test records while customer data controls are completed.</p>
-      <Link className="text-link" href="/workspace">
-        All workspaces and access help
-      </Link>
+      {data &&
+        (realWorkspace ? (
+          <p role="note">
+            Use authorized records for this workspace.{' '}
+            {data.scanMode === 'bypass'
+              ? 'Evidence scanning is deferred; unscanned files are marked as bypassed.'
+              : 'Evidence follows this workspace’s scanning controls.'}
+          </p>
+        ) : (
+          <p className="ux-testmode" role="note">
+            Test mode: use invented records only while customer data controls are completed.
+          </p>
+        ))}
       <p role="status" aria-live="polite" aria-label="Workspace status">
         {message}
       </p>
@@ -293,54 +308,57 @@ function TenantWorkspace({
         </AccessState>
       ) : (
         <>
-          <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
-          <section className="workspace-panel workspace-start" aria-label="Workspace overview">
-            <StatusBadge tone="caution">Synthetic workspace</StatusBadge>
-            <h2>Start with a mission.</h2>
-            <p>
-              Your access: <strong>{data.role}</strong>. Open a mission and define what needs to
-              happen. Find relevant companies, arrange the next conversation, then record the
-              commercial progress and share an approved view.
-            </p>
-            <p>
-              Start with Missions and requirements below. Evidence, financial controls and
-              administration remain available in All workspace tools and settings. Actions still
-              depend on your role, current authenticator verification and approved scope.
-            </p>
-            <RoleNavigation role={data.role} shortcuts />
-            {['owner', 'admin'].includes(data.role) && (
-              <details className="ux-journey-disclosure">
-                <summary>Manage this workspace</summary>
-                <nav className="workspace-navigation" aria-label="Administration">
-                  <a href="#ops-center">Control Center</a>
-                  <a href="#workspace-settings">Corridors and policies</a>
-                  <a href="#workspace-audit">Access and audit</a>
-                  {data.role === 'owner' && (
-                    <a href="#workspace-controls">People and workspace controls</a>
-                  )}
-                  <a href="#ops-gates">Production readiness</a>
-                </nav>
-                <p>
-                  Review operational configuration, membership records and launch requirements.
-                  Sensitive changes still require the existing approvals and fresh authenticator
-                  verification.
-                </p>
-              </details>
-            )}
-            {unavailableSection && (
-              <p role="alert">
-                This section is unavailable for your current workspace role or the link is outdated.
-                Choose an available tool above, or ask your workspace owner to review your
-                membership.
+          <div hidden={view === 'overview'}>
+            <WorkspaceAreaBar role={data.role} fragment={fragment} />
+          </div>
+          <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
+            <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
+            <section className="workspace-panel workspace-start" aria-label="Workspace overview">
+              <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
+                {realWorkspace ? 'Operational workspace' : 'Synthetic workspace'}
+              </StatusBadge>
+              <h2>Start with a mission.</h2>
+              <p>
+                Your access: <strong>{data.role}</strong>. Open a mission, find the right companies,
+                arrange the next conversation, then record progress and share an approved view.
+                Actions depend on your role, a current authenticator check and approved scope.
               </p>
-            )}
-          </section>
-          <RoleNavigation role={data.role} />
-          <p>
-            Follow the mission workflow above. Open the full directory when you need evidence,
-            assistance, settings or administration.
-          </p>
-          <div id="workspace-missions" tabIndex={-1} className="workspace-panel">
+              <RoleNavigation role={data.role} shortcuts />
+              {['owner', 'admin'].includes(data.role) && (
+                <details className="ux-journey-disclosure">
+                  <summary>Manage this workspace</summary>
+                  <nav className="workspace-navigation" aria-label="Administration">
+                    <a href="#ops-center">Control Center</a>
+                    <a href="#workspace-settings">Corridors and policies</a>
+                    <a href="#workspace-audit">Access and audit</a>
+                    {data.role === 'owner' && (
+                      <a href="#workspace-controls">People and workspace controls</a>
+                    )}
+                    <a href="#ops-gates">Production readiness</a>
+                  </nav>
+                  <p>
+                    Review operational configuration, membership records and launch requirements.
+                    Sensitive changes still require the existing approvals and fresh authenticator
+                    verification.
+                  </p>
+                </details>
+              )}
+              {unavailableSection && (
+                <p role="alert">
+                  This section is unavailable for your current workspace role or the link is
+                  outdated. Choose an available tool above, or ask your workspace owner to review
+                  your membership.
+                </p>
+              )}
+            </section>
+            <RoleNavigation role={data.role} />
+          </div>
+          <div
+            id="workspace-missions"
+            tabIndex={-1}
+            className="workspace-panel ux-panel"
+            hidden={view !== 'workspace-missions'}
+          >
             <Missions
               key={tenant}
               tenant={tenant}
@@ -350,7 +368,12 @@ function TenantWorkspace({
               Back to workspace sections
             </a>
           </div>
-          <div id="workspace-research" tabIndex={-1} className="workspace-panel">
+          <div
+            id="workspace-research"
+            tabIndex={-1}
+            className="workspace-panel ux-panel"
+            hidden={view !== 'workspace-research'}
+          >
             <Counterparties
               purpose={data.purpose ?? 'synthetic_validation'}
               key={`research-${tenant}`}
@@ -364,13 +387,23 @@ function TenantWorkspace({
               Back to workspace sections
             </a>
           </div>
-          <div id="workspace-meetings" tabIndex={-1} className="workspace-panel">
+          <div
+            id="workspace-meetings"
+            tabIndex={-1}
+            className="workspace-panel ux-panel"
+            hidden={view !== 'workspace-meetings'}
+          >
             <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
             <a className="text-link" href="#workspace-navigation">
               Back to workspace sections
             </a>
           </div>
-          <div id="workspace-commercial" tabIndex={-1} className="workspace-panel">
+          <div
+            id="workspace-commercial"
+            tabIndex={-1}
+            className="workspace-panel ux-panel"
+            hidden={view !== 'workspace-commercial'}
+          >
             <CommercialProgress
               key={`commercial-${tenant}`}
               tenant={tenant}
@@ -380,24 +413,47 @@ function TenantWorkspace({
               Back to workspace sections
             </a>
           </div>
-          <div id="workspace-delivery" tabIndex={-1} className="workspace-panel">
+          <div
+            id="workspace-delivery"
+            tabIndex={-1}
+            className="workspace-panel ux-panel"
+            hidden={view !== 'workspace-delivery'}
+          >
             <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
             <a className="text-link" href="#workspace-navigation">
               Back to workspace sections
             </a>
           </div>
           {['owner', 'admin', 'operator'].includes(data.role) && (
-            <Operations key={`operations-${tenant}`} tenant={tenant} role={data.role} />
+            <div className="ux-panel" hidden={view !== 'workspace-operations'}>
+              <Operations
+                key={`operations-${tenant}`}
+                tenant={tenant}
+                role={data.role}
+                section={fragment}
+                purpose={data.purpose}
+              />
+            </div>
           )}
           {data.role !== 'viewer' && (
             <>
-              <div id="workspace-ai" tabIndex={-1} className="workspace-panel">
+              <div
+                id="workspace-ai"
+                tabIndex={-1}
+                className="workspace-panel ux-panel"
+                hidden={view !== 'workspace-ai'}
+              >
                 <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
                 <a className="text-link" href="#workspace-navigation">
                   Back to workspace sections
                 </a>
               </div>
-              <div id="workspace-network" tabIndex={-1} className="workspace-panel">
+              <div
+                id="workspace-network"
+                tabIndex={-1}
+                className="workspace-panel ux-panel"
+                hidden={view !== 'workspace-network'}
+              >
                 <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
                 <a className="text-link" href="#workspace-navigation">
                   Back to workspace sections
@@ -405,7 +461,12 @@ function TenantWorkspace({
               </div>
             </>
           )}
-          <div id="workspace-sources" tabIndex={-1} className="detail-grid workspace-panel">
+          <div
+            id="workspace-sources"
+            tabIndex={-1}
+            className="detail-grid workspace-panel ux-panel"
+            hidden={view !== 'workspace-sources'}
+          >
             <section className="detail-card">
               <h2>Sources</h2>
               <ul>
@@ -499,7 +560,8 @@ function TenantWorkspace({
           <section
             id="workspace-evidence"
             tabIndex={-1}
-            className="operator-section workspace-panel"
+            className="operator-section workspace-panel ux-panel"
+            hidden={view !== 'workspace-evidence'}
           >
             <h2>Evidence review</h2>
             <p>
@@ -657,7 +719,8 @@ function TenantWorkspace({
           <section
             id="workspace-authenticator"
             tabIndex={-1}
-            className="operator-section workspace-panel"
+            className="operator-section workspace-panel ux-panel"
+            hidden={view !== 'workspace-authenticator'}
           >
             <h2>Confirm a sensitive action</h2>
             <form
@@ -687,13 +750,16 @@ function TenantWorkspace({
             </form>
           </section>
           {['owner', 'admin'].includes(data.role) && (
-            <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+            <div className="ux-panel" hidden={view !== 'workspace-settings'}>
+              <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+            </div>
           )}
           {['owner', 'admin'].includes(data.role) && (
             <section
               id="workspace-audit"
               tabIndex={-1}
-              className="operator-section workspace-panel"
+              className="operator-section workspace-panel ux-panel"
+              hidden={view !== 'workspace-audit'}
             >
               <h2>Access and audit</h2>
               <p>
@@ -732,7 +798,8 @@ function TenantWorkspace({
             <section
               id="workspace-controls"
               tabIndex={-1}
-              className="operator-section workspace-panel"
+              className="operator-section workspace-panel ux-panel"
+              hidden={view !== 'workspace-controls'}
             >
               <h2>Workspace controls</h2>
               <p>

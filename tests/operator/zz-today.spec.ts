@@ -177,5 +177,9 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   );
   await page.reload();
   await expect(today.getByRole('status')).toContainText("Today's list could not be loaded.");
+  await page
+    .getByRole('navigation', { name: 'Mission workflow' })
+    .getByRole('link', { name: 'Missions and requirements', exact: false })
+    .click();
   await expect(page.locator('#workspace-missions')).toBeVisible();
 });

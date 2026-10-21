@@ -36,7 +36,7 @@ export function OperatorWorkbench({
   }
   return (
     <nav ref={nav} className="ux-operator-workbench" aria-label={label}>
-      <p className="label">WORKFLOW SECTIONS</p>
+      <p className="label">JUMP TO</p>
       <div>
         {sections.map((s) => (
           <button className="text-link" type="button" key={s.label} onClick={() => open(s.heading)}>
@@ -44,10 +44,6 @@ export function OperatorWorkbench({
           </button>
         ))}
       </div>
-      <p>
-        Move between sections without losing your entries. Available actions depend on your current
-        access and approved scope.
-      </p>
       {notice && <p aria-live="polite">{notice}</p>}
     </nav>
   );
