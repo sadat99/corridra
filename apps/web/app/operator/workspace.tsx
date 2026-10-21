@@ -149,6 +149,7 @@ function TenantWorkspace({
   }, [tenant]);
   const loaded = !!data;
   const currentRole = data?.role;
+  const realWorkspace = data?.purpose === 'commercial_qualification';
   const [fragment, setFragment] = useState('');
   useEffect(() => {
     if (!loaded) return;
@@ -274,9 +275,19 @@ function TenantWorkspace({
           Sign out
         </button>
       </div>
-      <p className="ux-testmode" role="note">
-        Test mode: use invented records only while customer data controls are completed.
-      </p>
+      {data &&
+        (realWorkspace ? (
+          <p role="note">
+            Use authorized records for this workspace.{' '}
+            {data.scanMode === 'bypass'
+              ? 'Evidence scanning is deferred; unscanned files are marked as bypassed.'
+              : 'Evidence follows this workspace’s scanning controls.'}
+          </p>
+        ) : (
+          <p className="ux-testmode" role="note">
+            Test mode: use invented records only while customer data controls are completed.
+          </p>
+        ))}
       <p role="status" aria-live="polite" aria-label="Workspace status">
         {message}
       </p>
@@ -303,7 +314,9 @@ function TenantWorkspace({
           <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
             <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
             <section className="workspace-panel workspace-start" aria-label="Workspace overview">
-              <StatusBadge tone="caution">Synthetic workspace</StatusBadge>
+              <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
+                {realWorkspace ? 'Operational workspace' : 'Synthetic workspace'}
+              </StatusBadge>
               <h2>Start with a mission.</h2>
               <p>
                 Your access: <strong>{data.role}</strong>. Open a mission, find the right companies,

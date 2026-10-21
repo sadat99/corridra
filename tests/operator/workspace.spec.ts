@@ -539,6 +539,24 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await operatorEvidence(page, research, 'research');
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
+  // Presentation follows the trusted snapshot purpose; public settings grant no authority.
+  await page.route('**/api/workspace/workspace?*', async (route) => {
+    const response = await route.fetch();
+    expect(response.ok()).toBe(true);
+    await route.fulfill({
+      response,
+      json: { ...(await response.json()), purpose: 'commercial_qualification', scanMode: 'bypass' },
+    });
+  });
+  await page.reload();
+  await openSection(page, 'main');
+  await expect(page.getByText('Operational workspace', { exact: true })).toBeVisible();
+  await expect(page.getByRole('note')).toContainText('Evidence scanning is deferred');
+  await expect(page.locator('.ux-testmode')).toHaveCount(0);
+  await page.unroute('**/api/workspace/workspace?*');
+  await page.reload();
+  await openSection(page, 'main');
+  await expect(page.getByText('Synthetic workspace', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(
