@@ -30,5 +30,12 @@
   "productionWritten": false,
   "completedAt": "2026-10-21T23:20:45.490Z",
   "checkedApplicationSource": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
-  "scope": "Disposable managed PostgreSQL installation, immutable registry replay, enable/retry/pause and original authority preservation; not Production identity or email acceptance."
+  "scope": "Disposable managed PostgreSQL installation, immutable registry replay, enable/retry/pause and original authority preservation; not Production identity or email acceptance.",
+  "productionPrerequisiteReadOnlyCheck": {
+    "functions": 5,
+    "definitionHashesMatch": true,
+    "originalAndRehearsedOwner": "corridra_migrator",
+    "rehearsedFunctionOwnersCanCallPrivateScopeHelper": true,
+    "productionWritten": false
+  }
 }

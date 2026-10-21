@@ -15,6 +15,56 @@
     "axeViolations": 0,
     "captures": [
       {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-assigned-1440.png",
+        "sha256": "5f995288c84d2c43b96757e7cf2611d42f0ecbe9482457d818b6253abd410698"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-assigned-390.png",
+        "sha256": "b9b124e24d7b3b375fcf30fc3cd539c7aa625d10cce3f96e55ed616f0a77c009"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-empty-1440.png",
+        "sha256": "b33fa48a9223b9b8f2ed303f090c6c0da8a4579301c874739ec70b4c178a51cc"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-empty-390.png",
+        "sha256": "8b7d8df4914601b3f6625fc7e76caa20e13b226268188dbf14badb13740793b7"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-setup-1440.png",
+        "sha256": "a2bbf9e60dc31e35e73bdf0be6b6855eba517dd733888b62e13592672b451988"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-setup-390.png",
+        "sha256": "9ad533eb6badeefef2251189a8c8b4186b4ea0636de5edd2f39fa1bd28a6ab9d"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-submitted-1440.png",
+        "sha256": "e18324cb9fdd302fe92599d5e976d4c4cdc38b63dd6933bbba505c167f601496"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/contributor-submitted-390.png",
+        "sha256": "c0cedd123c44c058bfb2f091e8db98125fd42a58005a66da39d85a48234a8eeb"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/owner-empty-1440.png",
+        "sha256": "c817491691b648d035f0e7a207eae2ca5e23b2ce63f3dd7bb7cf8eaf07d38c50"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/owner-empty-390.png",
+        "sha256": "6edd7499df2f7aa3e99feb147ab57e621b2d717288069a49dba836a9e00a752e"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/owner-invited-1440.png",
+        "sha256": "ce2c0a056314ec0a749a16fa12c699994c94649b13ca97df54418a105723f65a"
+      },
+      {
+        "path": "work/real-use/network-browser-captures-2ff/owner-invited-390.png",
+        "sha256": "96ee4dcb148deea40579d99f15042444052140d939789b6db92689bf1c1543eb"
+      }
+    ],
+    "initialCaptureManifest": [
+      {
         "path": "work/real-use/network-browser/contributor-assigned-1440.png",
         "sha256": "7bc146f669a4d2d1fd88ec4c7314fa8e899f233d0aa65d493e419818d602c82c"
       },
@@ -62,7 +112,9 @@
         "path": "work/real-use/network-browser/owner-invited-390.png",
         "sha256": "2c3da62c8ae02051173cee6d8e90dd864431fab29f7625b8316a46c52a3939db"
       }
-    ]
+    ],
+    "latestCaptureSource": "2ff25819f6bf508b110b6ba6c7f79dc0fc114b50",
+    "initialCaptureFilesAreHistorical": true
   },
   "publicBrowser": {
     "exitCode": 0,
@@ -116,9 +168,35 @@
   },
   "productionNetworkEnabled": false,
   "remaining": [
-    "Full database and existing protected operator regression in progress",
-    "Exact final PR CI required",
+    "Final public browser regression with the four new cases",
+    "Exact final-head CI/CodeQL after private-header followup",
     "Protected installation and Production setting/deployment verification",
     "Genuine Production identity/email/private acceptance remains unverified"
-  ]
+  ],
+  "fullLocalRegression": {
+    "database": {
+      "files": 69,
+      "passed": 684,
+      "exitCode": 0
+    },
+    "existingProtectedBrowser": {
+      "files": 37,
+      "passed": 375,
+      "exitCode": 0
+    },
+    "newContributorBrowser": {
+      "passed": 1,
+      "exitCode": 0,
+      "head": "2ff25819f6bf508b110b6ba6c7f79dc0fc114b50"
+    },
+    "engineAndComponentBytesUnchangedInPrivateHeaderFollowup": true
+  },
+  "privateHeaderFollowup": {
+    "base": "2ff25819f6bf508b110b6ba6c7f79dc0fc114b50",
+    "compiledBrowserTests": 4,
+    "exitCode": 0,
+    "allNetworkInvitationSetupTaskApiPathsNoStoreNoReferrer": true,
+    "anonymousSetupDoesNotCollectPasswords": true,
+    "uiCaptureUploadAddedToExistingCiArtifact": true
+  }
 }
