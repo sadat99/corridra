@@ -90,7 +90,7 @@ test('real guided drafts accept ordinary company details and compose a normal co
     timezone: 'Europe/Madrid',
     offer: 'Supply hotel textiles to hospitality distributors',
     website: 'https://business.test/catalogue',
-    outcomes: ['Relevant meetings'],
+    outcomes: ['Relevant meetings' as const],
     notes: '',
     requirements: [{ label: 'Product', value: 'Hotel towels' }],
     contactName: 'Company contact',
