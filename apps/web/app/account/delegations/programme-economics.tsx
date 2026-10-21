@@ -473,7 +473,7 @@ function ScopedEconomics(props: Props) {
           {notice && <p role="status">{notice}</p>}
           <h5>Totals by currency</h5>
           {summary.currencies.length === 0 ? (
-            <p>No sample amounts recorded yet.</p>
+            <p className="ux-empty">No sample amounts recorded yet.</p>
           ) : (
             summary.currencies.map((c) => (
               <table key={c.currency}>
@@ -531,7 +531,7 @@ function ScopedEconomics(props: Props) {
             {summary.counts.withdrawnOrRemoved} withdrawn or removed
           </p>
           {people.length === 0 ? (
-            <p>No registered participants yet.</p>
+            <p className="ux-empty">No registered participants yet.</p>
           ) : (
             <ul>
               {people.map((r) => (
@@ -674,7 +674,7 @@ function ScopedEconomics(props: Props) {
 
           <h5>Entries, newest first</h5>
           {entries.length === 0 ? (
-            <p>No entries yet.</p>
+            <p className="ux-empty">No entries yet.</p>
           ) : (
             <ol reversed className="ux-plain-list">
               {entries.map((e) => (

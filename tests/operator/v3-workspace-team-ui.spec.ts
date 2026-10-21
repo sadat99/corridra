@@ -516,8 +516,8 @@ test('independent history cursors and saved invitation requests remain scoped to
   });
   await page.goto(origin);
   await page
-    .getByText(owner.name, { exact: true })
-    .locator('..')
+    .getByRole('listitem')
+    .filter({ has: page.getByText(owner.name, { exact: true }) })
     .getByText('Manage team', { exact: true })
     .click();
   const first = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
@@ -530,8 +530,8 @@ test('independent history cursors and saved invitation requests remain scoped to
   await first.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(first.getByRole('alert')).toContainText('Issuing was not confirmed');
   await page
-    .getByText(other.name, { exact: true })
-    .locator('..')
+    .getByRole('listitem')
+    .filter({ has: page.getByText(other.name, { exact: true }) })
     .getByText('Manage team', { exact: true })
     .click();
   const second = page.getByRole('region', { name: 'Test team for ' + other.name, exact: true });

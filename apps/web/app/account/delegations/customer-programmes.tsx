@@ -311,7 +311,7 @@ function ScopedProgrammes({
       className="delivery-view ux-saved-commercial-report"
       aria-label="Sample delegation planning"
     >
-      <a className="text-link" href="/account#customer-workspaces">
+      <a className="text-link ux-back" href="/account#customer-workspaces">
         Back to my workspaces
       </a>
       <p>
@@ -335,7 +335,7 @@ function ScopedProgrammes({
         <>
           <h2>Your planning programmes</h2>
           {rows.length === 0 ? (
-            <p>No sample programmes yet.</p>
+            <p className="ux-empty">No sample programmes yet.</p>
           ) : (
             <ul>
               {rows.map((p) => (

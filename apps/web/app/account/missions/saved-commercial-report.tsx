@@ -346,7 +346,7 @@ function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }
       className="delivery-view ux-saved-commercial-report"
       aria-label="Approved saved commercial report"
     >
-      <a className="text-link" href="/account#saved-commercial-missions">
+      <a className="text-link ux-back" href="/account#saved-commercial-missions">
         Back to my saved commercial missions
       </a>
       <p>
@@ -412,7 +412,9 @@ function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }
                   ))}
                 </ul>
               ) : (
-                <p>No meetings or visits have been approved for this itinerary yet.</p>
+                <p className="ux-empty">
+                  No meetings or visits have been approved for this itinerary yet.
+                </p>
               )}
               <h2>Recorded commercial progress</h2>
               <p>
