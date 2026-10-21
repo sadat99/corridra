@@ -35,7 +35,11 @@ const v = z
     MIGRATION_DATABASE_HOST: z.string().min(1),
     INSTALL_APPLY: z.string().optional(),
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
-    REAL_USE_REASON: z.string().trim().min(10).max(500).optional(),
+    // The workflow always passes this input, empty when unused: blank means not provided.
+    REAL_USE_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     // Optional: pin the customer issuer and event executor after the modules are installed.
     CUSTOMER_ISSUER: z.string().optional(),
     CUSTOMER_EXECUTOR_ID: z.string().optional(),
