@@ -311,6 +311,20 @@ test('the list shows each request in plain words, the services on offer, and a c
   );
   await page.getByText('What we can help with').click();
   await expect(page.getByText('Priced per day')).toBeVisible();
+  // Help is started from the place it is about, so the list says where to go.
+  const start = page.getByRole('region', { name: 'Ask for help' });
+  await expect(start.getByRole('link', { name: 'A programme in this workspace' })).toHaveAttribute(
+    'href',
+    '/account/delegations/' + workspaceId,
+  );
+  await expect(start.getByRole('link', { name: 'An approved company' })).toHaveAttribute(
+    'href',
+    '/account/companies',
+  );
+  await expect(start.getByRole('link', { name: 'A private request' })).toHaveAttribute(
+    'href',
+    '/account?view=work#customer-requests',
+  );
   expect(await axe(page)).toEqual([]);
   await page.unroute('**/api/customer-service-requests**');
   await serve(page, (url) =>
@@ -328,6 +342,29 @@ test('the list shows each request in plain words, the services on offer, and a c
   );
   await page.goto(origin + '/');
   await expect(page.getByText('Only an owner or admin can ask for help.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Ask for help' })).toHaveCount(0);
+  await page.unroute('**/api/customer-service-requests**');
+  await serve(page, (url) =>
+    url.searchParams.get('scope') === 'catalogue'
+      ? { json: catalogue() }
+      : {
+          json: {
+            workspaceId,
+            canRequest: true,
+            requests: [],
+            nextAfter: null,
+            expiresAt: new Date(Date.now() + 60000).toISOString(),
+          },
+        },
+  );
+  await page.goto(origin + '/');
+  await expect(page.getByText('Choose where you need help below.')).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Ask for help' })
+      .getByRole('link', { name: 'A programme in this workspace' }),
+  ).toBeVisible();
+  expect(await axe(page)).toEqual([]);
 });
 
 test('denied, unavailable and broken answers each show a plain message and never a request', async ({

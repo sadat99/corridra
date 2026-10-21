@@ -12,6 +12,7 @@ import {
   type CatalogueResult,
   type ListResult,
 } from './service-request-client';
+import { workspacePath } from '../../../lib/workspace-choice';
 
 type Props = { subject: string; issuer: string; workspaceId: string };
 
@@ -114,7 +115,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
               <p className="ux-state-label">No requests yet</p>
               <div role="status">
                 {list.canRequest
-                  ? 'Start from a delegation programme, a private request or an approved company, and choose Request help.'
+                  ? 'Nothing has been requested in this workspace yet. Choose where you need help below.'
                   : 'Nothing has been requested in this workspace yet. Only an owner or admin can ask for help.'}
               </div>
             </div>
@@ -174,6 +175,25 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
                 ))}
               </ul>
             </details>
+          )}
+          {list.canRequest && (
+            <section aria-labelledby="start-help-title" className="detail-card">
+              <h3 id="start-help-title">Ask for help</h3>
+              <p>Help is requested from the place it is about. Open one and choose Request help.</p>
+              <ul className="ux-link-list">
+                <li>
+                  <a href={workspacePath('programmes', workspaceId)}>
+                    A programme in this workspace
+                  </a>
+                </li>
+                <li>
+                  <a href="/account/companies">An approved company</a>
+                </li>
+                <li>
+                  <a href="/account?view=work#customer-requests">A private request</a>
+                </li>
+              </ul>
+            </section>
           )}
         </>
       )}
