@@ -1,0 +1,34 @@
+{
+  "lastInstall": {
+    "run": 39524758195,
+    "source": "b6a483aa2c0985897563a6a1bd2a17cc59db91a0",
+    "apply": "yes",
+    "result": "success",
+    "memberRoles": "1 applied",
+    "fourNewInstallersPresentInSource": false
+  },
+  "project": "odd-pond-26265871",
+  "database": "corridra",
+  "branchesChecked": [
+    "br-lucky-darkness-b1ppj8en",
+    "br-lingering-sea-b1eob57e",
+    "br-silent-tree-b18dmm1n"
+  ],
+  "tablesAbsentOnAll": [
+    "customer_private.organisation_link",
+    "customer_private.programme_terms_revision",
+    "customer_private.pricing_template",
+    "customer_private.service_request"
+  ],
+  "productionFlagsAbsent": [
+    "CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED",
+    "CORRIDRA_CUSTOMER_PROGRAMME_TERMS_ENABLED",
+    "CORRIDRA_CUSTOMER_PROGRAMME_PRICING_ENABLED",
+    "CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED"
+  ],
+  "limits": [
+    "Sensitive Vercel runtime URL not retrievable; runtime host match not independently established",
+    "Read-only metadata checks; no personal records read",
+    "Source presence, schema installation, flags and real-use admission are separate"
+  ]
+}
