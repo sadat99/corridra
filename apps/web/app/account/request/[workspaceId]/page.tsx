@@ -57,7 +57,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     );
   }
   return (
-    <CustomerShell tab="work" eyebrow="PRIVATE SAMPLE REQUEST" title="What do you want to achieve?">
+    <CustomerShell tab="work" eyebrow="MY WORK" title="What do you want to achieve?">
       <p>Workspace: {name}</p>
       <PrivateRequestIntake issuer={issuer} subject={data.user.id} workspaceId={id.data} />
     </CustomerShell>

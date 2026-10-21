@@ -835,3 +835,82 @@ for (const width of [320, 390, 768, 1440])
       ).toEqual([]);
     },
   );
+
+test('a failed evidence request is never reused for a different action', async ({ page }) => {
+  const posts: Json[] = [];
+  const panel = await openCustomer(page, () =>
+    view({ status: 'pending', canFile: false, claim: claim() }),
+  );
+  await page.route('**/api/customer-organisation-links', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const body = route.request().postDataJSON();
+    posts.push(body);
+    if (body.action === 'add_evidence') return route.fulfill({ status: 500, json: { error: 'x' } });
+    return route.fulfill({ json: view({ commandId: body.commandId }) });
+  });
+  await panel
+    .getByLabel('Statement (start with Synthetic)')
+    .fill('Synthetic registration statement from an invented registry');
+  await panel.getByRole('button', { name: 'Add evidence' }).click();
+  await expect(panel.getByRole('alert')).toContainText('could not be confirmed');
+  await panel.getByRole('button', { name: 'Withdraw this request' }).click();
+  await panel.getByRole('button', { name: 'Confirm withdrawal' }).click();
+  await expect(panel.getByText('No company link yet')).toBeVisible();
+  expect(posts.map((p) => p.action)).toEqual(['add_evidence', 'withdraw']);
+  expect(posts[1]!.commandId).not.toBe(posts[0]!.commandId);
+});
+
+test('a rejected replacement shows its staff reason while the earlier link stays approved', async ({
+  page,
+}) => {
+  const panel = await openCustomer(page, () =>
+    view({
+      status: 'approved',
+      link: approvedLink,
+      claim: claim({
+        state: 'rejected',
+        canAddEvidence: false,
+        canWithdraw: false,
+        decision: {
+          kind: 'rejected',
+          reason: 'The replacement evidence is not enough',
+          at: '2026-10-20T11:00:00.000Z',
+        },
+      }),
+    }),
+  );
+  await expect(panel.getByText(linkText)).toBeVisible();
+  await expect(panel.getByText('Staff note: The replacement evidence is not enough')).toBeVisible();
+});
+
+test('staff can page through a queue that has more than one page', async ({ page }) => {
+  const second = {
+    ...queueItem,
+    claimId: randomUUID(),
+    legalName: 'Synthetic Chattogram Mills Ltd',
+  };
+  const afters: (string | null)[] = [];
+  await page.route('**/api/workspace/customer-organisation-links**', (route) => {
+    if (route.request().method() !== 'GET') return route.fallback();
+    const url = new URL(route.request().url());
+    const after = url.searchParams.get('after');
+    afters.push(after);
+    return route.fulfill({
+      json: {
+        scope: url.searchParams.get('scope') ?? 'open',
+        synthetic: true,
+        nextAfter: after ? null : queueItem.claimId,
+        items: [after ? second : queueItem],
+      },
+    });
+  });
+  await page.goto(origin + '/?mode=staff');
+  await page.getByText('Customer company link requests', { exact: true }).click();
+  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await expect(page.getByText(/Synthetic Dhaka Textiles Ltd/)).toBeVisible();
+  await page.getByRole('button', { name: 'Show more requests' }).click();
+  await expect(page.getByText(/Synthetic Chattogram Mills Ltd/)).toBeVisible();
+  await expect(page.getByText(/Synthetic Dhaka Textiles Ltd/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show more requests' })).toHaveCount(0);
+  expect(afters).toEqual([null, queueItem.claimId]);
+});

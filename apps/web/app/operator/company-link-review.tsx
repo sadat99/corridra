@@ -243,6 +243,29 @@ function Reviewer({ tenant }: Props) {
       if (!task.signal.aborted) setBusy(false);
     }
   }
+  async function loadMore() {
+    if (busy || !queue?.nextAfter) return;
+    controller.current?.abort();
+    const task = new AbortController();
+    controller.current = task;
+    setBusy(true);
+    setMessage('');
+    try {
+      const r = await fetch(
+        endpoint + '&scope=' + queue.scope + '&after=' + encodeURIComponent(queue.nextAfter),
+        { cache: 'no-store', signal: task.signal },
+      );
+      if (!r.ok) throw Error(failureText(r.status));
+      const v = queueSchema.parse(await r.json());
+      if (v.scope !== queue.scope) throw Error('The list changed. Reload.');
+      if (!task.signal.aborted) setQueue({ ...v, items: [...queue.items, ...v.items] });
+    } catch (e) {
+      if (!task.signal.aborted)
+        setMessage(e instanceof Error ? e.message : 'The list could not be loaded.');
+    } finally {
+      if (!task.signal.aborted) setBusy(false);
+    }
+  }
   async function open(claimId: string) {
     if (busy) return;
     controller.current?.abort();
@@ -378,6 +401,11 @@ function Reviewer({ tenant }: Props) {
             </li>
           ))}
         </ul>
+      )}
+      {queue?.nextAfter && !review && (
+        <button className="text-link" type="button" disabled={busy} onClick={() => void loadMore()}>
+          Show more requests
+        </button>
       )}
       {review && (
         <section aria-label={'Review of ' + review.profile.legalName}>

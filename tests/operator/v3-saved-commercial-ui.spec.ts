@@ -236,6 +236,7 @@ test('explicitly saves and removes an invitation with scoped headers and no brow
   });
   await page.goto(origin);
   await expect(page.getByText('No commercial mission invitations saved yet.')).toBeVisible();
+  await page.getByText('Save an invitation', { exact: true }).click();
   await page.getByLabel('Private client mission invitation').fill(origin + '/client#' + token);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Save invitation to this account' }).click();
@@ -261,6 +262,7 @@ test('lost save response freezes the exact command and retries without claiming 
     else await route.fulfill({ json: metadata });
   });
   await page.goto(origin);
+  await page.getByText('Save an invitation', { exact: true }).click();
   await page.getByLabel('Private client mission invitation').fill(origin + '/client#' + token);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Save invitation to this account' }).click();

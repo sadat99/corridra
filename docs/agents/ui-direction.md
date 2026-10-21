@@ -253,9 +253,9 @@ One scale, set as tokens in `apps/web/app/globals.css`. Do not add a raw size; p
 | `--text-lg`      | 18 px       | Reading text and lead paragraphs, large buttons               |
 | `--text-xl`      | 20 px       | Card and step titles                                          |
 | `--text-2xl`     | 24 px       | Form step titles, key figures                                 |
-| `--text-h2`      | 24 to 36 px | Section headings                                              |
-| `--text-h1`      | 30 to 48 px | Page headline                                                 |
-| `--text-display` | 34 to 60 px | Home headline only                                            |
+| `--text-h2`      | 24 to 32 px | Section headings                                              |
+| `--text-h1`      | 30 to 40 px | Page headline                                                 |
+| `--text-display` | 34 to 52 px | Home headline only                                            |
 
 Phone headlines use a smaller range so each sentence stays on one line. Form controls stay at 16 px so phones never zoom on focus.
 

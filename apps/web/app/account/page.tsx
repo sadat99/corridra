@@ -26,12 +26,27 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
 import { foundations } from '../../lib/foundations';
+import { AccountHashRedirect } from './hash-redirect';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
   robots: { index: false, follow: false },
 };
-export default async function Page() {
+const views = ['home', 'work', 'results', 'more'] as const;
+type View = (typeof views)[number];
+const headings: Record<View, { eyebrow: string; title: string }> = {
+  home: { eyebrow: 'YOUR ACCOUNT', title: 'What would you like to do?' },
+  work: { eyebrow: 'MY WORK', title: 'Workspaces and requests.' },
+  results: { eyebrow: 'RESULTS', title: 'Missions shared with you.' },
+  more: { eyebrow: 'MORE', title: 'Your account and help.' },
+};
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string | string[] }>;
+}) {
+  const requested = (await searchParams).view;
+  const view: View = views.find((item) => item === requested) ?? 'home';
   const auth = neonAuth();
   if (!auth) redirect('/signin');
   const { data, error } = await auth.getSession({ query: { disableCookieCache: true } });
@@ -83,21 +98,59 @@ export default async function Page() {
         /* The independent request section provides the bounded unavailable/denied state. */
       }
   }
+  const heading = headings[view];
   return (
-    <CustomerShell tab="home" eyebrow="YOUR ACCOUNT" title="Your Corridra account.">
-      <NextStepCard
-        title={requestCreationEnabled ? 'Start a request' : 'Plan a mission'}
-        text={
-          requestCreationEnabled
-            ? 'Choose a test workspace, then say what you want to achieve.'
-            : 'Tell us your goal. It takes a few minutes.'
-        }
-        action={requestCreationEnabled ? 'Choose a workspace' : 'Plan a mission'}
-        href={requestCreationEnabled ? '#customer-workspaces' : '/plan'}
-      />
-      <div className="ux-account-groups">
-        <section id="my-work" tabIndex={-1} className="guide-area" aria-labelledby="my-work-title">
-          <h2 id="my-work-title">My work</h2>
+    <CustomerShell tab={view} eyebrow={heading.eyebrow} title={heading.title}>
+      <AccountHashRedirect view={view} />
+      {view === 'home' && (
+        <>
+          <NextStepCard
+            title={requestCreationEnabled ? 'Start a request' : 'Plan a mission'}
+            text={
+              requestCreationEnabled
+                ? 'Choose a workspace, then say what you want to achieve.'
+                : 'Tell us your goal. It takes a few minutes.'
+            }
+            action={requestCreationEnabled ? 'Choose a workspace' : 'Plan a mission'}
+            href={requestCreationEnabled ? '/account?view=work#customer-workspaces' : '/plan'}
+          />
+          <section className="guide-area ux-account-groups" aria-labelledby="open-title">
+            <h2 id="open-title">Have something to open?</h2>
+            <ul className="ux-quick-links">
+              {workspaceIssuer && (
+                <li>
+                  <Link prefetch={false} href="/account?view=work">
+                    <strong>Join a workspace</strong>
+                    <span>Use an invitation from a workspace owner.</span>
+                  </Link>
+                </li>
+              )}
+              <li>
+                <Link prefetch={false} href="/account?view=results">
+                  <strong>Open a shared mission</strong>
+                  <span>Paste the private link you were sent.</span>
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} href="/plan#receipt-check">
+                  <strong>Check a request receipt</strong>
+                  <span>See progress and replies on a request you sent.</span>
+                </Link>
+              </li>
+              {customerCompaniesEnabled() && (
+                <li>
+                  <Link prefetch={false} href="/account/companies">
+                    <strong>Browse approved companies</strong>
+                    <span>Companies cleared to take part in missions.</span>
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </section>
+        </>
+      )}
+      {view === 'work' && (
+        <div id="my-work" tabIndex={-1} className="ux-account-groups">
           {workspaceIssuer && (
             <div id="customer-workspaces" tabIndex={-1}>
               <CustomerWorkspaces
@@ -116,7 +169,7 @@ export default async function Page() {
           {workspaceIssuer && customerParticipantsEnabled() && (
             <p>
               <Link className="text-link" href="/account/delegations">
-                My sample delegation registrations
+                Delegation registrations
               </Link>
             </p>
           )}
@@ -131,9 +184,10 @@ export default async function Page() {
               />
             </div>
           )}
-        </section>
-        <section id="results" tabIndex={-1} className="guide-area" aria-labelledby="results-title">
-          <h2 id="results-title">Results</h2>
+        </div>
+      )}
+      {view === 'results' && (
+        <div id="results" tabIndex={-1} className="ux-account-groups">
           <div id="customer-missions" tabIndex={-1}>
             {savedMissionIssuer && (
               <div id="saved-commercial-missions">
@@ -152,36 +206,31 @@ export default async function Page() {
             )}
             <CustomerMissions key={data.user.id} />
           </div>
-        </section>
-        <section id="more" tabIndex={-1} className="guide-area" aria-labelledby="more-title">
-          <h2 id="more-title">More</h2>
+        </div>
+      )}
+      {view === 'more' && (
+        <div id="more" tabIndex={-1} className="ux-account-groups">
           <aside className="ux-account-sidebar" aria-label="Account and access">
             <section className="ux-account-profile" aria-label="Your verified profile">
               <span className="ux-status" data-tone="positive">
                 Verified account email
               </span>
-              <h3>{data.user.name}</h3>
+              <h2>{data.user.name}</h2>
               <p>{data.user.email}</p>
               <p>Your email address is verified. This does not verify your company.</p>
             </section>
             <OperatorInvitationHint key={data.user.id} />
-            <Link className="primary-link" href="/plan">
-              Plan a mission
-            </Link>
-            <p>
-              Keep the receipt we give you after you send a request. You can use it to check
-              progress and replies.
-            </p>
             <nav className="access-options" aria-label="Account sections">
-              {workspaceIssuer && <a href="#customer-workspaces">Test workspaces</a>}
-              {requestIssuer && <a href="#customer-requests">My saved requests</a>}
-              {savedMissionIssuer && (
-                <a href="#saved-commercial-missions">My saved commercial missions</a>
-              )}
-              <a href="#customer-missions">My shared missions</a>
+              <Link className="text-link" href="/plan">
+                Plan a mission
+              </Link>
               <Link className="text-link" href="/plan#receipt-check">
                 Check a request receipt
               </Link>
+              <p>
+                Keep the receipt we give you after you send a request. You can use it to check
+                progress and replies.
+              </p>
             </nav>
             <details className="ux-journey-disclosure">
               <summary>Other ways in</summary>
@@ -199,8 +248,8 @@ export default async function Page() {
             </details>
             <AccountSignout />
           </aside>
-        </section>
-      </div>
+        </div>
+      )}
     </CustomerShell>
   );
 }

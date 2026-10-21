@@ -255,49 +255,58 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
   }
   function file() {
     if (!view || busy) return;
-    const body = pending ?? {
-      action: 'file',
-      commandId: crypto.randomUUID(),
-      workspaceId,
-      expectedProfileVersion: view.currentProfileVersion,
-      kind,
-      organisationId: kind === 'EXISTING' ? chosen : null,
-      note: note.trim(),
-    };
+    const body =
+      pending?.action === 'file'
+        ? pending
+        : {
+            action: 'file',
+            commandId: crypto.randomUUID(),
+            workspaceId,
+            expectedProfileVersion: view.currentProfileVersion,
+            kind,
+            organisationId: kind === 'EXISTING' ? chosen : null,
+            note: note.trim(),
+          };
     setPending(body);
     void send(body);
   }
   function addEvidence() {
     const claim = view?.claim;
     if (!claim?.id || busy) return;
-    const body = pending ?? {
-      action: 'add_evidence',
-      commandId: crypto.randomUUID(),
-      workspaceId,
-      claimId: claim.id,
-      expectedVersion: claim.version,
-      evidenceKind: evKind,
-      statement: statement.trim(),
-      url: url.trim() === '' ? null : url.trim(),
-    };
+    const body =
+      pending?.action === 'add_evidence'
+        ? pending
+        : {
+            action: 'add_evidence',
+            commandId: crypto.randomUUID(),
+            workspaceId,
+            claimId: claim.id,
+            expectedVersion: claim.version,
+            evidenceKind: evKind,
+            statement: statement.trim(),
+            url: url.trim() === '' ? null : url.trim(),
+          };
     setPending(body);
     void send(body);
   }
   function withdraw() {
     const claim = view?.claim;
     if (!claim?.id || busy) return;
-    const body = pending ?? {
-      action: 'withdraw',
-      commandId: crypto.randomUUID(),
-      workspaceId,
-      claimId: claim.id,
-      expectedVersion: claim.version,
-    };
+    const body =
+      pending?.action === 'withdraw'
+        ? pending
+        : {
+            action: 'withdraw',
+            commandId: crypto.randomUUID(),
+            workspaceId,
+            claimId: claim.id,
+            expectedVersion: claim.version,
+          };
     setPending(body);
     void send(body);
   }
   const claim = view?.claim ?? null;
-  const open = view && ['pending', 'needs_evidence'].includes(view.status) && claim;
+  const open = view && claim && ['pending', 'needs_evidence'].includes(claim.state);
   const showForm = view?.canEdit && view.canFile && (view.status !== 'approved' || changing);
   return (
     <section aria-label="Company link" aria-busy={loading || busy} className="detail-card">
@@ -356,22 +365,19 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           )}
           {claim && (
             <>
-              {view.status === 'pending' && claim.awaitingCreation && (
+              {claim.state === 'pending' && claim.awaitingCreation && (
                 <p>
                   Staff approved adding your company to the list. The link follows once the record
                   exists.
                 </p>
               )}
-              {view.status === 'pending' && !claim.awaitingCreation && (
+              {claim.state === 'pending' && !claim.awaitingCreation && (
                 <p>Your request is waiting for Corridra staff.</p>
               )}
-              {view.status === 'needs_evidence' && (
+              {claim.state === 'needs_evidence' && (
                 <p>Staff need more evidence before they decide.</p>
               )}
-              {claim.decision &&
-                ['pending', 'needs_evidence', 'rejected'].includes(view.status) && (
-                  <p>Staff note: {claim.decision.reason}</p>
-                )}
+              {claim.decision && <p>Staff note: {claim.decision.reason}</p>}
               <dl>
                 <dt>Request</dt>
                 <dd>

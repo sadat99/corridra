@@ -110,23 +110,23 @@ export function CustomerWorkspaceInvitation({
   }
   return (
     <details className="ux-journey-disclosure">
-      <summary>Join a test workspace</summary>
+      <summary>Join a workspace</summary>
       <p>
-        Use a sample invitation from its owner. Your account must already be allowed to use this
-        test.
+        Use the invitation code from the workspace owner. Your account must already be allowed to
+        join.
       </p>
       <p>
-        Joining gives sample workspace access. It does not share private missions or company
+        Joining gives access to the workspace only. It does not share private missions or company
         records.
       </p>
       <form
         className="operator-form"
-        aria-label="Accept a test workspace invitation"
+        aria-label="Accept a workspace invitation"
         aria-busy={busy}
         onSubmit={join}
       >
         <label className="field">
-          Test workspace invitation code
+          Workspace invitation code
           <input
             type="password"
             value={code}
@@ -153,7 +153,7 @@ export function CustomerWorkspaceInvitation({
           </p>
         )}
         <button className="primary-link" disabled={busy}>
-          {busy ? 'Please wait…' : pending ? 'Retry joining workspace' : 'Join test workspace'}
+          {busy ? 'Please wait…' : pending ? 'Retry joining workspace' : 'Join workspace'}
         </button>
         {pending && (
           <button

@@ -486,7 +486,7 @@ export function CustomerWorkspaceTeam({
         if (event.currentTarget.open && !page && !loading && !inFlight.current) void load();
       }}
     >
-      <summary>Manage test team</summary>
+      <summary>Manage team</summary>
       <section aria-label={'Test team for ' + workspace.name} aria-busy={loading || busy}>
         <p>
           Sample workspace access only. No private mission, company or financial information is

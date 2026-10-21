@@ -19,6 +19,11 @@ export function CustomerShell({
     <WorkspaceShell
       eyebrow={eyebrow}
       title={title}
+      notice={
+        <p className="ux-testmode" role="note">
+          <strong>Test mode:</strong> invented data only. Use made-up names and details.
+        </p>
+      }
       nav={<CustomerNav current={tab} companies={customerCompaniesEnabled()} />}
     >
       {children}
