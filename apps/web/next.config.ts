@@ -81,6 +81,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/workspace/customer-service-requests',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/customer-requests/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
@@ -89,7 +96,7 @@ const nextConfig: NextConfig = {
       },
       {
         source:
-          '/api/:page(customer-workspaces|customer-workspace-access|customer-workspace-members|customer-requests|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes|customer-programme-participants|customer-programme-objectives|customer-programme-context|customer-organisation-profiles|customer-organisation-links|customer-mission-drafts|customer-programme-economics|customer-programme-coordination|customer-programme-templates|customer-programme-terms|customer-programme-pricing|customer-programme-exports)',
+          '/api/:page(customer-workspaces|customer-workspace-access|customer-workspace-members|customer-requests|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes|customer-programme-participants|customer-programme-objectives|customer-programme-context|customer-organisation-profiles|customer-organisation-links|customer-mission-drafts|customer-programme-economics|customer-programme-coordination|customer-programme-templates|customer-programme-terms|customer-programme-pricing|customer-programme-exports|customer-service-requests)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

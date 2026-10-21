@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
@@ -44,6 +45,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         requestId={parsed.data}
         subject={session.data.user.id}
         issuer={issuer}
+        serviceRequestsEnabled={customerServiceRequestsEnabled()}
       />
     </CustomerShell>
   );

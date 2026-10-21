@@ -18,6 +18,7 @@ import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-org
 import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { customerMemberRolesEnabled } from '@corridra/auth/customer-member-roles';
 import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -163,6 +164,7 @@ export default async function Page({
                 draftsEnabled={customerMissionDraftsEnabled()}
                 memberRolesEnabled={customerMemberRolesEnabled()}
                 linksEnabled={customerOrganisationLinksEnabled()}
+                serviceRequestsEnabled={customerServiceRequestsEnabled()}
               />
             </div>
           )}

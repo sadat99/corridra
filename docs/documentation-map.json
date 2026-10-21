@@ -749,6 +749,11 @@
       "use": "Pricing templates, all-or-nothing bulk fees, programme series, per-currency repeat revenue and audited CSV exports; moves no money"
     },
     {
+      "path": "docs/adr/0055-contextual-paid-service-requests.md",
+      "classification": "Architecture contract/index",
+      "use": "Contextual paid-service requests: staff catalogue, quote versus order, order intent without payment, status timeline; synthetic only, default off"
+    },
+    {
       "path": "docs/adr/0051-member-roles-and-leaving.md",
       "classification": "Architecture contract/index",
       "use": "Owner-managed admin and member roles and voluntary leaving for invited workspace members; append-only history; default off"

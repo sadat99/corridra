@@ -46,6 +46,7 @@ type Props = {
   templatesEnabled?: boolean;
   termsEnabled?: boolean;
   pricingEnabled?: boolean;
+  serviceRequestsEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -87,6 +88,7 @@ function ScopedProgrammes({
   templatesEnabled = false,
   termsEnabled = false,
   pricingEnabled = false,
+  serviceRequestsEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
@@ -348,6 +350,21 @@ function ScopedProgrammes({
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
                   <p>Planning record only · Sample data</p>
+                  {serviceRequestsEnabled && (
+                    <p>
+                      <a
+                        className="text-link"
+                        href={
+                          '/account/service-requests/new?kind=programme&ref=' +
+                          encodeURIComponent(p.id) +
+                          '&workspace=' +
+                          encodeURIComponent(workspaceId)
+                        }
+                      >
+                        Request help with this programme
+                      </a>
+                    </p>
+                  )}
                   {contextEnabled && (
                     <ProgrammeContext
                       subject={subject}

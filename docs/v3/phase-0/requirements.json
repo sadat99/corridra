@@ -3724,9 +3724,9 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 501,
     "requirement": "| Contextual paid-service requests | Hybrid revenue and local execution | P1 |",
-    "status": "MISSING",
+    "status": "PARTIAL",
     "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "nextAction": "Optional synthetic-only contextual paid-service requests are implemented and locally verified (staff catalogue, itemised quote versus order intent, status timeline, customer and staff screens; ADR055) but remain PARTIAL until the owner-approved install, a real-user trial and a named staff team; billing (V3-06-013) stays separate and MISSING."
   },
   {
     "id": "V3-06-013",
