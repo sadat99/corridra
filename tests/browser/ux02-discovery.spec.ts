@@ -215,7 +215,7 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
 test('saved request receipt uses the shared cards, copies safely, checks replies and starts a new request', async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const code = 'a'.repeat(64);
   await page.addInitScript((receipt) => {
@@ -255,7 +255,7 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
     );
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({
-      path: `.cache/ux06/public-after/receipt-${width}.png`,
+      path: testInfo.outputPath(`receipt-${width}.png`),
       fullPage: true,
     });
   }
