@@ -32,8 +32,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
         Forgot operator password?
       </Link>
       <nav className="access-options" aria-label="Sign-in alternatives">
-        <Link className="text-link" href="/operator/setup">
-          Set up invited operator access
+        <Link
+          className="text-link"
+          href={returnTo.startsWith('/contributor?') ? '/contributor/setup' : '/operator/setup'}
+        >
+          {returnTo.startsWith('/contributor?')
+            ? 'Set up invited contributor access'
+            : 'Set up invited operator access'}
         </Link>
         <Link className="text-link" href="/workspace">
           All workspaces and tools

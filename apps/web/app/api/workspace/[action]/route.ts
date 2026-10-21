@@ -36,6 +36,8 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           s.intelligence.sources(ctx, z.uuid().parse(new URL(request.url).searchParams.get('run'))),
         intelligence: () => s.intelligence.workspace(ctx),
         network: () => s.network.workspace(ctx),
+        'network-invitations': () =>
+          s.networkInvitations.list(ctx, new URL(request.url).searchParams.get('after')),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
         'founder-activation': async () => ({
           ...(await s.operations.founderAccess(ctx)),
@@ -218,6 +220,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       'ai-run': () => s.intelligence.run(ctx, input),
       'ai-review': () => s.intelligence.review(ctx, input),
       'network-profile': () => s.network.profile(ctx, input),
+      'network-invitation': () => s.networkInvitations.command(ctx, input),
       'network-task': () => s.network.task(ctx, input),
       'network-event': () => s.network.event(ctx, input),
       'network-review': () => s.network.reviewSubmission(ctx, input),

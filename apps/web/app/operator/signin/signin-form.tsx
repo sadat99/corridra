@@ -66,18 +66,26 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
       setBusy(false);
     }
   }
+  const contributor = returnTo.startsWith('/contributor?');
   return (
-    <form method="post" className="operator-form" onSubmit={submit} aria-label="Operator sign-in">
+    <form
+      method="post"
+      className="operator-form"
+      onSubmit={submit}
+      aria-label={contributor ? 'Contributor sign-in' : 'Operator sign-in'}
+    >
       <h2 ref={heading} tabIndex={-1}>
         {stage === 'password'
-          ? 'Use your operator account'
+          ? contributor
+            ? 'Use your contributor work account'
+            : 'Use your operator account'
           : stage === 'enrol'
             ? 'Set up your authenticator'
             : 'Verify your authenticator'}
       </h2>
       <p>
-        Access is limited to invited accounts. Use test records until customer data controls are
-        complete.
+        Access is limited to invited work accounts. Use your separate work password and
+        authenticator. Your customer account does not grant staff or assigned-task access.
       </p>
       {stage === 'password' && (
         <label className="field">

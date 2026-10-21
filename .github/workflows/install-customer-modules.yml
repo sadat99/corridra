@@ -27,6 +27,15 @@ on:
         description: 'Required reason for enabling or pausing real admission.'
         required: false
         default: ''
+      network_use_action:
+        description: 'Optional ADR057 operation for real invited contributor work.'
+        type: choice
+        options: [unchanged, install, enable, pause]
+        default: unchanged
+      network_use_reason:
+        description: 'Required reason for enabling or pausing real Network.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -49,7 +58,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -66,4 +75,6 @@ jobs:
           CUSTOMER_EXECUTOR_ID: ${{ inputs.customer_executor_id }}
           REAL_USE_ACTION: ${{ inputs.real_use_action }}
           REAL_USE_REASON: ${{ inputs.real_use_reason }}
+          NETWORK_USE_ACTION: ${{ inputs.network_use_action }}
+          NETWORK_USE_REASON: ${{ inputs.network_use_reason }}
         run: pnpm exec tsx scripts/install-customer-modules.ts

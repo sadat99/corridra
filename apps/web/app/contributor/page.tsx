@@ -43,6 +43,9 @@ export default async function Page({
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
         </p>
+        <Link className="primary-link" href="/contributor/setup">
+          Accept a reviewed contributor invitation
+        </Link>
         <Link className="text-link" href="/network">
           How assigned work works
         </Link>
@@ -63,8 +66,8 @@ export default async function Page({
   return (
     <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks.">
       <p>
-        Only your disclosed tasks appear here. Use synthetic records until pilot controls are
-        accepted.
+        Only your disclosed tasks appear here. Follow each task’s instructions, deadlines and
+        evidence requirements. Your access does not include the full mission or team workspace.
       </p>
       {process.env.CORRIDRA_NETWORK_ENABLED === 'true' ? (
         <TaskBoard workspace={workspace.data} />

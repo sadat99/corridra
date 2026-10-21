@@ -103,7 +103,9 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
             <Link
               prefetch={false}
               className="primary-link"
-              href={content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan'}
+              href={
+                content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
+              }
             >
               {content.cta ?? 'Start a request'}
             </Link>
@@ -228,7 +230,9 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           <Link
             prefetch={false}
             className="primary-link"
-            href={content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan'}
+            href={
+              content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
+            }
           >
             {content.cta ?? 'Start a request'}
           </Link>

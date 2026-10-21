@@ -21,6 +21,7 @@ export type PublicPageContent = {
   /** A last call to action under the closing section. */
   band?: { title: string; text: string };
   cta?: string;
+  ctaHref?: string;
   intakeJob?: string;
   /** The commercial direction this page is about, shown next to the main action. */
   route?: { label: string; href: string; linkLabel: string };

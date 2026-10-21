@@ -891,7 +891,12 @@
     {
       "path": "docs/adr/0056-real-use-admission-and-progressive-registration.md",
       "classification": "Architecture contract/index",
-      "use": "Owner real-use decision, both signup paths, pending handoff and preservation/acceptance requirements; not enabled"
+      "use": "Real admission and progressive signup contract; enabled configuration evidence is in the current V3 ledger"
+    },
+    {
+      "path": "docs/adr/0057-real-invited-execution-work.md",
+      "classification": "Architecture contract/index",
+      "use": "Real invited contributor work, separate identity/MFA, purpose isolation, exact rewards and protected activation; production pending"
     },
     {
       "path": "docs/v3/history/ledger-chunks-120-126.md",
