@@ -37,5 +37,27 @@
   "installationEnvironment": {
     "name": "customer-modules-install",
     "requiredReviewers": 1
+  },
+  "snapshot": "Before installation run 39561356047; absent-table/flag fields above are historical observations.",
+  "approvedInstallation": {
+    "run": 39561356047,
+    "job": 119093146088,
+    "source": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+    "ownerApproved": true,
+    "result": "success",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "fourTablesPresent": true,
+    "fourRegistries": "one applied row each; all SHA256 hashes equal accepted source",
+    "productionFlags": "all four true, production only; independently read back",
+    "configurationDeployment": {
+      "id": "dpl_CBx1qwTznhWj2EDXCWaBYV9F6VN6",
+      "source": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+      "lastState": "BUILDING",
+      "reason": "Existing automatic deployment predates the four flag changes; refresh exact checked source for changed configuration."
+    },
+    "limits": [
+      "Real-use admission is still not implemented or activated",
+      "Authenticated provider/customer acceptance not yet verified"
+    ]
   }
 }
