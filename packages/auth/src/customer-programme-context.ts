@@ -1,3 +1,4 @@
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { delegationContextInput } from '@corridra/domain/experience';
 import { CustomerSessionBoundary } from './customer-session';
@@ -10,9 +11,9 @@ export function customerProgrammeContextEnabled(env: NodeJS.ProcessEnv = process
 const syntheticText = z
   .string()
   .trim()
-  .min(11)
+  .min(2)
   .max(1000)
-  .regex(/^Synthetic /)
+  .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
   .refine((v) => !/[\u0000-\u001f\u007f]/u.test(v));
 export const customerProgrammeContextInput = z
   .object({

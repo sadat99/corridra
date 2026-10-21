@@ -1,3 +1,5 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CustomerAccessPage, CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 
@@ -5,8 +7,7 @@ const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const validId = (v: unknown): v is string => typeof v === 'string' && uuid.test(v);
 const label = (v: unknown): v is string =>
   typeof v === 'string' &&
-  v.startsWith('Synthetic ') &&
-  v.length >= 11 &&
+  customerLabelAllowed(v) &&
   v.length <= 120 &&
   v === v.trim() &&
   !/[\u0000-\u001f\u007f]/u.test(v);
@@ -161,7 +162,7 @@ export function CustomerWorkspaceTeam({
       try {
         const saved = readIntent(key);
         setPending(saved);
-        if (saved) setName(saved.label.slice('Synthetic '.length));
+        if (saved) setName(saved.label.slice((realCustomerInput() ? '' : 'Synthetic ').length));
         setStorageFailed(false);
       } catch {
         setStorageFailed(true);
@@ -189,10 +190,15 @@ export function CustomerWorkspaceTeam({
     const intent = pending ?? {
       version: 1 as const,
       commandId: crypto.randomUUID(),
-      label: 'Synthetic ' + name.trim(),
+      label: (realCustomerInput() ? '' : 'Synthetic ') + name.trim(),
     };
     if (!label(intent.label)) {
-      setMessage({ text: 'Enter a fictional label between 1 and 110 characters.', error: true });
+      setMessage({
+        text: realCustomerInput()
+          ? 'Enter a display label between 2 and 120 characters.'
+          : 'Enter a fictional label between 1 and 110 characters.',
+        error: true,
+      });
       return;
     }
     inFlight.current = true;
@@ -283,7 +289,9 @@ export function CustomerWorkspaceTeam({
           text: !cleared
             ? 'Invitation confirmed, but retry details could not be cleared. Review this code and the history before retrying.'
             : code.token
-              ? 'The sample invitation is issued. Keep its code privately before leaving this page.'
+              ? realCustomerInput()
+                ? 'The invitation is issued. Keep its code privately before leaving this page.'
+                : 'The sample invitation is issued. Keep its code privately before leaving this page.'
               : 'The invitation exists, but its code cannot be retrieved. Cancel it in the history and issue a new invitation.',
           error: !cleared || !code.token,
         });
@@ -512,7 +520,12 @@ export function CustomerWorkspaceTeam({
           <>
             <h3>Invitations</h3>
             {page.invitations.length === 0 ? (
-              <p className="ux-empty">No sample invitations on this page.</p>
+              <p className="ux-empty">
+                {' '}
+                {realCustomerInput()
+                  ? 'No invitations on this page.'
+                  : 'No sample invitations on this page.'}{' '}
+              </p>
             ) : (
               <ul>
                 {page.invitations.map((r) => (
@@ -623,7 +636,9 @@ export function CustomerWorkspaceTeam({
                     ? 'Make ' + roleChange.label + ' an admin?'
                     : 'Make ' + roleChange.label + ' a regular member?'}{' '}
                   {roleChange.role === 'admin'
-                    ? 'An admin can edit the company profile and plan delegations in this sample workspace. Only the owner can manage the team.'
+                    ? realCustomerInput()
+                      ? 'An admin can edit the company profile and plan delegations in this workspace. Only the owner can manage the team.'
+                      : 'An admin can edit the company profile and plan delegations in this sample workspace. Only the owner can manage the team.'
                     : 'A regular member can view but not edit the company profile or plan delegations.'}{' '}
                   The change is recorded in the history.
                 </p>
@@ -681,7 +696,11 @@ export function CustomerWorkspaceTeam({
             )}
             <form
               className="operator-form"
-              aria-label="Issue a sample workspace invitation"
+              aria-label={
+                realCustomerInput()
+                  ? 'Issue a workspace invitation'
+                  : 'Issue a sample workspace invitation'
+              }
               onSubmit={invite}
             >
               <label className="field">
@@ -697,8 +716,9 @@ export function CustomerWorkspaceTeam({
                 />
               </label>
               <p>
-                Use a fictional label. Only an account already allowed to use this test can accept
-                the code.
+                {realCustomerInput()
+                  ? 'Share this invitation code privately with the intended teammate. They must sign in with a verified account.'
+                  : 'Use a fictional label. Only an account already allowed to use this test can accept the code.'}{' '}
               </p>
               {pending && (
                 <p>
@@ -714,7 +734,9 @@ export function CustomerWorkspaceTeam({
                   ? 'Please wait…'
                   : pending
                     ? 'Retry issuing invitation'
-                    : 'Issue sample invitation'}
+                    : realCustomerInput()
+                      ? 'Issue invitation'
+                      : 'Issue sample invitation'}
               </button>
             </form>
             {(pending || storageFailed) && (

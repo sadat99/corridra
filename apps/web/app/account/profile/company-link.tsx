@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { linkStatusText, type LinkStatus } from '../company-link-status';
 
@@ -441,11 +442,14 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                   </select>
                 </div>
                 <div>
-                  <label htmlFor={id + 'es'}>Statement (start with Synthetic)</label>
+                  <label htmlFor={id + 'es'}>
+                    {' '}
+                    {realCustomerInput() ? 'Statement' : 'Statement (start with Synthetic)'}{' '}
+                  </label>
                   <textarea
                     id={id + 'es'}
                     required
-                    minLength={11}
+                    minLength={realCustomerInput() ? 2 : 11}
                     maxLength={1000}
                     rows={3}
                     value={statement}
@@ -588,12 +592,14 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                 )}
                 <div>
                   <label htmlFor={id + 'note'}>
-                    Why this is your company (start with Synthetic)
+                    {realCustomerInput()
+                      ? 'Why this is your company'
+                      : 'Why this is your company (start with Synthetic)'}{' '}
                   </label>
                   <textarea
                     id={id + 'note'}
                     required
-                    minLength={11}
+                    minLength={realCustomerInput() ? 2 : 11}
                     maxLength={1000}
                     rows={3}
                     value={note}

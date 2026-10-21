@@ -1,3 +1,4 @@
+import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerWorkspacesEnabled } from './customer-workspaces';
@@ -14,9 +15,9 @@ const syntheticText = (max: number) =>
   z
     .string()
     .trim()
-    .min(11)
+    .min(2)
     .max(max)
-    .regex(/^Synthetic /)
+    .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
     .refine((v) => !control.test(v), 'Control characters are not allowed');
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const contextRef = z
@@ -146,7 +147,7 @@ export type ServiceQuote = {
   preparedAt: string;
   expired: boolean;
   digest: string;
-  synthetic: true;
+  synthetic: boolean;
   billing: 'billing_not_enabled';
   paymentTaken: false;
 };
@@ -159,7 +160,7 @@ export type ServiceCatalogueEntry = {
   excluded: string[];
   regions: string[];
   quoteBasis: 'per_day' | 'per_visit' | 'per_item' | 'fixed_scope';
-  synthetic: true;
+  synthetic: boolean;
 };
 export type ServiceRequestDetail = {
   workspaceId: string;
@@ -197,7 +198,7 @@ export type ServiceRequestDetail = {
     quoteVersion: number | null;
   }[];
   actions: ('revise' | 'question' | 'withdraw' | 'accept' | 'decline')[];
-  synthetic: true;
+  synthetic: boolean;
   expiresAt: string;
 };
 

@@ -1,3 +1,4 @@
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import Link from 'next/link';
 import { waysToWork } from './ways-to-work';
 
@@ -43,7 +44,7 @@ export function SiteFooter() {
         <span>© 2026 Corridra</span>
         <span>
           <Link prefetch={false} href="/privacy">
-            Test intake notice
+            {realUseEnabled() ? 'Privacy and request notice' : 'Test intake notice'}
           </Link>
         </span>
       </div>

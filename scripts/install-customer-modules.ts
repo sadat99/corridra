@@ -22,6 +22,8 @@ import { migrateCustomerServiceRequests } from '../packages/db/src/customer-serv
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { migrateCustomerRequestAdmission } from '../packages/db/src/customer-request-admission-migrate';
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
+import { migrateCustomerRealUse } from '../packages/db/src/customer-real-use-migrate';
+import { configureCustomerRealUse } from '../packages/auth/src/customer-real-use-configuration';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -32,6 +34,8 @@ const v = z
     MIGRATION_DATABASE_URL: z.url(),
     MIGRATION_DATABASE_HOST: z.string().min(1),
     INSTALL_APPLY: z.string().optional(),
+    REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    REAL_USE_REASON: z.string().trim().min(10).max(500).optional(),
     // Optional: pin the customer issuer and event executor after the modules are installed.
     CUSTOMER_ISSUER: z.string().optional(),
     CUSTOMER_EXECUTOR_ID: z.string().optional(),
@@ -47,6 +51,10 @@ if (
 )
   throw new Error('Install target does not match the approved Frankfurt database');
 const apply = v.INSTALL_APPLY === 'yes';
+if (v.REAL_USE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Real-use changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.REAL_USE_ACTION) && !v.REAL_USE_REASON)
+  throw new Error('Real-use admission changes require an explicit reason');
 
 const registries = [
   'customer_migrations',
@@ -71,6 +79,7 @@ const registries = [
   'customer_request_admission_migrations',
   'customer_programme_terms_migrations',
   'customer_service_request_migrations',
+  'customer_real_use_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -135,6 +144,18 @@ try {
         executorId: v.CUSTOMER_EXECUTOR_ID,
       });
       console.log(`customer issuer and executor: ${result.pinned}`);
+    }
+    if (v.REAL_USE_ACTION !== 'unchanged') {
+      await migrateCustomerRealUse(pool);
+      if (v.REAL_USE_ACTION !== 'install') {
+        const result = await configureCustomerRealUse(pool, {
+          enabled: v.REAL_USE_ACTION === 'enable',
+          reason: v.REAL_USE_REASON,
+        });
+        console.log(
+          `Real-use admission ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     await report('After install');
     console.log('Install complete. No secret values were written to output.');

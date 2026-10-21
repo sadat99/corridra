@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayDate } from '@corridra/domain/locale';
@@ -10,7 +11,7 @@ type Item = {
   title?: string;
   expiresAt?: string;
 };
-type Page = { missions: Item[]; nextAfter: string | null; synthetic: true };
+type Page = { missions: Item[]; nextAfter: string | null; synthetic: boolean };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function item(value: unknown): value is Item {
   if (!value || typeof value !== 'object') return false;
@@ -73,7 +74,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
         .then((value) => {
           const page = value as Page;
           if (
-            page?.synthetic !== true ||
+            !customerProvenanceAllowed(page?.synthetic) ||
             !Array.isArray(page.missions) ||
             !page.missions.every(item) ||
             !(

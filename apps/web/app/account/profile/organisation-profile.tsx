@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 const roleOptions = [
   ['BUYER', 'Buyer'],
@@ -113,7 +114,11 @@ export function OrganisationProfile(props: {
     [ack, setAck] = useState(false),
     [dirty, setDirty] = useState(false),
     [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('Loading your sample company profile…'),
+    [message, setMessage] = useState(
+      realCustomerInput()
+        ? 'Loading your company profile…'
+        : 'Loading your sample company profile…',
+    ),
     [pending, setPending] = useState<Record<string, unknown> | null>(null);
   const active = useRef(false),
     task = useRef<AbortController | null>(null),
@@ -192,7 +197,11 @@ export function OrganisationProfile(props: {
           return;
         }
         if (r.status === 503) {
-          clear('The sample company profile is unavailable.');
+          clear(
+            realCustomerInput()
+              ? 'The company profile is unavailable.'
+              : 'The sample company profile is unavailable.',
+          );
           return;
         }
         if (r.status === 400) {
@@ -220,7 +229,9 @@ export function OrganisationProfile(props: {
               : v.profile
                 ? 'Company profile loaded.'
                 : v.canEdit
-                  ? 'No company profile yet. Add your sample details below.'
+                  ? realCustomerInput()
+                    ? 'No company profile yet. Add your company details below.'
+                    : 'No company profile yet. Add your sample details below.'
                   : 'No company profile has been added yet.',
           );
         }
@@ -340,14 +351,22 @@ export function OrganisationProfile(props: {
         >
           <fieldset disabled={busy || !!pending}>
             <legend>
-              {profile ? 'Edit sample company profile' : 'Add sample company profile'}
+              {profile
+                ? realCustomerInput()
+                  ? 'Edit company profile'
+                  : 'Edit sample company profile'
+                : realCustomerInput()
+                  ? 'Add company profile'
+                  : 'Add sample company profile'}
             </legend>
             <div>
-              <label htmlFor={id + 'legalName'}>Company name (start with Synthetic)</label>
+              <label htmlFor={id + 'legalName'}>
+                {realCustomerInput() ? 'Company name' : 'Company name (start with Synthetic)'}
+              </label>
               <input
                 id={id + 'legalName'}
                 required
-                minLength={11}
+                minLength={realCustomerInput() ? 2 : 11}
                 maxLength={200}
                 value={draft.legalName}
                 onChange={(e) => set('legalName', e.target.value)}
@@ -423,11 +442,15 @@ export function OrganisationProfile(props: {
               </select>
             </div>
             <div>
-              <label htmlFor={id + 'summary'}>About the company (start with Synthetic)</label>
+              <label htmlFor={id + 'summary'}>
+                {realCustomerInput()
+                  ? 'About the company'
+                  : 'About the company (start with Synthetic)'}
+              </label>
               <textarea
                 id={id + 'summary'}
                 required
-                minLength={11}
+                minLength={realCustomerInput() ? 2 : 11}
                 maxLength={1000}
                 rows={4}
                 value={draft.summary}
@@ -453,8 +476,10 @@ export function OrganisationProfile(props: {
                 marginBlock: '1rem',
               }}
             >
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />I
-              confirm these are fictional planning details only.
+              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />{' '}
+              {realCustomerInput()
+                ? 'I confirm these details are accurate to the best of my knowledge.'
+                : 'I confirm these are fictional planning details only.'}{' '}
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>

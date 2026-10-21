@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
@@ -22,7 +23,7 @@ const pageSchema = z
   .object({
     assignments: z.array(z.discriminatedUnion('available', [unavailable, available])).max(25),
     nextAfter: z.uuid().nullable(),
-    synthetic: z.literal(true),
+    synthetic: z.boolean().refine(customerProvenanceAllowed),
   })
   .strict();
 type Page = z.infer<typeof pageSchema> & { displayUntil: number };

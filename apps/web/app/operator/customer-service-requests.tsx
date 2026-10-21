@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 import { CustomerServiceCatalogue } from './customer-service-catalogue';
@@ -52,7 +53,7 @@ type Detail = {
   lastSeq: number;
 };
 type Row = { kind: string; label: string; treatment: string; amount: string };
-const starter = 'Synthetic ';
+const starter = realCustomerInput() ? '' : 'Synthetic ';
 const currencies = ['USD', 'EUR', 'GBP', 'BDT', 'JPY'];
 const kinds: [string, string][] = [
   ['service_fee', 'Service fee'],
@@ -113,7 +114,9 @@ function plainError(status: number | null) {
       : status === 409
         ? 'The request changed or the details were refused. Reload and check the quote.'
         : status === 400
-          ? 'Check the details. Every free-text field starts with Synthetic and amounts are whole minor units.'
+          ? realCustomerInput()
+            ? 'Check the details. Amounts must be whole minor units in the original currency.'
+            : 'Check the details. Every free-text field starts with Synthetic and amounts are whole minor units.'
           : 'This could not be completed. Try again.';
 }
 
@@ -436,7 +439,7 @@ function Scoped({ tenant }: { tenant: string }) {
                       </select>
                     </label>
                     <label className="field">
-                      Label (start with Synthetic)
+                      {realCustomerInput() ? 'Label' : 'Label (start with Synthetic)'}{' '}
                       <input
                         required
                         minLength={11}
@@ -513,7 +516,7 @@ function Scoped({ tenant }: { tenant: string }) {
                   </button>
                 )}
                 <label className="field">
-                  Scope (start with Synthetic)
+                  {realCustomerInput() ? 'Scope' : 'Scope (start with Synthetic)'}{' '}
                   <textarea
                     required
                     minLength={11}
@@ -524,7 +527,9 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
                 <label className="field">
-                  Left out, one per line (each starts with Synthetic)
+                  {realCustomerInput()
+                    ? 'Left out, one per line'
+                    : 'Left out, one per line (each starts with Synthetic)'}{' '}
                   <textarea
                     required
                     rows={3}
@@ -533,7 +538,9 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
                 <label className="field">
-                  Assumptions, one per line (each starts with Synthetic)
+                  {realCustomerInput()
+                    ? 'Assumptions, one per line'
+                    : 'Assumptions, one per line (each starts with Synthetic)'}{' '}
                   <textarea
                     required
                     rows={3}
@@ -542,7 +549,7 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
                 <label className="field">
-                  Delivery terms (start with Synthetic)
+                  {realCustomerInput() ? 'Delivery terms' : 'Delivery terms (start with Synthetic)'}{' '}
                   <input
                     required
                     minLength={11}
@@ -552,7 +559,9 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
                 <label className="field">
-                  Payment terms, described only (start with Synthetic)
+                  {realCustomerInput()
+                    ? 'Payment terms, described only'
+                    : 'Payment terms, described only (start with Synthetic)'}{' '}
                   <input
                     required
                     minLength={11}
@@ -597,7 +606,9 @@ function Scoped({ tenant }: { tenant: string }) {
                   </select>
                 </label>
                 <label className="field">
-                  Note the customer will read (start with Synthetic)
+                  {realCustomerInput()
+                    ? 'Note the customer will read'
+                    : 'Note the customer will read (start with Synthetic)'}{' '}
                   <textarea
                     required
                     minLength={11}
@@ -619,7 +630,7 @@ function Scoped({ tenant }: { tenant: string }) {
               <fieldset disabled={busy}>
                 <legend>Internal note (the customer never sees this)</legend>
                 <label className="field">
-                  Note (start with Synthetic)
+                  {realCustomerInput() ? 'Note' : 'Note (start with Synthetic)'}{' '}
                   <textarea
                     required
                     minLength={11}

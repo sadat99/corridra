@@ -1,3 +1,4 @@
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import type {
   ServiceCatalogueEntry,
   ServiceRequestDetail,
@@ -144,7 +145,7 @@ export function validDetail(value: unknown): value is ServiceRequestDetail {
   const v = value as ServiceRequestDetail | null;
   return (
     !!v &&
-    v.synthetic === true &&
+    customerProvenanceAllowed(v.synthetic) &&
     typeof v.workspaceId === 'string' &&
     !!v.request &&
     typeof v.request.id === 'string' &&

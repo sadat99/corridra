@@ -35,6 +35,13 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: '/api/intake/pending/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: csp },

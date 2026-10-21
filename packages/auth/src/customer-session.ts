@@ -60,7 +60,12 @@ export const pinnableCustomerIssuer = z.url().refine((value) => {
   const url = plainHttpsIssuer(value);
   return !!url && (isolatedIssuer(url) || ownerIssuerShape(url));
 }, 'A Frankfurt Neon Auth issuer over https is required');
-export type CustomerSession = { subject: string; expiresAt: Date; emailVerified: boolean };
+export type CustomerSession = {
+  subject: string;
+  expiresAt: Date;
+  emailVerified: boolean;
+  email?: string;
+};
 export type CustomerWorkspaceOptions = {
   enabled: boolean;
   synthetic: boolean;
@@ -68,6 +73,7 @@ export type CustomerWorkspaceOptions = {
   issuer: string;
   // Owner opt-in, default off: admit a fresh email-verified account on first use.
   openAdmission?: boolean;
+  dataMode?: 'synthetic' | 'real';
 };
 
 // Server-only boundary. Identity comes exclusively from a fresh provider response.
@@ -75,7 +81,7 @@ export class CustomerSessionBoundary {
   constructor(
     private runtime: DatabasePool,
     protected auth: DatabasePool,
-    private options: CustomerWorkspaceOptions,
+    protected options: CustomerWorkspaceOptions,
     private readSession: () => Promise<CustomerSession | null>,
   ) {}
 
@@ -87,7 +93,11 @@ export class CustomerSessionBoundary {
     expectedSubject?: string,
     expectedIssuer?: string,
   ): Promise<T> {
-    if (!this.options.enabled || !this.options.synthetic || this.options.production)
+    if (
+      !this.options.enabled ||
+      (!this.options.synthetic && this.options.dataMode !== 'real') ||
+      this.options.production
+    )
       throw new DomainError('Customer workspaces are unavailable', 503);
     if (
       expectedSubject !== undefined &&
@@ -142,11 +152,26 @@ export class CustomerSessionBoundary {
     }
     const hash = sessionHash(randomBytes(32).toString('hex'));
     // Use the DB clock for the short TTL and cap it at the actual provider expiry.
-    await this.auth.query(
-      `INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at)
+    if (this.options.dataMode === 'real') {
+      const email = z.email().max(254).safeParse(session.email);
+      if (!email.success) throw new DomainError('Verified account email is unavailable', 401);
+      await this.auth.query(
+        `INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at,data_mode,verified_email_hash)
+        VALUES($1,$2,$3,least(clock_timestamp()+interval '25 seconds',$4::timestamptz),'real',$5)`,
+        [
+          hash,
+          issuer,
+          session.subject,
+          session.expiresAt,
+          sessionHash(email.data.trim().toLowerCase()),
+        ],
+      );
+    } else
+      await this.auth.query(
+        `INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at)
       VALUES($1,$2,$3,least(clock_timestamp()+interval '25 seconds',$4::timestamptz))`,
-      [hash, issuer, session.subject, session.expiresAt],
-    );
+        [hash, issuer, session.subject, session.expiresAt],
+      );
     let db: DatabaseClient | undefined;
     try {
       // The admission function re-checks the fresh attestation in the database; the proof is removed below.
@@ -156,7 +181,7 @@ export class CustomerSessionBoundary {
       await db.query('BEGIN');
       await db.query(
         `SELECT set_config('corridra.customer_proof_hash',$1,true),set_config('corridra.session_hash','',true),
-        set_config('corridra.tenant_id','',true),set_config('corridra.purpose','synthetic_validation',true)`,
+        set_config('corridra.tenant_id','',true),set_config('corridra.customer_workspace_id','',true),set_config('corridra.purpose','synthetic_validation',true)`,
         [hash],
       );
       const result = await work(db, { hash, issuer, subject: session.subject });

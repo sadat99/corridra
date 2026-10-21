@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshButton } from './refresh-button';
 
@@ -6,7 +7,7 @@ type RequestRow = {
   id: string;
   workspaceId: string;
   createdAt: string;
-  synthetic: true;
+  synthetic: boolean;
   available: boolean;
   progress: null | {
     status: string;
@@ -14,7 +15,7 @@ type RequestRow = {
     replies: { body: string; createdAt: string }[];
   };
 };
-type Page = { requests: RequestRow[]; nextAfter: string | null; synthetic: true };
+type Page = { requests: RequestRow[]; nextAfter: string | null; synthetic: boolean };
 type Status = 'loading' | 'ready' | 'denied' | 'unavailable' | 'failed';
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function date(value: unknown): value is string {
@@ -29,7 +30,7 @@ function row(value: unknown, statuses: readonly string[]): value is RequestRow {
     typeof r.workspaceId !== 'string' ||
     !uuid.test(r.workspaceId) ||
     !date(r.createdAt) ||
-    r.synthetic !== true
+    !customerProvenanceAllowed(r.synthetic)
   )
     return false;
   if (r.available === false) return r.progress === null;
@@ -73,7 +74,7 @@ async function fetchPage(
   if (!value || typeof value !== 'object') throw new Error('failed');
   const page = value as Partial<Page>;
   if (
-    page.synthetic !== true ||
+    !customerProvenanceAllowed(page.synthetic) ||
     !Array.isArray(page.requests) ||
     !page.requests.every((value) => row(value, statuses)) ||
     !(page.nextAfter === null || (typeof page.nextAfter === 'string' && uuid.test(page.nextAfter)))

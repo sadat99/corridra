@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useRef, useState } from 'react';
 import { currencies, formatMoney } from '@corridra/domain/opportunities';
 import {
@@ -169,7 +170,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
   const [error, setError] = useState('');
   const writing = useRef(false);
   const [editing, setEditing] = useState<Series | 'new' | null>(null);
-  const [name, setName] = useState('Synthetic ');
+  const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [dates, setDates] = useState<string[]>(['']);
@@ -177,7 +178,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
   const [count, setCount] = useState('4');
   const [step, setStep] = useState(3);
   const [making, setMaking] = useState<Series | null>(null);
-  const [editionName, setEditionName] = useState('Synthetic ');
+  const [editionName, setEditionName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [revenueFor, setRevenueFor] = useState<string | null>(null);
   const [revenue] = usePrivateView(
     revenueFor
@@ -227,7 +228,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
     setNotice('');
     setMaking(null);
     setEditing(s ?? 'new');
-    setName(s ? s.name : 'Synthetic ');
+    setName(s ? s.name : realCustomerInput() ? '' : 'Synthetic ');
     setDescription(s?.description ?? '');
     setTemplateId(s ? s.templateId : '');
     setDates(s ? s.startDates : ['']);
@@ -260,9 +261,17 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
         }
       : (() => {
           if (!syntheticOk(name))
-            return setError('Start the series name with the word Synthetic and add a few words.');
+            return setError(
+              realCustomerInput()
+                ? 'Enter a clear description with at least two characters.'
+                : 'Start the series name with the word Synthetic and add a few words.',
+            );
           if (description.trim() && !syntheticOk(description))
-            return setError('Start the description with the word Synthetic, or clear it.');
+            return setError(
+              realCustomerInput()
+                ? 'Enter a clear description with at least two characters.'
+                : 'Start the description with the word Synthetic, or clear it.',
+            );
           if (!templateId)
             return setError('Choose the programme template each edition starts from.');
           const chosen = dates.map((d) => d.trim());
@@ -303,7 +312,10 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
     setEditing(null);
     setMaking(s);
     setEditionName(
-      'Synthetic ' + s.name.replace(/^Synthetic /, '') + ' edition ' + (s.editions.length + 1),
+      (realCustomerInput() ? '' : 'Synthetic ') +
+        s.name.replace(/^Synthetic /, '') +
+        ' edition ' +
+        (s.editions.length + 1),
     );
   }
   function createEdition() {
@@ -311,7 +323,11 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
     const s = making;
     if (!s) return;
     if (!syntheticOk(editionName) || editionName.trim().length > 160)
-      return setError('Start the edition name with the word Synthetic and add a few words.');
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the edition name with the word Synthetic and add a few words.',
+      );
     const input = {
       seriesId: s.id,
       expectedVersion: s.version,
@@ -460,7 +476,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                 version {making.templateVersion}. It appears in your programmes list.
               </p>
               <label className="field">
-                Edition name (start with Synthetic)
+                {realCustomerInput() ? 'Edition name' : 'Edition name (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={160}
@@ -603,7 +619,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
             >
               <h5>{editing === 'new' ? 'New series' : 'Edit series'}</h5>
               <label className="field">
-                Series name (start with Synthetic)
+                {realCustomerInput() ? 'Series name' : 'Series name (start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={120}
@@ -613,7 +629,9 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                 />
               </label>
               <label className="field">
-                Description (optional, start with Synthetic)
+                {realCustomerInput()
+                  ? 'Description (optional)'
+                  : 'Description (optional, start with Synthetic)'}{' '}
                 <input
                   type="text"
                   maxLength={500}

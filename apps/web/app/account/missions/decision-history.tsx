@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
@@ -23,7 +24,7 @@ const result = z.discriminatedUnion('state', [
     .object({
       resourceId: z.uuid(),
       state: z.literal('APPROVED'),
-      synthetic: z.literal(true),
+      synthetic: z.boolean().refine(customerProvenanceAllowed),
       version: z.number().int().positive(),
       expiresAt: z.iso.datetime({ offset: true }),
       decisions: z.array(record).max(30),
@@ -33,7 +34,7 @@ const result = z.discriminatedUnion('state', [
     .object({
       resourceId: z.uuid(),
       state: z.enum(['NOT_APPROVED', 'SOURCE_UNAVAILABLE']),
-      synthetic: z.literal(true),
+      synthetic: z.boolean().refine(customerProvenanceAllowed),
       decisions: z.array(z.never()).max(0),
     })
     .strict(),

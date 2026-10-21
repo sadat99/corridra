@@ -84,9 +84,11 @@ function Select({
 export function Counterparties({
   tenant,
   missionRevision = 0,
+  purpose = 'synthetic_validation',
 }: {
   tenant: string;
   missionRevision?: number;
+  purpose?: string;
 }) {
   const [catalogue, setCatalogue] = useState<{
       role: string;
@@ -380,7 +382,7 @@ export function Counterparties({
                     kind: f.get('kind'),
                     locator: f.get('locator'),
                     classification: f.get('classification'),
-                    purpose: 'synthetic_validation',
+                    purpose,
                     observedAt: new Date(String(f.get('observedAt')) + 'Z').toISOString(),
                     retentionUntil: new Date(String(f.get('retentionUntil')) + 'Z').toISOString(),
                     aiPolicy: 'DENY',

@@ -1,3 +1,4 @@
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import type { ReactNode } from 'react';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { CustomerNav, type CustomerTab } from './customer-nav';
@@ -21,7 +22,13 @@ export function CustomerShell({
       title={title}
       notice={
         <p className="ux-testmode" role="note">
-          <strong>Test mode:</strong> invented data only. Use made-up names and details.
+          {realUseEnabled() ? (
+            <>Your work stays private to the people given access.</>
+          ) : (
+            <>
+              <strong>Test mode:</strong> invented data only. Use made-up names and details.
+            </>
+          )}
         </p>
       }
       nav={<CustomerNav current={tab} companies={customerCompaniesEnabled()} />}

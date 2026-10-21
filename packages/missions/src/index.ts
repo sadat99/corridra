@@ -1,4 +1,4 @@
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   withTenant,
   type DatabasePool,
@@ -36,6 +36,31 @@ export class MissionService {
   private hash(value: string) {
     return createHmac('sha256', this.secret).update(value).digest('hex');
   }
+  /** Server-only capability. The HTTP adapter sends it only in an HttpOnly cookie. */
+  pendingRequestCapability(value: string) {
+    const match = /^([a-f0-9-]{36})\.([a-f0-9]{64})$/.exec(value);
+    if (!match || !z.uuid().safeParse(match[1]).success)
+      throw new DomainError('Request handoff is unavailable', 400);
+    const expected = this.hash('customer-pending-request-v1:' + match[1]);
+    if (!timingSafeEqual(Buffer.from(match[2], 'hex'), Buffer.from(expected, 'hex')))
+      throw new DomainError('Request handoff is unavailable', 403);
+    return { id: match[1], hash: digest(match[2]) };
+  }
+  async stagePendingRequest(commandId: string, input: unknown) {
+    if (this.intakeMode !== 'real') throw new DomainError('Real intake is unavailable', 503);
+    const id = z.uuid().parse(commandId);
+    const brief = realBriefSchema.parse(input);
+    const possession = this.hash('customer-pending-request-v1:' + id);
+    const result = await this.pool.query(
+      'SELECT customer.stage_pending_request($1,$2,$3::jsonb) AS result',
+      [id, digest(possession), JSON.stringify(brief)],
+    );
+    return { ...result.rows[0].result, cookie: id + '.' + possession } as {
+      id: string;
+      expiresAt: string;
+      cookie: string;
+    };
+  }
   async importBrief(tx: TenantTransaction, commandId: string, ownerId: string, input: unknown) {
     const brief = (this.intakeMode === 'real' ? realBriefSchema : briefSchema).parse(input);
     const result = await tx.db.query('SELECT app.import_mission_brief($1,$2,$3,$4::jsonb) AS id', [
@@ -49,11 +74,24 @@ export class MissionService {
   async budget(client: string) {
     // All replicas share PostgreSQL budgets; no raw addresses are retained.
     const r = await this.pool.query(
-      'SELECT app.intake_budget($1,6) AS client,app.intake_budget($2,60) AS global',
-      [this.hash(`intake-client:${client}`), this.hash('intake-global')],
+      this.intakeMode === 'real'
+        ? 'SELECT customer.real_request_budget($1,120) AS client,customer.real_request_budget($2,10000) AS global'
+        : 'SELECT app.intake_budget($1,6) AS client,app.intake_budget($2,60) AS global',
+      [
+        this.hash(`${this.intakeMode === 'real' ? 'real-' : ''}intake-client:${client}`),
+        this.hash(`${this.intakeMode === 'real' ? 'real-' : ''}intake-global`),
+      ],
     );
     if (!r.rows[0].client || !r.rows[0].global)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
+  }
+  async realIntakeAvailable() {
+    if (this.intakeMode !== 'real') return false;
+    return (
+      await this.pool.query<{ available: boolean }>(
+        'SELECT customer.intake_available() AS available',
+      )
+    ).rows[0].available;
   }
   // Pure canonical intake preparation, also used by the customer attestation boundary.
   // No database authority, receipt URL or customer ownership is granted here.
@@ -70,9 +108,22 @@ export class MissionService {
     };
   }
   prepareCustomerIntake(
-    context: { issuer: string; subject: string; workspaceId: string; commandId: string },
+    context: {
+      issuer: string;
+      subject: string;
+      workspaceId: string;
+      commandId: string;
+      synthetic?: boolean;
+    },
     input: unknown,
-  ) {
+  ): { key: string; payloadHash: string; receiptHash: string; noticeVersion: string } {
+    const mode =
+      context.synthetic === undefined ? this.intakeMode : context.synthetic ? 'synthetic' : 'real';
+    if (mode !== this.intakeMode)
+      return new MissionService(this.pool, this.secret, mode).prepareCustomerIntake(
+        { ...context, synthetic: undefined },
+        input,
+      );
     const namespace = this.intakeMode === 'real' ? 'customer-intake-real-v1' : 'customer-intake-v1';
     const hex = this.hash(
       `${namespace}:${JSON.stringify([

@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ProgrammeContextScope } from './programme-context';
 type Details = {
@@ -14,7 +16,7 @@ type Snapshot = {
   programmeId: string;
   workspaceId?: string;
   registrationId?: string;
-  synthetic: true;
+  synthetic: boolean;
   expiresAt: string;
   currentVersion?: number;
   shared?: boolean;
@@ -35,7 +37,7 @@ function parse(value: unknown, scope: ProgrammeContextScope): Snapshot {
   const v = value as Snapshot;
   if (
     !v ||
-    v.synthetic !== true ||
+    !customerProvenanceAllowed(v.synthetic) ||
     v.programmeId !== scope.programmeId ||
     !Number.isFinite(Date.parse(v.expiresAt)) ||
     Date.parse(v.expiresAt) <= Date.now() ||
@@ -288,15 +290,22 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
           }}
         >
           <fieldset disabled={busy || !!pending}>
-            <legend>Edit sample programme details</legend>
+            <legend>
+              {' '}
+              {realCustomerInput()
+                ? 'Edit programme details'
+                : 'Edit sample programme details'}{' '}
+            </legend>
             {(Object.keys(empty) as (keyof Details)[]).map((key) => (
               <div key={key}>
                 <label htmlFor={id + key}>
                   {
                     {
-                      organiser: 'Organiser (start with Synthetic)',
+                      organiser: realCustomerInput()
+                        ? 'Organiser'
+                        : 'Organiser (start with Synthetic)',
                       marketCode: 'Target country code or EU trade bloc',
-                      purpose: 'Purpose (start with Synthetic)',
+                      purpose: realCustomerInput() ? 'Purpose' : 'Purpose (start with Synthetic)',
                       startsAt: 'Start date and time with UTC offset',
                       endsAt: 'End date and time with UTC offset',
                       timezone: 'IANA time zone',
@@ -354,8 +363,10 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
                 marginBlock: '1rem',
               }}
             >
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />I
-              confirm these are fictional planning details only.
+              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />{' '}
+              {realCustomerInput()
+                ? 'I confirm these details are accurate to the best of my knowledge.'
+                : 'I confirm these are fictional planning details only.'}{' '}
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>

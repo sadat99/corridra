@@ -25,14 +25,12 @@ function failure(error: unknown) {
 export async function GET(request: Request) {
   try {
     const s = await services();
+    const workspaces = await s.customerWorkspaces.list(
+      request.headers.get('x-corridra-customer-subject') ?? undefined,
+      request.headers.get('x-corridra-customer-issuer') ?? undefined,
+    );
     return Response.json(
-      {
-        workspaces: await s.customerWorkspaces.list(
-          request.headers.get('x-corridra-customer-subject') ?? undefined,
-          request.headers.get('x-corridra-customer-issuer') ?? undefined,
-        ),
-        synthetic: true,
-      },
+      { workspaces, synthetic: workspaces.every((workspace) => workspace.synthetic) },
       { headers: deliveryHeaders },
     );
   } catch (error) {

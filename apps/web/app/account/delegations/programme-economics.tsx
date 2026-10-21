@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
 
@@ -207,7 +208,7 @@ function ScopedEconomics(props: Props) {
   const [currency, setCurrency] = useState<Code>('BDT');
   const [amount, setAmount] = useState('');
   const [occurredOn, setOccurredOn] = useState(today());
-  const [description, setDescription] = useState('Synthetic ');
+  const [description, setDescription] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [confirm, setConfirm] = useState(false);
   const [correcting, setCorrecting] = useState<string | null>(null);
   const [fixDate, setFixDate] = useState(today());
@@ -229,7 +230,7 @@ function ScopedEconomics(props: Props) {
     setEntries([]);
     setNextBefore(null);
     setAmount('');
-    setDescription('Synthetic ');
+    setDescription(realCustomerInput() ? '' : 'Synthetic ');
     setConfirm(false);
     setCorrecting(null);
     setFixConfirm(false);
@@ -409,8 +410,16 @@ function ScopedEconomics(props: Props) {
     }
     const participant = kind.startsWith('PARTICIPANT_');
     if (participant && !uuid(registrationId)) return setError('Choose a participant.');
-    if (!/^Synthetic .{3,}/.test(description.trim()))
-      return setError('Start the description with the word Synthetic and add a few words.');
+    if (
+      !(realCustomerInput()
+        ? description.trim().length >= 2
+        : /^Synthetic .{3,}/.test(description.trim()))
+    )
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the description with the word Synthetic and add a few words.',
+      );
     if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) return setError('Choose a date.');
     if (!confirm) return setError('Confirm that this is a record you are entering yourself.');
     void post(
@@ -425,15 +434,21 @@ function ScopedEconomics(props: Props) {
       },
       () => {
         setAmount('');
-        setDescription('Synthetic ');
+        setDescription(realCustomerInput() ? '' : 'Synthetic ');
         setConfirm(false);
       },
     );
   }
   function correct(id: string) {
     setError('');
-    if (!/^Synthetic .{3,}/.test(fixText.trim()))
-      return setError('Start the reason with the word Synthetic and add a few words.');
+    if (
+      !(realCustomerInput() ? fixText.trim().length >= 2 : /^Synthetic .{3,}/.test(fixText.trim()))
+    )
+      return setError(
+        realCustomerInput()
+          ? 'Enter a clear description with at least two characters.'
+          : 'Start the reason with the word Synthetic and add a few words.',
+      );
     if (!fixConfirm) return setError('Confirm the correction.');
     void post({ reverseOf: id, occurredOn: fixDate, description: fixText.trim() }, () => {
       setCorrecting(null);
@@ -456,7 +471,12 @@ function ScopedEconomics(props: Props) {
         This is your own bookkeeping, entered by you and not verified by Corridra. Corridra does not
         collect, hold or send any money. Each currency is shown separately and nothing is converted.
       </p>
-      {status === 'loading' && <p role="status">Loading sample finances…</p>}
+      {status === 'loading' && (
+        <p role="status">
+          {' '}
+          {realCustomerInput() ? 'Loading finances…' : 'Loading sample finances…'}{' '}
+        </p>
+      )}
       {status === 'unavailable' && <p role="status">{notice}</p>}
       {(status === 'denied' || status === 'failed') && (
         <>
@@ -473,7 +493,12 @@ function ScopedEconomics(props: Props) {
           {notice && <p role="status">{notice}</p>}
           <h5>Totals by currency</h5>
           {summary.currencies.length === 0 ? (
-            <p className="ux-empty">No sample amounts recorded yet.</p>
+            <p className="ux-empty">
+              {' '}
+              {realCustomerInput()
+                ? 'No amounts recorded yet.'
+                : 'No sample amounts recorded yet.'}{' '}
+            </p>
           ) : (
             summary.currencies.map((c) => (
               <table key={c.currency}>
@@ -647,7 +672,7 @@ function ScopedEconomics(props: Props) {
               />
             </label>
             <label className="field">
-              Description (start with Synthetic)
+              {realCustomerInput() ? 'Description' : 'Description (start with Synthetic)'}{' '}
               <input
                 type="text"
                 maxLength={300}
@@ -663,8 +688,9 @@ function ScopedEconomics(props: Props) {
                 disabled={busy}
                 onChange={(e) => setConfirm(e.target.checked)}
               />
-              I am entering this myself. It is a sample record, it is not verified, and no payment
-              is collected or sent.
+              {realCustomerInput()
+                ? 'I am entering this myself. It is a record, it is not verified, and no payment is collected or sent.'
+                : 'I am entering this myself. It is a sample record, it is not verified, and no payment is collected or sent.'}{' '}
             </label>
             {error && <p role="alert">{error}</p>}
             <button type="submit" className="primary-link" disabled={busy}>
@@ -722,7 +748,7 @@ function ScopedEconomics(props: Props) {
                         />
                       </label>
                       <label className="field">
-                        Reason (start with Synthetic)
+                        {realCustomerInput() ? 'Reason' : 'Reason (start with Synthetic)'}{' '}
                         <input
                           type="text"
                           maxLength={300}

@@ -1,4 +1,6 @@
 'use client';
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Small shared browser helpers for the pricing, series and export sections. Nothing here decides authority:
@@ -18,7 +20,8 @@ export const text = (v: unknown, max: number): v is string =>
   typeof v === 'string' && v.length >= 1 && v.length <= max;
 export const minorText = (v: unknown): v is string =>
   typeof v === 'string' && /^-?(0|[1-9][0-9]{0,24})$/.test(v);
-export const syntheticOk = (v: string) => /^Synthetic .{3,}/.test(v.trim());
+export const syntheticOk = (v: string) =>
+  realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
 export const deniedMessage = 'Account or workspace access changed. Private details were cleared.';
 export const expiredMessage = 'This private view expired. Reload to check access again.';
 

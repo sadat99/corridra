@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { redirect, notFound } from 'next/navigation';
@@ -11,12 +12,20 @@ import { GuidedRequest } from '../guided-request';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Guided sample request | Corridra',
+  title: realCustomerInput() ? 'Guided request | Corridra' : 'Guided sample request | Corridra',
   robots: { index: false, follow: false },
 };
-function unavailable(message = 'Guided sample requests are unavailable.') {
+function unavailable(
+  message = realCustomerInput()
+    ? 'Guided requests are unavailable.'
+    : 'Guided sample requests are unavailable.',
+) {
   return (
-    <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Guided sample request" compact>
+    <WorkspaceShell
+      eyebrow="YOUR ACCOUNT"
+      title={realCustomerInput() ? 'Guided request' : 'Guided sample request'}
+      compact
+    >
       <p role="status">{message}</p>
       <a className="text-link" href="/account">
         Return to your account

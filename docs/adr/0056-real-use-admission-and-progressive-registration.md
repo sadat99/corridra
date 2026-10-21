@@ -19,6 +19,14 @@ Managed Neon Auth already handles customer signup, email verification, sign-in a
 5. Reuse the explicit evidence bypass mechanism where applicable. Record unscanned evidence as `BYPASSED`, with integrity checks and the owner's recorded exception; never call it a clean scan. Deferral does not remove private storage, access checks, retention or independent evidence review. Do not activate outreach, inference, payments or payouts through this change.
 6. Update the intake/privacy wording to describe actual request handling, account activation and account-based updates. Do not promise mission email delivery or integrations that are not implemented. Install and enable the four missing modules separately from source deployment. Keep billing and other absent capabilities explicitly unbuilt.
 
+## Implementation boundaries
+
+Real records use the existing `commercial_qualification` purpose and explicit non-synthetic tenant provenance. The optional installer retains the existing issuer and service executor, creates a separate real intake tenant, and carries active intake staff roles, classification and country limits forward to that new scope with this explicit purpose. It does not change old memberships or records. A schema-owner-only procedure pins that configuration; admission enable/pause controls append versions. Pausing admission leaves configuration and existing private access intact.
+
+The real catalogue starts with three quote-only request types backed by the product scope: sourcing, market access and delegations. They assert no fixed fee, guaranteed coverage or external supplier capacity. Original financial calculations, exact minor amounts, quote version/digest acceptance and billing-disabled state remain unchanged. Catalogue keys cannot cross provenance. Scanning deferral uses the existing BYPASSED mechanism and an explicit configuration record, never CLEAN. Outreach, inference and payment integrations remain independently gated.
+
+A pending handoff expires after 24 hours; expiry is not a claim of automatic deletion. Public build-time copy/validation and server admission settings must be enabled together in the checked deployment. Public settings grant no identity, workspace or database authority.
+
 ## Release and acceptance
 
 Preserve legacy synthetic acceptance and denial tests. Add real-mode validation and database tests, populated before/after preservation, restricted-role denial, stale/revoked identity, handoff expiry, account mismatch, exact retry/concurrency and ownership isolation. Test account-first and submission-first browser journeys, activation/recovery continuation, password handling, accessibility and responsive layouts. Run every mandatory release gate and actual CodeQL analyses on the frozen head, then verify its exact merged deployment.

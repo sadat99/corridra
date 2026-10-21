@@ -1,4 +1,5 @@
 'use client';
+import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 type Context = {
   resourceId: string;
@@ -21,7 +22,7 @@ type Page = {
   scopesRead: number;
   unavailableScopes: number;
   expiresAt: string | null;
-  synthetic: true;
+  synthetic: boolean;
 };
 type Props = { subject: string; issuer: string; serviceRequestsEnabled?: boolean };
 const uuid = (s: unknown): s is string =>
@@ -32,7 +33,7 @@ function validPage(value: unknown): value is Page {
   if (!value || typeof value !== 'object') return false;
   const p = value as Page;
   if (
-    p.synthetic !== true ||
+    !customerProvenanceAllowed(p.synthetic) ||
     !Array.isArray(p.companies) ||
     p.companies.length > 150 ||
     !(p.nextAfter === null || uuid(p.nextAfter)) ||

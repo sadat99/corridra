@@ -1,4 +1,5 @@
 'use client';
+import { realCustomerInput, customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import {
   basisText,
@@ -19,7 +20,7 @@ type Props = {
   contextRef: string;
   workspaceId: string | null;
 };
-const starter = 'Synthetic ';
+const starter = realCustomerInput() ? '' : 'Synthetic ';
 
 export function ServiceRequestNew(props: Props) {
   return (
@@ -278,11 +279,15 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor={id + 'need'}>What do you need? (start with Synthetic)</label>
+                  <label htmlFor={id + 'need'}>
+                    {realCustomerInput()
+                      ? 'What do you need?'
+                      : 'What do you need? (start with Synthetic)'}
+                  </label>
                   <textarea
                     id={id + 'need'}
                     required
-                    minLength={11}
+                    minLength={realCustomerInput() ? 2 : 11}
                     maxLength={1000}
                     rows={4}
                     value={need}
@@ -320,8 +325,8 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               !chosen ||
               !region ||
               !workspace ||
-              !need.startsWith('Synthetic ') ||
-              need.trim().length < 11
+              !customerLabelAllowed(need) ||
+              need.trim().length < (realCustomerInput() ? 2 : 11)
             }
           >
             {pending ? 'Send the same request again' : 'Send help request'}

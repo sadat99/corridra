@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
@@ -42,6 +44,13 @@ export default async function Page() {
       eyebrow="YOUR COMMERCIAL WORKSPACE"
       title="Your approved companies"
     >
+      {customerOrganisationProfilesEnabled() && (
+        <p>
+          <Link className="text-link" prefetch={false} href="/account/profile">
+            Manage your company profiles and links
+          </Link>
+        </p>
+      )}
       <CompanyPortfolio
         subject={session.data.user.id}
         issuer={issuer}

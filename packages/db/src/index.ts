@@ -60,12 +60,21 @@ export async function withTenant<T>(
   const db = await pool.connect();
   try {
     await db.query('BEGIN');
+    const processingPurpose =
+      process.env.CORRIDRA_REAL_USE_ENABLED === 'true' && ctx.purpose === 'synthetic_validation'
+        ? (
+            await db.query<{ purpose: string }>(
+              'SELECT app.tenant_processing_purpose($1) AS purpose',
+              [ctx.tenantId],
+            )
+          ).rows[0].purpose
+        : ctx.purpose;
     await db.query(
       `SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose',$3,true),set_config('corridra.correlation_id',$4,true),set_config('corridra.causation_id',$5,true)`,
       [
         sessionHash(ctx.token),
         ctx.tenantId,
-        ctx.purpose,
+        processingPurpose,
         ctx.correlationId ?? randomUUID(),
         ctx.causationId ?? randomUUID(),
       ],
@@ -96,7 +105,7 @@ export async function withTenant<T>(
       actorId: a.actor_id,
       tenantId: ctx.tenantId,
       role: a.role,
-      purpose: ctx.purpose,
+      purpose: processingPurpose,
       freshMfa: a.fresh,
     });
     await db.query('COMMIT');

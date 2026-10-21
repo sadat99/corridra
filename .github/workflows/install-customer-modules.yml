@@ -18,9 +18,20 @@ on:
         description: 'Optional. UUID of the active service principal recorded as executor of customer events.'
         required: false
         default: ''
+      real_use_action:
+        description: 'Optional ADR056 operation. Enable creates separate real intake scope; pause preserves existing access.'
+        type: choice
+        options: [unchanged, install, enable, pause]
+        default: unchanged
+      real_use_reason:
+        description: 'Required reason for enabling or pausing real admission.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
+  security-events: read
 
 concurrency:
   group: install-customer-modules
@@ -28,6 +39,7 @@ concurrency:
 
 jobs:
   install:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: customer-modules-install
@@ -36,6 +48,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
+      - name: Verify exact revision before optional real-use installation
+        if: inputs.real_use_action != 'unchanged'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/verify-real-use-install-head.mjs
       - name: Install pinned pnpm
         run: npm install --global pnpm@11.19.0
       - name: Install workspace
@@ -47,4 +64,6 @@ jobs:
           INSTALL_APPLY: ${{ inputs.apply }}
           CUSTOMER_ISSUER: ${{ inputs.customer_issuer }}
           CUSTOMER_EXECUTOR_ID: ${{ inputs.customer_executor_id }}
+          REAL_USE_ACTION: ${{ inputs.real_use_action }}
+          REAL_USE_REASON: ${{ inputs.real_use_reason }}
         run: pnpm exec tsx scripts/install-customer-modules.ts

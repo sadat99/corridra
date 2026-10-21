@@ -1,3 +1,4 @@
+import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import type {
   OwnPlace,
   PlacesReport,
@@ -339,4 +340,5 @@ export function failureText(e: unknown) {
   }
   return 'It could not be saved. What you typed is kept; try again.';
 }
-export const syntheticOk = (v: string) => /^Synthetic .{3,}/.test(v.trim());
+export const syntheticOk = (v: string) =>
+  realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());

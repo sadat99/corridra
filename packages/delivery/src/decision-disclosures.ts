@@ -18,7 +18,7 @@ export class DecisionDisclosureService {
   constructor(private pool: DatabasePool) {}
   options(ctx: RequestContext, publicationId: string) {
     z.uuid().parse(publicationId);
-    return withTenant(this.pool, ctx, 'delivery.read', async ({ db, actorId, role }) => {
+    return withTenant(this.pool, ctx, 'delivery.read', async ({ db, actorId, role, purpose }) => {
       if (!['owner', 'admin'].includes(role))
         throw new DomainError('Owner/admin review required', 403);
       const p = (
@@ -45,7 +45,7 @@ export class DecisionDisclosureService {
         decisions,
         approvals,
         nextVersion: (approvals[0]?.version ?? 0) + 1,
-        synthetic: true,
+        synthetic: purpose === 'synthetic_validation',
       };
     });
   }
