@@ -1,5 +1,5 @@
 import { workspaceSections } from '../lib/workspace-navigation';
-const missionSections = new Set([
+export const missionSections = new Set([
   'workspace-missions',
   'workspace-research',
   'workspace-meetings',
@@ -8,7 +8,7 @@ const missionSections = new Set([
 ]);
 
 // Five job areas for the full directory. Every section stays listed; this only groups them.
-const toolAreas = [
+export const toolAreas = [
   { label: 'EVIDENCE AND SOURCES', ids: ['workspace-sources', 'workspace-evidence'] },
   { label: 'ASSISTANCE AND NETWORK', ids: ['workspace-ai', 'workspace-network'] },
   {

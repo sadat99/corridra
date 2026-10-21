@@ -15,6 +15,8 @@ Source of truth: [contract](V3_CONTRACT.md) and this current-state index. Read t
 - Installation audit: old run 39524758195 at b6a483a lacked four new installers; tables and flags were absent when audited. [Historical snapshot and approved installation update](v3/cleanup/2026-10-21-customer-module-audit.json). Run 39561356047 now installed organisation links, programme terms, pricing and service requests on live-synthetic; Production flags true. Activation deployment READY; all four API authentication boundaries verified. Signed-in acceptance remains unverified. Sensitive runtime URL is unreadable; no host match inferred. No real admission yet.
 - Whole V3 PARTIAL; billing V3-06-013 MISSING. No outreach, inference, payment or payout activation implied. Seven remote branches; preserve PR10/PR32 and unfinished work, maximum eight. Nine completed inherited local branches retired with commits preserved under refs/archive/completed-local; no remote deletion.
 
+- UX in progress (21 Oct, owner feedback on /operator): one-panel-at-a-time operator workspace plus system-wide link buttons are written and built but the operator browser specs are not yet adapted or run, so nothing is merged or released. Branch claude/happy-feynman-i66amw; exact next steps in the last work-log entry. Presentation only; no API, permission or gate change.
+
 ## Current state
 
 - Whole V3: PARTIAL. Phases 0–4 have bounded source acceptance; exhaustive runtime preservation, full customer organisation/authoring, independent organiser coordination/economics and full UX/security/usability remain unfinished.
