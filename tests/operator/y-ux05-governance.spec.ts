@@ -243,9 +243,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await expect
     .poll(() => Date.now(), { timeout: 35000, intervals: [1000] })
     .toBeGreaterThanOrEqual(nextCounter);
+  await openSection(page, 'workspace-authenticator');
   await page.getByLabel('Current authenticator code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
+  await openSection(page, 'workspace-operations');
   await ops
     .getByRole('button', { name: 'Retry original operational command', exact: true })
     .click();
@@ -366,6 +368,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     ['workspace-settings', 'reviewed-policies'],
     ['workspace-audit', 'audit'],
   ] as const) {
+    await openSection(page, id);
     if (id === 'workspace-audit')
       await page
         .getByRole('button', { name: 'Load access and recent changes', exact: true })
