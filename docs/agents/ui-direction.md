@@ -6,6 +6,10 @@ Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and i
 
 For the signed-in `/operator` landing screen, combine the supplied Concept 05 Bento Navigation and Concept 09 Command Center references: ivory surfaces, forest-green mission-first bento, serif headings, icon-led live status cards, a separate management disclosure and grouped tool directory. This scoped direction supersedes the earlier plain operator landing presentation. Preserve all original destinations, mounted panels, role checks, disclosures, real counts, failures and recovery. Do not copy fictional dates, identities, notifications or decorative search controls without a working backend. Use responsive readable cards rather than shrinking a desktop screen to phone width. Other screens retain the existing kit.
 
+## Network workspace correction (owner direction, 22 October 2026)
+
+The owner reports poor Network page usability and invitations that cannot be filled. Extend the same ivory/forest/serif language to the Network record and invitation flow: clear workspace readiness, an editable retained draft where permitted, a single invitation action, explicit next steps, readable form groups and quieter review disclosures. Preserve all activation, membership, country scope, MFA and task/reward boundaries. A paused workspace must explain the block and point to the existing workspace selector; never enable another tenant implicitly.
+
 ## Business objective and cognitive load (owner directive, 2026-10-15)
 
 Corridra is a startup. Every screen must move a real person toward a business outcome: a qualified mission, an introduction, a commercial result or a Corridra service fee. The owner reports that the current product is too complex to understand, even for its builder. Treat cognitive load as a defect with the same weight as a bug.

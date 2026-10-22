@@ -115,7 +115,17 @@ function Fields({ names }: { names: string[] }) {
     </>
   );
 }
-export function ExecutionNetwork({ tenant, role }: { tenant: string; role: string }) {
+export function ExecutionNetwork({
+  tenant,
+  role,
+  workspaceName,
+  onChooseWorkspace,
+}: {
+  tenant: string;
+  role: string;
+  workspaceName?: string;
+  onChooseWorkspace?: () => void;
+}) {
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false);
@@ -284,11 +294,50 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
   }
   return (
     <section
-      className="detail-card ux-governance-panel"
+      className="detail-card ux-governance-panel ux-network"
       data-operator-workbench
       aria-label="Execution network"
     >
-      <h2>Commercial execution work</h2>
+      <header className="ux-network-heading">
+        <div>
+          <p className="label">CORRIDRA NETWORK</p>
+          <h2>Commercial execution work</h2>
+          <p>Invite the right person. Define the work. Review the evidence.</p>
+        </div>
+        <span className="ux-network-state">
+          {data ? (data.enabled ? 'Network enabled' : 'Network paused') : 'Checking access…'}
+        </span>
+      </header>
+      <p role="status" aria-live="polite">
+        {message}
+      </p>
+      {!data && (
+        <p>
+          {message
+            ? 'This section could not be loaded. Refresh it or verify your current access.'
+            : 'Loading reviewed workspace…'}
+        </p>
+      )}
+      {data && !data.enabled && (
+        <aside className="ux-network-paused" aria-label="Network readiness">
+          <h3>Network is paused{workspaceName ? ` in ${workspaceName}` : ' in this workspace'}.</h3>
+          <p>
+            Activation applies to each workspace separately. New invitations, assignments and
+            rewards require an enabled workspace. Existing history remains available.
+          </p>
+          <p>
+            Choose an enabled workspace using the Workspace selector above. If your workspace is not
+            available, ask its owner to confirm your membership. A customer account does not grant
+            operator access.
+          </p>
+          {onChooseWorkspace && (
+            <button className="text-link" type="button" onClick={onChooseWorkspace}>
+              Choose workspace
+            </button>
+          )}
+        </aside>
+      )}
+      {admin && <ContributorInvitations tenant={tenant} />}
       <OperatorWorkbench
         label="Execution work sections"
         sections={[
@@ -308,9 +357,6 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
         Review capabilities and work eligibility, assign only the disclosed task, and assess
         submitted evidence. Completion and rewards require separate decisions.
       </p>
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
       <div className="workspace-links">
         <button
           className="text-link"
@@ -327,23 +373,9 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
         <a href="#workspace-sources">Open sources and claims</a>
         <a href="#workspace-authenticator">Verify current access</a>
       </div>
-      {!data && (
-        <p>
-          {message
-            ? 'This section could not be loaded. Refresh it or verify your current access.'
-            : 'Loading reviewed workspace…'}
-        </p>
-      )}
-      {data && !data.enabled && (
-        <p>
-          The execution network is awaiting activation review. No new assignment or reward can be
-          recorded. Existing history remains available.
-        </p>
-      )}
       <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
         Open assigned task access
       </Link>
-      {admin && <ContributorInvitations tenant={tenant} />}
       {admin && (
         <details>
           <summary>Review an invited contributor profile</summary>
