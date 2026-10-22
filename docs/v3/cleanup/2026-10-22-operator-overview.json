@@ -920,5 +920,174 @@
         ]
       }
     }
+  },
+  "staleAuthenticatorCorrection": {
+    "pr": 131,
+    "checkedHead": "c2701bfda2b1325672aa52067705f7989e45e032",
+    "mergeCommit": "bc044991210d66175d62eb71ea98e381a8724af6",
+    "fullTreeEqual": true,
+    "ci": {
+      "run": 39723860244,
+      "successfulJobs": 6,
+      "database": 684,
+      "databaseFiles": 69,
+      "protectedBrowser": 379,
+      "publicBrowser": 164
+    },
+    "security": {
+      "head": "c2701bfda2b1325672aa52067705f7989e45e032",
+      "ciRun": 39723860244,
+      "codeqlRun": 39723860262,
+      "analyses": [
+        {
+          "id": 119643249411,
+          "upload": true,
+          "reviews": [
+            {
+              "reports": 1,
+              "results": []
+            }
+          ]
+        },
+        {
+          "id": 119643249427,
+          "upload": true,
+          "reviews": [
+            {
+              "reports": 1,
+              "results": [
+                {
+                  "locations": [
+                    {
+                      "file": "security/corridra.test.ts",
+                      "line": 9
+                    }
+                  ],
+                  "rule": "js/disabling-certificate-validation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 119643249449,
+          "upload": true,
+          "reviews": [
+            {
+              "reports": 1,
+              "results": []
+            }
+          ]
+        }
+      ],
+      "newFindings": 0,
+      "baseline": "Only unchanged security/corridra.test.ts:9 negative scanner fixture"
+    },
+    "deployment": {
+      "id": "dpl_FQiimBmSAK4pCnmtaRjyJHWCodNS",
+      "state": "READY",
+      "target": "production",
+      "source": "bc044991210d66175d62eb71ea98e381a8724af6",
+      "regions": ["fra1"],
+      "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"]
+    },
+    "liveProbes": {
+      "origin": "https://corridra.vercel.app",
+      "observedAt": "2026-10-22T05:02:18.359104+00:00",
+      "passed": 10,
+      "total": 10,
+      "results": [
+        {
+          "path": "/network",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "enabledCopy": true
+        },
+        {
+          "path": "/privacy",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "contributorPrivacyCopy": true
+        },
+        {
+          "path": "/about",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true
+        },
+        {
+          "path": "/contributor/setup",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/operator-setup?kind=contributor",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/intake/pending",
+          "status": 200,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true,
+          "realAdmissionAvailable": true
+        }
+      ]
+    },
+    "cleanup": {
+      "applied": true,
+      "results": [
+        {
+          "id": "dpl_3whD4ecWtrTPGmqktvXMXAabDjyB",
+          "branch": "fix/stale-mfa-drafts",
+          "source": "c2701bfda2b1325672aa52067705f7989e45e032",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        }
+      ]
+    },
+    "limits": [
+      "Genuine authenticated production contributor submission and provider email acceptance remain unverified.",
+      "No production identities, sessions, roles, scopes or invitations changed."
+    ]
   }
 }
