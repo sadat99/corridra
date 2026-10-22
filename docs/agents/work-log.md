@@ -1233,3 +1233,15 @@ Changed: `scripts/v3-context.mjs` cap 36 KiB; new `docs/v3/KNOWN_ISSUES.md` (KI-
 Verification, each through the gate runner with exit 0: format:check, lint, typecheck, `pnpm test` (44 node tests, 0 failed), `verify` PASS. Always-read total 30,607 of 36,864 bytes.
 
 Next action: AC1-02 shared action primitives (fixes KI-11 at its root), then AC1-04 to AC1-07, then AC1-08 page families, one PR each with its gates, CI on the exact head, merge and deployment check.
+
+## 2026-10-22, Claude Code, AC1-02 slice 1: action groups for the access and restricted pages
+
+Request (owner screenshots of `/contributor` and `/signin` at 390 px): stacked outlined buttons and links had different widths, almost no gap and a ragged wrapped row. Measured on a local build before the change: at 390 px the contributor actions sat 0 px apart at widths 237, 198 and 160; on `/signin` the sign-in primary was 310 px wide with 295 px links, and the "other ways in" links had a 16 px vertical stagger and different widths. Cause: standalone actions were `inline-flex` with auto width and no group rule.
+
+Change: one labelled block at the end of `apps/web/app/globals.css`, tokens only, no markup change. Access forms (`.ux-account-access` and `.ux-access` forms): every action under the fields is full form width. The "other ways in" nav is a grid of equal cells. Actions placed straight under an access page stack full width with 12 px gaps on phones and share a wrapping row from 640 px. Measured after: `/signin` form actions all 310 px at 390 and 492 px at 768 and 1440; other-ways cells 342 px stacked at 390 and equal columns at 768 and 1440 with aligned rows; `/contributor` all 342 px at 390 with 12 px gaps; `/signup`, `/forgot-password`, `/operator/setup` and `/contributor/setup` equal widths; no horizontal overflow at 390, 768 or 1440.
+
+Preserved: every route, link target, element name and id, form payload, permission, flag and test hook; markup is unchanged and only CSS selectors were added. Not covered yet: customer pages, delegation, operator panels and the `/workspace` start page, which use other containers; each family is its own PR.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` (44), `pnpm build` all exit 0; `pnpm test:e2e` 166 passed and `pnpm test:ux` 42 passed with the Chromium path set (see KI-12). The first e2e and ux runs failed in milliseconds because the browser did not launch, and the first format check failed on my CSS formatting, which I fixed. Local layout checks used `next dev` with dummy auth values to render the real sign-in form (see KI-13).
+
+Next action: CI on the PR, merge, deployment check, then the next family (customer pages).
