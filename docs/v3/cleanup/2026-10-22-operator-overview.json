@@ -567,7 +567,7 @@
   },
   "networkWorkspaceCorrection": {
     "branch": "feat/network-workspace-readiness",
-    "state": "Implemented and bounded locally tested; exact-head CI/merge/deployment pending.",
+    "state": "Merged and exact-source deployed after six successful CI jobs and three actual reviewed CodeQL uploads. Genuine production contributor/email/private acceptance remains unverified.",
     "cause": "Screenshot-selected Corridra workspace has no Network activation. Approved Corridra request operations has enabled tenant control version1. Global flag does not activate other tenants.",
     "behavior": [
       "Workspace-named readiness and focus action to existing Workspace selector.",
@@ -641,6 +641,284 @@
       "newTestHarnessFindings": 2,
       "rule": "js/bad-code-sanitization",
       "fixedBy": "Bundler-parsed literal define; exact-head analysis must pass before release; no rule suppression."
+    },
+    "releaseEvidence": {
+      "pr": 129,
+      "checkedHead": "32d70f59ce46eb92d9966e1b6055361ee88492e2",
+      "mergeCommit": "4c88423f375bd7312127027d584030223d34ee9a",
+      "fullTreeEqual": true,
+      "checks": {
+        "ci": 39710700440,
+        "successfulJobs": 6,
+        "integrationTests": 684,
+        "integrationFiles": 69,
+        "protectedBrowser": 378,
+        "publicBrowser": 164,
+        "codeql": 39710700441,
+        "actualAnalysesUploaded": 3,
+        "newFindings": 0,
+        "review": [
+          {
+            "job": 119601113785,
+            "name": "Analyze (actions)",
+            "uploaded": true,
+            "metadata": [
+              {
+                "reports": 1,
+                "results": []
+              }
+            ]
+          },
+          {
+            "job": 119601113883,
+            "name": "Analyze (python)",
+            "uploaded": true,
+            "metadata": [
+              {
+                "reports": 1,
+                "results": []
+              }
+            ]
+          },
+          {
+            "job": 119601113895,
+            "name": "Analyze (javascript-typescript)",
+            "uploaded": true,
+            "metadata": [
+              {
+                "reports": 1,
+                "results": [
+                  {
+                    "locations": [
+                      {
+                        "file": "security/corridra.test.ts",
+                        "line": 9
+                      }
+                    ],
+                    "rule": "js/disabling-certificate-validation"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "deployment": {
+        "id": "dpl_3EcqP1R58wABff2DpuTw99R7oH9j",
+        "state": "READY",
+        "source": "4c88423f375bd7312127027d584030223d34ee9a",
+        "regions": ["fra1"],
+        "aliases": [
+          "corridra.vercel.app",
+          "c.obsidianglobal.studio",
+          "corridra-sadat-os.vercel.app"
+        ]
+      },
+      "limitations": [
+        "Production private signed-in interaction not executed by agent; no production invitation/identity/task/email created.",
+        "Contributor verified-account email proof in isolated acceptance is a fixture; genuine managed-provider acceptance remains unverified.",
+        "Custom domain blocked to executor; owned Vercel fallback and canonical redirects checked."
+      ],
+      "reviewChecklist": "work/network-review-checklist.json",
+      "liveProbes": {
+        "origin": "https://corridra.vercel.app",
+        "observedAt": "2026-10-22T03:12:11.427586+00:00",
+        "passed": 10,
+        "total": 10,
+        "results": [
+          {
+            "path": "/network",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true,
+            "enabledCopy": true
+          },
+          {
+            "path": "/privacy",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true,
+            "contributorPrivacyCopy": true
+          },
+          {
+            "path": "/about",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true
+          },
+          {
+            "path": "/contributor/setup",
+            "status": 307,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+            "status": 307,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/operator-setup?kind=contributor",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/intake/pending",
+            "status": 200,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true,
+            "realAdmissionAvailable": true
+          }
+        ]
+      },
+      "cleanup": {
+        "previewsDeletedAndVerifiedAbsent": [
+          {
+            "id": "dpl_HzN8ZYMj6qvGe63PQBPRVXCsMGwB",
+            "branch": "feat/network-workspace-readiness",
+            "source": "32d70f59ce46eb92d9966e1b6055361ee88492e2",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          },
+          {
+            "id": "dpl_3WHAXaarrpBZh9HTS5XGfidJvz2P",
+            "branch": "feat/network-workspace-readiness",
+            "source": "86608faec3ea239e1ad1b060fc11d65b95b9000d",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          },
+          {
+            "id": "dpl_GSdtKZ55ojs5UGbECscQxTG4YYdf",
+            "branch": "feat/network-workspace-readiness",
+            "source": "2eed603c491e74788db1f18862005a6ac2876973",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          }
+        ],
+        "mergedBranch": "feat/network-workspace-readiness",
+        "archive": "refs/archive/completed-local/pr129-network-workspace-readiness",
+        "deletedRemoteAndLocal": true,
+        "remoteNamesAfterCleanup": [
+          "claude/happy-feynman-i66amw",
+          "dependabot/npm_and_yarn/types/node-26.6.5",
+          "dependabot/npm_and_yarn/typescript-7.0.2",
+          "main"
+        ]
+      },
+      "postCleanupLiveProbes": {
+        "origin": "https://corridra.vercel.app",
+        "observedAt": "2026-10-22T03:13:17.649818+00:00",
+        "passed": 10,
+        "total": 10,
+        "results": [
+          {
+            "path": "/network",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true,
+            "enabledCopy": true
+          },
+          {
+            "path": "/privacy",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true,
+            "contributorPrivacyCopy": true
+          },
+          {
+            "path": "/about",
+            "status": 200,
+            "cacheControl": "public, max-age=0, must-revalidate",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "passed": true
+          },
+          {
+            "path": "/contributor/setup",
+            "status": 307,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+            "status": 307,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/operator-setup?kind=contributor",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+            "status": 401,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true
+          },
+          {
+            "path": "/api/intake/pending",
+            "status": 200,
+            "cacheControl": "no-store",
+            "referrerPolicy": "no-referrer",
+            "passed": true,
+            "realAdmissionAvailable": true
+          }
+        ]
+      }
     }
   }
 }
