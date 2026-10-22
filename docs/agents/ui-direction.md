@@ -2,6 +2,23 @@
 
 Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) first: they explain what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
+## AC/1 Atlantic Cobalt brand and composition lock (owner decision, 22 October 2026)
+
+The owner locked **Corridra AC/1**: the Atlantic Cobalt brand (Midnight Navy `#142438`, International Cobalt `#2856C5`, Porcelain `#F6F8FB`, Copper `#BF7548`, Ink `#18283C`), one foundation (Meridian) and four task compositions (SourceLedger, Encounter Grid, Commerce Atelier, Signal Desk). It is one design system, not five themes. The supplied package is preserved byte for byte in `docs/source/ac1-design-system/`; the working index, reconciliation and implemented crosswalk are in [the design-system index](../design-system/README.md).
+
+This supersession is deliberately narrow:
+
+1. **Colour only, now.** Every colour rule below that names ivory, forest green, gold or green-tinted shadows now means the AC/1 equivalent: porcelain page, navy chrome and dark contrast surface, cobalt for primary action, selected state, focus and links, copper for editorial ornament only (never warning, never small text), navy-tinted overlay shadows. The next-step card keeps every locked behaviour and becomes navy with one light button. The V3 contract's section 7 colour clause is superseded by this owner decision; the contract file itself stays unchanged.
+2. **Cobalt action, navy chrome.** `--action` is the only primary-action fill. `--brand-deep` (navy) is never a call-to-action fill. Selected states use `--selected`. Status colours stay independent of the brand.
+3. **Unchanged:** the eight guided rules, locked parts, navigation sets, glossary, trust labels, content rules, hard limits and verification steps.
+4. **Geometry, settled by the owner (22 October 2026, after a rendered comparison):** AC/1 rounding B, controls 8 px, cards and guided choices 12 px, panels and bands 16 px, capsules for status badges only (never navigation, tabs, filters or buttons). The 72 px space step is retired: use 64 px inside work screens and 80 px for large public sections. Guided touch sizes (44, 60 and 76 px) are unchanged. This replaces the guided radius values in "Token rules for the build" and the 72 px step in the space scale below.
+5. **Icons, settled by the owner (22 October 2026, after a rendered comparison):** Corridra Meridian line, one owned family in `apps/web/components/corridra-icon.tsx`: 20 px grid, 1.5 px stroke (`--icon-stroke`), square ends, mitred joins, right-angle routes and square nodes. No pastel tile behind any icon, no sparkle for AI (AI help is a draft pen), no gear (settings are sliders). Every icon keeps its word. New screens use `CorridraIcon`; inline `<svg>` icons fail the design-system test.
+6. **UX quality gate:** `pnpm test:ux` checks every static route at 320, 390, 768, 1024, 1440 and 1920 px for page overflow, touch targets (44 px up to 768 px, 24 px above), visible keyboard focus, capsule-shaped controls, more than one primary action per region, text under 12 px and axe WCAG 2.2 AA. Counts may not rise above `tests/ux/ux-baseline.json`; lower it when you fix debt, never raise it. It runs in CI and does not replace real user testing.
+7. **Home page settled (22 Oct 2026).** The owner chose concept A "Ledger" for `/`: headline "Make market entry deliberate.", the three jobs on the first screen, and a Selling/Sourcing example mission beside them. Selling and buying carry equal weight on the page. Details and fixed hooks: `docs/design-system/README.md` section 9.
+8. **Order of work:** tokens first, then shared primitives, then five reference screens (public home, customer Mission Room, sourcing comparison, delegation management, operator workspace). Platform-wide page migration waits for a named human reviewer's art-direction acceptance of those references. An agent may not mark that gate passed.
+
+The two 22 October directions below (operator landing, Network) keep their layout and serif headings until the Signal reference package; their colour words are superseded by this section.
+
 ## Operator landing reference (owner direction, 22 October 2026)
 
 For the signed-in `/operator` landing screen, combine the supplied Concept 05 Bento Navigation and Concept 09 Command Center references: ivory surfaces, forest-green mission-first bento, serif headings, icon-led live status cards, a separate management disclosure and grouped tool directory. This scoped direction supersedes the earlier plain operator landing presentation. Preserve all original destinations, mounted panels, role checks, disclosures, real counts, failures and recovery. Do not copy fictional dates, identities, notifications or decorative search controls without a working backend. Use responsive readable cards rather than shrinking a desktop screen to phone width. Other screens retain the existing kit.
@@ -103,7 +120,7 @@ One primary call to action per visual section, secondary actions visually quiete
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Colour    | Ivory paper, forest green and ink are the brand. Use semantic tokens only (`--surface-*`, `--text-*`, `--brand-*`, `--accent-gold`, `--positive`, `--caution`, `--critical`, `--info`, `--unknown`). Text must reach WCAG AA. No new hex values in component CSS.                            |
 | Type      | Inter for all interface and data text. An editorial serif for hero and section headings on public pages only. Bangla and Han fallbacks stay in every stack. Money, quantities, dates and ids use tabular numerals. Scale: 12, 13, 14, 16, 18, 20, 24, 32, 44, 60 px with fixed line heights. |
-| Space     | 4 px base: 4, 8, 12, 16, 24, 32, 48, 72, 96. No other values.                                                                                                                                                                                                                                |
+| Space     | 4 px base: 4, 8, 12, 16, 24, 32, 48, 64, 80, 96. No other values. (72 retired, owner decision 22 October 2026.)                                                                                                                                                                              |
 | Shape     | Controls 8 px, cards 12 px, large panels 16 px, pills for badges only.                                                                                                                                                                                                                       |
 | Elevation | Three levels, soft green-tinted shadows. Borders carry structure; shadows carry focus and overlays.                                                                                                                                                                                          |
 | Motion    | 120 to 220 ms ease-out for state changes only. Honour `prefers-reduced-motion`. Never block a task on animation.                                                                                                                                                                             |
@@ -226,7 +243,7 @@ This is the planned map at approval, not current implementation status. The date
 
 ### Token rules for the build
 
-The mockups use larger sizes than the current token layer. Add these to the "Design system layer" in `apps/web/app/globals.css` before use, and nowhere else: guided control radius 14 px, guided card 16 px, hero card 20 px, guided body text 18 px, touch targets 48 px and 60 px for the main action. Mockup spacing that fell between steps (18, 22, 28) snaps to the 4 px scale when built. No raw colours, as before.
+The mockups use larger sizes than the current token layer. Add these to the "Design system layer" in `apps/web/app/globals.css` before use, and nowhere else: guided control radius 8 px, guided card 12 px, hero card 16 px (AC/1 rounding B, owner decision 22 October 2026; originally 14, 16 and 20 px), guided body text 18 px, touch targets 48 px and 60 px for the main action. Mockup spacing that fell between steps (18, 22, 28) snaps to the 4 px scale when built. No raw colours, as before.
 
 ### Before any guided screen ships
 
@@ -301,7 +318,7 @@ A UI change may not alter domain packages, API handlers, authentication, RLS, mi
 
 ## Verification for every UI change
 
-`pnpm format:check`, `lint`, `typecheck`, `test`, `build`, `test:e2e`, and `test:operator` where a protected surface changed. Capture screenshots at 1440, 768 and 390 px before and after. Axe must stay clean. Record all of it, and what was not run, in `docs/agents/work-log.md`.
+`pnpm format:check`, `lint`, `typecheck`, `test`, `build`, `test:e2e`, `test:ux`, and `test:operator` where a protected surface changed. Capture screenshots at 1440, 768 and 390 px before and after. Axe must stay clean. Record all of it, and what was not run, in `docs/agents/work-log.md`.
 
 ## Sizes in use (checked on the live pages, 21 October 2026)
 
@@ -315,9 +332,9 @@ One scale for every page. Use these before inventing a size; all are tokens or v
 | Body text                          | 16 px                                     | Lead paragraphs 18 px; captions and secondary labels 14 px; eyebrow labels 12 px.      |
 | Page call to action                | 56 px tall, 18 px text                    | Hero and closing band only.                                                            |
 | In-card call to action             | 48 px tall, 16 px text                    | Home Start, route buttons.                                                             |
-| Standalone action (link or button) | 44 px tall, outlined, 14 px corners       | Refresh, Back to, Explore, Cancel and the like. Customer pages get this from one rule. |
+| Standalone action (link or button) | 44 px tall, outlined, 8 px corners        | Refresh, Back to, Explore, Cancel and the like. Customer pages get this from one rule. |
 | Inputs                             | 48 px tall, full width up to 40 rem       | Customer pages.                                                                        |
-| Card                               | 24 px padding, 1 px border, 20 px corners | Choice cards and step cards match.                                                     |
+| Card                               | 24 px padding, 1 px border, 16 px corners | Choice cards and step cards match; items inside a card use 12 px.                      |
 | Gap from header to first heading   | 24 px                                     | Do not add page padding on top.                                                        |
 | Footer                             | Two equal link columns of six             | Repeat nothing the header already carries.                                             |
 

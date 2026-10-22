@@ -25,11 +25,7 @@
 }
 
 :root {
-  --paper: #f5f3ec;
-  --ink: #222d29;
-  --muted: #58635d;
-  --accent: #526544;
-  --line: #d6d9ce;
+  /* Colour tokens live only in the canonical AC/1 layer ("Design system layer" below). */
   --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --sans: Arial, Helvetica, sans-serif;
 }
@@ -49,7 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 ::selection {
-  background: #d9e2c4;
+  background: var(--selected-surface);
   color: var(--ink);
 }
 a {
@@ -172,7 +168,7 @@ h1 {
   transition: background 150ms ease;
 }
 .primary-link:hover {
-  background: #3b4940;
+  background: var(--action-hover);
 }
 .launch-status {
   display: inline-flex;
@@ -334,7 +330,7 @@ h1 {
 }
 .closing {
   padding: 43px 40px 49px;
-  background: #e8ebdf;
+  background: var(--surface-2);
   margin: 0 0 38px;
 }
 .closing > .label {
@@ -717,10 +713,10 @@ summary:hover {
   outline-offset: 3px;
 }
 .field [aria-invalid='true'] {
-  border-color: #943f34;
+  border-color: var(--critical);
 }
 .field-error {
-  color: #943f34;
+  color: var(--critical);
   font-size: var(--text-sm);
 }
 @media (max-width: 1250px) {
@@ -853,7 +849,7 @@ summary:hover {
 .evidence-label {
   display: inline-block;
   font-size: var(--text-xs);
-  background: #e8ebdf;
+  background: var(--surface-2);
   padding: 4px 9px;
   margin-left: 8px;
 }
@@ -867,7 +863,7 @@ summary:hover {
 }
 .setup-secret {
   padding: 18px;
-  background: #e8ebdf;
+  background: var(--surface-2);
   overflow-wrap: anywhere;
 }
 .setup-secret summary {
@@ -1007,7 +1003,7 @@ summary:hover {
 .delivery-card {
   margin-block: 2rem;
   padding: 1.5rem;
-  border: 1px solid var(--line, #d4d4d4);
+  border: 1px solid var(--line);
   border-radius: 1rem;
 }
 .delivery-view label,
@@ -1044,7 +1040,7 @@ summary:hover {
 .delivery-table td {
   padding: 0.75rem;
   text-align: start;
-  border-bottom: 1px solid #d4d4d4;
+  border-bottom: 1px solid var(--line);
 }
 .delivery-ops details {
   margin-block: 1.5rem;
@@ -1175,23 +1171,7 @@ summary:hover {
 
 /* UX10X foundations: semantic colors and geometry shared by access and workspaces. */
 :root {
-  --surface-raised: #fffefa;
-  --surface-subtle: #e9eee5;
-  --text-strong: var(--ink);
-  --text-muted: var(--muted);
-  --border-subtle: var(--line);
-  --action: #244b39;
-  --focus: #244b39;
-  --positive: #285b3b;
-  --positive-surface: #e7f0e7;
-  --caution: #805018;
-  --caution-surface: #f7ecd9;
-  --critical: #963d31;
-  --critical-surface: #f9e8e3;
-  --info: #365e62;
-  --info-surface: #e6eeee;
-  --unknown: #5b594e;
-  --unknown-surface: #efede5;
+  /* Colour tokens live only in the canonical AC/1 layer ("Design system layer" below). */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -1458,22 +1438,22 @@ summary:hover {
 }
 .ux-atlas-map ellipse,
 .ux-atlas-map path {
-  stroke: #719280;
+  stroke: var(--map-eu-active);
   stroke-width: 1;
   fill: none;
   opacity: 0.5;
 }
 .ux-atlas-map path.ux-atlas-direction {
-  stroke: #f2ce95;
+  stroke: var(--map-arc-europe);
   stroke-width: 3;
   stroke-dasharray: 7 7;
   opacity: 1;
 }
 .ux-atlas-map circle {
-  fill: #f2ce95;
+  fill: var(--map-arc-europe);
 }
 .ux-atlas-map text {
-  fill: #f5f3ec;
+  fill: var(--paper);
   font-size: 15px;
   font-family: Arial, sans-serif;
 }
@@ -2073,19 +2053,80 @@ summary:hover {
     -apple-system, 'Segoe UI', Arial, sans-serif;
   --sans: var(--font-ui);
   --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
-  --brand-deep: #173f31;
-  --brand: #244b39;
-  --brand-hover: #0f2f24;
-  --on-brand: #fffefa;
-  --ring: rgb(36 75 57 / 14%);
-  --accent-gold: #b98a4e;
+  /* AC/1 Atlantic Cobalt primitives: the only raw colour values in the product.
+     Source: docs/source/ac1-design-system/atlantic-cobalt.tokens.json. Crosswalk: docs/design-system/README.md. */
+  --ac-navy: #142438;
+  --ac-cobalt: #2856c5;
+  --ac-cobalt-hover: #234eb0;
+  --ac-cobalt-pressed: #1e4295;
+  --ac-porcelain: #f6f8fb;
+  --ac-copper: #bf7548;
+  --ac-copper-ink: #85451e;
+  --ac-ink: #18283c;
+  --ac-paper: #ffffff;
+  --ac-surface-subtle: #eff3f8;
+  --ac-surface-selected: #e7eeff;
+  --ac-surface-navy: #1c3048;
+  --ac-surface-navy-hover: #263c56;
+  --ac-border: #d8e0ea;
+  --ac-border-strong: #a4b1c2;
+  --ac-text-secondary: #4b5a6c;
+  --ac-text-tertiary: #59677b;
+  --ac-positive: #116653;
+  --ac-positive-surface: #e8f5f0;
+  --ac-warning: #865018;
+  --ac-warning-surface: #fff2e2;
+  --ac-critical: #a52f43;
+  --ac-critical-surface: #fbecef;
+  --ac-unknown: #526073;
+  /* Semantic roles. Existing names are kept so every consumer and test still resolves. */
+  --paper: var(--ac-porcelain);
+  --ink: var(--ac-ink);
+  --muted: var(--ac-text-tertiary);
+  --line: var(--ac-border);
   --surface-0: var(--paper);
-  --surface-1: #fffefa;
-  --surface-2: #eef1e8;
+  --surface-1: var(--ac-paper);
+  --surface-2: var(--ac-surface-subtle);
+  --surface-raised: var(--ac-paper);
+  --surface-subtle: var(--ac-surface-subtle);
   --text-1: var(--ink);
-  --text-2: #4a564f;
+  --text-2: var(--ac-text-secondary);
   --text-3: var(--muted);
-  --border-strong: #8c978a;
+  --text-strong: var(--ink);
+  --text-muted: var(--muted);
+  --border-subtle: var(--line);
+  --border-strong: var(--ac-border-strong);
+  /* Navy is chrome and the dark contrast surface. It is never a call-to-action fill. */
+  --brand-deep: var(--ac-navy);
+  --nav-hover: var(--ac-surface-navy-hover);
+  /* Cobalt is the interactive accent: primary action, selected state, focus, links. */
+  --brand: var(--ac-cobalt);
+  --brand-hover: var(--ac-cobalt-hover);
+  --on-brand: var(--ac-paper);
+  --action: var(--ac-cobalt);
+  --action-hover: var(--ac-cobalt-hover);
+  --action-pressed: var(--ac-cobalt-pressed);
+  --on-action: var(--ac-paper);
+  --selected: var(--ac-cobalt);
+  --selected-surface: var(--ac-surface-selected);
+  --focus: var(--ac-cobalt);
+  --ring: color-mix(in srgb, var(--ac-cobalt) 16%, transparent);
+  /* Deprecated alias for legacy focus and hover consumers. */
+  --accent: var(--ac-cobalt);
+  /* Copper is editorial ornament only: never warning, verification or small text. */
+  --editorial-accent: var(--ac-copper);
+  --accent-gold: var(--editorial-accent);
+  /* Status colours are independent of the brand. */
+  --positive: var(--ac-positive);
+  --positive-surface: var(--ac-positive-surface);
+  --caution: var(--ac-warning);
+  --caution-surface: var(--ac-warning-surface);
+  --critical: var(--ac-critical);
+  --critical-surface: var(--ac-critical-surface);
+  --info: var(--ac-cobalt);
+  --info-surface: var(--ac-surface-selected);
+  --unknown: var(--ac-unknown);
+  --unknown-surface: var(--ac-surface-subtle);
   /* Type scale. Reading text 18, controls and cards 16, notes 14, captions 12. */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -2099,20 +2140,22 @@ summary:hover {
   --text-display: clamp(2.125rem, 4vw, 3.25rem);
   --space-5: 1.25rem;
   --space-12: 3rem;
-  --space-18: 4.5rem;
+  /* Owner decision 22 Oct 2026: the 72 px step is retired for AC/1's 64 and 80. */
+  --space-16: 4rem;
+  --space-20: 5rem;
   --space-24: 6rem;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
-  --shadow-1: 0 1px 2px rgb(23 63 49 / 6%), 0 1px 1px rgb(23 63 49 / 4%);
-  --shadow-2: 0 6px 18px -6px rgb(23 63 49 / 18%), 0 2px 4px rgb(23 63 49 / 6%);
-  --shadow-3: 0 24px 48px -16px rgb(23 63 49 / 28%), 0 4px 10px rgb(23 63 49 / 8%);
+  --shadow-1: 0 1px 2px rgb(20 36 56 / 6%), 0 1px 1px rgb(20 36 56 / 4%);
+  --shadow-2: 0 6px 18px -6px rgb(20 36 56 / 18%), 0 2px 4px rgb(20 36 56 / 6%);
+  --shadow-3: 0 24px 48px -16px rgb(20 36 56 / 28%), 0 4px 10px rgb(20 36 56 / 8%);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --dur: 160ms;
+  /* Corridra Meridian line icons (owner decision 22 Oct 2026): 1.5 px stroke, square ends. */
+  --icon-stroke: 1.5px;
   --radius-panel: var(--radius-md);
   --radius-control: var(--radius-sm);
-  --action: var(--brand);
-  --focus: var(--brand);
 }
 html {
   scroll-padding-top: 104px;
@@ -2153,6 +2196,10 @@ time {
     backdrop-filter: saturate(1.4) blur(14px);
     -webkit-backdrop-filter: saturate(1.4) blur(14px);
   }
+}
+/* The wordmark is a link home: keep the 44 px touch target. */
+.brand {
+  min-height: 2.75rem;
 }
 .brand span {
   font-size: 1.6rem;
@@ -2263,9 +2310,9 @@ time {
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.005em;
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border: 1px solid var(--brand-deep);
+  color: var(--on-action);
+  background: var(--action);
+  border: 1px solid var(--action);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
   cursor: pointer;
@@ -2276,12 +2323,15 @@ time {
 }
 .primary-link:hover,
 .button:hover {
-  background: var(--brand-hover);
+  background: var(--action-hover);
+  border-color: var(--action-hover);
   box-shadow: var(--shadow-2);
   transform: translateY(-1px);
 }
 .primary-link:active,
 .button:active {
+  background: var(--action-pressed);
+  border-color: var(--action-pressed);
   transform: translateY(0);
   box-shadow: var(--shadow-1);
 }
@@ -2614,16 +2664,17 @@ th {
 
 /* Corridor map: real outlines, both directions from Bangladesh always shown. */
 :root {
-  --map-land: #25503f;
-  --map-eu: #3b7a5c;
-  --map-eu-active: #4d9370;
-  --map-spain: #b98a4e;
-  --map-spain-active: #e0b872;
-  --map-china: #5f9e7f;
-  --map-china-active: #a9d6bc;
-  --map-bangladesh: #fffefa;
-  --map-arc-china: #c4ebd5;
-  --map-arc-europe: #f2ce95;
+  /* Derived from AC/1 primitives; drawn on the navy land tone. */
+  --map-land: var(--ac-surface-navy);
+  --map-eu: var(--ac-surface-navy-hover);
+  --map-eu-active: color-mix(in srgb, var(--ac-cobalt) 55%, var(--ac-surface-navy));
+  --map-spain: var(--ac-copper);
+  --map-spain-active: color-mix(in srgb, var(--ac-copper) 70%, var(--ac-paper));
+  --map-china: color-mix(in srgb, var(--ac-cobalt) 70%, var(--ac-surface-navy));
+  --map-china-active: color-mix(in srgb, var(--ac-cobalt) 45%, var(--ac-paper));
+  --map-bangladesh: var(--ac-paper);
+  --map-arc-china: color-mix(in srgb, var(--ac-cobalt) 30%, var(--ac-paper));
+  --map-arc-europe: color-mix(in srgb, var(--ac-copper) 45%, var(--ac-paper));
 }
 .ux-atlas-map .ux-map-land,
 .ux-atlas-map .ux-map-eu,
@@ -2916,9 +2967,10 @@ th {
 
 /* Guided experience (locked, docs/agents/ui-direction.md). One question, one button, tokens only. */
 :root {
-  --guided-control-radius: 0.875rem;
-  --guided-card-radius: 1rem;
-  --guided-hero-radius: 1.25rem;
+  /* Owner decision 22 Oct 2026 (AC/1 rounding B): controls 8, cards and choices 12, panels 16. */
+  --guided-control-radius: var(--radius-sm);
+  --guided-card-radius: var(--radius-md);
+  --guided-hero-radius: var(--radius-lg);
   --guided-body: 1.125rem;
   --guided-touch: 3rem;
   --guided-touch-large: 3.5rem;
@@ -2948,9 +3000,9 @@ th {
   height: 1.125rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-tag[data-tone='info'] {
   color: var(--info);
@@ -3076,18 +3128,16 @@ th {
 }
 .guide-choice-icon {
   display: grid;
-  place-items: center;
-  width: 4rem;
-  height: 4rem;
-  color: var(--brand);
-  background: var(--positive-surface);
-  border-radius: var(--guided-hero-radius);
+  place-items: start;
+  width: auto;
+  height: auto;
+  color: var(--brand-deep);
 }
+/* AC/1: no tile behind icons; the glyph sits on the card. */
 .guide-choice-icon svg {
-  width: 2.125rem;
-  height: 2.125rem;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 2rem;
+  height: 2rem;
+  stroke-width: var(--icon-stroke);
 }
 .guide-choice-text {
   display: grid;
@@ -3116,8 +3166,8 @@ th {
   padding-inline: var(--space-6);
   font-size: var(--text-base);
   font-weight: 600;
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--action);
   border-radius: var(--guided-control-radius);
 }
 .guide-choice-go {
@@ -3230,10 +3280,10 @@ th {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-  padding: var(--space-12) var(--space-18);
+  padding: var(--space-12) var(--space-16);
   color: var(--on-brand);
   background: var(--brand-deep);
-  border-radius: 1.5rem;
+  border-radius: var(--guided-hero-radius);
 }
 .guide-band h2 {
   margin: 0 0 var(--space-2);
@@ -3491,9 +3541,9 @@ th {
   margin-top: 0.125rem;
   fill: none;
   stroke: var(--positive);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-progress {
   display: grid;
@@ -3582,7 +3632,7 @@ th {
   padding: var(--space-12) var(--space-12) var(--space-24);
   color: color-mix(in srgb, var(--on-brand) 85%, transparent);
   background: var(--brand-deep);
-  border-radius: 1.5rem 1.5rem 0 0;
+  border-radius: var(--guided-hero-radius) var(--guided-hero-radius) 0 0;
 }
 .guide-footer-top {
   display: grid;
@@ -3675,15 +3725,15 @@ th {
   height: 1.25rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .dock-button[data-active='true'],
 .dock-button[aria-expanded='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
 }
 .dock-button::after {
   content: attr(data-tip);
@@ -3784,16 +3834,11 @@ th {
     gap: var(--space-4);
     min-height: 5.75rem;
     padding: var(--space-4);
-    border-radius: 1.125rem;
-  }
-  .guide-choice-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--guided-control-radius);
+    border-radius: var(--guided-hero-radius);
   }
   .guide-choice-icon svg {
-    width: 1.625rem;
-    height: 1.625rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
   .guide-choice-text strong {
     font-size: var(--text-xl);
@@ -3988,13 +4033,13 @@ th {
   color: var(--brand-deep);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .guide-route-quick button[aria-pressed='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
 }
 .guide-routes .ux-atlas {
   display: grid;
@@ -4142,7 +4187,7 @@ th {
 .guide-plan {
   display: grid;
   gap: var(--space-6);
-  padding-block: var(--space-12) var(--space-18);
+  padding-block: var(--space-12) var(--space-16);
 }
 .guide-plan-head {
   display: grid;
@@ -4217,7 +4262,7 @@ th {
   color: var(--brand-deep);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .guide-bn[open] > summary {
@@ -4235,7 +4280,7 @@ th {
   font-size: var(--text-base);
   color: var(--text-1);
   background: var(--info-surface);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .guide-status[hidden] {
   display: none;
@@ -4317,7 +4362,7 @@ th {
 .intake-form details {
   padding: var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .intake-form details > summary {
   min-height: 2.75rem;
@@ -4390,9 +4435,9 @@ th {
   color: var(--text-1);
 }
 .guide-journey-bar li[aria-current='step'] span {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
   box-shadow: 0 0 0 4px var(--ring);
 }
 .guide-journey-bar li[aria-current='step'] b {
@@ -4420,7 +4465,7 @@ th {
   color: var(--text-1);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   cursor: pointer;
   transition:
     border-color var(--dur) var(--ease),
@@ -5052,7 +5097,7 @@ th {
   font-weight: 600;
   color: var(--text-2);
   text-decoration: none;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease);
@@ -5062,8 +5107,8 @@ th {
   background: var(--surface-2);
 }
 .guide-tabs a[aria-current='page'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 .guide-tabs svg {
   width: 1.25rem;
@@ -5071,9 +5116,9 @@ th {
   flex: none;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-next .label {
   margin: 0 0 var(--space-2);
@@ -5297,7 +5342,7 @@ th {
   color: var(--text-1);
   background: var(--caution-surface);
   border: 1px solid var(--caution);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-testmode strong {
   font-weight: 700;
@@ -5363,9 +5408,9 @@ th {
   height: 1.125rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .ux-hint,
 .ux-customer .operator-form .ux-hint {
@@ -5431,7 +5476,7 @@ th {
   margin: 0;
   background: var(--surface-2);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-fact-row ul {
   margin: 0;
@@ -5498,14 +5543,9 @@ th {
     min-height: 0;
     border-width: 1px;
   }
-  .guide-choice-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--guided-control-radius);
-  }
   .guide-choice-icon svg {
-    width: 1.625rem;
-    height: 1.625rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
   .guide-choice-text strong {
     font-size: var(--text-xl);
@@ -5789,7 +5829,7 @@ th {
   color: var(--text-1);
   background: var(--critical-surface);
   border: 1px solid var(--critical);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer p[role='status'],
 .ux-customer .ux-draft-notice {
@@ -5798,7 +5838,7 @@ th {
   color: var(--text-1);
   background: var(--info-surface);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer :is(p, div)[role='alert'] > * {
   margin-block: 0;
@@ -5932,7 +5972,7 @@ th {
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer li > :is(a, button).text-link {
   display: inline-flex;
@@ -6093,7 +6133,7 @@ th {
   color: var(--text-2);
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .pricing-tabs [role='tab']:hover {
@@ -6101,8 +6141,8 @@ th {
   background: var(--surface-2);
 }
 .pricing-tabs [role='tab'][aria-selected='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 
 /* Operator workspace kit. One panel is in view at a time (the rest stay mounted, so entries
@@ -6186,7 +6226,7 @@ th {
   font-weight: 600;
   color: var(--text-2);
   text-decoration: none;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease);
@@ -6196,8 +6236,8 @@ th {
   background: var(--surface-2);
 }
 .ux-area-bar nav:first-child a[aria-current='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 .ux-area-bar .ux-area-home {
   border: 1px solid var(--border-strong);
@@ -6209,8 +6249,8 @@ th {
 }
 .ux-area-bar .ux-area-sections a[aria-current='location'] {
   color: var(--brand-deep);
-  background: var(--surface-2);
-  box-shadow: inset 0 -2px 0 var(--brand-deep);
+  background: var(--selected-surface);
+  box-shadow: inset 0 -2px 0 var(--selected);
   border-radius: var(--radius-sm);
 }
 
@@ -6276,7 +6316,7 @@ th {
   padding: var(--space-2) var(--space-4);
   background: var(--surface-2);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-hero-radius);
 }
 .ux-workspace-body .ux-operator-workbench > .label {
   margin: 0;
@@ -6785,7 +6825,7 @@ th {
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-controls-boundary p {
   margin: 0;
@@ -6922,8 +6962,8 @@ th {
   border-top: 1px solid var(--line);
 }
 .ux-operator-home .ux-area-bar .ux-area-home[aria-current='page'] {
-  background: var(--brand-deep);
-  color: var(--on-brand);
+  background: var(--selected);
+  color: var(--on-action);
 }
 .ux-operator-home .workspace-panel {
   min-width: 0;
@@ -6970,7 +7010,7 @@ th {
 .ux-operator-home .workspace-panel details:not(.ux-journey-disclosure) {
   margin-block: var(--space-3);
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-operator-home .workspace-panel details:not(.ux-journey-disclosure) > summary {
   min-height: 3rem;
@@ -7013,9 +7053,7 @@ th {
   width: 3rem;
   height: 3rem;
   flex: none;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  color: var(--brand-deep);
 }
 .ux-panel-heading-icon svg {
   width: 1.5rem;
@@ -7083,7 +7121,7 @@ th {
   padding: var(--space-5);
   background: var(--surface-2);
   border: 1px dashed var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-panel-empty h3 {
   margin-top: 0;
@@ -7101,7 +7139,7 @@ th {
 .ux-audit-members > li,
 .ux-audit-events > li {
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   padding: var(--space-4);
   min-width: 0;
 }
@@ -7234,7 +7272,7 @@ th {
 .ux-settings-counts > div {
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   padding: var(--space-4);
 }
 .ux-settings-counts dt {
@@ -7302,4 +7340,590 @@ th {
 .ux-audit-pagination p {
   margin: 0;
   color: var(--text-2);
+}
+
+/* AC/1 home, concept A "Ledger" (owner pick 22 Oct 2026). Promise and the three jobs on the left,
+   a switchable selling/sourcing example mission on the right. Tokens only. */
+.ux-public.ac1-home {
+  display: block;
+  padding-bottom: var(--space-12);
+}
+.ac1-home :is(h1, h2, h3) {
+  font-family: var(--serif);
+  font-weight: 400;
+}
+.ac1-home .label {
+  margin: 0;
+  color: var(--text-2);
+}
+.ac1-home :where(.corridra-icon:not([width])) {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.ac1-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ac1-rule::before {
+  content: '';
+  width: 1rem;
+  height: 2px;
+  background: var(--editorial-accent);
+}
+.ac1-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-16);
+  align-items: start;
+  padding-block: var(--space-16) var(--space-4);
+}
+.ac1-hero h1 {
+  margin: var(--space-6) 0;
+  font-size: clamp(2.375rem, 1.2rem + 3.4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+.ac1-lead {
+  margin: 0 0 var(--space-8);
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+}
+.ac1-hero .ac1-lead {
+  max-width: 34ch;
+  font-size: 1.1875rem;
+}
+.ac1-jobs {
+  display: grid;
+  margin-bottom: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+.ac1-jobs a {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
+  gap: var(--space-4);
+  align-items: center;
+  min-height: 5.25rem;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-1);
+  text-decoration: none;
+}
+.ac1-jobs .ac1-job-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+  color: var(--brand-deep);
+}
+.ac1-jobs strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.ac1-job-text {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-home .ac1-job-name {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.ac1-jobs .ac1-job-go {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--action);
+}
+.ac1-jobs a:hover strong {
+  color: var(--action);
+}
+.ac1-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  color: var(--action);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ac1-quiet:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ac1-calm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ac1-calm li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ac1-calm svg {
+  color: var(--positive);
+}
+.ac1-note {
+  max-width: 36ch;
+  margin: var(--space-6) 0 0;
+  color: var(--text-3);
+  font-size: var(--text-sm);
+}
+
+.ac1-record {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-record-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+.ac1-example-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ac1-record-tabs {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.ac1-record-tabs button {
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font: 600 var(--text-sm) var(--font-ui);
+  cursor: pointer;
+}
+.ac1-record-tabs button + button {
+  border-left: 1px solid var(--border-strong);
+}
+.ac1-record-tabs button[aria-selected='true'] {
+  background: var(--selected-surface);
+  box-shadow: inset 0 -2px 0 var(--selected);
+  color: var(--selected);
+}
+.ac1-record-tabs button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -4px;
+}
+.ac1-record-body {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+.ac1-record-body[hidden] {
+  display: none;
+}
+.ac1-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+.ac1-record h2 {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(1.5rem, 1.1rem + 1vw, 1.875rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.ac1-record-meta {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ac1-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ac1-track li {
+  position: relative;
+  padding-top: var(--space-4);
+  padding-right: var(--space-1);
+  color: var(--text-3);
+  font-size: 0.8125rem;
+}
+.ac1-track li::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--line);
+  content: '';
+}
+.ac1-track li.is-done {
+  color: var(--text-2);
+}
+.ac1-track li.is-done::before {
+  background: var(--brand-deep);
+}
+.ac1-track li.is-now {
+  color: var(--action);
+  font-weight: 600;
+}
+.ac1-track li.is-now::before {
+  background: var(--action);
+}
+.ac1-companies,
+.ac1-buyers,
+.ac1-truth,
+.ac1-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ac1-companies {
+  border-top: 1px solid var(--line);
+}
+.ac1-companies li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ac1-companies li > span:not(.guide-tag) {
+  grid-column: 1;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+.ac1-companies .guide-tag {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.ac1-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.ac1-next p {
+  margin: 0;
+}
+.ac1-next .label {
+  margin-bottom: var(--space-1);
+}
+.ac1-next svg {
+  color: var(--action);
+}
+
+.ac1-section {
+  padding-top: var(--space-20);
+}
+.ac1-section > h2 {
+  margin: var(--space-4) 0 var(--space-3);
+  font-size: clamp(2rem, 1.5rem + 1.4vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.ac1-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+.ac1-steps li {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+.ac1-step-number {
+  display: block;
+  margin-bottom: var(--space-4);
+  color: var(--action);
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.ac1-steps h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.ac1-steps p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--space-12);
+  align-items: start;
+}
+.ac1-proof + .ac1-proof {
+  margin-top: var(--space-12);
+}
+.ac1-proof > div > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 1.0625rem;
+}
+.ac1-proof-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+.ac1-proof-title svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--brand-deep);
+}
+.ac1-buyers li {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) auto minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ac1-buyers li > span:not(.guide-tag) {
+  color: var(--text-2);
+}
+.ac1-buyers .ac1-state {
+  font-size: var(--text-sm);
+}
+.ac1-compare {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-compare-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr));
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+}
+.ac1-compare-row:last-child {
+  border-bottom: 0;
+}
+.ac1-compare-head {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.ac1-compare [role='rowheader'] {
+  font-weight: 600;
+}
+.ac1-compare small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+.ac1-compare [data-tone='num'] {
+  font-variant-numeric: tabular-nums;
+}
+.ac1-compare [data-tone='ok'] {
+  color: var(--positive);
+  font-weight: 600;
+}
+.ac1-compare [data-tone='miss'] {
+  color: var(--caution);
+  font-weight: 600;
+}
+.ac1-compare [data-tone='bad'] {
+  color: var(--critical);
+  font-weight: 600;
+}
+.ac1-truth {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-truth li {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+}
+.ac1-truth li + li {
+  border-left: 1px solid var(--line);
+}
+.ac1-truth li > span:not(.guide-tag) {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-routes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.ac1-routes article {
+  padding-top: var(--space-6);
+  border-top: 3px solid var(--brand-deep);
+}
+.ac1-routes h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+.ac1-routes h3 svg {
+  color: var(--brand-deep);
+}
+.ac1-routes p {
+  max-width: 46ch;
+  margin: 0 0 var(--space-2);
+  color: var(--text-2);
+}
+.ac1-other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ac1-other p {
+  margin: 0;
+}
+.ux-guide-home.ac1-home .ac1-band {
+  margin-top: var(--space-20);
+}
+@media (max-width: 1000px) {
+  .ac1-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    padding-block: var(--space-8) 0;
+  }
+  .ac1-steps,
+  .ac1-truth {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ac1-truth li + li {
+    border-left: 0;
+  }
+  .ac1-truth li {
+    border-bottom: 1px solid var(--line);
+  }
+  .ac1-proof {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .ac1-routes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .ac1-section {
+    padding-top: var(--space-16);
+  }
+  .ac1-buyers li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    justify-items: start;
+  }
+  .ac1-compare-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ac1-compare-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+  .ac1-compare [role='cell'] {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+  .ac1-compare [role='cell']::before {
+    color: var(--text-2);
+    font-weight: 400;
+    content: attr(data-supplier);
+  }
+  .ac1-other {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  .ac1-hero .ac1-lead {
+    margin-bottom: var(--space-6);
+    font-size: 1.0625rem;
+  }
+  .ac1-jobs a {
+    min-height: 4.75rem;
+  }
+  .ac1-jobs strong {
+    font-size: 1.375rem;
+  }
+  .ac1-record-head,
+  .ac1-record-body {
+    padding-inline: var(--space-4);
+  }
+  .ac1-track li {
+    font-size: var(--text-xs);
+  }
+  .ac1-steps,
+  .ac1-truth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* One icon family everywhere (components/corridra-icon.tsx). Contexts may size it, not restyle it. */
+.corridra-icon {
+  flex: none;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }

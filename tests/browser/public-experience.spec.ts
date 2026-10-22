@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const routes = [
-  ['/', 'Find the right market.'],
+  ['/', 'Make market entry deliberate.'],
   ['/sell', 'Make the trip commercially useful.'],
   ['/source', 'Visit fewer suppliers.'],
   ['/enter-market', 'without entering it blind.'],
@@ -54,6 +54,48 @@ for (const [route, heading] of routes) {
     expect(failures).toEqual([]);
   });
 }
+
+test('the home example switches between selling and sourcing by pointer and keyboard', async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  page.on('request', (request) => {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(request.method());
+  });
+  await page.goto('/');
+  const record = page.getByRole('article', { name: 'Example missions, not real companies' });
+  const tabs = record.getByRole('tablist', { name: 'Example mission' });
+  const selling = tabs.getByRole('tab', { name: 'Selling', exact: true });
+  const sourcing = tabs.getByRole('tab', { name: 'Sourcing', exact: true });
+  await expect(selling).toHaveAttribute('aria-selected', 'true');
+  await expect(record.getByRole('tabpanel')).toHaveCount(1);
+  await expect(record.getByRole('tabpanel')).toContainText('knitwear buyers');
+  await sourcing.click();
+  await expect(sourcing).toHaveAttribute('aria-selected', 'true');
+  await expect(record.getByRole('tabpanel')).toContainText('circular knitting machines');
+  await sourcing.press('ArrowRight');
+  await expect(selling).toBeFocused();
+  await expect(selling).toHaveAttribute('aria-selected', 'true');
+  await selling.press('End');
+  await expect(sourcing).toBeFocused();
+  // Selling and buying carry equal weight: a buyer shortlist and a price quote comparison.
+  await expect(
+    page.getByRole('list', { name: 'Example buyer shortlist' }).locator('li'),
+  ).toHaveCount(4);
+  await expect(
+    page.getByRole('table', { name: 'Example price quote comparison' }).getByRole('row'),
+  ).toHaveCount(5);
+  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-spain', '/corridors'])
+    await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  expect(writes).toEqual([]);
+});
 
 test('the menu opens, closes with Escape and the footer takes visitors to a way to work', async ({
   page,

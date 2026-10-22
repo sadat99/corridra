@@ -1,0 +1,52 @@
+{
+  "/": {},
+  "/about": {},
+  "/account": {
+    "redirectsTo:/signin": 1
+  },
+  "/account/companies": {},
+  "/account/delegations": {},
+  "/account/delegations/organise": {},
+  "/account/profile": {},
+  "/account/service-requests": {},
+  "/account/service-requests/new": {
+    "unavailable": 6
+  },
+  "/business-trips": {},
+  "/buyer": {},
+  "/client": {},
+  "/coming-soon": {
+    "redirectsTo:/": 1
+  },
+  "/contributor": {},
+  "/contributor/setup": {},
+  "/corridors": {},
+  "/corridors/bangladesh-china": {},
+  "/corridors/bangladesh-eu": {},
+  "/corridors/bangladesh-spain": {},
+  "/enter-market": {},
+  "/forgot-password": {},
+  "/how-it-works": {},
+  "/institutions": {},
+  "/machinery": {},
+  "/network": {},
+  "/operator": {},
+  "/operator/forgot-password": {},
+  "/operator/reset-password": {},
+  "/operator/setup": {},
+  "/operator/signin": {},
+  "/plan": {},
+  "/privacy": {},
+  "/programme": {},
+  "/reset-password": {},
+  "/sell": {},
+  "/signin": {},
+  "/signup": {},
+  "/source": {},
+  "/trade-missions": {},
+  "/trust": {},
+  "/verify-email": {},
+  "/workspace": {
+    "crowdedRegions": 6
+  }
+}

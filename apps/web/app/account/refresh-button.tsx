@@ -1,3 +1,5 @@
+import { CorridraIcon } from '../../components/corridra-icon';
+
 /** One quiet Refresh button for every list. The full name goes to assistive technology. */
 export function RefreshButton({
   label,
@@ -19,9 +21,7 @@ export function RefreshButton({
       disabled={disabled || busy}
       onClick={onClick}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" />
-      </svg>
+      <CorridraIcon name="refresh" />
       {busy ? 'Loading…' : 'Refresh'}
     </button>
   );

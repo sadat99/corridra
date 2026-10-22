@@ -1,0 +1,293 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "Corridra V3 AC/1 Atlantic Cobalt locked visual system. Reconcile with existing semantic tokens; not a production CSS override.",
+  "version": "1.0.0",
+  "brand": "Atlantic Cobalt",
+  "colors": {
+    "primitive": {
+      "navy": {
+        "$type": "color",
+        "$value": "#142438"
+      },
+      "cobalt": {
+        "$type": "color",
+        "$value": "#2856C5"
+      },
+      "cobaltHover": {
+        "$type": "color",
+        "$value": "#234EB0"
+      },
+      "cobaltPressed": {
+        "$type": "color",
+        "$value": "#1E4295"
+      },
+      "porcelain": {
+        "$type": "color",
+        "$value": "#F6F8FB"
+      },
+      "copper": {
+        "$type": "color",
+        "$value": "#BF7548"
+      },
+      "copperInk": {
+        "$type": "color",
+        "$value": "#85451E"
+      },
+      "ink": {
+        "$type": "color",
+        "$value": "#18283C"
+      },
+      "paper": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "surfaceSubtle": {
+        "$type": "color",
+        "$value": "#EFF3F8"
+      },
+      "surfaceRaised": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "surfaceSelected": {
+        "$type": "color",
+        "$value": "#E7EEFF"
+      },
+      "surfaceNavy": {
+        "$type": "color",
+        "$value": "#1C3048"
+      },
+      "surfaceNavyHover": {
+        "$type": "color",
+        "$value": "#263C56"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "#D8E0EA"
+      },
+      "borderStrong": {
+        "$type": "color",
+        "$value": "#A4B1C2"
+      },
+      "textSecondary": {
+        "$type": "color",
+        "$value": "#4B5A6C"
+      },
+      "textTertiary": {
+        "$type": "color",
+        "$value": "#59677B"
+      },
+      "textInverse": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "onCobalt": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "positive": {
+        "$type": "color",
+        "$value": "#116653"
+      },
+      "positiveSurface": {
+        "$type": "color",
+        "$value": "#E8F5F0"
+      },
+      "warning": {
+        "$type": "color",
+        "$value": "#865018"
+      },
+      "warningSurface": {
+        "$type": "color",
+        "$value": "#FFF2E2"
+      },
+      "critical": {
+        "$type": "color",
+        "$value": "#A52F43"
+      },
+      "criticalSurface": {
+        "$type": "color",
+        "$value": "#FBECEF"
+      },
+      "info": {
+        "$type": "color",
+        "$value": "#2856C5"
+      },
+      "infoSurface": {
+        "$type": "color",
+        "$value": "#E7EEFF"
+      },
+      "unknown": {
+        "$type": "color",
+        "$value": "#526073"
+      },
+      "unknownSurface": {
+        "$type": "color",
+        "$value": "#EFF3F8"
+      },
+      "focusRing": {
+        "$type": "color",
+        "$value": "#2856C5"
+      },
+      "focusHalo": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "selection": {
+        "$type": "color",
+        "$value": "#E7EEFF"
+      },
+      "scrim": {
+        "$type": "color",
+        "$value": "#142438"
+      }
+    },
+    "semantic": {
+      "page": "{colors.primitive.porcelain}",
+      "surface": "{colors.primitive.paper}",
+      "surfaceMuted": "{colors.primitive.surfaceSubtle}",
+      "surfaceSelected": "{colors.primitive.surfaceSelected}",
+      "navBackground": "{colors.primitive.navy}",
+      "navSelected": "{colors.primitive.surfaceNavyHover}",
+      "primaryAction": "{colors.primitive.cobalt}",
+      "primaryHover": "{colors.primitive.cobaltHover}",
+      "primaryPressed": "{colors.primitive.cobaltPressed}",
+      "primaryOn": "{colors.primitive.onCobalt}",
+      "body": "{colors.primitive.ink}",
+      "subdued": "{colors.primitive.textSecondary}",
+      "quiet": "{colors.primitive.textTertiary}",
+      "line": "{colors.primitive.border}",
+      "lineStrong": "{colors.primitive.borderStrong}",
+      "positive": "{colors.primitive.positive}",
+      "positiveSurface": "{colors.primitive.positiveSurface}",
+      "caution": "{colors.primitive.warning}",
+      "cautionSurface": "{colors.primitive.warningSurface}",
+      "critical": "{colors.primitive.critical}",
+      "criticalSurface": "{colors.primitive.criticalSurface}",
+      "info": "{colors.primitive.info}",
+      "infoSurface": "{colors.primitive.infoSurface}",
+      "unknown": "{colors.primitive.unknown}",
+      "unknownSurface": "{colors.primitive.unknownSurface}",
+      "editorialAccent": "{colors.primitive.copper}"
+    }
+  },
+  "spacingPx": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "6": 24,
+    "8": 32,
+    "12": 48,
+    "16": 64,
+    "20": 80,
+    "24": 96
+  },
+  "cornerPx": {
+    "none": 0,
+    "control": 8,
+    "card": 12,
+    "panel": 16,
+    "choice": 12,
+    "chip": 8,
+    "round": 999
+  },
+  "iconPx": {
+    "small": 16,
+    "standard": 20,
+    "large": 24
+  },
+  "layoutPx": {
+    "phoneMin": 320,
+    "phoneNavMax": 700,
+    "tabletMin": 701,
+    "desktopMin": 1080,
+    "wideMin": 1440,
+    "publicMax": 1280,
+    "workMax": 1560,
+    "railWidth": 216,
+    "inspectorWidth": 336,
+    "readingLineCh": 68,
+    "pageGutterPhone": 16,
+    "pageGutterTablet": 24,
+    "pageGutterDesktop": 48,
+    "navHeightDesktop": 72,
+    "rowCompact": 44,
+    "rowComfortable": 56,
+    "touchTarget": 44,
+    "guidedChoiceMin": 76,
+    "guidedPrimaryMin": 60
+  },
+  "fontFamily": {
+    "ui": "Inter, Noto Sans Bengali, Noto Sans SC, system-ui, sans-serif",
+    "display": "Newsreader, Georgia, serif"
+  },
+  "fontPx": {
+    "caption": 12,
+    "meta": 13,
+    "detail": 14,
+    "body": 16,
+    "reading": 18,
+    "h4": 18,
+    "h3": 24,
+    "h2": 32,
+    "h1Mobile": 38,
+    "h1Desktop": 48,
+    "displayMobile": 44,
+    "displayDesktop": 64
+  },
+  "lineHeight": {
+    "caption": 1.45,
+    "meta": 1.45,
+    "detail": 1.48,
+    "body": 1.5,
+    "reading": 1.58,
+    "heading": 1.16,
+    "display": 1.06
+  },
+  "buttons": {
+    "defaultHeight": 44,
+    "largeHeight": 52,
+    "guidedHeight": 60,
+    "iconButtonSize": 44,
+    "gap": 8,
+    "minPaddingInline": 16,
+    "maxLabelsWithoutDisambiguation": 1
+  },
+  "motion": {
+    "fastMs": 120,
+    "standardMs": 160,
+    "panelMs": 200,
+    "maximumMs": 220,
+    "easing": "cubic-bezier(0.2, 0.7, 0.2, 1)"
+  },
+  "patterns": [
+    "editorial-landing",
+    "guided-flow",
+    "mission-record",
+    "commercial-queue",
+    "comparison-workbench",
+    "programme-schedule",
+    "evidence-report",
+    "operations-hub",
+    "account-access"
+  ],
+  "semanticTruth": [
+    "self-declared",
+    "evidence-available",
+    "verified",
+    "derived",
+    "outcome-observed"
+  ],
+  "governance": {
+    "ownerApprovedBrand": true,
+    "retainAllFunctions": true,
+    "noNewBackend": true,
+    "noRawHexInComponents": true,
+    "noUnapprovedAssets": true,
+    "noSpeculativeKPIs": true,
+    "lockedNavigation": true,
+    "humanArtDirectionGate": true
+  }
+}

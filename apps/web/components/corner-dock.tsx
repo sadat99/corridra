@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { CorridraIcon } from './corridra-icon';
 
 function subscribe(onChange: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return () => {};
@@ -113,11 +114,7 @@ export function CornerDock() {
         aria-controls={open ? 'help-sheet' : undefined}
         onClick={() => setOpen(!open)}
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7" />
-          <path d="M12 17h.01" />
-        </svg>
+        <CorridraIcon name="help" />
       </button>
       {supported && (
         <button
@@ -129,17 +126,7 @@ export function CornerDock() {
           aria-pressed={speaking}
           onClick={toggleListen}
         >
-          {speaking ? (
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="6" y="6" width="12" height="12" rx="2" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M11 5 6 9H2v6h4l5 4z" />
-              <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-              <path d="M19 5a9 9 0 0 1 0 14" />
-            </svg>
-          )}
+          <CorridraIcon name={speaking ? 'stop' : 'listen'} />
         </button>
       )}
     </div>

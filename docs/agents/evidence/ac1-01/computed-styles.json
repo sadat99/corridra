@@ -1,0 +1,506 @@
+{
+  "package": "AC1-01",
+  "note": "Computed styles from next start on local production builds. before = main ea67fb18 build; after = AC1-01 working tree. Public routes only; signed-in screens are covered by the operator suite, not these captures.",
+  "routes": [
+    "/",
+    "/corridors",
+    "/how-it-works",
+    "/institutions",
+    "/operator/signin",
+    "/plan",
+    "/signin",
+    "/trust",
+    "/workspace"
+  ],
+  "widths": [390, 768, 1440],
+  "before": [
+    {
+      "route": "/",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/corridors",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/trust",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/signin",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/plan",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/workspace",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/institutions",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/corridors",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/trust",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/signin",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/plan",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/workspace",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/institutions",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/corridors",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/trust",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/signin",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/plan",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/workspace",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": null,
+      "pageBg": "rgb(245, 243, 236)"
+    },
+    {
+      "route": "/institutions",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(23, 63, 49)",
+      "bandBg": "rgb(23, 63, 49)",
+      "pageBg": "rgb(245, 243, 236)"
+    }
+  ],
+  "after": [
+    {
+      "route": "/",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/corridors",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/trust",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/signin",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/plan",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/workspace",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/institutions",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/corridors",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/trust",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/signin",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/plan",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/workspace",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/institutions",
+      "width": 768,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/how-it-works",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/corridors",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/trust",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/signin",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/plan",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/operator/signin",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/workspace",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": null,
+      "pageBg": "rgb(246, 248, 251)"
+    },
+    {
+      "route": "/institutions",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "primaryBg": "rgb(40, 86, 197)",
+      "bandBg": "rgb(20, 36, 56)",
+      "pageBg": "rgb(246, 248, 251)"
+    }
+  ]
+}

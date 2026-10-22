@@ -1,0 +1,95 @@
+{
+  "name": "Corridra V3 AC/1 Atlantic Cobalt locked design system",
+  "created": "2026-10-22",
+  "sourceReviewed": "bc044991210d66175d62eb71ea98e381a8724af6",
+  "files": {
+    "README.md": {
+      "sha256": "82bd518d21258a272ed41027bf356f708b7d56024e65cee46a7b0cff2fd0782d",
+      "size": 2738
+    },
+    "MASTER_DESIGN_CONTRACT.md": {
+      "sha256": "8d3bdb87c7d58ac1310089d8b37e2ad315dffa9ed37c422dee10e8343743110c",
+      "size": 43111
+    },
+    "EXISTING_TOKEN_MIGRATION_CROSSWALK.md": {
+      "sha256": "7fcbdbdfff0133dd8873360e4e8b5ec54689f69ee3e2d11f37826765c4d3c8c1",
+      "size": 6191
+    },
+    "atlantic-cobalt.tokens.json": {
+      "sha256": "048c30352c3d964c317a01d3bcd105851d3173e123349e4d11ae370426569dbf",
+      "size": 6981
+    },
+    "contrast-checks.json": {
+      "sha256": "cd5a69e2cb79424b9e8661ecc0e4d12856b259ecde338f7e91da08a56ee78a97",
+      "size": 1489
+    },
+    "QUALITY_GATE_AND_CONTINUITY.md": {
+      "sha256": "95aa6e0ac13f65b1602b3975ec36be9dda4c9872637ebe9fe64ee61d66026d82",
+      "size": 5322
+    },
+    "ONE_PASTE_AGENT_INSTRUCTION.md": {
+      "sha256": "7172be37382f2d95aa0d6fc704b4ca52b880d869655acb3929da670b8ffdffeb",
+      "size": 2474
+    },
+    "AC1-visual-reference.html": {
+      "sha256": "954ea80d3ebdc105d259edb8e26794d2e0a10135ca909d4ef1af4a806bdfd33e",
+      "size": 38574
+    },
+    "verification.json": {
+      "sha256": "61e8bf2fe8bc95953f2455dadae617dd6432666df3d74695ab9477944cd8d549",
+      "size": 5722
+    },
+    "AC1_six_compositions_board.png": {
+      "sha256": "0c68f612cad7a7e67fdd890b0c4e5be5b1361ab0dc6f674f86e64b37b91025c1",
+      "size": 461320
+    },
+    "AC1_atelier_1440.png": {
+      "sha256": "2f2a737aa4a1e79d3eeac5befd42b99b6ff25dc35c8b27b7bf9a21057fe10a25",
+      "size": 207960
+    },
+    "AC1_atelier_390.png": {
+      "sha256": "37e98a0a2b511c37e2438497cf93f86117a4587d47da17af8c9e6c734380767d",
+      "size": 59985
+    },
+    "AC1_meridian_1440.png": {
+      "sha256": "ecb872f6f9777a67d5d398a2cf25786eb4c96073bbee3a0d0d34485721fa9a5e",
+      "size": 139102
+    },
+    "AC1_meridian_390.png": {
+      "sha256": "920d73b8ce6046d8ba9bd94b44e399e2b6943120811308467763135e1dc6a87d",
+      "size": 54431
+    },
+    "AC1_source_1440.png": {
+      "sha256": "5c2f6e0640f85b4f9cf30417b4b4df37c1e0eb686dab931ef02a23b9ae68c57a",
+      "size": 156849
+    },
+    "AC1_source_390.png": {
+      "sha256": "f1d5d369fc485085849f5ce589db3032f4bb94530b77b3524331c421a08ce9ad",
+      "size": 68064
+    },
+    "AC1_encounter_1440.png": {
+      "sha256": "855af5684565646a5ecfb4bdc564a1cb5312696eb9e3af52d7ad3d7f14be8b74",
+      "size": 129018
+    },
+    "AC1_encounter_390.png": {
+      "sha256": "3cef593bb7c98e1e4d5ee85a5d63c092e2871822e11bbd462c2d00a1e6aa3cff",
+      "size": 59014
+    },
+    "AC1_signal_1440.png": {
+      "sha256": "819410b1b66aa6e8d3e0967d06d24fd18f61bd50e0294bc5135219a86c0cd2f5",
+      "size": 120465
+    },
+    "AC1_signal_390.png": {
+      "sha256": "145a4db4f86840ee9f3e3def86a68033eb78dde82ea1d90c07ab14df0ce0fa1a",
+      "size": 58186
+    },
+    "AC1_gallery_1440.png": {
+      "sha256": "b080ff270ad22c7023215460e3100bf78d820e1d6ed3cf96627f6beded53888a",
+      "size": 134023
+    },
+    "AC1_gallery_390.png": {
+      "sha256": "86ca526f989d6e28d706409d190efffd2ab45bab6f848d6464a56b202faa79a3",
+      "size": 54848
+    }
+  }
+}

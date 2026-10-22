@@ -1,5 +1,6 @@
 import { PublicShell } from './public-shell';
 import { Arrow } from './arrow';
+import { CorridraIcon } from './corridra-icon';
 import { FactLabel } from './fact-label';
 import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
@@ -167,9 +168,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
           <ul>
             {content.record.items.map((item) => (
               <li key={item}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m5 12 5 5 9-10" />
-                </svg>
+                <CorridraIcon name="check" />
                 {item}
               </li>
             ))}
