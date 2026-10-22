@@ -144,7 +144,19 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       <p role="status" aria-live="polite">
         {message}
       </p>
-      {readError && <p role="alert">{readError}</p>}
+      {readError && (
+        <div role="alert" className="ux-network-paused">
+          <p>{readError}</p>
+          <p>
+            Invitation entry needs an owner or admin in the selected workspace and a current
+            authenticator check. Verify your access, then refresh invitations. The Workspace
+            selector above lets you choose another workspace without changing its permissions.
+          </p>
+          <a className="text-link" href="#workspace-authenticator">
+            Verify invitation access
+          </a>
+        </div>
+      )}
       {!data && !readError && <p>Loading contributor invitations…</p>}
       {data && !data.installed && (
         <p>Contributor invitation setup awaits the protected Network installation.</p>

@@ -440,4 +440,25 @@ test('Network invitation form supports scoped submission and an editable paused 
       reason: 'Restore isolated Network fixture after paused-workspace acceptance',
     });
   }
+  // A read denial keeps entry closed and offers the existing MFA recovery path.
+  await page.route('**/api/workspace/network-invitations?*', (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Owner or admin with current authenticator required.' }),
+    }),
+  );
+  await page.reload();
+  await expect(invitations.getByRole('alert')).toContainText(
+    'Verify your access, then refresh invitations.',
+  );
+  await expect(
+    invitations.getByRole('link', { name: 'Verify invitation access', exact: true }),
+  ).toHaveAttribute('href', '#workspace-authenticator');
+  await expect(invitations.getByLabel('Contributor name', { exact: true })).toBeDisabled();
+  await page.unroute('**/api/workspace/network-invitations?*');
+  await invitations.getByRole('button', { name: 'Refresh invitations', exact: true }).click();
+  await expect(
+    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+  ).toBeEnabled();
 });

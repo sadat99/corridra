@@ -578,7 +578,7 @@
     "localVerification": {
       "build": "exit0",
       "focusedProtectedBrowser": 2,
-      "durationSeconds": 26,
+      "durationSeconds": 35.5,
       "enabledInvitationSubmitted": true,
       "pausedDraftEditableAndRetained": true,
       "pausedSubmissionDisabled": true,
@@ -588,32 +588,34 @@
       "pausedWidths": [390, 1440],
       "axeViolations": 0,
       "overflow": 0,
-      "providerEmailProof": "Synthetic fixture only; genuine production email/account acceptance remains unverified."
+      "providerEmailProof": "Synthetic fixture only; genuine production email/account acceptance remains unverified.",
+      "invitationReadDenialRecovery": "Explicit403 transport fixture: fields remain disabled; existing authenticator-panel link and refresh restore normal entry. No claim of real provider/MFA acceptance.",
+      "originalIntakeWorkspaceAndOverviewDriver": "3/3 pass in1.3m with actual intake prerequisite and explicitly selected seeded owner workspace."
     },
     "screenshots": [
       {
         "path": "work/real-use/network-browser/network-paused-1440.png",
-        "sha256": "1f52b1abb8eda56569dec75844784139503688c25e3f8bd1c5b37771e8fb86f6"
+        "sha256": "c46fc8d013b1cd6ba07309e0c82cb31755ea474b4e657f2d4212ca09421678c0"
       },
       {
         "path": "work/real-use/network-browser/network-paused-390.png",
-        "sha256": "52355f8af9e06e8333f01ecdad24c984faf7ad412133f7f0e0e4eea0dfb53f38"
+        "sha256": "6c5ebf4a4eda1909cf20c9d47f0a0924e206d2dd0aaf6c42968456e157e5f5dd"
       },
       {
         "path": "work/real-use/network-browser/network-ready-1440.png",
-        "sha256": "a25c786656448fdc4eeb37baab62b063cf52fb750dcc8d666fb746a0754bd0b6"
+        "sha256": "651e43d2e9104ee8cf4db09802855dda0896e77bf6429219d2add1a81c5c00e3"
       },
       {
         "path": "work/real-use/network-browser/network-ready-360.png",
-        "sha256": "0ee8371697d28b34e03cca1ff47d6d4be699e84872604da97f8ef8316c31418a"
+        "sha256": "69bb3ffcd56506eca6d37eeecbcc8b354bbce668f55157cdd55dbf4a876a4e65"
       },
       {
         "path": "work/real-use/network-browser/network-ready-390.png",
-        "sha256": "bd23e312481bef3f745028c9b10dee51a093d92e6e06d165ea7f270ec2ca78ef"
+        "sha256": "fb13ddb80b5e12b00a53a55aabada4fb988b87d6ba71860fe9d9072eceb6237d"
       },
       {
         "path": "work/real-use/network-browser/network-ready-768.png",
-        "sha256": "777219c1f24fcd1339800d24932d175e28f19be3f7f79ea4624c2418b7bb9167"
+        "sha256": "b7a3651829a96426ba806263da7d5266effdabf0571dfa709d91e20bc538c265"
       },
       {
         "path": "work/real-use/network-browser/network-ready-viewport-1440.png",
