@@ -1,7 +1,7 @@
 {
   "scope": "Operator landing only, owner Concept05/09 combination",
   "base": "8865b889c258d305be06a3a88e91f83352db4ff7",
-  "applicationCheckpoint": "91bd091",
+  "applicationCheckpoint": "0dff980bfb784696947b5ad5cf2c5ab47c62d930",
   "requirements": [
     "V3-04-084",
     "V3-05-049",
@@ -137,13 +137,92 @@
       }
     ],
     "capturesInspected": [1440, 390],
-    "finalCaptureRefinement": "Pending repeat: top-of-page capture and compact mobile toolbar; no domain change."
+    "finalCaptureRefinement": "exit0: repeated four focused tests after final toolbar/wordmark styling; top-of-page captures inspected.",
+    "captures": [
+      {
+        "path": "work/operator-ui/overview-1440.png",
+        "sha256": "e727303bf6ab6ad0c19f4a43ba58ca9945b1c34207539e037b5cccdcd19d6b35"
+      },
+      {
+        "path": "work/operator-ui/viewport-1440.png",
+        "sha256": "af8057a3d1593874ae34ce9ddbc34468730036c828f30024efa2764ca2721d92"
+      },
+      {
+        "path": "work/operator-ui/overview-768.png",
+        "sha256": "83e56ab06401a368c6317e41b58ccc7d1eb91b55e8694f8fcd283449ffdedbf8"
+      },
+      {
+        "path": "work/operator-ui/viewport-768.png",
+        "sha256": "e485cf3f731d0d4caa9e8a66a90c3b43a447590189c6aaeca1e199ec61ff77b0"
+      },
+      {
+        "path": "work/operator-ui/overview-390.png",
+        "sha256": "028b0f4a5bb909169ec45fad5cdb250893a2a0e9e4611aa8577db9079488e97a"
+      },
+      {
+        "path": "work/operator-ui/viewport-390.png",
+        "sha256": "4d2393c8268c216ccb1107c28c9aada4fcf71f9f30f5c06f6d7116741101efce"
+      },
+      {
+        "path": "work/operator-ui/overview-360.png",
+        "sha256": "4593411b1c159c2aff61f045e5da0dfca9fc72c1c61595f23dcb5c30c4d47d2b"
+      },
+      {
+        "path": "work/operator-ui/viewport-360.png",
+        "sha256": "9ae5beddf63d6de6676302c7591becd80be67c1598af8045e3e4ce3e5b292352"
+      }
+    ]
   },
   "failedEvidencePreserved": {
     "initialCardAxeMismatch": "Fixed without weakening assertions; corrected link names and explicit descriptions pass.",
     "initialIntegrationTimeout": "Unchanged private-opportunity test timed out at30s under concurrent tooling; run interrupted for diagnosis. Exact isolated test passed in6.12s unchanged. Full exact-head CI remains required.",
     "missingBrowserExecutable": "Initial focused launch used absent Playwright browser; rerun with installed /usr/bin/chromium succeeded."
   },
-  "securityReview": "Actual CodeQL uploads required; sanitized SARIF rule/location summary added to existing analysis logs, original analysis/upload/artifacts retained.",
+  "securityReview": {
+    "head": "0dff980bfb784696947b5ad5cf2c5ab47c62d930",
+    "run": 39705002543,
+    "jobs": [
+      {
+        "job": "Analyze (actions)",
+        "jobId": 119582890603,
+        "uploaded": true,
+        "summary": {
+          "reports": 1,
+          "results": []
+        }
+      },
+      {
+        "job": "Analyze (javascript-typescript)",
+        "jobId": 119582890683,
+        "uploaded": true,
+        "summary": {
+          "reports": 1,
+          "results": [
+            {
+              "locations": [
+                {
+                  "file": "security/corridra.test.ts",
+                  "line": 9
+                }
+              ],
+              "rule": "js/disabling-certificate-validation"
+            }
+          ]
+        }
+      },
+      {
+        "job": "Analyze (python)",
+        "jobId": 119582890716,
+        "uploaded": true,
+        "summary": {
+          "reports": 1,
+          "results": []
+        }
+      }
+    ],
+    "newFindings": 0,
+    "unchangedFixture": "security/corridra.test.ts:9 js/disabling-certificate-validation",
+    "method": "Actual uploaded analyses and sanitized SARIF rule/location results reviewed through connected job logs; artifacts retained."
+  },
   "releaseState": "Implemented with bounded local acceptance; exact-head CI/release still pending. Not merged/deployed."
 }
