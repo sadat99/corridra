@@ -13,7 +13,7 @@
   },
   "mainChecks": {
     "ci": 39698442917,
-    "ciStatus": "in_progress; checks/operator1/operator2 passed, browser/operator3/validate pending at handoff",
+    "ciStatus": "completed/success",
     "codeql": 39698443032,
     "actualAnalysesUploaded": 3,
     "baselineCodeql": 39658261257,
@@ -60,7 +60,9 @@
       "exitCode": 1,
       "reason": "Expired CLI credential HTTP401 while fetching annotations; not a test failure",
       "connectedGitHubJobLookup": "working"
-    }
+    },
+    "previouslyRecordedCiStatus": "in_progress; checks/operator1/operator2 passed, browser/operator3/validate pending at handoff",
+    "successfulJobs": 6
   },
   "productionDeployment": {
     "id": "dpl_DVguKkFT3dLLoCLn5LNbkcaRdvzf",
@@ -152,14 +154,16 @@
     "realMissionAdmissionAvailable": true,
     "originalAuthorityPreserved": true,
     "state": "Pending protected installation and explicit flag verification",
-    "installerDispatched": false
+    "installerDispatched": true,
+    "continuationRun": 39701988762,
+    "continuationStatus": "waiting for required customer-modules-install reviewer sadat99; no installation or flag activation yet"
   },
   "limitations": [
     "Production signed-in contributor and managed email acceptance remain unverified.",
     "Custom Production domain is blocked to this execution environment; public probes use the owned Vercel fallback and assert canonical redirects without following them.",
     "No automatic invitation email, public contributor enrollment, AI, outreach, billing or payout provider activation."
   ],
-  "nextAction": "Finish exact-main CI, dispatch protected Network enable workflow, then request its actual environment review.",
+  "nextAction": "Owner reviews protected run39701988762. After success independently verify Network registry hashes, tenant control and original authority, then enable only the Production Network flag and verify exact-source deployment.",
   "handoff": {
     "branch": "docs/network-release-status",
     "base": "8865b889c258d305be06a3a88e91f83352db4ff7",
