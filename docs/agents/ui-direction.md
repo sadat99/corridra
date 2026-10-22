@@ -12,7 +12,9 @@ This supersession is deliberately narrow:
 2. **Cobalt action, navy chrome.** `--action` is the only primary-action fill. `--brand-deep` (navy) is never a call-to-action fill. Selected states use `--selected`. Status colours stay independent of the brand.
 3. **Unchanged:** the eight guided rules, locked parts, navigation sets, glossary, trust labels, content rules, hard limits and verification steps.
 4. **Geometry, settled by the owner (22 October 2026, after a rendered comparison):** AC/1 rounding B, controls 8 px, cards and guided choices 12 px, panels and bands 16 px, capsules for status badges only (never navigation, tabs, filters or buttons). The 72 px space step is retired: use 64 px inside work screens and 80 px for large public sections. Guided touch sizes (44, 60 and 76 px) are unchanged. This replaces the guided radius values in "Token rules for the build" and the 72 px step in the space scale below.
-5. **Order of work:** tokens first, then shared primitives, then five reference screens (public home, customer Mission Room, sourcing comparison, delegation management, operator workspace). Platform-wide page migration waits for a named human reviewer's art-direction acceptance of those references. An agent may not mark that gate passed.
+5. **Icons, settled by the owner (22 October 2026, after a rendered comparison):** Corridra Meridian line, one owned family in `apps/web/components/corridra-icon.tsx`: 20 px grid, 1.5 px stroke (`--icon-stroke`), square ends, mitred joins, right-angle routes and square nodes. No pastel tile behind any icon, no sparkle for AI (AI help is a draft pen), no gear (settings are sliders). Every icon keeps its word. New screens use `CorridraIcon`; inline `<svg>` icons fail the design-system test.
+6. **UX quality gate:** `pnpm test:ux` checks every static route at 320, 390, 768, 1024, 1440 and 1920 px for page overflow, touch targets (44 px up to 768 px, 24 px above), visible keyboard focus, capsule-shaped controls, more than one primary action per region, text under 12 px and axe WCAG 2.2 AA. Counts may not rise above `tests/ux/ux-baseline.json`; lower it when you fix debt, never raise it. It runs in CI and does not replace real user testing.
+7. **Order of work:** tokens first, then shared primitives, then five reference screens (public home, customer Mission Room, sourcing comparison, delegation management, operator workspace). Platform-wide page migration waits for a named human reviewer's art-direction acceptance of those references. An agent may not mark that gate passed.
 
 The two 22 October directions below (operator landing, Network) keep their layout and serif headings until the Signal reference package; their colour words are superseded by this section.
 
@@ -315,7 +317,7 @@ A UI change may not alter domain packages, API handlers, authentication, RLS, mi
 
 ## Verification for every UI change
 
-`pnpm format:check`, `lint`, `typecheck`, `test`, `build`, `test:e2e`, and `test:operator` where a protected surface changed. Capture screenshots at 1440, 768 and 390 px before and after. Axe must stay clean. Record all of it, and what was not run, in `docs/agents/work-log.md`.
+`pnpm format:check`, `lint`, `typecheck`, `test`, `build`, `test:e2e`, `test:ux`, and `test:operator` where a protected surface changed. Capture screenshots at 1440, 768 and 390 px before and after. Axe must stay clean. Record all of it, and what was not run, in `docs/agents/work-log.md`.
 
 ## Sizes in use (checked on the live pages, 21 October 2026)
 

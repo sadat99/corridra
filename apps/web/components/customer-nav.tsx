@@ -1,40 +1,14 @@
 import Link from 'next/link';
+import { CorridraIcon } from './corridra-icon';
 
 export type CustomerTab = 'home' | 'work' | 'companies' | 'results' | 'more';
 
-const icons: Record<CustomerTab, React.ReactNode> = {
-  home: (
-    <>
-      <path d="M4 11 12 4l8 7" />
-      <path d="M6 10v10h12V10" />
-    </>
-  ),
-  work: (
-    <>
-      <path d="M4 8h16v11H4z" />
-      <path d="M9 8V6h6v2" />
-      <path d="M4 13h16" />
-    </>
-  ),
-  companies: (
-    <>
-      <path d="M5 21V4h9v17" />
-      <path d="M14 10h5v11" />
-      <path d="M8 8h3M8 12h3M8 16h3" />
-    </>
-  ),
-  results: (
-    <>
-      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
-    </>
-  ),
-  more: (
-    <>
-      <circle cx="5" cy="12" r="1.5" />
-      <circle cx="12" cy="12" r="1.5" />
-      <circle cx="19" cy="12" r="1.5" />
-    </>
-  ),
+const icons: Record<CustomerTab, string> = {
+  home: 'home',
+  work: 'work',
+  companies: 'company',
+  results: 'progress',
+  more: 'more',
 };
 
 /**
@@ -68,9 +42,7 @@ export function CustomerNav({
           href={item.href}
           aria-current={item.tab === current ? 'page' : undefined}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            {icons[item.tab]}
-          </svg>
+          <CorridraIcon name={icons[item.tab]} />
           <span>{item.label}</span>
         </Link>
       ))}

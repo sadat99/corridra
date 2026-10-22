@@ -85,6 +85,15 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
+      - name: AC/1 UX quality gate (every static route at six widths, ratcheted baseline)
+        run: pnpm test:ux
+      - name: AC/1 UX gate report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ux-gate-report
+          path: work/ux-gate/
+          retention-days: 14
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

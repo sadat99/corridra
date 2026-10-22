@@ -231,3 +231,40 @@ test('owner AC/1 geometry decisions hold: rounding B and spacing 64/80', () => {
     }
   }
 });
+
+test('one owned icon family: Meridian line, no stray inline icons, no sparkle', async () => {
+  // Owner decision 22 October 2026 (AC/1 icons B). Source: apps/web/components/corridra-icon.tsx.
+  const { readdir } = await import('node:fs/promises');
+  const app = new URL('../apps/web/', import.meta.url);
+  const icon = await readFile(new URL('components/corridra-icon.tsx', app), 'utf8');
+  assert.equal(resolve('--icon-stroke'), '1.5px');
+  assert.match(icon, /strokeLinecap="square"/);
+  assert.match(icon, /viewBox="0 0 20 20"/);
+  assert.doesNotMatch(
+    icon,
+    /^\s+spark:\s*'M/m,
+    'no sparkle glyph; AI help is drawn as a draft pen',
+  );
+  // Icon rules never restyle the family back to round ends; maps and diagrams are not icons.
+  for (const rule of system.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    if (/atlas|map|path-/.test(rule[1])) continue;
+    assert.doesNotMatch(rule[2], /stroke-linecap:\s*round/, `round icon ends in ${rule[1].trim()}`);
+  }
+  // Inline <svg> is allowed only for the wordmark, maps, the route diagram and the one icon component.
+  const allowed = new Set([
+    'components/corridra-icon.tsx',
+    'components/site-header.tsx',
+    'components/corridor-map.tsx',
+    'components/world-route-map.tsx',
+    'components/corridor.tsx',
+    'app/operator/today.tsx', // decorative empty-state drawing; scheduled for the Signal reference package
+  ]);
+  const files = (await readdir(app, { recursive: true })).filter(
+    (file) => file.endsWith('.tsx') && !/(?:^|\/)(?:node_modules|\.next)\//.test(file),
+  );
+  for (const file of files) {
+    if (allowed.has(file)) continue;
+    const source = await readFile(new URL(file, app), 'utf8');
+    assert.doesNotMatch(source, /<svg[\s>]/, `${file} draws its own icon; use CorridraIcon`);
+  }
+});

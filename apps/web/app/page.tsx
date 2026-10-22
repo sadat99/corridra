@@ -1,4 +1,5 @@
 import { Arrow } from '../components/arrow';
+import { CorridraIcon } from '../components/corridra-icon';
 import { FactLabel, factLabels } from '../components/fact-label';
 import Link from 'next/link';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
@@ -10,38 +11,21 @@ const starts = [
     title: 'Sell my products',
     text: 'Find buyers and partners.',
     name: 'Find Buyers & Partners',
-    icon: (
-      <>
-        <path d="M5 8h14l-1 12H6z" />
-        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-      </>
-    ),
+    icon: 'sell',
   },
   {
     href: '/plan?job=sourcing',
     title: 'Buy products or machines',
     text: 'Find suppliers. Compare price quotes.',
     name: 'Find Suppliers & Products',
-    icon: (
-      <>
-        <path d="M2 21h20" />
-        <path d="M4 21V11l5 3v-3l5 3V5h6v16" />
-      </>
-    ),
+    icon: 'buy',
   },
   {
     href: '/plan?job=delegations',
     title: 'Lead a group trip',
     text: 'Plan the programme and meetings.',
     name: 'Organise a Delegation',
-    icon: (
-      <>
-        <circle cx="9" cy="8" r="3.5" />
-        <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-        <circle cx="17" cy="9" r="2.5" />
-        <path d="M17 14c2.5 0 5 1.8 5 4.5" />
-      </>
-    ),
+    icon: 'trip',
   },
 ] as const;
 
@@ -105,9 +89,7 @@ export default function Home() {
           {starts.map((start) => (
             <Link prefetch={false} key={start.href} href={start.href}>
               <span className="guide-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {start.icon}
-                </svg>
+                <CorridraIcon name={start.icon} />
               </span>
               <span className="guide-choice-text">
                 <strong>{start.title}</strong>

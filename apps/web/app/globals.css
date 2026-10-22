@@ -2152,6 +2152,8 @@ summary:hover {
   --shadow-3: 0 24px 48px -16px rgb(20 36 56 / 28%), 0 4px 10px rgb(20 36 56 / 8%);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --dur: 160ms;
+  /* Corridra Meridian line icons (owner decision 22 Oct 2026): 1.5 px stroke, square ends. */
+  --icon-stroke: 1.5px;
   --radius-panel: var(--radius-md);
   --radius-control: var(--radius-sm);
 }
@@ -2194,6 +2196,10 @@ time {
     backdrop-filter: saturate(1.4) blur(14px);
     -webkit-backdrop-filter: saturate(1.4) blur(14px);
   }
+}
+/* The wordmark is a link home: keep the 44 px touch target. */
+.brand {
+  min-height: 2.75rem;
 }
 .brand span {
   font-size: 1.6rem;
@@ -2994,9 +3000,9 @@ th {
   height: 1.125rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-tag[data-tone='info'] {
   color: var(--info);
@@ -3122,18 +3128,16 @@ th {
 }
 .guide-choice-icon {
   display: grid;
-  place-items: center;
-  width: 4rem;
-  height: 4rem;
-  color: var(--brand);
-  background: var(--selected-surface);
-  border-radius: var(--guided-hero-radius);
+  place-items: start;
+  width: auto;
+  height: auto;
+  color: var(--brand-deep);
 }
+/* AC/1: no tile behind icons; the glyph sits on the card. */
 .guide-choice-icon svg {
-  width: 2.125rem;
-  height: 2.125rem;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 2rem;
+  height: 2rem;
+  stroke-width: var(--icon-stroke);
 }
 .guide-choice-text {
   display: grid;
@@ -3537,9 +3541,9 @@ th {
   margin-top: 0.125rem;
   fill: none;
   stroke: var(--positive);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-progress {
   display: grid;
@@ -3721,9 +3725,9 @@ th {
   height: 1.25rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .dock-button[data-active='true'],
 .dock-button[aria-expanded='true'] {
@@ -3832,14 +3836,9 @@ th {
     padding: var(--space-4);
     border-radius: var(--guided-hero-radius);
   }
-  .guide-choice-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--guided-control-radius);
-  }
   .guide-choice-icon svg {
-    width: 1.625rem;
-    height: 1.625rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
   .guide-choice-text strong {
     font-size: var(--text-xl);
@@ -5117,9 +5116,9 @@ th {
   flex: none;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .guide-next .label {
   margin: 0 0 var(--space-2);
@@ -5409,9 +5408,9 @@ th {
   height: 1.125rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .ux-hint,
 .ux-customer .operator-form .ux-hint {
@@ -5544,14 +5543,9 @@ th {
     min-height: 0;
     border-width: 1px;
   }
-  .guide-choice-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--guided-control-radius);
-  }
   .guide-choice-icon svg {
-    width: 1.625rem;
-    height: 1.625rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
   .guide-choice-text strong {
     font-size: var(--text-xl);
@@ -7059,9 +7053,7 @@ th {
   width: 3rem;
   height: 3rem;
   flex: none;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  color: var(--brand-deep);
 }
 .ux-panel-heading-icon svg {
   width: 1.5rem;
@@ -7348,4 +7340,12 @@ th {
 .ux-audit-pagination p {
   margin: 0;
   color: var(--text-2);
+}
+
+/* One icon family everywhere (components/corridra-icon.tsx). Contexts may size it, not restyle it. */
+.corridra-icon {
+  flex: none;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
