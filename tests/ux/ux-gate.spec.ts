@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { corridorPages } from '../../apps/web/content/corridors';
 
 // AC/1 UX quality gate. Contract: docs/design-system/README.md (section 8) and the AC/1 master
 // contract sections 10 and 12. It measures every static route at the AC/1 widths and fails when any
@@ -143,7 +144,11 @@ async function measure(page: Page, width: number): Promise<Counts> {
   return counts;
 }
 
-for (const route of staticRoutes(appDir)) {
+// Dynamic segments are skipped above, except the corridor pages that generateStaticParams() renders
+// from content/corridors.ts: those are public static routes too.
+const generatedRoutes = Object.keys(corridorPages).map((slug) => `/corridors/${slug}`);
+
+for (const route of [...staticRoutes(appDir), ...generatedRoutes].sort()) {
   test(`AC/1 UX gate ${route}`, async ({ page }) => {
     test.setTimeout(180_000);
     const totals: Counts = {};
@@ -175,8 +180,8 @@ for (const route of staticRoutes(appDir)) {
       allowed,
       `${route} has no UX baseline entry; new routes start clean (run with UX_UPDATE_BASELINE=1 only to record existing debt)`,
     ).toBeDefined();
+    // A new or changed redirect is a regression too: its redirectsTo key is absent from the baseline.
     for (const [key, value] of Object.entries(totals)) {
-      if (key.startsWith('redirectsTo:')) continue;
       expect(value, `${route}: ${key} rose above the UX baseline`).toBeLessThanOrEqual(
         allowed[key] ?? 0,
       );

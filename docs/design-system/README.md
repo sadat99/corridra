@@ -136,6 +136,8 @@ The run fails when any count rises above `tests/ux/ux-baseline.json`, and when a
 
 First baseline (22 Oct 2026, 39 routes): every check is 0 except `/workspace` `crowdedRegions` 6 (two primary actions, "Open my account" and "Team sign-in", in one section; left for the Meridian reference package) and `/account/service-requests/new` `unavailable` 6 (module off). Raising the wordmark link to 44 px removed the only real small-target finding. Signed-in screens are not covered here; the protected operator suite covers them. No automated gate replaces task tests with real users.
 
+Routes: every static `page.tsx` route plus the corridor pages that `generateStaticParams()` renders from `content/corridors.ts` (42 routes). A redirect is recorded as `redirectsTo:<path>`; a new or changed redirect fails the gate like any other count.
+
 ## 9. Home page, concept A "Ledger" (AC1-03)
 
 - What stays fixed: the three jobs nav `Choose your commercial objective` with `/plan?job=buyers|sourcing|delegations` and the contract names in each link name, `Something else? Tell us your business goal` to `/plan`, the four step list `How a mission works`, `How we label facts` to `/trust`, the closing `Start a request` band, the legacy `#mission-example` redirect, the header, footer and dock. No form, no API call and no write on the page; the example is sample data, labelled Example, with no real company.
