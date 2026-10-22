@@ -14,3 +14,27 @@ The contract and release requirements remain authoritative. This workflow reduce
 - Reserve deeper analysis for authority, auth/RLS, migrations, money, concurrency and preservation. Keep routine edits and progress reports concise.
 
 The helper is read-only and refuses oversized output. It does not replace the original contract, inventories, tests, security controls or release procedure.
+
+## Token playbook
+
+Sizes come from `node scripts/v3-context.mjs budget` (tokens are an estimate of bytes divided by 4). None of this waives a contract read, a test or a release gate.
+
+| Situation                      | Load                                                                                   | Approx. tokens |
+| ------------------------------ | -------------------------------------------------------------------------------------- | -------------- |
+| Every session                  | CLAUDE.md, AGENTS.md, START_HERE, ledger (`verify` caps the four at 32 KiB)            | 7,000          |
+| Product work, once per session | Full contract, product vision v2.1, working summary (owner rule, never skipped)        | 22,000         |
+| Visible UI change              | The whole of docs/agents/ui-direction.md, every time (owner rule, 22 Oct 2026)         | 12,200         |
+| Resume or catch up on history  | `outline docs/agents/work-log.md --last 5`, then `section` or `--tail` for one entry   | under 1,000    |
+| Never load whole               | work-log (267 KB), documentation-map (45 KB), historical archive, requirement register | 0              |
+
+Steps, in order:
+
+1. Classify the task before reading. Documentation, tooling and status work uses the ledger and only its own authorities. Product work adds the contract and vision once. Do not preload guides the task does not touch.
+2. Read by outline. `node scripts/v3-context.mjs outline PATH [--last N] [--max-level L]` lists headings with line numbers and byte sizes. `section PATH QUERY [--nth K] [--tail BYTES]` prints one section (a title fragment or a line number from the outline). Use `--tail` for the newest part of a large section. Both refuse paths outside docs/ and the three root guides.
+3. For every visible UI change read the whole of docs/agents/ui-direction.md. This is an owner rule (22 Oct 2026); an outline or a few sections never stand in for it. Use `outline` only to find where a rule lives while you work.
+4. Re-check the ledger with `status --since SHA8`, using the `ledger-sha8` printed by your last `status`. An unchanged ledger prints two lines instead of the whole index; a changed one prints in full.
+5. Run every long command through the gate runner: `node scripts/gate.mjs NAME [--tail N] -- COMMAND ARGS`. It saves the full log and a receipt (exit code, log hash, Git head, changed-path count) under work/ and prints at most 6 KiB: the receipt, final totals, and on failure the first failure lines and the log tail. Its exit code is the command's exact exit code. Printed lines redact credentials; the raw log stays local and ignored. Use `bash -o pipefail -c '...'` when a pipeline is needed, and quote the receipt path in the ledger.
+6. Search before reading: `rg -l`, then `rg -n` with a narrow pattern, then `sed -n 'A,Bp'`. Pass field lists and `minimal_output` to GitHub and provider tools. Batch independent calls in one turn.
+7. Send broad sweeps (many files, naming conventions, inventories) to one read-only subagent and keep only its conclusion. Keep one writer per file. A subagent starts cold, so give it paths, the question and the output shape.
+8. During implementation run focused checks on touched files (`prettier --check`, `eslint` on the file, one test file). Run every mandatory gate once on the frozen revision, and again only after a relevant change or failure.
+9. Checkpoint the ledger and work log before long waits so a resumed session costs the 7,000-token start, not a re-read. Report outcomes in two lines: what was done and the next step.

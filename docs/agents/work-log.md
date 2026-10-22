@@ -1142,3 +1142,51 @@ Expanded local review passed3/3 real browser journeys, including72 destination-w
 Audit visual refinement now pages the same returned events ten at a time, keeps every exact reference reachable, resets to latest on refresh and labels the returned range without claiming complete history. Added next/previous reference continuity assertions. The broad browser run also caught transient missing-title timing after redundantly reselecting the current workspace; the driver now selects only when needed, asserts the intended workspace and waits for the actual route title before the unchanged full axe gate. No title rule suppressed. Final rebuilt local run and frozen-head CI/security pending; latest exact source will be published as a reviewable draft.
 
 Frozen d68d85e CI39792746140 exposed one delivery-driver failure: streamed Your workspace heading was visible while #workspace-navigation had not mounted within the existing5s attachment assertion. Third shard retained117 passes; local full18 destination/policy/audit review and public164 passed; three CodeQL39792746137 actual uploads reviewed with only unchanged negative fixture. Do not treat this CI as passed. Delivery sign-in driver now awaits the actual tenant-scoped workspace/config responses, asserts both200 plus owner role, then keeps every original attachment, import, private client, report and denial assertion. No retry, timeout relaxation, app authorization or UI source change. Full local workspace journey file and new exact-head CI/security are required.
+
+## 2026-10-22, Claude Code, token optimisation for current and later sessions
+
+Request: study the documentation and make every session cheaper without losing precision or any gate. Measured first: always-read guides 27.8 KB, product-work reads (contract, vision, summary) 88 KB, UI direction 48.8 KB, and four files that must never be loaded whole (work log 267 KB, documentation map 45 KB, historical archive 726 KB, requirement register 250 KB; 1.29 MB together). Token figures are bytes divided by 4, an estimate.
+
+Changed: `scripts/context-tools.mjs` and `scripts/v3-context.mjs` gained `outline`, `section` (title fragment or line number, `--nth`, `--tail`), `budget` and `status --since SHA8`; existing commands keep their behavior, status now ends with a ledger hash line. `verify` also caps the four always-read guides at 32 KiB. `scripts/gate.mjs` runs one command with the full log and a receipt (exit code, log hash, Git head, changed-path count) under work/, prints at most 6 KiB with credentials redacted and exits with the command's exact code. `docs/v3/CONTEXT.md` holds the token playbook; CLAUDE.md and AGENTS.md carry one-line pointers. The work-log row in the documentation catalogue no longer says to read it before editing. New `tests/context-tools.test.mjs` (6 tests) is part of `test:docs`.
+
+Verification, each through the gate runner with exit 0: format:check, lint, typecheck, `pnpm test` (36 node tests, 0 failed), `node scripts/v3-context.mjs verify` PASS. Integration, build and browser suites were not run locally because no product source changed; CI on the PR decides.
+
+Preserved: contract and vision hashes, 507 requirement identities, all archives, every gate and test, and the owner rule to read the full contract and vision once per session before product work. Judgment call for the owner: the playbook lets visible UI work read the ui-direction outline plus the binding sections and the touched area instead of the whole file, and says to read it whole for navigation, glossary or foundation changes or on request. Say so if you want the full read kept for every UI change.
+
+Next action: draft PR, watch CI, then use `budget` at the start of the next session to confirm the always-read cost stayed under 32 KiB.
+
+## 2026-10-22, Claude Code, correction: full UI direction read kept; PR132 audit and ported test fix
+
+Owner decision: the full read of `docs/agents/ui-direction.md` stays mandatory for every UI change. The earlier entry's partial-read default is withdrawn; `docs/v3/CONTEXT.md` now says so and the budget table counts the whole file.
+
+Audit of PR132 from run data (not from its text). Confirmed: checked head d37e93c CI39797044587 had six successful jobs; production dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY is READY at ea67fb18 on main. Not recorded anywhere: main CI39800962758 on that merge failed. operator (3) timed out in `tests/operator/workspace.spec.ts:1379` at the `page.waitForResponse` on line 1394 (117 passed), operator (2) was cancelled in its Browser runtime step after about 28 minutes with its shard skipped, and `validate` failed. CodeQL on that commit passed. The documentation checkpoint on `docs/network-release-status` cites only the pre-merge run, so it needs a correction before it merges.
+
+Cause traced in source: `apps/web/app/operator/page.tsx:42` falls back to `tenants[0]`, and `packages/auth/src/access.ts:20` orders the tenant list only in real-use mode. After earlier tests add the browser operator to more workspaces, the delivery test can open another tenant and never sees the seeded tenant's read. PR133 reached the same conclusion; its other comment blaming a shared MFA rate-limit bucket is a hypothesis it did not prove and its final body does not use it.
+
+Change: ported PR133's test-only fix byte for byte (sign in with `next=/operator?workspace=<seed>` as the test at line 3242 already does, and assert the selected workspace). No assertion, timeout or product code relaxed. The protected operator suite needs Docker and could not run here, so CI on this head is the proof. If PR133 merges first the hunks are identical and merge cleanly.
+
+Next action: CI on this head, then correct the PR132 documentation checkpoint with its owner.
+
+## 2026-10-22, Claude Code, correction: the ported delivery-test fix did not work
+
+The previous entry named `tenants[0]` ordering as the cause of the red main CI and ported a `next=/operator?workspace=<seed>` sign-in. On the new head e877898 the same test failed again (run 39836617855, operator (3), `workspace.spec.ts` wait on the workspace read, 117 passed). That fix is withdrawn and the cause is not established. The claim on PR133's thread that the cause was settled was premature.
+
+What is known: the failure is the same test and the same wait on main ea67fb18 and on two PR133 heads, and it passed on d37e93c and 23157ec, so it is intermittent. Source shows `/sign-in/email` and `/two-factor/*` limited to 5 per 60 seconds with database storage (`packages/auth/src/index.ts:59-69`), and the sibling tests at lines 804, 1131 and 1685 assert the verify response while this test does not. Neither theory is proven.
+
+Change now: only the sibling pattern, `expect((await verification).ok()).toBe(true)` after the verify click, so the next red run reports the real status (200 versus 429 or 401) instead of a silent 180 second wait. No assertion or timeout was relaxed and nothing was masked. This does not fix the flake. Main CI stays red until the cause is found.
+
+Next action: read the verify status from the next CI run on this head, then fix the proven cause in a reviewed change. If it is rate limiting, any fix touches auth configuration or test setup and needs its own blast-radius statement.
+
+## 2026-10-22, Claude Code, finding: the MFA verification is rejected in the red delivery test
+
+On 6d62f73 (run 39839813316, operator (3), 117 passed) the added assertion at `tests/operator/workspace.spec.ts:1407` failed: the `/two-factor/verify-totp` response was not OK. So the intermittent failure on main is the MFA verification being rejected, and the 180 second wait on the workspace read was only the symptom. This rules out tenant selection as the cause. The status code is still unknown. Candidates, none proven: the auth rate limit of 5 per 60 seconds on `/sign-in/email` and `/two-factor/*` (`packages/auth/src/index.ts:59-69`, database storage, shared test client address), a repeated TOTP code, or the account lockout setting.
+
+Change: the assertion now throws the response status and the first 200 characters of the error body (not printed when the verify succeeds). No timeout or assertion was relaxed. Next action: read the status from the next red run on this head, then make a reviewed fix. Rate limiting or code reuse would need a test-setup or auth change with its own blast-radius statement; nothing in production auth is changed here.
+
+## 2026-10-22, Claude Code, cause proven: the red delivery test hits the auth rate limit
+
+On 40803ce (run 39842482886, operator (3), 117 passed) the test now reported `MFA verification returned 429: {"message":"Too many requests. Please try again later."}`. Sign-in and `/two-factor/*` requests are limited to 5 per 60 seconds with database storage (`packages/auth/src/index.ts:59-69`), and the operator journeys run serially from one test address, so the counters from earlier MFA sign-ins can still be live when this test signs in. That explains the roughly half of runs that fail, the same test every time, and why the `tenants[0]` theory did nothing. Both earlier explanations in this log (tenant ordering, then the open question) are superseded by this entry.
+
+Fix, test only: before its sign-in the test deletes the rows in `identity."rateLimit"` of the dedicated local `corridra_browser` database through an owner connection, the same way the other operator specs reach that database and the same reset `tests/integration/identity-recovery.test.ts:144` uses. Blast radius: the browser-test database only. The limits, the production auth code, the real sign-in and verification, and every assertion are unchanged, and the status assertion stays. Not run locally (needs Docker); CI on the new head is the proof. If the same 429 returns in another test, give that test the same reset rather than raising a limit.
+
+Next action: CI on this head; then PR133 and PR134 both carry the same class of fix if needed, and the PR132 documentation checkpoint still needs its correction.
