@@ -1384,7 +1384,11 @@ test('scoped delivery imports every row, serves client requests and downloads co
   // This test runs after the established operator enrollment journey below.
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
-  await page.goto('/operator/signin');
+  // Earlier tests add this operator to more workspaces, and the default is the first one listed,
+  // so open the seeded workspace by name as the other multi-workspace tests do.
+  await page.goto(
+    `/operator/signin?next=${encodeURIComponent('/operator?workspace=' + seed.tenantId)}`,
+  );
   await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -1408,6 +1412,9 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect(configuration.status()).toBe(200);
   expect((await snapshot.json()).role).toBe('owner');
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Workspace', exact: true })).toHaveValue(
+    seed.tenantId,
+  );
   await openSection(page, 'workspace-delivery');
   const panel = page.locator('.delivery-ops');
   await panel.locator('summary').filter({ hasText: 'Create programme' }).click();
