@@ -16,17 +16,27 @@
       "jobs": "checks, browser (integration, e2e, UX gate), operator 1-3, validate",
       "result": "success"
     },
-    "pullRequestCodeQl": { "run": 39848672230, "result": "success" },
+    "pullRequestCodeQl": {
+      "run": 39848672230,
+      "result": "success"
+    },
     "mainCi": {
       "run": 39851833773,
       "sha": "c23ea622042bf92b311dea0f5b8d06e395ecf044",
       "result": "success"
     },
-    "mainCodeQl": { "run": 39851833789, "result": "success" },
-    "local": "format, lint, typecheck, pnpm test 44/44, build 0; test:e2e 166/166; test:ux 42/42 within baseline; operator shard 3 118/118"
+    "mainCodeQl": {
+      "run": 39851833789,
+      "result": "success"
+    },
+    "local": "On the final tree: format, lint, typecheck, pnpm test 44/44 and build 0. Earlier on the same branch (app code unchanged since): test:e2e 166/166 and test:ux 42/42 within baseline.",
+    "operatorScopedDeliveryTest": "The shipped workspace.spec.ts:1379 is main's PR134 version (rate-limit counters reset). It is verified by PR CI 39848672070 and main CI 39851833773, operator shards 1-3. A local shard 3 run of 118/118 was made on e250255 with a superseded retry variant of that test, so it is not evidence for the shipped version."
   },
   "deployment": {
     "id": "dpl_2twfVsTc36dN7D2ozajpWQUW7VXb",
+    "sourceSha": "c23ea622042bf92b311dea0f5b8d06e395ecf044",
+    "sourceRef": "main",
+    "sourceShaReportedBy": "Vercel deployment meta githubCommitSha",
     "state": "READY",
     "target": "production",
     "region": "fra1",
