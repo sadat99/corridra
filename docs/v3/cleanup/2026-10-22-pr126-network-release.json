@@ -1,0 +1,174 @@
+{
+  "pullRequest": 126,
+  "checkedHead": "da0f2cb0f80e15458b2342390150e6c8e09721da",
+  "mergeCommit": "8865b889c258d305be06a3a88e91f83352db4ff7",
+  "fullTreeEqual": true,
+  "prChecks": {
+    "ci": 39695096342,
+    "successfulJobs": 6,
+    "codeql": 39695096355,
+    "actualAnalysesUploaded": 3,
+    "newFindings": 0,
+    "responsiveScreenshotArtifact": 12389998522
+  },
+  "mainChecks": {
+    "ci": 39698442917,
+    "ciStatus": "in_progress; checks/operator1/operator2 passed, browser/operator3/validate pending at handoff",
+    "codeql": 39698443032,
+    "actualAnalysesUploaded": 3,
+    "baselineCodeql": 39658261257,
+    "unchangedFindings": [
+      {
+        "rule": "js/xss-through-dom",
+        "locations": [
+          {
+            "file": "apps/web/app/operator/counterparties.tsx",
+            "line": 926
+          }
+        ]
+      },
+      {
+        "rule": "js/xss-through-dom",
+        "locations": [
+          {
+            "file": "apps/web/app/operator/workspace.tsx",
+            "line": 584
+          }
+        ]
+      },
+      {
+        "rule": "js/clear-text-logging",
+        "locations": [
+          {
+            "file": "security/corridra.test.ts",
+            "line": 15
+          }
+        ]
+      },
+      {
+        "rule": "js/disabling-certificate-validation",
+        "locations": [
+          {
+            "file": "security/corridra.test.ts",
+            "line": 9
+          }
+        ]
+      }
+    ],
+    "newFindings": 0,
+    "cliWatcher": {
+      "exitCode": 1,
+      "reason": "Expired CLI credential HTTP401 while fetching annotations; not a test failure",
+      "connectedGitHubJobLookup": "working"
+    }
+  },
+  "productionDeployment": {
+    "id": "dpl_DVguKkFT3dLLoCLn5LNbkcaRdvzf",
+    "state": "READY",
+    "source": "8865b889c258d305be06a3a88e91f83352db4ff7",
+    "regions": ["fra1"],
+    "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"],
+    "automaticGitDeployment": true
+  },
+  "liveClosedStateProbes": {
+    "passed": 10,
+    "total": 10,
+    "results": [
+      {
+        "path": "/network",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true
+      },
+      {
+        "path": "/privacy",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true
+      },
+      {
+        "path": "/about",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true
+      },
+      {
+        "path": "/contributor/setup",
+        "status": 307,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+        "status": 307,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/operator-setup?kind=contributor",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/intake/pending",
+        "status": 200,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      }
+    ]
+  },
+  "activation": {
+    "networkDatabaseInstalled": false,
+    "productionEnvironmentFlagPresent": false,
+    "realMissionAdmissionAvailable": true,
+    "originalAuthorityPreserved": true,
+    "state": "Pending protected installation and explicit flag verification",
+    "installerDispatched": false
+  },
+  "limitations": [
+    "Production signed-in contributor and managed email acceptance remain unverified.",
+    "Custom Production domain is blocked to this execution environment; public probes use the owned Vercel fallback and assert canonical redirects without following them.",
+    "No automatic invitation email, public contributor enrollment, AI, outreach, billing or payout provider activation."
+  ],
+  "nextAction": "Finish exact-main CI, dispatch protected Network enable workflow, then request its actual environment review.",
+  "handoff": {
+    "branch": "docs/network-release-status",
+    "base": "8865b889c258d305be06a3a88e91f83352db4ff7",
+    "localDocumentationChecks": {
+      "documents": 30,
+      "infrastructure": 7,
+      "contextIntegrity": true
+    },
+    "rehearsalBranchRetained": "br-odd-shape-b1xuo4am",
+    "preservation": "Documentation-only follow-up; application, tests, migrations and immutable sources unchanged."
+  }
+}
