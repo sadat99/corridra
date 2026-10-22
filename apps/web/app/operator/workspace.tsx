@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { OperatorIcon } from '../../components/operator-icon';
 import { ReviewSettings } from './review-settings';
+import { WorkspaceControls } from './workspace-controls';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -81,6 +82,7 @@ function TenantWorkspace({
     [busy, setBusy] = useState(false),
     [missionRevision, setMissionRevision] = useState(0);
   const [readFailure, setReadFailure] = useState<'denied' | 'unavailable'>('unavailable');
+  const [membersLoaded, setMembersLoaded] = useState(false);
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
     [flags, setFlags] = useState<RecordRow[]>([]);
@@ -874,114 +876,29 @@ function TenantWorkspace({
               className="operator-section workspace-panel ux-panel"
               hidden={view !== 'workspace-controls'}
             >
-              <h2>Workspace controls</h2>
-              <p>
-                Membership and switches apply only to this workspace. Provider deployment approval,
-                exact source rights, current MFA and independent review remain separate. A synthetic
-                switch cannot authorize real customer work, outreach or a payout.
-              </p>
-              <button
-                className="text-link"
-                disabled={busy}
-                onClick={() =>
-                  act(async () => {
+              <WorkspaceControls
+                workspaceName={tenants.find((item) => item.id === tenant)?.name ?? 'this workspace'}
+                members={members}
+                membersLoaded={membersLoaded}
+                busy={busy}
+                enabled={enabled}
+                onLoadMembers={() =>
+                  void act(async () => {
                     setMembers(await request('members'));
+                    setMembersLoaded(true);
                   })
                 }
-              >
-                Load workspace members
-              </button>
-              <form
-                className="operator-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const f = new FormData(event.currentTarget);
+                onUpdateMember={(value) =>
                   void act(async () => {
-                    await request('member', {
-                      userId: f.get('user'),
-                      role: f.get('role'),
-                      revoked: f.get('revoked') === 'on',
-                    });
+                    await request('member', value);
                     setMembers(await request('members'));
-                  });
-                }}
-              >
-                <label className="field">
-                  Workspace member
-                  <select name="user" required disabled={!members.length || busy} defaultValue="">
-                    <option value="" disabled>
-                      Select an existing member
-                    </option>
-                    {members.map((member) => (
-                      <option key={member.user_id} value={member.user_id}>
-                        {member.name ?? member.user_id} · {member.role} ·{' '}
-                        {member.revoked_at ? 'Revoked' : 'Active'}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Role
-                  <select name="role" required disabled={busy} defaultValue="">
-                    <option value="" disabled>
-                      Select the intended role
-                    </option>
-                    {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((r) => (
-                      <option key={r}>{r}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <input type="checkbox" name="revoked" disabled={busy} /> Revoke membership
-                </label>
-                <button className="primary-link" disabled={busy || !members.length}>
-                  Update membership
-                </button>
-              </form>
-              <p>
-                Only the workspace owner can change these roles. Clearing “Revoke membership”
-                restores that existing membership; it does not reactivate a suspended identity. New
-                staff invitations and lost authenticators require reviewed recovery.
-              </p>
-              <p>
-                Deployment approval is separate from these workspace switches. Enabling a workspace
-                switch does not activate a disabled deployment.
-              </p>
-              <p>
-                Feature changes append a new version. Disabling a feature preserves its records.
-              </p>
-              {[
-                'evidence.uploads',
-                'evidence.verification',
-                'evidence.scan_bypass',
-                'research.ingestion',
-                'research.resolution',
-                'communications.introductions',
-                'communications.dispatch',
-                'opportunities.commands',
-                'ai.enabled',
-                'network.enabled',
-              ].map((key) => (
-                <div key={key}>
-                  <span>
-                    {key}: {enabled(key) ? 'enabled' : 'disabled'}
-                  </span>
-                  <button
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() =>
-                      act(() =>
-                        request('config', {
-                          key,
-                          enabled: !enabled(key),
-                        }),
-                      )
-                    }
-                  >
-                    Change {key}
-                  </button>
-                </div>
-              ))}
+                    setMembersLoaded(true);
+                  })
+                }
+                onChangeFeature={(key, value) =>
+                  void act(() => request('config', { key, enabled: value }))
+                }
+              />
             </section>
           )}
         </>

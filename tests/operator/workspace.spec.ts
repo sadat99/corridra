@@ -523,7 +523,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await db.end();
   }
   await openSection(page, 'workspace-controls');
-  await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
+  await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'Verify your authenticator again to continue',
   );
@@ -532,18 +532,112 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-controls');
-  await page.getByRole('button', { name: 'Change evidence.verification', exact: true }).click();
-  await expect(page.getByText('evidence.verification: enabled', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
+  await expect(
+    page
+      .getByRole('article', { name: 'Evidence verification', exact: true })
+      .getByText('Enabled', { exact: true }),
+  ).toBeVisible();
   await page.reload();
-  await expect(page.getByText('evidence.verification: enabled', { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole('article', { name: 'Evidence verification', exact: true })
+      .getByText('Enabled', { exact: true }),
+  ).toBeVisible();
   await openSection(page, 'workspace-evidence');
   await expect(
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
   await openSection(page, 'workspace-controls');
-  await expect(page.getByText('research.ingestion: enabled', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Change research.ingestion', exact: true }).click();
-  await expect(page.getByText('research.ingestion: disabled', { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole('article', { name: 'Research intake', exact: true })
+      .getByText('Enabled', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Disable research intake', exact: true }).click();
+  await expect(
+    page
+      .getByRole('article', { name: 'Research intake', exact: true })
+      .getByText('Disabled', { exact: true }),
+  ).toBeVisible();
+  const controls = page.locator('#workspace-controls');
+  await expect(
+    controls.getByRole('heading', { name: 'Workspace controls', exact: true }),
+  ).toBeVisible();
+  await expect(controls.getByRole('article')).toHaveCount(10);
+  await expect(
+    controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
+  ).toBeDisabled();
+  await expect(
+    controls.getByRole('button', { name: 'Update membership', exact: true }),
+  ).toBeDisabled();
+  await controls.getByRole('button', { name: 'Load workspace members', exact: true }).click();
+  await expect(
+    controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
+  ).toBeEnabled();
+  await expect(
+    controls.getByRole('button', { name: 'Refresh workspace members', exact: true }),
+  ).toBeVisible();
+  await controls.getByRole('combobox', { name: 'Role', exact: true }).selectOption('reviewer');
+  await controls.getByRole('checkbox', { name: 'Revoke membership', exact: false }).check();
+  await expect(controls.getByRole('checkbox')).toBeChecked();
+  await controls.getByRole('checkbox').uncheck();
+  await controls
+    .getByRole('combobox', { name: 'Workspace member', exact: true })
+    .selectOption(seed.principalId);
+  const deniedMembership = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/workspace/member?') && response.request().method() === 'POST',
+  );
+  await controls.getByRole('button', { name: 'Update membership', exact: true }).click();
+  expect((await deniedMembership).status()).toBe(409);
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
+    'The tenant must retain an active owner',
+  );
+  await controls.getByRole('combobox', { name: 'Role', exact: true }).selectOption('owner');
+  const savedMembership = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/workspace/member?') && response.request().method() === 'POST',
+  );
+  await controls.getByRole('button', { name: 'Update membership', exact: true }).click();
+  expect((await savedMembership).status()).toBe(201);
+  await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
+  for (const width of [1440, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await controls.scrollIntoViewIfNeeded();
+    expect(
+      await page.locator('.site-header').evaluate((header) => getComputedStyle(header).position),
+    ).toBe('static');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      scrollTo(0, 0);
+    });
+    await page.screenshot({
+      path: `.cache/ux06/after/workspace-controls-${width}.png`,
+      fullPage: true,
+    });
+    expect(
+      await page.locator('.skip-link').evaluate((link) => getComputedStyle(link).clipPath),
+    ).not.toBe('none');
+    if (width === 390) {
+      await controls.evaluate((panel) => panel.scrollIntoView({ block: 'start' }));
+      await page.screenshot({ path: '.cache/ux06/after/workspace-controls-mobile-viewport.png' });
+    }
+  }
+  await page.locator('.skip-link').focus();
+  await expect(page.locator('.skip-link')).toBeInViewport();
+  expect(await page.locator('.skip-link').evaluate((link) => getComputedStyle(link).clipPath)).toBe(
+    'none',
+  );
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main')).toBeFocused();
+  await openSection(page, 'workspace-controls');
+  await page.setViewportSize({ width: 1280, height: 720 });
+
   await operatorEvidence(page, research, 'research');
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
