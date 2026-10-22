@@ -1406,7 +1406,10 @@ test('scoped delivery imports every row, serves client requests and downloads co
       response.request().method() === 'GET' &&
       new URL(response.url()).searchParams.get('tenant') === seed.tenantId,
   );
+  const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  const verified = await verification;
+  expect(verified.status(), `verify-totp: ${await verified.text()}`).toBe(200);
   const [snapshot, configuration] = await Promise.all([workspaceRead, configRead]);
   expect(snapshot.status()).toBe(200);
   expect(configuration.status()).toBe(200);
