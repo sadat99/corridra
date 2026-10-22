@@ -1406,9 +1406,19 @@ test('scoped delivery imports every row, serves client requests and downloads co
       response.request().method() === 'GET' &&
       new URL(response.url()).searchParams.get('tenant') === seed.tenantId,
   );
-  const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
-  const verified = await verification;
+  const verify = async () => {
+    const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
+    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    return verification;
+  };
+  let verified = await verify();
+  // Two-factor checks are limited to 5 a minute per address (packages/auth). Earlier tests in this
+  // shard can use that allowance, so honour the limit: wait out the window and use a fresh code.
+  if (verified.status() === 429) {
+    await page.waitForTimeout(61_000);
+    await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+    verified = await verify();
+  }
   expect(verified.status(), `verify-totp: ${await verified.text()}`).toBe(200);
   const [snapshot, configuration] = await Promise.all([workspaceRead, configRead]);
   expect(snapshot.status()).toBe(200);
