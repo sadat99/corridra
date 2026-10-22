@@ -1,5 +1,6 @@
 'use client';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { PanelHeading } from './panel-heading';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 type Catalogue = {
@@ -121,7 +122,12 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       className="operator-section workspace-panel"
       aria-label="Corridor and policy settings"
     >
-      <h2>Corridors and reviewed policies</h2>
+      <PanelHeading
+        title="Corridors and reviewed policies"
+        eyebrow="Settings and access"
+        icon="globe"
+        description="Prepare mission templates, define a route and review the policies that govern its use."
+      />
       <OperatorWorkbench
         label="Reviewed configuration sections"
         sections={[
@@ -139,8 +145,8 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       />
       <p>
         Owner and admin reviews use existing versioned commands. Source, country, currency,
-        permission and authenticator checks still apply. Use synthetic records until operational
-        approvals are accepted.
+        permission and authenticator checks still apply. Use only records and actions approved for
+        this workspace.
       </p>
       <p role="status" aria-live="polite">
         {message}
@@ -163,178 +169,202 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       >
         Refresh reviewed configuration
       </button>
-      <details>
-        <summary>Prepare commercial mission templates</summary>
-        <p>
-          Install the existing generic mission, requirement and assessment definitions. This does
-          not create customer missions or approve a corridor.
+      {catalogue ? (
+        <dl className="ux-settings-counts">
+          <div>
+            <dt>Routes returned</dt>
+            <dd>{catalogue.routes.length}</dd>
+          </div>
+          <div>
+            <dt>Route packs returned</dt>
+            <dd>{catalogue.packs.length}</dd>
+          </div>
+          <div>
+            <dt>Mission types returned</dt>
+            <dd>{catalogue.types.length}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="ux-panel-empty">
+          {message
+            ? 'Reviewed references are unavailable. Refresh reviewed configuration to try again.'
+            : 'Loading reviewed references…'}
         </p>
-        <button
-          disabled={busy}
-          className="text-link"
-          onClick={() => void save('mission-templates', {}, '#workspace-missions')}
-        >
-          Install missing mission templates
-        </button>
-      </details>
-      <details>
-        <summary>Create a directional corridor route</summary>
-        <form
-          className="operator-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const f = new FormData(e.currentTarget);
-            void save(
-              'corridor-route',
-              {
-                id: crypto.randomUUID(),
-                origin: f.get('origin'),
-                destination: f.get('destination'),
-                reason: f.get('reason'),
-              },
-              '#workspace-settings',
-            );
-          }}
-        >
-          <label className="field">
-            Demand-origin market
-            <select name="origin" required>
-              <option value="">Choose a market</option>
-              <CountryOptions />
-              <option value="EU">European Union trade bloc</option>
-            </select>
-          </label>
-          <label className="field">
-            Target market
-            <select name="destination" required>
-              <option value="">Choose a market</option>
-              <CountryOptions />
-              <option value="EU">European Union trade bloc</option>
-            </select>
-          </label>
-          <label className="field">
-            Route review reason
-            <textarea name="reason" required minLength={3} maxLength={500} />
-          </label>
+      )}
+      <div className="ux-settings-sections">
+        <details>
+          <summary data-step="01">Prepare commercial mission templates</summary>
           <p>
-            The returned route reference is used in a reviewed pack. Creating a route grants no
-            coverage or legal approval.
+            Install the existing generic mission, requirement and assessment definitions. This does
+            not create customer missions or approve a corridor.
           </p>
-          <button disabled={busy} className="primary-link">
-            Create reviewed route
+          <button
+            disabled={busy}
+            className="text-link"
+            onClick={() => void save('mission-templates', {}, '#workspace-missions')}
+          >
+            Install missing mission templates
           </button>
-        </form>
-      </details>
-      <details>
-        <summary>Advanced versioned policy review</summary>
-        <form className="operator-form" onSubmit={submit}>
-          <label className="field">
-            Reviewed configuration action
-            <select
-              value={command}
-              onChange={(e) => {
-                setDrafts((previous) => ({ ...previous, [command]: draft }));
-                setCommand(e.target.value as Command);
-                setDraft(drafts[e.target.value as Command] ?? '');
-                setNext('');
-                setMessage('');
-              }}
-              disabled={busy}
-            >
-              {Object.entries(commands).map(([value, item]) => (
-                <option key={value} value={value}>
-                  {item.label}
-                </option>
+        </details>
+        <details>
+          <summary data-step="02">Create a directional corridor route</summary>
+          <form
+            className="operator-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              void save(
+                'corridor-route',
+                {
+                  id: crypto.randomUUID(),
+                  origin: f.get('origin'),
+                  destination: f.get('destination'),
+                  reason: f.get('reason'),
+                },
+                '#workspace-settings',
+              );
+            }}
+          >
+            <label className="field">
+              Demand-origin market
+              <select name="origin" required>
+                <option value="">Choose a market</option>
+                <CountryOptions />
+                <option value="EU">European Union trade bloc</option>
+              </select>
+            </label>
+            <label className="field">
+              Target market
+              <select name="destination" required>
+                <option value="">Choose a market</option>
+                <CountryOptions />
+                <option value="EU">European Union trade bloc</option>
+              </select>
+            </label>
+            <label className="field">
+              Route review reason
+              <textarea name="reason" required minLength={3} maxLength={500} />
+            </label>
+            <p>
+              The returned route reference is used in a reviewed pack. Creating a route grants no
+              coverage or legal approval.
+            </p>
+            <button disabled={busy} className="primary-link">
+              Create reviewed route
+            </button>
+          </form>
+        </details>
+        <details>
+          <summary data-step="03">Advanced versioned policy review</summary>
+          <form className="operator-form" onSubmit={submit}>
+            <label className="field">
+              Reviewed configuration action
+              <select
+                value={command}
+                onChange={(e) => {
+                  setDrafts((previous) => ({ ...previous, [command]: draft }));
+                  setCommand(e.target.value as Command);
+                  setDraft(drafts[e.target.value as Command] ?? '');
+                  setNext('');
+                  setMessage('');
+                }}
+                disabled={busy}
+              >
+                {Object.entries(commands).map(([value, item]) => (
+                  <option key={value} value={value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p>{commands[command].help}</p>
+            <label className="field">
+              Reviewed command JSON
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                required
+                rows={12}
+                maxLength={8192}
+                spellCheck={false}
+              />
+            </label>
+            <label>
+              <input type="checkbox" required /> I reviewed the source references, scope, effective
+              dates and reason.
+            </label>
+            <button disabled={busy} className="primary-link">
+              Save reviewed configuration
+            </button>
+          </form>
+        </details>
+        <details>
+          <summary data-step="04">Current route packs and definition references</summary>
+          {catalogue ? (
+            <>
+              <h3>Directional route references</h3>
+              <ul>
+                {catalogue.routes.map((route) => (
+                  <li key={route.id}>
+                    {route.origin_market} → {route.destination_market} · {route.id}
+                  </li>
+                ))}
+              </ul>
+              <ul>
+                {catalogue.packs.map((p) => (
+                  <li key={p.id}>
+                    {p.origin_market} → {p.destination_market} · {p.status} · version {p.version}
+                    <p>
+                      Route: {p.route_id} · Pack: {p.id}
+                    </p>
+                    <details>
+                      <summary>Inspect reviewed pack configuration</summary>
+                      <pre
+                        className="ai-draft-preview"
+                        tabIndex={0}
+                        role="region"
+                        aria-label={`Reviewed pack configuration ${p.id}`}
+                      >
+                        {JSON.stringify(p.configuration, null, 2)}
+                      </pre>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+              {!catalogue.packs.length && (
+                <p>
+                  No reviewed route pack is available yet. Create a route and append its reviewed
+                  pack.
+                </p>
+              )}
+              {(['types', 'requirements', 'assessments'] as const).map((group) => (
+                <div key={group}>
+                  <h3>
+                    {group === 'types'
+                      ? 'Mission types'
+                      : group === 'requirements'
+                        ? 'Requirements'
+                        : 'Assessments'}
+                  </h3>
+                  <ul>
+                    {catalogue[group].map((item) => (
+                      <li key={item.id}>
+                        {item.key} · {item.id}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </select>
-          </label>
-          <p>{commands[command].help}</p>
-          <label className="field">
-            Reviewed command JSON
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              required
-              rows={12}
-              maxLength={8192}
-              spellCheck={false}
-            />
-          </label>
-          <label>
-            <input type="checkbox" required /> I reviewed the source references, scope, effective
-            dates and reason.
-          </label>
-          <button disabled={busy} className="primary-link">
-            Save reviewed configuration
-          </button>
-        </form>
-      </details>
-      <details>
-        <summary>Current route packs and definition references</summary>
-        {catalogue ? (
-          <>
-            <h3>Directional route references</h3>
-            <ul>
-              {catalogue.routes.map((route) => (
-                <li key={route.id}>
-                  {route.origin_market} → {route.destination_market} · {route.id}
-                </li>
-              ))}
-            </ul>
-            <ul>
-              {catalogue.packs.map((p) => (
-                <li key={p.id}>
-                  {p.origin_market} → {p.destination_market} · {p.status} · version {p.version}
-                  <p>
-                    Route: {p.route_id} · Pack: {p.id}
-                  </p>
-                  <details>
-                    <summary>Inspect reviewed pack configuration</summary>
-                    <pre
-                      className="ai-draft-preview"
-                      tabIndex={0}
-                      role="region"
-                      aria-label={`Reviewed pack configuration ${p.id}`}
-                    >
-                      {JSON.stringify(p.configuration, null, 2)}
-                    </pre>
-                  </details>
-                </li>
-              ))}
-            </ul>
-            {!catalogue.packs.length && (
-              <p>
-                No reviewed route pack is available yet. Create a route and append its reviewed
-                pack.
-              </p>
-            )}
-            {(['types', 'requirements', 'assessments'] as const).map((group) => (
-              <div key={group}>
-                <h3>
-                  {group === 'types'
-                    ? 'Mission types'
-                    : group === 'requirements'
-                      ? 'Requirements'
-                      : 'Assessments'}
-                </h3>
-                <ul>
-                  {catalogue[group].map((item) => (
-                    <li key={item.id}>
-                      {item.key} · {item.id}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </>
-        ) : (
-          <p>
-            {message
-              ? 'Configuration could not be loaded. Use Refresh reviewed configuration to retry.'
-              : 'Loading reviewed configuration…'}
-          </p>
-        )}
-      </details>
+            </>
+          ) : (
+            <p>
+              {message
+                ? 'Configuration could not be loaded. Use Refresh reviewed configuration to retry.'
+                : 'Loading reviewed configuration…'}
+            </p>
+          )}
+        </details>
+      </div>
     </section>
   );
 }

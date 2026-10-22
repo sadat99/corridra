@@ -907,6 +907,11 @@
       "path": "docs/v3/history/ledger-before-operator-reference-release.md",
       "classification": "Immutable historical execution snapshot",
       "use": "Exact ea9b71d active-ledger bytes before earlier release summaries were retired; manifest hashes preserve evidence, relative links use docs/V3_LEDGER.md, not current state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-workspace-controls-ui.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact historical ledger snapshot before Workspace controls UI correction; preserve bytes and verify the history manifest hash."
     }
   ]
 }
