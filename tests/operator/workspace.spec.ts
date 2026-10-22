@@ -1384,6 +1384,22 @@ test('scoped delivery imports every row, serves client requests and downloads co
   // This test runs after the established operator enrollment journey below.
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  // Earlier journeys sign in repeatedly from this one test address, and sign-in and two-factor
+  // requests are limited to 5 per minute, so CI saw 429 here. Start with empty counters in the
+  // dedicated local test database; the limits themselves and the real sign-in stay unchanged.
+  const limits = new Pool({
+    host: '127.0.0.1',
+    port: 54329,
+    database: 'corridra_browser',
+    user: 'postgres',
+    password: local.ownerPassword,
+  });
+  try {
+    await limits.query('DELETE FROM identity."rateLimit"');
+  } finally {
+    await limits.end();
+  }
   await page.goto('/operator/signin');
   await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
