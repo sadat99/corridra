@@ -63,14 +63,15 @@ export function RoleNavigation({ role, shortcuts = false }: { role: string; shor
       <a
         key={section.id}
         href={'#' + section.id}
-        aria-label={section.label}
         aria-describedby={shortcuts ? `operator-hint-${section.id}` : undefined}
       >
         <OperatorIcon name={sectionIcons[section.id]} />
         <span className="operator-nav-copy">
           <span>{section.label}</span>
           {shortcuts && (
-            <small id={`operator-hint-${section.id}`}>{descriptions[section.id]}</small>
+            <small id={`operator-hint-${section.id}`} aria-hidden="true">
+              {descriptions[section.id]}
+            </small>
           )}
         </span>
         <OperatorIcon

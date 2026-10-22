@@ -55,6 +55,30 @@ jobs:
         with:
           output: codeql-results
           category: /language:${{ matrix.language }}
+      - name: Sanitized CodeQL review metadata
+        run: |
+          python3 - <<'PYCODEQL'
+          import glob, json
+          reports = sorted(glob.glob('codeql-results/*.sarif'))
+          if not reports:
+              raise SystemExit('CodeQL review metadata unavailable: no SARIF report')
+          results = []
+          for path in reports:
+              with open(path) as report:
+                  runs = json.load(report)['runs']
+              for run in runs:
+                  for result in run.get('results', []):
+                      locations = []
+                      for location in result.get('locations', []):
+                          physical = location.get('physicalLocation', {})
+                          locations.append({
+                              'file': physical.get('artifactLocation', {}).get('uri'),
+                              'line': physical.get('region', {}).get('startLine'),
+                          })
+                      results.append({'rule': result.get('ruleId'), 'locations': locations})
+          # Never print snippets, messages, configuration or credential-bearing source.
+          print('CodeQL review metadata: ' + json.dumps({'reports': len(reports), 'results': results}, sort_keys=True))
+          PYCODEQL
       - name: Private CodeQL findings for review
         if: always()
         uses: actions/upload-artifact@v7
