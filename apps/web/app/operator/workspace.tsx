@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { OperatorIcon } from '../../components/operator-icon';
 import { ReviewSettings } from './review-settings';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
@@ -269,16 +270,16 @@ function TenantWorkspace({
           </select>
         </label>
         <Link className="text-link" href="/workspace">
-          All workspaces and access help
+          <OperatorIcon name="help" /> All workspaces and access help
         </Link>
         <button className="text-link" disabled={busy} onClick={signOut}>
-          Sign out
+          <OperatorIcon name="exit" /> Sign out
         </button>
       </div>
       {data &&
         (realWorkspace ? (
-          <p role="note">
-            Use authorized records for this workspace.{' '}
+          <p role="note" className="operator-scope-note">
+            <OperatorIcon name="lock" /> Use authorized records for this workspace.{' '}
             {data.scanMode === 'bypass'
               ? 'Evidence scanning is deferred; unscanned files are marked as bypassed.'
               : 'Evidence follows this workspace’s scanning controls.'}
@@ -314,35 +315,21 @@ function TenantWorkspace({
           <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
             <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
             <section className="workspace-panel workspace-start" aria-label="Workspace overview">
-              <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
-                {realWorkspace ? 'Operational workspace' : 'Synthetic workspace'}
-              </StatusBadge>
+              <div className="operator-start-heading">
+                <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
+                  {realWorkspace ? 'Operational workspace' : 'Synthetic workspace'}
+                </StatusBadge>
+                <span className="operator-access">
+                  <OperatorIcon name="shield" /> Your access: <strong>{data.role}</strong>
+                </span>
+              </div>
               <h2>Start with a mission.</h2>
               <p>
-                Your access: <strong>{data.role}</strong>. Open a mission, find the right companies,
-                arrange the next conversation, then record progress and share an approved view.
-                Actions depend on your role, a current authenticator check and approved scope.
+                Open a mission, find the right companies, arrange the next conversation, then record
+                progress and share an approved view. Actions depend on your role, a current
+                authenticator check and approved scope.
               </p>
               <RoleNavigation role={data.role} shortcuts />
-              {['owner', 'admin'].includes(data.role) && (
-                <details className="ux-journey-disclosure">
-                  <summary>Manage this workspace</summary>
-                  <nav className="workspace-navigation" aria-label="Administration">
-                    <a href="#ops-center">Control Center</a>
-                    <a href="#workspace-settings">Corridors and policies</a>
-                    <a href="#workspace-audit">Access and audit</a>
-                    {data.role === 'owner' && (
-                      <a href="#workspace-controls">People and workspace controls</a>
-                    )}
-                    <a href="#ops-gates">Production readiness</a>
-                  </nav>
-                  <p>
-                    Review operational configuration, membership records and launch requirements.
-                    Sensitive changes still require the existing approvals and fresh authenticator
-                    verification.
-                  </p>
-                </details>
-              )}
               {unavailableSection && (
                 <p role="alert">
                   This section is unavailable for your current workspace role or the link is
@@ -351,6 +338,81 @@ function TenantWorkspace({
                 </p>
               )}
             </section>
+            {['owner', 'admin'].includes(data.role) && (
+              <details className="ux-journey-disclosure operator-management">
+                <summary>
+                  <OperatorIcon name="settings" />
+                  <span>Manage this workspace</span>
+                  <OperatorIcon name="chevron" className="operator-disclosure-arrow" />
+                </summary>
+                <nav className="workspace-navigation" aria-label="Administration">
+                  <a href="#ops-center" aria-describedby="operator-admin-hint-ops-center">
+                    <OperatorIcon name="settings" />
+                    <span>
+                      <span>Control Center</span>
+                      <small id="operator-admin-hint-ops-center" aria-hidden="true">
+                        Operational configuration.
+                      </small>
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                  <a
+                    href="#workspace-settings"
+                    aria-describedby="operator-admin-hint-workspace-settings"
+                  >
+                    <OperatorIcon name="shield" />
+                    <span>
+                      <span>Corridors and policies</span>
+                      <small id="operator-admin-hint-workspace-settings" aria-hidden="true">
+                        Scope, rules and guardrails.
+                      </small>
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                  <a href="#workspace-audit" aria-describedby="operator-admin-hint-workspace-audit">
+                    <OperatorIcon name="people" />
+                    <span>
+                      <span>Access and audit</span>
+                      <small id="operator-admin-hint-workspace-audit" aria-hidden="true">
+                        Access, permissions and activity.
+                      </small>
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                  {data.role === 'owner' && (
+                    <a
+                      href="#workspace-controls"
+                      aria-describedby="operator-admin-hint-workspace-controls"
+                    >
+                      <OperatorIcon name="people" />
+                      <span>
+                        <span>People and workspace controls</span>
+                        <small id="operator-admin-hint-workspace-controls" aria-hidden="true">
+                          Manage members and settings.
+                        </small>
+                      </span>
+                      <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                    </a>
+                  )}
+                  <a href="#ops-gates" aria-describedby="operator-admin-hint-ops-gates">
+                    <OperatorIcon name="shield" />
+                    <span>
+                      <span>Production readiness</span>
+                      <small id="operator-admin-hint-ops-gates" aria-hidden="true">
+                        Review configuration, membership records and launch requirements.
+                      </small>
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                </nav>
+                <p>
+                  Review operational configuration, membership records and launch requirements.
+                  Sensitive changes still require the existing approvals and fresh authenticator
+                  verification.
+                </p>
+              </details>
+            )}
+
             <RoleNavigation role={data.role} />
           </div>
           <div

@@ -8,7 +8,9 @@ export function WorkspaceShell({
   compact = false,
   nav,
   notice,
+  className = '',
 }: {
+  className?: string;
   eyebrow: string;
   title: string;
   children: ReactNode;
@@ -22,7 +24,7 @@ export function WorkspaceShell({
     <main
       id="main"
       tabIndex={-1}
-      className={`operator-page ux-workspace${compact ? ' ux-access' : ''}${nav ? ' ux-customer' : ''}`}
+      className={`operator-page ux-workspace${compact ? ' ux-access' : ''}${nav ? ' ux-customer' : ''} ${className}`}
     >
       <header className="ux-page-heading">
         <p className="label">{eyebrow}</p>

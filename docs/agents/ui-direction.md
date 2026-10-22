@@ -2,6 +2,10 @@
 
 Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) first: they explain what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
+## Operator landing reference (owner direction, 22 October 2026)
+
+For the signed-in `/operator` landing screen, combine the supplied Concept 05 Bento Navigation and Concept 09 Command Center references: ivory surfaces, forest-green mission-first bento, serif headings, icon-led live status cards, a separate management disclosure and grouped tool directory. This scoped direction supersedes the earlier plain operator landing presentation. Preserve all original destinations, mounted panels, role checks, disclosures, real counts, failures and recovery. Do not copy fictional dates, identities, notifications or decorative search controls without a working backend. Use responsive readable cards rather than shrinking a desktop screen to phone width. Other screens retain the existing kit.
+
 ## Business objective and cognitive load (owner directive, 2026-10-15)
 
 Corridra is a startup. Every screen must move a real person toward a business outcome: a qualified mission, an introduction, a commercial result or a Corridra service fee. The owner reports that the current product is too complex to understand, even for its builder. Treat cognitive load as a defect with the same weight as a bug.
