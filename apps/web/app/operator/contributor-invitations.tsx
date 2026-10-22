@@ -83,6 +83,12 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
   }
   async function save(event: FormEvent<HTMLFormElement>, invitationId?: string) {
     event.preventDefault();
+    if (!invitationId && (!data?.enabled || !data.countries.length)) {
+      setMessage(
+        'Your draft is kept. Verify your invitation access, then refresh invitations before submitting.',
+      );
+      return;
+    }
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
@@ -148,9 +154,10 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         <div role="alert" className="ux-network-paused">
           <p>{readError}</p>
           <p>
-            Invitation entry needs an owner or admin in the selected workspace and a current
-            authenticator check. Verify your access, then refresh invitations. The Workspace
-            selector above lets you choose another workspace without changing its permissions.
+            Invitation access needs an owner or admin and an authenticator check made within the
+            last five minutes. You can keep preparing the name and email below. Verify your access,
+            then refresh invitations to load your reviewed countries. Your sign-in and permissions
+            are separate from this short verification window.
           </p>
           <a className="text-link" href="#workspace-authenticator">
             Verify invitation access
@@ -170,7 +177,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       )}
       <div className="ux-invitation-flow">
         <form className="operator-form" method="post" onSubmit={(event) => void save(event)}>
-          <fieldset disabled={busy || !data?.installed}>
+          <fieldset disabled={busy}>
             <legend>New reviewed invitation</legend>
             <label className="field">
               Contributor name
@@ -187,9 +194,14 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                 required
                 defaultValue=""
                 aria-describedby="contributor-country-help"
+                disabled={!data?.installed || !data.countries.length}
               >
                 <option value="" disabled>
-                  Select a country
+                  {readError
+                    ? 'Verify access to load countries'
+                    : !data
+                      ? 'Loading reviewed countries…'
+                      : 'Select a country'}
                 </option>
                 {data?.countries.map((country) => (
                   <option key={country.code} value={country.code}>
@@ -199,7 +211,9 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
               </select>
             </label>
             <p id="contributor-country-help">
-              Choose within your reviewed country scope. Task eligibility is reviewed separately.
+              {data?.installed
+                ? 'Choose within your reviewed country scope. Task eligibility is reviewed separately.'
+                : 'Name and email stay editable. Reviewed countries load after authorized invitation access is confirmed.'}
             </p>
             <button
               className="primary-link"
