@@ -25,11 +25,7 @@
 }
 
 :root {
-  --paper: #f5f3ec;
-  --ink: #222d29;
-  --muted: #58635d;
-  --accent: #526544;
-  --line: #d6d9ce;
+  /* Colour tokens live only in the canonical AC/1 layer ("Design system layer" below). */
   --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --sans: Arial, Helvetica, sans-serif;
 }
@@ -49,7 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 ::selection {
-  background: #d9e2c4;
+  background: var(--selected-surface);
   color: var(--ink);
 }
 a {
@@ -172,7 +168,7 @@ h1 {
   transition: background 150ms ease;
 }
 .primary-link:hover {
-  background: #3b4940;
+  background: var(--action-hover);
 }
 .launch-status {
   display: inline-flex;
@@ -334,7 +330,7 @@ h1 {
 }
 .closing {
   padding: 43px 40px 49px;
-  background: #e8ebdf;
+  background: var(--surface-2);
   margin: 0 0 38px;
 }
 .closing > .label {
@@ -717,10 +713,10 @@ summary:hover {
   outline-offset: 3px;
 }
 .field [aria-invalid='true'] {
-  border-color: #943f34;
+  border-color: var(--critical);
 }
 .field-error {
-  color: #943f34;
+  color: var(--critical);
   font-size: var(--text-sm);
 }
 @media (max-width: 1250px) {
@@ -853,7 +849,7 @@ summary:hover {
 .evidence-label {
   display: inline-block;
   font-size: var(--text-xs);
-  background: #e8ebdf;
+  background: var(--surface-2);
   padding: 4px 9px;
   margin-left: 8px;
 }
@@ -867,7 +863,7 @@ summary:hover {
 }
 .setup-secret {
   padding: 18px;
-  background: #e8ebdf;
+  background: var(--surface-2);
   overflow-wrap: anywhere;
 }
 .setup-secret summary {
@@ -1007,7 +1003,7 @@ summary:hover {
 .delivery-card {
   margin-block: 2rem;
   padding: 1.5rem;
-  border: 1px solid var(--line, #d4d4d4);
+  border: 1px solid var(--line);
   border-radius: 1rem;
 }
 .delivery-view label,
@@ -1044,7 +1040,7 @@ summary:hover {
 .delivery-table td {
   padding: 0.75rem;
   text-align: start;
-  border-bottom: 1px solid #d4d4d4;
+  border-bottom: 1px solid var(--line);
 }
 .delivery-ops details {
   margin-block: 1.5rem;
@@ -1175,23 +1171,7 @@ summary:hover {
 
 /* UX10X foundations: semantic colors and geometry shared by access and workspaces. */
 :root {
-  --surface-raised: #fffefa;
-  --surface-subtle: #e9eee5;
-  --text-strong: var(--ink);
-  --text-muted: var(--muted);
-  --border-subtle: var(--line);
-  --action: #244b39;
-  --focus: #244b39;
-  --positive: #285b3b;
-  --positive-surface: #e7f0e7;
-  --caution: #805018;
-  --caution-surface: #f7ecd9;
-  --critical: #963d31;
-  --critical-surface: #f9e8e3;
-  --info: #365e62;
-  --info-surface: #e6eeee;
-  --unknown: #5b594e;
-  --unknown-surface: #efede5;
+  /* Colour tokens live only in the canonical AC/1 layer ("Design system layer" below). */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -1458,22 +1438,22 @@ summary:hover {
 }
 .ux-atlas-map ellipse,
 .ux-atlas-map path {
-  stroke: #719280;
+  stroke: var(--map-eu-active);
   stroke-width: 1;
   fill: none;
   opacity: 0.5;
 }
 .ux-atlas-map path.ux-atlas-direction {
-  stroke: #f2ce95;
+  stroke: var(--map-arc-europe);
   stroke-width: 3;
   stroke-dasharray: 7 7;
   opacity: 1;
 }
 .ux-atlas-map circle {
-  fill: #f2ce95;
+  fill: var(--map-arc-europe);
 }
 .ux-atlas-map text {
-  fill: #f5f3ec;
+  fill: var(--paper);
   font-size: 15px;
   font-family: Arial, sans-serif;
 }
@@ -2073,19 +2053,80 @@ summary:hover {
     -apple-system, 'Segoe UI', Arial, sans-serif;
   --sans: var(--font-ui);
   --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
-  --brand-deep: #173f31;
-  --brand: #244b39;
-  --brand-hover: #0f2f24;
-  --on-brand: #fffefa;
-  --ring: rgb(36 75 57 / 14%);
-  --accent-gold: #b98a4e;
+  /* AC/1 Atlantic Cobalt primitives: the only raw colour values in the product.
+     Source: docs/source/ac1-design-system/atlantic-cobalt.tokens.json. Crosswalk: docs/design-system/README.md. */
+  --ac-navy: #142438;
+  --ac-cobalt: #2856c5;
+  --ac-cobalt-hover: #234eb0;
+  --ac-cobalt-pressed: #1e4295;
+  --ac-porcelain: #f6f8fb;
+  --ac-copper: #bf7548;
+  --ac-copper-ink: #85451e;
+  --ac-ink: #18283c;
+  --ac-paper: #ffffff;
+  --ac-surface-subtle: #eff3f8;
+  --ac-surface-selected: #e7eeff;
+  --ac-surface-navy: #1c3048;
+  --ac-surface-navy-hover: #263c56;
+  --ac-border: #d8e0ea;
+  --ac-border-strong: #a4b1c2;
+  --ac-text-secondary: #4b5a6c;
+  --ac-text-tertiary: #59677b;
+  --ac-positive: #116653;
+  --ac-positive-surface: #e8f5f0;
+  --ac-warning: #865018;
+  --ac-warning-surface: #fff2e2;
+  --ac-critical: #a52f43;
+  --ac-critical-surface: #fbecef;
+  --ac-unknown: #526073;
+  /* Semantic roles. Existing names are kept so every consumer and test still resolves. */
+  --paper: var(--ac-porcelain);
+  --ink: var(--ac-ink);
+  --muted: var(--ac-text-tertiary);
+  --line: var(--ac-border);
   --surface-0: var(--paper);
-  --surface-1: #fffefa;
-  --surface-2: #eef1e8;
+  --surface-1: var(--ac-paper);
+  --surface-2: var(--ac-surface-subtle);
+  --surface-raised: var(--ac-paper);
+  --surface-subtle: var(--ac-surface-subtle);
   --text-1: var(--ink);
-  --text-2: #4a564f;
+  --text-2: var(--ac-text-secondary);
   --text-3: var(--muted);
-  --border-strong: #8c978a;
+  --text-strong: var(--ink);
+  --text-muted: var(--muted);
+  --border-subtle: var(--line);
+  --border-strong: var(--ac-border-strong);
+  /* Navy is chrome and the dark contrast surface. It is never a call-to-action fill. */
+  --brand-deep: var(--ac-navy);
+  --nav-hover: var(--ac-surface-navy-hover);
+  /* Cobalt is the interactive accent: primary action, selected state, focus, links. */
+  --brand: var(--ac-cobalt);
+  --brand-hover: var(--ac-cobalt-hover);
+  --on-brand: var(--ac-paper);
+  --action: var(--ac-cobalt);
+  --action-hover: var(--ac-cobalt-hover);
+  --action-pressed: var(--ac-cobalt-pressed);
+  --on-action: var(--ac-paper);
+  --selected: var(--ac-cobalt);
+  --selected-surface: var(--ac-surface-selected);
+  --focus: var(--ac-cobalt);
+  --ring: color-mix(in srgb, var(--ac-cobalt) 16%, transparent);
+  /* Deprecated alias for legacy focus and hover consumers. */
+  --accent: var(--ac-cobalt);
+  /* Copper is editorial ornament only: never warning, verification or small text. */
+  --editorial-accent: var(--ac-copper);
+  --accent-gold: var(--editorial-accent);
+  /* Status colours are independent of the brand. */
+  --positive: var(--ac-positive);
+  --positive-surface: var(--ac-positive-surface);
+  --caution: var(--ac-warning);
+  --caution-surface: var(--ac-warning-surface);
+  --critical: var(--ac-critical);
+  --critical-surface: var(--ac-critical-surface);
+  --info: var(--ac-cobalt);
+  --info-surface: var(--ac-surface-selected);
+  --unknown: var(--ac-unknown);
+  --unknown-surface: var(--ac-surface-subtle);
   /* Type scale. Reading text 18, controls and cards 16, notes 14, captions 12. */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -2104,15 +2145,13 @@ summary:hover {
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
-  --shadow-1: 0 1px 2px rgb(23 63 49 / 6%), 0 1px 1px rgb(23 63 49 / 4%);
-  --shadow-2: 0 6px 18px -6px rgb(23 63 49 / 18%), 0 2px 4px rgb(23 63 49 / 6%);
-  --shadow-3: 0 24px 48px -16px rgb(23 63 49 / 28%), 0 4px 10px rgb(23 63 49 / 8%);
+  --shadow-1: 0 1px 2px rgb(20 36 56 / 6%), 0 1px 1px rgb(20 36 56 / 4%);
+  --shadow-2: 0 6px 18px -6px rgb(20 36 56 / 18%), 0 2px 4px rgb(20 36 56 / 6%);
+  --shadow-3: 0 24px 48px -16px rgb(20 36 56 / 28%), 0 4px 10px rgb(20 36 56 / 8%);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --dur: 160ms;
   --radius-panel: var(--radius-md);
   --radius-control: var(--radius-sm);
-  --action: var(--brand);
-  --focus: var(--brand);
 }
 html {
   scroll-padding-top: 104px;
@@ -2263,9 +2302,9 @@ time {
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.005em;
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border: 1px solid var(--brand-deep);
+  color: var(--on-action);
+  background: var(--action);
+  border: 1px solid var(--action);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
   cursor: pointer;
@@ -2276,12 +2315,15 @@ time {
 }
 .primary-link:hover,
 .button:hover {
-  background: var(--brand-hover);
+  background: var(--action-hover);
+  border-color: var(--action-hover);
   box-shadow: var(--shadow-2);
   transform: translateY(-1px);
 }
 .primary-link:active,
 .button:active {
+  background: var(--action-pressed);
+  border-color: var(--action-pressed);
   transform: translateY(0);
   box-shadow: var(--shadow-1);
 }
@@ -2614,16 +2656,17 @@ th {
 
 /* Corridor map: real outlines, both directions from Bangladesh always shown. */
 :root {
-  --map-land: #25503f;
-  --map-eu: #3b7a5c;
-  --map-eu-active: #4d9370;
-  --map-spain: #b98a4e;
-  --map-spain-active: #e0b872;
-  --map-china: #5f9e7f;
-  --map-china-active: #a9d6bc;
-  --map-bangladesh: #fffefa;
-  --map-arc-china: #c4ebd5;
-  --map-arc-europe: #f2ce95;
+  /* Derived from AC/1 primitives; drawn on the navy land tone. */
+  --map-land: var(--ac-surface-navy);
+  --map-eu: var(--ac-surface-navy-hover);
+  --map-eu-active: color-mix(in srgb, var(--ac-cobalt) 55%, var(--ac-surface-navy));
+  --map-spain: var(--ac-copper);
+  --map-spain-active: color-mix(in srgb, var(--ac-copper) 70%, var(--ac-paper));
+  --map-china: color-mix(in srgb, var(--ac-cobalt) 70%, var(--ac-surface-navy));
+  --map-china-active: color-mix(in srgb, var(--ac-cobalt) 45%, var(--ac-paper));
+  --map-bangladesh: var(--ac-paper);
+  --map-arc-china: color-mix(in srgb, var(--ac-cobalt) 30%, var(--ac-paper));
+  --map-arc-europe: color-mix(in srgb, var(--ac-copper) 45%, var(--ac-paper));
 }
 .ux-atlas-map .ux-map-land,
 .ux-atlas-map .ux-map-eu,
@@ -3116,8 +3159,8 @@ th {
   padding-inline: var(--space-6);
   font-size: var(--text-base);
   font-weight: 600;
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--action);
   border-radius: var(--guided-control-radius);
 }
 .guide-choice-go {
@@ -3681,9 +3724,9 @@ th {
 }
 .dock-button[data-active='true'],
 .dock-button[aria-expanded='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
 }
 .dock-button::after {
   content: attr(data-tip);
@@ -3992,9 +4035,9 @@ th {
   cursor: pointer;
 }
 .guide-route-quick button[aria-pressed='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
 }
 .guide-routes .ux-atlas {
   display: grid;
@@ -4390,9 +4433,9 @@ th {
   color: var(--text-1);
 }
 .guide-journey-bar li[aria-current='step'] span {
-  color: var(--on-brand);
-  background: var(--brand-deep);
-  border-color: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
   box-shadow: 0 0 0 4px var(--ring);
 }
 .guide-journey-bar li[aria-current='step'] b {
@@ -5062,8 +5105,8 @@ th {
   background: var(--surface-2);
 }
 .guide-tabs a[aria-current='page'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 .guide-tabs svg {
   width: 1.25rem;
@@ -6101,8 +6144,8 @@ th {
   background: var(--surface-2);
 }
 .pricing-tabs [role='tab'][aria-selected='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 
 /* Operator workspace kit. One panel is in view at a time (the rest stay mounted, so entries
@@ -6196,8 +6239,8 @@ th {
   background: var(--surface-2);
 }
 .ux-area-bar nav:first-child a[aria-current='true'] {
-  color: var(--on-brand);
-  background: var(--brand-deep);
+  color: var(--on-action);
+  background: var(--selected);
 }
 .ux-area-bar .ux-area-home {
   border: 1px solid var(--border-strong);
@@ -6209,8 +6252,8 @@ th {
 }
 .ux-area-bar .ux-area-sections a[aria-current='location'] {
   color: var(--brand-deep);
-  background: var(--surface-2);
-  box-shadow: inset 0 -2px 0 var(--brand-deep);
+  background: var(--selected-surface);
+  box-shadow: inset 0 -2px 0 var(--selected);
   border-radius: var(--radius-sm);
 }
 
@@ -6922,8 +6965,8 @@ th {
   border-top: 1px solid var(--line);
 }
 .ux-operator-home .ux-area-bar .ux-area-home[aria-current='page'] {
-  background: var(--brand-deep);
-  color: var(--on-brand);
+  background: var(--selected);
+  color: var(--on-action);
 }
 .ux-operator-home .workspace-panel {
   min-width: 0;

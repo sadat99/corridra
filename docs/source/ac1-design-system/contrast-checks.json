@@ -1,0 +1,71 @@
+{
+  "checks": [
+    {
+      "pair": "white / cobalt",
+      "ratio": 6.51,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "white / navy",
+      "ratio": 15.68,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "ink / porcelain",
+      "ratio": 14.02,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "secondary / porcelain",
+      "ratio": 6.63,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "tertiary / porcelain",
+      "ratio": 5.41,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "critical / criticalSurface",
+      "ratio": 5.94,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "positive / positiveSurface",
+      "ratio": 6.15,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "warning / warningSurface",
+      "ratio": 6.0,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "info / infoSurface",
+      "ratio": 5.6,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "unknown / unknownSurface",
+      "ratio": 5.75,
+      "required": 4.5,
+      "passes": true
+    },
+    {
+      "pair": "copper on porcelain (must not use for small text)",
+      "ratio": 3.37,
+      "required": 4.5,
+      "passes": false
+    }
+  ],
+  "note": "Last copper pair intentionally fails: accent decorative only. All actual UI components need browser contrast tests, including hover/disabled states."
+}

@@ -39,7 +39,7 @@
   min-height: 3.5rem;
   border-color: var(--line);
   border-radius: 0.85rem;
-  box-shadow: 0 2px 5px rgb(23 63 49 / 3%);
+  box-shadow: var(--shadow-1);
 }
 .ux-operator-home .operator-scope-note {
   display: flex;
@@ -58,10 +58,10 @@
   gap: 1.25rem;
 }
 .ux-operator-home :is(.ux-today, .workspace-start, .operator-management, .ux-workspace-directory) {
-  border: 1px solid #e5e6de;
+  border: 1px solid var(--line);
   border-radius: 1.15rem;
   background: var(--surface-1);
-  box-shadow: 0 3px 12px rgb(23 63 49 / 3%);
+  box-shadow: var(--shadow-1);
 }
 .ux-operator-home .ux-today {
   position: relative;
@@ -100,15 +100,15 @@
   height: 100%;
   min-height: 9rem;
   padding: 1rem;
-  border: 1px solid #e5e9e1;
+  border: 1px solid var(--line);
   border-radius: 0.8rem;
-  background: #f0f3ed;
+  background: var(--surface-2);
   text-decoration: none;
   color: var(--brand-deep);
   transition: background var(--dur) var(--ease);
 }
 .ux-operator-home .ux-today-tiles a:hover {
-  background: #e5ecdf;
+  background: var(--selected-surface);
 }
 .ux-operator-home .ux-today-tiles strong {
   font: 500 1.85rem/1 var(--font-ui);
@@ -151,7 +151,7 @@
   flex: none;
   width: 8rem;
   height: 4rem;
-  color: #9cae96;
+  color: var(--border-strong);
 }
 .ux-operator-home .ux-today .operator-mission-cta {
   display: inline-flex;
@@ -162,15 +162,16 @@
   min-height: 3rem;
   margin: 0.5rem 0 0;
   padding: 0.7rem 1rem;
-  border: 1px solid var(--brand-deep);
+  border: 1px solid var(--action);
   border-radius: 0.7rem;
-  background: var(--brand-deep);
-  color: var(--on-brand);
+  background: var(--action);
+  color: var(--on-action);
   font-size: 0.875rem;
   text-decoration: none;
 }
 .ux-operator-home .ux-today .operator-mission-cta:hover {
-  background: var(--brand-hover);
+  border-color: var(--action-hover);
+  background: var(--action-hover);
 }
 .ux-operator-home .ux-today-lists {
   margin-bottom: 0;
@@ -195,7 +196,7 @@
   gap: 0.4rem;
   align-items: center;
   padding: 0.4rem 0.65rem;
-  background: #f1f3ee;
+  background: var(--surface-2);
   border-radius: 0.55rem;
   font-size: 0.75rem;
   color: var(--text-2);
@@ -228,8 +229,8 @@
   min-width: 0;
   min-height: 7.5rem;
   padding: 1rem;
-  background: #fffefa;
-  border: 1px solid #e6e7e0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
   border-radius: 0.8rem;
   color: var(--brand-deep);
 }
@@ -264,7 +265,7 @@
   overflow: hidden;
 }
 .ux-operator-home .ux-tool-index a:first-child:hover {
-  background: var(--brand-hover);
+  background: var(--nav-hover);
 }
 .ux-operator-home .ux-tool-index a:first-child > .operator-icon:first-child {
   width: 1.9rem;
@@ -280,7 +281,7 @@
 }
 .ux-operator-home .ux-tool-index a:first-child small {
   max-width: 12rem;
-  color: #e1eadc;
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
 }
 .ux-operator-home .ux-tool-index a:first-child .operator-nav-arrow {
   top: auto;
@@ -290,7 +291,7 @@
   height: 2.4rem;
   padding: 0.55rem;
   border-radius: 50%;
-  background: rgb(255 255 255 / 12%);
+  background: color-mix(in srgb, var(--on-brand) 12%, transparent);
 }
 .ux-operator-home .operator-primary-label {
   margin-top: auto;
@@ -298,7 +299,7 @@
   border-radius: 99px;
   font-size: 0.65rem;
   font-weight: 400;
-  background: rgb(255 255 255 / 12%);
+  background: color-mix(in srgb, var(--on-brand) 12%, transparent);
 }
 .ux-operator-home :is(.operator-management, .ux-workspace-directory) {
   padding: 0.5rem 1.25rem;
@@ -346,7 +347,7 @@
   gap: 0.6rem;
   min-height: 5rem;
   padding: 0.8rem;
-  border: 1px solid #e6e7e0;
+  border: 1px solid var(--line);
   border-radius: 0.65rem;
   text-decoration: none;
   color: var(--brand-deep);
@@ -417,7 +418,7 @@
 }
 .ux-operator-home :is(.ux-workspace-directory, .operator-management) a:hover {
   color: var(--brand-hover);
-  background: #f1f4ed;
+  background: var(--selected-surface);
 }
 .ux-operator-home :is(a, button, summary, select):focus-visible {
   outline: 3px solid var(--brand-deep);

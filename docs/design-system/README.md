@@ -1,0 +1,116 @@
+# Corridra AC/1 design system: implementation index
+
+This is the working index for the owner-locked **Corridra AC/1** design system (Atlantic Cobalt brand, one Meridian foundation, four task compositions). It tells Claude Code or Codex what the package says, how it was reconciled with existing authorities, what is built, what is not and what to do next. It is not a product authority and not a status ledger: live status, tested SHAs and the next action stay in [the V3 ledger](../V3_LEDGER.md), and every change is logged in [the work log](../agents/work-log.md).
+
+## 1. Where the package is and how to check it
+
+The owner supplied `CORRIDRA_AC1_LOCKED_DESIGN_SYSTEM.zip` on 22 October 2026 (zip sha256 `9a9574ef7f16b4bcdef92356685a77dc0b184e6cc237283dd622b0784fc70e5a`). All 23 files are preserved byte for byte in [`docs/source/ac1-design-system/`](../source/ac1-design-system/). Its own `manifest.json` lists 22 files with sha256 and size; `tests/design-system.test.mjs` re-checks every hash in `pnpm test`, so a later edit to an original fails CI. Never edit those files. Amend forward here or in [UI direction](../agents/ui-direction.md).
+
+| File (in `docs/source/ac1-design-system/`)  | What it is                                                                                        | How to use it                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `MASTER_DESIGN_CONTRACT.md`                 | Binding visual grammar: brand, type, geometry, navigation, components, five blueprints, gates     | Read in full before any AC/1 work. Sections 3, 7, 8 and 12 drive implementation         |
+| `atlantic-cobalt.tokens.json`               | Primitive and semantic tokens (DTCG format), spacing, radius, type, motion, governance flags      | Source values for `globals.css`; never copy as a second CSS layer                       |
+| `EXISTING_TOKEN_MIGRATION_CROSSWALK.md`     | Why a blind recolour breaks CTAs, legacy-variable roles and touchpoint list                       | Read with section 4 below, which records the crosswalk as implemented                   |
+| `AC1-visual-reference.html`                 | Static specimen of the six views (Atelier, Meridian, SourceLedger, Encounter, Signal, Components) | Open in a browser. Example data only, no backend, not acceptance proof                  |
+| `AC1_*_1440.png`, `AC1_*_390.png`, board    | Rendered specimen screenshots at 1440 and 390 px                                                  | Visual reference for review; not product screenshots                                    |
+| `QUALITY_GATE_AND_CONTINUITY.md`            | Five gates, ten anti-template questions, representative screen set, per-PR evidence list          | Use as the review checklist for every AC/1 PR                                           |
+| `ONE_PASTE_AGENT_INSTRUCTION.md`            | The owner's one-paste instruction for either agent                                                | Same text the owner pasted into the session that started this work                      |
+| `verification.json`, `contrast-checks.json` | 24 specimen render checks (no overflow) and 11 illustrative colour-pair ratios                    | Specimen evidence only; product contrast is re-tested by `tests/design-system.test.mjs` |
+| `README.md`, `manifest.json`                | Package reading order and integrity manifest                                                      | Integrity anchor                                                                        |
+
+## 2. What AC/1 decides (summary, not a replacement)
+
+- **Brand lock:** Midnight Navy `#142438`, International Cobalt `#2856C5`, Porcelain `#F6F8FB`, Copper `#BF7548`, Ink `#18283C`. Replaces ivory, forest green and gold.
+- **One foundation, four compositions:** Meridian (customer and mission shell), SourceLedger (comparison and evidence), Encounter (delegations and meetings), Commerce Atelier (public and discovery), Signal Desk (staff, founder, governance). Not five themes. Composition is chosen by task and information type, never by role, country or taste.
+- **Semantic separation:** cobalt is the action, selected and focus colour. Navy is chrome and the dark contrast surface. Copper is editorial ornament only, never a warning and never small text. Status colours are independent of brand.
+- **Nothing functional changes:** destinations, roles, deep links, the 18 operator section IDs, drafts, evidence, trust labels, money and history are preserved. A role governs access, not a visual brand.
+- **Human gate:** an agent cannot pass art direction. Each reference screen and each page family needs a named human reviewer.
+
+## 3. Reconciliation with existing authorities (22 October 2026)
+
+Authority order from the package: latest owner decision (this brand and composition lock, read narrowly), then the V3 contract, ADRs, ledger reality and the locked Guided UX rules, then AC/1 visual grammar, then legacy mockups.
+
+| Existing rule                                                                           | AC/1 position                                                      | Resolution in this repository                                                                                                                                                                |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V3 contract section 7: "ivory backgrounds, forest-green identity"                       | Atlantic Cobalt replaces forest green and ivory                    | Owner brand decision supersedes the colour clause only. The contract file is immutable and unchanged; the supersession is recorded in UI direction. All other section 7 rules stand.         |
+| UI direction foundation: ivory, forest green, gold, green-tinted shadows                | Porcelain, navy, cobalt, copper; navy-tinted overlay shadows only  | Superseded for colour by the dated AC/1 addendum. Token names are unchanged so every consumer and test keeps working.                                                                        |
+| Guided locked part "Next-step card: the dark green card with one light button"          | Same rule, "now navy"                                              | Behaviour unchanged (one per screen, first on Home and on a piece of work). Only the colour is navy.                                                                                         |
+| Operator landing reference (22 Oct): ivory, forest-green bento, serif headings          | Signal Desk: UI sans titles, exceptions first, no bento-by-default | Colour superseded now. Layout, serif headings and bento structure are **not** changed in the token package; they belong to the Signal reference package and need owner review before change. |
+| Network workspace correction (22 Oct): ivory, forest, serif                             | Same as above                                                      | Colour superseded now; layout unchanged.                                                                                                                                                     |
+| Space scale 4, 8, 12, 16, 24, 32, 48, **72**, 96                                        | 0, 4, 8, 12, 16, 24, 32, 48, **64, 80**, 96                        | **Open conflict, owner to settle.** Both positions recorded. `--space-18` (72 px) stays until the owner chooses. No new local values in either case.                                         |
+| Guided radius 14 px controls, 16 px cards, 20 px hero; standalone actions 14 px corners | Controls 8 px, cards 12 px, panels 16 px; no large pill buttons    | **Open conflict, owner to settle.** The guided sizes are a locked part that needs owner approval to change. Unchanged in the token package.                                                  |
+| Type scale tokens (`--text-*`), Inter UI, editorial serif on public headings only       | Inter UI; Newsreader proposed for display, fallback Georgia        | Compatible. Newsreader is not adopted: it needs a licence, a local asset and a Bangla/Chinese specimen check first. The current serif stack (Georgia first) stays.                           |
+| Customer card 24 px padding, 20 px corners; page CTA 56 px                              | Primary 44, large 52, guided 60                                    | Heights are compatible with the guided 60 px rule. Card corner conflict is part of the open radius decision.                                                                                 |
+| Trust labels Self-declared, Evidence available, Verified, Derived, Outcome observed     | Same five, never interchangeable                                   | Identical. No change.                                                                                                                                                                        |
+| Navigation sets for public, customer, Corridra team and founder                         | Same sets                                                          | Identical. No change.                                                                                                                                                                        |
+
+## 4. Token crosswalk as implemented (package AC1-01)
+
+One canonical colour layer now lives in the "Design system layer" `:root` of `apps/web/app/globals.css`. The two legacy roots (top of file and the UX10X foundations block) no longer declare colours; they keep their non-colour values. Raw hex appears only as `--ac-*` primitives; everything else is a `var()` or a `color-mix()` of primitives.
+
+| Token (unchanged name)                      | Before (forest/ivory)     | After (AC/1)                  | Role                                                                           |
+| ------------------------------------------- | ------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| `--paper`, `--surface-0`                    | `#f5f3ec`                 | Porcelain `#f6f8fb`           | Page canvas                                                                    |
+| `--ink`, `--text-1`, `--text-strong`        | `#222d29`                 | Ink `#18283c`                 | Primary text                                                                   |
+| `--text-2`                                  | `#4a564f`                 | `#4b5a6c`                     | Secondary text                                                                 |
+| `--muted`, `--text-3`, `--text-muted`       | `#58635d`                 | `#59677b`                     | Tertiary text                                                                  |
+| `--line`, `--border-subtle`                 | `#d6d9ce`                 | `#d8e0ea`                     | Dividers                                                                       |
+| `--border-strong`                           | `#8c978a`                 | `#a4b1c2`                     | Control borders                                                                |
+| `--surface-1`, `--surface-raised`           | `#fffefa`                 | `#ffffff`                     | Raised surface                                                                 |
+| `--surface-2`, `--surface-subtle`           | `#eef1e8` / `#e9eee5`     | `#eff3f8`                     | Quiet grouping                                                                 |
+| `--brand-deep`                              | `#173f31` (also CTA fill) | Navy `#142438`                | Chrome, dark contrast surface, next-step card. **No longer a CTA fill**        |
+| `--brand`                                   | `#244b39`                 | Cobalt `#2856c5`              | Interactive accent, focus ring, text links                                     |
+| `--brand-hover`                             | `#0f2f24`                 | `#234eb0`                     | Hover of cobalt                                                                |
+| `--on-brand`                                | `#fffefa`                 | `#ffffff`                     | Text on navy or cobalt                                                         |
+| `--action` (CTA fill)                       | brand green               | Cobalt                        | Every primary action. New: `--action-hover`, `--action-pressed`, `--on-action` |
+| `--selected`, `--selected-surface` (new)    | was `--brand-deep` fill   | Cobalt / `#e7eeff`            | Current tab, current step, pressed toggle, selection                           |
+| `--nav-hover` (new)                         | n/a                       | `#263c56`                     | Hover on a navy surface (dark tiles)                                           |
+| `--accent`                                  | `#526544` olive           | Cobalt (deprecated alias)     | Legacy focus and hover consumers only                                          |
+| `--accent-gold`, `--editorial-accent` (new) | `#b98a4e` gold            | Copper `#bf7548`              | Decorative dots, underline decoration, map pins. Never text, never warning     |
+| `--positive` / surface                      | `#285b3b` / `#e7f0e7`     | `#116653` / `#e8f5f0`         | Status only                                                                    |
+| `--caution` / surface                       | `#805018` / `#f7ecd9`     | `#865018` / `#fff2e2`         | Status only                                                                    |
+| `--critical` / surface                      | `#963d31` / `#f9e8e3`     | `#a52f43` / `#fbecef`         | Status only, destructive                                                       |
+| `--info` / surface                          | `#365e62` / `#e6eeee`     | `#2856c5` / `#e7eeff`         | Informational state                                                            |
+| `--unknown` / surface                       | `#5b594e` / `#efede5`     | `#526073` / `#eff3f8`         | Unknown, not measured yet                                                      |
+| `--ring`                                    | green 14%                 | Cobalt 16%                    | Focus halo on fields and choices                                               |
+| `--shadow-1..3`                             | green-tinted              | Navy-tinted, same geometry    | Overlays and lift only                                                         |
+| `--map-*`                                   | greens and gold           | Navy, cobalt and copper mixes | Atlas map (commercial direction, never a shipping route)                       |
+
+Consumers re-pointed by role (presentation only, no class, id, name, link or payload change):
+
+- `.primary-link`, `.button`, `.guide-choice-start`, `.operator-mission-cta`: fill `--action`, hover `--action-hover`, pressed `--action-pressed`. These were filled with `--brand-deep`; recolouring `--brand-deep` alone would have turned every CTA navy.
+- Selected states move from a navy fill to `--selected`: customer tabs `aria-current="page"`, journey-bar current step, pricing tabs `aria-selected`, operator area bar current, dock buttons when active, quick-route toggles `aria-pressed`.
+- Navy stays on dark contrast surfaces: next-step card and closing band (`.guide-band`), guided footer, the outcome-path final step and the operator directory's first tile (hover `--nav-hover`).
+- `operator-overview.css` had 11 raw hex values and 4 raw `rgb()` values (green shadows, white overlays) outside the token check. They now use tokens, and the design-system test now scans every stylesheet under `apps/web` other than `globals.css`.
+- Legacy CSS before the marker had 15 raw hex values; all 15 now use tokens, so `legacyHex` in `tests/design-system-baseline.json` is lowered from 15 to 0. The 2 legacy raw font families (Arial fallbacks) are unchanged and out of scope.
+- New tests in `tests/design-system.test.mjs`: package hashes, locked primitive values against `atlantic-cobalt.tokens.json`, single declaration of each primitive, CTA uses `--action` (never `--brand-deep`) in default, hover and pressed states, copper never sets text colour, and 20 WCAG AA text pairs plus 2 non-text pairs computed from the resolved tokens. Mutation-checked: a navy CTA fill and a low-contrast tertiary text value each fail the suite.
+
+Rollback: revert the AC1-01 commit. It touches only CSS, the design-system test and baseline, and documentation, so a revert restores the forest/ivory palette exactly with no data, route or API effect.
+
+## 5. Work packages (one bounded PR each, in order)
+
+Claim a package by naming it in the ledger "Active work" line with your branch before you start. Do not start a package another agent has claimed.
+
+| ID     | Package                                                                                                                                                                                                                                                                                                                   | Gate to start                                              | Status (see ledger for evidence)                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| AC1-01 | Baseline record, package preservation, UI direction addendum, canonical colour tokens, CTA/navy/selected separation, operator stylesheet tokens, contrast test                                                                                                                                                            | None                                                       | Implemented in this PR, human art review pending |
+| AC1-02 | Shared primitives: one primary/secondary/quiet/destructive action family (44/52/60 heights), context tabs with line-under, nav rows, status and fact labels, fields, notices, empty/loading/denied states. Specimen route or fixture with hover, focus, disabled, loading, selected, error, long copy, Bangla and Chinese | AC1-01 merged; radius and spacing decisions from the owner | Not started                                      |
+| AC1-03 | Atelier reference: public `/` (`apps/web/app/page.tsx`)                                                                                                                                                                                                                                                                   | AC1-02 merged                                              | Not started                                      |
+| AC1-04 | Meridian reference: customer `/account` and Mission Room `/account/missions/[resourceId]`                                                                                                                                                                                                                                 | AC1-02 merged                                              | Not started                                      |
+| AC1-05 | SourceLedger reference: quotation comparison (`apps/web/components/comparison-matrix.tsx` inside the mission and operator commercial views)                                                                                                                                                                               | AC1-02 merged                                              | Not started                                      |
+| AC1-06 | Encounter reference: delegation management `/account/delegations/[workspaceId]` and organiser flow                                                                                                                                                                                                                        | AC1-02 merged                                              | Not started                                      |
+| AC1-07 | Signal reference: operator workspace `/operator` (Today queue, area bar, all tools directory, 18 section IDs)                                                                                                                                                                                                             | AC1-02 merged                                              | Not started                                      |
+| AC1-08 | Page-family migration of the remaining 48 `page.tsx` routes with an action to route to component to service to permission to test parity matrix                                                                                                                                                                           | **Owner art-direction acceptance of AC1-03 to AC1-07**     | Blocked on human review                          |
+
+Each reference package must ship: before and after screenshots at 320, 390, 768 and 1440 px (1024 and 1920 for dense grids), axe at those widths, keyboard walk, empty and populated synthetic states, the role and denial checks of the affected suites, and the PR report block from section 13 of the master contract.
+
+## 6. Status words
+
+Use the package ladder exactly: **designed** (this contract exists), **implemented** (merged), **verified** (tests and screenshots pass on the exact SHA), **accepted** (named human reviewer approved the art direction), **deployed** (production serves the exact SHA), **enabled** (flags, configuration and real auth confirmed), **commercially ready** (separate legal and operations checks). Report each separately. As of AC1-01, AC/1 is designed and, once merged, implemented for tokens only. It is not accepted.
+
+## 7. Resume checklist for the next agent
+
+1. Follow [START_HERE](../START_HERE.md): `git status`, fetch main and open PRs, `node scripts/v3-context.mjs` and `verify`.
+2. Read the master contract in `docs/source/ac1-design-system/` once, then sections 3 to 7 of this file.
+3. Check the ledger for the AC/1 line: which package is merged, which is claimed, whether the owner settled the spacing and radius conflicts and whether any reference screen was accepted.
+4. Take the next unclaimed package from section 5. Never start AC1-08 without recorded human acceptance.

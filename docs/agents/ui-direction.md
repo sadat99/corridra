@@ -2,6 +2,20 @@
 
 Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) first: they explain what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
+## AC/1 Atlantic Cobalt brand and composition lock (owner decision, 22 October 2026)
+
+The owner locked **Corridra AC/1**: the Atlantic Cobalt brand (Midnight Navy `#142438`, International Cobalt `#2856C5`, Porcelain `#F6F8FB`, Copper `#BF7548`, Ink `#18283C`), one foundation (Meridian) and four task compositions (SourceLedger, Encounter Grid, Commerce Atelier, Signal Desk). It is one design system, not five themes. The supplied package is preserved byte for byte in `docs/source/ac1-design-system/`; the working index, reconciliation and implemented crosswalk are in [the design-system index](../design-system/README.md).
+
+This supersession is deliberately narrow:
+
+1. **Colour only, now.** Every colour rule below that names ivory, forest green, gold or green-tinted shadows now means the AC/1 equivalent: porcelain page, navy chrome and dark contrast surface, cobalt for primary action, selected state, focus and links, copper for editorial ornament only (never warning, never small text), navy-tinted overlay shadows. The next-step card keeps every locked behaviour and becomes navy with one light button. The V3 contract's section 7 colour clause is superseded by this owner decision; the contract file itself stays unchanged.
+2. **Cobalt action, navy chrome.** `--action` is the only primary-action fill. `--brand-deep` (navy) is never a call-to-action fill. Selected states use `--selected`. Status colours stay independent of the brand.
+3. **Unchanged:** the eight guided rules, locked parts, navigation sets, glossary, trust labels, content rules, hard limits and verification steps.
+4. **Open conflicts, owner to settle** (both positions recorded, nothing changed yet): the space scale (here 72 px; AC/1 64 and 80 px) and corner radii (guided 14, 16 and 20 px; AC/1 8, 12 and 16 px with no large pill buttons).
+5. **Order of work:** tokens first, then shared primitives, then five reference screens (public home, customer Mission Room, sourcing comparison, delegation management, operator workspace). Platform-wide page migration waits for a named human reviewer's art-direction acceptance of those references. An agent may not mark that gate passed.
+
+The two 22 October directions below (operator landing, Network) keep their layout and serif headings until the Signal reference package; their colour words are superseded by this section.
+
 ## Operator landing reference (owner direction, 22 October 2026)
 
 For the signed-in `/operator` landing screen, combine the supplied Concept 05 Bento Navigation and Concept 09 Command Center references: ivory surfaces, forest-green mission-first bento, serif headings, icon-led live status cards, a separate management disclosure and grouped tool directory. This scoped direction supersedes the earlier plain operator landing presentation. Preserve all original destinations, mounted panels, role checks, disclosures, real counts, failures and recovery. Do not copy fictional dates, identities, notifications or decorative search controls without a working backend. Use responsive readable cards rather than shrinking a desktop screen to phone width. Other screens retain the existing kit.
