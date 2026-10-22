@@ -1089,5 +1089,1595 @@
       "Genuine authenticated production contributor submission and provider email acceptance remain unverified.",
       "No production identities, sessions, roles, scopes or invitations changed."
     ]
+  },
+  "operatorSubtabsCorrection": {
+    "head": "d37e93cd418276019164bfecbb11a012936c062f",
+    "applicationSourceIdenticalTo": "d68d85e08d5f99481207a52bcf08073c92df1a10",
+    "ci": 39797044587,
+    "codeql": 39797044591,
+    "analyses": [
+      {
+        "id": 119886888770,
+        "upload": true,
+        "reviews": [
+          {
+            "reports": 1,
+            "results": [
+              {
+                "locations": [
+                  {
+                    "file": "security/corridra.test.ts",
+                    "line": 9
+                  }
+                ],
+                "rule": "js/disabling-certificate-validation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 119886889230,
+        "upload": true,
+        "reviews": [
+          {
+            "reports": 1,
+            "results": []
+          }
+        ]
+      },
+      {
+        "id": 119886889352,
+        "upload": true,
+        "reviews": [
+          {
+            "reports": 1,
+            "results": []
+          }
+        ]
+      }
+    ],
+    "newFindings": 0,
+    "local": {
+      "completeWorkspaceJourneys": 10,
+      "destinations": 18,
+      "destinationWidthStates": 72,
+      "widths": [1440, 1024, 768, 390],
+      "publicBrowser": 164,
+      "documents": 30,
+      "infrastructure": 7,
+      "axeViolations": 0,
+      "overflowFailures": 0
+    },
+    "priorFailure": {
+      "head": "d68d85e",
+      "ci": 39792746140,
+      "job": 119872579973,
+      "cause": "Delivery driver awaited streamed heading before protected workspace/config reads completed.",
+      "assertionsStrengthened": "Real scoped workspace/config HTTP200 plus owner role before unchanged navigation/delivery assertions; no timeout/retry relaxation."
+    },
+    "state": "Implemented, tested, merged and automatically deployed; live read-only verification and bounded safe cleanup completed.",
+    "ciJobs": [
+      {
+        "run": 39797044587,
+        "name": "CI",
+        "jobs": [
+          {
+            "id": 119886838959,
+            "name": "operator (2)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886839343,
+            "name": "browser",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886839362,
+            "name": "operator (1)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886839447,
+            "name": "checks",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886839482,
+            "name": "operator (3)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119895316752,
+            "name": "validate",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "run": 39797044591,
+        "name": "CodeQL Advanced",
+        "jobs": [
+          {
+            "id": 119886839377,
+            "name": "CodeQL configuration status",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886888770,
+            "name": "Analyze (javascript-typescript)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886889230,
+            "name": "Analyze (python)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 119886889352,
+            "name": "Analyze (actions)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "ciTotals": [
+      {
+        "id": 119886838959,
+        "available": true,
+        "totals": ["2026-10-22T14:39:46.1584928Z   124 passed (1.6m)"],
+        "failure": false
+      },
+      {
+        "id": 119886839362,
+        "available": true,
+        "totals": ["2026-10-22T14:43:55.8859296Z   138 passed (2.1m)"],
+        "failure": false
+      },
+      {
+        "id": 119886839482,
+        "available": true,
+        "totals": ["2026-10-22T14:51:12.0615172Z   118 passed (12.8m)"],
+        "failure": false
+      },
+      {
+        "id": 119886839343,
+        "available": true,
+        "totals": [
+          "2026-10-22T14:42:41.7435922Z  Test Files  69 passed (69)",
+          "2026-10-22T14:42:41.7440556Z       Tests  684 passed (684)",
+          "2026-10-22T14:45:25.8155946Z   164 passed (1.5m)"
+        ],
+        "failure": false
+      }
+    ],
+    "mergeCommit": "ea67fb18af560107be6f2a1a6d338f7c98ba5421",
+    "fullTreeEqual": true,
+    "productionDeployment": "dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY",
+    "production": {
+      "id": "dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY",
+      "state": "READY",
+      "target": "production",
+      "source": "ea67fb18af560107be6f2a1a6d338f7c98ba5421",
+      "regions": ["fra1"],
+      "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"]
+    },
+    "liveProbes": {
+      "origin": "https://corridra.vercel.app",
+      "observedAt": "2026-10-22T15:04:23.367106+00:00",
+      "passed": 10,
+      "total": 10,
+      "results": [
+        {
+          "path": "/network",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "enabledCopy": true
+        },
+        {
+          "path": "/privacy",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "contributorPrivacyCopy": true
+        },
+        {
+          "path": "/about",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true
+        },
+        {
+          "path": "/contributor/setup",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/operator-setup?kind=contributor",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/intake/pending",
+          "status": 200,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true,
+          "realAdmissionAvailable": true
+        }
+      ]
+    },
+    "featureCleanup": {
+      "archivedRef": "refs/archive/completed-local/fix/workspace-controls-ui",
+      "archivedTip": "d37e93cd418276019164bfecbb11a012936c062f",
+      "branchRetired": true,
+      "branchSpecificEnvironmentBindings": 0,
+      "previews": {
+        "applied": true,
+        "results": [
+          {
+            "id": "dpl_5FdRy6V4sS73w2LGdFzn3TMFg99U",
+            "branch": "fix/workspace-controls-ui",
+            "source": "d37e93cd418276019164bfecbb11a012936c062f",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          },
+          {
+            "id": "dpl_HX9JXR6hvy8HHqnfCf6PFf3s9UJV",
+            "branch": "fix/workspace-controls-ui",
+            "source": "d68d85e08d5f99481207a52bcf08073c92df1a10",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          },
+          {
+            "id": "dpl_2CYhpg9XgFakeJSZnRdvGMbbZ3wQ",
+            "branch": "fix/workspace-controls-ui",
+            "source": "0fb3e03dcd4765832d1e698e92010060713eabc0",
+            "nonProduction": true,
+            "publicAliasesExcluded": true,
+            "deletedAndVerifiedAbsent": true
+          }
+        ]
+      }
+    },
+    "limits": [
+      "All18 destinations were exercised at four widths; this does not certify every possible role/record combination.",
+      "Protected mutation and contributor acceptance used isolated local services; genuine authenticated production contributor/email acceptance remains unverified.",
+      "Custom domain is assigned to this exact production but executor policy blocks direct custom-domain access; read-only live probes used canonical Vercel origin.",
+      "No production identity, membership, role, country scope, feature setting, migration, money or history changed."
+    ],
+    "postCleanupLiveProbes": {
+      "origin": "https://corridra.vercel.app",
+      "observedAt": "2026-10-22T15:17:04.712745+00:00",
+      "passed": 10,
+      "total": 10,
+      "results": [
+        {
+          "path": "/network",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "enabledCopy": true
+        },
+        {
+          "path": "/privacy",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "contributorPrivacyCopy": true
+        },
+        {
+          "path": "/about",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true
+        },
+        {
+          "path": "/contributor/setup",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/operator-setup?kind=contributor",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/intake/pending",
+          "status": 200,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true,
+          "realAdmissionAvailable": true
+        }
+      ]
+    },
+    "ownerRequestedBroadCleanup": {
+      "authorization": "Owner explicitly requested obsolete Git branches and Vercel previews/productions removed after deployment, only when safe.",
+      "observedAt": "2026-10-22T15:16:27.204348+00:00",
+      "project": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+      "inventoryCountBefore": 98,
+      "deletedCount": 59,
+      "deletedByTarget": {
+        "production": 48,
+        "preview": 11
+      },
+      "deleted": [
+        {
+          "id": "dpl_DnsGU3pmDiEQbbr3ZaZEkm5noxio",
+          "sha": "23e0345e2ede0c6898b4d1eb8988c9d5e57a0a12",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_3EcqP1R58wABff2DpuTw99R7oH9j",
+          "sha": "4c88423f375bd7312127027d584030223d34ee9a",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_B7oT8k7jXRMuytiGUzPJBo9TWL71",
+          "sha": "ffcd4f13e6bc96ecf61fd7e757235494bce7e4cf",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Hb4iwV8vJYbAtban7TVJwtJ3Bwm6",
+          "sha": "21b3d05f4aa28d621afcc15adcaa1b5b8d8cec31",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_FxPdoWTVzrKv7WXvKafdaBxe4WfC",
+          "sha": "8865b889c258d305be06a3a88e91f83352db4ff7",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_DVguKkFT3dLLoCLn5LNbkcaRdvzf",
+          "sha": "8865b889c258d305be06a3a88e91f83352db4ff7",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_5pDWkmkykxHpqQ3ogzmwPeT8F9PF",
+          "sha": "b69f0ffc8f6de1113ce97f5f049ab287a7e6aa4b",
+          "branch": "b69f0ffc8f6de1113ce97f5f049ab287a7e6aa4b",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-b69f0ffc8f6de1113ce97f5f049ab287a7e6aa4b-sadat-os.vercel.app"],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Ep94kHzQ19TVHLCSgL1QjztXywBc",
+          "sha": "b69f0ffc8f6de1113ce97f5f049ab287a7e6aa4b",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_A3oMvMXiAAKNNGaNUui7gkAqJsJg",
+          "sha": "fb9f34a9a771afaf02d93d4bf644a60589f26405",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_4A7dAY8tWs5JPBcUTuCaMv9YXkWt",
+          "sha": "f8dace079ab558be0e1639b02babb7089a4da4f4",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_6BxbgeNyPGzNkm8HaTPWTVPETnVP",
+          "sha": "cec1a45f0eda77549c4b7e6284056da7eb67da44",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_CvbKpWhnGgK2DWaTV5aFQL2xXtLU",
+          "sha": "c1a8f3754860a7254c75a0b1e0dc4493fb163b7b",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_ED9UV8TPrkW39Mnrz8UckM1XfKjt",
+          "sha": "bfd69d6da9a9dfb2a0dc2f6d5887380716abaccd",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Dq7WxRbhFPpccB9yXvx17BM77h3E",
+          "sha": "7b54ed58a6d1425ee8764d95f0845bea0e5fd7ea",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_HH7MsHoPN5L35dLjsJFA6vd5MYeJ",
+          "sha": "7150eacf0bd1dc4735467dcb2763740b6a2034aa",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_D66s9RwAEckMhFmKLdvyZkjJFVnZ",
+          "sha": "5a87811973f3508412ea078eafce8fd3e2e723a6",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Fc9bmvLzm9ZznD7z68iSMXnhCYJc",
+          "sha": "8a85c72be1ed2275f08a31eb644ec97ed85db3db",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_HjNjqZov7EC5k9fwi96YqbrPJLer",
+          "sha": "10a4a33a133b88bf883911b3eb1d4b010b375f85",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_ARYcXyNAnfbKNPqmgMujyQAVrWoT",
+          "sha": "44cb9b5df55e9aeb6a7a1d42a761ff500a711b33",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Fq9FDcE5Hhm2LZVrrAc39JAyE81k",
+          "sha": "a342bbfde05536813e717c78c6b8b7409d291e68",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_28vEVZRWbwBEpTJRGNKBKqEo3T6L",
+          "sha": "5294568ce8fa70d7d1200e33002fd75d5e31ff6b",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_CZsX9uyaTAvZcoCKaCnBwMHb6eX2",
+          "sha": "d46d43d937794a455837a244787ff9820df1ebba",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_91Nfdbw4D1GhzR7NSE7GPnPjdXy1",
+          "sha": "7936d68920401d39f599cde4bc73b296280880c3",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_4Mifr89V6fNBya6fjgU2SXEhhW1a",
+          "sha": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_jven8z2zSVJwhkEQpKjNcYWNSn8m",
+          "sha": "9f03668e1d8a86ba7c16893d2c62c3b9b3bcf0bf",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_ZTPe5UrVaXpYYiqxNENdwesVNiXb",
+          "sha": "f189c79ed1c1d6da12da693632c72307514371b9",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_HkTBCDbGy4D8xZw8FktCTGcZ4zTT",
+          "sha": "92d11881618ddd6481e8c942de1265b2ae24a180",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_52C2L688Czk42crEShbHqaQC9FWw",
+          "sha": "13c745fe3915ba2a31deab7dea82d404c0b6fdd1",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_7rXzpDrbV6EFM1QoDxu91hoPoVom",
+          "sha": "1ca4f32817ad1521de3559c66ed601b98ffc26dc",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_8b1cYaHmshx7kYYhVLTQuQZPafsX",
+          "sha": "0bf9a9a0860707b2de511d68a751493b5837f297",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_3R5qon6mtnr8q77aMk3uqjG8UuRK",
+          "sha": "07fa1b8a74d020d8e77f45c82ba6b8b95b34bbb9",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_5URUtQBa7sQv1FHx2EZEAfqUexWL",
+          "sha": "b6a483aa2c0985897563a6a1bd2a17cc59db91a0",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_4hNLZbDPsZVXT5uWXyVQ8BQt259y",
+          "sha": "383518ecae58d70fc6b6a7ca4b7d1d507c837da9",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_B9utg6FP5Y4KZ3xNg5gPQTKi8Qjb",
+          "sha": "b29938d602865547f62d2734d1a5caed97436110",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_274Hg2kSLRZ6Xyd6ctVPhAnSVEbL",
+          "sha": "1d9f1157c08d38a6e31e37f4fd8bbfa98bd7109b",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_FebHM6qsSyYTRox4PhjbLy77WGNN",
+          "sha": "1d9f1157c08d38a6e31e37f4fd8bbfa98bd7109b",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_DKG2kDD3cKYXTgW1D6YkgHAPBUdW",
+          "sha": "5a3e1232ae1dd1f5f57f1c549e27290de298c670",
+          "branch": "main",
+          "target": "production",
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Hf7LCSphprCTyixyFWrkzpr7PjFg",
+          "sha": "29e59c483c37cf575b43dcd9ce8d612a50ee203c",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_5w2n5XW4RMHCkHHYivRVyo8Tkebu",
+          "sha": "5a3e1232ae1dd1f5f57f1c549e27290de298c670",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_DmDyG2SnGDRu2fMffeMYKzoGj5sw",
+          "sha": "b8af3a984fd8952b796ef3e41e88706d91f78116",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_4MqMDJkgAn2FBpE5yvrL2GkbRcbb",
+          "sha": "3f7a70d14121d51259486a0c663f2da45fafcbe9",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_GwBtFnE5M7iHgpaHKf9qaGKwbVgg",
+          "sha": "73417de9e2a5d6b307c935a86f44c6160e4a3c65",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_5gFhpy3jX1NGFSW1KWCYygby18QX",
+          "sha": "454b8b36c2301dc5afdc2b229e233410a8d45eb7",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Cjk5Zp44f7D5PuKxsANQawAMiSNz",
+          "sha": "73417de9e2a5d6b307c935a86f44c6160e4a3c65",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_GrRXn4mYmbCui1G7vUyvpAbvNk3R",
+          "sha": "7b05bf9d04e647cd153c4c8191b0379480b1a987",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_EyaoxSv8cHni5KBq4kiWoDyF3zru",
+          "sha": "29d76d6904f16b65fc4b5e0792e86865b2a405c6",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_BsKPfaEVuwqGzZzUk37BLDJdjB1T",
+          "sha": "58ac24dfca308f2ac96c26d44faa7a7d44ee0f5e",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_BwunTCzxWSk6trofUqTrvrUsutVP",
+          "sha": "d19e4c8505ced239617874844d9021a41f6a6a84",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_9ZxfddkTcqhPoMexsCeUvgu1pVqH",
+          "sha": "aebb527a35bc5b06819797be884baeedd30dd4d7",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_7R9Lixk92paBHLGyJs2WxNrdJhDB",
+          "sha": "8bbbca25ddc9a28224254f851d1c1702aa377402",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_EdF8jdWxohcntZe93LBa5nU4hgMt",
+          "sha": "248884bd467a4e75c4e7bb14af02063b53c74d64",
+          "branch": "248884bd467a4e75c4e7bb14af02063b53c74d64",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-248884bd467a4e75c4e7bb14af02063b53c74d64-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_9MbSd2wCxAsosfVvFJGnvCv1nEtW",
+          "sha": "bb826896e4070d7eaece0c0fca6aa14b64765c67",
+          "branch": "bb826896e4070d7eaece0c0fca6aa14b64765c67",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-bb826896e4070d7eaece0c0fca6aa14b64765c67-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_7s25EKF9z5vFHnpVWKn19XvPhtM3",
+          "sha": "383bb9ff8cc9ac651b0aba3a14a67ad7f2c310bd",
+          "branch": "383bb9ff8cc9ac651b0aba3a14a67ad7f2c310bd",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-383bb9ff8cc9ac651b0aba3a14a67ad7f2c310bd-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_47hinDMvcvHukpW5tFTUkgrDGDtf",
+          "sha": "3e081aee2b4272a62d320f11adf674b896a8469f",
+          "branch": "3e081aee2b4272a62d320f11adf674b896a8469f",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-3e081aee2b4272a62d320f11adf674b896a8469f-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_FFgYmSHrgiLqw2V1BWMf9rvoywSW",
+          "sha": "5c4e8450541d48b64d703eb85fa6f55168a3f7e3",
+          "branch": "docs/part-02-release",
+          "target": null,
+          "state": "BLOCKED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "refs/archive/completed-local/docs/part-02-release",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_6Amy1s78QDDTzGWxDJCV1hHNPqu9",
+          "sha": "2af94e406575b2eb5c155e2af0ab5ce266a9c7e5",
+          "branch": "feat/public-experience",
+          "target": null,
+          "state": "BLOCKED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "refs/archive/completed-local/feat/public-experience",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_Gq7DA6sUHJFHAebc69LJRy1k3yvk",
+          "sha": "424d80a0adfdcbc2cbda89030df7db4eb4fb1962",
+          "branch": "main",
+          "target": "production",
+          "state": "BLOCKED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_B8eE3ATUmwCfqnMuif6trQpcUPHm",
+          "sha": "7c34edb4f93468501414ed24d4f316a4453a21e7",
+          "branch": "main",
+          "target": "production",
+          "state": "BLOCKED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_AaD4zvdw3oJFWCWy7iQSyD7N7g3z",
+          "sha": "9da4f71ffe86de6255fa3c1b4cde4be5d46174e2",
+          "branch": "main",
+          "target": "production",
+          "state": "BLOCKED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": null,
+          "deletedAndVerifiedAbsent": true
+        }
+      ],
+      "retainedCount": 39,
+      "retained": [
+        {
+          "id": "dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY",
+          "sha": "ea67fb18af560107be6f2a1a6d338f7c98ba5421",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": true,
+          "aliases": [
+            "c.obsidianglobal.studio",
+            "corridra.vercel.app",
+            "corridra-sadat-os.vercel.app"
+          ],
+          "sourcePreservedIn": "main",
+          "retainReason": "live production"
+        },
+        {
+          "id": "dpl_DYqiCcxrvbDidUL96KFp2o13hZSm",
+          "sha": "77234f0d94ceddf77c8b3a3bd95863ea7320e897",
+          "branch": "docs/network-release-status",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-docs-network-release-status-sadat-os.vercel.app"],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": "current branch head or branch environment binding"
+        },
+        {
+          "id": "dpl_FQiimBmSAK4pCnmtaRjyJHWCodNS",
+          "sha": "bc044991210d66175d62eb71ea98e381a8724af6",
+          "branch": "main",
+          "target": "production",
+          "state": "READY",
+          "rollback": true,
+          "aliases": [],
+          "sourcePreservedIn": "docs/network-release-status",
+          "retainReason": "tested compatible rollback"
+        },
+        {
+          "id": "dpl_AkAWJ1AvukhfhT8kVAt5FfmnGuYs",
+          "sha": "dfef478814221aec6f2d219c81769e4d5c00a09b",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-claude-happy-feynman-i66amw-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": "current branch head or branch environment binding"
+        },
+        {
+          "id": "dpl_CBx1qwTznhWj2EDXCWaBYV9F6VN6",
+          "sha": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+          "branch": "65dd78ae2d0ca832677343a4046bbbb169e43ef0",
+          "target": "production",
+          "state": "READY",
+          "rollback": false,
+          "aliases": [
+            "corridra-git-65dd78ae2d0ca832677343a4046bbbb169e43ef0-sadat-os.vercel.app",
+            "corridra-git-main-sadat-os.vercel.app"
+          ],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": "active non-retired alias"
+        },
+        {
+          "id": "dpl_FojwSZVH4Ai7FfqLNF9hECqRjHff",
+          "sha": "ab4fcf9d2143499a003f0b1b354768b8d73feadc",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_38Yr8rdiAJvxXH59gdN3XPHN3MKJ",
+          "sha": "ab68d3a3758aa48b2d86f696a84679e2ac6dbb13",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_HhtTdKJoN1Brfx77UHSV3W3vewEJ",
+          "sha": "bdb8bb66b814c7c838e38d85b2841025a6063429",
+          "branch": "dependabot/npm_and_yarn/types/node-26.6.5",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "current branch head or branch environment binding"
+        },
+        {
+          "id": "dpl_E6dffVXcEcXtKgDNUHrrumRXsHvf",
+          "sha": "a9b81cc98f6b5dd53222ad245ced7e1a30fc5ce2",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_FPPLVa3HzvBynDKp3fXozeh4R4Qj",
+          "sha": "e2edfba37f6965cc14398f5c6617c7d73b78a1e7",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_A6nkNuZYeLTitJWghxBYYFnVXc2e",
+          "sha": "70153dfc0dcd993d4a8c69f3737f1c21952d8bbd",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_DMELSTKyD5FExsY2uthzDSmxnsAh",
+          "sha": "42033628d8261f952d24a7aed54314de21a7e358",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_62K7N1N4SjTFQcWRAwbWwNCQfY1e",
+          "sha": "8ade63f11b926ccd59dc2b7f9c91b21c0eef1b13",
+          "branch": "fix/signup-existing-account",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-fix-signup-existing-account-sadat-os.vercel.app"],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_9SCehRd8ZxntJzVq7KvKgFA9hDgf",
+          "sha": "558d7e19893b503a8321f87082d98c35e6b6dc8c",
+          "branch": "fix/signup-existing-account",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_2YWKn5oPS1nakWyFn9hNBimuHSZF",
+          "sha": "c9453e7d30d4aa12255e4bbbcd8fec8bb518e9ad",
+          "branch": "fix/signup-existing-account",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_3M69fR9peW431h4KcRQhppungMqJ",
+          "sha": "a86054065ee53288adbbbf3317252ac435929e42",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_7AaiqMBxypxFYzZe5kBVBADEd6xT",
+          "sha": "19cb7e9831bb24b64ee162212e367233a069d4a0",
+          "branch": "fix/signup-existing-account",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_JFykM5ZHKtxy6fjKpEqWcJyNrbTs",
+          "sha": "9fe7e468024b3a8302bb5facbecdcb7f4fcbfca9",
+          "branch": "fix/signup-existing-account",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_5ZPpetPtJUdUgfLn1DJ5w5GdVN9V",
+          "sha": "558dfa6a0c4339e348b8af393e0de746b0c1dc3b",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_8ahhgWD3QnEJRijTRixQjAqLNWdy",
+          "sha": "3522664e72004e331b5bec592aa6022319367b2e",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_3jBGyUw94DA8g1TKgyffXQ1kVJ3Y",
+          "sha": "5d5757823e15f6ec21a859f99d16d2be1590f0b3",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_EtTCiAjqvRw1nB4ukNp4yQmaf5p3",
+          "sha": "8e6e3d319789cdde3842f1c527ee21533fa262f7",
+          "branch": "docs/customer-unlock-release",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-docs-customer-unlock-release-sadat-os.vercel.app"],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_7sFMaUvsfUxknquk7f3M7a6S72Uo",
+          "sha": "2caf016627b4a0f1653c420e449079187275412c",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_Ht6c8MUvEraaqYdFYfysdpCksd9f",
+          "sha": "eaf4e74bbaad6a2074aa1f0ac6426aea25fcdd1f",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_Er1UMrFDkgzbTtmcopVkb7t6Jeus",
+          "sha": "1d01a422571ba8098fb65ce4d13e8cf916c48419",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_368oyom3NyskjmBTfuNboArUMyML",
+          "sha": "a846f9f9b58fd2dee09d8b117de02a97f8160354",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_5hj6uwvrpv1tJ2kPfxVmFs1Rnbq6",
+          "sha": "d25d732b37734d5828b5ad3a99ddfda888a0101b",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_Bf2srs9qZ7G67JahQDtyg9e2P4vE",
+          "sha": "13c59af2bc754d10a695c84796d923ce684ec1a6",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_GyZ1r3jsNDCM4fGkFGC8sGMYE2Q5",
+          "sha": "a4d858d748bbf4a3a50e5cb0a1275e9c8aa90d34",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_F4qXBCm4kY6c6L7MThprFdK5Qprz",
+          "sha": "593cb21db0edf76f1bdc98b01880362e13a2421f",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-feat-v3-organisation-profiles-sadat-os.vercel.app"],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_BX8rZwWJoSfCN7ZMmTKgmVD7EP5p",
+          "sha": "33186e496ea63669244a56969ed17fa12ff69769",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_4dTyG565KagGjJ7hzY3HtHyuNuwA",
+          "sha": "decce4e6f834952b2e816fcc4655479e72bfea6b",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_HT6rXp5ahZ3B65oYG8SrhPbpowf2",
+          "sha": "fdaede44c863e99a098437ca755d7aecb3616278",
+          "branch": "claude/happy-feynman-i66amw",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_Gk3StP7Gd4SJAhYh41cw8rGAtZ7M",
+          "sha": "e405c3c015b60b3305c0bbfd2bc1e70e1db3ced9",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_44QjxvVCqU6H66xYxB1jM8QFkWfe",
+          "sha": "8acdbc1f290e58a5d4c9b581d47f65e8a8294eb8",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_7vKc1mCvJKmyx3Ae1z6rPaTkwyan",
+          "sha": "3764c1b2fbcdf259e209f76ba64970ef9a0a4bc4",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_4VeENVqYD7CEeCcD8hXPkNYPcojg",
+          "sha": "d4ec6e33aec9f9e1eae750f8d8d656da60c88573",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_Ffh7SLi5TKiFCXz2LL7NAy9mESCk",
+          "sha": "31419a45c76a71ef78ae34c20938c2dc52d858d3",
+          "branch": "feat/v3-organisation-profiles",
+          "target": null,
+          "state": "CANCELED",
+          "rollback": false,
+          "aliases": [],
+          "sourcePreservedIn": null,
+          "retainReason": "source not proven preserved in retained Git history"
+        },
+        {
+          "id": "dpl_8mU3VFwLBuaTRM17mLkLt14tNzXS",
+          "sha": "bb826896e4070d7eaece0c0fca6aa14b64765c67",
+          "branch": "feat/v3-customer-acceptance",
+          "target": null,
+          "state": "READY",
+          "rollback": false,
+          "aliases": ["corridra-git-feat-v3-customer-acceptance-sadat-os.vercel.app"],
+          "sourcePreservedIn": "claude/happy-feynman-i66amw",
+          "retainReason": "current branch head or branch environment binding"
+        }
+      ],
+      "retainedHealth": [
+        {
+          "id": "dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY",
+          "state": "READY",
+          "source": "ea67fb18af560107be6f2a1a6d338f7c98ba5421",
+          "regions": ["fra1"],
+          "currentAliases": [
+            "c.obsidianglobal.studio",
+            "corridra.vercel.app",
+            "corridra-sadat-os.vercel.app"
+          ]
+        },
+        {
+          "id": "dpl_FQiimBmSAK4pCnmtaRjyJHWCodNS",
+          "state": "READY",
+          "source": "bc044991210d66175d62eb71ea98e381a8724af6",
+          "regions": ["fra1"],
+          "currentAliases": []
+        }
+      ],
+      "eligibleRemaining": 0,
+      "remainingGeneratedAliasesToAlreadyAbsentDeployments": 43,
+      "aliasLimit": "Historical dangling generated aliases were inspected; all43 deployment targets returned404. Alias records left unchanged. No domain, environment setting, current target or alias was modified.",
+      "git": {
+        "remoteBranches": 5,
+        "maximum": 8,
+        "names": [
+          "main",
+          "docs/network-release-status",
+          "claude/happy-feynman-i66amw",
+          "dependabot/npm_and_yarn/types/node-26.6.5",
+          "dependabot/npm_and_yarn/typescript-7.0.2"
+        ],
+        "openDependencyPRs": [10, 32],
+        "featureBranchArchivedAndRetired": true,
+        "otherBranchesDeletedInBroadCleanup": 0,
+        "reason": "All remaining branches carry main, the release documentation checkpoint, open dependency PRs or unfinished work."
+      },
+      "limits": [
+        "32 deployments retained because source preservation in retained history could not be proven; age or branch name alone does not authorize deletion.",
+        "Four deployments retained for current Git branch heads or a branch-specific environment binding; an older production remains behind an existing Git-main alias.",
+        "Active production and immediately previous tested compatible production retained. Deployment count is not a measured byte/storage saving.",
+        "Documentation receipt is published on docs/network-release-status; application production remains exact ea67fb18."
+      ]
+    }
   }
 }
