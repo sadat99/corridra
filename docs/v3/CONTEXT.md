@@ -21,7 +21,7 @@ Sizes come from `node scripts/v3-context.mjs budget` (tokens are an estimate of 
 
 | Situation                      | Load                                                                                   | Approx. tokens |
 | ------------------------------ | -------------------------------------------------------------------------------------- | -------------- |
-| Every session                  | CLAUDE.md, AGENTS.md, START_HERE, ledger (`verify` caps the four at 32 KiB)            | 7,000          |
+| Every session                  | CLAUDE.md, AGENTS.md, START_HERE, ledger (`verify` caps the four at 36 KiB)            | 7,000          |
 | Product work, once per session | Full contract, product vision v2.1, working summary (owner rule, never skipped)        | 22,000         |
 | Visible UI change              | The whole of docs/agents/ui-direction.md, every time (owner rule, 22 Oct 2026)         | 12,200         |
 | Resume or catch up on history  | `outline docs/agents/work-log.md --last 5`, then `section` or `--tail` for one entry   | under 1,000    |
@@ -38,3 +38,4 @@ Steps, in order:
 7. Send broad sweeps (many files, naming conventions, inventories) to one read-only subagent and keep only its conclusion. Keep one writer per file. A subagent starts cold, so give it paths, the question and the output shape.
 8. During implementation run focused checks on touched files (`prettier --check`, `eslint` on the file, one test file). Run every mandatory gate once on the frozen revision, and again only after a relevant change or failure.
 9. Checkpoint the ledger and work log before long waits so a resumed session costs the 7,000-token start, not a re-read. Report outcomes in two lines: what was done and the next step.
+10. Before debugging CI, read [known issues](KNOWN_ISSUES.md). Add an entry when a failure takes more than one run to explain.

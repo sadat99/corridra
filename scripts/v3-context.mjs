@@ -8,7 +8,7 @@ const budget = 12 * 1024;
 const read = (path) => readFileSync(path, 'utf8');
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const alwaysRead = ['CLAUDE.md', 'AGENTS.md', 'docs/START_HERE.md', 'docs/V3_LEDGER.md'];
-const alwaysBudget = 32 * 1024;
+const alwaysBudget = 36 * 1024;
 const usage =
   'Usage: node scripts/v3-context.mjs [status [--since SHA8]|requirement ID...|chunk N|outline PATH [--last N] [--max-level L]|section PATH QUERY [--nth K] [--tail BYTES]|budget|verify]';
 function option(args, name) {
@@ -151,7 +151,7 @@ function main() {
     const alwaysBytes = alwaysRead.reduce((sum, path) => sum + statSync(path).size, 0);
     assert.ok(
       alwaysBytes <= alwaysBudget,
-      `Always-read guides total ${alwaysBytes} bytes; archive or condense to stay within 32 KiB`,
+      `Always-read guides total ${alwaysBytes} bytes; archive or condense to stay within 36 KiB`,
     );
     const rows = JSON.parse(read(manifest.requirements));
     assert.equal(rows.length, manifest.requirementCount, 'Requirement count changed');

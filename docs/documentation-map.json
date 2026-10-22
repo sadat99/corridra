@@ -809,6 +809,11 @@
       "use": "Bounded context reads and exact historical preservation;never substitutes for verification or release gates"
     },
     {
+      "path": "docs/v3/KNOWN_ISSUES.md",
+      "classification": "Current execution workflow",
+      "use": "CI failures, causes, fixes and process lessons; read before debugging CI or merging"
+    },
+    {
       "path": "docs/v3/history/ledger-through-109.md",
       "classification": "Immutable historical execution snapshot",
       "use": "Exact ledger bytes through chunk109;manifest hashes preserve evidence;superseded statuses are not current acceptance"
