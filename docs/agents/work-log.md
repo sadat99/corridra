@@ -1166,3 +1166,13 @@ Cause traced in source: `apps/web/app/operator/page.tsx:42` falls back to `tenan
 Change: ported PR133's test-only fix byte for byte (sign in with `next=/operator?workspace=<seed>` as the test at line 3242 already does, and assert the selected workspace). No assertion, timeout or product code relaxed. The protected operator suite needs Docker and could not run here, so CI on this head is the proof. If PR133 merges first the hunks are identical and merge cleanly.
 
 Next action: CI on this head, then correct the PR132 documentation checkpoint with its owner.
+
+## 2026-10-22, Claude Code, correction: the ported delivery-test fix did not work
+
+The previous entry named `tenants[0]` ordering as the cause of the red main CI and ported a `next=/operator?workspace=<seed>` sign-in. On the new head e877898 the same test failed again (run 39836617855, operator (3), `workspace.spec.ts` wait on the workspace read, 117 passed). That fix is withdrawn and the cause is not established. The claim on PR133's thread that the cause was settled was premature.
+
+What is known: the failure is the same test and the same wait on main ea67fb18 and on two PR133 heads, and it passed on d37e93c and 23157ec, so it is intermittent. Source shows `/sign-in/email` and `/two-factor/*` limited to 5 per 60 seconds with database storage (`packages/auth/src/index.ts:59-69`), and the sibling tests at lines 804, 1131 and 1685 assert the verify response while this test does not. Neither theory is proven.
+
+Change now: only the sibling pattern, `expect((await verification).ok()).toBe(true)` after the verify click, so the next red run reports the real status (200 versus 429 or 401) instead of a silent 180 second wait. No assertion or timeout was relaxed and nothing was masked. This does not fix the flake. Main CI stays red until the cause is found.
+
+Next action: read the verify status from the next CI run on this head, then fix the proven cause in a reviewed change. If it is rate limiting, any fix touches auth configuration or test setup and needs its own blast-radius statement.
