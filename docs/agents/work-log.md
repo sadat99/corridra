@@ -1176,3 +1176,9 @@ What is known: the failure is the same test and the same wait on main ea67fb18 a
 Change now: only the sibling pattern, `expect((await verification).ok()).toBe(true)` after the verify click, so the next red run reports the real status (200 versus 429 or 401) instead of a silent 180 second wait. No assertion or timeout was relaxed and nothing was masked. This does not fix the flake. Main CI stays red until the cause is found.
 
 Next action: read the verify status from the next CI run on this head, then fix the proven cause in a reviewed change. If it is rate limiting, any fix touches auth configuration or test setup and needs its own blast-radius statement.
+
+## 2026-10-22, Claude Code, finding: the MFA verification is rejected in the red delivery test
+
+On 6d62f73 (run 39839813316, operator (3), 117 passed) the added assertion at `tests/operator/workspace.spec.ts:1407` failed: the `/two-factor/verify-totp` response was not OK. So the intermittent failure on main is the MFA verification being rejected, and the 180 second wait on the workspace read was only the symptom. This rules out tenant selection as the cause. The status code is still unknown. Candidates, none proven: the auth rate limit of 5 per 60 seconds on `/sign-in/email` and `/two-factor/*` (`packages/auth/src/index.ts:59-69`, database storage, shared test client address), a repeated TOTP code, or the account lockout setting.
+
+Change: the assertion now throws the response status and the first 200 characters of the error body (not printed when the verify succeeds). No timeout or assertion was relaxed. Next action: read the status from the next red run on this head, then make a reviewed fix. Rate limiting or code reuse would need a test-setup or auth change with its own blast-radius statement; nothing in production auth is changed here.

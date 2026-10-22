@@ -1404,7 +1404,11 @@ test('scoped delivery imports every row, serves client requests and downloads co
   );
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
-  expect((await verification).ok()).toBe(true);
+  const verified = await verification;
+  if (!verified.ok())
+    throw new Error(
+      `MFA verification returned ${verified.status()}: ${(await verified.text()).slice(0, 200)}`,
+    );
   const [snapshot, configuration] = await Promise.all([workspaceRead, configRead]);
   expect(snapshot.status()).toBe(200);
   expect(configuration.status()).toBe(200);
