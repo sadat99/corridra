@@ -1,18 +1,40 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { budgetRows, outline, safeMarkdownPath, section } from './context-tools.mjs';
 
 // Read-only context/navigation helper. Never regenerates execution memory.
 const budget = 12 * 1024;
 const read = (path) => readFileSync(path, 'utf8');
 const sha = (value) => createHash('sha256').update(value).digest('hex');
+const alwaysRead = ['CLAUDE.md', 'AGENTS.md', 'docs/START_HERE.md', 'docs/V3_LEDGER.md'];
+const alwaysBudget = 32 * 1024;
+const usage =
+  'Usage: node scripts/v3-context.mjs [status [--since SHA8]|requirement ID...|chunk N|outline PATH [--last N] [--max-level L]|section PATH QUERY [--nth K] [--tail BYTES]|budget|verify]';
+function option(args, name) {
+  const at = args.indexOf(name);
+  if (at < 0) return undefined;
+  const value = args[at + 1];
+  assert.ok(/^\d+$/.test(value ?? ''), `${name} needs a number`);
+  args.splice(at, 2);
+  return Number(value);
+}
 function main() {
   const manifest = JSON.parse(read('docs/v3/history/manifest.json'));
   const [command = 'status', ...args] = process.argv.slice(2);
   let output;
   if (command === 'status') {
-    assert.equal(args.length, 0, 'Usage: node scripts/v3-context.mjs status');
-    output = read('docs/V3_LEDGER.md');
+    const since = args[0] === '--since' ? args[1] : undefined;
+    assert.ok(
+      args.length === 0 || (args.length === 2 && /^[0-9a-f]{8}$/.test(since ?? '')),
+      'Usage: node scripts/v3-context.mjs status [--since SHA8]',
+    );
+    const ledger = read('docs/V3_LEDGER.md');
+    const id = sha(ledger).slice(0, 8);
+    output =
+      since === id
+        ? `UNCHANGED since your last read; skip the re-read.\nledger-sha8: ${id}`
+        : `${ledger.trimEnd()}\n\nledger-sha8: ${id}`;
   } else if (command === 'requirement') {
     assert.ok(args.length, 'Usage: node scripts/v3-context.mjs requirement V3-02-046');
     const rows = JSON.parse(read(manifest.requirements));
@@ -43,6 +65,46 @@ function main() {
       break;
     }
     assert.ok(output, `Unknown chunk: ${args[0]}`);
+  } else if (command === 'outline') {
+    const path = safeMarkdownPath(args.shift() ?? '');
+    const last = option(args, '--last') ?? 0;
+    const maxLevel = option(args, '--max-level') ?? 3;
+    assert.equal(args.length, 0, usage);
+    output = `line\tbytes\theading\n${outline(read(path), { last, maxLevel })}`;
+  } else if (command === 'section') {
+    const path = safeMarkdownPath(args.shift() ?? '');
+    const nth = option(args, '--nth') ?? 1;
+    const tail = option(args, '--tail') ?? 0;
+    assert.equal(args.length, 1, usage);
+    output = section(read(path), args[0], { nth, tail });
+  } else if (command === 'budget') {
+    assert.equal(args.length, 0, 'Usage: node scripts/v3-context.mjs budget');
+    const groups = [
+      ['always', alwaysRead],
+      [
+        'product-work-once',
+        ['docs/V3_CONTRACT.md', manifest.productVision, 'docs/agents/product-vision.md'],
+      ],
+      ['visible-ui', ['docs/agents/ui-direction.md']],
+      [
+        'release',
+        [
+          'docs/runbooks/deployment.md',
+          'docs/verification-guide.md',
+          'docs/implementation/current-plan.md',
+        ],
+      ],
+      [
+        'query-never-whole',
+        [
+          'docs/agents/work-log.md',
+          'docs/documentation-map.md',
+          manifest.archive,
+          manifest.requirements,
+        ],
+      ],
+    ];
+    output = `group\tfile\tbytes\t~tokens (bytes/4)\n${budgetRows(groups, (file) => statSync(file).size)}`;
   } else if (command === 'verify') {
     assert.equal(args.length, 0, 'Usage: node scripts/v3-context.mjs verify');
     const archive = readFileSync(manifest.archive);
@@ -86,6 +148,11 @@ function main() {
         `Put live release metadata only in the ledger: ${path}`,
       );
     }
+    const alwaysBytes = alwaysRead.reduce((sum, path) => sum + statSync(path).size, 0);
+    assert.ok(
+      alwaysBytes <= alwaysBudget,
+      `Always-read guides total ${alwaysBytes} bytes; archive or condense to stay within 32 KiB`,
+    );
     const rows = JSON.parse(read(manifest.requirements));
     assert.equal(rows.length, manifest.requirementCount, 'Requirement count changed');
     assert.equal(new Set(rows.map((row) => row.id)).size, rows.length, 'Duplicate requirement ID');
@@ -103,7 +170,7 @@ function main() {
     );
     output = `PASS: exact ${archive.length}-byte historical archive; unchanged contract/vision; ${manifest.additionalArchives.length} exact additional archives; ${rows.length} unique requirement identities/text; active ledger within 12 KiB.`;
   } else {
-    throw Error('Usage: node scripts/v3-context.mjs [status|requirement ID...|chunk N|verify]');
+    throw Error(usage);
   }
   assert.ok(
     Buffer.byteLength(output) <= budget,
