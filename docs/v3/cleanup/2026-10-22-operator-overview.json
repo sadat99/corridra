@@ -578,7 +578,7 @@
     "localVerification": {
       "build": "exit0",
       "focusedProtectedBrowser": 2,
-      "durationSeconds": 35.5,
+      "durationSeconds": 27.1,
       "enabledInvitationSubmitted": true,
       "pausedDraftEditableAndRetained": true,
       "pausedSubmissionDisabled": true,
@@ -590,32 +590,33 @@
       "overflow": 0,
       "providerEmailProof": "Synthetic fixture only; genuine production email/account acceptance remains unverified.",
       "invitationReadDenialRecovery": "Explicit403 transport fixture: fields remain disabled; existing authenticator-panel link and refresh restore normal entry. No claim of real provider/MFA acceptance.",
-      "originalIntakeWorkspaceAndOverviewDriver": "3/3 pass in1.3m with actual intake prerequisite and explicitly selected seeded owner workspace."
+      "originalIntakeWorkspaceAndOverviewDriver": "3/3 pass in1.3m with actual intake prerequisite and explicitly selected seeded owner workspace.",
+      "browserFixtureData": "esbuild parsed literal define, no database-ID interpolation into TSX; same two HTTP/DB tests pass unchanged."
     },
     "screenshots": [
       {
         "path": "work/real-use/network-browser/network-paused-1440.png",
-        "sha256": "c46fc8d013b1cd6ba07309e0c82cb31755ea474b4e657f2d4212ca09421678c0"
+        "sha256": "ef2abb3b35e9a5ce83a9651f315a34befbe30a283fa36babc66e859e0012c628"
       },
       {
         "path": "work/real-use/network-browser/network-paused-390.png",
-        "sha256": "6c5ebf4a4eda1909cf20c9d47f0a0924e206d2dd0aaf6c42968456e157e5f5dd"
+        "sha256": "b84ae2f0d89314585dd530b48334aa4e334329d8ce358240bc72a4260d04702f"
       },
       {
         "path": "work/real-use/network-browser/network-ready-1440.png",
-        "sha256": "651e43d2e9104ee8cf4db09802855dda0896e77bf6429219d2add1a81c5c00e3"
+        "sha256": "565659ad4a184cedee4105666639f1757113ac298ca06e6bb3d70062edfd3ba2"
       },
       {
         "path": "work/real-use/network-browser/network-ready-360.png",
-        "sha256": "69bb3ffcd56506eca6d37eeecbcc8b354bbce668f55157cdd55dbf4a876a4e65"
+        "sha256": "93b5b42c3cf74204fa9e6c8e26a2588a9337da2c42844ca5fae9845a57d4ff15"
       },
       {
         "path": "work/real-use/network-browser/network-ready-390.png",
-        "sha256": "fb13ddb80b5e12b00a53a55aabada4fb988b87d6ba71860fe9d9072eceb6237d"
+        "sha256": "f8f6fb3507eddfaeb9838930d50cadd24d01791b0d594aad5008c5f86cb0f1f1"
       },
       {
         "path": "work/real-use/network-browser/network-ready-768.png",
-        "sha256": "b7a3651829a96426ba806263da7d5266effdabf0571dfa709d91e20bc538c265"
+        "sha256": "9603d1bafeda3f3194a4942265c962c2fe0014a59a952287d4b8cd860bd4114e"
       },
       {
         "path": "work/real-use/network-browser/network-ready-viewport-1440.png",
@@ -633,6 +634,13 @@
         "path": "work/real-use/network-browser/network-ready-viewport-768.png",
         "sha256": "16732bd0158bc48a39e049a064f230dae9e79a0963d7fa2313437d3275bba018"
       }
-    ]
+    ],
+    "securityGateHistory": {
+      "supersededHead": "86608faec3ea239e1ad1b060fc11d65b95b9000d",
+      "codeql": 39709911187,
+      "newTestHarnessFindings": 2,
+      "rule": "js/bad-code-sanitization",
+      "fixedBy": "Bundler-parsed literal define; exact-head analysis must pass before release; no rule suppression."
+    }
   }
 }

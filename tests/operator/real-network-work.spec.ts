@@ -107,7 +107,9 @@ test.beforeAll(async () => {
     import{OperatorSignin}from ${JSON.stringify(resolve('apps/web/app/operator/signin/signin-form.tsx'))};
     import{TaskBoard}from ${JSON.stringify(resolve('apps/web/app/contributor/task-board.tsx'))};
     const workspace=new URLSearchParams(location.search).get('workspace');
-    createRoot(document.getElementById('fixture')).render(location.pathname==='/network-owner'?<ExecutionNetwork tenant={${JSON.stringify(f.realTenant)}} role="owner" workspaceName="Reviewed test workspace" onChooseWorkspace={()=>document.getElementById('fixture-workspace')?.focus()}/>:location.pathname==='/owner'?<ContributorInvitations tenant={${JSON.stringify(f.realTenant)}}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/operator/signin'?<OperatorSignin returnTo={${JSON.stringify('/contributor?workspace=' + f.realTenant)}}/>:<TaskBoard workspace={workspace}/>);`,
+    const fixtureTenant=__NETWORK_TEST_TENANT__;
+    const contributorReturnTo='/contributor?workspace='+encodeURIComponent(fixtureTenant);
+    createRoot(document.getElementById('fixture')).render(location.pathname==='/network-owner'?<ExecutionNetwork tenant={fixtureTenant} role="owner" workspaceName="Reviewed test workspace" onChooseWorkspace={()=>document.getElementById('fixture-workspace')?.focus()}/>:location.pathname==='/owner'?<ContributorInvitations tenant={fixtureTenant}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/operator/signin'?<OperatorSignin returnTo={contributorReturnTo}/>:<TaskBoard workspace={workspace}/>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -117,7 +119,11 @@ test.beforeAll(async () => {
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
-    define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
+    define: {
+      'process.env.NODE_ENV': '"production"',
+      'process.env': '{}',
+      __NETWORK_TEST_TENANT__: JSON.stringify(f.realTenant),
+    },
     plugins: [
       {
         name: 'next-navigation-fixture',
