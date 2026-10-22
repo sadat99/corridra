@@ -68,6 +68,11 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Register each new private API in the framework private-header overrides before checking the compiled route; handler headers alone can be overridden.
 - Discover customer migration directories with `rg --files packages/db`; never infer a directory from a module name.
 - After pnpm metadata drift, use the explicit CLI warn option or pinned installed executables; an environment-only option did not suppress bootstrap in this managed runtime.
+- Print the failing response status before naming a CI root cause; two guessed causes cost four CI cycles (docs/v3/KNOWN_ISSUES.md KI-01, KI-04).
+- A red `validate` on a superseded run means cancelled jobs; read the run conclusion before investigating.
+- Operator browser tests share one auth rate limit (5 per 60 s on sign-in and two-factor); a test that signs in after many others clears `identity."rateLimit"` in the browser-test database. Never raise a limit.
+- Use `get_check_runs` and `get_job_logs` with `tail_lines` near 130; `list_workflow_jobs` returns tens of thousands of tokens.
+- Read docs/v3/KNOWN_ISSUES.md before debugging CI and add an entry when a failure takes more than one run to explain.
 
 ## Bounded V3 context
 
