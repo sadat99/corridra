@@ -12,7 +12,7 @@ export const setupInvitation = z
     userId: z.uuid(),
     principalId: z.uuid(),
     tenantId: z.uuid(),
-    role,
+    role: z.union([role, z.literal('contributor')]),
     commandId: z.uuid(),
     approvedBy: z.uuid(),
   })
@@ -20,7 +20,7 @@ export const setupInvitation = z
 const verifiedAccount = z.object({ email: z.email(), emailVerified: z.literal(true) });
 
 // Only the trusted server-side customer provider supplies this proof. This service
-// consumes an explicit offline invitation; it never creates users or memberships.
+// consumes an explicit reviewed invitation; it never creates users or memberships.
 export class OperatorSetup {
   constructor(private pool: DatabasePool) {}
   async status(proof: unknown) {
@@ -33,6 +33,19 @@ export class OperatorSetup {
     ).rows;
     if (rows.length !== 1) return { available: false };
     const invite = setupInvitation.parse(JSON.parse(rows[0].value));
+    if (invite.role === 'contributor') {
+      const check = await this.pool.query(
+        'SELECT identity.network_invitation_current($1,$2) AS active',
+        [invite.commandId, invite.principalId],
+      );
+      if (!check.rows[0]?.active) return { available: false };
+      return {
+        available: true,
+        role: invite.role,
+        workspaceId: invite.tenantId,
+        expiresAt: rows[0].expiresAt,
+      };
+    }
     return { available: true, role: invite.role, expiresAt: rows[0].expiresAt };
   }
   async complete(proof: unknown, input: unknown) {
@@ -55,6 +68,14 @@ export class OperatorSetup {
       if (rows.length !== 1)
         throw new DomainError('No current operator invitation is available for this account.', 404);
       const invite = setupInvitation.parse(JSON.parse(rows[0].value));
+      if (invite.role === 'contributor') {
+        const check = await db.query(
+          'SELECT identity.network_invitation_current($1,$2,true) AS active',
+          [invite.commandId, invite.principalId],
+        );
+        if (!check.rows[0]?.active)
+          throw new DomainError('This contributor invitation has expired or was revoked.', 403);
+      }
       const target = (
         await db.query(
           `SELECT u.id FROM identity."user" u JOIN identity.principal p ON p.identity_id=u.id
@@ -82,7 +103,14 @@ export class OperatorSetup {
       ]);
       await db.query('DELETE FROM identity.verification WHERE id=$1', [rows[0].id]);
       await db.query('COMMIT');
-      return { completed: true, requiresAuthenticator: true };
+      return invite.role === 'contributor'
+        ? {
+            completed: true,
+            requiresAuthenticator: true,
+            role: invite.role,
+            workspaceId: invite.tenantId,
+          }
+        : { completed: true, requiresAuthenticator: true };
     } catch (error) {
       await db.query('ROLLBACK');
       throw error;

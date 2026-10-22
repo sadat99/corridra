@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { AccessState } from '../../../components/access-state';
 import { displayDate } from '@corridra/domain/locale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-type Invitation = { available: boolean; role?: string; expiresAt?: string };
-export function SetupForm() {
+type Invitation = { available: boolean; role?: string; expiresAt?: string; workspaceId?: string };
+export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contributor' }) {
+  const contributor = kind === 'contributor';
   const inFlight = useRef(false);
   const [failure, setFailure] = useState<'denied' | 'unavailable'>('denied');
   const [invite, setInvite] = useState<Invitation | null>(null),
@@ -14,7 +15,9 @@ export function SetupForm() {
     [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    fetch('/api/operator-setup', { cache: 'no-store' })
+    fetch('/api/operator-setup' + (kind === 'contributor' ? '?kind=contributor' : ''), {
+      cache: 'no-store',
+    })
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw Object.assign(Error(data.error), { status: r.status });
@@ -27,7 +30,7 @@ export function SetupForm() {
           setMessage(
             data.available
               ? ''
-              : 'There is no current operator invitation for this account. Ask your workspace owner to review access.',
+              : `There is no current ${kind} invitation for this account. Ask your workspace owner to review access.`,
           );
         }
       })
@@ -40,21 +43,21 @@ export function SetupForm() {
     return () => {
       active = false;
     };
-  }, [attempt]);
+  }, [attempt, kind]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inFlight.current) return;
     const form = event.currentTarget,
       data = new FormData(form);
     if (data.get('password') !== data.get('confirm')) {
-      setMessage('The operator passwords must match.');
+      setMessage(`The ${kind} passwords must match.`);
       return;
     }
     inFlight.current = true;
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch('/api/operator-setup', {
+      const r = await fetch('/api/operator-setup' + (contributor ? '?kind=contributor' : ''), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: data.get('password') }),
@@ -64,7 +67,9 @@ export function SetupForm() {
       form.reset();
       setDone(true);
       setMessage(
-        'Your operator password is ready. Sign in separately and enroll your authenticator before opening the workspace.',
+        contributor
+          ? 'Your contributor password is ready. Sign in separately and enroll your authenticator. Reviewed eligibility and a task assignment are still required.'
+          : 'Your operator password is ready. Sign in separately and enroll your authenticator before opening the workspace.',
       );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Setup failed. Try again.');
@@ -74,7 +79,7 @@ export function SetupForm() {
     }
   }
   return (
-    <section aria-label="Your operator invitation">
+    <section aria-label={`Your ${kind} invitation`}>
       {message && (
         <AccessState
           kind={
@@ -102,16 +107,26 @@ export function SetupForm() {
           Check invitation again
         </button>
       )}
-      {invite?.available && !done && (
+      {invite?.available && !done && (invite.role === 'contributor') !== contributor && (
+        <p>
+          This invitation uses a different access route.{' '}
+          <Link href={invite.role === 'contributor' ? '/contributor/setup' : '/operator/setup'}>
+            Open the invited setup route
+          </Link>
+          .
+        </p>
+      )}
+      {invite?.available && !done && (invite.role === 'contributor') === contributor && (
         <form method="post" className="operator-form" onSubmit={submit}>
           <h2>Accept {invite.role} access</h2>
           {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>}
           <p>
-            Your invitation is for the synthetic workspace. It does not authorize real customer
-            operations. Keep your password and authenticator recovery codes private.
+            {contributor
+              ? 'This invitation grants no team membership or full mission access. Only reviewed, explicitly assigned tasks can become available. Keep your password and authenticator recovery codes private.'
+              : 'Your invitation is for the synthetic workspace. It does not authorize real customer operations. Keep your password and authenticator recovery codes private.'}
           </p>
           <label className="field">
-            New operator password
+            New {kind} password
             <input
               type="password"
               name="password"
@@ -123,7 +138,7 @@ export function SetupForm() {
             />
           </label>
           <label className="field">
-            Confirm operator password
+            Confirm {kind} password
             <input
               type="password"
               name="confirm"
@@ -135,12 +150,20 @@ export function SetupForm() {
             />
           </label>
           <button className="primary-link" disabled={busy}>
-            {busy ? 'Setting up…' : 'Set operator password'}
+            {busy ? 'Setting up…' : `Set ${kind} password`}
           </button>
         </form>
       )}
       {done && (
-        <Link className="primary-link" href="/operator/signin">
+        <Link
+          className="primary-link"
+          href={
+            contributor && invite?.workspaceId
+              ? '/operator/signin?next=' +
+                encodeURIComponent('/contributor?workspace=' + invite.workspaceId)
+              : '/operator/signin'
+          }
+        >
           Sign in and set up authenticator
         </Link>
       )}

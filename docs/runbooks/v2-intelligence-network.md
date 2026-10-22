@@ -2,7 +2,33 @@
 
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
-Start with the existing operator password/TOTP identity and tenant authority. Use only synthetic data. Customer Neon identities do not gain execution access through email matching.
+Start with the existing work password/TOTP identity and tenant authority. Use isolated synthetic records for validation. Real invited work additionally requires ADR057 installation and both explicit Network controls. Customer Neon identities do not gain execution access through email matching.
+
+## Access Corridra Network
+
+- Public overview: [Corridra Network](https://c.obsidianglobal.studio/network), also linked in the public footer. This is an introduction, not a public task marketplace.
+- Invited staff: open [Execution network](https://c.obsidianglobal.studio/operator#workspace-network), sign in with the operator identity and authenticator, then select **Assistance → Execution network**. Navigation is offered to owner/admin/operator/reviewer roles; every API permission still applies. Customer registration grants no staff membership.
+- Invited contributors: use `/contributor?workspace=<the-issued-workspace-id>` from the reviewed invitation. The staff panel’s **Open assigned task access** link includes that workspace. Opening `/contributor` alone shows access help, not a workspace chooser or public enrolment.
+
+Implementation in PR126 adds real invited work under [ADR057](../adr/0057-real-invited-execution-work.md). Production activation is pending checked source, protected installation and explicit flag verification. Do not infer activation from the source or this runbook. Genuine production identity/email acceptance remains separate from local browser evidence.
+
+### Prepare contributor access
+
+1. An owner/admin with a current authenticator opens **Assistance → Execution network → Invite a contributor** in the real workspace. Enter the intended name, contact email and an operating country within your authority. This creates a disabled pending work identity, not team membership.
+2. Share the **Contributor setup link** (`/contributor/setup`) and the workspace-specific **Assigned task link** manually with that person. Corridra does not email these invitations automatically. They create or sign in to their customer account, verify the same email, then set a separate work password through the setup page. Pending invitations expire after seven days; the owner/admin can cancel before acceptance.
+3. They follow the setup confirmation to work sign-in, enroll their authenticator and retain recovery codes privately. An already active work identity keeps its credentials and memberships; use its existing work sign-in instead of attempting a reset.
+4. Copy the principal reference from the invitation record into **Contributor eligibility**. Review capabilities, markets, languages, sectors, work countries, availability, expiry and supporting eligibility evidence. A reference is not eligibility approval. Legal/commercial evidence remains independently reviewed.
+5. Create the fully disclosed task against its mission/route assignment, including instructions, evidence requirements, deadlines, independent reviewer and any exact conditional reward rule. Explicitly assign it to the reviewed profile. Contributors see only their assigned task disclosures.
+6. Contributors accept, submit findings and request corrections/dispute review through their assigned-task page. The independent reviewer reviews the evidence and task decision. Contribution assessment and owner/admin reward approval are separate; no payment or payout provider is activated.
+7. Suspend the contributor profile to stop task access. Preserve work, evidence and money history. Accepted identities are not reset or removed through invitation cancellation.
+
+### Install, enable or pause
+
+After exact-head CI and actual CodeQL uploads pass, run the existing protected **Install customer modules** workflow from checked `main`, `apply=yes`, `network_use_action=enable` and an explicit reason. Leave existing authority inputs blank and `real_use_action=unchanged` to preserve them. The Network action installs two optional additive migrations after the existing seven real-use migrations, then appends the real tenant's `network.enabled` control. `install` installs without enabling; `pause` appends a disabled tenant control. The protected environment requires its GitHub reviewer; never bypass it.
+
+After the successful install, independently check both registry hashes, the tenant control and original pinned owner/executor. Set only Production `CORRIDRA_NETWORK_ENABLED=true` and refresh the exact checked deployment for build-time public copy. Verify READY, its commit, aliases and the public/private routes. Retain real intake settings and deferred scanning. This does not enable real AI, outreach, billing or payouts.
+
+To pause, use the protected tenant `pause` action and/or disable the Production environment flag. Do not delete identities, invitations, profiles, tasks, events or financial records. Existing invitation history and pending cancellation remain readable while the environment flag is off. Exact compensating reward reversal remains available to authorized staff; it does not create new work.
 
 ## AI preparation and review
 
@@ -33,4 +59,4 @@ Disabling either feature preserves history. Inspect owned blocked tasks, pending
 
 ## Release and Part 5 handoff
 
-Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Part 4 was merged in PR 34; for future changes use bounded reviewed PRs and the current release runbook; retain a maximum of ten Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. The next revised Part 5 needs a new owner packet; this release does not implement it.
+Require full database/RLS, provider-mock/golden, migration/replay, regression, build and browser acceptance. Part 4 was merged in PR 34; for future changes use bounded reviewed PRs and the current release runbook; retain a maximum of eight Git branches including main and all unfinished dependency PRs. Verify exact production SHA and actual independent flag states. Clean only accepted completed branches after current PR, ancestry, parent/child and binding checks. Revised Part 5 subsequently merged; follow the ledger’s current sequence. This historical Part 4 receipt does not establish whole V3 readiness.

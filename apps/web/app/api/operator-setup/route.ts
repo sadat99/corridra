@@ -7,11 +7,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function handle(request: Request) {
   const headers = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
+  const kind =
+    new URL(request.url).searchParams.get('kind') === 'contributor' ? 'contributor' : 'operator';
+  const label = kind === 'contributor' ? 'Contributor' : 'Operator';
   try {
     const services = foundations(),
       customer = neonAuth();
     if (!services || !customer)
-      throw new DomainError('Operator invitation setup is unavailable in this environment.', 503);
+      throw new DomainError(`${label} invitation setup is unavailable in this environment.`, 503);
     if (
       request.method === 'POST' &&
       request.headers.get('origin') !== new URL(services.config.APP_ORIGIN).origin
@@ -23,7 +26,7 @@ async function handle(request: Request) {
       throw new DomainError('Sign in to your customer account to check an invitation.', 401);
     if (!data.user.emailVerified)
       throw new DomainError(
-        'Verify your customer account email before accepting an operator invitation.',
+        `Verify your customer account email before accepting ${kind === 'operator' ? 'an operator' : 'a contributor'} invitation.`,
         403,
       );
     const proof = { email: data.user.email, emailVerified: true };
@@ -49,8 +52,8 @@ async function handle(request: Request) {
           error instanceof DomainError
             ? error.message
             : status === 400
-              ? 'Use an operator password between 14 and 128 characters.'
-              : 'Operator invitation setup is temporarily unavailable.',
+              ? `Use ${kind === 'operator' ? 'an operator' : 'a contributor'} password between 14 and 128 characters.`
+              : `${label} invitation setup is temporarily unavailable.`,
       },
       { status, headers },
     );

@@ -1,5 +1,6 @@
 'use client';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { ContributorInvitations } from './contributor-invitations';
 import {
   SubmissionFailure,
   submissionMessage,
@@ -51,6 +52,7 @@ type Performance = {
   rationale: { taskId: string; rationale: string }[];
 };
 type Snapshot = {
+  purpose?: string;
   enabled: boolean;
   profiles: Profile[];
   tasks: Task[];
@@ -294,6 +296,7 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
           { label: 'Quality and timeliness', heading: 'Reviewed work dimensions by task category' },
           ...(admin
             ? [
+                { label: 'Contributor invitations', heading: 'Invite a contributor' },
                 { label: 'Eligibility and status', heading: 'Current private work profiles' },
                 { label: 'Reward obligations', heading: 'Independent reward approval' },
                 { label: 'Compensations', heading: 'Compensate an unreconciled reward obligation' },
@@ -340,12 +343,16 @@ export function ExecutionNetwork({ tenant, role }: { tenant: string; role: strin
       <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
         Open assigned task access
       </Link>
+      {admin && <ContributorInvitations tenant={tenant} />}
       {admin && (
         <details>
           <summary>Review an invited contributor profile</summary>
           <p>
             The identity must already be invited with an authenticator. This review creates no
-            tenant membership. Use synthetic eligibility evidence only.
+            tenant membership.{' '}
+            {data?.purpose === 'commercial_qualification'
+              ? 'Use current reviewed eligibility evidence.'
+              : 'Use synthetic eligibility evidence only.'}
           </p>
           <form className="operator-form" onSubmit={createProfile}>
             <Fields

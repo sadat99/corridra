@@ -60,7 +60,42 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/contributor/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/account/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/network-invitations',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/network-invitation',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/operator-setup',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/network/tasks',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

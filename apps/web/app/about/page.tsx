@@ -25,7 +25,7 @@ const useCases = [
     'For chambers, institutions and organisers. Coordinate the programme while keeping each participant’s objectives and private information separate.',
   ],
 ];
-const process = [
+const missionProcess = [
   [
     'Define the objective',
     'Tell us the market, the commercial need and what would make the work worthwhile.',
@@ -118,7 +118,7 @@ export default function Page() {
           <h2>How the work progresses</h2>
           <div>
             <ol>
-              {process.map(([title, text]) => (
+              {missionProcess.map(([title, text]) => (
                 <li key={title}>
                   <strong>{title}.</strong> {text}
                 </li>
@@ -187,8 +187,16 @@ export default function Page() {
               payments are not available.
             </p>
             <p>
-              Independent contributor participation and broader market coverage remain controlled
-              expansion plans. We publish no unverified client list, network size or success rate.
+              {process.env.CORRIDRA_NETWORK_ENABLED === 'true'
+                ? 'Reviewed contributors can receive specific execution tasks through Corridra Network. Invitations, eligibility review, task assignment and evidence review remain separate steps. Contributor access does not include the full mission or team workspace.'
+                : 'Independent contributor participation remains a controlled expansion plan.'}{' '}
+              Broader market coverage remains a controlled expansion plan. We publish no unverified
+              client list, network size or success rate.
+            </p>
+            <p>
+              <Link className="text-link" prefetch={false} href="/network">
+                Understand Corridra Network and invited work
+              </Link>
             </p>
             <p>
               Corridra is operated by Sadat in Gulshan, Dhaka. For account or privacy questions, see

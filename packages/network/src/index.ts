@@ -14,6 +14,7 @@ export class NetworkService {
     if (!this.enabled) throw new DomainError('Execution network is disabled', 503);
   }
   rule(ctx: RequestContext, raw: unknown) {
+    this.assertEnabled();
     const v = z
       .object({
         id: z.uuid().toLowerCase(),
@@ -52,6 +53,7 @@ export class NetworkService {
     );
   }
   profile(ctx: RequestContext, raw: unknown) {
+    this.assertEnabled();
     const v = profileInput.parse(raw);
     return withTenant(
       this.pool,
@@ -186,20 +188,21 @@ export class NetworkService {
         throw new DomainError('Submitted task and current reviewer required', 409);
       const source = (
         await t.db.query(
-          `INSERT INTO app.source_record(tenant_id,kind,locator,observed_at,classification,purpose,retention_until,ai_policy,created_by) VALUES($1,'self_declaration',$2,$3,'INTERNAL','synthetic_validation',$4,'DENY',$5) RETURNING id`,
+          `INSERT INTO app.source_record(tenant_id,kind,locator,observed_at,classification,purpose,retention_until,ai_policy,created_by) VALUES($1,'self_declaration',$2,$3,'INTERNAL',$6,$4,'DENY',$5) RETURNING id`,
           [
             t.tenantId,
             `Restricted network task ${v.taskId}; submission ${submission.id}; declarant ${submission.created_by}`,
             submission.created_at,
             task.expires_at,
             t.actorId,
+            t.purpose,
           ],
         )
       ).rows[0];
       const claim = (
         await t.db.query(
-          "INSERT INTO app.claim(tenant_id,source_id,statement,classification,purpose,created_by) VALUES($1,$2,$3,'INTERNAL','synthetic_validation',$4) RETURNING id",
-          [t.tenantId, source.id, submission.details.body, t.actorId],
+          "INSERT INTO app.claim(tenant_id,source_id,statement,classification,purpose,created_by) VALUES($1,$2,$3,'INTERNAL',$5,$4) RETURNING id",
+          [t.tenantId, source.id, submission.details.body, t.actorId, t.purpose],
         )
       ).rows[0];
       const details = {
@@ -322,13 +325,23 @@ export class NetworkService {
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
+      const purpose =
+        process.env.CORRIDRA_REAL_USE_ENABLED === 'true' && ctx.purpose === 'synthetic_validation'
+          ? (
+              await db.query<{ purpose: string }>(
+                'SELECT app.tenant_processing_purpose($1) AS purpose',
+                [ctx.tenantId],
+              )
+            ).rows[0].purpose
+          : ctx.purpose;
       await db.query(
-        "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose','synthetic_validation',true),set_config('corridra.correlation_id',$3,true),set_config('corridra.causation_id',$4,true)",
+        "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose',$5,true),set_config('corridra.correlation_id',$3,true),set_config('corridra.causation_id',$4,true)",
         [
           sessionHash(ctx.token),
           ctx.tenantId,
           ctx.correlationId ?? randomUUID(),
           ctx.causationId ?? randomUUID(),
+          purpose,
         ],
       );
       const r = await db.query(`SELECT ${expression} AS result`, values);
@@ -343,6 +356,7 @@ export class NetworkService {
   }
   workspace(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'trust.write', async (t) => ({
+      purpose: t.purpose,
       enabled:
         this.enabled &&
         (

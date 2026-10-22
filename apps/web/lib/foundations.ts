@@ -59,6 +59,7 @@ import { recoverableResource } from './recoverable-resource';
 import { localFixtureAdapter } from '@corridra/intelligence/local-fixture';
 import { IntelligenceService } from '@corridra/intelligence/service';
 import { NetworkService } from '@corridra/network';
+import { NetworkInvitations } from '@corridra/auth/network-invitations';
 import { Pool, assertRestrictedPool } from '@corridra/db';
 import { createIdentity } from '@corridra/auth';
 import { operatorRecoveryMailer } from '@corridra/auth/recovery-mail';
@@ -187,6 +188,10 @@ function createServices() {
     config,
     ...identity,
     operatorSetup: new OperatorSetup(authPool),
+    networkInvitations: new NetworkInvitations(
+      authPool,
+      process.env.CORRIDRA_NETWORK_ENABLED === 'true',
+    ),
     access: new AccessService(runtimePool, authPool),
     customerWorkspaces: new CustomerWorkspaceService(
       runtimePool,

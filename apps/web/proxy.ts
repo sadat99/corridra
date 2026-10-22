@@ -19,6 +19,7 @@ export const config = {
     '/reset-password',
     '/account/:path*',
     '/operator/:path*',
+    '/contributor/:path*',
     '/plan',
     '/client',
     '/programme',

@@ -24,6 +24,8 @@ import { migrateCustomerRequestAdmission } from '../packages/db/src/customer-req
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
 import { migrateCustomerRealUse } from '../packages/db/src/customer-real-use-migrate';
 import { configureCustomerRealUse } from '../packages/auth/src/customer-real-use-configuration';
+import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migrate';
+import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -35,6 +37,11 @@ const v = z
     MIGRATION_DATABASE_HOST: z.string().min(1),
     INSTALL_APPLY: z.string().optional(),
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    NETWORK_USE_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     // The workflow always passes this input, empty when unused: blank means not provided.
     REAL_USE_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -59,6 +66,10 @@ if (v.REAL_USE_ACTION !== 'unchanged' && !apply)
   throw new Error('Real-use changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.REAL_USE_ACTION) && !v.REAL_USE_REASON)
   throw new Error('Real-use admission changes require an explicit reason');
+if (v.NETWORK_USE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Network changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.NETWORK_USE_ACTION) && !v.NETWORK_USE_REASON)
+  throw new Error('Network changes require an explicit reason');
 
 const registries = [
   'customer_migrations',
@@ -84,6 +95,7 @@ const registries = [
   'customer_programme_terms_migrations',
   'customer_service_request_migrations',
   'customer_real_use_migrations',
+  'network_real_use_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -158,6 +170,18 @@ try {
         });
         console.log(
           `Real-use admission ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.NETWORK_USE_ACTION !== 'unchanged') {
+      await migrateNetworkRealUse(pool);
+      if (v.NETWORK_USE_ACTION !== 'install') {
+        const result = await configureNetworkRealUse(pool, {
+          enabled: v.NETWORK_USE_ACTION === 'enable',
+          reason: v.NETWORK_USE_REASON,
+        });
+        console.log(
+          `Real Network ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }

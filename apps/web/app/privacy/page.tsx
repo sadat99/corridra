@@ -142,6 +142,39 @@ export default function Page() {
             </p>
           </div>
         </article>
+        {process.env.CORRIDRA_NETWORK_ENABLED === 'true' && (
+          <article id="contributors">
+            <h2>Invited contributor work</h2>
+            <div>
+              <p>
+                An authorized owner or administrator records a contributor’s name, email and
+                operating country when preparing a reviewed invitation. The invited person verifies
+                their customer account email before setting a separate work password and enrolling
+                an authenticator. Work password hashes, authenticator credentials, recovery codes
+                and sessions are stored separately from customer accounts in the application
+                database.
+              </p>
+              <p>
+                Eligibility records, assigned task instructions, submissions, evidence review,
+                contribution assessments and reward decisions are private work records. Contributors
+                receive only their assigned task disclosures, not full mission or team access.
+                Authorized staff review submissions within their existing permissions. A recorded
+                reward does not mean a payment has been made; automated payouts are not available.
+              </p>
+              <p>
+                Pending invitations expire after seven days and can be cancelled before acceptance.
+                Expiry or cancellation does not delete invitation or work history. Accepted access
+                can be suspended through eligibility controls. Contact us about corrections or
+                retention; automatic deletion of these records is not operational.
+              </p>
+              <p>
+                <Link className="text-link" prefetch={false} href="/network">
+                  How invited contributor access works
+                </Link>
+              </p>
+            </div>
+          </article>
+        )}
         <article id="files">
           <h2>Files and deferred scanning</h2>
           <div>
