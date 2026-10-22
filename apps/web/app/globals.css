@@ -6512,3 +6512,214 @@ th {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+/* Network record and invitation flow: owner usability correction, 22 October. */
+.ux-workspace-body .workspace-panel .ux-network {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  gap: var(--space-5);
+}
+.ux-network > :is(p, h3, h4, .workspace-links) {
+  margin-block: 0;
+}
+.ux-network > p[role='status']:empty,
+.ux-network-invitations > p[role='status']:empty {
+  display: none;
+}
+.ux-network-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-4);
+}
+.ux-network-heading :is(h2, p) {
+  margin: 0;
+}
+.ux-workspace-body .workspace-panel .ux-network-heading h2 {
+  font: 400 clamp(1.75rem, 3vw, 2.5rem)/1.15 var(--serif);
+  margin-block: var(--space-2) var(--space-3);
+}
+.ux-network-state {
+  flex: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--brand-deep);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+}
+.ux-network-paused {
+  padding: var(--space-5);
+  border: 1px solid var(--caution);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.ux-network-paused h3 {
+  margin: 0;
+}
+.ux-network-paused p {
+  max-width: 70ch;
+}
+.ux-workspace-body .workspace-panel .ux-network-invitations {
+  padding: var(--space-6);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-hero-radius);
+  background: var(--surface-1);
+}
+.ux-network-invitations > .label {
+  color: var(--brand-deep);
+  margin: 0 0 var(--space-2);
+}
+.ux-workspace-body .workspace-panel .ux-network-invitations > h3 {
+  font: 400 2rem/1.2 var(--serif);
+  margin: 0 0 var(--space-3);
+}
+.ux-network-invitations > p {
+  max-width: 72ch;
+}
+.ux-invitation-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-block: var(--space-5);
+}
+.ux-invitation-flow > * {
+  min-width: 0;
+}
+.ux-workspace-body .workspace-panel .ux-invitation-flow form.operator-form {
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+.ux-invitation-flow fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.ux-invitation-flow legend {
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+.ux-invitation-flow .field {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.ux-invitation-flow :is(input, select) {
+  min-height: 3rem;
+  width: 100%;
+}
+.ux-invitation-flow .primary-link {
+  justify-self: start;
+  min-height: 3rem;
+  padding-inline: var(--space-5);
+}
+.ux-invitation-flow fieldset > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-invitation-guide {
+  padding: var(--space-5);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+.ux-invitation-guide h4 {
+  margin: 0 0 var(--space-4);
+}
+.ux-invitation-guide ol {
+  padding-left: var(--space-5);
+  margin: 0;
+  display: grid;
+  gap: var(--space-5);
+}
+.ux-invitation-guide li > :is(strong, span) {
+  display: block;
+}
+.ux-invitation-guide li > span {
+  margin-top: var(--space-2);
+  color: var(--text-2);
+}
+.ux-invitation-links {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.ux-workspace-body .workspace-panel .ux-network > details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: 0;
+  overflow: clip;
+}
+.ux-network > details > summary {
+  padding: var(--space-4) var(--space-5);
+  background: transparent;
+  min-height: 3rem;
+}
+.ux-network > details[open] > summary {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.ux-network > details > :not(summary) {
+  margin-inline: var(--space-5);
+}
+@media (max-width: 700px) {
+  .ux-network-heading {
+    flex-direction: column;
+  }
+  .ux-invitation-flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-workspace-body .workspace-panel .ux-network-invitations {
+    padding: var(--space-4);
+  }
+  .ux-invitation-flow .primary-link {
+    width: 100%;
+  }
+}
+.ux-workspace-body .workspace-panel .ux-network .ux-invitation-flow fieldset {
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+}
+.ux-network > a.text-link {
+  justify-self: start;
+}
+.ux-workspace-body .workspace-panel .ux-network > details > summary {
+  background: transparent;
+}
+.ux-workspace-body .workspace-panel .ux-network > details[open] > summary {
+  background: var(--surface-2);
+}
+.ux-network .ux-operator-workbench button {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.ux-workspace-body .workspace-panel .ux-network .ux-invitation-flow form.operator-form {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ux-network .ux-operator-workbench > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+@media (max-width: 700px) {
+  .ux-network .ux-operator-workbench > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .ux-network .ux-operator-workbench button {
+    text-align: left;
+    white-space: normal;
+    min-height: 2.75rem;
+  }
+}

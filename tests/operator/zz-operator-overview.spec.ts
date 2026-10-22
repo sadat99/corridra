@@ -32,6 +32,9 @@ test('operator overview follows the bento references and preserves every authori
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+  // Earlier suites create other authorized workspaces. Select this test's owner workspace explicitly.
+  await page.goto('/operator?workspace=' + encodeURIComponent(seed.tenantId));
+  await expect(page.getByText('Your access: owner', { exact: true })).toBeVisible();
   const home = page.locator('.ux-overview');
   const workflow = page.getByRole('navigation', { name: 'Mission workflow' });
   await expect(workflow.getByRole('link')).toHaveCount(5);

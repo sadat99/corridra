@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
 import { createIdentity } from '../../packages/auth/src/index';
 import { AccessService } from '../../packages/auth/src/access';
+import { configureNetworkRealUse } from '../../packages/auth/src/network-real-use-configuration';
 import { realNetworkFixture } from '../integration/real-network-fixture';
 import { prepareRealNetworkTask } from '../integration/real-network-scenario';
 
@@ -101,11 +102,12 @@ test.beforeAll(async () => {
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
     import{ContributorInvitations}from ${JSON.stringify(resolve('apps/web/app/operator/contributor-invitations.tsx'))};
+    import{ExecutionNetwork}from ${JSON.stringify(resolve('apps/web/app/operator/network.tsx'))};
     import{SetupForm}from ${JSON.stringify(resolve('apps/web/app/operator/setup/setup-form.tsx'))};
     import{OperatorSignin}from ${JSON.stringify(resolve('apps/web/app/operator/signin/signin-form.tsx'))};
     import{TaskBoard}from ${JSON.stringify(resolve('apps/web/app/contributor/task-board.tsx'))};
     const workspace=new URLSearchParams(location.search).get('workspace');
-    createRoot(document.getElementById('fixture')).render(location.pathname==='/owner'?<ContributorInvitations tenant={${JSON.stringify(f.realTenant)}}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/operator/signin'?<OperatorSignin returnTo={${JSON.stringify('/contributor?workspace=' + f.realTenant)}}/>:<TaskBoard workspace={workspace}/>);`,
+    createRoot(document.getElementById('fixture')).render(location.pathname==='/network-owner'?<ExecutionNetwork tenant={${JSON.stringify(f.realTenant)}} role="owner" workspaceName="Reviewed test workspace" onChooseWorkspace={()=>document.getElementById('fixture-workspace')?.focus()}/>:location.pathname==='/owner'?<ContributorInvitations tenant={${JSON.stringify(f.realTenant)}}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/operator/signin'?<OperatorSignin returnTo={${JSON.stringify('/contributor?workspace=' + f.realTenant)}}/>:<TaskBoard workspace={workspace}/>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -172,7 +174,7 @@ test.beforeAll(async () => {
       }
       res.setHeader('content-type', 'text/html');
       res.end(
-        `<!doctype html><html lang="en"><head><title>Invited Network work</title><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="stylesheet" href="/fixture.css"/></head><body><main class="ux-workspace"><h1>Invited Network work</h1>${path === '/owner' ? '<h2>Commercial execution work</h2>' : ''}<div class="workspace-section" id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
+        `<!doctype html><html lang="en"><head><title>Invited Network work</title><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="stylesheet" href="/fixture.css"/></head><body><main class="ux-workspace ux-workspace-body"><h1>Invited Network work</h1>${path === '/owner' ? '<h2>Commercial execution work</h2>' : path === '/network-owner' ? '<label>Workspace<select id="fixture-workspace"><option>Reviewed test workspace</option></select></label>' : ''}<div class="workspace-section workspace-panel" id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
       );
     } catch (error) {
       res.statusCode = 500;
@@ -320,4 +322,122 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
     ).rows[0].n,
   ).toBe(0);
   await workerContext.close();
+});
+
+test('Network invitation form supports scoped submission and an editable paused draft with clear recovery', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.context().addCookies([{ name: 'fixture_owner', value: 'authorized', url: origin }]);
+  await page.goto(origin + '/network-owner');
+  const invitations = page.getByRole('region', { name: 'Contributor invitations', exact: true });
+  await expect(
+    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+  ).toBeEnabled();
+  await invitations
+    .getByLabel('Contributor name', { exact: true })
+    .fill('Network usability contributor');
+  await invitations
+    .getByLabel('Contributor email', { exact: true })
+    .fill('network-usability@business.test');
+  await invitations
+    .getByRole('combobox', { name: 'Contributor operating country', exact: true })
+    .selectOption('DE');
+  for (const width of [360, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(invitations.getByLabel('Contributor name', { exact: true })).toHaveValue(
+      'Network usability contributor',
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
+      false,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      scrollTo(0, 0);
+    });
+    await page.screenshot({
+      path: `work/real-use/network-browser/network-ready-${width}.png`,
+      fullPage: true,
+    });
+    await page.screenshot({
+      path: `work/real-use/network-browser/network-ready-viewport-${width}.png`,
+    });
+  }
+  await invitations.getByRole('button', { name: 'Prepare contributor invitation' }).click();
+  await expect(invitations.getByRole('status')).toContainText('Invitation prepared');
+  await expect(
+    invitations.getByText('network-usability@business.test', { exact: true }),
+  ).toBeVisible();
+  await expect(invitations.getByLabel('Contributor email', { exact: true })).toHaveValue('');
+  await configureNetworkRealUse(f.owner, {
+    enabled: false,
+    reason: 'Test paused workspace readiness without changing authority',
+  });
+  try {
+    await page.reload();
+    await expect(
+      page.getByRole('heading', { name: 'Network is paused in Reviewed test workspace.' }),
+    ).toBeVisible();
+    await expect(
+      invitations.getByText('Invitations are paused in this workspace.', { exact: false }),
+    ).toBeVisible();
+    await invitations.getByLabel('Contributor name', { exact: true }).fill('Retained paused draft');
+    await invitations
+      .getByLabel('Contributor email', { exact: true })
+      .fill('paused-draft@business.test');
+    await invitations
+      .getByRole('combobox', { name: 'Contributor operating country', exact: true })
+      .selectOption('DE');
+    await expect(
+      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    ).toBeDisabled();
+    await page.getByRole('button', { name: 'Choose workspace', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: 'Workspace', exact: true })).toBeFocused();
+    await expect(invitations.getByLabel('Contributor name', { exact: true })).toHaveValue(
+      'Retained paused draft',
+    );
+    const response = await page.request.post(
+      origin + '/api/workspace/network-invitation?tenant=' + f.realTenant,
+      {
+        headers: { origin },
+        data: {
+          action: 'invite',
+          commandId: crypto.randomUUID(),
+          name: 'Blocked invitation',
+          email: 'must-stay-blocked@business.test',
+          operatingCountry: 'DE',
+        },
+      },
+    );
+    expect(response.ok()).toBe(false);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM app.network_invitation i JOIN identity.principal p ON p.id=i.principal_id JOIN identity."user" u ON u.id=p.identity_id WHERE u.email=$1',
+          ['must-stay-blocked@business.test'],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
+        false,
+      );
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement)?.blur();
+        scrollTo(0, 0);
+      });
+      await page.screenshot({
+        path: `work/real-use/network-browser/network-paused-${width}.png`,
+        fullPage: true,
+      });
+    }
+  } finally {
+    await configureNetworkRealUse(f.owner, {
+      enabled: true,
+      reason: 'Restore isolated Network fixture after paused-workspace acceptance',
+    });
+  }
 });

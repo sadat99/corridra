@@ -224,5 +224,413 @@
     "unchangedFixture": "security/corridra.test.ts:9 js/disabling-certificate-validation",
     "method": "Actual uploaded analyses and sanitized SARIF rule/location results reviewed through connected job logs; artifacts retained."
   },
-  "releaseState": "Implemented with bounded local acceptance; exact-head CI/release still pending. Not merged/deployed."
+  "releaseState": "Merged and exact-source deployed after all six CI jobs and three reviewed CodeQL uploads passed; genuine production signed-in contributor acceptance remains unverified.",
+  "releaseCompletion": {
+    "checkedHead": "e6c95abae7629e148e8c816a15e97fa0557ef6c8",
+    "mergeCommit": "ffcd4f13e6bc96ecf61fd7e757235494bce7e4cf",
+    "fullTreeEqual": true,
+    "prChecks": {
+      "ci": 39705498234,
+      "successfulJobs": 6,
+      "integrationTests": 684,
+      "integrationFiles": 69,
+      "publicBrowser": 164,
+      "protectedBrowser": 377,
+      "codeql": 39705498229,
+      "actualAnalysesUploaded": 3,
+      "newFindings": 0
+    },
+    "deployment": {
+      "id": "dpl_B7oT8k7jXRMuytiGUzPJBo9TWL71",
+      "source": "ffcd4f13e6bc96ecf61fd7e757235494bce7e4cf",
+      "state": "READY",
+      "regions": ["fra1"],
+      "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"]
+    },
+    "networkReceiptRelease": {
+      "pr": 127,
+      "checkedHead": "c897b5befb70fc80c9495d221309e31f24dd39b3",
+      "mergeCommit": "21b3d05f4aa28d621afcc15adcaa1b5b8d8cec31",
+      "fullTreeEqual": true,
+      "prCI": 39704270737,
+      "successfulJobs": 6,
+      "prCodeql": 39704270659,
+      "actualAnalysesUploaded": 3,
+      "mainCI": 39705734579,
+      "mainSuccessfulJobs": 6,
+      "deployment": "dpl_Hb4iwV8vJYbAtban7TVJwtJ3Bwm6",
+      "state": "READY"
+    },
+    "cleanup": {
+      "userApprovedRehearsal": "br-odd-shape-b1xuo4am",
+      "deletedAndVerifiedAbsent": true,
+      "preservedNeon": [
+        "br-lucky-darkness-b1ppj8en",
+        "br-lingering-sea-b1eob57e",
+        "br-silent-tree-b18dmm1n"
+      ],
+      "mergedBranches": [
+        {
+          "pr": 126,
+          "head": "feat/real-network-activation",
+          "sha": "da0f2cb0f80e15458b2342390150e6c8e09721da",
+          "merged": true,
+          "merge": "8865b889c258d305be06a3a88e91f83352db4ff7"
+        },
+        {
+          "pr": 127,
+          "head": "docs/network-release-status",
+          "sha": "c897b5befb70fc80c9495d221309e31f24dd39b3",
+          "merged": true,
+          "merge": "21b3d05f4aa28d621afcc15adcaa1b5b8d8cec31"
+        },
+        {
+          "pr": 128,
+          "head": "feat/operator-bento-overview",
+          "sha": "e6c95abae7629e148e8c816a15e97fa0557ef6c8",
+          "merged": true,
+          "merge": "ffcd4f13e6bc96ecf61fd7e757235494bce7e4cf"
+        }
+      ],
+      "archivePrefix": "refs/archive/completed-local/",
+      "preserveOpenDependencyPRs": [10, 32],
+      "preserveUnfinishedBranch": "claude/happy-feynman-i66amw",
+      "previews": [
+        {
+          "id": "dpl_GoG4Amj2zkYseQfmmsy7EqmDTYsn",
+          "branch": "feat/real-network-activation",
+          "source": "da0f2cb0f80e15458b2342390150e6c8e09721da",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_8YbNJ4FMgn841ewrchcefc7Qg3Bd",
+          "branch": "feat/real-network-activation",
+          "source": "1ac809d28541e33f3893ccfa431dc0324d6926ff",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_EcTEAPXq6mdvV5DXoZz9QeWEnPQE",
+          "branch": "feat/real-network-activation",
+          "source": "2ff25819f6bf508b110b6ba6c7f79dc0fc114b50",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_BykseLoiGoobJVEN8hCVjheQbmFB",
+          "branch": "feat/real-network-activation",
+          "source": "c68a400dbacfff469a06bb5a31c01ac3f056aaab",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_3MbhY1wSYeB8ZomMNA15R1Sgvz8n",
+          "branch": "feat/real-network-activation",
+          "source": "296ba7bc8d2f593fa5e05aca7ad359db6dc066be",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_FcjGmonyi6SQMdLvsJkwRasCpyXM",
+          "branch": "feat/real-network-activation",
+          "source": "9eab47af73a8ff92f3a867bc05062000188334e0",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_3HpbEWdtfdw55HCQkAQJcMASsbKJ",
+          "branch": "docs/network-release-status",
+          "source": "c897b5befb70fc80c9495d221309e31f24dd39b3",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_96T8qJEaW8agGebAkfiYVsyu3HF1",
+          "branch": "docs/network-release-status",
+          "source": "f776ea4be9d8da1ccd5047ed55efdfda671b56fb",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_G4p83m8FEAEpnKM7KVLqys6cveok",
+          "branch": "docs/network-release-status",
+          "source": "ce9b3bcef7e735359408cfae33d14e2f72f8aef2",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_2BFDbw3YEfKJ8dxcEcPGAjSpMW2Z",
+          "branch": "feat/operator-bento-overview",
+          "source": "0dff980bfb784696947b5ad5cf2c5ab47c62d930",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_G7hANUHh1aa4sGzuXiCBbLDDY4QQ",
+          "branch": "feat/operator-bento-overview",
+          "source": "ea9b71d85927e8107565cfb870d00eeb44065e90",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_GsjHV1zX5g9pqKRmmuXJsiVFFFkD",
+          "branch": "feat/operator-bento-overview",
+          "source": "91bd091da27705d8628f46184a779b94f98b4d27",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        },
+        {
+          "id": "dpl_87mL1K38txHDpCwazP3jEBLEmQDV",
+          "branch": "feat/operator-bento-overview",
+          "source": "c26b54043f4626d9a63b597e9dfb7db4070fb6ef",
+          "nonProduction": true,
+          "publicAliasesExcluded": true,
+          "deletedAndVerifiedAbsent": true
+        }
+      ]
+    },
+    "liveProbes": {
+      "origin": "https://corridra.vercel.app",
+      "observedAt": "2026-10-22T01:48:12.438706+00:00",
+      "passed": 10,
+      "total": 10,
+      "results": [
+        {
+          "path": "/network",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "enabledCopy": true
+        },
+        {
+          "path": "/privacy",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true,
+          "contributorPrivacyCopy": true
+        },
+        {
+          "path": "/about",
+          "status": 200,
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "referrerPolicy": "strict-origin-when-cross-origin",
+          "passed": true
+        },
+        {
+          "path": "/contributor/setup",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 307,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/operator-setup?kind=contributor",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+          "status": 401,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true
+        },
+        {
+          "path": "/api/intake/pending",
+          "status": 200,
+          "cacheControl": "no-store",
+          "referrerPolicy": "no-referrer",
+          "passed": true,
+          "realAdmissionAvailable": true
+        }
+      ]
+    },
+    "mainCodeql": {
+      "run": 39707433048,
+      "actualAnalysesUploaded": 3,
+      "newFindings": 0,
+      "review": [
+        {
+          "id": 119590687861,
+          "uploaded": true,
+          "metadata": [
+            {
+              "reports": 1,
+              "results": [
+                {
+                  "locations": [
+                    {
+                      "file": "apps/web/app/operator/counterparties.tsx",
+                      "line": 926
+                    }
+                  ],
+                  "rule": "js/xss-through-dom"
+                },
+                {
+                  "locations": [
+                    {
+                      "file": "apps/web/app/operator/workspace.tsx",
+                      "line": 646
+                    }
+                  ],
+                  "rule": "js/xss-through-dom"
+                },
+                {
+                  "locations": [
+                    {
+                      "file": "security/corridra.test.ts",
+                      "line": 9
+                    }
+                  ],
+                  "rule": "js/disabling-certificate-validation"
+                },
+                {
+                  "locations": [
+                    {
+                      "file": "security/corridra.test.ts",
+                      "line": 15
+                    }
+                  ],
+                  "rule": "js/clear-text-logging"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 119590687887,
+          "uploaded": true,
+          "metadata": [
+            {
+              "reports": 1,
+              "results": []
+            }
+          ]
+        },
+        {
+          "id": 119590687892,
+          "uploaded": true,
+          "metadata": [
+            {
+              "reports": 1,
+              "results": []
+            }
+          ]
+        }
+      ],
+      "baseline": "PR126 main39698443032: identical source at workspace finding moved584 to646; other three locations unchanged."
+    },
+    "mainCI": {
+      "run": 39707433078,
+      "status": "failure",
+      "failedJobs": ["operator (3)", "validate"],
+      "failure": "New overview driver assumed first authorized workspace was its seeded owner workspace; later suites can add memberships. Follow-up explicitly selects its existing seed.tenantId and asserts owner before unchanged full acceptance."
+    }
+  },
+  "networkWorkspaceCorrection": {
+    "branch": "feat/network-workspace-readiness",
+    "state": "Implemented and bounded locally tested; exact-head CI/merge/deployment pending.",
+    "cause": "Screenshot-selected Corridra workspace has no Network activation. Approved Corridra request operations has enabled tenant control version1. Global flag does not activate other tenants.",
+    "behavior": [
+      "Workspace-named readiness and focus action to existing Workspace selector.",
+      "Invitation fields editable in an installed paused workspace; submission remains disabled.",
+      "Invitations appear before directory; readable form and onboarding steps, quiet review disclosures.",
+      "No scope, server authorization, RLS, migration, identity, task, reward, money or event change."
+    ],
+    "localVerification": {
+      "build": "exit0",
+      "focusedProtectedBrowser": 2,
+      "durationSeconds": 26,
+      "enabledInvitationSubmitted": true,
+      "pausedDraftEditableAndRetained": true,
+      "pausedSubmissionDisabled": true,
+      "pausedDirectWriteDeniedAndNoInvitationCreated": true,
+      "workspaceSelectorFocus": true,
+      "readyWidths": [360, 390, 768, 1440],
+      "pausedWidths": [390, 1440],
+      "axeViolations": 0,
+      "overflow": 0,
+      "providerEmailProof": "Synthetic fixture only; genuine production email/account acceptance remains unverified."
+    },
+    "screenshots": [
+      {
+        "path": "work/real-use/network-browser/network-paused-1440.png",
+        "sha256": "1f52b1abb8eda56569dec75844784139503688c25e3f8bd1c5b37771e8fb86f6"
+      },
+      {
+        "path": "work/real-use/network-browser/network-paused-390.png",
+        "sha256": "52355f8af9e06e8333f01ecdad24c984faf7ad412133f7f0e0e4eea0dfb53f38"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-1440.png",
+        "sha256": "a25c786656448fdc4eeb37baab62b063cf52fb750dcc8d666fb746a0754bd0b6"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-360.png",
+        "sha256": "0ee8371697d28b34e03cca1ff47d6d4be699e84872604da97f8ef8316c31418a"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-390.png",
+        "sha256": "bd23e312481bef3f745028c9b10dee51a093d92e6e06d165ea7f270ec2ca78ef"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-768.png",
+        "sha256": "777219c1f24fcd1339800d24932d175e28f19be3f7f79ea4624c2418b7bb9167"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-viewport-1440.png",
+        "sha256": "591d86baf57ca3279923f77f568291872358330abdd304552f5a33c60066f53e"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-viewport-360.png",
+        "sha256": "f0ea2c7a7e31a9316d22d5833cd90a416d73f73e11ee2d9555a37893a0abd355"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-viewport-390.png",
+        "sha256": "4faad9a76f8a7c3e673666283c68ce4952fd47800d94c40839f57505a4c2aabc"
+      },
+      {
+        "path": "work/real-use/network-browser/network-ready-viewport-768.png",
+        "sha256": "16732bd0158bc48a39e049a064f230dae9e79a0963d7fa2313437d3275bba018"
+      }
+    ]
+  }
 }

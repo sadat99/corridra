@@ -249,6 +249,7 @@ function TenantWorkspace({
         <label className="field">
           Workspace
           <select
+            id="operator-workspace-select"
             disabled={busy}
             value={tenant}
             onChange={(e) => {
@@ -516,7 +517,17 @@ function TenantWorkspace({
                 className="workspace-panel ux-panel"
                 hidden={view !== 'workspace-network'}
               >
-                <ExecutionNetwork key={`network-${tenant}`} tenant={tenant} role={data.role} />
+                <ExecutionNetwork
+                  key={`network-${tenant}`}
+                  tenant={tenant}
+                  role={data.role}
+                  workspaceName={tenants.find((item) => item.id === tenant)?.name}
+                  onChooseWorkspace={() => {
+                    const selector = document.getElementById('operator-workspace-select');
+                    selector?.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    selector?.focus();
+                  }}
+                />
                 <a className="text-link" href="#workspace-navigation">
                   Back to workspace sections
                 </a>

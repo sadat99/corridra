@@ -12,6 +12,8 @@ Start with the existing work password/TOTP identity and tenant authority. Use is
 
 PR126 is merged as `8865b889` with real invited work under [ADR057](../adr/0057-real-invited-execution-work.md). Its exact-source Production deployment is READY. Production Network was enabled by reviewed install run39701988762 and the independent Production flag, then verified at exact source `8865b889`. See the [activation receipt](../v3/cleanup/2026-10-22-network-enabled.json) for migration hashes, preserved authority, READY deployment and live probes. This dated receipt is not a continuous health check. Genuine production identity/email acceptance remains separate from local browser evidence.
 
+Production observation, 22 October: approved Network activation applies to **Corridra request operations**. The separate **Corridra workspace** remains paused. Select the enabled workspace using the operator Workspace selector; global enablement does not activate every tenant. A paused form may hold a draft, but invitation submission remains blocked. Never copy activation or memberships between workspaces to bypass this boundary.
+
 ### Prepare contributor access
 
 1. An owner/admin with a current authenticator opens **Assistance → Execution network → Invite a contributor** in the real workspace. Enter the intended name, contact email and an operating country within your authority. This creates a disabled pending work identity, not team membership.

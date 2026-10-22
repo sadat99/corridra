@@ -133,7 +133,8 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
     }
   }
   return (
-    <section className="detail-card" aria-label="Contributor invitations">
+    <section className="detail-card ux-network-invitations" aria-label="Contributor invitations">
+      <p className="label">01 · INVITE</p>
       <h3>Invite a contributor</h3>
       <p>
         Prepare their separate work sign-in. They verify their account email, set a contributor
@@ -150,48 +151,83 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       )}
       {data?.installed && !data.enabled && (
         <p>
-          New invitations are paused. Existing invitation history and pending cancellation remain
-          available.
+          Invitations are paused in this workspace. You can prepare the fields below, but cannot
+          submit until Network is enabled here. Choose an enabled workspace using the Workspace
+          selector above. Existing history and pending cancellation remain available.
         </p>
       )}
-      <form className="operator-form" method="post" onSubmit={(event) => void save(event)}>
-        <fieldset disabled={busy || !data?.enabled}>
-          <legend>New reviewed invitation</legend>
-          <label className="field">
-            Contributor name
-            <input name="name" required maxLength={80} autoComplete="off" />
-          </label>
-          <label className="field">
-            Contributor email
-            <input name="email" type="email" required maxLength={254} autoComplete="off" />
-          </label>
-          <label className="field">
-            Contributor operating country
-            <select
-              name="operatingCountry"
-              required
-              defaultValue=""
-              aria-describedby="contributor-country-help"
-            >
-              <option value="" disabled>
-                Select a country
-              </option>
-              {data?.countries.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
+      <div className="ux-invitation-flow">
+        <form className="operator-form" method="post" onSubmit={(event) => void save(event)}>
+          <fieldset disabled={busy || !data?.installed}>
+            <legend>New reviewed invitation</legend>
+            <label className="field">
+              Contributor name
+              <input name="name" required maxLength={80} autoComplete="off" />
+            </label>
+            <label className="field">
+              Contributor email
+              <input name="email" type="email" required maxLength={254} autoComplete="off" />
+            </label>
+            <label className="field">
+              Contributor operating country
+              <select
+                name="operatingCountry"
+                required
+                defaultValue=""
+                aria-describedby="contributor-country-help"
+              >
+                <option value="" disabled>
+                  Select a country
                 </option>
-              ))}
-            </select>
-          </label>
-          <p id="contributor-country-help">
-            Choose within your reviewed country scope. Task eligibility is reviewed separately.
-          </p>
-          <button className="primary-link">
-            {busy ? 'Saving…' : 'Prepare contributor invitation'}
-          </button>
-        </fieldset>
-      </form>
-      <div className="workspace-links">
+                {data?.countries.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p id="contributor-country-help">
+              Choose within your reviewed country scope. Task eligibility is reviewed separately.
+            </p>
+            <button
+              className="primary-link"
+              disabled={busy || !data?.enabled || !data.countries.length}
+            >
+              {busy ? 'Saving…' : 'Prepare contributor invitation'}
+            </button>
+          </fieldset>
+        </form>
+        <aside className="ux-invitation-guide" aria-label="Contributor onboarding steps">
+          <h4>What happens next</h4>
+          <ol>
+            <li>
+              <strong>Prepare the invitation.</strong>
+              <span>Use the person’s account email and a country within your reviewed scope.</span>
+            </li>
+            <li>
+              <strong>Share the setup link.</strong>
+              <span>
+                They verify that email, set a separate work password and enroll an authenticator.
+                Corridra does not send an invitation email.
+              </span>
+            </li>
+            <li>
+              <strong>Review, then assign.</strong>
+              <span>
+                Approve their eligibility before assigning a fully disclosed task. An invitation
+                grants no workspace membership.
+              </span>
+            </li>
+          </ol>
+        </aside>
+      </div>
+      {data?.installed && !data.countries.length && (
+        <p role="alert">
+          No operating country is available in your reviewed scope. Ask your workspace owner to
+          review your country access before inviting a contributor.
+        </p>
+      )}
+      <div className="workspace-links ux-invitation-links">
         <button
           className="text-link"
           type="button"
