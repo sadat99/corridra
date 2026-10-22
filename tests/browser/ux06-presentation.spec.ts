@@ -107,7 +107,7 @@ test('UX-06 discovery preserves keyboard and content at all required widths and 
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Find the right market.Meet the right people.Know what to do next.',
+      'Make market entry deliberate.',
     );
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth + 1,

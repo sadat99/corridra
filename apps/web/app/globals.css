@@ -7342,6 +7342,584 @@ th {
   color: var(--text-2);
 }
 
+/* AC/1 home, concept A "Ledger" (owner pick 22 Oct 2026). Promise and the three jobs on the left,
+   a switchable selling/sourcing example mission on the right. Tokens only. */
+.ux-public.ac1-home {
+  display: block;
+  padding-bottom: var(--space-12);
+}
+.ac1-home :is(h1, h2, h3) {
+  font-family: var(--serif);
+  font-weight: 400;
+}
+.ac1-home .label {
+  margin: 0;
+  color: var(--text-2);
+}
+.ac1-home :where(.corridra-icon:not([width])) {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.ac1-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ac1-rule::before {
+  content: '';
+  width: 1rem;
+  height: 2px;
+  background: var(--editorial-accent);
+}
+.ac1-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-16);
+  align-items: start;
+  padding-block: var(--space-16) var(--space-4);
+}
+.ac1-hero h1 {
+  margin: var(--space-6) 0;
+  font-size: clamp(2.375rem, 1.2rem + 3.4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+.ac1-lead {
+  margin: 0 0 var(--space-8);
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+}
+.ac1-hero .ac1-lead {
+  max-width: 34ch;
+  font-size: 1.1875rem;
+}
+.ac1-jobs {
+  display: grid;
+  margin-bottom: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+.ac1-jobs a {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
+  gap: var(--space-4);
+  align-items: center;
+  min-height: 5.25rem;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-1);
+  text-decoration: none;
+}
+.ac1-jobs .ac1-job-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+  color: var(--brand-deep);
+}
+.ac1-jobs strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.ac1-job-text {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-home .ac1-job-name {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.ac1-jobs .ac1-job-go {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--action);
+}
+.ac1-jobs a:hover strong {
+  color: var(--action);
+}
+.ac1-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  color: var(--action);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ac1-quiet:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ac1-calm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ac1-calm li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ac1-calm svg {
+  color: var(--positive);
+}
+.ac1-note {
+  max-width: 36ch;
+  margin: var(--space-6) 0 0;
+  color: var(--text-3);
+  font-size: var(--text-sm);
+}
+
+.ac1-record {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-record-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+.ac1-example-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ac1-record-tabs {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.ac1-record-tabs button {
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font: 600 var(--text-sm) var(--font-ui);
+  cursor: pointer;
+}
+.ac1-record-tabs button + button {
+  border-left: 1px solid var(--border-strong);
+}
+.ac1-record-tabs button[aria-selected='true'] {
+  background: var(--selected-surface);
+  box-shadow: inset 0 -2px 0 var(--selected);
+  color: var(--selected);
+}
+.ac1-record-tabs button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -4px;
+}
+.ac1-record-body {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+.ac1-record-body[hidden] {
+  display: none;
+}
+.ac1-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+.ac1-record h2 {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(1.5rem, 1.1rem + 1vw, 1.875rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.ac1-record-meta {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ac1-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ac1-track li {
+  position: relative;
+  padding-top: var(--space-4);
+  padding-right: var(--space-1);
+  color: var(--text-3);
+  font-size: 0.8125rem;
+}
+.ac1-track li::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--line);
+  content: '';
+}
+.ac1-track li.is-done {
+  color: var(--text-2);
+}
+.ac1-track li.is-done::before {
+  background: var(--brand-deep);
+}
+.ac1-track li.is-now {
+  color: var(--action);
+  font-weight: 600;
+}
+.ac1-track li.is-now::before {
+  background: var(--action);
+}
+.ac1-companies,
+.ac1-buyers,
+.ac1-truth,
+.ac1-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ac1-companies {
+  border-top: 1px solid var(--line);
+}
+.ac1-companies li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ac1-companies li > span:not(.guide-tag) {
+  grid-column: 1;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+.ac1-companies .guide-tag {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.ac1-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.ac1-next p {
+  margin: 0;
+}
+.ac1-next .label {
+  margin-bottom: var(--space-1);
+}
+.ac1-next svg {
+  color: var(--action);
+}
+
+.ac1-section {
+  padding-top: var(--space-20);
+}
+.ac1-section > h2 {
+  margin: var(--space-4) 0 var(--space-3);
+  font-size: clamp(2rem, 1.5rem + 1.4vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.ac1-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+.ac1-steps li {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+.ac1-step-number {
+  display: block;
+  margin-bottom: var(--space-4);
+  color: var(--action);
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.ac1-steps h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.ac1-steps p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--space-12);
+  align-items: start;
+}
+.ac1-proof + .ac1-proof {
+  margin-top: var(--space-12);
+}
+.ac1-proof > div > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 1.0625rem;
+}
+.ac1-proof-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+.ac1-proof-title svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--brand-deep);
+}
+.ac1-buyers li {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) auto minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ac1-buyers li > span:not(.guide-tag) {
+  color: var(--text-2);
+}
+.ac1-buyers .ac1-state {
+  font-size: var(--text-sm);
+}
+.ac1-compare {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-compare-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr));
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+}
+.ac1-compare-row:last-child {
+  border-bottom: 0;
+}
+.ac1-compare-head {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.ac1-compare [role='rowheader'] {
+  font-weight: 600;
+}
+.ac1-compare small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+.ac1-compare [data-tone='num'] {
+  font-variant-numeric: tabular-nums;
+}
+.ac1-compare [data-tone='ok'] {
+  color: var(--positive);
+  font-weight: 600;
+}
+.ac1-compare [data-tone='miss'] {
+  color: var(--caution);
+  font-weight: 600;
+}
+.ac1-compare [data-tone='bad'] {
+  color: var(--critical);
+  font-weight: 600;
+}
+.ac1-truth {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.ac1-truth li {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+}
+.ac1-truth li + li {
+  border-left: 1px solid var(--line);
+}
+.ac1-truth li > span:not(.guide-tag) {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+.ac1-routes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.ac1-routes article {
+  padding-top: var(--space-6);
+  border-top: 3px solid var(--brand-deep);
+}
+.ac1-routes h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+.ac1-routes h3 svg {
+  color: var(--brand-deep);
+}
+.ac1-routes p {
+  max-width: 46ch;
+  margin: 0 0 var(--space-2);
+  color: var(--text-2);
+}
+.ac1-other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ac1-other p {
+  margin: 0;
+}
+.ux-guide-home.ac1-home .ac1-band {
+  margin-top: var(--space-20);
+}
+@media (max-width: 1000px) {
+  .ac1-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    padding-block: var(--space-8) 0;
+  }
+  .ac1-steps,
+  .ac1-truth {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ac1-truth li + li {
+    border-left: 0;
+  }
+  .ac1-truth li {
+    border-bottom: 1px solid var(--line);
+  }
+  .ac1-proof {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .ac1-routes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .ac1-section {
+    padding-top: var(--space-16);
+  }
+  .ac1-buyers li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    justify-items: start;
+  }
+  .ac1-compare-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ac1-compare-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+  .ac1-compare [role='cell'] {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+  .ac1-compare [role='cell']::before {
+    color: var(--text-2);
+    font-weight: 400;
+    content: attr(data-supplier);
+  }
+  .ac1-other {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  .ac1-hero .ac1-lead {
+    margin-bottom: var(--space-6);
+    font-size: 1.0625rem;
+  }
+  .ac1-jobs a {
+    min-height: 4.75rem;
+  }
+  .ac1-jobs strong {
+    font-size: 1.375rem;
+  }
+  .ac1-record-head,
+  .ac1-record-body {
+    padding-inline: var(--space-4);
+  }
+  .ac1-track li {
+    font-size: var(--text-xs);
+  }
+  .ac1-steps,
+  .ac1-truth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* One icon family everywhere (components/corridra-icon.tsx). Contexts may size it, not restyle it. */
 .corridra-icon {
   flex: none;
