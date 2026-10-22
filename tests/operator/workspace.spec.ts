@@ -1389,7 +1389,24 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  // The streamed page heading can arrive before the protected snapshot mounts.
+  // Await both real authorized reads; retain all navigation and delivery assertions.
+  const workspaceRead = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/workspace/workspace' &&
+      new URL(response.url()).searchParams.get('tenant') === seed.tenantId,
+  );
+  const configRead = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/workspace/config' &&
+      response.request().method() === 'GET' &&
+      new URL(response.url()).searchParams.get('tenant') === seed.tenantId,
+  );
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  const [snapshot, configuration] = await Promise.all([workspaceRead, configRead]);
+  expect(snapshot.status()).toBe(200);
+  expect(configuration.status()).toBe(200);
+  expect((await snapshot.json()).role).toBe('owner');
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await openSection(page, 'workspace-delivery');
   const panel = page.locator('.delivery-ops');
