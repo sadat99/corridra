@@ -53,6 +53,7 @@ test.beforeAll(async () => {
       contents: `import{GET as setupGet,POST as setupPost}from ${JSON.stringify(resolve('apps/web/app/api/operator-setup/route.ts'))};
     import{GET as workGet,POST as workPost}from ${JSON.stringify(resolve('apps/web/app/api/workspace/[action]/route.ts'))};
     import{GET as taskGet,POST as taskPost}from ${JSON.stringify(resolve('apps/web/app/api/network/tasks/route.ts'))};
+    export{NetworkInvitations}from ${JSON.stringify(resolve('packages/auth/src/network-invitations.ts'))};
     export function handle(request){const path=new URL(request.url).pathname;return path.startsWith('/api/workspace/')?(request.method==='GET'?workGet:workPost)(request,{params:Promise.resolve({action:path.split('/').at(-1)})}):path.startsWith('/api/network/')?(request.method==='GET'?taskGet:taskPost)(request):(request.method==='GET'?setupGet:setupPost)(request)}`,
       resolveDir: resolve('.'),
       loader: 'ts',
@@ -68,6 +69,10 @@ test.beforeAll(async () => {
         setup(b) {
           b.onResolve({ filter: /^workflow(?:\/.*)?$/ }, (args) => ({
             path: require.resolve(args.path, { paths: [resolve('apps/web')] }),
+            external: true,
+          }));
+          b.onResolve({ filter: /^better-auth\// }, (args) => ({
+            path: require.resolve(args.path, { paths: [resolve('packages/auth')] }),
             external: true,
           }));
           b.onResolve({ filter: /^pg$/ }, () => ({
@@ -204,7 +209,8 @@ test.beforeAll(async () => {
       access: new AccessService(f.runtime, f.auth),
       operatorSetup: f.setup,
       network: f.network,
-      networkInvitations: f.invitations,
+      // Instantiate beside the bundled handler so DomainError retains its runtime identity.
+      networkInvitations: new api.NetworkInvitations(f.auth, true),
       provider: {
         getSession: async (headers: Headers) =>
           headers.get('cookie')?.includes('fixture_owner=authorized')
@@ -446,7 +452,7 @@ test('Network invitation form supports scoped submission and an editable paused 
       reason: 'Restore isolated Network fixture after paused-workspace acceptance',
     });
   }
-  // A read denial keeps entry closed and offers the existing MFA recovery path.
+  // A read denial keeps protected actions closed while permitting a local name/email draft.
   await page.route('**/api/workspace/network-invitations?*', (route) =>
     route.fulfill({
       status: 403,
@@ -456,15 +462,121 @@ test('Network invitation form supports scoped submission and an editable paused 
   );
   await page.reload();
   await expect(invitations.getByRole('alert')).toContainText(
-    'Verify your access, then refresh invitations.',
+    'an authenticator check made within the last five minutes.',
   );
   await expect(
     invitations.getByRole('link', { name: 'Verify invitation access', exact: true }),
   ).toHaveAttribute('href', '#workspace-authenticator');
-  await expect(invitations.getByLabel('Contributor name', { exact: true })).toBeDisabled();
+  await invitations.getByLabel('Contributor name', { exact: true }).fill('Access retry draft');
+  await invitations
+    .getByLabel('Contributor email', { exact: true })
+    .fill('access-retry@business.test');
+  await expect(
+    invitations.getByRole('combobox', { name: 'Contributor operating country', exact: true }),
+  ).toBeDisabled();
+  await expect(
+    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+  ).toBeDisabled();
   await page.unroute('**/api/workspace/network-invitations?*');
   await invitations.getByRole('button', { name: 'Refresh invitations', exact: true }).click();
   await expect(
     invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
   ).toBeEnabled();
+});
+
+test('expired five-minute MFA permits drafting but denies invitation reads and writes until renewed', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.context().addCookies([{ name: 'fixture_owner', value: 'authorized', url: origin }]);
+  const session = f.users.owner.sessionId;
+  const previous = (
+    await f.owner.query('SELECT verified_at FROM identity.assurance WHERE session_id=$1', [session])
+  ).rows[0].verified_at;
+  await f.owner.query(
+    "UPDATE identity.assurance SET verified_at=clock_timestamp()-interval '6 minutes' WHERE session_id=$1",
+    [session],
+  );
+  try {
+    await page.goto(origin + '/network-owner');
+    const invitations = page.getByRole('region', { name: 'Contributor invitations', exact: true });
+    await expect(page.getByText('Network enabled', { exact: true })).toBeVisible();
+    await expect(invitations.getByRole('alert')).toContainText('last five minutes');
+    await invitations
+      .getByLabel('Contributor name', { exact: true })
+      .fill('Retained expired MFA draft');
+    await invitations
+      .getByLabel('Contributor email', { exact: true })
+      .fill('expired-mfa-draft@business.test');
+    await expect(
+      invitations.getByRole('combobox', { name: 'Contributor operating country', exact: true }),
+    ).toBeDisabled();
+    await expect(
+      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    ).toBeDisabled();
+    const endpoint = origin + '/api/workspace/network-invitation?tenant=' + f.realTenant;
+    const list = await page.request.get(
+      origin + '/api/workspace/network-invitations?tenant=' + f.realTenant,
+    );
+    expect(list.status()).toBe(403);
+    expect((await list.json()).countries).toBeUndefined();
+    const rejected = await page.request.post(endpoint, {
+      headers: { origin },
+      data: {
+        action: 'invite',
+        commandId: crypto.randomUUID(),
+        name: 'Must remain denied',
+        email: 'stale-mfa-denied@business.test',
+        operatingCountry: 'DE',
+      },
+    });
+    expect(rejected.status()).toBe(403);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM app.network_invitation i JOIN identity.principal p ON p.id=i.principal_id JOIN identity."user" u ON u.id=p.identity_id WHERE u.email=$1',
+          ['stale-mfa-denied@business.test'],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
+        false,
+      );
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.screenshot({
+        path: `work/real-use/network-browser/stale-mfa-draft-${width}.png`,
+        fullPage: true,
+      });
+    }
+    // Restore fresh assurance only inside this disposable fixture; production is never changed.
+    await f.owner.query(
+      'UPDATE identity.assurance SET verified_at=clock_timestamp() WHERE session_id=$1',
+      [session],
+    );
+    await invitations.getByRole('button', { name: 'Refresh invitations', exact: true }).click();
+    await expect(
+      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    ).toBeEnabled();
+    await expect(invitations.getByLabel('Contributor name', { exact: true })).toHaveValue(
+      'Retained expired MFA draft',
+    );
+    await expect(invitations.getByLabel('Contributor email', { exact: true })).toHaveValue(
+      'expired-mfa-draft@business.test',
+    );
+    await invitations
+      .getByRole('combobox', { name: 'Contributor operating country', exact: true })
+      .selectOption('DE');
+    await invitations.getByRole('button', { name: 'Prepare contributor invitation' }).click();
+    await expect(invitations.getByRole('status')).toContainText('Invitation prepared');
+    await expect(
+      invitations.getByText('expired-mfa-draft@business.test', { exact: true }),
+    ).toBeVisible();
+  } finally {
+    await f.owner.query('UPDATE identity.assurance SET verified_at=$2 WHERE session_id=$1', [
+      session,
+      previous,
+    ]);
+  }
 });
