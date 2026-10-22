@@ -80,6 +80,7 @@ Consumers re-pointed by role (presentation only, no class, id, name, link or pay
 
 - `.primary-link`, `.button`, `.guide-choice-start`, `.operator-mission-cta`: fill `--action`, hover `--action-hover`, pressed `--action-pressed`. These were filled with `--brand-deep`; recolouring `--brand-deep` alone would have turned every CTA navy.
 - Selected states move from a navy fill to `--selected`: customer tabs `aria-current="page"`, journey-bar current step, pricing tabs `aria-selected`, operator area bar current, dock buttons when active, quick-route toggles `aria-pressed`.
+- `.guide-choice-icon` (home choice cards) used the status token `--positive-surface` as decoration; it now uses `--selected-surface`, because status colours carry meaning only.
 - Navy stays on dark contrast surfaces: next-step card and closing band (`.guide-band`), guided footer, the outcome-path final step and the operator directory's first tile (hover `--nav-hover`).
 - `operator-overview.css` had 11 raw hex values and 4 raw `rgb()` values (green shadows, white overlays) outside the token check. They now use tokens, and the design-system test now scans every stylesheet under `apps/web` other than `globals.css`.
 - Legacy CSS before the marker had 15 raw hex values; all 15 now use tokens, so `legacyHex` in `tests/design-system-baseline.json` is lowered from 15 to 0. The 2 legacy raw font families (Arial fallbacks) are unchanged and out of scope.

@@ -3123,7 +3123,7 @@ th {
   width: 4rem;
   height: 4rem;
   color: var(--brand);
-  background: var(--positive-surface);
+  background: var(--selected-surface);
   border-radius: var(--guided-hero-radius);
 }
 .guide-choice-icon svg {
