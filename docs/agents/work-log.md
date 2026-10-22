@@ -1154,3 +1154,15 @@ Verification, each through the gate runner with exit 0: format:check, lint, type
 Preserved: contract and vision hashes, 507 requirement identities, all archives, every gate and test, and the owner rule to read the full contract and vision once per session before product work. Judgment call for the owner: the playbook lets visible UI work read the ui-direction outline plus the binding sections and the touched area instead of the whole file, and says to read it whole for navigation, glossary or foundation changes or on request. Say so if you want the full read kept for every UI change.
 
 Next action: draft PR, watch CI, then use `budget` at the start of the next session to confirm the always-read cost stayed under 32 KiB.
+
+## 2026-10-22, Claude Code, correction: full UI direction read kept; PR132 audit and ported test fix
+
+Owner decision: the full read of `docs/agents/ui-direction.md` stays mandatory for every UI change. The earlier entry's partial-read default is withdrawn; `docs/v3/CONTEXT.md` now says so and the budget table counts the whole file.
+
+Audit of PR132 from run data (not from its text). Confirmed: checked head d37e93c CI39797044587 had six successful jobs; production dpl_ETqmbewZ2wGmucz6BfJGsefwYCNY is READY at ea67fb18 on main. Not recorded anywhere: main CI39800962758 on that merge failed. operator (3) timed out in `tests/operator/workspace.spec.ts:1379` at the `page.waitForResponse` on line 1394 (117 passed), operator (2) was cancelled in its Browser runtime step after about 28 minutes with its shard skipped, and `validate` failed. CodeQL on that commit passed. The documentation checkpoint on `docs/network-release-status` cites only the pre-merge run, so it needs a correction before it merges.
+
+Cause traced in source: `apps/web/app/operator/page.tsx:42` falls back to `tenants[0]`, and `packages/auth/src/access.ts:20` orders the tenant list only in real-use mode. After earlier tests add the browser operator to more workspaces, the delivery test can open another tenant and never sees the seeded tenant's read. PR133 reached the same conclusion; its other comment blaming a shared MFA rate-limit bucket is a hypothesis it did not prove and its final body does not use it.
+
+Change: ported PR133's test-only fix byte for byte (sign in with `next=/operator?workspace=<seed>` as the test at line 3242 already does, and assert the selected workspace). No assertion, timeout or product code relaxed. The protected operator suite needs Docker and could not run here, so CI on this head is the proof. If PR133 merges first the hunks are identical and merge cleanly.
+
+Next action: CI on this head, then correct the PR132 documentation checkpoint with its owner.
