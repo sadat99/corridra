@@ -1,0 +1,130 @@
+{
+  "protectedRun": 39701988762,
+  "job": 119573152424,
+  "reviewer": "sadat99",
+  "result": "success",
+  "workflowSource": "8865b889c258d305be06a3a88e91f83352db4ff7",
+  "productionDatabase": {
+    "project": "odd-pond-26265871",
+    "branch": "br-lucky-darkness-b1ppj8en",
+    "database": "corridra",
+    "registryHashes": [
+      {
+        "name": "0001_real_invited_execution.sql",
+        "sha256": "bfb0f5cae591883134d85867438b1efc3b481082517a237aae06b3324f346233"
+      },
+      {
+        "name": "0002_reviewed_contributor_invitations.sql",
+        "sha256": "554ae501e5c21170e334b13418da76aa259d53d23329f0ecbdf6b113554e087a"
+      }
+    ],
+    "coreMigrations": 29,
+    "realUseMigrations": 7,
+    "networkControl": {
+      "enabled": true,
+      "version": 1,
+      "created_by_original_owner": true
+    },
+    "originalAuthorityPreserved": true,
+    "realAdmissionAvailable": true
+  },
+  "productionEnvironment": {
+    "CORRIDRA_NETWORK_ENABLED": "true",
+    "target": "production",
+    "preexistingVariableMetadataPreserved": 64
+  },
+  "deployment": {
+    "id": "dpl_FxPdoWTVzrKv7WXvKafdaBxe4WfC",
+    "source": "8865b889c258d305be06a3a88e91f83352db4ff7",
+    "state": "READY",
+    "regions": ["fra1"],
+    "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"],
+    "configurationRefresh": true
+  },
+  "limitations": [
+    "Genuine production contributor account/email/work-password/TOTP and assigned-task acceptance remain unverified.",
+    "Invitations are shared manually; no automated invitation email, public enrollment, AI, outreach, billing or payout activation.",
+    "Custom domain blocked to executor; read-only probes use owned Vercel fallback and verify canonical redirects."
+  ],
+  "liveProbes": {
+    "origin": "https://corridra.vercel.app",
+    "observedAt": "2026-10-22T01:10:24.367683+00:00",
+    "passed": 10,
+    "total": 10,
+    "results": [
+      {
+        "path": "/network",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true,
+        "enabledCopy": true
+      },
+      {
+        "path": "/privacy",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true,
+        "contributorPrivacyCopy": true
+      },
+      {
+        "path": "/about",
+        "status": 200,
+        "cacheControl": "public, max-age=0, must-revalidate",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "passed": true
+      },
+      {
+        "path": "/contributor/setup",
+        "status": 307,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/contributor?workspace=11111111-1111-4111-8111-111111111111",
+        "status": 307,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/workspace/network-invitations?tenant=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/workspace/network-invitation?tenant=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/operator-setup?kind=contributor",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/network/tasks?workspace=11111111-1111-4111-8111-111111111111",
+        "status": 401,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true
+      },
+      {
+        "path": "/api/intake/pending",
+        "status": 200,
+        "cacheControl": "no-store",
+        "referrerPolicy": "no-referrer",
+        "passed": true,
+        "realAdmissionAvailable": true
+      }
+    ]
+  }
+}

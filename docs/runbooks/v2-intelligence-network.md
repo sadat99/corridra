@@ -10,7 +10,7 @@ Start with the existing work password/TOTP identity and tenant authority. Use is
 - Invited staff: open [Execution network](https://c.obsidianglobal.studio/operator#workspace-network), sign in with the operator identity and authenticator, then select **Assistance → Execution network**. Navigation is offered to owner/admin/operator/reviewer roles; every API permission still applies. Customer registration grants no staff membership.
 - Invited contributors: use `/contributor?workspace=<the-issued-workspace-id>` from the reviewed invitation. The staff panel’s **Open assigned task access** link includes that workspace. Opening `/contributor` alone shows access help, not a workspace chooser or public enrolment.
 
-PR126 is merged as `8865b889` with real invited work under [ADR057](../adr/0057-real-invited-execution-work.md). Its exact-source Production deployment is READY. Production Network activation remains pending protected installation and explicit flag verification. Do not infer activation from the source or this runbook. Genuine production identity/email acceptance remains separate from local browser evidence.
+PR126 is merged as `8865b889` with real invited work under [ADR057](../adr/0057-real-invited-execution-work.md). Its exact-source Production deployment is READY. Production Network was enabled by reviewed install run39701988762 and the independent Production flag, then verified at exact source `8865b889`. See the [activation receipt](../v3/cleanup/2026-10-22-network-enabled.json) for migration hashes, preserved authority, READY deployment and live probes. This dated receipt is not a continuous health check. Genuine production identity/email acceptance remains separate from local browser evidence.
 
 ### Prepare contributor access
 
