@@ -44,6 +44,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - After a missing path or unsupported CLI field, inspect available paths/fields before retrying; never substitute another guessed name.
 - Verify rendered accessible names, including descriptive descendants, before writing exact navigation selectors; preserve every behavior and denial assertion when correcting a driver.
 - Select country/workspace controls by the rendered combobox role/name; exact label text can include option descendants even when the computed accessible name does not.
+- Select controlled textareas by rendered textbox role/name; exact label text can include the current textarea value.
 - Derive cleanup counts from the verified ID lists after all safety exclusions; never reuse pre-exclusion totals.
 - Use `set -e` for multi-step verification and publishing commands; a later success must never mask an earlier failure.
 - Use discovered database names and explicit project/branch/role IDs; never assume a provider's default database.

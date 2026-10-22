@@ -7,6 +7,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
 import { intakeTemplate } from '../../packages/delivery/src/import';
+import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import { initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { initialRoutes } from '../../packages/domain/src/corridors';
 function totp(secret: string) {
@@ -665,6 +666,129 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     (await page.request.get(`/api/workspace/workspace?tenant=${seed.tenantId}`)).status(),
   ).toBe(401);
 });
+test('all 18 operator destinations render with scoped audit, working policy jumps and retained forms', async ({
+  page,
+}) => {
+  test.setTimeout(360000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+  const workspace = page.getByRole('combobox', { name: 'Workspace', exact: true });
+  if ((await workspace.inputValue()) !== seed.tenantId) await workspace.selectOption(seed.tenantId);
+  await expect(workspace).toHaveValue(seed.tenantId);
+  await expect(page).toHaveTitle('Operator workspace | Corridra');
+  await mkdir('.cache/ux06/after/operator-subtabs', { recursive: true });
+  for (const section of workspaceSections) {
+    await openSection(page, section.id);
+    const panel = page.locator('#' + section.id);
+    await expect(panel.getByRole('heading').first()).toBeVisible();
+    for (const width of [1440, 1024, 768, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        section.id + ' overflow at ' + width,
+      ).toBe(true);
+      expect(
+        await page.locator('.ux-area-bar').evaluate((bar) => getComputedStyle(bar).position),
+      ).toBe('static');
+      if (width === 1440 || width === 390)
+        expect(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          section.id + ' accessibility at ' + width,
+        ).toEqual([]);
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement)?.blur();
+        scrollTo(0, 0);
+      });
+      await page.screenshot({
+        path: `.cache/ux06/after/operator-subtabs/${section.id}-${width}.png`,
+        fullPage: true,
+      });
+    }
+  }
+  await openSection(page, 'workspace-audit');
+  const audit = page.locator('#workspace-audit');
+  await expect(audit.getByText('Review access when you need it', { exact: true })).toBeVisible();
+  await audit.getByRole('button', { name: 'Load access and recent changes', exact: true }).click();
+  await expect(audit.getByText('Synthetic Browser Operator', { exact: true })).toBeVisible();
+  await expect(audit.getByText('Active membership', { exact: true })).toBeVisible();
+  const event = audit.locator('.ux-audit-events > li').first();
+  await expect(event.locator('time')).toHaveAttribute('datetime', /\d{4}-/);
+  await event.getByText('Event references', { exact: true }).click();
+  await expect(event.getByText('Event type', { exact: true })).toBeVisible();
+  await expect(event.locator('code').first()).not.toBeEmpty();
+  const firstEvent = await event.getAttribute('data-event');
+  await expect(audit.locator('.ux-audit-events > li')).toHaveCount(10);
+  await audit.getByRole('button', { name: 'Next changes', exact: true }).click();
+  await expect(event).not.toHaveAttribute('data-event', firstEvent!);
+  await audit.getByRole('button', { name: 'Previous changes', exact: true }).click();
+  await expect(event).toHaveAttribute('data-event', firstEvent!);
+  await event.getByText('Event references', { exact: true }).click();
+
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      scrollTo(0, 0);
+    });
+    await page.screenshot({
+      path: `.cache/ux06/after/operator-subtabs/audit-loaded-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await openSection(page, 'workspace-settings');
+  const settings = page.locator('#workspace-settings');
+  for (const label of [
+    'Mission templates',
+    'Directional route',
+    'Source rights and model policies',
+    'Pinned configuration references',
+  ]) {
+    await settings.getByRole('button', { name: label, exact: true }).click();
+    await expect(settings.locator('details[open]')).not.toHaveCount(0);
+  }
+  await expect(
+    settings.getByRole('combobox', { name: 'Reviewed configuration action', exact: true }),
+  ).toBeVisible();
+  await settings
+    .getByRole('textbox', { name: 'Reviewed command JSON', exact: true })
+    .fill('{"reason":"retained scoped UI draft"}');
+  await openSection(page, 'workspace-authenticator');
+  await expect(page.getByLabel('Current authenticator code', { exact: true })).toHaveAttribute(
+    'maxlength',
+    '6',
+  );
+  await openSection(page, 'workspace-settings');
+  await expect(
+    settings.getByRole('textbox', { name: 'Reviewed command JSON', exact: true }),
+  ).toHaveValue('{"reason":"retained scoped UI draft"}');
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      scrollTo(0, 0);
+    });
+    await page.screenshot({
+      path: `.cache/ux06/after/operator-subtabs/policies-expanded-${width}.png`,
+      fullPage: true,
+    });
+  }
+});
+
 test('controlled buyer response progresses through durable delivery, a held meeting and owned follow-up', async ({
   page,
   browser,

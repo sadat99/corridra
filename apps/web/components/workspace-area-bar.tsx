@@ -30,7 +30,7 @@ export function WorkspaceAreaBar({ role, fragment }: { role: string; fragment: s
   return (
     <div className="ux-area-bar">
       <nav aria-label="Workspace areas">
-        <a className="ux-area-home" href="#main">
+        <a className="ux-area-home" href="#main" aria-current={!active ? 'page' : undefined}>
           Overview
         </a>
         {visible.map((area) => (

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { OperatorIcon } from '../../components/operator-icon';
 import { ReviewSettings } from './review-settings';
 import { WorkspaceControls } from './workspace-controls';
+import { WorkspaceAudit } from './workspace-audit';
+import { PanelHeading } from './panel-heading';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -32,6 +34,11 @@ type RecordRow = {
   name?: string | null;
   revoked_at?: string | null;
   type?: string;
+  occurred_at?: string;
+  aggregate_type?: string;
+  aggregate_id?: string;
+  actor_id?: string;
+  correlation_id?: string;
   version?: number;
   key?: string;
   value?: { enabled: boolean };
@@ -83,6 +90,7 @@ function TenantWorkspace({
     [missionRevision, setMissionRevision] = useState(0);
   const [readFailure, setReadFailure] = useState<'denied' | 'unavailable'>('unavailable');
   const [membersLoaded, setMembersLoaded] = useState(false);
+  const [auditLoaded, setAuditLoaded] = useState(false);
   const [members, setMembers] = useState<RecordRow[]>([]),
     [audit, setAudit] = useState<RecordRow[]>([]),
     [flags, setFlags] = useState<RecordRow[]>([]);
@@ -542,13 +550,23 @@ function TenantWorkspace({
             className="detail-grid workspace-panel ux-panel"
             hidden={view !== 'workspace-sources'}
           >
+            <div className="ux-sources-heading">
+              <PanelHeading
+                title="Sources and claims"
+                icon="document"
+                description="Record where information came from, review its claims and keep verified facts separate."
+              />
+            </div>
             <section className="detail-card">
-              <h2>Sources</h2>
+              <h3>Sources</h3>
               <ul>
                 {data.sources.map((r) => (
                   <li key={r.id}>
                     {r.locator}
-                    <p>Source reference: {r.id}</p>
+                    <details>
+                      <summary>Source reference</summary>
+                      <p>Source reference: {r.id}</p>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -591,12 +609,15 @@ function TenantWorkspace({
               )}
             </section>
             <section className="detail-card">
-              <h2>Claims</h2>
+              <h3>Claims</h3>
               <ul>
                 {data.claims.map((r) => (
                   <li key={r.id}>
                     {r.statement} <span className="evidence-label">Self-declared</span>
-                    <p>Claim reference: {r.id}</p>
+                    <details>
+                      <summary>Claim reference</summary>
+                      <p>Claim reference: {r.id}</p>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -624,7 +645,7 @@ function TenantWorkspace({
               )}
             </section>
             <section className="detail-card">
-              <h2>Verified facts</h2>
+              <h3>Verified facts</h3>
               {data.facts.length ? (
                 data.facts.map((r) => <p key={r.id}>{r.statement}</p>)
               ) : (
@@ -797,7 +818,22 @@ function TenantWorkspace({
             className="operator-section workspace-panel ux-panel"
             hidden={view !== 'workspace-authenticator'}
           >
-            <h2>Confirm a sensitive action</h2>
+            <PanelHeading
+              title="Confirm a sensitive action"
+              eyebrow="Settings and access"
+              icon="lock"
+              description="Use a fresh code from your authenticator app to continue a protected action."
+            />
+            <div className="ux-authenticator-guidance">
+              <p>
+                Stay signed in while you verify. Invitation access requires a check made within the
+                last five minutes.
+              </p>
+              <p>
+                After verification, return to the form you were using and refresh its records.
+                Verification does not grant a new role or change your country scope.
+              </p>
+            </div>
             <form
               className="operator-form"
               onSubmit={(event) => {
@@ -816,9 +852,14 @@ function TenantWorkspace({
                   autoComplete="one-time-code"
                   inputMode="numeric"
                   pattern="[0-9]{6}"
+                  maxLength={6}
+                  aria-describedby="workspace-authenticator-help"
                   required
                 />
               </label>
+              <p id="workspace-authenticator-help">
+                Enter the six-digit code. Your existing form entries stay in their workspace tabs.
+              </p>
               <button className="primary-link" disabled={busy}>
                 Verify again
               </button>
@@ -836,37 +877,24 @@ function TenantWorkspace({
               className="operator-section workspace-panel ux-panel"
               hidden={view !== 'workspace-audit'}
             >
-              <h2>Access and audit</h2>
-              <p>
-                Inspect members and recent changes for this workspace. Viewing an audit entry does
-                not change a role, verify a source or authorize a payment.
-              </p>
-              <button
-                className="text-link"
-                onClick={() =>
-                  act(async () => {
-                    setMembers(await request('members'));
-                    setAudit(await request('audit'));
+              <WorkspaceAudit
+                members={members}
+                events={audit}
+                loaded={auditLoaded}
+                busy={busy}
+                onLoad={() =>
+                  void act(async () => {
+                    const [currentMembers, currentAudit] = await Promise.all([
+                      request('members'),
+                      request('audit'),
+                    ]);
+                    setMembers(currentMembers);
+                    setMembersLoaded(true);
+                    setAudit(currentAudit);
+                    setAuditLoaded(true);
                   })
                 }
-              >
-                Load access and recent changes
-              </button>
-              <ul>
-                {members.map((r) => (
-                  <li key={r.user_id}>
-                    {r.name ?? r.user_id} · {r.role} ·{' '}
-                    {r.revoked_at ? 'Access revoked' : 'Active membership'}
-                  </li>
-                ))}
-              </ul>
-              <ul>
-                {audit.map((r) => (
-                  <li key={r.id}>
-                    {r.type} · {r.id}
-                  </li>
-                ))}
-              </ul>
+              />
             </section>
           )}
           {data.role === 'owner' && (
