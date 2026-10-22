@@ -1,3 +1,4 @@
+import './operator-overview.css';
 import Link from 'next/link';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { headers } from 'next/headers';
@@ -66,7 +67,11 @@ export default async function Page({
       </WorkspaceShell>
     );
   return (
-    <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Your workspace.">
+    <WorkspaceShell
+      eyebrow="OPERATOR WORKSPACE"
+      title="Your workspace."
+      className="ux-operator-home"
+    >
       <Workspace tenants={tenants} initialTenant={selected!} />
     </WorkspaceShell>
   );

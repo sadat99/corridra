@@ -1,4 +1,32 @@
+import { OperatorIcon } from './operator-icon';
 import { workspaceSections } from '../lib/workspace-navigation';
+const sectionIcons: Record<string, string> = {
+  'workspace-missions': 'mission',
+  'workspace-research': 'company',
+  'workspace-meetings': 'people',
+  'workspace-commercial': 'progress',
+  'workspace-delivery': 'document',
+  'workspace-sources': 'document',
+  'workspace-evidence': 'search',
+  'workspace-ai': 'spark',
+  'workspace-network': 'network',
+  'workspace-operations': 'globe',
+  'ops-dashboard': 'progress',
+  'ops-center': 'settings',
+  'ops-health': 'shield',
+  'ops-gates': 'shield',
+  'workspace-settings': 'shield',
+  'workspace-audit': 'people',
+  'workspace-authenticator': 'lock',
+  'workspace-controls': 'people',
+};
+const descriptions: Record<string, string> = {
+  'workspace-missions': 'Create and manage missions from intake to delivery.',
+  'workspace-research': 'Find, assess and track companies.',
+  'workspace-meetings': 'Arrange and track conversations.',
+  'workspace-commercial': 'Track progress and outcomes.',
+  'workspace-delivery': 'Prepare and deliver approved views.',
+};
 export const missionSections = new Set([
   'workspace-missions',
   'workspace-research',
@@ -32,8 +60,29 @@ export function RoleNavigation({ role, shortcuts = false }: { role: string; shor
   const unplaced = tools.filter((section) => !known.has(section.id));
   function links(sections: typeof available) {
     return sections.map((section) => (
-      <a key={section.id} href={'#' + section.id}>
-        {section.label}
+      <a
+        key={section.id}
+        href={'#' + section.id}
+        aria-describedby={shortcuts ? `operator-hint-${section.id}` : undefined}
+      >
+        <OperatorIcon name={sectionIcons[section.id]} />
+        <span className="operator-nav-copy">
+          <span>{section.label}</span>
+          {shortcuts && (
+            <small id={`operator-hint-${section.id}`} aria-hidden="true">
+              {descriptions[section.id]}
+            </small>
+          )}
+        </span>
+        <OperatorIcon
+          name={shortcuts && section.id === 'workspace-missions' ? 'arrow' : 'chevron'}
+          className="operator-nav-arrow"
+        />
+        {shortcuts && section.id === 'workspace-missions' && (
+          <span className="operator-primary-label" aria-hidden="true">
+            Primary destination
+          </span>
+        )}
       </a>
     ));
   }
@@ -50,7 +99,11 @@ export function RoleNavigation({ role, shortcuts = false }: { role: string; shor
         links(workflow)
       ) : (
         <details className="ux-workspace-directory">
-          <summary>All workspace tools and settings</summary>
+          <summary>
+            <OperatorIcon name="grid" />
+            <span>All workspace tools and settings</span>
+            <OperatorIcon name="chevron" className="operator-disclosure-arrow" />
+          </summary>
           <div>
             <div>
               <p className="label">MISSION WORK</p>

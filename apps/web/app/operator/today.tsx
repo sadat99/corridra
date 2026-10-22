@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
+import { OperatorIcon } from '../../components/operator-icon';
 import { displayDate } from '@corridra/domain/locale';
 
 type Mission = {
@@ -20,6 +21,7 @@ type FollowUp = { id: string; status: string; due_at: string; next_action: strin
 type Page = { missions: Mission[]; total: number };
 type MeetingRead = { meetings: Meeting[]; followups: FollowUp[] };
 type Today = {
+  observedAt: string;
   fresh: Page;
   overdue: Page;
   open: Page;
@@ -130,7 +132,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
                 meetingRead.followups.length >= readLimit,
             }
           : null;
-        setToday({ fresh, overdue, open, work });
+        setToday({ fresh, overdue, open, work, observedAt: new Date(now).toISOString() });
         setFailed(false);
       })
       .catch((error: unknown) => {
@@ -150,7 +152,18 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
         work.lateFollowUps.length === 0));
   return (
     <section className="ux-today" aria-labelledby="today-title">
-      <h2 id="today-title">Today</h2>
+      <header className="operator-today-heading">
+        <h2 id="today-title">Today</h2>
+        {today && (
+          <time dateTime={today.observedAt}>
+            {new Intl.DateTimeFormat('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            }).format(new Date(today.observedAt))}
+          </time>
+        )}
+      </header>
       {failed ? (
         <p role="status">
           Today&apos;s list could not be loaded. The mission list below still works.
@@ -163,54 +176,94 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
         <>
           <ul className="ux-today-tiles" aria-label="Counts">
             <li>
-              <strong>{today.fresh.total}</strong>
-              <span>
-                {plural(today.fresh.total, 'new request to review', 'new requests to review')}
-              </span>
+              <a href="#workspace-missions">
+                <OperatorIcon name="document" />
+                <strong>{today.fresh.total}</strong>
+                <span>
+                  {plural(today.fresh.total, 'new request to review', 'new requests to review')}
+                </span>
+                <OperatorIcon name="chevron" className="operator-nav-arrow" />
+              </a>
             </li>
             <li>
-              <strong>{today.overdue.total}</strong>
-              <span>
-                {plural(
-                  today.overdue.total,
-                  'mission past its due date',
-                  'missions past their due date',
-                )}
-              </span>
+              <a href="#workspace-missions">
+                <OperatorIcon name="clock" />
+                <strong>{today.overdue.total}</strong>
+                <span>
+                  {plural(
+                    today.overdue.total,
+                    'mission past its due date',
+                    'missions past their due date',
+                  )}
+                </span>
+                <OperatorIcon name="chevron" className="operator-nav-arrow" />
+              </a>
             </li>
             {work && (
               <>
                 <li>
-                  <strong>{work.lateFollowUps.length}</strong>
-                  <span>
-                    {plural(
-                      work.lateFollowUps.length,
-                      'follow-up past its due date',
-                      'follow-ups past their due date',
-                    )}
-                  </span>
+                  <a href="#workspace-meetings">
+                    <OperatorIcon name="people" />
+                    <strong>{work.lateFollowUps.length}</strong>
+                    <span>
+                      {plural(
+                        work.lateFollowUps.length,
+                        'follow-up past its due date',
+                        'follow-ups past their due date',
+                      )}
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
                 </li>
                 <li>
-                  <strong>{work.upcoming.length}</strong>
-                  <span>
-                    {plural(
-                      work.upcoming.length,
-                      'meeting in the next 7 days',
-                      'meetings in the next 7 days',
-                    )}
-                  </span>
+                  <a href="#workspace-meetings">
+                    <OperatorIcon name="calendar" />
+                    <strong>{work.upcoming.length}</strong>
+                    <span>
+                      {plural(
+                        work.upcoming.length,
+                        'meeting in the next 7 days',
+                        'meetings in the next 7 days',
+                      )}
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
                 </li>
               </>
             )}
             <li>
-              <strong>{today.open.total}</strong>
-              <span>{plural(today.open.total, 'open mission', 'open missions')}</span>
+              <a href="#workspace-missions">
+                <OperatorIcon name="mission" />
+                <strong>{today.open.total}</strong>
+                <span>{plural(today.open.total, 'open mission', 'open missions')}</span>
+                <OperatorIcon name="chevron" className="operator-nav-arrow" />
+              </a>
             </li>
           </ul>
           {nothing ? (
-            <p className="ux-today-empty">
-              Nothing is waiting. New requests, late work and upcoming meetings appear here.
-            </p>
+            <div className="ux-today-empty">
+              <svg
+                className="operator-landscape"
+                viewBox="0 0 220 85"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M0 57 48 37l55 17 56-31 61 25M0 67l49-15 46 13 58-17 67 13M0 76l62-9 45 8 61-10 52 9M22 80l76-23 64 28M65 84l52-20 66 20"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+                <path
+                  d="m37 64 5-21 5 21zm13 5 7-30 7 30zm24-8 5-19 5 19z"
+                  fill="currentColor"
+                  opacity=".5"
+                />
+              </svg>
+              <p>
+                <strong>Nothing is waiting.</strong>
+                <span>New requests, late work and upcoming meetings appear here.</span>
+              </p>
+            </div>
           ) : (
             <div className="ux-today-lists">
               {today.fresh.missions.length > 0 && (
@@ -317,8 +370,8 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
               Meeting and follow-up counts cover the first {readLimit} records of each kind.
             </p>
           )}
-          <a className="text-link" href="#workspace-missions">
-            Open the mission list
+          <a className="text-link operator-mission-cta" href="#workspace-missions">
+            Open the mission list <OperatorIcon name="arrow" />
           </a>
         </>
       )}
