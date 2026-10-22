@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm test:docs && pnpm test:infrastructure",
-    "test:docs": "node --test tests/documents.test.mjs tests/design-system.test.mjs tests/world-geography.test.mjs tests/vercel-ignore-build.test.mjs tests/real-use-install-head.test.mjs",
+    "test:docs": "node --test tests/documents.test.mjs tests/design-system.test.mjs tests/world-geography.test.mjs tests/vercel-ignore-build.test.mjs tests/real-use-install-head.test.mjs tests/context-tools.test.mjs",
     "test:e2e": "playwright test",
     "test:ux": "playwright test --config playwright.ux.config.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm build && pnpm test:e2e && pnpm test:operator",

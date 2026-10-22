@@ -186,7 +186,7 @@
     {
       "path": "docs/agents/work-log.md",
       "classification": "Current guide/contract",
-      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+      "use": "Append-only log; never read whole. Use v3-context outline --last N and section for affected entries"
     },
     {
       "path": "docs/architecture/implementation-canvas-v1.0.md",
