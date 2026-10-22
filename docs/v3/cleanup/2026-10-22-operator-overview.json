@@ -1,0 +1,149 @@
+{
+  "scope": "Operator landing only, owner Concept05/09 combination",
+  "base": "8865b889c258d305be06a3a88e91f83352db4ff7",
+  "applicationCheckpoint": "91bd091",
+  "requirements": [
+    "V3-04-084",
+    "V3-05-049",
+    "V3-05-050",
+    "V3-05-064",
+    "V3-07-019",
+    "V3-07-020",
+    "V3-07-042"
+  ],
+  "preservation": {
+    "originalAuthorizedDestinations": 18,
+    "primaryWorkAreas": 5,
+    "panelsRemainMounted": true,
+    "rolesAndServerAuthorizationUnchanged": true,
+    "databaseMoneyHistoryAndMigrationsUnchanged": true
+  },
+  "localVerification": {
+    "productionBuild": "exit0",
+    "lint": "exit0",
+    "typecheck": "exit0",
+    "documents": 30,
+    "infrastructure": 7,
+    "publicBrowser": 164,
+    "focusedProtectedBrowser": 4,
+    "viewports": [
+      {
+        "width": 1440,
+        "overflow": 0,
+        "axeViolations": 0,
+        "cards": [
+          {
+            "width": 351.828125,
+            "height": 252
+          },
+          {
+            "width": 335.078125,
+            "height": 120
+          },
+          {
+            "width": 335.09375,
+            "height": 120
+          },
+          {
+            "width": 335.078125,
+            "height": 120
+          },
+          {
+            "width": 335.09375,
+            "height": 120
+          }
+        ]
+      },
+      {
+        "width": 768,
+        "overflow": 0,
+        "axeViolations": 0,
+        "cards": [
+          {
+            "width": 197.59375,
+            "height": 327.28125
+          },
+          {
+            "width": 188.203125,
+            "height": 157.640625
+          },
+          {
+            "width": 188.203125,
+            "height": 157.640625
+          },
+          {
+            "width": 188.203125,
+            "height": 157.640625
+          },
+          {
+            "width": 188.203125,
+            "height": 157.640625
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "overflow": 0,
+        "axeViolations": 0,
+        "cards": [
+          {
+            "width": 272.8125,
+            "height": 254.515625
+          },
+          {
+            "width": 130.40625,
+            "height": 168.8125
+          },
+          {
+            "width": 130.40625,
+            "height": 168.8125
+          },
+          {
+            "width": 130.40625,
+            "height": 188.8125
+          },
+          {
+            "width": 130.40625,
+            "height": 188.8125
+          }
+        ]
+      },
+      {
+        "width": 360,
+        "overflow": 0,
+        "axeViolations": 0,
+        "cards": [
+          {
+            "width": 242.8125,
+            "height": 254.515625
+          },
+          {
+            "width": 115.40625,
+            "height": 188.8125
+          },
+          {
+            "width": 115.40625,
+            "height": 188.8125
+          },
+          {
+            "width": 115.40625,
+            "height": 207.359375
+          },
+          {
+            "width": 115.40625,
+            "height": 207.359375
+          }
+        ]
+      }
+    ],
+    "capturesInspected": [1440, 390],
+    "finalCaptureRefinement": "Pending repeat: top-of-page capture and compact mobile toolbar; no domain change."
+  },
+  "failedEvidencePreserved": {
+    "initialCardAxeMismatch": "Fixed without weakening assertions; corrected link names and explicit descriptions pass.",
+    "initialIntegrationTimeout": "Unchanged private-opportunity test timed out at30s under concurrent tooling; run interrupted for diagnosis. Exact isolated test passed in6.12s unchanged. Full exact-head CI remains required.",
+    "missingBrowserExecutable": "Initial focused launch used absent Playwright browser; rerun with installed /usr/bin/chromium succeeded."
+  },
+  "securityReview": "Actual CodeQL uploads required; sanitized SARIF rule/location summary added to existing analysis logs, original analysis/upload/artifacts retained.",
+  "releaseState": "Implemented with bounded local acceptance; exact-head CI/release still pending. Not merged/deployed."
+}

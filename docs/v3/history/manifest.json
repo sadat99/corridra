@@ -142,6 +142,14 @@
       "kind": "ledger-chunks",
       "throughChunk": 126,
       "meaning": "Exact previous active chunks120 through126, retained as historical implementation/release evidence; not live state"
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "ea9b71d85927e8107565cfb870d00eeb44065e90",
+      "archive": "docs/v3/history/ledger-before-operator-reference-release.md",
+      "bytes": 12241,
+      "sha256": "7404b002a9cf1ae7bc42e7bed095fd16403034aaf2ff8db629be2846230c88de",
+      "meaning": "Exact active-index snapshot before retiring earlier PR114-121 release summaries; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

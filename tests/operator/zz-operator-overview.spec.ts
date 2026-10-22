@@ -60,7 +60,13 @@ test('operator overview follows the bento references and preserves every authori
       })),
     );
     expect(cards.every((card) => card.width >= 110 && card.height >= 76)).toBe(true);
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    await page.mouse.move(0, 0);
     await page.screenshot({ path: `${out}/overview-${width}.png`, fullPage: true });
+    await page.screenshot({ path: `${out}/viewport-${width}.png` });
     observations.push({ width, overflow, axeViolations: axe.violations.length, cards });
   }
   await page.setViewportSize({ width: 1440, height: 1100 });
