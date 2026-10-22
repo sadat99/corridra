@@ -202,3 +202,32 @@ test('every application stylesheet outside the token layer uses tokens only', as
     assert.equal(rawFonts(body), 0, `raw font-family in ${file}`);
   }
 });
+
+test('owner AC/1 geometry decisions hold: rounding B and spacing 64/80', () => {
+  // Owner decision 22 October 2026. Controls 8, cards and choices 12, panels 16.
+  assert.equal(resolve('--radius-sm'), '0.5rem');
+  assert.equal(resolve('--radius-md'), '0.75rem');
+  assert.equal(resolve('--radius-lg'), '1rem');
+  assert.equal(resolve('--guided-control-radius'), resolve('--radius-sm'));
+  assert.equal(resolve('--guided-card-radius'), resolve('--radius-md'));
+  assert.equal(resolve('--guided-hero-radius'), resolve('--radius-lg'));
+  // The 72 px step is retired for 64 and 80.
+  assert.ok(!declared.has('--space-18'), '--space-18 (72 px) is retired');
+  assert.equal(resolve('--space-16'), '4rem');
+  assert.equal(resolve('--space-20'), '5rem');
+  // Capsules are for status badges only, never navigation, tabs or buttons.
+  for (const selector of [
+    '.guide-tabs a',
+    '.guide-route-quick button',
+    ".pricing-tabs [role='tab']",
+    '.ux-area-bar a',
+    '.guide-bn > summary',
+  ]) {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const rule of system.matchAll(
+      new RegExp(`(?:^|\\})\\s*${escaped}\\s*\\{([^}]*)\\}`, 'g'),
+    )) {
+      assert.doesNotMatch(rule[1], /border-radius:\s*999px/, selector);
+    }
+  }
+});

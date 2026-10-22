@@ -2140,7 +2140,9 @@ summary:hover {
   --text-display: clamp(2.125rem, 4vw, 3.25rem);
   --space-5: 1.25rem;
   --space-12: 3rem;
-  --space-18: 4.5rem;
+  /* Owner decision 22 Oct 2026: the 72 px step is retired for AC/1's 64 and 80. */
+  --space-16: 4rem;
+  --space-20: 5rem;
   --space-24: 6rem;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -2959,9 +2961,10 @@ th {
 
 /* Guided experience (locked, docs/agents/ui-direction.md). One question, one button, tokens only. */
 :root {
-  --guided-control-radius: 0.875rem;
-  --guided-card-radius: 1rem;
-  --guided-hero-radius: 1.25rem;
+  /* Owner decision 22 Oct 2026 (AC/1 rounding B): controls 8, cards and choices 12, panels 16. */
+  --guided-control-radius: var(--radius-sm);
+  --guided-card-radius: var(--radius-md);
+  --guided-hero-radius: var(--radius-lg);
   --guided-body: 1.125rem;
   --guided-touch: 3rem;
   --guided-touch-large: 3.5rem;
@@ -3273,10 +3276,10 @@ th {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-  padding: var(--space-12) var(--space-18);
+  padding: var(--space-12) var(--space-16);
   color: var(--on-brand);
   background: var(--brand-deep);
-  border-radius: 1.5rem;
+  border-radius: var(--guided-hero-radius);
 }
 .guide-band h2 {
   margin: 0 0 var(--space-2);
@@ -3625,7 +3628,7 @@ th {
   padding: var(--space-12) var(--space-12) var(--space-24);
   color: color-mix(in srgb, var(--on-brand) 85%, transparent);
   background: var(--brand-deep);
-  border-radius: 1.5rem 1.5rem 0 0;
+  border-radius: var(--guided-hero-radius) var(--guided-hero-radius) 0 0;
 }
 .guide-footer-top {
   display: grid;
@@ -3827,7 +3830,7 @@ th {
     gap: var(--space-4);
     min-height: 5.75rem;
     padding: var(--space-4);
-    border-radius: 1.125rem;
+    border-radius: var(--guided-hero-radius);
   }
   .guide-choice-icon {
     width: 3rem;
@@ -4031,7 +4034,7 @@ th {
   color: var(--brand-deep);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .guide-route-quick button[aria-pressed='true'] {
@@ -4185,7 +4188,7 @@ th {
 .guide-plan {
   display: grid;
   gap: var(--space-6);
-  padding-block: var(--space-12) var(--space-18);
+  padding-block: var(--space-12) var(--space-16);
 }
 .guide-plan-head {
   display: grid;
@@ -4260,7 +4263,7 @@ th {
   color: var(--brand-deep);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .guide-bn[open] > summary {
@@ -4278,7 +4281,7 @@ th {
   font-size: var(--text-base);
   color: var(--text-1);
   background: var(--info-surface);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .guide-status[hidden] {
   display: none;
@@ -4360,7 +4363,7 @@ th {
 .intake-form details {
   padding: var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .intake-form details > summary {
   min-height: 2.75rem;
@@ -4463,7 +4466,7 @@ th {
   color: var(--text-1);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   cursor: pointer;
   transition:
     border-color var(--dur) var(--ease),
@@ -5095,7 +5098,7 @@ th {
   font-weight: 600;
   color: var(--text-2);
   text-decoration: none;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease);
@@ -5340,7 +5343,7 @@ th {
   color: var(--text-1);
   background: var(--caution-surface);
   border: 1px solid var(--caution);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-testmode strong {
   font-weight: 700;
@@ -5474,7 +5477,7 @@ th {
   margin: 0;
   background: var(--surface-2);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-fact-row ul {
   margin: 0;
@@ -5832,7 +5835,7 @@ th {
   color: var(--text-1);
   background: var(--critical-surface);
   border: 1px solid var(--critical);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer p[role='status'],
 .ux-customer .ux-draft-notice {
@@ -5841,7 +5844,7 @@ th {
   color: var(--text-1);
   background: var(--info-surface);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer :is(p, div)[role='alert'] > * {
   margin-block: 0;
@@ -5975,7 +5978,7 @@ th {
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-customer li > :is(a, button).text-link {
   display: inline-flex;
@@ -6136,7 +6139,7 @@ th {
   color: var(--text-2);
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   cursor: pointer;
 }
 .pricing-tabs [role='tab']:hover {
@@ -6229,7 +6232,7 @@ th {
   font-weight: 600;
   color: var(--text-2);
   text-decoration: none;
-  border-radius: 999px;
+  border-radius: var(--guided-control-radius);
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease);
@@ -6319,7 +6322,7 @@ th {
   padding: var(--space-2) var(--space-4);
   background: var(--surface-2);
   border: 0;
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-hero-radius);
 }
 .ux-workspace-body .ux-operator-workbench > .label {
   margin: 0;
@@ -6828,7 +6831,7 @@ th {
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--surface-2);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-controls-boundary p {
   margin: 0;
@@ -7013,7 +7016,7 @@ th {
 .ux-operator-home .workspace-panel details:not(.ux-journey-disclosure) {
   margin-block: var(--space-3);
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-operator-home .workspace-panel details:not(.ux-journey-disclosure) > summary {
   min-height: 3rem;
@@ -7126,7 +7129,7 @@ th {
   padding: var(--space-5);
   background: var(--surface-2);
   border: 1px dashed var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
 }
 .ux-panel-empty h3 {
   margin-top: 0;
@@ -7144,7 +7147,7 @@ th {
 .ux-audit-members > li,
 .ux-audit-events > li {
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   padding: var(--space-4);
   min-width: 0;
 }
@@ -7277,7 +7280,7 @@ th {
 .ux-settings-counts > div {
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: var(--guided-control-radius);
+  border-radius: var(--guided-card-radius);
   padding: var(--space-4);
 }
 .ux-settings-counts dt {

@@ -31,14 +31,14 @@
   min-height: 3.5rem;
   padding-inline: 1rem 2.5rem;
   background-color: var(--surface-1);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
 }
 .ux-operator-home .operator-toolbar > :is(a, button).text-link {
   gap: 0.6rem;
   min-height: 3.5rem;
   border-color: var(--line);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
 }
 .ux-operator-home .operator-scope-note {
@@ -59,7 +59,7 @@
 }
 .ux-operator-home :is(.ux-today, .workspace-start, .operator-management, .ux-workspace-directory) {
   border: 1px solid var(--line);
-  border-radius: 1.15rem;
+  border-radius: var(--radius-lg);
   background: var(--surface-1);
   box-shadow: var(--shadow-1);
 }
@@ -101,7 +101,7 @@
   min-height: 9rem;
   padding: 1rem;
   border: 1px solid var(--line);
-  border-radius: 0.8rem;
+  border-radius: var(--radius-md);
   background: var(--surface-2);
   text-decoration: none;
   color: var(--brand-deep);
@@ -163,7 +163,7 @@
   margin: 0.5rem 0 0;
   padding: 0.7rem 1rem;
   border: 1px solid var(--action);
-  border-radius: 0.7rem;
+  border-radius: var(--radius-sm);
   background: var(--action);
   color: var(--on-action);
   font-size: 0.875rem;
@@ -197,7 +197,7 @@
   align-items: center;
   padding: 0.4rem 0.65rem;
   background: var(--surface-2);
-  border-radius: 0.55rem;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   color: var(--text-2);
 }
@@ -231,7 +231,7 @@
   padding: 1rem;
   background: var(--surface-1);
   border: 1px solid var(--line);
-  border-radius: 0.8rem;
+  border-radius: var(--radius-md);
   color: var(--brand-deep);
 }
 .ux-operator-home .ux-tool-index .operator-nav-copy {
@@ -348,7 +348,7 @@
   min-height: 5rem;
   padding: 0.8rem;
   border: 1px solid var(--line);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   color: var(--brand-deep);
   font-size: 0.8rem;
