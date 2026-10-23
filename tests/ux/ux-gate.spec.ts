@@ -104,12 +104,51 @@ async function measure(page: Page, width: number): Promise<Counts> {
         );
         return own && parseFloat(getComputedStyle(el).fontSize) < 12;
       }).length;
+      // AC/1 action groups: standalone controls that share a parent keep one rhythm. Stacked
+      // controls are at least 8 px apart (and equal in width on phones); controls in one row share
+      // a top edge and are at least 8 px apart.
+      const controls = [...document.querySelectorAll('main :is(a, button)')].filter((el) => {
+        if (!visible(el) || inline(el) || el.getAttribute('role') === 'tab') return false;
+        const r = el.getBoundingClientRect();
+        const s = getComputedStyle(el);
+        const framed = parseFloat(s.borderTopWidth) > 0 || s.backgroundColor !== 'rgba(0, 0, 0, 0)';
+        return framed && r.height >= 36 && r.width > 1;
+      });
+      const byParent = new Map<Element, Element[]>();
+      for (const el of controls) {
+        const parent = el.parentElement as Element;
+        byParent.set(parent, [...(byParent.get(parent) ?? []), el]);
+      }
+      let actionGap = 0;
+      let actionWidth = 0;
+      let actionStagger = 0;
+      for (const group of byParent.values()) {
+        const boxes = group
+          .map((el) => el.getBoundingClientRect())
+          .sort((a, b) => a.top - b.top || a.left - b.left);
+        for (let i = 1; i < boxes.length; i++) {
+          const a = boxes[i - 1];
+          const b = boxes[i];
+          const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const sameRow = Math.abs(a.top - b.top) < Math.min(a.height, b.height) / 2;
+          if (sameRow) {
+            if (Math.abs(a.top - b.top) > 2 || Math.abs(a.height - b.height) > 2) actionStagger++;
+            else if (b.left - a.right < 8) actionGap++;
+          } else if (overlap > Math.min(a.width, b.width) / 2) {
+            if (b.top - a.bottom < 8) actionGap++;
+            if (window.innerWidth <= 640 && Math.abs(a.width - b.width) > 2) actionWidth++;
+          }
+        }
+      }
       return {
         overflow: document.documentElement.scrollWidth > window.innerWidth + 1 ? 1 : 0,
         smallTargets,
         pillControls,
         crowdedRegions,
         tinyText,
+        actionGap,
+        actionWidth,
+        actionStagger,
         focusables: interactive.length,
       };
     },
@@ -120,6 +159,9 @@ async function measure(page: Page, width: number): Promise<Counts> {
   add('pillControls', dom.pillControls);
   add('crowdedRegions', dom.crowdedRegions);
   add('tinyText', dom.tinyText);
+  add('actionGap', dom.actionGap);
+  add('actionWidth', dom.actionWidth);
+  add('actionStagger', dom.actionStagger);
 
   // Keyboard: every element reached by Tab shows a visible focus indicator.
   let invisibleFocus = 0;

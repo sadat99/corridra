@@ -7946,17 +7946,17 @@ th {
 }
 
 /* Other ways in: equal cells on one grid, so rows and edges line up. */
-:is(.ux-account-access, .ux-access) .access-options {
+:is(main) .access-options:not(.ux-account-sidebar .access-options) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: var(--space-3);
   align-items: stretch;
 }
-:is(.ux-account-access, .ux-access) .access-options > p {
+:is(main) .access-options:not(.ux-account-sidebar .access-options) > p {
   grid-column: 1 / -1;
   margin: 0;
 }
-:is(.ux-account-access, .ux-access) .access-options > :is(a, button) {
+:is(main) .access-options:not(.ux-account-sidebar .access-options) > :is(a, button) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7968,8 +7968,11 @@ th {
   text-align: center;
 }
 
-/* Access and restricted pages: actions placed straight under the page. */
-.ux-access
+/* Pages and state panels: actions placed straight under the page or inside a state message. */
+.operator-page
+  > :is(a, button):is(.primary-link, .text-link, .button, .button-secondary):not(.ux-back),
+.ux-state
+  > :is([role='alert'], [role='status'])
   > :is(a, button):is(.primary-link, .text-link, .button, .button-secondary):not(.ux-back) {
   display: flex;
   align-items: center;
@@ -7980,11 +7983,49 @@ th {
   text-align: center;
 }
 @media (min-width: 40rem) {
-  .ux-access
+  .operator-page
+    > :is(a, button):is(.primary-link, .text-link, .button, .button-secondary):not(.ux-back),
+  .ux-state
+    > :is([role='alert'], [role='status'])
     > :is(a, button):is(.primary-link, .text-link, .button, .button-secondary):not(.ux-back) {
     display: inline-flex;
     width: auto;
     margin: var(--space-3) var(--space-3) 0 0;
     vertical-align: top;
   }
+}
+
+/* Slice 2: public gateway, private-link and quick-route groups. On phones every action in these
+   rows takes the full row; the gap comes from the container. Page call-to-action pairs share the
+   56 px height, and quick routes sit in equal cells. */
+@media (max-width: 39.99rem) {
+  :is(.ux-start-actions, .ux-start-foot, .guide-page-actions, .guide-links, .ux-state-actions)
+    > :is(a, button) {
+    flex: 1 1 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+  }
+  .operator-page
+    :is(.ux-start-actions, .ux-start-foot, .guide-page-actions, .guide-links, .ux-state-actions)
+    > :is(a, button) {
+    margin: 0;
+  }
+}
+.guide-page-actions {
+  align-items: stretch;
+}
+.guide-page-actions > :is(.primary-link, .button-secondary) {
+  min-height: 3.5rem;
+}
+.guide-route-quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+.guide-route-quick > p {
+  grid-column: 1 / -1;
+}
+.guide-route-quick button {
+  width: 100%;
 }

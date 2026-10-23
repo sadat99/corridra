@@ -31,7 +31,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 ### KI-05 CI logs are hard to reach
 
 - `gh run view --log-failed` returned 403 in the cloud session, and the failure artifact excludes `test-results/workspace-*`.
-- Use the GitHub MCP `get_job_logs` with `tail_lines` near 130 so the failure message is included. The operator suite needs Docker, which the cloud container lacks, so CI is the proof; push a diagnostic instead of guessing.
+- Use the GitHub MCP `get_job_logs` with `tail_lines` near 130 so the failure message is included. The protected operator suite runs locally on a native PostgreSQL 16 (KI-15); CI stays the proof for the exact head.
 
 ### KI-06 Oversized tool output
 
@@ -76,3 +76,12 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 ### KI-14 Subscription notices are large
 
 - Each "subscription created" PR notice carries about 5,000 tokens of boilerplate. Subscribe once per PR and do not re-subscribe.
+
+### KI-15 Running the protected operator suite locally (no Docker daemon)
+
+- The cloud container has the Docker client but no daemon, and `pnpm db:local` needs one. PostgreSQL 16 server binaries are installed natively and give the same result, about 17 minutes for all 380 tests.
+- **Start the database:** run `initdb` as the `postgres` user into an empty directory such as `/tmp/pg54329` (`-U postgres`, a password file, `-A scram-sha-256`), start it with `pg_ctl ... -o "-p 54329 -c listen_addresses=127.0.0.1 -c unix_socket_directories=/tmp"`, and `createdb corridra_test`. Write `.cache/part03-local.json` with four random 32 to 48 byte hex values (`ownerPassword`, `runtimePassword`, `authPassword`, `authSecret`); the owner password must match the one used for `initdb`. Then `pnpm db:prepare-local`.
+- **Run:** `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome UX06_EVIDENCE_STAGE=after pnpm test:operator` (the stage must be `baseline` or `after`; any other value captures nothing).
+- **Two specs read old commits** (`git show <sha>:path`), so run `git fetch --unshallow` first or they fail with "Command failed: git show".
+- **The run rewrites tracked evidence images** under `docs/implementation/evidence` and `docs/v3/phase-4`. Run `git checkout docs/implementation/evidence docs/v3/phase-4` before committing; never commit them.
+- The ClamAV scanner tests are vitest integration tests, not part of this suite, and need the Docker scanner; they are not run locally.
