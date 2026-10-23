@@ -359,6 +359,16 @@
       "use": "Governing product direction supplied by the owner on 15 October 2026; meaning preserved; read before substantial work"
     },
     {
+      "path": "docs/product/phase0-rehearsal-mission-proposal.md",
+      "classification": "Owner proposal",
+      "use": "How to click through a whole sample mission without touching a real customer; routes, the smallest change, safety position and owner decisions; nothing is built"
+    },
+    {
+      "path": "docs/product/phase0-view-as-proposal.md",
+      "classification": "Owner proposal",
+      "use": "Read-only, logged way for the owner to see customer, delegate and supplier screens with sample data; impersonation rejected; nothing is built"
+    },
+    {
       "path": "docs/product/phase0-mission-email-proposal.md",
       "classification": "Owner proposal",
       "use": "What the first two mission emails build today, what needs an approved database change, and the privacy wording to review; nothing is switched on"
