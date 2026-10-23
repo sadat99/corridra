@@ -190,75 +190,82 @@ export default function Home() {
           Every company comes with a reason and a trust label. The companies below are examples, not
           real companies.
         </p>
-        <div className="ac1-proof">
-          <div>
-            <h3 className="ac1-proof-title">
-              <CorridraIcon name="sell" /> Buyers worth meeting
-            </h3>
-            <p>A buyer list is only useful if you know why each one fits and what is proven.</p>
-          </div>
-          <div className="ac1-exhibit">
-            <p className="ac1-exhibit-head">
-              <span className="ac1-example-tag">Example</span>
-              <span>Not real companies</span>
-            </p>
-            <p className="ac1-ledger-head" aria-hidden="true">
-              <span>Company</span>
-              <span>Why it fits</span>
-              <span>Trust label</span>
-              <span>Next step</span>
-            </p>
-            <ul className="ac1-buyers" aria-label="Example buyer shortlist">
-              {buyers.map(([name, note, fact, state]) => (
-                <li key={name}>
-                  <strong>{name}</strong>
-                  <span>{note}</span>
-                  <FactLabel label={fact} />
-                  <span className="ac1-state">{state}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="ac1-proof">
-          <div>
-            <h3 className="ac1-proof-title">
-              <CorridraIcon name="buy" /> Price quotes side by side
-            </h3>
-            <p>A low price can hide a missing cost. We show what each price quote includes.</p>
-          </div>
-          <div className="ac1-exhibit">
-            <p className="ac1-exhibit-head">
-              <span className="ac1-example-tag">Example</span>
-              <span>Not real suppliers</span>
-            </p>
-            <div className="ac1-compare" role="table" aria-label="Example price quote comparison">
-              <div className="ac1-compare-row ac1-compare-head" role="row">
-                <span role="columnheader">Term</span>
-                {suppliers.map((supplier) => (
-                  <span role="columnheader" key={supplier}>
-                    {supplier}
-                  </span>
+        <div
+          className="ac1-proofs"
+          role="region"
+          aria-label="Examples for selling and for buying"
+          tabIndex={0}
+        >
+          <div className="ac1-proof">
+            <div>
+              <h3 className="ac1-proof-title">
+                <CorridraIcon name="sell" /> Buyers worth meeting
+              </h3>
+              <p>A buyer list is only useful if you know why each one fits and what is proven.</p>
+            </div>
+            <div className="ac1-exhibit">
+              <p className="ac1-exhibit-head">
+                <span className="ac1-example-tag">Example</span>
+                <span>Not real companies</span>
+              </p>
+              <p className="ac1-ledger-head" aria-hidden="true">
+                <span>Company</span>
+                <span>Why it fits</span>
+                <span>Trust label</span>
+                <span>Next step</span>
+              </p>
+              <ul className="ac1-buyers" aria-label="Example buyer shortlist">
+                {buyers.map(([name, note, fact, state]) => (
+                  <li key={name}>
+                    <strong>{name}</strong>
+                    <span>{note}</span>
+                    <FactLabel label={fact} />
+                    <span className="ac1-state">{state}</span>
+                  </li>
                 ))}
-              </div>
-              {quotes.map((quote) => (
-                <div className="ac1-compare-row" role="row" key={quote.term}>
-                  <span role="rowheader">
-                    {quote.term}
-                    {quote.note ? <small>{quote.note}</small> : null}
-                  </span>
-                  {quote.values.map(([value, tone], index) => (
-                    <span
-                      role="cell"
-                      key={suppliers[index]}
-                      data-supplier={suppliers[index]}
-                      data-tone={tone}
-                    >
-                      {value}
+              </ul>
+            </div>
+          </div>
+          <div className="ac1-proof">
+            <div>
+              <h3 className="ac1-proof-title">
+                <CorridraIcon name="buy" /> Price quotes side by side
+              </h3>
+              <p>A low price can hide a missing cost. We show what each price quote includes.</p>
+            </div>
+            <div className="ac1-exhibit">
+              <p className="ac1-exhibit-head">
+                <span className="ac1-example-tag">Example</span>
+                <span>Not real suppliers</span>
+              </p>
+              <div className="ac1-compare" role="table" aria-label="Example price quote comparison">
+                <div className="ac1-compare-row ac1-compare-head" role="row">
+                  <span role="columnheader">Term</span>
+                  {suppliers.map((supplier) => (
+                    <span role="columnheader" key={supplier}>
+                      {supplier}
                     </span>
                   ))}
                 </div>
-              ))}
+                {quotes.map((quote) => (
+                  <div className="ac1-compare-row" role="row" key={quote.term}>
+                    <span role="rowheader">
+                      {quote.term}
+                      {quote.note ? <small>{quote.note}</small> : null}
+                    </span>
+                    {quote.values.map(([value, tone], index) => (
+                      <span
+                        role="cell"
+                        key={suppliers[index]}
+                        data-supplier={suppliers[index]}
+                        data-tone={tone}
+                      >
+                        {value}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
