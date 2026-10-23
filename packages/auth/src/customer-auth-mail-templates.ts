@@ -104,6 +104,7 @@ export const authMailColours = colour;
 const font =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 const mono = "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace";
+export const authMailFont = font;
 
 export function escapeHtml(value: string) {
   return value

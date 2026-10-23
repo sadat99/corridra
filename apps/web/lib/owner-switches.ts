@@ -257,7 +257,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_MISSION_EMAIL_ENABLED',
     label: 'Mission emails',
-    line: 'Planned. Emails to the account holder about their own request.',
+    line: 'Not wired. The two emails are written and tested, but sending needs a database change that waits for your approval. Setting this does nothing yet.',
     group: 'Delivery',
     kind: 'planned',
   },

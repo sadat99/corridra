@@ -359,6 +359,11 @@
       "use": "Governing product direction supplied by the owner on 15 October 2026; meaning preserved; read before substantial work"
     },
     {
+      "path": "docs/product/phase0-mission-email-proposal.md",
+      "classification": "Owner proposal",
+      "use": "What the first two mission emails build today, what needs an approved database change, and the privacy wording to review; nothing is switched on"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -902,6 +907,11 @@
       "path": "docs/adr/0057-real-invited-execution-work.md",
       "classification": "Architecture contract/index",
       "use": "Real invited contributor work, separate identity/MFA, purpose isolation, exact rewards and protected activation; production pending"
+    },
+    {
+      "path": "docs/adr/0058-emailed-request-status-link.md",
+      "classification": "Architecture contract/index",
+      "use": "Proposed emailed request status link; owner has not approved it and no code depends on it"
     },
     {
       "path": "docs/v3/history/ledger-chunks-120-126.md",

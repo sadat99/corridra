@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
+import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
 import { JourneyBar } from '../../components/journey-bar';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
@@ -132,7 +133,12 @@ async function claimSavedRequest(storageKey: string, navigate: (path: string) =>
   }
   navigate('/account/requests/' + encodeURIComponent(body.id));
 }
-type IntakeProps = { privateSubmission?: PrivateIntakeSubmission; realMode?: boolean };
+type IntakeProps = {
+  privateSubmission?: PrivateIntakeSubmission;
+  realMode?: boolean;
+  /** From CORRIDRA_CUSTOMER_CODE_SIGNIN on the server. Adds a code sign-in link where a request lives in an account. */
+  codeSignIn?: boolean;
+};
 export function Intake(props: IntakeProps = {}) {
   return props.realMode && !props.privateSubmission ? (
     <RegisteredIntake {...props} />
@@ -150,6 +156,7 @@ function missingNavigation() {
 function IntakeForm({
   privateSubmission,
   realMode = false,
+  codeSignIn = false,
   navigate = missingNavigation,
 }: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
@@ -173,6 +180,8 @@ function IntakeForm({
       replies: { body: string; createdAt: string }[];
     } | null>(null),
     [finished, setFinished] = useState(false),
+    [deviceSaved, setDeviceSaved] = useState(false),
+    [forgotten, setForgotten] = useState(false),
     [ready, setReady] = useState(false),
     [draftNotice, setDraftNotice] = useState('');
   const key = useRef(''),
@@ -238,11 +247,11 @@ function IntakeForm({
                 : (new Intl.DisplayNames(['en'], { type: 'region' }).of(marketCode) ?? marketCode),
           }));
         }
-        const token =
-          privateMode || realMode ? null : sessionStorage.getItem('corridra-mission-receipt');
-        if (token) {
-          setReceipt(token);
-          setCheckCode(token);
+        const remembered = privateMode || realMode ? null : readReceipt(browserStores());
+        if (remembered) {
+          setReceipt(remembered.receipt);
+          setCheckCode(remembered.receipt);
+          setDeviceSaved(remembered.place === 'device');
           setFinished(true);
           submitted.current = true;
         }
@@ -575,14 +584,17 @@ function IntakeForm({
       if (data.receipt) {
         setReceipt(data.receipt);
         setCheckCode(data.receipt);
+        const place = saveReceipt(browserStores(), data.receipt);
+        setDeviceSaved(place === 'device');
         try {
-          sessionStorage.setItem('corridra-mission-receipt', data.receipt);
           sessionStorage.removeItem('corridra-mission-draft');
         } catch {
+          /* The draft only expires sooner when tab storage is blocked. */
+        }
+        if (place === 'none')
           setDraftNotice(
             'The request was recorded, but this browser could not save its receipt. Copy the private code before leaving.',
           );
-        }
       }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Unable to save. Your input is still here.');
@@ -733,6 +745,11 @@ function IntakeForm({
                 {!account && (
                   <Link className="text-link" href={accountAccessPath('/signup', '/plan')}>
                     Create your account
+                  </Link>
+                )}
+                {!account && codeSignIn && (
+                  <Link className="text-link" href={accountAccessPath('/signin', '/plan', 'code')}>
+                    Sign in with a code to see your request
                   </Link>
                 )}
                 <button
@@ -1129,9 +1146,34 @@ function IntakeForm({
               <p className="label">REQUEST SAVED</p>
               <h2 id="plan-receipt-title">Keep your private receipt.</h2>
               <p>
-                Anyone with this code can read the mission status and replies. Save it before
-                closing this tab. It expires after 30 days.
+                {deviceSaved
+                  ? 'Anyone with this code can read the mission status and replies. It expires after 30 days.'
+                  : 'Anyone with this code can read the mission status and replies. Save it before closing this tab. It expires after 30 days.'}
               </p>
+              {deviceSaved ? (
+                <p className="guide-hint">
+                  Your request is saved on this device. You do not need to copy a code. Use another
+                  device? Copy the code first.{' '}
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() => {
+                      forgetReceipt(browserStores());
+                      setDeviceSaved(false);
+                      setForgotten(true);
+                    }}
+                  >
+                    Forget this request on this device
+                  </button>
+                </p>
+              ) : (
+                forgotten && (
+                  <p className="guide-hint">
+                    This device no longer remembers your request. Copy the code now if you still
+                    need it.
+                  </p>
+                )
+              )}
               <label className="field">
                 Private receipt code
                 <input
@@ -1161,9 +1203,9 @@ function IntakeForm({
                 setStep(0);
                 setMessage('');
                 setErrors({});
-                try {
-                  sessionStorage.removeItem('corridra-mission-receipt');
-                } catch {}
+                setDeviceSaved(false);
+                setForgotten(false);
+                forgetReceipt(browserStores());
                 persist(empty, 0);
               }}
             >
@@ -1187,6 +1229,13 @@ function IntakeForm({
                 Check status and replies
               </button>
             </form>
+            {realMode && !privateMode && !account && codeSignIn && (
+              <p className="guide-hint">
+                <Link className="text-link" href={accountAccessPath('/signin', '/account', 'code')}>
+                  Sign in with a code to see your request
+                </Link>
+              </p>
+            )}
             {result && (
               <div>
                 <p>
