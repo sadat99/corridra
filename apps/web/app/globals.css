@@ -8655,3 +8655,17 @@ samp {
   padding-top: var(--space-3);
   border-top: 1px solid var(--text-1);
 }
+/* Meridian card edges. Lists, empty states, notices and form cards inside a signed-in panel fill the
+   panel, so every block ends on the same right edge. Fields keep a readable width. */
+.ux-customer .workspace-panel :is(.ux-quick-links, .ux-link-list) {
+  max-width: none;
+}
+.ux-customer :is(section, div).delivery-view :is(p.ux-empty, p[role='status'], p[role='alert']) {
+  max-width: none;
+}
+.ux-customer :is(section, div).delivery-view form.operator-form {
+  max-width: none;
+}
+.ux-customer :is(section, div).delivery-view form.operator-form :is(.field, fieldset) {
+  max-width: 40rem;
+}
