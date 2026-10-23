@@ -1,8 +1,8 @@
 # AC/1 art review sheet
 
-Owner review of the deployed pages (decision of 22 October 2026: review happens on the deployed pages, and a page the owner rejects is reverted). Nothing below is **accepted** until a named human records it in the Decision column. Status words follow [README section 6](README.md#6-status-words). Live host: `https://c.obsidianglobal.studio`.
+Owner review of the deployed pages (decision of 22 October 2026: review happens on the deployed pages, and a page the owner rejects is reverted). The owner (Nazmus Sadat) recorded every decision below on 23 October 2026 through the review page, as the chat message "Accepted" for each of the ten rows. Status words follow [README section 6](README.md#6-status-words). Live host: `https://c.obsidianglobal.studio`.
 
-How to decide: for each row write `accept`, `accept with change: <what>` or `reject` and the date. A reject reverts the listed PR for that package (`git revert -m 1` is not needed, the PRs are squash merges: revert the squash commit). Change requests go back into the same package as a new slice.
+How a decision is recorded: write `accept`, `accept with change: <what>` or `reject` and the date. A reject reverts the listed PR for that package (`git revert -m 1` is not needed, the PRs are squash merges: revert the squash commit). Change requests go back into the same package as a new slice.
 
 | Package                                 | Pages to open                                                                                                                                                                                                                              | PR (squash commit)    | Evidence                                                            | Decision |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------- | -------- |
@@ -18,3 +18,5 @@ How to decide: for each row write `accept`, `accept with change: <what>` or `rej
 | AC1-08 Atelier informational family     | `/how-it-works`, `/sell`, `/source`, `/machinery`, `/enter-market`, `/trade-missions`, `/business-trips`, `/institutions`, `/trust`, `/network`, `/about`, `/privacy`, `/corridors`, `/corridors/[corridor]`, `/coming-soon`, the 404 page | PR143                 | `evidence/ac1-08-atelier/{before,after}`                            | pending  |
 
 Signed-in pages cannot be reviewed from the evidence folders alone: open them with a real account on the deployed site, or ask for a synthetic walkthrough recording.
+
+Scope of the acceptance: it covers what was built and shown on the review page. AC1-06 is the first slice only (the organiser flow is not built), AC1-03 includes the example and routes refinement and AC1-07 the Today queue, and both of those ship in the PR after PR146. The remaining AC1-08 page families, the rest of Signal and the Encounter organiser flow still need their own review when built.

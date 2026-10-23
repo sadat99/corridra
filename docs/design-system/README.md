@@ -106,7 +106,7 @@ Claim a package by naming it in the ledger "Active work" line with your branch b
 
 **Owner decision, 22 October 2026 (chat):** proceed through AC1-02, AC1-04 to AC1-07 and AC1-08 in order, merging and deploying each checked PR without waiting for per-package approval. This replaces the AC1-08 gate "owner art-direction acceptance" with review on the deployed pages; a page the owner rejects is reverted. Every other gate in this section stays: parity, tests, screenshots, accessibility, denial checks and rollback.
 
-The owner review sheet, with one decision row per package and what a reject reverts, is [ART_REVIEW.md](ART_REVIEW.md).
+The owner review sheet, with one decision row per package and what a reject reverts, is [ART_REVIEW.md](ART_REVIEW.md). **Accepted by the owner on 23 October 2026: AC1-01, AC1-02i, AC1-02 (action groups, message panels and button states), AC1-03 (home, example and routes), AC1-04, AC1-05, AC1-06 (first slice), AC1-07 (Today queue) and AC1-08 (information pages).** What is accepted is what was built and shown, not the unbuilt parts of a package.
 
 Each reference package must ship: before and after screenshots at 320, 390, 768 and 1440 px (1024 and 1920 for dense grids), axe at those widths, keyboard walk, empty and populated synthetic states, the role and denial checks of the affected suites, and the PR report block from section 13 of the master contract.
 
@@ -119,7 +119,7 @@ Use the package ladder exactly: **designed** (this contract exists), **implement
 1. Follow [START_HERE](../START_HERE.md): `git status`, fetch main and open PRs, `node scripts/v3-context.mjs` and `verify`.
 2. Read the master contract in `docs/source/ac1-design-system/` once, then sections 3 to 7 of this file.
 3. Check the ledger for the AC/1 line: which package is merged, which is claimed, whether the owner settled the spacing and radius conflicts and whether any reference screen was accepted.
-4. Take the next unclaimed package from section 5. Never start AC1-08 without recorded human acceptance.
+4. Take the next unclaimed package from section 5. Human acceptance of the five references is recorded (owner, 23 October 2026, [ART_REVIEW.md](ART_REVIEW.md)), so the remaining AC1-08 families may start; each new family still goes to the owner on the review page. Never mark a gate passed without a recorded decision.
 
 ## 7a. Implementation notes (23 October 2026)
 

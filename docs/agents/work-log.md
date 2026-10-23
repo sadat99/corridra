@@ -1377,3 +1377,11 @@ Open: owner art review of the new landing sections; the Signal Today queue table
 Owner: continue with Signal. Today panel on `/operator` restyled toward the Signal reference ("decisions, not dashboards"): counts as a hairline strip of equal columns, queue rows on one three-column grid, eyebrow group headings, no tinted blocks, no icon tiles. CSS only, in `operator/operator-overview.css`, tokens only. Not built: the reference's Attention and Owner columns (no data source; never faked) and a column head row (groups mix item kinds).
 
 Evidence: before and after at 390 and 1440 px in `docs/design-system/evidence/ac1-07-today`. Local operator audit of `workspace.spec.ts` plus `zz-today.spec.ts` (11 passed, axe clean on the real page); `zz-operator-overview.spec.ts` failed at the MFA step because a hand-picked subset lacks earlier state (KI-16), so CI's full operator suite is the check for it. The audit's layout report shows no new flag from the Today area; its remaining flags are the documented bento and phone area bar. `div.hero-actions` (Next and Previous missions) was flagged for stagger at 1280 and 1440 in this subset run; I did not change that control and did not investigate it, so it stays open.
+
+## 2026-10-23 AC/1 art review recorded (branch landing-example)
+
+The owner asked to fix art approval. I built a private review page with before and after evidence and one Accept, Accept with a change or Reject control per package, because signed-in screens cannot be judged from files and the agent may not mark the gate passed. The owner replied in chat "Accepted" for all ten rows: AC1-01, AC1-02i, AC1-02 action groups, AC1-02 message panels and button states, AC1-03 home example and routes, AC1-04, AC1-05, AC1-06, AC1-07 Today queue, AC1-08 information pages.
+
+Recorded in `docs/design-system/ART_REVIEW.md` (decision column and scope note) and README section 5 and 7. Scope: what was built and shown. AC1-06 is the first slice only; the home example and routes refinement and the Today queue ship in the PR after PR146. The AC1-08 gate ("never start without recorded human acceptance") is now satisfied for the five references, so the remaining page families may start.
+
+Not done: the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
