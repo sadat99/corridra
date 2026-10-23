@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { canonicalPageRedirect } from './lib/canonical-origin';
+import { viewAsMethodRefusal } from './lib/view-as-gate';
 
 export function proxy(request: NextRequest) {
+  const refused = viewAsMethodRefusal(request);
+  if (refused) return refused;
   const destination = canonicalPageRedirect(request);
   if (!destination) return NextResponse.next();
   const response = NextResponse.redirect(destination, 307);
