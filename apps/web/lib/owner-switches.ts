@@ -225,6 +225,13 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Money and pricing',
     kind: 'module',
   },
+  {
+    name: 'CORRIDRA_CUSTOMER_BILLING_ENABLED',
+    label: 'Sample plans and subscriptions',
+    line: 'Lets a sample workspace ask for a plan. Nothing is charged and no invoice is made.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
   // Delivery
   {
     name: 'CORRIDRA_FOUNDATIONS_ENABLED',

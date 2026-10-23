@@ -58,7 +58,7 @@ CREATE TABLE customer_private.billing_plan_version (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  plan_key text NOT NULL CHECK(plan_key ~ '^[a-z][a-z0-9-]{2,59}$'),
  version integer NOT NULL CHECK(version BETWEEN 1 AND 2147483646),
- title text NOT NULL CHECK(customer_private.billing_plain_ok(title,3,120) AND title ~* 'synthetic'),
+ title text NOT NULL CHECK(customer_private.billing_plain_ok(title,3,120) AND title ~* '(sample|synthetic)'),
  summary text NOT NULL CHECK(customer_private.billing_plain_ok(summary,10,400)),
  billing_interval text NOT NULL CHECK(billing_interval IN ('month','year')),
  price_minor bigint NOT NULL CHECK(price_minor BETWEEN 0 AND 99999999999),
@@ -195,15 +195,15 @@ INSERT INTO customer_private.billing_entitlement_key(key,unit,label,description)
 
 -- Three invented example plans so the catalogue is not empty. Titles say they are examples; the prices are invented.
 INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES
-('example-starter',1,'Starter workspace (synthetic example)',
+('example-starter',1,'Starter workspace (sample plan)',
  'A free example plan for one small team. It exists to show how a plan reads and is not an offer.','month',0,'USD','tax_to_be_confirmed',
  ARRAY['A shared workspace for a small team','One delegation programme at a time','Plain-language reports on screen'],
  ARRAY['Programme report exports','Help requests','Any support commitment'],true,'SEED'),
-('example-organiser',1,'Organiser monthly (synthetic example)',
+('example-organiser',1,'Organiser monthly (sample plan)',
  'An example monthly plan for a delegation organiser. The price is invented and is not an offer.','month',4900,'USD','price_excludes_tax',
  ARRAY['A shared workspace for a larger team','Several delegation programmes at the same time','Report exports for each programme','Help requests, quoted separately'],
  ARRAY['The cost of any help request','Payment collection from participants','Travel, visas and accommodation'],true,'SEED'),
-('example-organiser-bdt',1,'Organiser monthly in taka (synthetic example)',
+('example-organiser-bdt',1,'Organiser monthly in taka (sample plan)',
  'The same example organiser plan priced in Bangladeshi taka. The price is invented and is not an offer.','month',480000,'BDT','tax_to_be_confirmed',
  ARRAY['A shared workspace for a larger team','Several delegation programmes at the same time','Report exports for each programme'],
  ARRAY['The cost of any help request','Payment collection from participants','Currency conversion of any kind'],true,'SEED');

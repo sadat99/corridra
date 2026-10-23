@@ -73,8 +73,8 @@ export const staffPlanInput = z
     planKey: z.string().regex(/^[a-z][a-z0-9-]{2,59}$/),
     expectedVersion: z.number().int().min(0).max(2147483646),
     title: plain(3, 120).refine(
-      (v) => /synthetic/i.test(v),
-      'The title must say the plan is synthetic',
+      (v) => /(sample|synthetic)/i.test(v),
+      'The title must say the plan is a sample',
     ),
     summary: plain(10, 400),
     interval: z.enum(['month', 'year']),

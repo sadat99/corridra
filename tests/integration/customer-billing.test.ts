@@ -152,7 +152,7 @@ async function backdate(subscriptionId: string, days: number) {
 const planBody = (over: Record<string, unknown> = {}) => ({
   planKey: 'example-yearly-team',
   expectedVersion: 0,
-  title: 'Yearly team plan (synthetic example)',
+  title: 'Yearly team plan (sample plan)',
   summary: 'An example yearly plan used to test plan maintenance. The price is invented.',
   interval: 'year',
   priceMinor: '99000',
@@ -428,7 +428,7 @@ test('the runtime and auth logins can reach only the eight intended functions an
     await expect(f.runtime.query(call, [randomUUID()])).rejects.toThrow(/permission denied/i);
 });
 
-test('three synthetic example plans exist, each states every entitlement, and every customer role reads them', async () => {
+test('three sample plans exist, each states every entitlement, and every customer role reads them', async () => {
   const keys = (
     await f.owner.query(
       'SELECT key,unit FROM customer_private.billing_entitlement_key ORDER BY key',
@@ -453,7 +453,7 @@ test('three synthetic example plans exist, each states every entitlement, and ev
   ]);
   for (const row of seeded) {
     expect(row.synthetic).toBe(true);
-    expect(row.title).toMatch(/\(synthetic example\)$/);
+    expect(row.title).toMatch(/\(sample plan\)$/);
   }
   expect(seeded.find((r) => r.plan_key === 'example-organiser-bdt')).toMatchObject({
     price_minor: '480000',
@@ -1227,7 +1227,7 @@ test('staff revise plans with a version check; customers see the new version and
   await revise({
     planKey: key,
     expectedVersion: 0,
-    title: 'Revisable monthly plan (synthetic example)',
+    title: 'Revisable monthly plan (sample plan)',
     interval: 'month',
     priceMinor: '4900',
   });
@@ -1238,7 +1238,7 @@ test('staff revise plans with a version check; customers see the new version and
   const revised = await revise({
     planKey: key,
     expectedVersion: 1,
-    title: 'Revisable monthly plan (synthetic example)',
+    title: 'Revisable monthly plan (sample plan)',
     interval: 'month',
     priceMinor: '5900',
   });
@@ -1288,7 +1288,7 @@ test('staff revise plans with a version check; customers see the new version and
   const retired = await revise({
     planKey: key,
     expectedVersion: 2,
-    title: 'Revisable monthly plan (synthetic example)',
+    title: 'Revisable monthly plan (sample plan)',
     interval: 'month',
     active: false,
   });
@@ -1365,7 +1365,7 @@ test('a plan must state every entitlement once with a mode that suits its unit, 
   // Zod alone refuses honest-wording and price mistakes.
   for (const bad of [
     { title: 'Yearly team plan' },
-    { title: 'Yearly team plan (synthetic example) see https://example.invalid' },
+    { title: 'Yearly team plan (sample plan) see https://example.invalid' },
     { priceMinor: '49.00' },
     { priceMinor: '-1' },
     { summary: 'short' },
@@ -1392,7 +1392,7 @@ test('a plan must state every entitlement once with a mode that suits its unit, 
   try {
     await db.query('BEGIN');
     await db.query(
-      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (synthetic example)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'SEED')",
+      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (sample plan)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'SEED')",
     );
     await expect(db.query('COMMIT')).rejects.toThrow(/state every entitlement/i);
   } finally {
@@ -1406,17 +1406,17 @@ test('a plan must state every entitlement once with a mode that suits its unit, 
   ).rejects.toThrow(/check constraint/i);
   await expect(
     f.owner.query(
-      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (synthetic example)','A direct insert used to test the guard.','month',-5,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'SEED')",
+      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (sample plan)','A direct insert used to test the guard.','month',-5,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'SEED')",
     ),
   ).rejects.toThrow(/check constraint/i);
   await expect(
     f.owner.query(
-      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (synthetic example)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'STAFF')",
+      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,source) VALUES('example-direct',1,'Direct plan (sample plan)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,'STAFF')",
     ),
   ).rejects.toThrow(/check constraint/i);
   await expect(
     f.owner.query(
-      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,synthetic,source) VALUES('example-direct',1,'Direct plan (synthetic example)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,false,'SEED')",
+      "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,synthetic,source) VALUES('example-direct',1,'Direct plan (sample plan)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,false,'SEED')",
     ),
   ).rejects.toThrow(/check constraint/i);
 });
