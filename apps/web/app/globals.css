@@ -8248,7 +8248,7 @@ th {
 .ux-participant-passport .ux-mission-next .ux-scope-note {
   color: color-mix(in srgb, var(--on-brand) 78%, transparent);
 }
-.ux-participant-mission > h2,
+.ux-participant-mission > :is(h2, h3),
 .ux-participant-mission > section > h2 {
   margin-block: var(--space-12) var(--space-4);
   padding-top: var(--space-6);
