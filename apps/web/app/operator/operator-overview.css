@@ -502,7 +502,7 @@
   }
   .ux-operator-home .ux-tool-index a:first-child .operator-nav-copy > span {
     max-width: none;
-    font-size: 1.65rem;
+    font-size: var(--text-title);
   }
   .ux-operator-home .ux-tool-index a:first-child .operator-nav-copy small {
     max-width: 15rem;
