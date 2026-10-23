@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
 import { migrateCustomerMemberRoles } from './customer-member-role-migrate';
-// Explicit optional synthetic billing authority (ADR-059). It reads the workspace roles, so the member-roles
+// Explicit optional synthetic billing authority (ADR-060). It reads the workspace roles, so the member-roles
 // module is installed first. Accepted base lifecycles are unchanged and no other module reads these tables.
 export async function migrateCustomerBilling(pool: DatabasePool) {
   await migrateCustomerMemberRoles(pool);

@@ -1,6 +1,6 @@
 # Rehearsal Mission proposal (Phase 0, item 7)
 
-Date: 2026-10-23. Status: proposal for the owner. Docs only. This file adds no code and no migration.
+Date: 2026-10-23. Status: approved proposal. This file itself adds no code and no migration. The owner approved this proposal on 23 October 2026 ("yes to both, as long as safe"). Built so far: the report notice fix (4.2, first row) and the exclusion test (4.4), see the section 9 note.
 
 Owner goal: click through the whole mission journey without touching a real customer.
 
@@ -217,3 +217,10 @@ Decisions needed from the owner:
 - What `synthetic: config.DATA_ENVIRONMENT === 'synthetic'` does for customer services on the live site, where it is false (`apps/web/lib/foundations.ts` line 201 and its repeats). I did not trace its effect.
 - Whether any report or count outside `packages/missions/src/operations.ts`, `packages/missions/src/index.ts` and `packages/db/migrations/0015_shared_commercial_totals.sql` reads across tenants. I did not search all of them.
 - Whether the preview route A is available today: it needs a sterile parent branch, a free Neon branch slot and a PR number. The ledger says the sterile template is kept, but I did not check it.
+
+## 9. Built after approval (23 October 2026)
+
+- **Notice fix.** The client and institution report now shows "Sample data. The people and companies in this report are invented." only when the report's purpose is the sample purpose. A real report shows no such notice. The old fixed text said real admission was not enabled, which is no longer true. Covered by the type check and unchanged operator specs only; it has no new test of its own.
+- **Exclusion test.** `tests/integration/sample-journey-exclusion.test.ts` runs a sample journey of three missions through qualify, activate and targeting in the sample workspace, and asserts that the real workspace's row counts, queue, open queue, dashboard, control center and reliability views are identical before and after. It also asserts the sample workspace's own queue grew by three, so the journey really happened, and that a staff member scoped to real work cannot open the sample workspace. Counting across all tenants instead of one failed the test, so it is sensitive.
+- **Not built, and why.** The loud "Rehearsal" banner on staff, buyer, client and institution screens changes visible layouts across the workspace that the AC/1 interface work is still changing, and a layout change to shared selectors needs the full operator suite (about 17 minutes). It waits for that work to finish and for your go.
+- **Still your decisions:** whether the practice walk on the live site is enough for now, who holds the sample-only staff login, and route C (customer views on the live site), which stays unbuilt.

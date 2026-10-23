@@ -10,7 +10,7 @@ import { CustomerWorkspaceService } from '../../packages/auth/src/customer-works
 import { CustomerBillingService } from '../../packages/auth/src/customer-billing';
 import { CustomerBillingStaffService } from '../../packages/delivery/src/customer-billing-staff';
 
-// ADR-059: billing records are synthetic only, even when real-use admission is installed and enabled. A real
+// ADR-060: billing records are synthetic only, even when real-use admission is installed and enabled. A real
 // workspace reads no plan, asks for none and is served nothing, and staff cannot see or change one.
 let f: Awaited<ReturnType<typeof fixture>>;
 let realWorkspace: string;

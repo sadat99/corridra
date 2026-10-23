@@ -919,12 +919,17 @@
       "use": "Real invited contributor work, separate identity/MFA, purpose isolation, exact rewards and protected activation; production pending"
     },
     {
+      "path": "docs/adr/0059-view-as-preview.md",
+      "classification": "Architecture contract/index",
+      "use": "Read-only, always-logged preview of a customer screen for owners and admins; stage 1; impersonation rejected"
+    },
+    {
       "path": "docs/adr/0058-emailed-request-status-link.md",
       "classification": "Architecture contract/index",
       "use": "Proposed emailed request status link; owner has not approved it and no code depends on it"
     },
     {
-      "path": "docs/adr/0059-synthetic-plans-subscriptions-and-entitlements.md",
+      "path": "docs/adr/0060-synthetic-plans-subscriptions-and-entitlements.md",
       "classification": "Architecture contract/index",
       "use": "Synthetic plans, subscriptions and entitlements (billing slice 1): default-off, synthetic-only, no payment or invoice, entitlements recorded and not enforced"
     },

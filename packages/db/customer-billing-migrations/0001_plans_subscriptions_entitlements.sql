@@ -1,4 +1,4 @@
--- Optional additive module: synthetic billing plans, subscriptions and entitlements (billing slice 1, ADR-059).
+-- Optional additive module: synthetic billing plans, subscriptions and entitlements (billing slice 1, ADR-060).
 -- A subscription here is a record that a synthetic workspace holds a plan for a stated period. Nothing is charged:
 -- there is no payment, invoice, card, tax number or contact detail in this module and none can be stored.
 -- Entitlements record what a plan grants; no other module reads them, so they restrict nothing.

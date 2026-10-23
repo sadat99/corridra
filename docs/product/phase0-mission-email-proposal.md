@@ -50,13 +50,13 @@ How it is installed: the protected **Install customer modules** workflow, from `
 
 Tested against a real PostgreSQL with the real roles (`tests/integration/mission-mail-database.test.ts`, 22 checks). Seven deliberate breaks of the SQL were tried: six failed a test at once, and the seventh (the sample workspace rule) survived until a test for it was added, after which it failed too.
 
-## Words for the privacy notice (for your review; the page is not edited)
+## Privacy notice (edited 23 October 2026, with the owner's approval)
 
-The privacy page now says mission reply emails are not sent. When these emails are on, I suggest replacing that sentence with:
+The privacy page (`/privacy`) now shows, only while real use is on and `CORRIDRA_MISSION_EMAIL_ENABLED` is `true`:
 
-> We email the verified address on your account when we receive your request and when we need something from you about it. Each of these emails has a link to mute that request and a link to your account settings. We keep the address used for sending only as long as we keep the request, and never share it. Sign-in and password emails are separate.
+> We email the verified address on your account when we receive your request. Each of these emails has a link to mute messages about that request and a link to your account. We keep the address used for sending in the Frankfurt application database for at most 24 hours, only to send the email, and we do not share it with anyone else. These emails are sent through Resend, like account verification emails. Sign-in and password emails are separate.
 
-Keep the switch off until you have reviewed this.
+Where this differs from the first suggestion, it follows what is built: no "when we need something from you" (that message is not wired), "your account" instead of "your account settings", and "at most 24 hours" instead of "as long as we keep the request". With the switch off the page still says "Mission reply emails are not sent." The notice version string is unchanged. `tests/integration/privacy-notice.test.ts` renders the real page and checks both states.
 
 ## The application side as built (Phase B)
 
@@ -77,7 +77,7 @@ Tests: `tests/integration/mission-mail-flow.test.ts` (8, real database and roles
 1. Merge Phase A, then Phase B. Merging installs and enables nothing.
 2. Run **Install customer modules** from `main` with `mission_mail_action = install`. This creates the objects. Nothing can be queued yet because the database control is closed.
 3. Set the sender settings if they are not already set (`CUSTOMER_AUTH_MAIL_KEY`, `CUSTOMER_AUTH_MAIL_FROM`, `CUSTOMER_AUTH_MAIL_REPLY_TO`, the same ones the sign-in emails use) and `MISSION_EMAIL_FOUNDER_LINE` with your sentence.
-4. Review the privacy wording above and have the privacy page changed. It is not edited by this work.
+4. Privacy page: done. It shows the paragraph above only after the switch is on. Check it on the live site after the next deploy.
 5. Set `CORRIDRA_MISSION_EMAIL_ENABLED=true` and let the next deployment finish.
 6. Run the workflow again with `mission_mail_action = enable` and a written reason. This is the moment mail can start.
 

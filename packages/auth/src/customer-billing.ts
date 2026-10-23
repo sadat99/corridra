@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerWorkspacesEnabled } from './customer-workspaces';
 
-// ADR-059: synthetic plans, subscriptions and entitlements. Off unless the owner sets the switch, and then only for
+// ADR-060: synthetic plans, subscriptions and entitlements. Off unless the owner sets the switch, and then only for
 // synthetic workspaces: the database refuses any other workspace. No payment, invoice or processor exists here.
 export function customerBillingEnabled(env: NodeJS.ProcessEnv = process.env) {
   return customerWorkspacesEnabled(env) && env.CORRIDRA_CUSTOMER_BILLING_ENABLED === 'true';

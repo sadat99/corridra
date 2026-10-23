@@ -9,6 +9,8 @@ export const metadata = {
 };
 export default function Page() {
   const real = realUseEnabled();
+  // The first mission email says what it does only while it can actually be sent.
+  const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
   return (
     <PublicShell>
       <section className="guide-page-hero">
@@ -28,7 +30,7 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated 21 October 2026. Request notice version:{' '}
+            Updated 23 October 2026. Request notice version:{' '}
             {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
           </p>
         </div>
@@ -119,6 +121,13 @@ export default function Page() {
                 For test submissions, keep your private receipt code. Anyone with that code can read
                 the associated status and replies at <Link href="/plan">the request page</Link>. A
                 receipt expires after 30 days.
+              </p>
+            )}
+            {!real && (
+              <p>
+                If you send a request without signing in, a private code for it is kept in your
+                browser on this device so you can check its status later. You can remove it at any
+                time with Forget this request on this device. The device forgets it after 30 days.
               </p>
             )}
           </div>
@@ -218,6 +227,16 @@ export default function Page() {
                 : 'Keep your private receipt to read test request status and replies. No account is required for the existing receipt workflow.'}{' '}
               Mission reply emails are not sent.
             </p>
+            {missionEmail && (
+              <p>
+                We email the verified address on your account when we receive your request. Each of
+                these emails has a link to mute messages about that request and a link to your
+                account. We keep the address used for sending in the Frankfurt application database
+                for at most 24 hours, only to send the email, and we do not share it with anyone
+                else. These emails are sent through Resend, like account verification emails.
+                Sign-in and password emails are separate.
+              </p>
+            )}
             <p>
               We update this notice when handling changes. A new request records the notice version
               acknowledged at submission. If anything is unclear, contact us before adding sensitive

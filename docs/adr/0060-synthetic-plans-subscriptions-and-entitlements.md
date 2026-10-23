@@ -1,4 +1,4 @@
-# ADR-059: Synthetic plans, subscriptions and entitlements (billing slice 1)
+# ADR-060: Synthetic plans, subscriptions and entitlements (billing slice 1)
 
 Status: bounded implementation, synthetic only, default off (`CORRIDRA_CUSTOMER_BILLING_ENABLED`). V3-06-013 (billing, entitlements, invoicing, subscriptions) moves from MISSING to PARTIAL for the whole product. Invoices, payment observations and credit notes are slice 2 and are not built here. No payment processor is involved.
 
