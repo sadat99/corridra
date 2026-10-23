@@ -322,6 +322,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_VIEW_AS_ENABLED',
+    label: 'Preview as a customer',
+    line: 'Lets owners and admins open a read-only preview of a customer screen with sample data. Every open is logged. It never signs in as a real person.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_OWNER_PAGE_ENABLED',
     label: 'This Owner page',
     line: 'Shows this page to workspace owners and admins.',

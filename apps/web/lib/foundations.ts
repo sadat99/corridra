@@ -71,6 +71,7 @@ import {
 } from '@corridra/auth/customer-workspaces';
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
+import { ViewAsService } from '@corridra/auth/view-as';
 import {
   CustomerProgrammeService,
   customerProgrammesEnabled,
@@ -206,6 +207,7 @@ function createServices() {
     config,
     ...identity,
     missionMail,
+    viewAs: new ViewAsService(runtimePool),
     operatorSetup: new OperatorSetup(authPool),
     networkInvitations: new NetworkInvitations(
       authPool,

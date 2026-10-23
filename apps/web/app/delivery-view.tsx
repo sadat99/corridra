@@ -265,9 +265,11 @@ function ScopedDeliveryView({
         </p>
       )}
       <p role="status">{notice}</p>
-      <p className="evidence-label">
-        Invented test mission data. Real customer mission admission is not enabled.
-      </p>
+      {report.purpose === 'synthetic_validation' && (
+        <p className="evidence-label">
+          Sample data. The people and companies in this report are invented.
+        </p>
+      )}
       <OperatorWorkbench
         label="Approved report sections"
         sections={[

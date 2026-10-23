@@ -71,3 +71,5 @@ ADR056: [Real-use admission and progressive registration](0056-real-use-admissio
 ADR057: [Real invited execution work](0057-real-invited-execution-work.md), separate contributor invitations and password/TOTP access, real purpose isolation and preserved review/reward boundaries; Production activation pending.
 
 ADR058: [Emailed request status link](0058-emailed-request-status-link.md), proposed only; a 90 day link that shows request status without sign-in, awaiting owner approval, no code depends on it.
+
+ADR059: [View-as preview](0059-view-as-preview.md), a read-only, always-logged preview of a customer screen with sample data for owners and admins; stage 1 built, switch off by default.

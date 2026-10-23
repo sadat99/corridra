@@ -1,6 +1,6 @@
 # View-as proposal (Phase 0, item 8)
 
-Date: 2026-10-23. Status: proposal only. No code, no migration, no flag exists yet. Nothing here is accepted until the owner answers the decisions at the end.
+Date: 2026-10-23. Status: approved by the owner on 23 October 2026 ("yes to both, as long as safe") and recorded as [ADR 059](../adr/0059-view-as-preview.md). Stage 1 is built; later stages are not. The decisions at the end were taken at their proposed defaults.
 
 ## Goal and hard limits
 
@@ -190,3 +190,15 @@ Stage 1 is first because it proves the gate, the audit write and the read-only r
 8. Show the viewer's name in the watermark (not logged), or keep it anonymous (proposed)?
 9. OK to add one additive database function for the audit entry, with its own ADR and a hash-checked migration?
 10. Should denied attempts also go to the tenant audit trail where a tenant is known, or only to the application log (proposed)?
+
+## Built after approval: stage 1 (23 October 2026)
+
+Everything in the stage 1 row of the staged plan, behind `CORRIDRA_VIEW_AS_ENABLED` (default off):
+
+- Permission `viewas.open` for owner and admin, with the existing five minute authenticator check.
+- `app.record_view_as_open`, one additive database function in the optional module `view-as-migrations`, installed with the owner-run workflow input `view_as_action = install`. It re-checks the member role, the authenticator and the inputs itself, and writes one event and one audit row with the shown role, the viewer's role and a preview version.
+- `/operator/view-as/customer`: the bar, the diagonal mark, inert sample content, a title starting "Preview:", no real name, not indexed, not cached, no referrer. Delegate and supplier answer not found and are not logged until built.
+- A 405 answer for any method but GET or HEAD under the preview path.
+- Tests: a real-database denial matrix, source checks that the preview folder has no script, form, fetch, server action or outside link, and an operator browser journey (marked, inert, logged on every open, no network request of its own, axe at 1440, 768 and 390). Breaking the role check, the authenticator check, the role list, the audit write or the record contents each failed a test.
+
+Stage 1 is reached by address only. No link to it is added to the workspace yet. Path-scoped content security rules were left out: stage 1 has no form or script to restrict, and how Next merges two header rules for one path is not confirmed.
