@@ -1287,3 +1287,17 @@ Next bundle (CSS only, tokens only): the Mission Room next-action panel is a dar
 Audit findings left as designed (not defects): the operator tool index is a bento grid whose first tile spans two rows or two columns, so its tiles differ in size on purpose; the hero filter row mixes labelled selects and pager buttons.
 
 Not done: AC1-06 Encounter. The delegation screens only render signed in, and the operator-suite fixtures mount their parts without the real customer frame, so layout there cannot be measured honestly; next step is review on the deployed page or fixtures that include the frame. Next action: finish the local gates, open the PR, merge when CI is green.
+
+## 2026-10-23 PR140 merged; AC1-07 Signal first slice (branch ccr-998044a6-w7yufu, base 4d3a287)
+
+PR140 merged as `4d3a287` (squash) with CI green on the exact head `6550c98`; Vercel production deployment for it was building when last checked. A Codex review finding was real and fixed before merge: the Mission Room section rule matched `h2` only while `/client` and `/programme` render the sections as `h3`.
+
+Audit: a new "short fill" measure (a control that starts at the container's left edge, covers more than 60 percent of its width and stops 6 to 40 px short of the right edge) found 18 operator controls on the full 380-test signed-in run. Two causes: the legacy `.operator-page .text-link { margin-right: 15px }` on grid and flex items that stretch (form buttons such as "Add a tier", panel links such as "Back to workspace sections", the jump-list chips); and the "Open the mission list" button, which sat in the first column of a `1fr auto` grid with an empty second column and so stopped one column gap short.
+
+Change (CSS only, tokens only): `margin-right: 0` for text links that are direct children of `.operator-form`, `.workspace-panel`, `.ux-today` and for jump-list chips; the mission-list button now keeps its natural width (`justify-self: start`, as it already did on phones). After the change the same audit finds 0 short-fill controls and all 380 tests pass.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test`, `pnpm build`, full signed-in suite copy 380/380, `pnpm test:ux` 42/42, `pnpm test:e2e` 166/166. CI runs the protected suite on the exact head.
+
+Pages affected: the operator overview (`/operator`) and every operator section with forms or jump lists (missions, companies, meetings, commercial, delivery, network, operations, controls), i.e. more than 10 destinations.
+
+Not done: AC1-06 Encounter, the rest of AC1-07. Next action: PR, CI, merge, then confirm production.

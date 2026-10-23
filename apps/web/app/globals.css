@@ -8281,3 +8281,11 @@ th {
   background: var(--unknown-surface);
   color: var(--text-2);
 }
+
+/* AC1-07 Signal: the legacy 15 px right margin on operator text links left controls that fill a grid or
+   flex container 15 px short of its edge (found by the signed-in layout audit on 18 controls). Inside the
+   form, panel and jump-list containers the container already owns the gap. */
+.operator-page :is(.operator-form, .workspace-panel, .ux-today) > :is(a, button).text-link,
+.operator-page .ux-operator-workbench :is(a, button).text-link {
+  margin-right: 0;
+}
