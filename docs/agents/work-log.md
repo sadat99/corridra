@@ -1337,3 +1337,13 @@ PR143 merged as `92aa80f` (squash) with CI green on the exact head `36d282c` (ch
 This entry is documentation only: the design-system README work-package status column now names what is merged for AC1-02, AC1-04 to AC1-08, section 7a records the audit method, selector pitfalls, evidence location and the 23 October owner decision, AGENTS.md has one lesson pointing at KI-16, and the ledger lists PR137 to PR143. Nothing outside documentation changes.
 
 Open: AC1-02 still partial (the specimen route or fixture with all states and the remaining primitives are not built; Codex review of this PR caught the earlier wording), rest of AC1-07 Signal, remaining AC1-08 families (partner discovery, dossiers), the owner art review on the deployed pages (a page the owner rejects is reverted), and a deployment check for `92aa80f`.
+
+## 2026-10-23 PR144 merged; AC1-02 primitive states, specimen gate and state panel (branch ccr-998044a6-w7yufu, base 22e23ee)
+
+PR144 (documentation) merged as `22e23ee` after a Codex finding was right: the AC1-02 row read as implemented while the specimen and primitives were unbuilt. The row and the ledger now say partial. The branch was restarted from main and the work cherry-picked (KI-17).
+
+AC1-02, CSS only plus one test, tokens only. Specimen gate `tests/ux/specimen.spec.ts` builds the primitives in the page (no production route) with the product stylesheet and checks, at 320, 390, 768 and 1440 px: no overflow, 44 px targets, visible keyboard focus on every control, disabled/selected/destructive/busy readable without colour alone, Bangla and Chinese line height, axe. It first failed on four real gaps (secondary disabled was not dimmed; selected, destructive and busy had no style), now closed with opt-in attributes `aria-pressed`, `aria-busy` and `data-intent="destructive"`, so no element changes until a page sets one. State panel (`.ux-state`, markup unchanged): label becomes a quiet eyebrow, message at body size with room between lines, focus ring clear of the text, actions 16 px below. Pages: `/client`, `/programme`, `/signup`, `/forgot-password`, `/reset-password`, `/verify-email`, `/contributor/setup`, `/operator/setup` plus the signed-in service-request and delivery views that render the same panel.
+
+Verification: see the PR body. Evidence: `docs/design-system/evidence/ac1-02-state/{before,after}` (8 pages at 320, 390, 768, 1440, first 900 px) and `work/ux-specimen` locally.
+
+Not done: pages adopting the busy, selected and destructive attributes, field and notice polish, rest of AC1-07 Signal, AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
