@@ -8888,6 +8888,9 @@ samp {
   .ac1-proofs .ac1-proof + .ac1-proof {
     margin-top: 0;
   }
+  .ac1-proofs .ac1-ledger-head {
+    display: none;
+  }
   .ac1-proofs .ac1-buyers li {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-1) var(--space-4);
