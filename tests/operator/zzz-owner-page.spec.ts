@@ -60,7 +60,7 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   await expect(row('CORRIDRA_OWNER_PAGE_ENABLED')).toContainText('On');
   await expect(row('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED')).toContainText('Off');
   await expect(row('CORRIDRA_CUSTOMER_CODE_SIGNIN')).toContainText('Off');
-  await expect(row('CORRIDRA_MISSION_EMAIL_ENABLED')).toContainText('Planned, not built yet');
+  await expect(row('CORRIDRA_MISSION_EMAIL_ENABLED')).toContainText('Off');
   await expect(row('CORRIDRA_AI_FIXTURE_URL')).toContainText('Set');
 
   // Real counts from the Today list, each a whole number or an honest unknown.

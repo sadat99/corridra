@@ -88,7 +88,8 @@ export class CustomerSessionBoundary {
   protected async transaction<T>(
     work: (
       db: DatabaseClient,
-      proof: { hash: string; issuer: string; subject: string },
+      // `email` is the provider-verified address, present only in real data mode.
+      proof: { hash: string; issuer: string; subject: string; email?: string },
     ) => Promise<T>,
     expectedSubject?: string,
     expectedIssuer?: string,
@@ -184,7 +185,12 @@ export class CustomerSessionBoundary {
         set_config('corridra.tenant_id','',true),set_config('corridra.customer_workspace_id','',true),set_config('corridra.purpose','synthetic_validation',true)`,
         [hash],
       );
-      const result = await work(db, { hash, issuer, subject: session.subject });
+      const result = await work(db, {
+        hash,
+        issuer,
+        subject: session.subject,
+        email: this.options.dataMode === 'real' ? session.email : undefined,
+      });
       await db.query('COMMIT');
       return result;
     } catch (error) {

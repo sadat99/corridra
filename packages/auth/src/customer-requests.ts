@@ -3,8 +3,13 @@ import { z } from 'zod';
 import { customerProductionLocked } from './customer-production';
 import { briefSchema, realBriefSchema } from '@corridra/domain/missions';
 import { DomainError } from '@corridra/domain';
-import type { DatabaseClient } from '@corridra/db';
-import { CustomerSessionBoundary } from './customer-session';
+import type { DatabaseClient, DatabasePool } from '@corridra/db';
+import {
+  CustomerSessionBoundary,
+  type CustomerSession,
+  type CustomerWorkspaceOptions,
+} from './customer-session';
+import type { MissionMailJob, MissionMailPort } from './mission-mail';
 
 export const customerRequestInput = z
   .object({
@@ -43,6 +48,27 @@ export function customerRequestsEnabled(env: NodeJS.ProcessEnv = process.env) {
 // Trusted server composition supplies canonical preparation. No browser key,
 // receipt, issuer or subject can become positive authority.
 export class CustomerRequestService extends CustomerSessionBoundary {
+  // The optional mail port exists only while the mission mail switch is on. Without it nothing below
+  // runs and a request is stored exactly as before.
+  constructor(
+    runtime: DatabasePool,
+    auth: DatabasePool,
+    options: CustomerWorkspaceOptions,
+    readSession: () => Promise<CustomerSession | null>,
+    private mail?: MissionMailPort,
+  ) {
+    super(runtime, auth, options, readSession);
+  }
+
+  private async dispatchMail(jobs: MissionMailJob[]) {
+    for (const job of jobs)
+      try {
+        await this.mail?.dispatch(job);
+      } catch {
+        console.info(JSON.stringify({ event: 'mission_mail_dispatch_failed' }));
+      }
+  }
+
   async list(input: unknown = {}, expectedSubject?: string, expectedIssuer?: string) {
     const page = pageInput.parse(input);
     return this.transaction(
@@ -69,20 +95,24 @@ export class CustomerRequestService extends CustomerSessionBoundary {
         ? customerRequestInput.extend({ brief: realBriefSchema })
         : customerRequestInput
     ).parse(input);
-    return this.transaction(
+    const jobs: MissionMailJob[] = [];
+    const result = await this.transaction(
       async (db, proof) => {
-        return this.submitInTransaction(db, proof, value, prepare);
+        return this.submitInTransaction(db, proof, value, prepare, jobs);
       },
       expectedSubject,
       expectedIssuer,
     );
+    await this.dispatchMail(jobs);
+    return result;
   }
 
   private async submitInTransaction(
     db: DatabaseClient,
-    proof: { hash: string; issuer: string; subject: string },
+    proof: { hash: string; issuer: string; subject: string; email?: string },
     value: { commandId: string; workspaceId: string; brief: unknown },
     prepare: (context: CustomerRequestContext, brief: unknown) => CustomerRequestPlan,
+    jobs?: MissionMailJob[],
   ) {
     const synthetic =
       this.options.dataMode === 'real'
@@ -124,7 +154,18 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       'SELECT customer.submit_private_request($1,$2,$3::jsonb) AS result',
       [value.commandId, value.workspaceId, body],
     );
-    return result.rows[0].result;
+    const stored = result.rows[0].result;
+    // Inside the same transaction, in a savepoint: a mail problem never fails or undoes the request.
+    if (this.mail && jobs && proof.email && stored?.id) {
+      const job = await this.mail.enqueue(db, {
+        requestId: stored.id,
+        email: proof.email,
+        name: (brief as { name: string }).name,
+        objective: (brief as { objective: string }).objective,
+      });
+      if (job) jobs.push(job);
+    }
+    return stored;
   }
 
   async claimPending(
@@ -158,7 +199,8 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       }
       return { workspaceId, subject: proof.subject, issuer: proof.issuer };
     });
-    return this.transaction(
+    const jobs: MissionMailJob[] = [];
+    const claimed = await this.transaction(
       async (db, proof) => {
         const pending = (
           await db.query('SELECT customer.pending_request_for_claim($1,$2) result', [
@@ -175,6 +217,7 @@ export class CustomerRequestService extends CustomerSessionBoundary {
             proof,
             { commandId: cap.id, workspaceId: scope.workspaceId, brief },
             prepare,
+            jobs,
           );
           requestId = request.id;
         }
@@ -189,5 +232,7 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       scope.subject,
       scope.issuer,
     );
+    await this.dispatchMail(jobs);
+    return claimed;
   }
 }

@@ -1,6 +1,6 @@
 # Phase 0: first two mission emails
 
-Status: proposal for the owner, 23 October 2026. Nothing here is switched on. The switch `CORRIDRA_MISSION_EMAIL_ENABLED` does nothing yet, and the Owner page says so.
+Status: approved by the owner on 23 October 2026 ("Yes, go for update in database"). Phase A, the database module and installer, and Phase B, the application side, are built and tested. Nothing is installed or switched on: the database control starts closed and `CORRIDRA_MISSION_EMAIL_ENABLED` is off.
 
 ## What is built and tested
 
@@ -17,9 +17,9 @@ The templates reuse the AC/1 colours and the escaping of the sign-in emails. Onl
 
 One deliberate difference from the plan text: when the request has no short description, the plan says to use "your request" for the job. That would read "Your request about your request". The template drops the phrase instead and says "Your request has reached us".
 
-## What is not built, and why
+## Why a database change was needed, and what still waits
 
-The plan asks for the events and outbox pattern, a mute that works, and no sending from a request handler. Today that cannot be done without a database change. These facts come from reading the code.
+The plan asks for the events and outbox pattern, a mute that works, and no sending from a request handler. That could not be done without a database change. These facts come from reading the code. Points 1 to 4 and 6 are now answered by the module below. Point 5 still waits.
 
 1. **Nothing reads the outbox for email.** `app.outbox` rows are written for many events, but the only dispatcher (`packages/workflows/src/index.ts`) works on the controlled communications queue, and only the synthetic channel exists. The database also refuses a real email channel there.
 2. **The app cannot add an event type.** The runtime database role can only read the event and outbox tables. Rows come from database functions and triggers. A new "send this email" event needs a new function.
@@ -58,9 +58,29 @@ The privacy page now says mission reply emails are not sent. When these emails a
 
 Keep the switch off until you have reviewed this.
 
-## What you need to do
+## The application side as built (Phase B)
 
-1. Write the one founder sentence for message 1, then set `MISSION_EMAIL_FOUNDER_LINE`.
-2. Run the install workflow when Phase B is merged: first `install`, then, after you have read the privacy wording, `enable` with a reason.
-3. Review the privacy wording.
-4. Say when the Mission Road work should supply the "move" that message 4 needs.
+| Piece                                            | What it does                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/auth/src/mission-mail.ts`              | Queues inside the request transaction, in a savepoint, so a mail problem can never fail or undo the request. Sends one attempt at a time. Mutes. Derives the two secrets from the server secret.                                                                                                                   |
+| `customer-requests.ts`                           | An optional mail port. It exists only while `CORRIDRA_MISSION_EMAIL_ENABLED` is exactly `true` in real use. Delivery starts only after the request has committed. With the switch off the request code path is unchanged.                                                                                          |
+| `apps/web/workflows/mission-mail.ts`             | A durable workflow with a few spaced attempts. The database also caps attempts at three and expires a message after 24 hours.                                                                                                                                                                                      |
+| `/mute/[requestId]` and `/api/mission-mail/mute` | Public, not indexed, no cache, no referrer. The token is in the address fragment and is removed from the address once read. Opening the page mutes nothing; the button does. Every refusal reads the same. They keep working if the sending switch is later turned off, so an older email's Mute link still works. |
+| Owner page                                       | `CORRIDRA_MISSION_EMAIL_ENABLED` is now a real switch, and `MISSION_EMAIL_FOUNDER_LINE` is listed (its text is never shown).                                                                                                                                                                                       |
+
+Message 1 uses these words: "We have your request". The job phrase comes from the request type the person chose ("selling in a new market" and so on), never from free text. Message 4 ("Your move") is written and tested but has no trigger and cannot be queued: the database refuses that kind until the Mission Road work supplies a real move.
+
+Tests: `tests/integration/mission-mail-flow.test.ts` (8, real database and roles, a recorder in place of the provider; four deliberate breaks each failed a test) and `tests/browser/mission-mail-mute.spec.ts` (page, headers, button behaviour, refusals, axe at 1440, 390 and 320).
+
+## What you need to do, in this order
+
+1. Merge Phase A, then Phase B. Merging installs and enables nothing.
+2. Run **Install customer modules** from `main` with `mission_mail_action = install`. This creates the objects. Nothing can be queued yet because the database control is closed.
+3. Set the sender settings if they are not already set (`CUSTOMER_AUTH_MAIL_KEY`, `CUSTOMER_AUTH_MAIL_FROM`, `CUSTOMER_AUTH_MAIL_REPLY_TO`, the same ones the sign-in emails use) and `MISSION_EMAIL_FOUNDER_LINE` with your sentence.
+4. Review the privacy wording above and have the privacy page changed. It is not edited by this work.
+5. Set `CORRIDRA_MISSION_EMAIL_ENABLED=true` and let the next deployment finish.
+6. Run the workflow again with `mission_mail_action = enable` and a written reason. This is the moment mail can start.
+
+To stop: run the workflow with `mission_mail_action = pause`, and unset the switch. To check before going live, do steps 2 to 6 on a non-production database first.
+
+Still yours to do: write the founder sentence, and say when the Mission Road work should supply the "move" that message 4 needs.

@@ -257,10 +257,18 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_MISSION_EMAIL_ENABLED',
     label: 'Mission emails',
-    line: 'Not wired. The two emails are written and tested, but sending needs a database change that waits for your approval. Setting this does nothing yet.',
+    line: 'Sends "We have your request" to the verified account holder. Needs the mission mail database module installed and opened, and the sender settings. "Your move" waits for the Mission Road work.',
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
+  {
+    name: 'MISSION_EMAIL_FOUNDER_LINE',
+    label: 'Founder sentence in the first email',
+    line: 'One sentence in your words, shown in the first email. Empty shows nothing. Its text is never shown here.',
+    group: 'Delivery',
+    kind: 'setting',
+  },
+
   // Network
   {
     name: 'CORRIDRA_NETWORK_ENABLED',
