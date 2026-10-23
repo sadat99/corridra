@@ -35,7 +35,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 ### KI-06 Oversized tool output
 
-- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run.
+- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run. `actions_list list_workflow_runs` ignores `per_page` and the head_sha filter and returns about 25 full runs (tens of thousands of tokens): use `pull_request_read get_check_runs` instead.
 
 ### KI-07 Two sessions on one area
 
@@ -94,4 +94,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Method that worked:** a throwaway copy of the operator specs with the axe import swapped for a subclass that also measures action geometry (gap, width, stagger) and writes one line per page and width to `.cache/action-layout/report.jsonl`; run it on the local native PostgreSQL (KI-15). Optionally inject a draft stylesheet with `page.addStyleTag` to prove a rule before building. About 17 minutes for 380 tests.
 - **Pitfalls found:** sorting controls by top before left made a row look like a negative gap (compare left edges within an 8 px band); running one test of the serial workspace file alone fails at MFA enrolment because it depends on the earlier test; fixture URLs are `/?mode=...`, not the real routes.
 - **Not committed:** the audit copy is a local tool. If it is wanted in CI, add it as an explicit work package with owner approval.
+
+### KI-17 Reused branch after a squash merge hides CI
+
+- **Seen (23 Oct):** after PR138 was squash-merged, new commits on the same branch had the old pre-squash commit in their history. The next PR conflicted with main in every file both touched, so GitHub created no `pull_request` CI run and `get_check_runs` showed only the Vercel comment check.
+- **Avoid:** if a PR has no CI checks a minute after opening, check mergeability first (`git merge-tree --write-tree origin/main HEAD`). After any squash merge, restart the branch from main (`git checkout -B <branch> origin/main`) and cherry-pick only the new commit, then `git push --force-with-lease`.
 
