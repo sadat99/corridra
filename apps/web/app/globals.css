@@ -8461,3 +8461,89 @@ th {
 .ux-public .guide-page-intro + .guide-journey > .guide-phase:first-child {
   border-top: 0;
 }
+
+/* AC1-02 shared primitives: states every action needs to show without colour alone. Opt-in
+   through attributes (aria-pressed, aria-busy, data-intent), so no element changes until a page
+   sets one. Specimen and checks: tests/ux/specimen.spec.ts. */
+.button-secondary:disabled,
+.secondary-link[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.button-secondary[aria-pressed='true'] {
+  color: var(--brand-deep);
+  background: var(--surface-subtle);
+  border-color: var(--brand-deep);
+  box-shadow: inset 0 0 0 1px var(--brand-deep);
+}
+.button-secondary[aria-pressed='true']::before {
+  content: '\2713' / '';
+  font-weight: 700;
+}
+.button-secondary[data-intent='destructive'] {
+  color: var(--critical);
+  border-color: var(--critical);
+}
+.button-secondary[data-intent='destructive']:hover {
+  background: var(--critical-surface);
+  border-color: var(--critical);
+}
+:is(.button, .button-secondary)[aria-busy='true'] {
+  cursor: progress;
+}
+:is(.button, .button-secondary)[aria-busy='true']::after {
+  content: '';
+  flex: none;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ac1-busy 0.8s linear infinite;
+}
+@keyframes ac1-busy {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* AC1-02 state panel (access, empty, denied, expired, revoked, unavailable). The label becomes a
+   quiet eyebrow, the message reads at body size with room between lines, and the programmatic
+   focus ring keeps clear of the text. Markup is unchanged (components/access-state.tsx). */
+.ux-state {
+  padding: var(--space-6) var(--space-8);
+}
+.ux-state-label {
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.ux-state-label + [role] {
+  margin-top: var(--space-2);
+}
+.ux-state [role] > p {
+  max-width: 72ch;
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+.ux-state [role] > p + p {
+  margin-top: var(--space-2);
+}
+.ux-state [role] > p:first-child:not(:last-child) {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-state [tabindex='-1']:focus-visible {
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 39.99rem) {
+  .ux-state {
+    padding: var(--space-5) var(--space-5);
+  }
+}
+.ux-state [role] > p + :is(a, button).text-link {
+  margin-top: var(--space-4);
+}
