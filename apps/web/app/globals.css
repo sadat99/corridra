@@ -8074,7 +8074,19 @@ th {
     + :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
       .ux-back,
       [role='tab']
-    ):not(:is(.guide-actions, .guide-actions-row, .ux-controls-section-heading) > *) {
+    ):not(
+      :is(
+          .guide-actions,
+          .guide-actions-row,
+          .ux-controls-section-heading,
+          .ux-start-actions,
+          .ux-start-foot,
+          .guide-page-actions,
+          .guide-links,
+          .ux-state-actions
+        )
+        > *
+    ) {
     margin-block-start: var(--space-3);
   }
 }
@@ -8088,7 +8100,19 @@ th {
     + :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
       .ux-back,
       [role='tab']
-    ):not(:is(.guide-actions, .guide-actions-row, .ux-controls-section-heading) > *) {
+    ):not(
+      :is(
+          .guide-actions,
+          .guide-actions-row,
+          .ux-controls-section-heading,
+          .ux-start-actions,
+          .ux-start-foot,
+          .guide-page-actions,
+          .guide-links,
+          .ux-state-actions
+        )
+        > *
+    ) {
     margin-inline-start: var(--space-3);
   }
   main
