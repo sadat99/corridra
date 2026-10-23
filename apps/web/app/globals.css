@@ -6006,6 +6006,23 @@ th {
   padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
+/* One frame per record: a section or form inside a delivery view carries only a rule above, the
+   same rule the mission card uses. The tinted record rows inside a section keep their own fill. */
+.ux-customer
+  :is(section.delivery-view, section:not([class]))
+  > :is(.detail-card, form.operator-form) {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.ux-customer
+  :is(section.delivery-view, section:not([class]))
+  > :is(.detail-card, form.operator-form):not(:first-child) {
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--line);
+}
 
 /* Routes page on the page scale: card titles are 20 px sans bold (as the step cards), in-card
    actions are outlined 44 px buttons, call-to-action buttons are 48 px, one corner radius. */
@@ -8163,7 +8180,7 @@ th {
 }
 @media (min-width: 40rem) {
   main
-    :is(section, div, form, article, li, aside, details, fieldset, nav.workspace-links)
+    :is(section, div, form, aside, fieldset, nav.workspace-links)
     > :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
       .ux-back,
       [role='tab']
@@ -8185,6 +8202,16 @@ th {
         > *
     ) {
     margin-inline-start: var(--space-3);
+  }
+  /* Buttons that sit in a list item or article wrap onto several lines; a trailing margin keeps
+     every wrapped line flush left, where a leading margin on the later ones staggered them. */
+  main
+    :is(li, article, details)
+    > :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
+      .ux-back,
+      [role='tab']
+    ) {
+    margin-inline-end: var(--space-3);
   }
   main
     :is(li, article, details)
