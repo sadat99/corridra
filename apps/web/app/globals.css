@@ -8394,3 +8394,70 @@ th {
     margin-top: var(--space-3);
   }
 }
+
+/* AC1-08 Atelier informational pages (how it works, about, trust, privacy, network, corridors, sell, source,
+   machinery, enter-market, institutions): typography leads, sections are separated by rules instead of boxed
+   cards, and cobalt stays on actions. Presentation only. Tokens only. */
+.ux-public .guide-page-hero {
+  padding-block: var(--space-16) var(--space-12);
+}
+.ux-public .guide-page-hero .label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ux-public .guide-page-hero .label::before {
+  content: '';
+  width: var(--space-6);
+  height: 2px;
+  background: var(--ac-copper);
+}
+.ux-public .guide-page-hero h1 {
+  max-width: 24ch;
+  font-size: clamp(2.5rem, 1.5rem + 4.2vw, 4.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.ux-public .guide-page-intro {
+  padding: var(--space-8) 0;
+  background: transparent;
+  border-block: 1px solid var(--line);
+  border-radius: 0;
+}
+.ux-public .guide-phase {
+  padding: var(--space-8) 0 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+.ux-public .guide-journey {
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+}
+.ux-public .guide-step-number {
+  color: var(--brand-deep);
+  background: transparent;
+  border: 1px solid var(--brand);
+}
+.ux-public .guide-statements {
+  padding: var(--space-8) 0;
+  background: transparent;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+.ux-public .guide-statements li {
+  padding: var(--space-4) 0 0;
+  background: transparent;
+  border: 0;
+  border-top: 2px solid var(--ac-copper);
+  border-radius: 0;
+}
+
+.ux-public .guide-page-intro + .guide-journey {
+  margin-top: 0;
+}
+.ux-public .guide-page-intro + .guide-journey > .guide-phase:first-child {
+  border-top: 0;
+}
