@@ -1484,6 +1484,14 @@ After Wave 4 the owner answered: use their founder sentence idea (it arrived wit
 
 Next: the rehearsal fixes and view-as stage 1, then the owner steps in the proposal.
 
+## 2026-10-23 Rehearsal Mission, first safe pieces (branch claude/relaxed-thompson-b6ixvz, stacked on mission mail)
+
+The owner approved both Wave 4 proposals "as long as safe". Built from the Rehearsal Mission proposal, without a schema change: (1) the report notice in `apps/web/app/delivery-view.tsx` is now shown only when `report.purpose` is the sample purpose, and says the data is invented; the old text claimed real admission was not enabled, which is no longer true; (2) `tests/integration/sample-journey-exclusion.test.ts`, a real PostgreSQL test that runs three sample missions through qualify, activate and targeting in the sample workspace and asserts the real workspace's row counts, queue, open queue, dashboard, control center and reliability views are identical before and after, that the sample queue grew by three, and that a real-scoped staff member cannot open the sample workspace. Counting across all tenants instead of one failed the test. The `checkedAt` timestamp is ignored because it is the only field that changes on its own.
+
+Not built: the loud "Rehearsal" banner on staff, buyer, client and institution screens, because it changes shared layouts the AC/1 interface work is still changing and would need the full operator suite; and route C, customer views on the live site. The notice fix has no test of its own beyond the type check and unchanged operator specs.
+
+Next: view-as stage 1, then the owner steps for mission mail.
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.
