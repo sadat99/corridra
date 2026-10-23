@@ -35,7 +35,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 ### KI-06 Oversized tool output
 
-- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run. `actions_list list_workflow_runs` ignores `per_page` and the head_sha filter and returns about 25 full runs (tens of thousands of tokens): use `pull_request_read get_check_runs` instead.
+- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run. `actions_list list_workflow_runs` ignores `per_page` and the head_sha filter and returns about 25 full runs (tens of thousands of tokens): use `pull_request_read get_check_runs` instead. Never grep CSS or `apps/web` without excluding `.next`: the compiled stylesheet is one line of tens of thousands of tokens.
 
 ### KI-07 Two sessions on one area
 
