@@ -210,8 +210,10 @@ jobs:
           retention-days: 7
 
   # One required check name for the whole run. Branch protection and the release steps read `validate`.
+  # A newer push cancels the older run. `!cancelled()` skips this roll-up in that case, so a
+  # superseded head never reports a false failure; a failed or timed-out job still fails it.
   validate:
-    if: always()
+    if: ${{ !cancelled() }}
     needs: [checks, browser, operator]
     runs-on: ubuntu-latest
     steps:

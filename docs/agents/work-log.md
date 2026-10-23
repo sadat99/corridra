@@ -1359,3 +1359,29 @@ Owner art review sheet `docs/design-system/ART_REVIEW.md`: one decision row per 
 Operator home: the local signed-in audit (199 measurements, 19 pages) found only the tool index and the phone area bar uneven, both deliberate featured compositions. A uniform grid was built, screenshotted before and after and reverted because it orphaned the fifth tile at 1440 px; evidence in `docs/design-system/evidence/signal-tool-index/`. KI-16 and README 7a record it as not a defect. Note: the audit stopped at test 360 of about 380 when the local database container died; the rest of the pages were not measured.
 
 Not done: the Signal Today queue as a table (AC1-07 reference), AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
+
+## 2026-10-23 Landing example and routes sections (branch landing-example, base bca9107)
+
+Owner request: the example section and the routes on `/` look cluttered and scattered; improve them in line with the design system. Read in full first: `docs/agents/ui-direction.md`, README section 9, the Atelier reference.
+
+Findings: the buyer list used `grid-template-columns: ... auto ...` per row, so the trust-label column changed width from row to row; the list was an open ruled list while the quote table was a bordered card; the "Another route?" box was a different container from the route columns; an older `.ac1-proof > div > p` rule leaked a larger font into the new frame (found on the first render).
+
+Changes (presentation only, tokens only): both examples in one frame with an Example tag, a head row (Company, Why it fits, Trust label, Next step) and a shared grid; routes as a ruled row of three (counter eyebrows Route 01, Route 02, Other) with each action on one line; rows stack below 52 rem. Markup: two wrapper divs, a visual head row marked `aria-hidden`, and the "Another route?" block moved into the routes grid as an h3. No copy, link, list item or table row changed.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` 44/44, `pnpm build`, `pnpm test:e2e` 166/166 (includes the public-experience test pinning four buyers, five quote rows and the route links), `pnpm test:ux` 46/46 (42 routes at six widths plus the specimen). Screenshots at 320, 390, 768, 1440 px before and after in `docs/design-system/evidence/ac1-03-landing`. Not run: `test:operator` (no protected surface changed).
+
+Open: owner art review of the new landing sections; the Signal Today queue table.
+
+## 2026-10-23 AC1-07 Signal Today queue (branch landing-example)
+
+Owner: continue with Signal. Today panel on `/operator` restyled toward the Signal reference ("decisions, not dashboards"): counts as a hairline strip of equal columns, queue rows on one three-column grid, eyebrow group headings, no tinted blocks, no icon tiles. CSS only, in `operator/operator-overview.css`, tokens only. Not built: the reference's Attention and Owner columns (no data source; never faked) and a column head row (groups mix item kinds).
+
+Evidence: before and after at 390 and 1440 px in `docs/design-system/evidence/ac1-07-today`. Local operator audit of `workspace.spec.ts` plus `zz-today.spec.ts` (11 passed, axe clean on the real page); `zz-operator-overview.spec.ts` failed at the MFA step because a hand-picked subset lacks earlier state (KI-16), so CI's full operator suite is the check for it. The audit's layout report shows no new flag from the Today area; its remaining flags are the documented bento and phone area bar. `div.hero-actions` (Next and Previous missions) was flagged for stagger at 1280 and 1440 in this subset run; I did not change that control and did not investigate it, so it stays open.
+
+## 2026-10-23 AC/1 art review recorded (branch landing-example)
+
+The owner asked to fix art approval. I built a private review page with before and after evidence and one Accept, Accept with a change or Reject control per package, because signed-in screens cannot be judged from files and the agent may not mark the gate passed. The owner pressed Accept on all ten rows on the page (09:34 to 09:37 UTC, no notes; read back from the page store) and confirmed the same in chat: AC1-01, AC1-02i, AC1-02 action groups, AC1-02 message panels and button states, AC1-03 home example and routes, AC1-04, AC1-05, AC1-06, AC1-07 Today queue, AC1-08 information pages.
+
+Recorded in `docs/design-system/ART_REVIEW.md` (decision column and scope note) and README section 5 and 7. Scope: what was built and shown. AC1-06 is the first slice only; the home example and routes refinement and the Today queue ship in the PR after PR146. The AC1-08 gate ("never start without recorded human acceptance") is now satisfied for the five references, so the remaining page families may start.
+
+Not done: the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
