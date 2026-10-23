@@ -57,7 +57,7 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
@@ -90,7 +90,7 @@ jobs:
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
       - name: Browser runtime
         id: browser-runtime
-        timeout-minutes: 6
+        timeout-minutes: 4
         continue-on-error: true
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser runtime (retry)
@@ -124,7 +124,7 @@ jobs:
 
   operator:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -159,7 +159,7 @@ jobs:
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
       - name: Browser runtime
         id: browser-runtime
-        timeout-minutes: 6
+        timeout-minutes: 4
         continue-on-error: true
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser runtime (retry)
