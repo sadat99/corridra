@@ -40,6 +40,26 @@ Rules for every visible change:
 5. **Hide, never delete.** Reduce load by ordering, grouping, collapsing and role-based defaults. Keep every existing panel mounted and every action reachable, because tests, history and permissions depend on them.
 6. **Money path first.** Order content by the path visitor, brief, qualified mission, introduction, meeting, commercial outcome, service fee. Gated or unavailable capabilities are shown honestly and briefly, never as the headline.
 
+## Scroll budget (owner request, decided 23 October 2026)
+
+A long page is a cognitive-load defect, so every screen has a length limit. The unit is **phone screens**: page height divided by 844 px at 390 px wide, in the default state, with every disclosure closed, before any edit form is opened.
+
+| Page type                   | Phone limit             | Desktop limit (900 px high) |
+| --------------------------- | ----------------------- | --------------------------- |
+| Flow step                   | 1.5                     | 1                           |
+| Landing page per audience   | 5                       | 3                           |
+| Record, queue or report     | 4                       | 2.5                         |
+| Reading page (legal, about) | 6, with a contents list | 3                           |
+
+A page over its limit is restructured in this order, and every panel stays mounted and every action reachable (hide, never delete):
+
+1. Make it denser: a row of chips or two-up facts where a page stacks full-width controls.
+2. Add a jump bar to the sections. Nothing is hidden.
+3. Fold secondary sections into disclosures with a summary line and a count. The next action and anything a test drives stay open at the widths the tests run.
+4. List the first five records, then "show more". This touches rendering, so read the data flow first.
+
+How to measure: build, run `next start`, load each route at 390 and 1440 wide; for signed-in views mount the fixture in the real customer or operator frame, close every `details`, and divide the height of the content by the viewport height. Fixtures that tests have already opened or put into an edit state overstate the length; the first audit did exactly that and reported the customer mission view at 6.5 screens when its default state is 2.6. Record measured lengths in the work log with the state they were taken in.
+
 ## Plain language for a global audience (owner directive, 2026-10-15)
 
 Users in Bangladesh, China and other non-English countries must understand every screen without help. Many read English as a second language and some use machine translation. Write for them, without lowering the business standard or the product vision.
