@@ -1046,3 +1046,169 @@
     margin: 0;
   }
 }
+
+/* Scroll budget phase 3: readiness, access and audit, workspace controls, introductions,
+   sources and the research record. */
+/* Production readiness: give the next-action column the room so rows wrap less. */
+#ops-gates .operations-table table {
+  table-layout: fixed;
+  min-width: 56rem;
+}
+#ops-gates .operations-table :is(th, td) {
+  max-width: none;
+}
+#ops-gates .operations-table :is(th, td):nth-child(1) {
+  width: 6rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(2) {
+  width: 12rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(3) {
+  width: 9rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(4) {
+  width: 9rem;
+}
+/* Access and audit: on phones a record stacks its label, time and reference disclosure; from
+   40rem all three share one row. An opened disclosure takes the full width. */
+.ux-workspace-body .ux-audit-events > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+.ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading {
+  display: contents;
+}
+.ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading > strong {
+  grid-column: 1 / -1;
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details {
+  margin: 0;
+  border: 0;
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details > summary {
+  min-height: 2.75rem;
+  padding-inline: var(--space-3);
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details[open] {
+  grid-column: 1 / -1;
+}
+.ux-workspace-body .ux-audit-counts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+@media (min-width: 40rem) {
+  .ux-workspace-body .ux-audit-events > li {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading > strong {
+    grid-column: auto;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .ux-audit-events {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .ux-workspace-body .ux-controls-groups {
+    display: block;
+    columns: 2;
+    column-gap: var(--space-4);
+  }
+  .ux-workspace-body .ux-controls-groups > .ux-controls-group {
+    break-inside: avoid;
+    margin: 0 0 var(--space-4);
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .ux-audit-counts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-controls-members form.operator-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    max-width: none;
+  }
+  .ux-workspace-body
+    .workspace-panel
+    .ux-controls-members
+    form.operator-form
+    > :is(.ux-controls-revoke, button) {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body #workspace-meetings form.operator-form > label.field:has(textarea) {
+    grid-column: auto;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench button {
+    width: 100%;
+    margin: 0;
+    white-space: normal;
+  }
+}
+/* Client and programme delivery: closed sections in pairs and the paid-service and sample-plan
+   panels side by side on desktop. An opened section takes the full width. */
+@media (min-width: 64rem) {
+  .ux-workspace-body #workspace-delivery :is(section.delivery-ops, details.phone-fold > section) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+    row-gap: var(--space-3);
+    align-items: start;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > * {
+    grid-column: 1 / -1;
+    margin-block: 0;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(details:not([open]):not(.phone-fold), section.detail-card) {
+    grid-column: auto;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(button, a) {
+    justify-self: start;
+  }
+}
+/* Research record: sections folded on phones keep the record's tighter rhythm on desktop. */
+@media (min-width: 40rem) {
+  .ux-workspace-body
+    .workspace-panel
+    .research-panel
+    > details.phone-fold[data-phone-fold='phone']
+    > *
+    + * {
+    margin-top: var(--space-3);
+  }
+  .ux-workspace-body
+    .workspace-panel
+    .research-panel
+    > details.phone-fold[data-phone-fold='phone']
+    > h4 {
+    margin-top: 0;
+  }
+}
