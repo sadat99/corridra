@@ -1492,6 +1492,24 @@ Not built: the loud "Rehearsal" banner on staff, buyer, client and institution s
 
 Next: view-as stage 1, then the owner steps for mission mail.
 
+## 2026-10-23 View-as stage 1 and the practice-mission pieces (branch claude/relaxed-thompson-b6ixvz, base b5b0242)
+
+The owner said "yes, start view-as stage 1" and later "push view-as and the practice-mission pieces now". Mission mail Phase A (`1f46db7`) and Phase B (`b5b0242`) are merged; the owner ran the install workflow successfully after the first attempt failed because CI on the exact main head had been cancelled by a newer merge (the guard worked as designed and nothing was written).
+
+**View-as stage 1** (ADR 059, `docs/product/phase0-view-as-proposal.md`): switch `CORRIDRA_VIEW_AS_ENABLED`, permission `viewas.open` for owner and admin with the fresh authenticator check, database function `app.record_view_as_open` in the optional module `view-as-migrations` (installer input `view_as_action`), `ViewAsService`, a method gate answering 405 for anything but GET or HEAD under `/operator/view-as/`, and the customer preview page with fixed sample content: caution-colour bar, diagonal mark, inert content, "Preview:" title, no real name, noindex, no-store, no referrer, a close link with prefetch off. Delegate and supplier are not built and are refused without a log row. Tests: `tests/integration/view-as-database.test.ts` (8, real roles; five deliberate breaks each failed a test), `tests/integration/view-as.test.ts` (11; four deliberate breaks each failed a test), and `tests/operator/zzz-view-as.spec.ts` (signed-out and refused cases, owner journey: marked, inert, one audit row per open including reload, nothing requested by the page, axe at 1440, 768 and 390; screenshots in `docs/design-system/evidence/view-as/after/`).
+
+**Practice mission pieces:** the sample-only report notice and `tests/integration/sample-journey-exclusion.test.ts` (details in the entry above). The loud banner and route C are still not built.
+
+**Verification (final build of head after rebase on 7a4613a):** operator run of `workspace.spec.ts`, `zzz-owner-page.spec.ts` and `zzz-view-as.spec.ts`: 13 passed, 1 failed. The failure is `workspace.spec.ts:2403` (claim limit error), which fails identically on clean `origin/main` in this container (KI-19). The view-as journey passed after two real fixes: the rotated "SAMPLE PREVIEW" mark widened the page to 1874px (now clipped on the stage) and the test counted the later not-found page's own link prefetches (now only requests made from the preview count). Screenshots are in `docs/design-system/evidence/view-as/after/`.
+
+**Not verified:** nothing from this change is installed in the Frankfurt database; view-as needs `view_as_action = install` and then the switch. No real person was involved at any point.
+
+**Privacy page (owner approved the edit, 23 Oct):** `apps/web/app/privacy/page.tsx` now says the date 23 October 2026 and, only in real use with `CORRIDRA_MISSION_EMAIL_ENABLED=true`, adds the mission email paragraph (verified address, mute link, account link, address kept at most 24 hours in the Frankfurt application database, Resend, sign-in and password emails separate). With the switch off it still says "Mission reply emails are not sent." Outside real use it also explains the browser-kept private code and "Forget this request on this device". Notice version strings (`real-intake-2026-10-21-v1`) are unchanged because database checks and tests pin them. It differs from the PR151 suggestion in three places, each to match what is built (no "when we need something from you", "your account", "at most 24 hours"). `tests/integration/privacy-notice.test.ts` (6 tests) renders the real page; four deliberate breaks each failed a test.
+
+ADR 059 originally promised a reason-only log line for refused attempts. Stage 1 does not write one; the ADR now says so.
+
+Next: after this merges and deploys, the owner runs Install customer modules with `mission_mail_action = enable` and a reason (only once main CI and CodeQL are green on the exact head and nothing else has merged). View-as stage 2 waits for a go.
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.

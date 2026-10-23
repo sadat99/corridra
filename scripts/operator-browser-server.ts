@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { Pool } from '../packages/db/src/index';
 import { migrate } from '../packages/db/src/migrate';
+import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { seedSyntheticWorkspace } from '../packages/auth/src/bootstrap';
 import { configureSyntheticIntake } from '../packages/missions/src/bootstrap';
 const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
@@ -28,6 +29,7 @@ const db = new Pool({
   database: 'corridra_browser',
 });
 await migrate(db);
+await migrateViewAs(db);
 const password = randomBytes(24).toString('base64url');
 const seed = await seedSyntheticWorkspace(db, {
   email: 'browser@example.invalid',
@@ -48,6 +50,7 @@ const env = {
   CORRIDRA_AI_ENABLED: 'true',
   CORRIDRA_NETWORK_ENABLED: 'true',
   CORRIDRA_OWNER_PAGE_ENABLED: 'true',
+  CORRIDRA_VIEW_AS_ENABLED: 'true',
   CORRIDRA_AI_FIXTURE_URL: 'http://127.0.0.1:3201',
   APP_ORIGIN: 'http://127.0.0.1:3200',
   DATA_ENVIRONMENT: 'synthetic',

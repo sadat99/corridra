@@ -85,6 +85,8 @@ export const permissions = {
   'members.manage': ['owner'],
   'config.manage': ['owner'],
   'audit.read': ['owner', 'admin'],
+  // Opening a read-only preview of what a customer, delegate or supplier sees. Always logged.
+  'viewas.open': ['owner', 'admin'],
 } satisfies Record<string, Role[]>;
 export type Permission = keyof typeof permissions;
 export function authorize(role: Role, permission: Permission) {

@@ -45,6 +45,11 @@ on:
         description: 'Required reason for enabling or pausing mission mail.'
         required: false
         default: ''
+      view_as_action:
+        description: 'Optional Phase 0 operation for the view-as preview audit function. Install shows nothing to anyone.'
+        type: choice
+        options: [unchanged, install]
+        default: unchanged
 
 permissions:
   contents: read
@@ -67,7 +72,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.view_as_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -88,4 +93,5 @@ jobs:
           NETWORK_USE_REASON: ${{ inputs.network_use_reason }}
           MISSION_MAIL_ACTION: ${{ inputs.mission_mail_action }}
           MISSION_MAIL_REASON: ${{ inputs.mission_mail_reason }}
+          VIEW_AS_ACTION: ${{ inputs.view_as_action }}
         run: pnpm exec tsx scripts/install-customer-modules.ts

@@ -1,0 +1,117 @@
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Renders the real privacy page for each setting. The notice must be true in every state: the
+// mission email paragraph appears only while that email can be sent, and the device memory
+// sentence only where a request can be sent without an account.
+// React lives with the web app, not at the repository root.
+const web = createRequire(resolve('apps/web/package.json'));
+const createElement = web('react').createElement as (
+  type: unknown,
+  props?: unknown,
+  ...children: unknown[]
+) => unknown;
+const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
+  element: unknown,
+) => string;
+// The page is a TSX module; the package type check has no JSX setting, so it is loaded by path.
+const pagePath = '../../apps/web/app/privacy/page';
+// Reads the visible text: everything outside angle brackets, with runs of space collapsed.
+function visibleText(markup: string) {
+  let inside = false;
+  let out = '';
+  for (const character of markup) {
+    if (character === '<') {
+      inside = true;
+      out += ' ';
+    } else if (character === '>') inside = false;
+    else if (!inside) out += character;
+  }
+  return out.split(/\s+/).filter(Boolean).join(' ');
+}
+vi.mock('../../apps/web/components/public-shell', () => ({
+  PublicShell: ({ children }: { children: unknown }) =>
+    createElement('div', null, children as never),
+}));
+vi.mock('next/link', () => ({
+  default: ({ children, href }: { children: unknown; href: string }) =>
+    createElement('a', { href }, children as never),
+}));
+
+const text = async (env: Record<string, string | undefined>) => {
+  vi.resetModules();
+  for (const key of [
+    'DATA_ENVIRONMENT',
+    'CORRIDRA_REAL_USE_ENABLED',
+    'CORRIDRA_MISSION_EMAIL_ENABLED',
+    'VERCEL_ENV',
+  ])
+    delete process.env[key];
+  Object.assign(process.env, env);
+  const { default: Page } = await import(/* @vite-ignore */ pagePath);
+  return visibleText(renderToStaticMarkup(createElement(Page)));
+};
+const real = { DATA_ENVIRONMENT: 'real', CORRIDRA_REAL_USE_ENABLED: 'true' };
+const emailSentence = 'We email the verified address on your account when we receive your request.';
+const deviceSentence =
+  'a private code for it is kept in your browser on this device so you can check its status later';
+
+afterEach(() => {
+  for (const key of [
+    'DATA_ENVIRONMENT',
+    'CORRIDRA_REAL_USE_ENABLED',
+    'CORRIDRA_MISSION_EMAIL_ENABLED',
+  ])
+    delete process.env[key];
+});
+
+describe('the privacy notice', () => {
+  it('real use, mission email off: says replies are not emailed and announces no mission email', async () => {
+    const page = await text(real);
+    expect(page).toContain('Mission reply emails are not sent.');
+    expect(page).not.toContain(emailSentence);
+    expect(page).not.toContain(deviceSentence);
+  });
+  it('real use, mission email on: adds the paragraph, still says replies are not emailed', async () => {
+    const page = await text({ ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' });
+    expect(page).toContain(emailSentence);
+    expect(page).toContain('a link to mute messages about that request and a link to your account');
+    expect(page).toContain('for at most 24 hours, only to send the email');
+    expect(page).toContain('Sign-in and password emails are separate.');
+    expect(page).toContain('Mission reply emails are not sent.');
+  });
+  it('the mission email switch counts only when it is exactly true, and only in real use', async () => {
+    for (const value of ['TRUE', 'yes', '1', ' true', ''])
+      expect(await text({ ...real, CORRIDRA_MISSION_EMAIL_ENABLED: value })).not.toContain(
+        emailSentence,
+      );
+    expect(
+      await text({ DATA_ENVIRONMENT: 'synthetic', CORRIDRA_MISSION_EMAIL_ENABLED: 'true' }),
+    ).not.toContain(emailSentence);
+  });
+  it('test mode: tells people the code is kept on the device, how to remove it and when it is forgotten', async () => {
+    const page = await text({ DATA_ENVIRONMENT: 'synthetic' });
+    expect(page).toContain(deviceSentence);
+    expect(page).toContain('Forget this request on this device');
+    expect(page).toContain('The device forgets it after 30 days.');
+    expect(page).toContain('Mission reply emails are not sent.');
+    expect(page).not.toContain(emailSentence);
+  });
+  it('keeps the request notice version the database pins, and the new date', async () => {
+    expect(await text(real)).toContain(
+      'Updated 23 October 2026. Request notice version: real-intake-2026-10-21-v1.',
+    );
+    expect(await text({ DATA_ENVIRONMENT: 'synthetic' })).toContain(
+      'Updated 23 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
+    );
+  });
+  it('uses no dashes as punctuation', async () => {
+    for (const env of [
+      real,
+      { ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' },
+      { DATA_ENVIRONMENT: 'synthetic' },
+    ])
+      expect(await text(env)).not.toMatch(/—|–| - /);
+  });
+});
