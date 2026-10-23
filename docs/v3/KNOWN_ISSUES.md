@@ -17,12 +17,14 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Cause:** the Ubuntu package mirror on the hosted runner (`azure.archive.ubuntu.com`) is intermittently very slow, at the index step in the first case and at the package download in the second. It is runner infrastructure, not the application or the tests.
 - **First mitigation was wrong:** a step timeout stops the step but not the root-owned `apt-get` it started, which kept the dpkg lock; the retry then failed with `Could not get lock /var/lib/dpkg/lock-frontend`. Lesson: never assume a step timeout cleans up a root child.
 - **Current mitigation (`ci.yml`, `browser` and `operator` jobs):** a step writes `/etc/apt/apt.conf.d/99-ci-resilience` (15 s HTTP timeouts, 3 retries) so a stalled connection fails inside apt; the first install has `timeout-minutes: 4` and `continue-on-error`; the retry (12 minutes: on PR146 a slow mirror made the retry need almost 6) kills any leftover `apt-get` and `dpkg`, runs `dpkg --configure -a` and installs again. The `browser` and `operator` jobs have a 45-minute limit instead of 30: on PR146 the recovery worked (the retry installed after a stall) but the old 30-minute limit then cancelled the `browser` job, which normally needs about 19 minutes by itself. Not yet seen to pass end to end after a stall.
+- **Seen working (23 Oct, PR146):** in the `browser` job the first install stalled to its limit, the retry killed the leftover apt, installed in about 5 minutes and the tests started; the old 30-minute job limit then cancelled that job, which is why the limit is now 45. Later the `operator (3)` retry timed out at 6 minutes one second before Chrome finished, which is why the retry now has 12. The final PR146 head passed every job; whether that run met a stall was not checked.
 - **If it recurs:** read the step durations (`list_workflow_jobs`) and the last apt lines; if the retry also fails, the mirror is down and one re-run is the answer. Do not change tests for it.
 
-### KI-03 `validate` red right after a push (not a failure)
+### KI-03 `validate` red on a superseded head (fixed at source 23 Oct)
 
-- **Seen:** PR134 heads `e2c485f` and `40803ce`. `validate` rolls up every job, and a newer push cancels the older run, so the roll-up shows red.
-- **Avoid:** read the run conclusion first. `cancelled` on a superseded head needs no action; only the current head matters.
+- **Seen:** PR134, PR144, PR146. `validate` ran with `if: always()`, so when a newer push cancelled the older run it still rolled up the cancelled jobs and went red on a head nobody cares about, and each report woke the session.
+- **Fix:** `ci.yml` now uses `if: ${{ !cancelled() }}`. A cancelled (superseded) run skips the roll-up; a failed job, or a job cancelled by its own timeout, still fails it, so real failures stay red. This takes effect for runs started after the change reaches main.
+- **Reading events:** a check event whose `head_sha` is not the PR's current head is stale. Compare it with the head you last pushed and ignore it without comment. Only the current head counts.
 
 ### KI-04 Two wrong causes written as facts (process)
 
@@ -44,6 +46,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - Two sessions fixed the same test and edited the same ledger and work-log lines at once, and the PR132 receipt branch cited only pre-merge CI.
 - Fetch main and open PR metadata before editing and check other branches for the same file. Record main CI of the merge commit, not only the PR CI, before calling a change released.
+- **Working beside another session (23 Oct, PR147 and PR148):** list the other PR's files before editing (`pull_request_read get_files`) and keep your set disjoint. The shared hot files are `docs/V3_LEDGER.md` (cap 12 KiB: change one line, never reflow), `docs/agents/work-log.md` (append-only, so two appenders always conflict at the end: whoever merges second merges main in and keeps both entries), `tests/ux/ux-baseline.json` and `docs/documentation-map.json` (add entries, never reorder). The session that merges first owns the main; the other merges main in, resolves, re-runs the checks and only then continues. Never push to or edit another session's branch.
 
 ### KI-08 Merge authority
 

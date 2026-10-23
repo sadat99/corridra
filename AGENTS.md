@@ -40,7 +40,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Discover connector names with a bounded result first; shared description boilerplate can match every tool and defeat filtering.
 - Use discovered file paths and navigation IDs in inventories and verification; never guess them.
 - After a patch context mismatch, read the exact target lines before retrying.
-- Before publishing, verify the Git author matches the authenticated repository owner and established accepted release identity; correct inherited local configuration forward without rewriting pushed history.
+- Identity: branch commits are authored as `Claude <noreply@anthropic.com>` (set once in the clone's local git config; the session stop hook requires it and previews deploy fine). What is published on main is the squash commit GitHub creates when the owner's account opens and merges the PR, so it carries the owner identity. Before publishing, verify that squash commit on main shows the owner; correct inherited local configuration forward without rewriting pushed history.
 - After a missing path or unsupported CLI field, inspect available paths/fields before retrying; never substitute another guessed name.
 - Verify rendered accessible names, including descriptive descendants, before writing exact navigation selectors; preserve every behavior and denial assertion when correcting a driver.
 - Select country/workspace controls by the rendered combobox role/name; exact label text can include option descendants even when the computed accessible name does not.
@@ -69,7 +69,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Discover customer migration directories with `rg --files packages/db`; never infer a directory from a module name.
 - After pnpm metadata drift, use the explicit CLI warn option or pinned installed executables; an environment-only option did not suppress bootstrap in this managed runtime.
 - Print the failing response status before naming a CI root cause; two guessed causes cost four CI cycles (docs/v3/KNOWN_ISSUES.md KI-01, KI-04).
-- A red `validate` on a superseded run means cancelled jobs; read the run conclusion before investigating.
+- Check events carry a `head_sha`. If it is not the head you last pushed, the event is stale: ignore it silently and do not report it. CI now skips `validate` on cancelled runs (KI-03), so this should be rare.
 - Operator browser tests share one auth rate limit (5 per 60 s on sign-in and two-factor); a test that signs in after many others clears `identity."rateLimit"` in the browser-test database. Never raise a limit.
 - Use `get_check_runs` and `get_job_logs` with `tail_lines` near 130; `list_workflow_jobs` returns tens of thousands of tokens.
 - In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` for e2e, ux and operator runs; hundreds of failures at a few milliseconds mean the browser did not launch. `next dev` rewrites `apps/web/AGENTS.md`, and the local operator suite rewrites tracked evidence images; restore them before committing. The suite runs locally on native PostgreSQL 16 (docs/v3/KNOWN_ISSUES.md KI-15).

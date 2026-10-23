@@ -1360,11 +1360,37 @@ Operator home: the local signed-in audit (199 measurements, 19 pages) found only
 
 Not done: the Signal Today queue as a table (AC1-07 reference), AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
 
+## 2026-10-23 Landing example and routes sections (branch landing-example, base bca9107)
+
+Owner request: the example section and the routes on `/` look cluttered and scattered; improve them in line with the design system. Read in full first: `docs/agents/ui-direction.md`, README section 9, the Atelier reference.
+
+Findings: the buyer list used `grid-template-columns: ... auto ...` per row, so the trust-label column changed width from row to row; the list was an open ruled list while the quote table was a bordered card; the "Another route?" box was a different container from the route columns; an older `.ac1-proof > div > p` rule leaked a larger font into the new frame (found on the first render).
+
+Changes (presentation only, tokens only): both examples in one frame with an Example tag, a head row (Company, Why it fits, Trust label, Next step) and a shared grid; routes as a ruled row of three (counter eyebrows Route 01, Route 02, Other) with each action on one line; rows stack below 52 rem. Markup: two wrapper divs, a visual head row marked `aria-hidden`, and the "Another route?" block moved into the routes grid as an h3. No copy, link, list item or table row changed.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` 44/44, `pnpm build`, `pnpm test:e2e` 166/166 (includes the public-experience test pinning four buyers, five quote rows and the route links), `pnpm test:ux` 46/46 (42 routes at six widths plus the specimen). Screenshots at 320, 390, 768, 1440 px before and after in `docs/design-system/evidence/ac1-03-landing`. Not run: `test:operator` (no protected surface changed).
+
+Open: owner art review of the new landing sections; the Signal Today queue table.
+
+## 2026-10-23 AC1-07 Signal Today queue (branch landing-example)
+
+Owner: continue with Signal. Today panel on `/operator` restyled toward the Signal reference ("decisions, not dashboards"): counts as a hairline strip of equal columns, queue rows on one three-column grid, eyebrow group headings, no tinted blocks, no icon tiles. CSS only, in `operator/operator-overview.css`, tokens only. Not built: the reference's Attention and Owner columns (no data source; never faked) and a column head row (groups mix item kinds).
+
+Evidence: before and after at 390 and 1440 px in `docs/design-system/evidence/ac1-07-today`. Local operator audit of `workspace.spec.ts` plus `zz-today.spec.ts` (11 passed, axe clean on the real page); `zz-operator-overview.spec.ts` failed at the MFA step because a hand-picked subset lacks earlier state (KI-16), so CI's full operator suite is the check for it. The audit's layout report shows no new flag from the Today area; its remaining flags are the documented bento and phone area bar. `div.hero-actions` (Next and Previous missions) was flagged for stagger at 1280 and 1440 in this subset run; I did not change that control and did not investigate it, so it stays open.
+
+## 2026-10-23 AC/1 art review recorded (branch landing-example)
+
+The owner asked to fix art approval. I built a private review page with before and after evidence and one Accept, Accept with a change or Reject control per package, because signed-in screens cannot be judged from files and the agent may not mark the gate passed. The owner pressed Accept on all ten rows on the page (09:34 to 09:37 UTC, no notes; read back from the page store) and confirmed the same in chat: AC1-01, AC1-02i, AC1-02 action groups, AC1-02 message panels and button states, AC1-03 home example and routes, AC1-04, AC1-05, AC1-06, AC1-07 Today queue, AC1-08 information pages.
+
+Recorded in `docs/design-system/ART_REVIEW.md` (decision column and scope note) and README section 5 and 7. Scope: what was built and shown. AC1-06 is the first slice only; the home example and routes refinement and the Today queue ship in the PR after PR146. The AC1-08 gate ("never start without recorded human acceptance") is now satisfied for the five references, so the remaining page families may start.
+
+Not done: the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
+
 ## 2026-10-23 Phase 0 Wave 1: art-direction record and read-only Owner page (branch claude/relaxed-thompson-b6ixvz, PR147, base 43ea1db)
 
 Owner request: Phase 0 plan, one wave at a time, every new capability behind its own switch that defaults to off. This is Wave 1, items 1 and 2 of 8. Waves 2 to 4 start only when the owner says "next wave". Work ran in one session. Three read-only subagents drafted the Wave 3 and Wave 4 documents (status-link ADR, rehearsal mission, view-as); they are held outside the repository until their waves.
 
-**Item 1, art-direction record (no code).** On 23 October 2026 the owner stated in chat: "Nazmus Sadat states that he approved the art direction and is the human reviewer." Also on 23 October he decided there are no live users to protect (design-system README 7a). This entry records the statement only. No gate is passed here: the design-system rule says an agent may not pass art direction, so the owner flips that line himself in a PR he reviews.
+**Item 1, art-direction record (no code).** On 23 October 2026 the owner stated in chat: "Nazmus Sadat states that he approved the art direction and is the human reviewer." Also on 23 October he decided there are no live users to protect (design-system README 7a). This entry records the statement only. No gate is passed here: the design-system rule says an agent may not pass art direction. The owner's own Accept decisions on the ten AC/1 packages are recorded separately in `docs/design-system/ART_REVIEW.md` (see the entry above).
 
 **Item 2, Owner page.** `/operator/owner`, read only, behind `CORRIDRA_OWNER_PAGE_ENABLED` (exact `true`, default off; unset gives a 404 and the workspace shows no link). Staff session first, then owner or admin membership in any workspace; everyone else gets the same "Workspace access is unavailable." state as the operator page, and a signed-out visitor is redirected to sign-in. Three sections in Signal Desk: what is on and off (every `CORRIDRA_*` setting the code reads, in plain words, in seven groups), waiting on the Corridra team (the same three counts as the Today list, read with the person's own access; a count that cannot be read says "Not measurable here yet"), and open gaps D01 to D06 and D08 (text copied from the deferred controls register; only D01 has a live signal; nothing is shown as closed). Customer module states reuse `founderActivation()`, so "On" also means its dependencies are on. Names ending KEY, SECRET, TOKEN or PASSWORD are never listed and their values are never read; settings that hold a value show only Set or Not set. Settings found in the environment but not described show in a "Not described yet" group. Two switches for later waves (`CORRIDRA_CUSTOMER_CODE_SIGNIN`, `CORRIDRA_MISSION_EMAIL_ENABLED`) are listed as "Planned, not built yet" so those waves add no registry entries for them; `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED` is added with Wave 2.
 
