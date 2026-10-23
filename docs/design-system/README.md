@@ -106,6 +106,8 @@ Claim a package by naming it in the ledger "Active work" line with your branch b
 
 **Owner decision, 22 October 2026 (chat):** proceed through AC1-02, AC1-04 to AC1-07 and AC1-08 in order, merging and deploying each checked PR without waiting for per-package approval. This replaces the AC1-08 gate "owner art-direction acceptance" with review on the deployed pages; a page the owner rejects is reverted. Every other gate in this section stays: parity, tests, screenshots, accessibility, denial checks and rollback.
 
+The owner review sheet, with one decision row per package and what a reject reverts, is [ART_REVIEW.md](ART_REVIEW.md).
+
 Each reference package must ship: before and after screenshots at 320, 390, 768 and 1440 px (1024 and 1920 for dense grids), axe at those widths, keyboard walk, empty and populated synthetic states, the role and denial checks of the affected suites, and the PR report block from section 13 of the master contract.
 
 ## 6. Status words
