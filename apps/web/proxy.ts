@@ -24,5 +24,6 @@ export const config = {
     '/client',
     '/programme',
     '/buyer',
+    '/mute/:path*',
   ],
 };

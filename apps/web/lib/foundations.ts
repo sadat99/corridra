@@ -70,6 +70,7 @@ import {
   customerWorkspacesEnabled,
 } from '@corridra/auth/customer-workspaces';
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
+import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
 import {
   CustomerProgrammeService,
   customerProgrammesEnabled,
@@ -184,9 +185,27 @@ function createServices() {
       expiresAt: new Date(data.session.expiresAt),
     };
   };
+  // Mission mail. The service is cheap and always built (mute links must keep working if the switch is
+  // turned off later). The port that queues mail exists only while the switch is on, so with it off a
+  // request is stored exactly as before. Delivery starts only after the request commits, and the
+  // workflow is imported lazily to keep the workflow and this module from importing each other.
+  const missionMail = new MissionMailService(runtimePool, config.AUTH_SECRET);
+  const missionMailPort = missionMailApplicationEnabled()
+    ? {
+        enqueue: (
+          db: Parameters<MissionMailService['enqueue']>[0],
+          input: Parameters<MissionMailService['enqueue']>[1],
+        ) => missionMail.enqueue(db, input),
+        dispatch: async (job: Parameters<MissionMailService['send']>[0]) => {
+          const { missionMailOrchestrator } = await import('./mission-mail-orchestrator');
+          await missionMailOrchestrator.start(job);
+        },
+      }
+    : undefined;
   return {
     config,
     ...identity,
+    missionMail,
     operatorSetup: new OperatorSetup(authPool),
     networkInvitations: new NetworkInvitations(
       authPool,
@@ -443,6 +462,7 @@ function createServices() {
         issuer: customerIssuerFromEnv(),
       },
       readCustomerSession,
+      missionMailPort,
     ),
     customerSavedMissions: new CustomerSavedMissionService(
       runtimePool,

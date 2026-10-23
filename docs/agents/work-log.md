@@ -1476,9 +1476,13 @@ After Wave 4 the owner answered: use their founder sentence idea (it arrived wit
 
 **Tests.** `tests/integration/mission-mail-database.test.ts`, 22 checks on a real PostgreSQL with the real roles, passing. Seven deliberate breaks of the SQL: six failed a test at once; the sample workspace rule survived, a test was added, and it then failed. Lint, typecheck and the infrastructure tests exit 0.
 
-**Not verified.** Nothing has been installed in the Frankfurt database. The workflow itself was not run. Phase B (enqueue at submit, send workflow, mute page) is not built yet.
+**Mission mail Phase B, application side, switch off.** `packages/auth/src/mission-mail.ts` (queue inside the request transaction in a savepoint, one send attempt, mute, secrets derived from `AUTH_SECRET`), an optional mail port on `CustomerRequestService` that exists only while `CORRIDRA_MISSION_EMAIL_ENABLED` is exactly `true` in real use (delivery starts only after the request commits), the verified email passed to request callbacks in real mode only (`customer-session.ts`), a durable workflow `apps/web/workflows/mission-mail.ts`, and a public mute page and route (`/mute/[requestId]`, `/api/mission-mail/mute`: token in the fragment and removed from the address, opening mutes nothing, one refusal text, no-store, no-referrer, noindex, kept working if the switch is later turned off). The Owner page lists the switch as a real flag and the founder sentence setting without its text. "Your move" cannot be queued: the database refuses that kind until the Mission Road work supplies a real move.
 
-Next: Phase B, then the rehearsal fixes and view-as stage 1.
+**Tests (Phase B).** `tests/integration/mission-mail-flow.test.ts` 8 (real database and roles; the provider replaced by a recorder): closed control and no port leave the request untouched, queue inside the request and dispatch after commit, exact email content and links, retry cap and address removal, mute scope, a mail problem never fails the request (including a database error inside the savepoint), application switch and missing sender settings send nothing, closing the control keeps the record. Four deliberate breaks each failed a test. `tests/browser/mission-mail-mute.spec.ts` 4 on desktop and mobile: headers, the button is needed, answers, refusals, axe at 1440, 390 and 320. Existing request tests (customer requests, admission, guest handoff, real modules, request details) 75 of 75 with the new files.
+
+**Not verified.** Nothing is installed in the Frankfurt database, the workflow was not run, no real email was sent, and the Resend sender was not called. Sender settings are the ones the sign-in emails use and are not set in Production.
+
+Next: the rehearsal fixes and view-as stage 1, then the owner steps in the proposal.
 
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
