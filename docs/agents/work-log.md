@@ -1259,3 +1259,19 @@ Verification, each through the gate runner: format:check, lint, typecheck, `pnpm
 Not covered: signed-in screens. A real contributor task screen from the local run shows the same spacing problems; the customer, delegation, contributor and operator screens are the next bundle.
 
 Next action: CI and merge for this PR, then the four reference screens (AC1-04 to AC1-07) with the fixtures the operator suite already mounts.
+
+## 2026-10-23 AC1-02 slice 3 and AC1-04 Meridian customer frame (branch ccr-998044a6-w7yufu, base 7940135)
+
+PR138 merged as `7940135` (CI green on head `5eaeb2e`; Vercel production deployment building at the time of writing). This entry covers the next bundle of at least 10 pages.
+
+Audit: a local copy of the operator specs with an axe subclass that measures action geometry ran all 380 signed-in tests (KI-16). Before: 28 flagged pages. After the change: the remaining flags are only `/operator` navigation bars, tool index and hero actions, which belong to AC1-07 (Signal). Customer, contributor, delegation, service-request, programme and buyer action groups are clear.
+
+Change (CSS only, appended to `apps/web/app/globals.css`, tokens only, no markup change): (1) a generic action-group rule for actions sharing a parent (`main section|div|form|article|li|aside|details|fieldset > a|button` with `.text-link|.primary-link|.secondary-link|.button|.button-secondary`): full width and 12 px gap on phones, 12 px row gap from 640 px, 12 px block gap for wrapped pairs in `li|article|details`; containers with their own row layout are excluded (`.guide-actions`, `.guide-actions-row`, `.ux-controls-section-heading`, plus the slice 2 sets). (2) Meridian customer frame for `.ux-customer`: compact heading with a copper rule, line-under context tabs from 700 px (the phone bottom bar is unchanged), divider-led record rows replacing card grids for `.ux-quick-links` and `.ux-link-list`, section headings as small caps eyebrows, flat detail cards. Selected state keeps the `--selected` token; the navigation set (Home, My Work, Companies, Results, More) and every href are unchanged.
+
+Pages covered: `/account` (home, work, results, more views), `/account/missions/[resourceId]`, `/account/companies`, `/account/profile`, `/account/drafts/[workspaceId]`, `/account/request/[workspaceId]`, `/account/requests/[requestId]`, `/account/service-requests` family, `/account/delegations` family, `/buyer`, `/client`, `/programme`, `/contributor` (action groups).
+
+Mistakes caught by the gates: first version used `margin-block-start: 0` on later siblings, which staggered `/client` and `/programme` (UX gate actionStagger 4 on each) and a width 100% rule overflowed `/plan` guide actions and the operator controls heading at 390 px (operator suite). Both fixed by exclusions and by limiting the vertical gap rule to phones.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test`, `pnpm build`, `pnpm test:e2e` 166 passed, `pnpm test:ux` 42 passed (after the fix; the first run failed 2 as described), local operator-suite copy 380 passed on native PostgreSQL 16. CI runs the protected suite on the exact head.
+
+Not done: Mission Room next-action band and rows (needs component markup work), SourceLedger comparison (AC1-05), Encounter (AC1-06), Signal (AC1-07), AC1-08. Next action: PR CI, merge, then Mission Room and comparison matrix.
