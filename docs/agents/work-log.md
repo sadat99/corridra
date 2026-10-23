@@ -1245,3 +1245,17 @@ Preserved: every route, link target, element name and id, form payload, permissi
 Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` (44), `pnpm build` all exit 0; `pnpm test:e2e` 166 passed and `pnpm test:ux` 42 passed with the Chromium path set (see KI-12). The first e2e and ux runs failed in milliseconds because the browser did not launch, and the first format check failed on my CSS formatting, which I fixed. Local layout checks used `next dev` with dummy auth values to render the real sign-in form (see KI-13).
 
 Next action: CI on the PR, merge, deployment check, then the next family (customer pages).
+
+## 2026-10-23, Claude Code, AC1-02 slice 2 and the action-layout audit
+
+Owner rules recorded this session: each PR and commit bundles at least 10 pages (never one page per commit); finish the four reference screens, then AC1-08.
+
+Audit: the UX gate (`tests/ux/ux-gate.spec.ts`) now measures standalone actions that share a parent: stacked ones at least 8 px apart (equal width on phones), row members on one top edge and at least 8 px apart; tabs are exempt. Before the fix it flagged 10 routes (8 distinct pages): `/` (tab pair, now exempt), `/signin`, `/buyer`, `/client`, `/programme`, `/corridors`, `/workspace`, `/operator`. Causes: `/client` and `/programme` stacked state-message actions at different widths with 0 px gap; `/buyer` and `/signin` used other-ways grids or action rows that sized to text; `/corridors` route chips were three different widths; `/workspace` start actions were 300 and 232 px; `/operator` gate actions were 198 and 160 px with 0 px gap; the coming-soon `/signin` hero pair differed in height.
+
+Change (CSS only, appended to `apps/web/app/globals.css`, tokens only, no markup change): page-level and state-panel actions use the slice 1 rhythm on any operator page; every `.access-options` is an equal-cell grid; on phones the start, hero, guide-link and state action rows give each action the full row; hero call-to-action pairs share the 56 px height; quick routes sit in equal cells. Verified by injection and then by build at 320, 390, 768 and 1440 on 14 public pages with zero flagged pairs; the UX gate reports 0 action issues on all 42 routes.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` (44), `pnpm build`, `pnpm test:e2e` 166 passed, `pnpm test:ux` 42 passed. Local protected operator suite on native PostgreSQL 16 (see KI-15): 371 passed, 2 failed and 7 did not run only because two specs read old commits from a shallow clone; fixed by unshallowing.
+
+Not covered: signed-in screens. A real contributor task screen from the local run shows the same spacing problems; the customer, delegation, contributor and operator screens are the next bundle.
+
+Next action: CI and merge for this PR, then the four reference screens (AC1-04 to AC1-07) with the fixtures the operator suite already mounts.
