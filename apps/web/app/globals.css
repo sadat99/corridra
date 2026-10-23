@@ -8988,3 +8988,40 @@ samp {
     border-bottom: 0;
   }
 }
+
+/* Customer delivery views (/client, /programme) inside the scroll budget (docs/agents/ui-direction.md).
+   On phones the jump bar is a wrapped row of chips like the operator panels, not five full-width
+   buttons, the scope card shows its two dates side by side, and the programme metrics sit three
+   across. Nothing is hidden. The chip rule matches the action-group rule's specificity and comes
+   later; if that rule changes, keep this one after it. */
+@media (max-width: 39.99rem) {
+  main .ux-delivery .ux-operator-workbench > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+  }
+  main .ux-delivery .ux-operator-workbench > div > button.text-link:is(.text-link) {
+    display: inline-flex;
+    flex: 0 1 auto;
+    width: auto;
+    justify-content: center;
+    margin: 0;
+    padding-inline: var(--space-3);
+  }
+  .ux-delivery .ux-participant-scope dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+  }
+  .ux-delivery .ux-participant-scope dl > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 22.5rem) and (max-width: 39.99rem) {
+  .ux-programme-overview .delivery-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .ux-programme-overview .delivery-metrics > div {
+    padding-top: var(--space-2);
+  }
+}
