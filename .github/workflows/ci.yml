@@ -95,7 +95,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser runtime (retry)
         if: steps.browser-runtime.outcome != 'success'
-        timeout-minutes: 6
+        timeout-minutes: 12
         run: |
           sudo pkill -KILL -x apt-get || true
           sudo pkill -KILL -x dpkg || true
@@ -164,7 +164,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser runtime (retry)
         if: steps.browser-runtime.outcome != 'success'
-        timeout-minutes: 6
+        timeout-minutes: 12
         run: |
           sudo pkill -KILL -x apt-get || true
           sudo pkill -KILL -x dpkg || true
