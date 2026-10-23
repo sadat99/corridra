@@ -32,6 +32,9 @@
   "/network": {},
   "/operator": {},
   "/operator/forgot-password": {},
+  "/operator/owner": {
+    "unavailable": 6
+  },
   "/operator/reset-password": {},
   "/operator/setup": {},
   "/operator/signin": {},

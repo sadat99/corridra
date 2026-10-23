@@ -57,9 +57,11 @@ type Tenant = { id: string; name: string; role: string };
 export function Workspace({
   tenants,
   initialTenant,
+  ownerPage = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
+  ownerPage?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -70,17 +72,25 @@ export function Workspace({
     });
   }
   return (
-    <TenantWorkspace key={tenant} tenants={tenants} tenant={tenant} switchTenant={switchTenant} />
+    <TenantWorkspace
+      key={tenant}
+      tenants={tenants}
+      tenant={tenant}
+      switchTenant={switchTenant}
+      ownerPage={ownerPage}
+    />
   );
 }
 function TenantWorkspace({
   tenants,
   tenant,
   switchTenant,
+  ownerPage,
 }: {
   tenants: Tenant[];
   tenant: string;
   switchTenant: (next: string) => void;
+  ownerPage: boolean;
 }) {
   const router = useRouter();
   const edited = useRef(false);
@@ -416,6 +426,11 @@ function TenantWorkspace({
                     <OperatorIcon name="chevron" className="operator-nav-arrow" />
                   </a>
                 </nav>
+                {ownerPage && (
+                  <Link className="text-link" href="/operator/owner">
+                    What is on and off
+                  </Link>
+                )}
                 <p>
                   Review operational configuration, membership records and launch requirements.
                   Sensitive changes still require the existing approvals and fresh authenticator

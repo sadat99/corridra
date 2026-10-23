@@ -4,6 +4,7 @@ import { WorkspaceShell } from '../../components/workspace-shell';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { foundations } from '../../lib/foundations';
+import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
 import { Workspace } from './workspace';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -72,7 +73,11 @@ export default async function Page({
       title="Your workspace."
       className="ux-operator-home"
     >
-      <Workspace tenants={tenants} initialTenant={selected!} />
+      <Workspace
+        tenants={tenants}
+        initialTenant={selected!}
+        ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
+      />
     </WorkspaceShell>
   );
 }
