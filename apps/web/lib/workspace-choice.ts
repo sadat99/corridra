@@ -13,6 +13,10 @@ export const workspaceDestinations = {
     path: 'service-requests',
     description: 'Help requests, questions and quotes for work in this workspace.',
   },
+  billing: {
+    path: 'billing',
+    description: 'The sample plan this workspace holds, what it includes and the plans on offer.',
+  },
 } as const;
 export type WorkspaceKind = keyof typeof workspaceDestinations;
 

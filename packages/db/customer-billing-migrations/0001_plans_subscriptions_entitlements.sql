@@ -247,7 +247,7 @@ CREATE FUNCTION customer_private.billing_plan_digest(plan uuid) RETURNS text
  SELECT encode(sha256(convert_to(jsonb_build_object('id',p.id,'key',p.plan_key,'version',p.version,'title',p.title,'summary',p.summary,
   'interval',p.billing_interval,'priceMinor',p.price_minor::text,'currency',p.currency,'taxTreatment',p.tax_treatment,
   'included',to_jsonb(p.included),'excluded',to_jsonb(p.excluded),
-  'entitlements',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key),'[]'::jsonb)
+  'entitlements',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key COLLATE "C"),'[]'::jsonb)
    FROM customer_private.billing_plan_entitlement e WHERE e.plan_id=p.id))::text,'UTF8')),'hex')
  FROM customer_private.billing_plan_version p WHERE p.id=plan
 $$;
@@ -256,7 +256,7 @@ CREATE FUNCTION customer_private.billing_plan_json(plan uuid) RETURNS jsonb
  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT jsonb_build_object('id',p.id,'key',p.plan_key,'version',p.version,'title',p.title,'summary',p.summary,'interval',p.billing_interval,
   'priceMinor',p.price_minor::text,'currency',p.currency,'taxTreatment',p.tax_treatment,'included',to_jsonb(p.included),'excluded',to_jsonb(p.excluded),
-  'entitlements',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'label',k.label,'description',k.description,'unit',e.unit,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key),'[]'::jsonb)
+  'entitlements',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'label',k.label,'description',k.description,'unit',e.unit,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key COLLATE "C"),'[]'::jsonb)
    FROM customer_private.billing_plan_entitlement e JOIN customer_private.billing_entitlement_key k ON k.key=e.entitlement_key WHERE e.plan_id=p.id),
   'digest',customer_private.billing_plan_digest(p.id),'active',p.active,'synthetic',true,'invoicing','not_enabled','paymentTaken',false)
  FROM customer_private.billing_plan_version p WHERE p.id=plan
@@ -393,7 +393,7 @@ BEGIN
  IF actor IS NULL OR target IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
  access:=customer_private.billing_role(target,actor);
  IF access IS NULL THEN RAISE EXCEPTION 'Workspace unavailable' USING ERRCODE='42501'; END IF;
- SELECT coalesce(jsonb_agg(customer_private.billing_plan_json(p.id) ORDER BY p.title,p.plan_key),'[]'::jsonb) INTO items
+ SELECT coalesce(jsonb_agg(customer_private.billing_plan_json(p.id) ORDER BY p.plan_key COLLATE "C"),'[]'::jsonb) INTO items
  FROM customer_private.billing_plan_version p WHERE p.active
  AND p.version=(SELECT max(x.version) FROM customer_private.billing_plan_version x WHERE x.plan_key=p.plan_key);
  IF access='writer' THEN
@@ -433,7 +433,7 @@ BEGIN
   cur:=customer_private.billing_summary(holding);
   elapsed:=(cur->>'periodElapsed')::boolean;
   IF NOT elapsed THEN
-   SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'label',k.label,'description',k.description,'unit',e.unit,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key),'[]'::jsonb) INTO ents
+   SELECT coalesce(jsonb_agg(jsonb_build_object('key',e.entitlement_key,'label',k.label,'description',k.description,'unit',e.unit,'mode',e.mode,'limit',e.limit_count) ORDER BY e.entitlement_key COLLATE "C"),'[]'::jsonb) INTO ents
    FROM customer_private.billing_plan_entitlement e JOIN customer_private.billing_entitlement_key k ON k.key=e.entitlement_key WHERE e.plan_id=held_plan;
   END IF;
  END IF;
@@ -652,9 +652,9 @@ CREATE FUNCTION app.billing_plan_staff_list() RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid:=customer_private.billing_staff_actor();
 BEGIN
- RETURN jsonb_build_object('plans',(SELECT coalesce(jsonb_agg(customer_private.billing_plan_json(p.id)||jsonb_build_object('source',p.source) ORDER BY p.title,p.plan_key),'[]'::jsonb)
+ RETURN jsonb_build_object('plans',(SELECT coalesce(jsonb_agg(customer_private.billing_plan_json(p.id)||jsonb_build_object('source',p.source) ORDER BY p.plan_key COLLATE "C"),'[]'::jsonb)
   FROM customer_private.billing_plan_version p WHERE p.version=(SELECT max(x.version) FROM customer_private.billing_plan_version x WHERE x.plan_key=p.plan_key)),
-  'entitlementKeys',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',k.key,'unit',k.unit,'label',k.label,'description',k.description) ORDER BY k.key),'[]'::jsonb) FROM customer_private.billing_entitlement_key k),
+  'entitlementKeys',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',k.key,'unit',k.unit,'label',k.label,'description',k.description) ORDER BY k.key COLLATE "C"),'[]'::jsonb) FROM customer_private.billing_entitlement_key k),
   'synthetic',true);
 END $$;
 

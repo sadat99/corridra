@@ -19,6 +19,7 @@ import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-dr
 import { customerMemberRolesEnabled } from '@corridra/auth/customer-member-roles';
 import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
+import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -179,6 +180,14 @@ export default async function Page({
                   </Link>
                 </li>
               )}
+              {customerBillingEnabled() && (
+                <li>
+                  <Link prefetch={false} href="/account/billing">
+                    <strong>Plan and billing</strong>
+                    <span>The sample plan your workspace holds and the plans on offer.</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </section>
 
@@ -195,6 +204,7 @@ export default async function Page({
                 memberRolesEnabled={customerMemberRolesEnabled()}
                 linksEnabled={customerOrganisationLinksEnabled()}
                 serviceRequestsEnabled={customerServiceRequestsEnabled()}
+                billingEnabled={customerBillingEnabled()}
               />
             </div>
           )}
@@ -281,6 +291,14 @@ export default async function Page({
                     <Link prefetch={false} href="/account/service-requests">
                       <strong>Service requests</strong>
                       <span>Help requests, questions and quotes.</span>
+                    </Link>
+                  </li>
+                )}
+                {customerBillingEnabled() && (
+                  <li>
+                    <Link prefetch={false} href="/account/billing">
+                      <strong>Plan and billing</strong>
+                      <span>Your sample plan and the plans on offer.</span>
                     </Link>
                   </li>
                 )}
