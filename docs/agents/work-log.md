@@ -1430,6 +1430,28 @@ Preserved: password sign-in, sign-up, verification and reset, the staff recovery
 
 Next: the owner allows the identity host or runs the new-address check, then sets the Wave 2 settings; or says "next wave" for Wave 3 (device memory and "sign in with a code to see your request", the status-link ADR, and the first two mission emails, built and left off).
 
+## 2026-10-23 Phase 0 Wave 3: device memory, code link, status-link ADR, first two mission emails (branch claude/relaxed-thompson-b6ixvz, built on PR150)
+
+The owner said "next wave 100% correctly without disrupting, damaging running pr". Wave 3 was built on a local branch stacked on the PR150 head, so PR150's CI was never restarted. Nothing was pushed until PR150 merged.
+
+**Item 5a, device memory.** `apps/web/lib/receipt-memory.ts` keeps the receipt code (64 hex) on the device in local storage, with session storage as the fallback and a plain notice only when neither works. The server still sees only the digest. The receipt format and the API are unchanged. The request page says "Your request is saved on this device. You do not need to copy a code." and offers "Forget this request on this device". Real mode and private submissions never read or write it. Tests: `tests/integration/receipt-memory.test.ts` (10) and `tests/browser/receipt-memory.spec.ts` (3).
+
+**Item 5b, come back with a code.** With `CORRIDRA_CUSTOMER_CODE_SIGNIN` exactly `true`, a person who is not signed in sees "Sign in with a code to see your request" on the saved request panel and under the receipt check. It opens `/signin?method=code` (the return path `/plan` or `/account` is kept), which starts on the code option; the password option is one click away. The parameter is ignored when the switch is off. Nothing was added to the account pages. A sample request page never shows it, because a sample request is not in an account. `/plan` is prerendered, so the real mode links are tested with the real components bundled and the identity and request calls stubbed (`tests/operator/v3-receipt-code-link.spec.ts`, 5). Removing the signed-out guard failed the signed-in test.
+
+**Item 5c, ADR only.** `docs/adr/0058-emailed-request-status-link.md`, status proposed. Two findings the owner should read: a 90 day link conflicts with the 30 day retention (`retention_until` defaults to 30 days), and the receipt check has no rate limit today. No code depends on it.
+
+**Item 6, first two mission emails: built, tested, left off, not wired.** Pieces: `mission-mail-templates.ts` (message 1 "We have your request" and message 4 "Your move" in the agreed words, a typed `MissionMove` input, footer with mute, manage and language), `mission-mail-mute.ts` (keyed hash of the request id, one purpose), `mission-mail-gate.ts` (switch exactly `true`, then real use, not a sample workspace, verified email, usable address; switch read first), `MISSION_EMAIL_FOUNDER_LINE` (empty renders nothing). `tests/integration/mission-mail.test.ts` has 34 checks; five deliberate breaks (founder line, sample workspace rule, mute purpose, code sentence, date sentence) each failed a test.
+
+What is not built, with reasons (read from the code): no email consumer of `app.outbox` exists and the runtime role cannot add event types; no storage can remember a mute click; the verified email is not stored; no table records something a customer must do, and `app.mission.next_action` is the team's own step. So the trigger, the queue and the mute record need an additive migration, proposed in `docs/product/phase0-mission-email-proposal.md` with its blast radius and rollback. The Owner page line for `CORRIDRA_MISSION_EMAIL_ENABLED` now says it does nothing yet. The privacy page was not edited; proposed wording is in the proposal and the PR description. One deliberate difference: with no job text, the plan's "your request" would read "Your request about your request", so the phrase is dropped instead.
+
+**Verification (local, Node 22).** `pnpm lint`, `pnpm typecheck`, `pnpm format:check` exit 0; `pnpm test:docs` 44/44; related integration files 107/107; the code link operator spec 5/5; receipt memory and discovery browser specs 20/20. CI on the exact head is the authority for the rest.
+
+**Not verified.** Nothing was sent or received; no email provider was called. The code link proves where links go, not that a code is delivered; the Wave 2 new-address check is still untested.
+
+Preserved: receipt format and API, password sign-in, closed gates D01 to D06 and D08. With every switch unset nothing changes except the device memory line on the sample request page.
+
+Next: the owner reads the proposal and the ADR; Wave 4 (rehearsal mission and view-as proposals) waits for "next wave".
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.

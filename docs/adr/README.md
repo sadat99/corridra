@@ -69,3 +69,5 @@ ADR055: [Contextual paid-service requests](0055-contextual-paid-service-requests
 ADR056: [Real-use admission and progressive registration](0056-real-use-admission-and-progressive-registration.md), owner-authorized real admission with deferred scanning, both signup entry paths and a verified identity plus possession handoff; real admission enabled, with genuine managed-provider acceptance separately unverified.
 
 ADR057: [Real invited execution work](0057-real-invited-execution-work.md), separate contributor invitations and password/TOTP access, real purpose isolation and preserved review/reward boundaries; Production activation pending.
+
+ADR058: [Emailed request status link](0058-emailed-request-status-link.md), proposed only; a 90 day link that shows request status without sign-in, awaiting owner approval, no code depends on it.
