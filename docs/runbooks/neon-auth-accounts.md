@@ -29,6 +29,45 @@ Only existing verified staff with enabled principals receive mail. Unknown, susp
 
 The verified customer invitation hint uses the existing protected setup status and no persistent storage. A pending invitation is setup, not an existing-staff password reset. The scoped member selector resolves only permitted existing workspace principals after `audit.read`; only owners with fresh MFA can change memberships, retaining last-owner protection and immutable history. It is not a provider-wide customer directory.
 
+## Branded customer emails and sign-in with a code (Phase 0, both off by default)
+
+Two separate switches, both unset until the owner acts. Staff recovery mail above is not touched.
+
+| Switch                                | What it does                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `CORRIDRA_CUSTOMER_CODE_SIGNIN`       | Adds "Sign in with a code" under the password form on `/signin`. Password stays the default. Read on the server. |
+| `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED` | Turns on `POST /api/auth-mail`, the receiver for Neon Auth email events. With it unset the route answers 404.    |
+
+Settings for the mail receiver, set by the owner in the host (never in the repository, never in chat): `CUSTOMER_AUTH_MAIL_KEY` (secret, the Resend key for the sending domain), `CUSTOMER_AUTH_MAIL_FROM` (`sadat@c.obsidianglobal.studio`, shown as "Sadat, Corridra"), `CUSTOMER_AUTH_MAIL_REPLY_TO` (`sadat@obsidianglobal.studio`), and only if the key address cannot be derived from `NEON_AUTH_BASE_URL`, `CUSTOMER_AUTH_MAIL_WEBHOOK_JWKS_URL`. If any is missing or invalid the receiver answers 503 and sends nothing.
+
+### What Neon does (from its documentation, read 23 October 2026)
+
+- The webhook is set per Neon project and branch. It subscribes to `send.otp` (sign-in, email-confirmation and reset codes) and `send.magic_link` (links). This application sends the sign-in, email-confirmation and reset-code messages from `send.otp`, and the password reset link from `send.magic_link` with `link_type` `forget-password`, which is what the customer reset form uses today. A sign-in or confirmation link, or an SMS code, is refused.
+- **While a webhook is registered Neon sends none of its own emails for the subscribed events, and it does not fall back to them if the webhook fails.** After three attempts or 15 seconds the sign-in, sign-up confirmation or reset the person asked for fails with an error. One broken deployment therefore stops every code and reset email on that branch.
+- To switch back to Neon's own emails, set `enabled` to `false` on the webhook (console, CLI or API). Do this first if anything goes wrong.
+- The webhook address must be `https`, a host name (no IP address), and must not redirect: Neon does not follow redirects. Use the exact host in `APP_ORIGIN` and check it answers a POST without a redirect.
+- Neon offers no test event, event log or redelivery. Test with a real sign-in on a non-production branch.
+- Each request is signed (Ed25519, detached JWS) with a key published at the branch's `.well-known/jwks.json`. The receiver rejects a wrong signature, any algorithm other than EdDSA, an event older than five minutes, an unknown event type, a body over 32 KiB, a link to a host other than the identity provider or this application, and a header event id that differs from the body. A repeated event id sends once. The event id is also sent to Resend as its idempotency key.
+
+### Order of steps (owner)
+
+1. Set the four settings above in the host for Preview first. Set `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED=true` there and redeploy. Check `POST /api/auth-mail` without a signature answers 401, not 404 or 503.
+2. Register the webhook on the **non-production** identity branch only (`corridra-v3-auth-synthetic`): URL `https://<preview host>/api/auth-mail`, events `send.otp` and `send.magic_link`, timeout 5 seconds. Console: Auth, Configuration, Webhooks. CLI: `neon neon-auth config webhook update --enabled --url ... --enabled-events send.otp,send.magic_link --timeout 5`.
+3. Test with an address you control: a sign-up confirmation code (2b), a password reset (3, a link with a "Choose a new password" button), and, with `CORRIDRA_CUSTOMER_CODE_SIGNIN=true`, a sign-in code (2a). Check the sender, the Reply-To and that no code or link appears anywhere except the inbox. Report header details only, never the code or link.
+4. Only then repeat on the production identity branch with production settings. Never register the webhook on the live branch before step 3 passes.
+5. Roll back by setting the webhook to `enabled: false`. Then unset `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED`.
+
+### Must be answered before `CORRIDRA_CUSTOMER_CODE_SIGNIN` is turned on
+
+Neon's page on email codes does not say whether signing in with a code **creates an account for an address that has none**. Test it on the non-production branch with an address you control, then delete the test account:
+
+1. Ask for a sign-in code for an address that has no account. Does a code arrive? Does the screen say anything different from an address that has one? (It must not.)
+2. Enter the code. Are you signed in? Was an account created, and is its email marked verified?
+3. If an account was created, does it pass the same email-verified admission as a password sign-up (ADR-049 and ADR-056)? Note that this route skips the sign-up page, so it also skips the privacy notice shown there and sets no password or name.
+4. If an account must not be created, say so. The option then stays for existing accounts only and the owner decides before the switch is turned on.
+
+Status on 23 October 2026: **not tested.** The cloud container that built this could not reach the identity host, so the answer is unknown. Leave the switch off until it is recorded here with the date and the observed behaviour.
+
 ## Actual acceptance and how to diagnose
 
 [PR 46 acceptance](../implementation/access-recovery-production-acceptance.json) records exact revision/CI/READY deployment, audit migration and read-only production observations. The owner privately completed staff password/MFA and confirmed workspace entry. Both actual customer and staff reset emails were confirmed received. The latest private reset-link consumption and resulting new-password sign-in were not observed; do not claim otherwise. PR 26 separately records its original managed-customer token-consumption acceptance.

@@ -88,6 +88,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/auth-mail',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/operator-setup',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
