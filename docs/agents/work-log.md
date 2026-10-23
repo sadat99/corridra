@@ -1447,3 +1447,5 @@ Found while checking: the earlier side-by-side previews showed Georgia as this m
 Verification: `pnpm lint`, `pnpm typecheck`, `pnpm test:docs` pass locally; production-build UX gate run recorded in the PR; the 380-test audit passed on the new type before the Signal CSS.
 
 Open: owner review of the type set and the Signal panels, AC1-06 organiser pages, AC1-02 state adoption, the other signed-in families.
+
+AC1-02 state adoption (PR153): `data-intent="destructive"` added to 12 existing buttons (Revoke buyer link, Revoke link, Withdraw publication, Withdraw this request twice, Confirm withdrawal, Revoke invitation, Revoke programme access, Withdraw my feedback, Withdraw this result, Discard this draft, Remove from my saved missions). Attribute only: no handler, name, id or payload changed. The rule now covers `.text-link` as well as `.button-secondary`. `aria-busy` is left off real controls: `busy` is one flag for the whole form, so it would put a spinner on every button.

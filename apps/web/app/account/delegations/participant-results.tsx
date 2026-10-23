@@ -448,6 +448,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
             )}
             {feedback && !feedback.retracted && (
               <button
+                data-intent="destructive"
                 type="button"
                 className="text-link"
                 disabled={busy}
@@ -550,6 +551,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                         {o.shared ? 'Stop sharing' : 'Share with the organiser'}
                       </button>{' '}
                       <button
+                        data-intent="destructive"
                         type="button"
                         className="text-link"
                         disabled={busy}

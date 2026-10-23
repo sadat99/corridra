@@ -8551,11 +8551,11 @@ th {
   content: '\2713' / '';
   font-weight: 700;
 }
-.button-secondary[data-intent='destructive'] {
+:is(.button-secondary, .text-link)[data-intent='destructive'] {
   color: var(--critical);
   border-color: var(--critical);
 }
-.button-secondary[data-intent='destructive']:hover {
+:is(.button-secondary, .text-link)[data-intent='destructive']:hover:not(:disabled) {
   background: var(--critical-surface);
   border-color: var(--critical);
 }

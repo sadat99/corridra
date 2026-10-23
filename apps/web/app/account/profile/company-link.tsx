@@ -481,6 +481,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
             )}
           {open && claim.canWithdraw && !confirmWithdraw && (
             <button
+              data-intent="destructive"
               type="button"
               className="text-link"
               disabled={busy}
@@ -493,6 +494,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
             <div role="group" aria-label="Confirm withdrawal">
               <p>Withdraw this request? You can send a new one afterwards.</p>
               <button
+                data-intent="destructive"
                 type="button"
                 className="button button-primary"
                 disabled={busy}

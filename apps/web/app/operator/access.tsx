@@ -566,7 +566,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 Link revocation reason
                 <input name="reason" required minLength={3} maxLength={500} />
               </label>
-              <button className="text-link" disabled={busy}>
+              <button data-intent="destructive" className="text-link" disabled={busy}>
                 Revoke buyer link
               </button>
             </form>

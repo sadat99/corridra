@@ -194,6 +194,7 @@ function ScopedParticipants(props: Props) {
                   </p>
                   {i.status === 'ISSUED' && (
                     <button
+                      data-intent="destructive"
                       type="button"
                       className="text-link"
                       disabled={view.busy || !!view.pending}
@@ -245,6 +246,7 @@ function ScopedParticipants(props: Props) {
                   )}
                   {r.status === 'REGISTERED' && (
                     <button
+                      data-intent="destructive"
                       type="button"
                       className="text-link"
                       disabled={view.busy || !!view.pending}

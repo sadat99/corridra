@@ -301,6 +301,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
               <p>This invitation may have expired or been withdrawn. No report content is shown.</p>
             )}
             <button
+              data-intent="destructive"
               type="button"
               className="text-link"
               disabled={busy}
