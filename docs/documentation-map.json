@@ -929,6 +929,11 @@
       "use": "Read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
     },
     {
+      "path": "docs/design-system/ART_REVIEW.md",
+      "classification": "Current guide/contract",
+      "use": "Owner review sheet for AC/1 deployed pages: one decision row per package, what a reject reverts"
+    },
+    {
       "path": "docs/source/ac1-design-system/README.md",
       "classification": "Preserved source/working copy",
       "use": "Owner-supplied AC/1 design system original (22 Oct 2026); hash-checked, never edit; amend forward in docs/design-system/README.md"
