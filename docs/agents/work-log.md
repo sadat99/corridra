@@ -1336,4 +1336,4 @@ PR143 merged as `92aa80f` (squash) with CI green on the exact head `36d282c` (ch
 
 This entry is documentation only: the design-system README work-package status column now names what is merged for AC1-02, AC1-04 to AC1-08, section 7a records the audit method, selector pitfalls, evidence location and the 23 October owner decision, AGENTS.md has one lesson pointing at KI-16, and the ledger lists PR137 to PR143. Nothing outside documentation changes.
 
-Open: rest of AC1-07 Signal, remaining AC1-08 families (partner discovery, dossiers), the owner art review on the deployed pages (a page the owner rejects is reverted), and a deployment check for `92aa80f`.
+Open: AC1-02 still partial (the specimen route or fixture with all states and the remaining primitives are not built; Codex review of this PR caught the earlier wording), rest of AC1-07 Signal, remaining AC1-08 families (partner discovery, dossiers), the owner art review on the deployed pages (a page the owner rejects is reverted), and a deployment check for `92aa80f`.
