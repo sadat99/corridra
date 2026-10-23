@@ -1485,3 +1485,9 @@ Verification: `pnpm lint`, `pnpm typecheck`, `pnpm test:docs` pass locally; prod
 Open: owner review of the type set and the Signal panels, AC1-06 organiser pages, AC1-02 state adoption, the other signed-in families.
 
 AC1-02 state adoption (PR153): `data-intent="destructive"` added to 12 existing buttons (Revoke buyer link, Revoke link, Withdraw publication, Withdraw this request twice, Confirm withdrawal, Revoke invitation, Revoke programme access, Withdraw my feedback, Withdraw this result, Discard this draft, Remove from my saved missions). Attribute only: no handler, name, id or payload changed. The rule now covers `.text-link` as well as `.button-secondary`. `aria-busy` is left off real controls: `busy` is one flag for the whole form, so it would put a spinner on every button.
+
+## 2026-10-23 PR153 merged (branch ccr-998044a6-w7yufu, base 3e3f3d0)
+
+PR153 merged as `3e3f3d0` with CI green on the exact head `e948406` (checks, browser, operator 1 to 3, validate, CodeQL). An earlier head's `operator (3)` run failed before any test ran (`ECONNRESET` in `pnpm db:prepare-local` right after the database container started); that head was superseded by my next push, and the same job passed on the final head. The production-build UX gate passed 47 of 47 locally. Vercel production deploy `dpl_6B99YtUY8nQQjcuFLhhU8Zcp9xGM` is READY at `3e3f3d0`. The owner review page now carries the type set and the operator panels as two new cards (decisions stay pending).
+
+Open: owner decisions on those two cards, AC1-06 organiser pages (need a real signed-in frame to judge), the margin rail placement for long pages (not built; the info page intros already use a two-column heading and text layout), `aria-busy` and `aria-pressed` on real controls (one shared busy flag per form).
