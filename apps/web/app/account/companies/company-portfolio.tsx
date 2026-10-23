@@ -285,7 +285,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
       )}
       {status === 'ready' && (
         <>
-          <p>
+          <p className="ux-summary">
             {rows.length} approved {rows.length === 1 ? 'company' : 'companies'} from {scopes} saved
             mission {scopes === 1 ? 'report' : 'reports'} checked.
             {next ? ' More mission reports have not been loaded.' : ''}
@@ -307,7 +307,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
             </label>
           )}
           {shown.length === 0 && (
-            <p>
+            <p className="ux-empty">
               {rows.length
                 ? 'No loaded companies match this search.'
                 : 'No companies are approved in these saved mission reports yet.'}
