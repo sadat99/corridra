@@ -88,6 +88,21 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/mission-mail/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/mute/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+      {
         source: '/api/auth-mail',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
