@@ -1359,3 +1359,15 @@ Owner art review sheet `docs/design-system/ART_REVIEW.md`: one decision row per 
 Operator home: the local signed-in audit (199 measurements, 19 pages) found only the tool index and the phone area bar uneven, both deliberate featured compositions. A uniform grid was built, screenshotted before and after and reverted because it orphaned the fifth tile at 1440 px; evidence in `docs/design-system/evidence/signal-tool-index/`. KI-16 and README 7a record it as not a defect. Note: the audit stopped at test 360 of about 380 when the local database container died; the rest of the pages were not measured.
 
 Not done: the Signal Today queue as a table (AC1-07 reference), AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
+
+## 2026-10-23 Landing example and routes sections (branch landing-example, base bca9107)
+
+Owner request: the example section and the routes on `/` look cluttered and scattered; improve them in line with the design system. Read in full first: `docs/agents/ui-direction.md`, README section 9, the Atelier reference.
+
+Findings: the buyer list used `grid-template-columns: ... auto ...` per row, so the trust-label column changed width from row to row; the list was an open ruled list while the quote table was a bordered card; the "Another route?" box was a different container from the route columns; an older `.ac1-proof > div > p` rule leaked a larger font into the new frame (found on the first render).
+
+Changes (presentation only, tokens only): both examples in one frame with an Example tag, a head row (Company, Why it fits, Trust label, Next step) and a shared grid; routes as a ruled row of three (counter eyebrows Route 01, Route 02, Other) with each action on one line; rows stack below 52 rem. Markup: two wrapper divs, a visual head row marked `aria-hidden`, and the "Another route?" block moved into the routes grid as an h3. No copy, link, list item or table row changed.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` 44/44, `pnpm build`, `pnpm test:e2e` 166/166 (includes the public-experience test pinning four buyers, five quote rows and the route links), `pnpm test:ux` 46/46 (42 routes at six widths plus the specimen). Screenshots at 320, 390, 768, 1440 px before and after in `docs/design-system/evidence/ac1-03-landing`. Not run: `test:operator` (no protected surface changed).
+
+Open: owner art review of the new landing sections; the Signal Today queue table.
