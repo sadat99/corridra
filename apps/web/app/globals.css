@@ -3297,6 +3297,7 @@ th {
   margin: 0;
   max-width: 42rem;
   font-size: var(--guided-body);
+  line-height: 1.55;
   color: color-mix(in srgb, var(--on-brand) 82%, transparent);
 }
 .guide-band .primary-link {
@@ -4981,6 +4982,7 @@ th {
   font-family: var(--font-ui);
   font-size: var(--text-2xl);
   font-weight: 700;
+  line-height: 1.25;
   letter-spacing: -0.01em;
   color: var(--text-1);
 }
