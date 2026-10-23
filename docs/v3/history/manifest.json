@@ -158,6 +158,14 @@
       "bytes": 12019,
       "sha256": "87b52619fa7993ce3dd68b366ec28c5ec4c9c1d6ac29e950b7f44c4a06e6623a",
       "meaning": "Exact active-index snapshot before compacting completed activation and UI release receipts for the owner-requested Workspace controls correction; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "43ea1db",
+      "archive": "docs/v3/history/ledger-before-phase0-owner-tools.md",
+      "bytes": 11677,
+      "sha256": "672fff5375e2c75a0a1f9afc968db1cf124841a5c949104a9a43f1331f0d3c00",
+      "meaning": "Exact active-index snapshot before retiring the PR126 to PR131 release summaries to make room for Phase 0 owner-tool entries; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

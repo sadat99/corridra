@@ -919,6 +919,11 @@
       "use": "Exact historical ledger snapshot before Workspace controls UI correction; preserve bytes and verify the history manifest hash."
     },
     {
+      "path": "docs/v3/history/ledger-before-phase0-owner-tools.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact 43ea1db active-ledger bytes before the PR126 to PR131 release summaries were retired; manifest hashes preserve evidence, relative links use docs/V3_LEDGER.md, not current state."
+    },
+    {
       "path": "docs/design-system/README.md",
       "classification": "Current guide/contract",
       "use": "Read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
