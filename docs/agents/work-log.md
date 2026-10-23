@@ -1329,3 +1329,11 @@ Pages affected: the ten `PublicPage` routes (`/how-it-works`, `/sell`, `/source`
 Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` (design-system token rules), `pnpm build`, `pnpm test:ux` 42/42 (axe, overflow, tap targets and action layout on every public route at six widths), `pnpm test:e2e` 166/166; before and after screenshots at 320, 390, 768 and 1440 px for `/how-it-works`, `/sell`, `/trust` and `/corridors` (32 images, first 2600 px of each page, before from main `eb86083`) are in `docs/design-system/evidence/ac1-08-atelier/before` and `after`; `/signin` and `/about` were also reviewed visually. A Codex P1 finding on the PR was right: the package gate requires those screenshots and the first push shipped none. CI runs the protected suite on the exact head.
 
 Not done: rest of AC1-07 Signal, the other AC1-08 families (partner discovery, dossiers), and the art review on the deployed pages (owner decision 22 Oct).
+
+## 2026-10-23 PR143 merged; documentation of package statuses (branch ccr-998044a6-w7yufu, base 92aa80f)
+
+PR143 merged as `92aa80f` (squash) with CI green on the exact head `36d282c` (checks, operator 1 to 3, browser, validate, CodeQL). A Codex P1 finding on it was right and fixed before merge: the package gate needs before and after screenshots at 320, 390, 768 and 1440 px, so 32 images for four pages were added under `docs/design-system/evidence/ac1-08-atelier`. `validate` red on superseded heads was cancelled-run noise (KI-03).
+
+This entry is documentation only: the design-system README work-package status column now names what is merged for AC1-02, AC1-04 to AC1-08, section 7a records the audit method, selector pitfalls, evidence location and the 23 October owner decision, AGENTS.md has one lesson pointing at KI-16, and the ledger lists PR137 to PR143. Nothing outside documentation changes.
+
+Open: rest of AC1-07 Signal, remaining AC1-08 families (partner discovery, dossiers), the owner art review on the deployed pages (a page the owner rejects is reverted), and a deployment check for `92aa80f`.
