@@ -19,6 +19,7 @@ import { migrateCustomerMemberRoles } from '../packages/db/src/customer-member-r
 import { migrateCustomerOrganisationLinks } from '../packages/db/src/customer-organisation-link-migrate';
 import { migrateCustomerProgrammeTerms } from '../packages/db/src/customer-programme-terms-migrate';
 import { migrateCustomerServiceRequests } from '../packages/db/src/customer-service-request-migrate';
+import { migrateCustomerBilling } from '../packages/db/src/customer-billing-migrate';
 import { migrateCustomerAdmission } from '../packages/db/src/customer-admission-migrate';
 import { migrateCustomerRequestAdmission } from '../packages/db/src/customer-request-admission-migrate';
 import { pinCustomerAuthority } from '../packages/auth/src/customer-authority-pin';
@@ -105,6 +106,7 @@ const registries = [
   'customer_request_admission_migrations',
   'customer_programme_terms_migrations',
   'customer_service_request_migrations',
+  'customer_billing_migrations',
   'customer_real_use_migrations',
   'network_real_use_migrations',
   'customer_mission_mail_migrations',
@@ -133,6 +135,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['request authority with open admission', migrateCustomerRequestAdmission],
   ['programme terms, eligibility and places', migrateCustomerProgrammeTerms],
   ['paid-service requests', migrateCustomerServiceRequests],
+  ['synthetic plans, subscriptions and entitlements', migrateCustomerBilling],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);

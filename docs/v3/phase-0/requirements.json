@@ -3736,7 +3736,7 @@
     "requirement": "| Billing, entitlements, invoicing and subscriptions | Full automated paid SaaS | P1 before subscription launch |",
     "status": "MISSING",
     "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "nextAction": "Slice 1 backend built, source and local database tests only (ADR059: synthetic plans, subscriptions and entitlements, default off, not installed, no payment); it stays MISSING until the customer and staff screens exist and the owner installs it. Invoices, payment observations, credit notes and entitlement enforcement are slice 2 and later. Staff functionality does not establish self-service."
   },
   {
     "id": "V3-06-014",

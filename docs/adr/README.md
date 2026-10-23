@@ -71,3 +71,5 @@ ADR056: [Real-use admission and progressive registration](0056-real-use-admissio
 ADR057: [Real invited execution work](0057-real-invited-execution-work.md), separate contributor invitations and password/TOTP access, real purpose isolation and preserved review/reward boundaries; Production activation pending.
 
 ADR058: [Emailed request status link](0058-emailed-request-status-link.md), proposed only; a 90 day link that shows request status without sign-in, awaiting owner approval, no code depends on it.
+
+ADR059: [Synthetic plans, subscriptions and entitlements](0059-synthetic-plans-subscriptions-and-entitlements.md), an optional, default-off, synthetic-only billing slice: versioned plans with stated tax treatment, a customer request that records the exact plan shown, staff-activated subscription periods and a plain read of what a plan grants. No payment, invoice or processor; entitlements are recorded, not enforced; invoicing is a later slice.
