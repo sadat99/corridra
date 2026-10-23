@@ -18,6 +18,7 @@ import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
 import { customerServiceRequestsEnabled } from './customer-service-requests';
+import { customerBillingEnabled } from './customer-billing';
 import {
   customerOpenAdmission,
   customerProductionLocked,
@@ -179,6 +180,12 @@ const modules: {
     label: 'Paid-service requests',
     flag: 'CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED',
     enabled: customerServiceRequestsEnabled,
+  },
+  {
+    key: 'billing',
+    label: 'Sample plans and subscriptions',
+    flag: 'CORRIDRA_CUSTOMER_BILLING_ENABLED',
+    enabled: customerBillingEnabled,
   },
 ];
 

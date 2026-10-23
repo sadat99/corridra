@@ -96,6 +96,7 @@ export function CustomerWorkspaces({
   memberRolesEnabled = false,
   linksEnabled = false,
   serviceRequestsEnabled = false,
+  billingEnabled = false,
 }: {
   subject: string;
   issuer: string;
@@ -106,6 +107,7 @@ export function CustomerWorkspaces({
   memberRolesEnabled?: boolean;
   linksEnabled?: boolean;
   serviceRequestsEnabled?: boolean;
+  billingEnabled?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -377,6 +379,13 @@ export function CustomerWorkspaces({
                       <p>
                         <a className="text-link" href={'/account/service-requests/' + row.id}>
                           Paid-service requests
+                        </a>
+                      </p>
+                    )}
+                    {billingEnabled && (
+                      <p>
+                        <a className="text-link" href={'/account/billing/' + row.id}>
+                          Plan and billing
                         </a>
                       </p>
                     )}

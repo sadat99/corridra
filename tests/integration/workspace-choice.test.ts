@@ -17,8 +17,8 @@ test('programme management lists only workspaces the person owns or manages', ()
   expect(workspacesFor('programmes', [rows[2]!])).toEqual([]);
 });
 
-test('profile and help requests stay open to every member of a workspace', () => {
-  for (const kind of ['profile', 'services'] as const)
+test('profile, help requests and plans stay open to every member of a workspace', () => {
+  for (const kind of ['profile', 'services', 'billing'] as const)
     expect(workspacesFor(kind, rows).map((r) => r.id)).toEqual(['a', 'b', 'c']);
 });
 
@@ -26,6 +26,12 @@ test('each destination is one account path under the workspace and encodes the i
   expect(workspacePath('profile', id)).toBe('/account/profile/' + id);
   expect(workspacePath('programmes', id)).toBe('/account/delegations/' + id);
   expect(workspacePath('services', id)).toBe('/account/service-requests/' + id);
+  expect(workspacePath('billing', id)).toBe('/account/billing/' + id);
   expect(workspacePath('services', 'a/b?c')).toBe('/account/service-requests/a%2Fb%3Fc');
-  expect(Object.keys(workspaceDestinations).sort()).toEqual(['profile', 'programmes', 'services']);
+  expect(Object.keys(workspaceDestinations).sort()).toEqual([
+    'billing',
+    'profile',
+    'programmes',
+    'services',
+  ]);
 });

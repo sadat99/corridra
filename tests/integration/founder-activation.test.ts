@@ -194,3 +194,16 @@ test('paid-service requests report their own flag and wait for the workspace fla
     ),
   ).toBe('LOCKED_PRODUCTION');
 });
+
+test('sample plans and subscriptions report their own flag and wait for the workspace flag', () => {
+  const billing = { ...synthetic, CORRIDRA_CUSTOMER_BILLING_ENABLED: 'true' };
+  expect(state(billing, 'billing')).toBe('WAITING_PREREQUISITE');
+  expect(state({ ...billing, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true' }, 'billing')).toBe('ON');
+  expect(state(synthetic, 'billing')).toBe('OFF');
+  expect(
+    state(
+      { ...billing, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true', VERCEL_ENV: 'production' },
+      'billing',
+    ),
+  ).toBe('LOCKED_PRODUCTION');
+});
