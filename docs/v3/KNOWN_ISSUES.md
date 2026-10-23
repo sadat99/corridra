@@ -119,3 +119,8 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Seen (23 Oct):** `tests/operator/workspace.spec.ts:2403` (governed SDK fixture review) fails here at the first of four large claims with `claim: The record or policy changed` (a 409 from a database limit error). It fails the same way on `origin/main` `7a4613a`, with and without the Phase 0 changes, while CI passes it. Cause not found; suspected difference in the local PostgreSQL. The other 13 cases in `workspace.spec.ts`, `zzz-owner-page.spec.ts` and `zzz-view-as.spec.ts` pass.
 - **Do:** compare with a clean `origin/main` run before blaming a change. The `zzz-*` specs need the authenticator that `workspace.spec.ts` enrols in the same run (the database is rebuilt every run), so run them together with it. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium`.
+
+### KI-20 Two clean ledger edits can exceed the 12 KiB cap when both merge
+
+- **Seen (23 Oct, PR160 after PR161):** each PR passed `verify` alone, git merged both ledger edits without a conflict, and `main` ended at 12,357 bytes, over the cap, so `node scripts/v3-context.mjs verify` failed on `main` and would have failed every later PR.
+- **Do:** after merging main into a branch, and straight after your own merge, run `node scripts/v3-context.mjs verify` and `wc -c docs/V3_LEDGER.md`. Edit the ledger lines in place and condense old history instead of adding lines; keep a margin of about 150 bytes for the other sessions. Fixed by removing a repeated action-group sentence and the two CI failure details already kept in this file.
