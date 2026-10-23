@@ -6006,19 +6006,16 @@ th {
   padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
-/* One frame per record: a section or form inside a delivery view carries only a rule above, the
-   same rule the mission card uses. The tinted record rows inside a section keep their own fill. */
-.ux-customer
-  :is(section.delivery-view, section:not([class]))
-  > :is(.detail-card, form.operator-form) {
+/* One frame per record: a section or form directly inside a delivery view carries only a rule
+   above, the same rule the mission card uses. The tinted record rows inside a section keep their
+   own fill. Scoped to the delivery view so other customer records keep their frames. */
+.ux-customer section.delivery-view > :is(.detail-card, form.operator-form) {
   padding: 0;
   background: none;
   border: 0;
   border-radius: 0;
 }
-.ux-customer
-  :is(section.delivery-view, section:not([class]))
-  > :is(.detail-card, form.operator-form):not(:first-child) {
+.ux-customer section.delivery-view > :is(.detail-card, form.operator-form):not(:first-child) {
   margin-block-start: var(--space-6);
   padding-block-start: var(--space-6);
   border-block-start: 1px solid var(--line);
