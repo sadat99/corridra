@@ -1380,7 +1380,7 @@ Evidence: before and after at 390 and 1440 px in `docs/design-system/evidence/ac
 
 ## 2026-10-23 AC/1 art review recorded (branch landing-example)
 
-The owner asked to fix art approval. I built a private review page with before and after evidence and one Accept, Accept with a change or Reject control per package, because signed-in screens cannot be judged from files and the agent may not mark the gate passed. The owner replied in chat "Accepted" for all ten rows: AC1-01, AC1-02i, AC1-02 action groups, AC1-02 message panels and button states, AC1-03 home example and routes, AC1-04, AC1-05, AC1-06, AC1-07 Today queue, AC1-08 information pages.
+The owner asked to fix art approval. I built a private review page with before and after evidence and one Accept, Accept with a change or Reject control per package, because signed-in screens cannot be judged from files and the agent may not mark the gate passed. The owner pressed Accept on all ten rows on the page (09:34 to 09:37 UTC, no notes; read back from the page store) and confirmed the same in chat: AC1-01, AC1-02i, AC1-02 action groups, AC1-02 message panels and button states, AC1-03 home example and routes, AC1-04, AC1-05, AC1-06, AC1-07 Today queue, AC1-08 information pages.
 
 Recorded in `docs/design-system/ART_REVIEW.md` (decision column and scope note) and README section 5 and 7. Scope: what was built and shown. AC1-06 is the first slice only; the home example and routes refinement and the Today queue ship in the PR after PR146. The AC1-08 gate ("never start without recorded human acceptance") is now satisfied for the five references, so the remaining page families may start.
 

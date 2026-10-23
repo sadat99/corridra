@@ -1,6 +1,6 @@
 # AC/1 art review sheet
 
-Owner review of the deployed pages (decision of 22 October 2026: review happens on the deployed pages, and a page the owner rejects is reverted). The owner (Nazmus Sadat) recorded every decision below on 23 October 2026 through the review page, as the chat message "Accepted" for each of the ten rows. Status words follow [README section 6](README.md#6-status-words). Live host: `https://c.obsidianglobal.studio`.
+Owner review of the deployed pages (decision of 22 October 2026: review happens on the deployed pages, and a page the owner rejects is reverted). The owner (Nazmus Sadat) recorded every decision below on 23 October 2026: ten accepts pressed on the review page between 09:34 and 09:37 UTC (stored, with no change notes) and the same ten rows confirmed in chat. Status words follow [README section 6](README.md#6-status-words). Live host: `https://c.obsidianglobal.studio`.
 
 How a decision is recorded: write `accept`, `accept with change: <what>` or `reject` and the date. A reject reverts the listed PR for that package (`git revert -m 1` is not needed, the PRs are squash merges: revert the squash commit). Change requests go back into the same package as a new slice.
 
