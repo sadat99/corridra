@@ -1385,3 +1385,11 @@ The owner asked to fix art approval. I built a private review page with before a
 Recorded in `docs/design-system/ART_REVIEW.md` (decision column and scope note) and README section 5 and 7. Scope: what was built and shown. AC1-06 is the first slice only; the home example and routes refinement and the Today queue ship in the PR after PR146. The AC1-08 gate ("never start without recorded human acceptance") is now satisfied for the five references, so the remaining page families may start.
 
 Not done: the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
+
+## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
+
+PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.
+
+Fix: my regex that marked the ten decisions accepted also swallowed the blank line after the table in `ART_REVIEW.md`, so the "Signed-in pages cannot be reviewed" paragraph became a table row and widened the first column. Blank line restored, table re-padded, and the scope note updated (the landing and Today work shipped in PR148). The owner noticed that the landing example still looked unchanged: that was production still serving `8cbdd3e`, before PR148.
+
+Open: the owner's small change to the landing routes (asked, not yet specified), the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
