@@ -55,8 +55,24 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - MCP connectors disconnect and reconnect during a session and tool schemas must be loaded again. Reload with `ToolSearch select:` after a reconnect notice; do not search for tools while the server is disconnected.
 
-### KI-11 Buttons and links badly spaced on phones (open)
+### KI-11 Buttons and links badly spaced on phones (fixed for access pages)
 
 - **Seen (owner screenshots, 22 Oct):** on `/contributor` and `/signin` at 390 px, stacked outlined links have different widths and almost no gap, and a wrapped row (`Team sign-in`, `Start page`, `Local helper tasks`, `Plan a mission`) is ragged.
-- **Cause:** action groups have no shared layout rule; each link sizes to its text.
-- **Fix:** AC1-02 shared action primitives. See the ledger for the package status.
+- **Measured cause:** standalone actions were `inline-flex` with auto width. In a block parent they flow inline, so stacked ones sat 0 to 8 px apart at different widths, and the wrapped row mixed baselines (a 16 px stagger on `/signin`). The sign-in form also mixed a 310 px primary with 295 px links.
+- **Fix (AC1-02, first slice):** one action-group block at the end of `globals.css`: forms and the "other ways in" grid use equal full-width cells, and page-level actions stack full width on phones with 12 px gaps and share a wrapping row from 640 px. After the fix every action in a group has one width and one edge.
+- **Still to do:** the same rule for the other page families (customer, delegation, operator panels, the `/workspace` start page), one family per PR.
+
+### KI-12 Browser gates fail in milliseconds in the cloud container
+
+- **Seen:** `pnpm test:e2e` and `pnpm test:ux` reported 124 and 42 failures at 2 to 5 ms each. The pinned Playwright wants a Chromium build the container does not have (`chromium_headless_shell-1248`; the container has 1194).
+- **Fix:** run with `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Mass failures of a few milliseconds mean the browser did not launch, not that the product broke.
+
+### KI-13 Local tooling side effects
+
+- `next dev` rewrites the tracked `apps/web/AGENTS.md`; restore it with `git checkout apps/web/AGENTS.md` before committing, or use `next start` for layout checks.
+- `pkill -f "next dev"` matches the shell that runs it; write the pattern as `[n]ext dev`.
+- To see the real sign-in form without a database, run `next dev` with `CORRIDRA_NEON_AUTH_ENABLED=true`, a dummy `NEON_AUTH_BASE_URL` of the form `https://ep-x.neonauth.eu-central-1.aws.neon.tech/x/auth`, a 32 character `NEON_AUTH_COOKIE_SECRET` and `APP_ORIGIN` set to the local origin. These are layout-check values only.
+
+### KI-14 Subscription notices are large
+
+- Each "subscription created" PR notice carries about 5,000 tokens of boilerplate. Subscribe once per PR and do not re-subscribe.
