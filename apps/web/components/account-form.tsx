@@ -46,7 +46,9 @@ export function AccountForm({
   const [codeRequested, setCodeRequested] = useState(false);
   const [failed, setFailed] = useState(false);
   // Sign in with a code: a second route into the same sign-in form. Password stays the default.
-  const [viaCode, setViaCode] = useState(false);
+  const [viaCode, setViaCode] = useState(
+    mode === 'signin' && codeSignIn && query.get('method') === 'code',
+  );
   const [codeSent, setCodeSent] = useState(false);
   const [waitLeft, setWaitLeft] = useState(0);
   const codeEnabled = mode === 'signin' && codeSignIn;

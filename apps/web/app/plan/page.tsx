@@ -18,7 +18,10 @@ export default function Page() {
               : 'A short request is enough. No account needed.'}
           </p>
         </header>
-        <Intake realMode={realUseEnabled()} />
+        <Intake
+          realMode={realUseEnabled()}
+          codeSignIn={process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
+        />
       </section>
     </PublicShell>
   );
