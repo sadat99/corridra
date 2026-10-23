@@ -3734,9 +3734,9 @@
     "heading": "6. New V3 Capabilities — Not Yet Assumed Implemented",
     "line": 502,
     "requirement": "| Billing, entitlements, invoicing and subscriptions | Full automated paid SaaS | P1 before subscription launch |",
-    "status": "MISSING",
+    "status": "PARTIAL",
     "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Implement separately reviewed additive synthetic-only capability in Phase 3; staff functionality does not establish self-service."
+    "nextAction": "Slice 1 is implemented with customer and staff screens and locally verified (ADR060: sample plans, subscriptions and entitlements, default off, sample workspaces only, no payment, entitlements recorded and not enforced) but it is not installed, not enabled and unobserved with real sessions. Invoices, payment observations, credit notes, entitlement enforcement and any real billing are slice 2 and later and need their own gates. Staff functionality does not establish self-service."
   },
   {
     "id": "V3-06-014",

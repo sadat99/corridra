@@ -73,3 +73,5 @@ ADR057: [Real invited execution work](0057-real-invited-execution-work.md), sepa
 ADR058: [Emailed request status link](0058-emailed-request-status-link.md), proposed only; a 90 day link that shows request status without sign-in, awaiting owner approval, no code depends on it.
 
 ADR059: [View-as preview](0059-view-as-preview.md), a read-only, always-logged preview of a customer screen with sample data for owners and admins; stage 1 built, switch off by default.
+
+ADR060: [Synthetic plans, subscriptions and entitlements](0060-synthetic-plans-subscriptions-and-entitlements.md), an optional, default-off, synthetic-only billing slice: versioned plans with stated tax treatment, a customer request that records the exact plan shown, staff-activated subscription periods and a plain read of what a plan grants. No payment, invoice or processor; entitlements are recorded, not enforced; invoicing is a later slice.

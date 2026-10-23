@@ -2,6 +2,7 @@
 import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { CustomerServiceRequests } from './customer-service-requests';
+import { CustomerBilling } from './customer-billing';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
@@ -529,6 +530,7 @@ export function DeliveryExperience(props: Props) {
         <CustomerMissionDelivery tenant={tenant} mission={mission} />
       )}
       {['owner', 'admin'].includes(props.role) && <CustomerServiceRequests tenant={tenant} />}
+      {['owner', 'admin'].includes(props.role) && <CustomerBilling tenant={tenant} />}
       <h3>Counterparty declarations awaiting review</h3>
       {data.responses.length ? (
         data.responses.map((r) => (
