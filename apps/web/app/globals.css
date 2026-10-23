@@ -5754,7 +5754,7 @@ th {
 .ux-customer
   :is(section, div, form, article, nav, aside, details, fieldset)
   > :is(a, button).text-link,
-.ux-customer button:not([class]),
+.ux-customer button:not([class], [role='tab'], [aria-selected]),
 .ux-customer a.ux-action {
   display: inline-flex;
   align-items: center;
@@ -5778,7 +5778,7 @@ th {
 .ux-customer
   :is(section, div, form, article, nav, aside, details, fieldset)
   > :is(a, button).text-link:hover,
-.ux-customer button:not([class]):hover,
+.ux-customer button:not([class], [role='tab'], [aria-selected]):hover,
 .ux-customer a.ux-action:hover {
   background: var(--surface-2);
   border-color: var(--brand);
@@ -5786,7 +5786,7 @@ th {
 .ux-customer
   :is(section, div, form, article, nav, aside, details, fieldset)
   > button.text-link:disabled,
-.ux-customer button:not([class]):disabled {
+.ux-customer button:not([class], [role='tab'], [aria-selected]):disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -8288,4 +8288,109 @@ th {
 .operator-page :is(.operator-form, .workspace-panel, .ux-today) > :is(a, button).text-link,
 .operator-page .ux-operator-workbench :is(a, button).text-link {
   margin-right: 0;
+}
+
+/* AC1-06 Encounter and customer components: vertical rhythm inside the customer frame. The customer kit
+   zeroes heading margins in every section; components whose root is a delivery view then stacked headings,
+   text, record rows and buttons with no spacing. Presentation only. Tokens only. */
+.ux-customer :is(section, div).delivery-view :is(h2, h3, h4) {
+  margin-block: var(--space-8) var(--space-2);
+  line-height: 1.25;
+}
+.ux-customer :is(section, div).delivery-view h4 {
+  margin-block-start: var(--space-6);
+}
+.ux-customer :is(section, div).delivery-view :is(h2, h3, h4):first-child {
+  margin-block-start: 0;
+}
+.ux-customer :is(section, div).delivery-view p {
+  max-width: 72ch;
+}
+.ux-customer
+  :is(section, div).delivery-view
+  :is(p, ul, ol, dl, details, table)
+  + :is(p, ul, ol, dl, details, form, table, button, a),
+.ux-customer
+  :is(section, div).delivery-view
+  :is(h2, h3, h4)
+  + :is(ul, ol, dl, details, form, table) {
+  margin-block-start: var(--space-3);
+}
+.ux-customer
+  :is(section, div).delivery-view
+  :is(a, button)
+  + :is(p, ul, ol, dl, details, form, h2, h3, h4),
+.ux-customer :is(section, div).delivery-view form + :is(a, button, p, ul, h2, h3, h4) {
+  margin-block-start: var(--space-4);
+}
+.ux-customer :is(section, div).delivery-view :is(ul, ol) > li + li {
+  margin-block-start: var(--space-3);
+}
+
+/* Service requests in the customer frame: the quote cost table scrolls inside its labelled region instead of
+   squeezing four columns into a phone, and label and value lists read as pairs. Presentation only. */
+.ux-customer [role='region'][aria-label^='Quote costs'] table {
+  min-width: 34rem;
+}
+.ux-customer [role='region'][aria-label^='Quote costs'] :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+}
+.ux-customer [role='region'][aria-label^='Quote costs'] td {
+  font-variant-numeric: tabular-nums;
+}
+.ux-customer [role='region'][aria-label^='Quote costs']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  ) {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  )
+  > dt {
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  )
+  > dd {
+  margin: 0;
+}
+@media (max-width: 39.99rem) {
+  .ux-customer
+    dl:not(
+      [class],
+      :has(> div),
+      :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+    ) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .ux-customer
+    dl:not(
+      [class],
+      :has(> div),
+      :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+    )
+    > dd
+    + dt {
+    margin-top: var(--space-3);
+  }
 }

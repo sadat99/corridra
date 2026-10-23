@@ -1301,3 +1301,19 @@ Verification, each through the gate runner: format:check, lint, typecheck, `pnpm
 Pages affected: the operator overview (`/operator`) and every operator section with forms or jump lists (missions, companies, meetings, commercial, delivery, network, operations, controls), i.e. more than 10 destinations.
 
 Not done: AC1-06 Encounter, the rest of AC1-07. Next action: PR, CI, merge, then confirm production.
+
+## 2026-10-23 PR141 merged; AC1-06 customer components rhythm and tab contrast (branch ccr-998044a6-w7yufu, base 399dc23)
+
+PR141 merged as `399dc23` (CI green on the exact head `fdb6648`, Codex review no findings). Owner decision in chat on 23 Oct: there are no live users to protect, so broad presentation changes to customer screens are fine; the closed gates, permission checks, money and data semantics stay as they are.
+
+Method: the audit copy of the operator specs now has a real-frame mode (KI-16): `main` gets `ux-customer`, loses its inline style and, for the screenshot only, the `#fixture` wrapper is removed so the component sits directly under `main` as on the real page. In that view the programme participants component (root `section.delivery-view`) showed headings, text, record rows and buttons stacked with almost no spacing, because the customer kit sets `margin: 0` on headings in every section (`.ux-customer :is(section, article, aside, details):not(.guide-band) h3`) and the root is a block, not a grid.
+
+Change (CSS only, tokens only, in `globals.css`): (1) vertical rhythm for `.ux-customer :is(section, div).delivery-view` content: heading spacing (8, 6 for h4, 2 below), 12 px between text and lists, 16 px around action buttons and forms, 12 px between list rows, readable paragraph width; (2) `.ux-customer button:not([class])` no longer matches tabs (`role="tab"`, `aria-selected`), so the pricing and terms tabs keep their own styles; before, hovering the selected tab gave white text on a pale surface (axe contrast 1.11) in the customer frame.
+
+Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test`, `pnpm build`, `pnpm test:ux` 42/42, `pnpm test:e2e` 166/166; 27 customer and programme component specs run in the real-frame mode with axe on the built CSS: 355 passed (the pricing tab keyboard tests failed before the tab fix). CI runs the protected suite on the exact head.
+
+Service requests (same PR): the quote cost table keeps a 34 rem minimum width and scrolls inside its labelled region (it squeezed four columns into a phone), cell padding and tabular figures, a focus ring on the region, and plain label and value lists (`dl` with direct `dt`/`dd`, not the passport, facts and profile lists, not `dl > div` rows) read as pairs. A first version also matched `dl > div` rows and overflowed the plan review at 1366 px; the real-frame run caught it and the selector excludes `:has(> div)`.
+
+Pages affected (routes that render these components under the customer frame): `/account` work and results views, `/account/companies`, `/account/delegations`, `/account/delegations/organise`, `/account/delegations/[workspaceId]`, `/account/missions/[resourceId]`, `/account/service-requests`, `/account/service-requests/new`, `/account/service-requests/[workspaceId]` and `/account/service-requests/[workspaceId]/[requestId]` (ten, with the work and results views counted separately). `/client` and `/programme` use `WorkspaceShell` without the customer class and already have heading spacing from the workspace rules; they are not changed here (a Codex review finding; their section headings were ruled in PR140).
+
+Not done: remaining AC1-07 Signal work; AC1-08.
