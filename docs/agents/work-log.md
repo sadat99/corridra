@@ -1510,6 +1510,14 @@ ADR 059 originally promised a reason-only log line for refused attempts. Stage 1
 
 Next: after this merges and deploys, the owner runs Install customer modules with `mission_mail_action = enable` and a reason (only once main CI and CodeQL are green on the exact head and nothing else has merged). View-as stage 2 waits for a go.
 
+## 2026-10-23 Mission mail enabled in the database (branch claude/relaxed-thompson-b6ixvz, base 1635269)
+
+PR161 merged as `0d4dfa5`; the production deploy was READY and the live `/privacy` page showed the 23 October date and the mission email paragraph. Three later merges (PR160 `8c4f101`, PR162 `1d57b6b`, PR158 `1635269`) each cancelled main CI on the commit before, so the install waited for CI and CodeQL to finish green on the exact head `1635269`. PR160 and PR161 together had pushed the ledger over its cap (12,357 bytes, `checks` failed); PR162 fixed that. Lesson: with several sessions merging, ask for a merge freeze before an owner-run install, and check `wc -c docs/V3_LEDGER.md` on the merge result.
+
+The owner ran Install customer modules from `main` (run 40008182310, 19:02 to 19:11 UTC) with `apply = yes`, `mission_mail_action = enable` and a written reason. Log: "Mission mail enabled; changed=true", `customer_mission_mail_migrations: 1 applied`, `view_as_migrations: not installed`. The standard install list also applied the billing sample module from PR158 (`customer_billing_migrations: 1 applied`, switch off, sample workspaces only).
+
+Not verified: the owner's own test (a real request, the email from "Sadat, Corridra", the mute link, the account link) has not been done yet. If it fails, run the workflow with `mission_mail_action = pause`. View-as is merged but not installed.
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.
