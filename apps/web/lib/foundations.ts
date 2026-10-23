@@ -31,7 +31,9 @@ import {
   CustomerServiceRequestService,
   customerServiceRequestsEnabled,
 } from '@corridra/auth/customer-service-requests';
+import { CustomerBillingService, customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { CustomerServiceStaffService } from '@corridra/delivery/customer-service-staff';
+import { CustomerBillingStaffService } from '@corridra/delivery/customer-billing-staff';
 import {
   CustomerMemberRoleService,
   customerMemberRolesEnabled,
@@ -400,6 +402,20 @@ function createServices() {
     ),
     staffOrganisationLinks: new StaffOrganisationLinkService(runtimePool),
     customerServiceStaff: new CustomerServiceStaffService(runtimePool),
+    customerBillingStaff: new CustomerBillingStaffService(runtimePool),
+    customerBilling: new CustomerBillingService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerBillingEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
     customerServiceRequests: new CustomerServiceRequestService(
       runtimePool,
       authPool,

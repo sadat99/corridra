@@ -5,6 +5,7 @@
     "redirectsTo:/signin": 1
   },
   "/account/companies": {},
+  "/account/billing": {},
   "/account/delegations": {},
   "/account/delegations/organise": {},
   "/account/profile": {},

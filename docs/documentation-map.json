@@ -929,6 +929,11 @@
       "use": "Proposed emailed request status link; owner has not approved it and no code depends on it"
     },
     {
+      "path": "docs/adr/0060-synthetic-plans-subscriptions-and-entitlements.md",
+      "classification": "Architecture contract/index",
+      "use": "Synthetic plans, subscriptions and entitlements (billing slice 1): default-off, synthetic-only, no payment or invoice, entitlements recorded and not enforced"
+    },
+    {
       "path": "docs/v3/history/ledger-chunks-120-126.md",
       "classification": "Exact historical execution entries",
       "use": "Chunks120 through126 preserved byte-for-byte with a manifest hash; not current state"
