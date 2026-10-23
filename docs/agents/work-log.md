@@ -1371,3 +1371,9 @@ Changes (presentation only, tokens only): both examples in one frame with an Exa
 Verification, each through the gate runner: format:check, lint, typecheck, `pnpm test` 44/44, `pnpm build`, `pnpm test:e2e` 166/166 (includes the public-experience test pinning four buyers, five quote rows and the route links), `pnpm test:ux` 46/46 (42 routes at six widths plus the specimen). Screenshots at 320, 390, 768, 1440 px before and after in `docs/design-system/evidence/ac1-03-landing`. Not run: `test:operator` (no protected surface changed).
 
 Open: owner art review of the new landing sections; the Signal Today queue table.
+
+## 2026-10-23 AC1-07 Signal Today queue (branch landing-example)
+
+Owner: continue with Signal. Today panel on `/operator` restyled toward the Signal reference ("decisions, not dashboards"): counts as a hairline strip of equal columns, queue rows on one three-column grid, eyebrow group headings, no tinted blocks, no icon tiles. CSS only, in `operator/operator-overview.css`, tokens only. Not built: the reference's Attention and Owner columns (no data source; never faked) and a column head row (groups mix item kinds).
+
+Evidence: before and after at 390 and 1440 px in `docs/design-system/evidence/ac1-07-today`. Local operator audit of `workspace.spec.ts` plus `zz-today.spec.ts` (11 passed, axe clean on the real page); `zz-operator-overview.spec.ts` failed at the MFA step because a hand-picked subset lacks earlier state (KI-16), so CI's full operator suite is the check for it. The audit's layout report shows no new flag from the Today area; its remaining flags are the documented bento and phone area bar. `div.hero-actions` (Next and Previous missions) was flagged for stagger at 1280 and 1440 in this subset run; I did not change that control and did not investigate it, so it stays open.
