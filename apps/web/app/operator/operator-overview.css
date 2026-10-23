@@ -730,3 +730,27 @@
 .ux-operator-home .workspace-panel details.research-panel > :last-child {
   margin-bottom: var(--space-4);
 }
+/* One frame per record. Inside a mission card the commercial workbench and the forms carry no frame
+   of their own, only a rule above; the same rule the customer pages already follow. */
+.ux-operator-home
+  .workspace-panel
+  .mission-card
+  :is(.ux-commercial-workbench, form.operator-form, .ux-operator-workbench) {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.ux-operator-home .workspace-panel .mission-card :is(.ux-commercial-workbench, form.operator-form) {
+  margin-block: var(--space-6) 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+.ux-operator-home .workspace-panel .mission-card .ux-commercial-workbench {
+  margin-block-end: var(--space-6);
+}
+.ux-operator-home .workspace-panel .mission-card > h4 {
+  margin: var(--space-8) 0 var(--space-3);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+}
