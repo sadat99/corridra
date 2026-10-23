@@ -81,9 +81,13 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      # `playwright install --with-deps` runs `apt-get update`, which once stalled for 28 minutes on an
-      # Ubuntu mirror (KI-02). Bound it, and retry once; the runner kills the whole process tree on a
-      # step timeout, so the retry starts without a held apt lock.
+      # `playwright install --with-deps` downloads packages through apt. Twice on a hosted runner (KI-02)
+      # the Ubuntu mirror stalled for minutes, once for the whole 30-minute job. Fail fast inside apt
+      # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
+      # the root-owned apt-get it started, which keeps the dpkg lock, so the retry stops it first.
+      - name: Resilient apt settings
+        run: |
+          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 6
@@ -92,7 +96,12 @@ jobs:
       - name: Browser runtime (retry)
         if: steps.browser-runtime.outcome != 'success'
         timeout-minutes: 6
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          sudo pkill -KILL -x apt-get || true
+          sudo pkill -KILL -x dpkg || true
+          sleep 2
+          sudo dpkg --configure -a
+          pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
       - name: AC/1 UX quality gate (every static route at six widths, ratcheted baseline)
@@ -141,9 +150,13 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      # `playwright install --with-deps` runs `apt-get update`, which once stalled for 28 minutes on an
-      # Ubuntu mirror (KI-02). Bound it, and retry once; the runner kills the whole process tree on a
-      # step timeout, so the retry starts without a held apt lock.
+      # `playwright install --with-deps` downloads packages through apt. Twice on a hosted runner (KI-02)
+      # the Ubuntu mirror stalled for minutes, once for the whole 30-minute job. Fail fast inside apt
+      # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
+      # the root-owned apt-get it started, which keeps the dpkg lock, so the retry stops it first.
+      - name: Resilient apt settings
+        run: |
+          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 6
@@ -152,7 +165,12 @@ jobs:
       - name: Browser runtime (retry)
         if: steps.browser-runtime.outcome != 'success'
         timeout-minutes: 6
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          sudo pkill -KILL -x apt-get || true
+          sudo pkill -KILL -x dpkg || true
+          sleep 2
+          sudo dpkg --configure -a
+          pnpm exec playwright install --with-deps chromium
       - name: Protected operator browser tests (shard ${{ matrix.shard }} of 3)
         env:
           UX06_EVIDENCE_STAGE: after
