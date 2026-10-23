@@ -20,10 +20,11 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Seen working (23 Oct, PR146):** in the `browser` job the first install stalled to its limit, the retry killed the leftover apt, installed in about 5 minutes and the tests started; the old 30-minute job limit then cancelled that job, which is why the limit is now 45. Later the `operator (3)` retry timed out at 6 minutes one second before Chrome finished, which is why the retry now has 12. The final PR146 head passed every job; whether that run met a stall was not checked.
 - **If it recurs:** read the step durations (`list_workflow_jobs`) and the last apt lines; if the retry also fails, the mirror is down and one re-run is the answer. Do not change tests for it.
 
-### KI-03 `validate` red right after a push (not a failure)
+### KI-03 `validate` red on a superseded head (fixed at source 23 Oct)
 
-- **Seen:** PR134 heads `e2c485f` and `40803ce`. `validate` rolls up every job, and a newer push cancels the older run, so the roll-up shows red.
-- **Avoid:** read the run conclusion first. `cancelled` on a superseded head needs no action; only the current head matters.
+- **Seen:** PR134, PR144, PR146. `validate` ran with `if: always()`, so when a newer push cancelled the older run it still rolled up the cancelled jobs and went red on a head nobody cares about, and each report woke the session.
+- **Fix:** `ci.yml` now uses `if: ${{ !cancelled() }}`. A cancelled (superseded) run skips the roll-up; a failed job, or a job cancelled by its own timeout, still fails it, so real failures stay red. This takes effect for runs started after the change reaches main.
+- **Reading events:** a check event whose `head_sha` is not the PR's current head is stale. Compare it with the head you last pushed and ignore it without comment. Only the current head counts.
 
 ### KI-04 Two wrong causes written as facts (process)
 
