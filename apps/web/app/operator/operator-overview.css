@@ -502,7 +502,7 @@
   }
   .ux-operator-home .ux-tool-index a:first-child .operator-nav-copy > span {
     max-width: none;
-    font-size: 1.65rem;
+    font-size: var(--text-title);
   }
   .ux-operator-home .ux-tool-index a:first-child .operator-nav-copy small {
     max-width: 15rem;
@@ -666,4 +666,67 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-1);
   }
+}
+
+/* Signal panels: one rhythm for every operator tab. */
+.ux-operator-home .workspace-panel button:not([class]) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--brand-deep);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+  cursor: pointer;
+}
+.ux-operator-home .workspace-panel button:not([class]):hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.ux-operator-home .workspace-panel button:not([class]):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ux-operator-home .workspace-panel h2 {
+  font-size: var(--text-h2);
+}
+.ux-operator-home .workspace-panel > .operator-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+:where(.ux-operator-home .operator-section) > * + * {
+  margin-top: var(--space-4);
+}
+.ux-operator-home .operator-section > p {
+  max-width: 72ch;
+}
+.ux-operator-home .workspace-panel .detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-4);
+}
+.ux-operator-home .operator-section > :is(h3, h4) {
+  margin: var(--space-8) 0 var(--space-3);
+}
+.ux-operator-home .workspace-panel .hero-actions {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.ux-operator-home .workspace-panel .hero-actions > button:not([class]) {
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+}
+.ux-operator-home .workspace-panel details.research-panel {
+  padding: 0;
+  overflow: clip;
+}
+.ux-operator-home .workspace-panel details.research-panel > :not(summary) {
+  margin-inline: var(--space-4);
+}
+.ux-operator-home .workspace-panel details.research-panel > :last-child {
+  margin-bottom: var(--space-4);
 }

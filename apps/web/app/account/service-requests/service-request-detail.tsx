@@ -506,6 +506,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                   )}
                   {can('withdraw') && (
                     <button
+                      data-intent="destructive"
                       type="button"
                       className="button button-secondary"
                       onClick={() => open('withdraw')}

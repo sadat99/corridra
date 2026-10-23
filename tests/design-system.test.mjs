@@ -16,7 +16,7 @@ const legacy = strip(css.slice(0, at));
 const system = strip(css.slice(at + marker.length));
 const hex = /#[0-9a-fA-F]{3,8}\b/g;
 const colourFn = /\b(?:rgb|rgba|hsl|hsla)\(/g;
-const allowedFont = /^(?:var\(--(?:font-ui|sans|serif)\)|inherit)$/;
+const allowedFont = /^(?:var\(--(?:font-ui|sans|serif|font-mono)\)|inherit)$/;
 const count = (text, pattern) => (text.match(pattern) ?? []).length;
 const rawFonts = (text) =>
   [...text.matchAll(/font-family\s*:\s*([^;}]+)/g)].filter((m) => !allowedFont.test(m[1].trim()))
@@ -45,7 +45,7 @@ test('legacy CSS debt does not grow', () => {
   );
 });
 
-test('the root layout loads the single self-hosted interface font', async () => {
+test('the root layout loads only self-hosted fonts', async () => {
   const layout = await readFile(new URL('../apps/web/app/layout.tsx', import.meta.url), 'utf8');
   assert.match(layout, /next\/font\/local/);
   assert.doesNotMatch(layout, /next\/font\/google/);

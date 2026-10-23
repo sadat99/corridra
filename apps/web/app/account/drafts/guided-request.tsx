@@ -1209,6 +1209,7 @@ function Guided(scope: Scope) {
         )}
         {!locked && draftId && (
           <button
+            data-intent="destructive"
             type="button"
             className="text-link"
             disabled={busy}

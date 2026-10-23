@@ -765,6 +765,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
             {new Date(l.expires_at).toLocaleString()} · {l.revoked ? 'Revoked' : 'Issued'}
             {manages && !l.revoked && (
               <button
+                data-intent="destructive"
                 disabled={busy}
                 onClick={() =>
                   void act(async () => {
@@ -788,6 +789,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
             <li key={p.id}>
               {p.copy.company}: {p.copy.title}{' '}
               <button
+                data-intent="destructive"
                 disabled={busy}
                 onClick={() =>
                   void act(async () => {

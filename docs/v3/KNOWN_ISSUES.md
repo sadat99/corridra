@@ -107,3 +107,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Seen (23 Oct):** after PR138 was squash-merged, new commits on the same branch had the old pre-squash commit in their history. The next PR conflicted with main in every file both touched, so GitHub created no `pull_request` CI run and `get_check_runs` showed only the Vercel comment check.
 - **Avoid:** if a PR has no CI checks a minute after opening, check mergeability first (`git merge-tree --write-tree origin/main HEAD`). After any squash merge, restart the branch from main (`git checkout -B <branch> origin/main`) and cherry-pick only the new commit, then `git push --force-with-lease`.
+
+### KI-18 Do not read the UX gate against `next dev`
+
+- **Seen (23 Oct, PR153):** `PLAYWRIGHT_BASE_URL=<dev server> pnpm test:ux` failed 7 cases (`invisibleFocus` on `/client`, `/plan`, `/programme`, and the four specimen widths with `getComputedStyle ... not of type 'Element'`). The same cases passed on a production build. The dev server mounts a focusable dev indicator and re-renders the body, so the gate and the specimen fixture misread it.
+- **Do:** build (`pnpm build`), run `next start --port 3100` and point the gate at it. Use the dev server only for screenshots.
+- **Fast iteration on signed-in views:** the audit copy (KI-16) can dump each view's DOM with all CSS inlined (`DOMS=<dir>`). Load a dump from disk with the fonts re-attached and add a draft stylesheet to test a rule in seconds instead of the 21 minute run. Dumps without the frame classes lack the customer shell; add `operator-page ux-workspace ux-customer` to `main` first for fixture pages.

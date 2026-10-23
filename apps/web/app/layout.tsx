@@ -6,14 +6,50 @@ import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
 import { CornerDock } from '../components/corner-dock';
 
-// Self-hosted variable Inter (SIL OFL, see fonts/INTER-LICENSE.txt). Latin only; Bangla and Han
-// text keeps the system fallbacks declared in --font-ui.
-const inter = localFont({
-  src: './fonts/inter-latin-variable.woff2',
-  variable: '--font-inter',
+// Self-hosted variable fonts (SIL OFL, licences in fonts/). Newsreader sets public and section
+// headings, Geist the product text, Geist Mono labels and references. All three are Latin only.
+// The Bangla serif is a lazy face: the browser fetches it only when a page contains Bengali
+// characters, and it is never preloaded. Han text keeps the system fallbacks in --font-ui.
+const newsreader = localFont({
+  src: './fonts/newsreader-latin-variable.woff2',
+  variable: '--font-newsreader',
+  weight: '200 800',
+  display: 'swap',
+  adjustFontFallback: 'Times New Roman',
+});
+const geist = localFont({
+  src: './fonts/geist-latin-variable.woff2',
+  variable: '--font-geist',
   weight: '100 900',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 });
+const geistMono = localFont({
+  src: './fonts/geist-mono-latin-variable.woff2',
+  variable: '--font-geist-mono',
+  weight: '100 900',
+  display: 'swap',
+  adjustFontFallback: 'Arial',
+});
+const notoSerifBengali = localFont({
+  src: './fonts/noto-serif-bengali-variable.woff2',
+  variable: '--font-bengali',
+  weight: '100 900',
+  display: 'swap',
+  preload: false,
+  declarations: [
+    {
+      prop: 'unicode-range',
+      value: 'U+0951-0952,U+0964-0965,U+0980-09FE,U+200C-200D,U+20B9,U+25CC',
+    },
+  ],
+});
+const fontVariables = [
+  newsreader.variable,
+  geist.variable,
+  geistMono.variable,
+  notoSerifBengali.variable,
+].join(' ');
 
 export const metadata: Metadata = {
   title: 'Corridra | Cross-border market access',
@@ -32,7 +68,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={fontVariables}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content
