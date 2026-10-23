@@ -8326,3 +8326,71 @@ th {
 .ux-customer :is(section, div).delivery-view :is(ul, ol) > li + li {
   margin-block-start: var(--space-3);
 }
+
+/* Service requests in the customer frame: the quote cost table scrolls inside its labelled region instead of
+   squeezing four columns into a phone, and label and value lists read as pairs. Presentation only. */
+.ux-customer [role='region'][aria-label^='Quote costs'] table {
+  min-width: 34rem;
+}
+.ux-customer [role='region'][aria-label^='Quote costs'] :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+}
+.ux-customer [role='region'][aria-label^='Quote costs'] td {
+  font-variant-numeric: tabular-nums;
+}
+.ux-customer [role='region'][aria-label^='Quote costs']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  ) {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  )
+  > dt {
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ux-customer
+  dl:not(
+    [class],
+    :has(> div),
+    :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+  )
+  > dd {
+  margin: 0;
+}
+@media (max-width: 39.99rem) {
+  .ux-customer
+    dl:not(
+      [class],
+      :has(> div),
+      :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+    ) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .ux-customer
+    dl:not(
+      [class],
+      :has(> div),
+      :is(.ux-mission-facts, .ux-participant-passport, .ux-account-profile) dl
+    )
+    > dd
+    + dt {
+    margin-top: var(--space-3);
+  }
+}
