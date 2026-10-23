@@ -3,6 +3,7 @@ import {
   customerBillingCommandInput,
   customerBillingEnabled,
 } from '@corridra/auth/customer-billing';
+import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -27,7 +28,16 @@ function context(request: Request) {
     request.headers.get('x-corridra-customer-issuer') ?? undefined,
   ] as const;
 }
-// Reads: ?scope=overview&workspaceId=..., ?scope=plans&workspaceId=...
+// Sample invoices are read-only for customers and have their own switch on top of the billing switch.
+async function invoices(
+  s: Awaited<ReturnType<typeof services>>,
+  query: Record<string, string>,
+  who: readonly [string | undefined, string | undefined],
+) {
+  if (!customerInvoicingEnabled()) throw new DomainError('Plans are unavailable', 503);
+  return s.customerInvoicing.overview(query, ...who);
+}
+// Reads: ?scope=overview|plans|invoices&workspaceId=...
 export async function GET(request: Request) {
   try {
     const s = await services(),
@@ -35,9 +45,11 @@ export async function GET(request: Request) {
     const body =
       scope === 'plans'
         ? await s.customerBilling.plans(query, ...context(request))
-        : scope === 'overview' || scope === undefined
-          ? await s.customerBilling.overview(query, ...context(request))
-          : null;
+        : scope === 'invoices'
+          ? await invoices(s, query, context(request))
+          : scope === 'overview' || scope === undefined
+            ? await s.customerBilling.overview(query, ...context(request))
+            : null;
     if (body === null) throw new DomainError('Unknown scope', 400);
     return Response.json(body, { headers: deliveryHeaders });
   } catch (error) {

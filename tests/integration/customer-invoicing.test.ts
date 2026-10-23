@@ -54,7 +54,6 @@ const roles = (person = 'alice') =>
   new CustomerMemberRoleService(f.runtime, f.auth, options, async () => session(person));
 const staffCtx = () => f.users.owner.ctx;
 const day = (offset = 0) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
-const note = 'Synthetic note for the customer to read';
 let freshCount = 0;
 const freshWorkspace = async (person = 'alice') =>
   (
@@ -309,7 +308,9 @@ test('installing the module on a populated database adds only new objects and ch
       .filter((t) => !oldTables.has(t))
       .sort(),
   ).toEqual(
-    ['command', 'credit', 'invoice', 'payment'].map((n) => 'customer_private.invoicing_' + n).sort(),
+    ['command', 'credit', 'invoice', 'payment']
+      .map((n) => 'customer_private.invoicing_' + n)
+      .sort(),
   );
   for (const [name, digest] of Object.entries(before.records))
     expect(after.records[name]).toBe(digest);
@@ -336,7 +337,10 @@ test('installing the module on a populated database adds only new objects and ch
     await f.owner.query('SELECT name,sha256 FROM customer_invoicing_migrations.applied')
   ).rows;
   expect(applied).toHaveLength(1);
-  const sql = await readFile('packages/db/customer-invoicing-migrations/' + applied[0].name, 'utf8');
+  const sql = await readFile(
+    'packages/db/customer-invoicing-migrations/' + applied[0].name,
+    'utf8',
+  );
   expect(applied[0].sha256).toBe(createHash('sha256').update(sql).digest('hex'));
 });
 
@@ -450,7 +454,9 @@ test('an invoice covers one activated period, states exact amounts for each tax 
   });
   // Numbers follow in order without gaps, and a credit note number sequence is its own.
   const numbers = (
-    await f.owner.query('SELECT invoice_no FROM customer_private.invoicing_invoice ORDER BY invoice_no')
+    await f.owner.query(
+      'SELECT invoice_no FROM customer_private.invoicing_invoice ORDER BY invoice_no',
+    )
   ).rows.map((r) => r.invoice_no);
   expect(numbers).toEqual(numbers.map((_, i) => i + 1));
   const issued = [first, zero, included, unconfirmed].map((i) => i.number);
@@ -460,27 +466,33 @@ test('an invoice covers one activated period, states exact amounts for each tax 
 
 test('an invoice is refused for an unknown period, a free plan, a wrong fee or tax, a bad due date or a period already invoiced', async () => {
   const a = await held('example-organiser');
-  await expect(issue(a.sub, { periodStart: day(-40) })).rejects.toThrow(
-    /activated or renewed/i,
-  );
+  await expect(issue(a.sub, { periodStart: day(-40) })).rejects.toThrow(/activated or renewed/i);
   await expect(issue(randomUUID())).rejects.toThrow(/unavailable/i);
   await expect(issue(a.sub, { planFeeMinor: '4800' })).rejects.toThrow(/equal the plan price/i);
   await expect(issue(a.sub, { taxMinor: null })).rejects.toThrow(/tax amount/i);
   await expect(issue(a.sub, { dueOn: day(-1) })).rejects.toThrow(/within 90 days/i);
   await expect(issue(a.sub, { dueOn: day(91) })).rejects.toThrow(/within 90 days/i);
   // Nothing was written by the refusals, then the right one works once.
-  expect((await staff.pending(staffCtx())).periods.some((p: { subscriptionId: string }) => p.subscriptionId === a.sub)).toBe(true);
+  expect(
+    (await staff.pending(staffCtx())).periods.some(
+      (p: { subscriptionId: string }) => p.subscriptionId === a.sub,
+    ),
+  ).toBe(true);
   const ok = await issue(a.sub);
   await expect(issue(a.sub)).rejects.toThrow(/already invoiced/i);
   expect(
-    (await staff.pending(staffCtx())).periods.some((p: { subscriptionId: string }) => p.subscriptionId === a.sub),
+    (await staff.pending(staffCtx())).periods.some(
+      (p: { subscriptionId: string }) => p.subscriptionId === a.sub,
+    ),
   ).toBe(false);
   expect(ok.status).toBe('unpaid');
   // A free plan cannot be invoiced and never appears among the periods to invoice.
   const free = await held('example-starter');
   await expect(issue(free.sub, { planFeeMinor: '1' })).rejects.toThrow(/free plan/i);
   expect(
-    (await staff.pending(staffCtx())).periods.some((p: { subscriptionId: string }) => p.subscriptionId === free.sub),
+    (await staff.pending(staffCtx())).periods.some(
+      (p: { subscriptionId: string }) => p.subscriptionId === free.sub,
+    ),
   ).toBe(false);
   // Tax inside the price cannot be more than the price.
   const key = await includesTaxPlan();
@@ -511,7 +523,9 @@ test('two staff issuing the same period at the same moment produce one invoice, 
   const both = await Promise.all([issue(b.sub), issue(c.sub)]);
   expect(new Set(both.map((i) => i.number)).size).toBe(2);
   const numbers = (
-    await f.owner.query('SELECT invoice_no FROM customer_private.invoicing_invoice ORDER BY invoice_no')
+    await f.owner.query(
+      'SELECT invoice_no FROM customer_private.invoicing_invoice ORDER BY invoice_no',
+    )
   ).rows.map((r) => r.invoice_no);
   expect(numbers).toEqual(numbers.map((_, i) => i + 1));
 });
@@ -553,18 +567,28 @@ test('payments are recorded against what is outstanding, name the position they 
     position: 1,
   });
   expect(partly.payments).toHaveLength(1);
-  expect(partly.payments[0]).toMatchObject({ seq: 1, amountMinor: '2000', method: 'bank_transfer' });
+  expect(partly.payments[0]).toMatchObject({
+    seq: 1,
+    amountMinor: '2000',
+    method: 'bank_transfer',
+  });
   // More than is outstanding, a stale position, a future date and a date before the invoice are all refused.
   await expect(pay(inv.id, '3391')).rejects.toThrow(/more than is still outstanding/i);
   await expect(pay(inv.id, '100', { expectedPosition: 0 })).rejects.toThrow(/reload/i);
   await expect(pay(inv.id, '100', { receivedOn: day(1) })).rejects.toThrow(/future/i);
-  await expect(pay(inv.id, '100', { receivedOn: day(-1) })).rejects.toThrow(
-    /before the invoice/i,
-  );
+  await expect(pay(inv.id, '100', { receivedOn: day(-1) })).rejects.toThrow(/before the invoice/i);
   await expect(pay(inv.id, '100', { method: 'card' })).rejects.toThrow();
   await expect(pay(inv.id, '100', { reference: 'A real transfer from my bank' })).rejects.toThrow();
-  const done = await pay(inv.id, '3390', { method: 'cash', reference: 'Synthetic cash handover 0002' });
-  expect(done).toMatchObject({ status: 'paid', outstandingMinor: '0', paidMinor: '5390', position: 2 });
+  const done = await pay(inv.id, '3390', {
+    method: 'cash',
+    reference: 'Synthetic cash handover 0002',
+  });
+  expect(done).toMatchObject({
+    status: 'paid',
+    outstandingMinor: '0',
+    paidMinor: '5390',
+    position: 2,
+  });
   // Nothing more can be paid or credited.
   await expect(pay(inv.id, '1')).rejects.toThrow(/more than is still outstanding/i);
   await expect(credit(inv.id, '1')).rejects.toThrow(/more than is still unpaid/i);
@@ -577,7 +601,11 @@ test('credit notes reduce what is unpaid, never more, and every status is derive
   const one = await issue(a.sub, { taxMinor: '0' });
   await expect(credit(one.id, '4901')).rejects.toThrow(/more than is still unpaid/i);
   const partlyCredited = await credit(one.id, '900');
-  expect(partlyCredited).toMatchObject({ status: 'unpaid', creditedMinor: '900', outstandingMinor: '4000' });
+  expect(partlyCredited).toMatchObject({
+    status: 'unpaid',
+    creditedMinor: '900',
+    outstandingMinor: '4000',
+  });
   expect(partlyCredited.credits[0]).toMatchObject({
     seq: 1,
     number: expect.stringMatching(/^SAMPLE-CN-\d{6}$/),
@@ -590,10 +618,17 @@ test('credit notes reduce what is unpaid, never more, and every status is derive
   const two = await issue(b.sub, { taxMinor: '0' });
   await pay(two.id, '1000');
   const settled = await credit(two.id, '3900');
-  expect(settled).toMatchObject({ status: 'settled', paidMinor: '1000', creditedMinor: '3900', outstandingMinor: '0' });
+  expect(settled).toMatchObject({
+    status: 'settled',
+    paidMinor: '1000',
+    creditedMinor: '3900',
+    outstandingMinor: '0',
+  });
   // Credit numbers are gap-free and their own sequence.
   const numbers = (
-    await f.owner.query('SELECT credit_no FROM customer_private.invoicing_credit ORDER BY credit_no')
+    await f.owner.query(
+      'SELECT credit_no FROM customer_private.invoicing_credit ORDER BY credit_no',
+    )
   ).rows.map((r) => r.credit_no);
   expect(numbers).toEqual(numbers.map((_, i) => i + 1));
   // A credit needs a reason that is invented text.
@@ -628,7 +663,10 @@ test('an invoice is overdue only while something is unpaid after its due date', 
   ]);
   await pay(inv.id, '4900', { receivedOn: day(-3) });
   expect(((await staff.view(staffCtx(), inv.id)).invoice as Invoice).overdue).toBe(false);
-  expect((await overview(a.target)).balances[0]).toMatchObject({ outstandingMinor: '0', overdueMinor: '0' });
+  expect((await overview(a.target)).balances[0]).toMatchObject({
+    outstandingMinor: '0',
+    overdueMinor: '0',
+  });
 });
 
 test('two payments or credits sent at the same moment for the same position cannot both land or exceed what is outstanding', async () => {
@@ -708,7 +746,16 @@ test('staff commands replay once, conflict on other content and need the staff a
     { ...body, commandId: randomUUID(), taxMinor: '-1' },
     { ...body, commandId: randomUUID(), extra: true },
     { action: 'refund', commandId: randomUUID(), invoiceId: first.id },
-    { action: 'payment', commandId: randomUUID(), invoiceId: first.id, expectedPosition: 0, amountMinor: '0', receivedOn: day(), method: 'cash', reference: 'Synthetic ok ref' },
+    {
+      action: 'payment',
+      commandId: randomUUID(),
+      invoiceId: first.id,
+      expectedPosition: 0,
+      amountMinor: '0',
+      receivedOn: day(),
+      method: 'cash',
+      reference: 'Synthetic ok ref',
+    },
   ])
     expect(staffInvoicingCommandInput.safeParse(bad).success).toBe(false);
 });
@@ -720,7 +767,12 @@ test('owners and admins read their invoices and balances; a member only learns t
   const owner = await overview();
   const admin = await overview(workspaceId, 'bob');
   for (const view of [owner, admin]) {
-    expect(view).toMatchObject({ canRead: true, invoicesExist: true, paymentTaken: false, synthetic: true });
+    expect(view).toMatchObject({
+      canRead: true,
+      invoicesExist: true,
+      paymentTaken: false,
+      synthetic: true,
+    });
     expect(view.invoices).toHaveLength(1);
     expect(view.invoices[0]).toMatchObject({
       number: inv.number,
@@ -730,7 +782,9 @@ test('owners and admins read their invoices and balances; a member only learns t
       status: 'partly_paid',
     });
     // Customers see what was paid and when, never the staff reference or who recorded it.
-    expect(JSON.stringify(view)).not.toMatch(/private transfer text|recordedAt|recordedBy|issuedAt|position/);
+    expect(JSON.stringify(view)).not.toMatch(
+      /private transfer text|recordedAt|recordedBy|issuedAt|position/,
+    );
     expect(view.balances).toEqual([
       {
         currency: 'USD',
@@ -755,7 +809,7 @@ test('owners and admins read their invoices and balances; a member only learns t
   });
   // There is no customer command that touches an invoice.
   await expect(
-    f.runtime.query("SELECT customer.invoicing_overview($1)", [workspaceId]),
+    f.runtime.query('SELECT customer.invoicing_overview($1)', [workspaceId]),
   ).rejects.toThrow(/denied/i);
 });
 
@@ -800,18 +854,20 @@ test('direct SQL cannot write a wrong total, a wrong fee, an over-payment, an ov
   const inv = await issue(a.sub, { taxMinor: '0' });
   const sub = (
     await f.owner.query(
-      'SELECT s.tenant_id,s.plan_id,e.period_start,e.period_end FROM customer_private.billing_subscription s JOIN customer_private.billing_subscription_event e ON e.subscription_id=s.id AND e.kind=\'activated\' WHERE s.id=$1',
+      "SELECT s.tenant_id,s.plan_id,e.period_start,e.period_end FROM customer_private.billing_subscription s JOIN customer_private.billing_subscription_event e ON e.subscription_id=s.id AND e.kind='activated' WHERE s.id=$1",
       [a.sub],
     )
   ).rows[0];
   const b = await held('example-organiser');
   const row = (
     await f.owner.query(
-      'SELECT s.tenant_id,s.plan_id,e.period_start,e.period_end FROM customer_private.billing_subscription s JOIN customer_private.billing_subscription_event e ON e.subscription_id=s.id AND e.kind=\'activated\' WHERE s.id=$1',
+      "SELECT s.tenant_id,s.plan_id,e.period_start,e.period_end FROM customer_private.billing_subscription s JOIN customer_private.billing_subscription_event e ON e.subscription_id=s.id AND e.kind='activated' WHERE s.id=$1",
       [b.sub],
     )
   ).rows[0];
-  const next = (await f.owner.query('SELECT max(invoice_no)+1 n FROM customer_private.invoicing_invoice')).rows[0].n;
+  const next = (
+    await f.owner.query('SELECT max(invoice_no)+1 n FROM customer_private.invoicing_invoice')
+  ).rows[0].n;
   const insert = (over: Record<string, unknown> = {}) => {
     const v = {
       invoice_no: next,
@@ -838,7 +894,9 @@ test('direct SQL cannot write a wrong total, a wrong fee, an over-payment, an ov
     );
   };
   await expect(insert({ total_minor: 4901 })).rejects.toThrow();
-  await expect(insert({ plan_fee_minor: 4800, total_minor: 4800 })).rejects.toThrow(/match the plan price/i);
+  await expect(insert({ plan_fee_minor: 4800, total_minor: 4800 })).rejects.toThrow(
+    /match the plan price/i,
+  );
   await expect(insert({ currency: 'BDT' })).rejects.toThrow(/match the plan price/i);
   await expect(insert({ tax_treatment: 'tax_to_be_confirmed', tax_minor: null })).rejects.toThrow(
     /match the plan price/i,
@@ -847,12 +905,22 @@ test('direct SQL cannot write a wrong total, a wrong fee, an over-payment, an ov
   await expect(insert({ synthetic: false })).rejects.toThrow();
   await expect(insert({ invoice_no: next + 1 })).rejects.toThrow(/in order/i);
   await expect(insert({ invoice_no: 1 })).rejects.toThrow();
-  await expect(insert({ issue_date: day(-5), due_date: day(5) })).rejects.toThrow(/day it is recorded/i);
+  await expect(insert({ issue_date: day(-5), due_date: day(5) })).rejects.toThrow(
+    /day it is recorded/i,
+  );
   await expect(insert({ due_date: day(120) })).rejects.toThrow();
   await expect(insert({ period_start: day(-60), period_end: day(-30) })).rejects.toThrow(
     /activated or renewed/i,
   );
-  await expect(insert({ plan_id: (await f.owner.query("SELECT id FROM customer_private.billing_plan_version WHERE plan_key='example-starter'")).rows[0].id })).rejects.toThrow();
+  await expect(
+    insert({
+      plan_id: (
+        await f.owner.query(
+          "SELECT id FROM customer_private.billing_plan_version WHERE plan_key='example-starter'",
+        )
+      ).rows[0].id,
+    }),
+  ).rejects.toThrow();
   await expect(insert({ tenant_id: otherWorkspace })).rejects.toThrow();
   // The one right row goes in.
   await insert();
@@ -886,7 +954,9 @@ test('direct SQL cannot write a wrong total, a wrong fee, an over-payment, an ov
   await expect(payment({ reference: 'A bank statement line' })).rejects.toThrow();
   await expect(payment({ tenant_id: otherWorkspace })).rejects.toThrow();
   await payment();
-  await expect(payment({ seq: 2, amount_minor: 3901 })).rejects.toThrow(/more than is still outstanding/i);
+  await expect(payment({ seq: 2, amount_minor: 3901 })).rejects.toThrow(
+    /more than is still outstanding/i,
+  );
   const cred = (over: Record<string, unknown> = {}) => {
     const v = {
       credit_no: 1000000,
@@ -907,10 +977,18 @@ test('direct SQL cannot write a wrong total, a wrong fee, an over-payment, an ov
     );
   };
   await expect(cred()).rejects.toThrow(/in order/i);
-  const nextCredit = (await f.owner.query('SELECT coalesce(max(credit_no),0)+1 n FROM customer_private.invoicing_credit')).rows[0].n;
-  await expect(cred({ credit_no: nextCredit, amount_minor: 3901 })).rejects.toThrow(/more than is still unpaid/i);
+  const nextCredit = (
+    await f.owner.query(
+      'SELECT coalesce(max(credit_no),0)+1 n FROM customer_private.invoicing_credit',
+    )
+  ).rows[0].n;
+  await expect(cred({ credit_no: nextCredit, amount_minor: 3901 })).rejects.toThrow(
+    /more than is still unpaid/i,
+  );
   await expect(cred({ credit_no: nextCredit, reason: 'Not invented' })).rejects.toThrow();
-  await expect(cred({ credit_no: nextCredit, issued_on: day(-4) })).rejects.toThrow(/day it is recorded/i);
+  await expect(cred({ credit_no: nextCredit, issued_on: day(-4) })).rejects.toThrow(
+    /day it is recorded/i,
+  );
   await cred({ credit_no: nextCredit });
 });
 
@@ -982,8 +1060,14 @@ test('events carry ids, the sample number and a sequence only, one chain per cha
   expect(events.map((e) => e.aggregate_version)).toEqual([1, 2, 3]);
   for (const e of events) {
     expect(e.tenant_id).toBe(a.target);
-    expect(e.p).not.toMatch(/secret|words|5390|4900|490|1234|777|USD|reference|reason|amount|date/i);
-    expect(JSON.parse(e.p)).toMatchObject({ invoiceId: inv.id, number: inv.number, synthetic: true });
+    expect(e.p).not.toMatch(
+      /secret|words|5390|4900|490|1234|777|USD|reference|reason|amount|date/i,
+    );
+    expect(JSON.parse(e.p)).toMatchObject({
+      invoiceId: inv.id,
+      number: inv.number,
+      synthetic: true,
+    });
   }
 });
 
@@ -997,7 +1081,9 @@ test('a workspace that is not a sample workspace is refused everywhere, and staf
     await expect(pay(inv.id, '1')).rejects.toThrow();
     await expect(credit(inv.id, '1')).rejects.toThrow();
     expect(
-      (await staff.list(staffCtx(), { pageSize: 50 })).invoices.some((i: Invoice) => i.id === inv.id),
+      (await staff.list(staffCtx(), { pageSize: 50 })).invoices.some(
+        (i: Invoice) => i.id === inv.id,
+      ),
     ).toBe(false);
     await expect(
       f.owner.query(
@@ -1053,8 +1139,12 @@ test('the flags, synthetic and production gates stay binding and the installer i
   };
   expect(customerBillingEnabled(on)).toBe(true);
   expect(customerInvoicingEnabled(on)).toBe(false);
-  expect(customerInvoicingEnabled({ ...on, CORRIDRA_CUSTOMER_INVOICING_ENABLED: 'true' })).toBe(true);
-  expect(customerInvoicingEnabled({ ...on, CORRIDRA_CUSTOMER_INVOICING_ENABLED: 'yes' })).toBe(false);
+  expect(customerInvoicingEnabled({ ...on, CORRIDRA_CUSTOMER_INVOICING_ENABLED: 'true' })).toBe(
+    true,
+  );
+  expect(customerInvoicingEnabled({ ...on, CORRIDRA_CUSTOMER_INVOICING_ENABLED: 'yes' })).toBe(
+    false,
+  );
   // Invoicing needs billing: the invoicing switch alone is not enough.
   expect(
     customerInvoicingEnabled({
@@ -1090,11 +1180,15 @@ test('the flags, synthetic and production gates stay binding and the installer i
   await expect(expired.overview({ workspaceId })).rejects.toThrow(/sign in/i);
   const first = (await f.owner.query('SELECT * FROM customer_invoicing_migrations.applied')).rows;
   await migrateCustomerInvoicing(f.owner);
-  expect((await f.owner.query('SELECT * FROM customer_invoicing_migrations.applied')).rows).toEqual(first);
+  expect((await f.owner.query('SELECT * FROM customer_invoicing_migrations.applied')).rows).toEqual(
+    first,
+  );
   expect(first).toHaveLength(1);
   await f.owner.query('UPDATE customer_invoicing_migrations.applied SET sha256=$1', [
     randomBytes(32).toString('hex'),
   ]);
   await expect(migrateCustomerInvoicing(f.owner)).rejects.toThrow(/history mismatch/i);
-  await f.owner.query('UPDATE customer_invoicing_migrations.applied SET sha256=$1', [first[0].sha256]);
+  await f.owner.query('UPDATE customer_invoicing_migrations.applied SET sha256=$1', [
+    first[0].sha256,
+  ]);
 });

@@ -75,3 +75,5 @@ ADR058: [Emailed request status link](0058-emailed-request-status-link.md), prop
 ADR059: [View-as preview](0059-view-as-preview.md), a read-only, always-logged preview of a customer screen with sample data for owners and admins; stage 1 built, switch off by default.
 
 ADR060: [Synthetic plans, subscriptions and entitlements](0060-synthetic-plans-subscriptions-and-entitlements.md), an optional, default-off, synthetic-only billing slice: versioned plans with stated tax treatment, a customer request that records the exact plan shown, staff-activated subscription periods and a plain read of what a plan grants. No payment, invoice or processor; entitlements are recorded, not enforced; invoicing is a later slice.
+
+ADR061: [Sample invoices, payment records and credit notes](0061-sample-invoices-payment-records-and-credit-notes.md), the second billing slice: an optional, default-off, synthetic-only record of what the team asks for each activated plan period, what they say was received and any credit, with derived status and per-currency balances. Customers read, staff write. No processor, collection, refund, tax calculation or legal numbering.
