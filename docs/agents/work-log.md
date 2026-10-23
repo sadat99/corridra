@@ -1452,6 +1452,20 @@ Preserved: receipt format and API, password sign-in, closed gates D01 to D06 and
 
 Next: the owner reads the proposal and the ADR; Wave 4 (rehearsal mission and view-as proposals) waits for "next wave".
 
+## 2026-10-23 Phase 0 Wave 4: Rehearsal Mission and view-as proposals (branch claude/relaxed-thompson-b6ixvz, base 9f11ec4)
+
+The owner said "Next wave?" after Wave 3 was merged as PR151 (`9f11ec4`, CI green on the exact head, squash). Wave 4 is two proposals only: no code, no migration, no switch, no screen.
+
+**Item 7, `docs/product/phase0-rehearsal-mission-proposal.md`.** A practice mission can be walked with no schema change for the staff, buyer and client views, on the live site in the existing sample workspace (route B) or in a sample environment on a separate Neon child (route A, the stronger proof of isolation). The customer views work only in a sample environment, because on the live site any workspace a customer makes is real. A small additive installer module (one allow-list table, one control table, one function) would be needed only if the owner wants the customer views on the live site (route C); it is not written. Three optional screen-only fixes are listed, the first fixes a notice that may now be wrong on a real report. Exclusion from counts is tenant scoping, checked in the queries found; one integration test is proposed to prove it. Seven owner decisions, with defaults.
+
+**Item 8, `docs/product/phase0-view-as-proposal.md`.** Recommends a read-only, staff-only, logged preview route per role that renders the real components in the real frame with fixed sample data. True impersonation is rejected (it breaks ADR-020 and ADR-033 and every action would be real). Seven server checks in order, including a new `viewas.open` permission for owner and admin, fresh MFA, and an audit write in the same transaction; layered read-only enforcement; a banner and watermark; abuse cases; rollback; a five stage plan whose first stage proves the gate and the audit write before any real component is used. Ten owner decisions.
+
+**Checked.** Every file path both documents cite exists. Line claims were spot-checked (the fixed notice in `delivery-view.tsx`, `audit.read` as owner and admin, the staff session read in the operator page). I did not read the live database or host settings, so whether the live sample workspace and its features are in place is unconfirmed and says so in the document. Both documents carry a list of what could not be confirmed.
+
+Preserved: closed gates D01 to D06 and D08, all switches, every existing denial. Nothing sends, stores or changes.
+
+Next: the owner answers the decisions in each document. Stage 1 of view-as and the screen-only fixes for item 7 each need their own go.
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.
