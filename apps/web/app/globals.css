@@ -8669,3 +8669,134 @@ samp {
 .ux-customer :is(section, div).delivery-view form.operator-form :is(.field, fieldset) {
   max-width: 40rem;
 }
+/* Composition pass (owner screenshots, 23 Oct 2026): one column, one lead, one action hierarchy.
+   Access pages keep one primary button; the other ways in become a quiet ruled list. */
+:is(main).ux-access .access-options:not(.ux-account-sidebar .access-options) {
+  display: block;
+  max-width: 34rem;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+:is(main).ux-access .access-options:not(.ux-account-sidebar .access-options) > :is(a, button) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: var(--space-3) var(--space-8) var(--space-3) 0;
+  text-align: start;
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+:is(main).ux-access
+  .access-options:not(.ux-account-sidebar .access-options)
+  > :is(a, button)::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: var(--space-2);
+  top: 50%;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-top: 2px solid var(--brand-deep);
+  border-right: 2px solid var(--brand-deep);
+  transform: translateY(-50%) rotate(45deg);
+}
+:is(main).ux-access
+  .access-options:not(.ux-account-sidebar .access-options)
+  > :is(a, button):hover {
+  background: var(--surface-2);
+}
+:is(main).ux-access > a.text-link:not(.ux-back) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  text-align: start;
+  min-height: 2.75rem;
+  margin-inline-end: var(--space-5);
+  padding: 0;
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+/* Customer delivery views: one rhythm, one lead sentence, quieter supporting lines. */
+:where(.ux-customer .delivery-view) > * + * {
+  margin-top: var(--space-4);
+}
+.ux-customer .delivery-view > .ux-back + p:not([class], [role]) {
+  max-width: 62ch;
+  font-size: var(--text-lead);
+  line-height: 1.55;
+  color: var(--text-1);
+}
+.ux-customer .delivery-view > p:not([class], [role]) {
+  color: var(--text-2);
+}
+.ux-customer .delivery-view > .ux-back + p:not([class], [role]) {
+  color: var(--text-1);
+}
+.ux-customer .delivery-view > p:not([class], [role]):last-child {
+  font-size: var(--text-sm);
+}
+.ux-customer .delivery-view > p.ux-summary {
+  padding-block: var(--space-3);
+  font-weight: 600;
+  color: var(--text-1);
+  border-block: 1px solid var(--line);
+}
+/* Operator queue: the filters sit on one aligned grid with the action beside them. */
+.ux-operator-home .workspace-panel .hero-actions:has(> label.field) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  align-items: end;
+  gap: var(--space-3) var(--space-4);
+}
+.ux-operator-home .workspace-panel .hero-actions:has(> label.field) select {
+  width: 100%;
+}
+.ux-operator-home .workspace-panel .hero-actions:has(> label.field) > button {
+  justify-self: start;
+}
+/* Several quiet links in a row on an access page read as one ruled list. */
+:is(main).ux-access > a.text-link:is(:has(+ a.text-link), a.text-link + a.text-link) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 34rem;
+  min-height: 3.25rem;
+  margin: 0;
+  padding: var(--space-3) var(--space-8) var(--space-3) 0;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+:is(main).ux-access > a.text-link:has(+ a.text-link):not(a.text-link + a.text-link) {
+  border-top: 1px solid var(--line);
+}
+:is(main).ux-access > a.text-link:is(:has(+ a.text-link), a.text-link + a.text-link)::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: var(--space-2);
+  top: 50%;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-top: 2px solid var(--brand-deep);
+  border-right: 2px solid var(--brand-deep);
+  transform: translateY(-50%) rotate(45deg);
+}
+:is(main).ux-access > p {
+  margin-bottom: var(--space-5);
+}
