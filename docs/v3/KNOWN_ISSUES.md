@@ -35,7 +35,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 ### KI-06 Oversized tool output
 
-- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run.
+- `list_workflow_jobs` returned tens of thousands of tokens for one run. Use `pull_request_read` with `get_check_runs` for status and `get_job_logs` for one job. Never list all jobs of a run. `actions_list list_workflow_runs` ignores `per_page` and the head_sha filter and returns about 25 full runs (tens of thousands of tokens): use `pull_request_read get_check_runs` instead.
 
 ### KI-07 Two sessions on one area
 
@@ -60,7 +60,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Seen (owner screenshots, 22 Oct):** on `/contributor` and `/signin` at 390 px, stacked outlined links have different widths and almost no gap, and a wrapped row (`Team sign-in`, `Start page`, `Local helper tasks`, `Plan a mission`) is ragged.
 - **Measured cause:** standalone actions were `inline-flex` with auto width. In a block parent they flow inline, so stacked ones sat 0 to 8 px apart at different widths, and the wrapped row mixed baselines (a 16 px stagger on `/signin`). The sign-in form also mixed a 310 px primary with 295 px links.
 - **Fix (AC1-02, first slice):** one action-group block at the end of `globals.css`: forms and the "other ways in" grid use equal full-width cells, and page-level actions stack full width on phones with 12 px gaps and share a wrapping row from 640 px. After the fix every action in a group has one width and one edge.
-- **Still to do:** the same rule for the other page families (customer, delegation, operator panels, the `/workspace` start page), one family per PR.
+- **Slice 2 (PR138, `7940135`):** the same rule for the gateway and state pages, with action-layout metrics added to the UX gate (stacked actions at least 8 px apart and equal width on phones, row members on one top edge). The gate reports 0 issues on all 42 static routes.
+- **Slice 3 (in progress):** signed-in, private and staff pages. A generic rule for actions that share a parent (`main section/div/form/article/li > a|button` with `.text-link`, `.primary-link`, `.secondary-link`, `.button`, `.button-secondary`) makes them full width on phones and gives them a 12 px gap. Containers that already lay out their own row are excluded (`.guide-actions`, `.guide-actions-row`, `.ux-controls-section-heading`); without that exclusion the rule caused horizontal overflow at 390 px on `/plan` and in the controls panel, caught by the protected operator suite.
+- **Lesson:** a presentation rule that touches a shared selector must run through the full operator suite before merge; the static UX gate cannot see signed-in layouts. The audit copy used for this (axe wrapper that also measures action geometry) is described in KI-16.
 
 ### KI-12 Browser gates fail in milliseconds in the cloud container
 
@@ -85,3 +87,15 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Two specs read old commits** (`git show <sha>:path`), so run `git fetch --unshallow` first or they fail with "Command failed: git show".
 - **The run rewrites tracked evidence images** under `docs/implementation/evidence` and `docs/v3/phase-4`. Run `git checkout docs/implementation/evidence docs/v3/phase-4` before committing; never commit them.
 - The ClamAV scanner tests are vitest integration tests, not part of this suite, and need the Docker scanner; they are not run locally.
+
+### KI-16 Signed-in layouts are only visible through the operator suite
+
+- **Seen (23 Oct):** the UX gate covers 42 static routes. Signed-in screens (customer, delegation, contributor, operator) are mounted as fixtures by `tests/operator/*.spec.ts`, so the static gate cannot measure them, and a real `/account` route cannot render without a session.
+- **Method that worked:** a throwaway copy of the operator specs with the axe import swapped for a subclass that also measures action geometry (gap, width, stagger) and writes one line per page and width to `.cache/action-layout/report.jsonl`; run it on the local native PostgreSQL (KI-15). Optionally inject a draft stylesheet with `page.addStyleTag` to prove a rule before building. About 17 minutes for 380 tests.
+- **Pitfalls found:** sorting controls by top before left made a row look like a negative gap (compare left edges within an 8 px band); running one test of the serial workspace file alone fails at MFA enrolment because it depends on the earlier test; fixture URLs are `/?mode=...`, not the real routes.
+- **Not committed:** the audit copy is a local tool. If it is wanted in CI, add it as an explicit work package with owner approval.
+
+### KI-17 Reused branch after a squash merge hides CI
+
+- **Seen (23 Oct):** after PR138 was squash-merged, new commits on the same branch had the old pre-squash commit in their history. The next PR conflicted with main in every file both touched, so GitHub created no `pull_request` CI run and `get_check_runs` showed only the Vercel comment check.
+- **Avoid:** if a PR has no CI checks a minute after opening, check mergeability first (`git merge-tree --write-tree origin/main HEAD`). After any squash merge, restart the branch from main (`git checkout -B <branch> origin/main`) and cherry-pick only the new commit, then `git push --force-with-lease`.

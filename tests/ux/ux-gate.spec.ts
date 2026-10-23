@@ -126,17 +126,31 @@ async function measure(page: Page, width: number): Promise<Counts> {
         const boxes = group
           .map((el) => el.getBoundingClientRect())
           .sort((a, b) => a.top - b.top || a.left - b.left);
-        for (let i = 1; i < boxes.length; i++) {
-          const a = boxes[i - 1];
-          const b = boxes[i];
-          const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-          const sameRow = Math.abs(a.top - b.top) < Math.min(a.height, b.height) / 2;
-          if (sameRow) {
+        // Rows first, so a wrapped or gridded group compares each control with the ones above it
+        // and beside it, not only with the previous control in reading order.
+        const rows: DOMRect[][] = [];
+        for (const box of boxes) {
+          const row = rows[rows.length - 1];
+          if (row && Math.abs(row[0].top - box.top) < Math.min(row[0].height, box.height) / 2)
+            row.push(box);
+          else rows.push([box]);
+        }
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r].sort((a, b) => a.left - b.left);
+          for (let i = 1; i < row.length; i++) {
+            const a = row[i - 1];
+            const b = row[i];
             if (Math.abs(a.top - b.top) > 2 || Math.abs(a.height - b.height) > 2) actionStagger++;
             else if (b.left - a.right < 8) actionGap++;
-          } else if (overlap > Math.min(a.width, b.width) / 2) {
-            if (b.top - a.bottom < 8) actionGap++;
-            if (window.innerWidth <= 640 && Math.abs(a.width - b.width) > 2) actionWidth++;
+          }
+          if (r === 0) continue;
+          for (const b of rows[r]) {
+            for (const a of rows[r - 1]) {
+              const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+              if (overlap <= Math.min(a.width, b.width) / 2) continue;
+              if (b.top - a.bottom < 8) actionGap++;
+              if (window.innerWidth <= 640 && Math.abs(a.width - b.width) > 2) actionWidth++;
+            }
           }
         }
       }
