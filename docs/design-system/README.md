@@ -106,6 +106,8 @@ Claim a package by naming it in the ledger "Active work" line with your branch b
 
 **Owner decision, 22 October 2026 (chat):** proceed through AC1-02, AC1-04 to AC1-07 and AC1-08 in order, merging and deploying each checked PR without waiting for per-package approval. This replaces the AC1-08 gate "owner art-direction acceptance" with review on the deployed pages; a page the owner rejects is reverted. Every other gate in this section stays: parity, tests, screenshots, accessibility, denial checks and rollback.
 
+The owner review sheet, with one decision row per package and what a reject reverts, is [ART_REVIEW.md](ART_REVIEW.md).
+
 Each reference package must ship: before and after screenshots at 320, 390, 768 and 1440 px (1024 and 1920 for dense grids), axe at those widths, keyboard walk, empty and populated synthetic states, the role and denial checks of the affected suites, and the PR report block from section 13 of the master contract.
 
 ## 6. Status words
@@ -122,6 +124,7 @@ Use the package ladder exactly: **designed** (this contract exists), **implement
 ## 7a. Implementation notes (23 October 2026)
 
 - **Audit method for signed-in screens** is in [known issues KI-16](../v3/KNOWN_ISSUES.md): a local copy of the operator specs with an axe subclass that measures action geometry, a short-fill measure and a real-frame mode that mounts components under `main.ux-customer`. Use it before restyling any signed-in screen; the static UX gate (`pnpm test:ux`) only sees the 42 public routes.
+- **Operator home bento kept (23 October):** the tool index (one navy featured tile and four cards) and the phone area bar are featured compositions that the local audit measures as uneven. A uniform grid looked worse (evidence: `evidence/signal-tool-index/bento-vs-uniform-1440.png`) and was reverted; the audit flag is documented in KI-16 as not a defect.
 - **Selector pitfalls found**: the customer kit zeroes heading margins in every section (`.ux-customer :is(section, article, aside, details):not(.guide-band) h3`), so a rule that adds heading spacing needs equal or higher specificity; `.ux-customer button:not([class])` styles every class-less button, so tabs must be excluded; legacy `.operator-page .text-link { margin-right: 15px }` shortens controls that stretch in a grid, so reset it inside the container.
 - **Evidence for a package** is stored under `docs/design-system/evidence/<package>/before` and `after` (example: `ac1-08-atelier`, four pages at 320, 390, 768 and 1440 px, before taken from the merge base).
 - **Owner decision 23 October (chat)**: there are no live users to protect, so broad presentation changes are allowed. Closed gates, permission checks, money and data semantics, and the parity checks still apply.

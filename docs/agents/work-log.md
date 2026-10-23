@@ -1347,3 +1347,15 @@ AC1-02, CSS only plus one test, tokens only. Specimen gate `tests/ux/specimen.sp
 Verification: see the PR body. Evidence: `docs/design-system/evidence/ac1-02-state/{before,after}` (8 pages at 320, 390, 768, 1440, first 900 px) and `work/ux-specimen` locally.
 
 Not done: pages adopting the busy, selected and destructive attributes, field and notice polish, rest of AC1-07 Signal, AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
+
+## 2026-10-23 PR145 merged; KI-02 explained, art review sheet, operator bento decision (branch ccr-998044a6-w7yufu, base 43ea1db)
+
+PR145 merged as `43ea1db` (CI green on the exact head `7e29245`). Three things on this branch, no application code change:
+
+KI-02 explained from the job step timings and log of main run 39800962758: `operator (2)` was cancelled by the 30-minute job timeout while `playwright install --with-deps` sat inside `apt-get update` (last output 15:04:23, nothing until the cancel at 15:32:10); the same step took 22 to 38 seconds in the other jobs of that run. Mirror stall on the runner, not our code. `ci.yml` now gives that step a 6-minute timeout, `continue-on-error` and one retry step in the `browser` and `operator` jobs. The stall then recurred on this PR's own CI (package download, run 39926542807) and showed the first design was wrong: the step timeout left the root `apt-get` holding the dpkg lock, so the retry failed. Fixed by adding apt timeouts and retries and killing leftover apt and dpkg before the retry; KI-02 records both.
+
+Owner art review sheet `docs/design-system/ART_REVIEW.md`: one decision row per package with the pages to open, the PR and what a reject reverts; all rows are pending until the owner decides. Registered in the documentation map.
+
+Operator home: the local signed-in audit (199 measurements, 19 pages) found only the tool index and the phone area bar uneven, both deliberate featured compositions. A uniform grid was built, screenshotted before and after and reverted because it orphaned the fifth tile at 1440 px; evidence in `docs/design-system/evidence/signal-tool-index/`. KI-16 and README 7a record it as not a defect. Note: the audit stopped at test 360 of about 380 when the local database container died; the rest of the pages were not measured.
+
+Not done: the Signal Today queue as a table (AC1-07 reference), AC1-06 organiser flow, AC1-08 partner discovery and dossiers, owner art review.
