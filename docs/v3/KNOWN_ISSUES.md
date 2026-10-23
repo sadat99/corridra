@@ -46,6 +46,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - Two sessions fixed the same test and edited the same ledger and work-log lines at once, and the PR132 receipt branch cited only pre-merge CI.
 - Fetch main and open PR metadata before editing and check other branches for the same file. Record main CI of the merge commit, not only the PR CI, before calling a change released.
+- **Working beside another session (23 Oct, PR147 and PR148):** list the other PR's files before editing (`pull_request_read get_files`) and keep your set disjoint. The shared hot files are `docs/V3_LEDGER.md` (cap 12 KiB: change one line, never reflow), `docs/agents/work-log.md` (append-only, so two appenders always conflict at the end: whoever merges second merges main in and keeps both entries), `tests/ux/ux-baseline.json` and `docs/documentation-map.json` (add entries, never reorder). The session that merges first owns the main; the other merges main in, resolves, re-runs the checks and only then continues. Never push to or edit another session's branch.
 
 ### KI-08 Merge authority
 
