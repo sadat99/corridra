@@ -14,6 +14,7 @@ import {
   authMailPlaceholders,
   contrastRatio,
   directionOf,
+  escapeHtml,
   expiryWords,
   renderAuthMail,
   type AuthMailKind,
@@ -311,19 +312,12 @@ describe('the email templates', () => {
       expect(part).not.toMatch(/[–—]/);
       expect(part).not.toContain('undefined');
     }
-    // The text part says the same words as the html part.
-    const words = (value: string) =>
-      value
-        .replace(/<style[\s\S]*?<\/style>/g, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&#39;/g, "'")
-        .replace(/&amp;/g, '&')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const visible = words(mail.html.replace(/<head>[\s\S]*?<\/head>/, ''));
+    // The text part says the same words as the html part. Each text line must appear, escaped the
+    // way the layout escapes it, inside the html. No tag stripping is needed to prove it.
     for (const line of mail.text.split('\n\n')) {
-      const plain = line.replace(/^Choose a new password: .*/, 'Choose a new password');
-      expect(visible, plain).toContain(plain);
+      const button = /^(Choose a new password): (https:\/\/\S+)$/.exec(line);
+      for (const piece of button ? [button[1], button[2]] : [line])
+        expect(mail.html, piece).toContain(escapeHtml(piece));
     }
     expect(mail.html).toContain('Sent by Corridra.');
     expect(mail.text.trim().endsWith('Sent by Corridra.')).toBe(true);
