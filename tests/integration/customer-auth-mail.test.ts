@@ -204,17 +204,18 @@ describe('the webhook receiver', () => {
     expect((await run(signed(otp({}, { otp_code: '12345' })))).status).toBe(400);
     expect((await run(signed(otp({}, { otp_code: '12345a' })))).status).toBe(400);
   });
-  it('rejects an oversize body before reading it all', async () => {
+  it('rejects an oversize body, declared or streamed, before reading it all', async () => {
     const big = { ...otp(), padding: 'x'.repeat(maxWebhookBytes) };
-    const request = signed(big);
-    const response = await run(request);
-    expect(response.status).toBe(413);
-    const noLength = new Request(request.url, {
-      method: 'POST',
-      headers: new Headers([...request.headers].filter(([k]) => k !== 'content-length')),
-      body: JSON.stringify(big),
-    });
-    expect((await run(noLength)).status).toBe(413);
+    const base = signed(big);
+    const copy = (extra: Record<string, string>) => {
+      const headers = new Headers(extra);
+      base.headers.forEach((value, key) => headers.set(key, value));
+      return new Request(base.url, { method: 'POST', headers, body: JSON.stringify(big) });
+    };
+    // A declared length is refused without reading the body.
+    expect((await run(copy({ 'content-length': String(maxWebhookBytes + 100) }))).status).toBe(413);
+    // A body with no declared length is cut off as it streams.
+    expect((await run(copy({}))).status).toBe(413);
     expect(send).not.toHaveBeenCalled();
   });
   it('rejects a request that is not a POST', async () => {
