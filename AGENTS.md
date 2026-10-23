@@ -70,6 +70,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - After pnpm metadata drift, use the explicit CLI warn option or pinned installed executables; an environment-only option did not suppress bootstrap in this managed runtime.
 - Print the failing response status before naming a CI root cause; two guessed causes cost four CI cycles (docs/v3/KNOWN_ISSUES.md KI-01, KI-04).
 - Check events carry a `head_sha`. If it is not the head you last pushed, the event is stale: ignore it silently and do not report it. CI now skips `validate` on cancelled runs (KI-03), so this should be rare.
+- Run the UX gate against a production build, never `next dev` (KI-18): the dev server gives seven false failures.
 - Operator browser tests share one auth rate limit (5 per 60 s on sign-in and two-factor); a test that signs in after many others clears `identity."rateLimit"` in the browser-test database. Never raise a limit.
 - Use `get_check_runs` and `get_job_logs` with `tail_lines` near 130; `list_workflow_jobs` returns tens of thousands of tokens.
 - In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` for e2e, ux and operator runs; hundreds of failures at a few milliseconds mean the browser did not launch. `next dev` rewrites `apps/web/AGENTS.md`, and the local operator suite rewrites tracked evidence images; restore them before committing. The suite runs locally on native PostgreSQL 16 (docs/v3/KNOWN_ISSUES.md KI-15).

@@ -1437,3 +1437,13 @@ PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exac
 Fix: my regex that marked the ten decisions accepted also swallowed the blank line after the table in `ART_REVIEW.md`, so the "Signed-in pages cannot be reviewed" paragraph became a table row and widened the first column. Blank line restored, table re-padded, and the scope note updated (the landing and Today work shipped in PR148). The owner noticed that the landing example still looked unchanged: that was production still serving `8cbdd3e`, before PR148.
 
 Open: the owner's small change to the landing routes (asked, not yet specified), the remaining AC1-08 families, the rest of Signal, the Encounter organiser flow.
+
+## 2026-10-23 Type system, Signal panels and placements (PR153, branch ccr-998044a6-w7yufu, base fe651e1)
+
+Owner picked the recommended set for the whole system. Built: Newsreader, Geist and Geist Mono self-hosted with `next/font/local`, Noto Serif Bengali as a lazy face, Inter removed. Sizes follow the Lean scale; the AC/1 hero, section, proof and public page-hero rules now use the shared tokens (home hero was 38 px on a phone). All 11 px heading tracking values became em. Index line placement on home sections. Signal panels: class-less buttons outlined, stat tiles fill the row, 72 character measure, no stray first rule, accordion double frame removed.
+
+Found while checking: the earlier side-by-side previews showed Georgia as this machine's stand-in serif, and the first preview's hero size did not reflect the AC/1 hero clamp. Both corrected with notes on the owner pages. The REAL_FRAME audit option added customer classes to operator pages and produced two contrast failures that were not product defects; the DOM-dump method in KI-18 shows the true state.
+
+Verification: `pnpm lint`, `pnpm typecheck`, `pnpm test:docs` pass locally; production-build UX gate run recorded in the PR; the 380-test audit passed on the new type before the Signal CSS.
+
+Open: owner review of the type set and the Signal panels, AC1-06 organiser pages, AC1-02 state adoption, the other signed-in families.
