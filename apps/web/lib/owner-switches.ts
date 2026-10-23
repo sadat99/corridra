@@ -142,9 +142,16 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_CUSTOMER_CODE_SIGNIN',
     label: 'Sign in with a code',
-    line: 'Planned. A customer will sign in with a code sent by email.',
+    line: 'Adds a second way to sign in: a six-digit code sent by email. Password sign-in stays.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED',
+    label: 'Branded sign-in and reset emails',
+    line: 'Sends the code and reset emails from Corridra. Needs its sender settings and the Neon webhook.',
+    group: 'Accounts and requests',
+    kind: 'flag',
   },
   // Programmes and delegations
   {

@@ -93,7 +93,9 @@ describe('switch states', () => {
     const view = states({});
     expect([...view].filter(([, text]) => text === 'On')).toEqual([]);
     expect(view.get('CORRIDRA_NETWORK_ENABLED')).toBe('Off');
-    expect(view.get('CORRIDRA_CUSTOMER_CODE_SIGNIN')).toBe('Planned, not built yet');
+    expect(view.get('CORRIDRA_CUSTOMER_CODE_SIGNIN')).toBe('Off');
+    expect(view.get('CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED')).toBe('Off');
+    expect(view.get('CORRIDRA_MISSION_EMAIL_ENABLED')).toBe('Planned, not built yet');
   });
   it('reads a plain switch only when it is exactly true', () => {
     expect(states({ CORRIDRA_NETWORK_ENABLED: 'true' }).get('CORRIDRA_NETWORK_ENABLED')).toBe('On');

@@ -17,7 +17,11 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         </p>
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>
-            <AccountForm key={mode} mode={mode} />
+            <AccountForm
+              key={mode}
+              mode={mode}
+              codeSignIn={mode === 'signin' && process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
+            />
           </Suspense>
         ) : (
           <AccessState kind="unavailable">

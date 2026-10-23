@@ -6,7 +6,30 @@ import { accountClient } from '../lib/neon-auth-client';
 import { announceSessionChange } from './session-events';
 import { accountAccessPath, accountReturnTo } from '../lib/account-return';
 export type AccountFormMode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
-export function AccountForm({ mode }: { mode: AccountFormMode }) {
+// How long a person waits before asking for another sign-in code.
+const resendSeconds = 30;
+// The identity client can return an error or throw one. The code route reads only the status and
+// the code from either and never shows the provider's own words, which could reveal an account.
+async function settle(call: () => Promise<{ error?: unknown } | undefined | void>) {
+  try {
+    const result = await call();
+    return result && result.error ? detail(result.error) : null;
+  } catch (error) {
+    return detail(error);
+  }
+}
+function detail(error: unknown) {
+  const e = (error ?? {}) as { status?: number; code?: string };
+  return { status: e.status, code: String(e.code ?? '') };
+}
+export function AccountForm({
+  mode,
+  codeSignIn = false,
+}: {
+  mode: AccountFormMode;
+  /** Set by the server from CORRIDRA_CUSTOMER_CODE_SIGNIN. Off keeps the form exactly as it was. */
+  codeSignIn?: boolean;
+}) {
   const router = useRouter();
   const query = useSearchParams();
   const destination = accountReturnTo(query.get('returnTo'));
@@ -22,12 +45,22 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
   const [sent, setSent] = useState(mode === 'verify');
   const [codeRequested, setCodeRequested] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Sign in with a code: a second route into the same sign-in form. Password stays the default.
+  const [viaCode, setViaCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [waitLeft, setWaitLeft] = useState(0);
+  const codeEnabled = mode === 'signin' && codeSignIn;
   const emailInput = useRef<HTMLInputElement>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
   const inFlight = useRef(false);
   useEffect(() => {
     if (failed && message) feedback.current?.focus();
   }, [failed, message]);
+  useEffect(() => {
+    if (waitLeft <= 0) return;
+    const timer = window.setTimeout(() => setWaitLeft((seconds) => seconds - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [waitLeft]);
   async function submit(event: FormEvent) {
     event.preventDefault();
     await perform();
@@ -39,7 +72,30 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
     setBusy(true);
     setMessage('');
     try {
-      if (mode === 'signin') {
+      if (codeEnabled && viaCode && (!codeSent || requestCode)) {
+        // The answer never says whether an account exists. Only a rate limit is reported as such.
+        const failure = await settle(() =>
+          accountClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' }),
+        );
+        if (failure?.status === 429)
+          throw new Error('Too many requests. Wait a minute, then try again.');
+        setCode('');
+        setCodeSent(true);
+        setWaitLeft(resendSeconds);
+        setMessage('If this address can sign in, a code is on its way.');
+      } else if (codeEnabled && viaCode) {
+        const failure = await settle(() => accountClient.signIn.emailOtp({ email, otp: code }));
+        if (failure)
+          throw new Error(
+            failure.code === 'TOO_MANY_ATTEMPTS' || failure.status === 429
+              ? 'Too many tries. Ask for a new code.'
+              : 'That code is wrong or has expired. Check it or ask for a new code.',
+          );
+        setCode('');
+        announceSessionChange();
+        router.replace(destination);
+        router.refresh();
+      } else if (mode === 'signin') {
         const result = await accountClient.signIn.email({ email, password });
         if (result.error) throw new Error('Sign-in failed. Check your details and try again.');
         setPassword('');
@@ -145,6 +201,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
             onChange={(e) => {
               setEmail(e.target.value);
               if (mode !== 'verify') setSent(false);
+              setCodeSent(false);
               setCode('');
             }}
             autoComplete="email"
@@ -153,7 +210,7 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           />
         </label>
       )}
-      {['signin', 'signup', 'reset'].includes(mode) && !(mode === 'reset' && sent) && (
+      {['signin', 'signup', 'reset'].includes(mode) && !(mode === 'reset' && sent) && !viaCode && (
         <label className="field">
           {mode === 'reset' ? 'New password' : 'Password'}
           <input
@@ -183,6 +240,21 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
           />
         </label>
       )}
+      {codeEnabled && viaCode && codeSent && (
+        <label className="field">
+          Six-digit code
+          <input
+            value={code}
+            disabled={busy}
+            onChange={(e) => setCode(e.target.value)}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            required
+          />
+        </label>
+      )}
       {message && (
         <p
           ref={feedback}
@@ -198,17 +270,70 @@ export function AccountForm({ mode }: { mode: AccountFormMode }) {
         <button className="primary-link" disabled={busy}>
           {busy
             ? 'Please wait…'
-            : mode === 'signin'
-              ? 'Sign in'
-              : mode === 'signup'
-                ? 'Create account'
-                : mode === 'forgot'
-                  ? 'Request reset email'
-                  : mode === 'reset'
-                    ? 'Set new password'
-                    : sent
-                      ? 'Verify email'
-                      : 'Request verification code'}
+            : codeEnabled && viaCode && !codeSent
+              ? 'Send code'
+              : mode === 'signin'
+                ? 'Sign in'
+                : mode === 'signup'
+                  ? 'Create account'
+                  : mode === 'forgot'
+                    ? 'Request reset email'
+                    : mode === 'reset'
+                      ? 'Set new password'
+                      : sent
+                        ? 'Verify email'
+                        : 'Request verification code'}
+        </button>
+      )}
+      {codeEnabled && !viaCode && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={busy}
+          onClick={() => {
+            setViaCode(true);
+            setCodeSent(false);
+            setCode('');
+            setMessage('');
+            setFailed(false);
+          }}
+        >
+          Sign in with a code
+        </button>
+      )}
+      {codeEnabled && viaCode && codeSent && (
+        <>
+          <button
+            type="button"
+            className="text-link"
+            disabled={busy || waitLeft > 0}
+            onClick={() => {
+              if (emailInput.current?.reportValidity()) void perform(true);
+            }}
+          >
+            Send a new code
+          </button>
+          {waitLeft > 0 && (
+            <p>
+              You can ask for a new code in {waitLeft} {waitLeft === 1 ? 'second' : 'seconds'}.
+            </p>
+          )}
+        </>
+      )}
+      {codeEnabled && viaCode && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={busy}
+          onClick={() => {
+            setViaCode(false);
+            setCodeSent(false);
+            setCode('');
+            setMessage('');
+            setFailed(false);
+          }}
+        >
+          Use my password instead
         </button>
       )}
       {mode === 'verify' && sent && !codeRequested && (
