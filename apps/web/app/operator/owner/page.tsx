@@ -170,38 +170,29 @@ export default async function Page({
           These controls stay open until their evidence exists. Status is copied from the deferred
           controls register. Nothing here is marked closed.
         </p>
-        <div className="owner-scroll" role="region" tabIndex={0} aria-label="Open gaps table">
-          <table className="owner-table">
-            <thead>
-              <tr>
-                <th scope="col">Control</th>
-                <th scope="col">Needed before</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ownerGaps.map((gap) => {
-                const signal = gapSignal(gap.id);
-                return (
-                  <tr key={gap.id}>
-                    <th scope="row">
-                      <span className="owner-label">{gap.id}</span>
-                      <span className="owner-line">{gap.work}</span>
-                    </th>
-                    <td>{gap.requiredBefore}</td>
-                    <td>
-                      <StatusBadge tone="caution">Open</StatusBadge>
-                      <span className="owner-line">{gap.status}</span>
-                      <span className="owner-line">
-                        {signal ?? 'Status taken from the deferred controls register.'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ul className="owner-gaps">
+          {ownerGaps.map((gap) => {
+            const signal = gapSignal(gap.id);
+            return (
+              <li key={gap.id}>
+                <span className="owner-label">{gap.id}</span>
+                <span className="owner-line">{gap.work}</span>
+                <dl className="owner-facts">
+                  <dt>Needed before</dt>
+                  <dd>{gap.requiredBefore}</dd>
+                  <dt>Status</dt>
+                  <dd>
+                    <StatusBadge tone="caution">Open</StatusBadge>
+                    <span className="owner-line">{gap.status}</span>
+                    <span className="owner-line">
+                      {signal ?? 'Status taken from the deferred controls register.'}
+                    </span>
+                  </dd>
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
       </section>
       <Link className="text-link" href="/operator">
         Back to your workspace

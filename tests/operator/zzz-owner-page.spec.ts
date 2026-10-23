@@ -69,9 +69,9 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
 
   // Open gaps are copied from the register and none is marked closed.
   for (const id of ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D08'])
-    await expect(page.getByRole('row').filter({ hasText: id }).first()).toContainText('Open');
+    await expect(page.getByRole('listitem').filter({ hasText: id }).first()).toContainText('Open');
   await expect(page.locator('main')).not.toContainText('Closed');
-  await expect(page.getByRole('row').filter({ hasText: 'D01' })).toContainText(
+  await expect(page.getByRole('listitem').filter({ hasText: 'D01' })).toContainText(
     'Deferred; explicitly authorized BYPASSED mode',
   );
 
