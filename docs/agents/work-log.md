@@ -1466,6 +1466,20 @@ Preserved: closed gates D01 to D06 and D08, all switches, every existing denial.
 
 Next: the owner answers the decisions in each document. Stage 1 of view-as and the screen-only fixes for item 7 each need their own go.
 
+## 2026-10-23 Phase 0 approvals; Owner page switched on; mission mail Phase A (branch claude/relaxed-thompson-b6ixvz, base 3e3f3d0)
+
+After Wave 4 the owner answered: use their founder sentence idea (it arrived with a bracketed placeholder, so it is not set; a clean version is proposed in the reply), "yes, go for update in database", and "yes to both" proposals "as long as safe". They also asked why the waves are not switched on and said to do it if all right.
+
+**Switches.** Only `CORRIDRA_OWNER_PAGE_ENABLED=true` was set, in Production (Vercel project env, plain, id `yIBdJRz2nAPlBBVW`). It is read-only and shows only to a signed-in owner or admin; it takes effect at the next production deployment. Not switched on, with reasons: `CORRIDRA_CUSTOMER_CODE_SIGNIN` (production is in real mode with owner-approved open admission; whether a code for an address with no account creates an account is untested, and the identity host is blocked from the cloud container), `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED` (the sender key and addresses are not set, and registering the webhook has no fallback), `CORRIDRA_MISSION_EMAIL_ENABLED` (not wired until Phase B). Production already runs real mode with real-use admission on; that was found by listing the project variables, values of plain flags only.
+
+**Mission mail Phase A, database module, not installed anywhere.** `packages/db/customer-mission-mail-migrations/0001_mission_mail.sql`, `packages/db/src/customer-mission-mail-migrate.ts` (chains the real-use install first), `packages/auth/src/customer-mission-mail-configuration.ts` (offline owner open or close with a reason), installer input `mission_mail_action` and `mission_mail_reason` in `scripts/install-customer-modules.ts` and the workflow, which runs the same exact-head CI and CodeQL check as the Network install. Design choices worth knowing: the address is kept in its own table for at most 24 hours and deleted when sent, muted, dead or expired (the repo has no erasure path, so the append-only rule is deliberately not used for addresses); the queue holds ids, states and hashes only; the recipient must equal the verified email hash in the session proof, checked in the database; claim and finish need a capability derived from the server secret, so the database role alone cannot read an address; the mute token is the existing keyed hash of the request id, stored only as its digest; no outbox row is written because nothing consumes it. Existing functions are not replaced, so no prerequisite hash guard was needed.
+
+**Tests.** `tests/integration/mission-mail-database.test.ts`, 22 checks on a real PostgreSQL with the real roles, passing. Seven deliberate breaks of the SQL: six failed a test at once; the sample workspace rule survived, a test was added, and it then failed. Lint, typecheck and the infrastructure tests exit 0.
+
+**Not verified.** Nothing has been installed in the Frankfurt database. The workflow itself was not run. Phase B (enqueue at submit, send workflow, mute page) is not built yet.
+
+Next: Phase B, then the rehearsal fixes and view-as stage 1.
+
 ## 2026-10-23 PR146 and PR148 merged; review sheet table fixed (branch ccr-998044a6-w7yufu, base 54e2c21)
 
 PR146 merged as `8cbdd3e` and PR148 as `54e2c21`, each with CI green on the exact head (all `operator` shards, `browser`, `checks`, `validate`, CodeQL). Production deploy of `8cbdd3e` was READY; the deploy of `54e2c21` was not yet checked when this entry was written. The `browser` job of PR148 took 25 minutes against about 19 normally, so it probably rode out a mirror stall under the new retry and 45-minute limit; this was not confirmed from the step timings.

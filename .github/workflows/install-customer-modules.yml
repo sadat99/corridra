@@ -36,6 +36,15 @@ on:
         description: 'Required reason for enabling or pausing real Network.'
         required: false
         default: ''
+      mission_mail_action:
+        description: 'Optional Phase 0 operation for the two mission emails. Install sends nothing; enable opens the database side only.'
+        type: choice
+        options: [unchanged, install, enable, pause]
+        default: unchanged
+      mission_mail_reason:
+        description: 'Required reason for enabling or pausing mission mail.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -58,7 +67,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -77,4 +86,6 @@ jobs:
           REAL_USE_REASON: ${{ inputs.real_use_reason }}
           NETWORK_USE_ACTION: ${{ inputs.network_use_action }}
           NETWORK_USE_REASON: ${{ inputs.network_use_reason }}
+          MISSION_MAIL_ACTION: ${{ inputs.mission_mail_action }}
+          MISSION_MAIL_REASON: ${{ inputs.mission_mail_reason }}
         run: pnpm exec tsx scripts/install-customer-modules.ts

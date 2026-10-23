@@ -26,6 +26,8 @@ import { migrateCustomerRealUse } from '../packages/db/src/customer-real-use-mig
 import { configureCustomerRealUse } from '../packages/auth/src/customer-real-use-configuration';
 import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migrate';
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
+import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
+import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -38,6 +40,11 @@ const v = z
     INSTALL_APPLY: z.string().optional(),
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    MISSION_MAIL_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     NETWORK_USE_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -70,6 +77,10 @@ if (v.NETWORK_USE_ACTION !== 'unchanged' && !apply)
   throw new Error('Network changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.NETWORK_USE_ACTION) && !v.NETWORK_USE_REASON)
   throw new Error('Network changes require an explicit reason');
+if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
+  throw new Error('Mission mail changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
+  throw new Error('Mission mail changes require an explicit reason');
 
 const registries = [
   'customer_migrations',
@@ -96,6 +107,7 @@ const registries = [
   'customer_service_request_migrations',
   'customer_real_use_migrations',
   'network_real_use_migrations',
+  'customer_mission_mail_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -182,6 +194,18 @@ try {
         });
         console.log(
           `Real Network ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.MISSION_MAIL_ACTION !== 'unchanged') {
+      await migrateCustomerMissionMail(pool);
+      if (v.MISSION_MAIL_ACTION !== 'install') {
+        const result = await configureMissionMail(pool, {
+          enabled: v.MISSION_MAIL_ACTION === 'enable',
+          reason: v.MISSION_MAIL_REASON,
+        });
+        console.log(
+          `Mission mail ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }

@@ -28,18 +28,27 @@ The plan asks for the events and outbox pattern, a mute that works, and no sendi
 5. **There is no "move" for a customer.** The `next_action` on a mission is the team's own next step and must not be sent to a customer. No table records something a customer must do by a date. The trigger waits for the Mission Road work.
 6. **Sample accounts use `.invalid` addresses**, which can never receive mail. The send rules refuse them.
 
-## Smallest change that makes it work (needs your approval)
+## The database change as built (Phase A, approved)
 
-An additive migration, applied by the offline schema-owner tooling like the other customer modules, with the runtime role getting only execute rights on named functions.
+A new optional installer module, `customer-mission-mail-migrations`, installed by the owner-run workflow like the Network module. It adds new objects only. No existing table, policy, trigger, grant or function changes. It depends on real-use admission being installed and refuses to install without it.
 
-1. `customer_private.mission_mail_mute` : request id, purpose (`mute`), created time. One row per request and purpose. No personal data.
-2. `customer.mute_mission_mail(request_id, token)` : checks the keyed hash inside the database, inserts the row once, and returns the same answer on a repeat so a click can be repeated safely.
-3. `customer_private.mission_mail_queue` : request id, kind (`request-received` or `your-move`), the recipient address, state, attempts, and `retention_until` set to the request retention (30 days). Written in the same transaction as the request, only when the switch is on.
-4. `customer.claim_mission_mail` and `customer.finish_mission_mail` : lease, retry with a cap, and a record that the mail went out, modelled on the existing communications claim and finish functions. The sender reuses the Resend transport already written for sign-in codes.
+| Object                                      | What it holds or does                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mission_mail_control`                      | Append-only open or closed versions with a reason. No row means closed. Opened only by the offline owner operation.                                                                                                                                                                                                           |
+| `mission_mail_queue`                        | One row per message: request id, kind, state, attempts, retry time, and hashes of two secrets. Never an address, a name or message text. Rows are never deleted, identity columns never change, finished rows never change again.                                                                                             |
+| `mission_mail_recipient`                    | The only place an address is kept, with the typed name and a short description of the request, for sending. Deleted when the message is sent, muted, dead or after 24 hours, whichever is first. This is a deliberate difference from the append-only rule, because the repo has no erasure path for an address.              |
+| `mission_mail_mute`                         | One row per muted request. Ids only. Append-only.                                                                                                                                                                                                                                                                             |
+| `customer.enqueue_mission_mail`             | Runs inside the customer's own request transaction. Checks the control, the real session, that the caller owns the request, that the workspace is real, and that the address equals the verified email hash from the session proof. Returns "not queued" with a reason, never an error, for closed, sample or unusable cases. |
+| `claim_mission_mail`, `finish_mission_mail` | Lease for 60 seconds, retry with a cap of three, backoff to a minute, permanent failure ends at once. Both need a capability computed from the server secret, so the database role alone cannot read an address.                                                                                                              |
+| `mute_mission_mail`                         | No sign-in. Needs the link token, which is tied to one request and one purpose. A repeat returns the same answer. A wrong token and an unknown request are refused identically.                                                                                                                                               |
 
-Blast radius: new objects only, no existing table or function changes, none of it is reachable with the switch off. Rollback: drop the four objects; the queue holds nothing the person cannot already see in their request. The new rows are excluded from counts, reports and delivery because no existing query reads these tables.
+Each queue and mute action also writes an event and an audit row with ids only. No outbox row is written, because nothing would consume it and a row with no consumer would suggest a delivery that did not happen.
 
-Open choice for you: storing the recipient address is new personal data. The alternative is to send once, in the same request that creates the request, which the plan forbids. I recommend the queue with the 30 day limit.
+Blast radius: new objects only. Nothing reaches them with the control closed. Rollback: close the control with the workflow (`mission_mail_action = pause`), unset the application switch. Records stay, as everywhere else in this system.
+
+How it is installed: the protected **Install customer modules** workflow, from `main`, after exact-head CI and CodeQL, with `mission_mail_action = install` (creates the objects, sends nothing), later `enable` (opens the database side) with a written reason. Nothing is installed by merging.
+
+Tested against a real PostgreSQL with the real roles (`tests/integration/mission-mail-database.test.ts`, 22 checks). Seven deliberate breaks of the SQL were tried: six failed a test at once, and the seventh (the sample workspace rule) survived until a test for it was added, after which it failed too.
 
 ## Words for the privacy notice (for your review; the page is not edited)
 
@@ -52,6 +61,6 @@ Keep the switch off until you have reviewed this.
 ## What you need to do
 
 1. Write the one founder sentence for message 1, then set `MISSION_EMAIL_FOUNDER_LINE`.
-2. Approve, change or reject the migration above.
+2. Run the install workflow when Phase B is merged: first `install`, then, after you have read the privacy wording, `enable` with a reason.
 3. Review the privacy wording.
 4. Say when the Mission Road work should supply the "move" that message 4 needs.
