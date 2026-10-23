@@ -11,10 +11,12 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Fix:** PR134 (`becb052`). The test clears `identity."rateLimit"` in the browser-test database before its sign-in and throws the verify status and error body. Main CI was green on `becb052`, `c23ea62` and `62205d2`. The limiter is unchanged.
 - **Avoid:** print the failing response status before naming a cause. If another test returns 429, give it the same reset. Never raise a limit or disable the limiter to pass a test.
 
-### KI-02 `operator (2)` cancelled on main (open, unexplained)
+### KI-02 `operator (2)` cancelled on main (explained 23 Oct, mitigated)
 
-- **Seen (22 Oct):** main CI39800962758, cancelled after about 28 minutes in its Browser runtime step; no test ran. Not seen again in any run read since.
-- **If it recurs:** record the step timings and re-run the job once. Do not change tests for it.
+- **Seen (22 Oct):** main CI39800962758, job `operator (2)` cancelled by the 30-minute job timeout. The job log shows `pnpm exec playwright install --with-deps chromium` printing its last `apt-get update` line at 15:04:23 (the Ubuntu security index) and nothing after until the cancel at 15:32:10; the same step took 22 to 38 seconds in the other three jobs of that run. No test ran; the build and database steps before it passed.
+- **Cause:** the apt step inside `--with-deps` stalled on a package mirror (the log shows `azure.archive.ubuntu.com` index fetches ignored and a switch to `archive.ubuntu.com`). It is runner infrastructure, not the application or the tests. Only the step identity, timing and the stall point are proven; the mirror is inferred from the last lines.
+- **Mitigation:** `ci.yml` gives the step `timeout-minutes: 6`, `continue-on-error`, and one retry step, in both the `browser` and `operator` jobs. A stall now costs about six minutes and recovers, instead of 28 minutes and a red run. The step timeout kills the whole tree, so the retry does not meet a held apt lock. Real failures still fail the job (the retry has no `continue-on-error`).
+- **If it recurs:** look at the first step's duration in the job steps list (`list_workflow_jobs`), not the log tail. Do not change tests for it.
 
 ### KI-03 `validate` red right after a push (not a failure)
 

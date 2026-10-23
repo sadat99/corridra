@@ -81,7 +81,17 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      # `playwright install --with-deps` runs `apt-get update`, which once stalled for 28 minutes on an
+      # Ubuntu mirror (KI-02). Bound it, and retry once; the runner kills the whole process tree on a
+      # step timeout, so the retry starts without a held apt lock.
       - name: Browser runtime
+        id: browser-runtime
+        timeout-minutes: 6
+        continue-on-error: true
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime (retry)
+        if: steps.browser-runtime.outcome != 'success'
+        timeout-minutes: 6
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
@@ -131,7 +141,17 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      # `playwright install --with-deps` runs `apt-get update`, which once stalled for 28 minutes on an
+      # Ubuntu mirror (KI-02). Bound it, and retry once; the runner kills the whole process tree on a
+      # step timeout, so the retry starts without a held apt lock.
       - name: Browser runtime
+        id: browser-runtime
+        timeout-minutes: 6
+        continue-on-error: true
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime (retry)
+        if: steps.browser-runtime.outcome != 'success'
+        timeout-minutes: 6
         run: pnpm exec playwright install --with-deps chromium
       - name: Protected operator browser tests (shard ${{ matrix.shard }} of 3)
         env:
