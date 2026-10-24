@@ -954,6 +954,11 @@
       "use": "Real plans, subscriptions and entitlements (billing stage 1): default-off, two switches, real catalogue kept apart from the sample one, no payment or invoice; stages 2 and 3 not built"
     },
     {
+      "path": "docs/adr/0063-real-report-access-switches.md",
+      "classification": "Architecture contract/index",
+      "use": "Owner switches for how a real workspace report is read: public link (off by default) and signed-in access (on by default); enforced in the application and the database; export stays refused"
+    },
+    {
       "path": "docs/product/real-use-audit-2026-10-24.md",
       "classification": "Product audit",
       "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"

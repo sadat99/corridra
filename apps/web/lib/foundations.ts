@@ -1,4 +1,5 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
 import {
   CustomerMissionDraftService,
   customerMissionDraftsEnabled,
@@ -545,6 +546,7 @@ function createServices() {
       runtimePool,
       new MissionService(runtimePool, config.AUTH_SECRET, realUseEnabled() ? 'real' : 'synthetic'),
       config.AUTH_SECRET,
+      () => realReportPublicLinkEnabled(),
     ),
     deliveryExperience: new DeliveryExperienceService(runtimePool),
     meetings: new MeetingService(runtimePool),
