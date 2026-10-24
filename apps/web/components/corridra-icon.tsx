@@ -11,6 +11,8 @@ export const iconPaths = {
   company: 'M4 16V4h7v12M11 8h5v8M2.5 16h15M6.5 7h2M6.5 10h2M6.5 13h2',
   progress: 'M3 16h14M5 16v-4M9 16V8M13 16V5',
   more: 'M4 9h2v2H4zM9 9h2v2H9zM14 9h2v2h-2z',
+  library: 'M4 3.5h8a3 3 0 0 1 3 3V17H7a3 3 0 0 1-3-3zM4 14a3 3 0 0 1 3-3h8M7 6.5h5',
+  list: 'M4 5h12M4 10h12M4 15h8',
   // Three commercial starts
   sell: 'M3 10h8v6H3zM9.5 4H16v6.5M16 4l-6.5 6.5',
   buy: 'M3 16V9.5l4 2.5V9.5l4 2.5V4.5h4V16M2.5 16h15',

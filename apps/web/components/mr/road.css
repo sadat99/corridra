@@ -1,0 +1,130 @@
+/* The Road. Vertical on a phone, six columns from 48rem. Shapes differ as well as colour. */
+.mr-road-wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+.mr-road {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.mr-road > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: start;
+  padding-bottom: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.mr-road > li:last-child {
+  padding-bottom: 0;
+}
+.mr-road > li::after {
+  content: '';
+  position: absolute;
+  top: 2.125rem;
+  left: calc(1rem - 1px);
+  bottom: 0.125rem;
+  width: 2px;
+  background: var(--border-subtle);
+}
+.mr-road > li:last-child::after {
+  display: none;
+}
+.mr-road > li[data-state='done']::after {
+  background: var(--brand);
+}
+.mr-road-dot {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+[data-state='done'] > .mr-road-dot {
+  color: var(--on-brand);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+[data-state='now'] > .mr-road-dot {
+  color: var(--on-action);
+  background: var(--selected);
+  border-color: var(--selected);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+[data-state='notTracked'] > .mr-road-dot {
+  border-style: dashed;
+  background: var(--paper);
+}
+.mr-road-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.mr-road-text b {
+  font-weight: 600;
+  color: var(--text-strong);
+  font-size: var(--text-base);
+}
+[data-state='now'] .mr-road-text b {
+  font-weight: 700;
+}
+.mr-road-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mr-road-sub {
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.mr-road-aside {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  background: var(--caution-surface);
+  border: 1px solid var(--caution);
+  border-radius: var(--radius-md);
+}
+.mr-road-legend {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+@media (min-width: 48rem) {
+  .mr-road {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    padding: var(--space-5) var(--space-6);
+  }
+  .mr-road > li {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-2);
+    padding: 0 var(--space-2) 0 0;
+  }
+  .mr-road > li::after {
+    top: 1rem;
+    left: 2.5rem;
+    right: var(--space-2);
+    bottom: auto;
+    width: auto;
+    height: 2px;
+  }
+}

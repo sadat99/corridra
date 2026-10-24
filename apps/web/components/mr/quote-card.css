@@ -1,0 +1,107 @@
+.mr-quote {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.mr-quote h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.mr-quote-sub {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.mr-num {
+  font-variant-numeric: tabular-nums;
+}
+.mr-quote-verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.35;
+  border-radius: var(--radius-sm);
+  color: var(--caution);
+  background: var(--caution-surface);
+}
+.mr-quote[data-comparable='true'] .mr-quote-verdict {
+  color: var(--positive);
+  background: var(--positive-surface);
+}
+.mr-quote-verdict small {
+  display: block;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.mr-quote-seal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: var(--text-xs);
+  border: 2px solid var(--caution);
+  border-radius: 50%;
+}
+.mr-quote[data-comparable='true'] .mr-quote-seal {
+  color: var(--on-brand);
+  background: var(--positive);
+  border-color: var(--positive);
+}
+.mr-quote-price {
+  display: grid;
+  gap: 2px;
+  padding-block: var(--space-3);
+  border-block: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.mr-quote-price strong {
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+.mr-quote-price .guide-tag {
+  justify-self: start;
+  margin-top: var(--space-2);
+}
+.mr-quote-terms {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+.mr-quote-terms > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.mr-quote-terms dt {
+  min-width: 0;
+  color: var(--text-muted);
+}
+.mr-quote-terms dd {
+  margin: 0;
+  min-width: 0;
+  text-align: end;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.mr-quote-terms [data-missing='true'] dd {
+  padding-inline: var(--space-2);
+  font-weight: 600;
+  color: var(--caution);
+  background: var(--caution-surface);
+  border-radius: 4px;
+}

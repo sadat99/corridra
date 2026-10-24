@@ -164,3 +164,7 @@ Keep every existing receipt and ADR-033 test. Add tests for these cases:
 - populated before-and-after preservation of old receipts.
 
 Run a real browser journey with a real inbox. A fixture does not prove email delivery. Run every mandatory release gate on the exact merged head.
+
+## Decision needed (added 24 October 2026, status unchanged)
+
+The UX update reserves the switch `CORRIDRA_STATUS_LINK` and sends the same kind of private link through Pulse ([ADR-067](0067-notification-records-and-pulse.md)). The owner decides, before this ADR is built: whether the status link is still wanted beside Pulse; how long it should last; and whether the privacy review of Pulse also covers it.
