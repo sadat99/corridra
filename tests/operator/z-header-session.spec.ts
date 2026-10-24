@@ -125,3 +125,77 @@ test('the header treats a failed or malformed session answer as signed out', asy
     server.kill('SIGTERM');
   }
 });
+
+test('the header shows the team workspace link, not Sign in, for a signed-in team member; sign-out stays on the workspace page', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  const cli = createRequire(import.meta.url).resolve('next/dist/bin/next', {
+    paths: [resolve('apps/web')],
+  });
+  const server = spawn(
+    process.execPath,
+    [cli, 'start', '--hostname', '127.0.0.1', '--port', '3404'],
+    {
+      cwd: resolve('apps/web'),
+      stdio: 'ignore',
+      env: {
+        PATH: process.env.PATH,
+        NODE_ENV: 'production',
+        NEXT_TELEMETRY_DISABLED: '1',
+        CORRIDRA_NEON_AUTH_ENABLED: 'true',
+        NEON_AUTH_BASE_URL:
+          'https://ep-ux02-fixture.neonauth.eu-central-1.aws.neon.tech/neondb/auth',
+        NEON_AUTH_COOKIE_SECRET: randomBytes(32).toString('hex'),
+        APP_ORIGIN: 'http://127.0.0.1:3404',
+      },
+    },
+  );
+  try {
+    await expect(async () => {
+      expect((await page.request.get('http://127.0.0.1:3404/signin')).status()).toBe(200);
+    }).toPass({ timeout: 15000 });
+    let signedIn = true;
+    const signOuts: string[] = [];
+    // No customer account is signed in; the team sign-in is a separate service.
+    await page.route('**/api/auth/get-session', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: 'null' }),
+    );
+    await page.route('**/api/operator-auth/**', async (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith('/get-session'))
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            signedIn
+              ? {
+                  session: { id: 'synthetic-staff-session' },
+                  user: { id: 'synthetic-staff', email: 'synthetic-staff@example.invalid' },
+                }
+              : null,
+          ),
+        });
+      else if (url.pathname.endsWith('/sign-out')) {
+        signOuts.push(route.request().method());
+        signedIn = false;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      } else await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
+    await page.goto('http://127.0.0.1:3404/forgot-password');
+    const nav = page.getByRole('navigation', { name: 'Main navigation' });
+    const workspace = nav.getByRole('link', { name: 'Team workspace', exact: true });
+    await expect(workspace).toBeVisible();
+    await expect(workspace).toHaveAttribute('href', '/operator');
+    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+    expect(signOuts).toEqual([]);
+  } finally {
+    server.kill('SIGTERM');
+  }
+});

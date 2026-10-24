@@ -532,11 +532,33 @@ export function DeliveryExperience(props: Props) {
       {['owner', 'admin'].includes(props.role) && mission && (
         <CustomerMissionDelivery tenant={tenant} mission={mission} />
       )}
-      {['owner', 'admin'].includes(props.role) && <CustomerServiceRequests tenant={tenant} />}
-      {['owner', 'admin'].includes(props.role) && <CustomerBilling tenant={tenant} />}
-      {['owner', 'admin'].includes(props.role) && <CustomerInvoicing tenant={tenant} />}
-      {['owner', 'admin'].includes(props.role) && <CustomerRealInvoicing tenant={tenant} />}
-      {['owner', 'admin'].includes(props.role) && <CustomerSimulatedPayments tenant={tenant} />}
+      {['owner', 'admin'].includes(props.role) && (
+        <section aria-label="Plans, invoices and payments" className="billing-hub">
+          <h3>Plans, invoices and payments</h3>
+          <nav aria-label="Jump to a billing section" className="billing-jump">
+            <a href="#billing-services">Services</a>
+            <a href="#billing-plans">Plans</a>
+            <a href="#billing-sample-invoices">Sample invoices</a>
+            <a href="#billing-invoices">Invoices</a>
+            <a href="#billing-payments">Payments</a>
+          </nav>
+          <div id="billing-services">
+            <CustomerServiceRequests tenant={tenant} />
+          </div>
+          <div id="billing-plans">
+            <CustomerBilling tenant={tenant} />
+          </div>
+          <div id="billing-sample-invoices">
+            <CustomerInvoicing tenant={tenant} />
+          </div>
+          <div id="billing-invoices">
+            <CustomerRealInvoicing tenant={tenant} />
+          </div>
+          <div id="billing-payments">
+            <CustomerSimulatedPayments tenant={tenant} />
+          </div>
+        </section>
+      )}
       <h3>Counterparty declarations awaiting review</h3>
       {data.responses.length ? (
         data.responses.map((r) => (

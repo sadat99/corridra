@@ -151,6 +151,8 @@ One primary call to action per visual section, secondary actions visually quiete
 
 Buttons (primary, secondary, quiet), fields (label above, helper below, error inline, 44 px), cards, status badges, data tables (sticky header, tabular numerals, intentional local scroll below 640 px), disclosure panels, notices (info, caution, critical, unknown), section rail and tabs, empty states, loading states and recovery states. Reuse the existing class names (`primary-link`, `text-link`, `field`, `operator-form`, and others) so behaviour and tests are untouched. Add a class only when no existing one fits, and document it here.
 
+Staff billing classes (24 October 2026): `billing-hub` (full-width column with a jump bar, `billing-jump`, for the five billing panels), `billing-notice` (the result of a save, shown beside the form that was used; `data-tone` ok or error), `billing-plans` and `billing-plan` (plan rows, `data-saved` marks the plan just saved), `billing-requests` and `billing-request`, `billing-badge`, `billing-form` with `billing-group`, `billing-pair`, `billing-hint` and `billing-actions` (a plan form grouped into Plan, Price, What customers read and Limits). Rule behind them: a result is always said next to the control that caused it, never only at the top of a long panel.
+
 ## Maps and the atlas
 
 The platform serves any country to any country. Two routes are spotlighted (Bangladesh to China, Bangladesh to Spain or the EU) and any other pair can be chosen.

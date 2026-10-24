@@ -54,8 +54,10 @@ const customer = (who = 'inv-owner') =>
   new CustomerRealInvoicingService(...runtime(), sessionFor(who));
 const plans = (who = 'inv-owner') => new CustomerBillingService(...runtime(), sessionFor(who));
 const first = () => s.ctx;
-const utcToday = () => new Date().toISOString().slice(0, 10);
-const days = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+// The database dates invoices, payments and credit notes by the Singapore calendar day, so the tests do too.
+const utcToday = () => new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+const days = (n: number) =>
+  new Date(Date.now() + 8 * 3600000 + n * 86400000).toISOString().slice(0, 10);
 const singaporeYear = () => Number(new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 4));
 const number = (prefix: string, seq: number) =>
   `${prefix}-${singaporeYear()}-${String(seq).padStart(6, '0')}`;

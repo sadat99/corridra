@@ -718,7 +718,23 @@ test('staff add a plan version with every limit stated once', async ({ page }) =
     const scope = url.searchParams.get('scope');
     if (scope === 'plans')
       return {
-        json: { plans: [{ ...plan(), source: 'SEED' }], entitlementKeys: keys, synthetic: true },
+        json: {
+          plans: [
+            { ...plan(), source: 'SEED' },
+            ...(posts.length
+              ? [
+                  {
+                    ...plan(),
+                    key: 'example-yearly',
+                    title: 'Yearly team (sample plan)',
+                    version: 1,
+                  },
+                ]
+              : []),
+          ],
+          entitlementKeys: keys,
+          synthetic: true,
+        },
       };
     return { json: { subscriptions: [], nextAfter: null, synthetic: true } };
   });
@@ -745,7 +761,15 @@ test('staff add a plan version with every limit stated once', async ({ page }) =
     await form.getByLabel(label, { exact: true }).selectOption('unlimited');
   expect(await axe(page)).toEqual([]);
   await form.getByRole('button', { name: 'Save as a new version' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+  // The result is said inside the plans section, next to the form that was used, and the saved plan is marked.
+  const fold = page.locator('details', { hasText: 'Plans on offer and plan versions' });
+  await expect(fold.getByRole('status').filter({ hasText: 'Saved.' })).toContainText(
+    'Yearly team (sample plan) is now version 1 and on offer to customers',
+  );
+  await expect(fold.getByRole('status')).toBeInViewport();
+  await expect(fold.getByText('just saved')).toBeVisible();
+  await expect(form).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
   expect(posts).toHaveLength(1);
   expect(posts[0]).toMatchObject({
     action: 'plan',
