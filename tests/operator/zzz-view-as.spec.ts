@@ -116,6 +116,9 @@ test('an owner can open the customer preview: marked, read only, inert, logged e
     await expect(page.getByText('Synthetic Browser Operator')).toHaveCount(0);
     await expect(page.getByText('browser@example.invalid')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /sign out/i })).toHaveCount(0);
+    // The header's account links (sign in, your account, start a request) are not on offer here.
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Start a request' })).toBeHidden();
 
     // Read only: the sample content is inert and holds nothing that can act.
     await expect(page.locator('.view-as-content')).toHaveAttribute('inert', '');
@@ -153,6 +156,19 @@ test('an owner can open the customer preview: marked, read only, inert, logged e
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
+      // The mark reaches the foot of the stage, not only the top of it.
+      const marked = await page.evaluate(() => {
+        const stage = document.querySelector('.view-as-stage');
+        if (!stage) return false;
+        const box = stage.getBoundingClientRect();
+        const layer = getComputedStyle(stage, '::before');
+        return (
+          layer.content.includes('SAMPLE PREVIEW') &&
+          parseFloat(layer.height) >= box.height &&
+          parseFloat(layer.width) >= box.width
+        );
+      });
+      expect(marked, `mark covers the stage at ${width}`).toBe(true);
       await page.screenshot({
         path: `docs/design-system/evidence/view-as/after/customer-${width}.png`,
         fullPage: true,

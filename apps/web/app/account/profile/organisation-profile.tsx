@@ -387,12 +387,14 @@ export function OrganisationProfile(props: {
             </div>
             <div>
               <label htmlFor={id + 'website'}>
-                Website (optional, example, test or invalid hosts only)
+                {realCustomerInput()
+                  ? 'Website (optional)'
+                  : 'Website (optional, example, test or invalid hosts only)'}
               </label>
               <input
                 id={id + 'website'}
                 maxLength={200}
-                placeholder="https://company.example"
+                placeholder={realCustomerInput() ? 'https://' : 'https://company.example'}
                 value={draft.website}
                 onChange={(e) => set('website', e.target.value)}
               />
