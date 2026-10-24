@@ -1,5 +1,7 @@
 # Founder activation view: bounded plan and acceptance record
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Contract sections: 4 (the founder's clarity layer), 6 (founder overview, P1) and 9 (Phase 4 founder controls). Status of the whole capability: PARTIAL.
 
 ## Changed requirement IDs

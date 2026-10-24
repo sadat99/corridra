@@ -1,5 +1,7 @@
 # Part 07 handoff: commercial follow-through
 
+**Document status: HISTORICAL.** Hand-off note of a finished V1 part. Its next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Status: implemented following the owner's 9 October 2026 instruction to proceed. See [the requirement baseline](part-07-scope.md), [runbook](../runbooks/part-07-commercial-followthrough.md) and [release status](part-07-release.md). Customer signup remains deferred.

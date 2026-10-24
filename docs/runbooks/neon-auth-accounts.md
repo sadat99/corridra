@@ -1,5 +1,7 @@
 # Customer and staff identity, setup and recovery
 
+**Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
+
 Current guidance as reconciled on 15 October 2026. See [access and administration](v2-access-and-launch.md), [ADR 020](../adr/0020-neon-auth-accounts-and-preserved-operator-mfa.md), [ADR 030](../adr/0030-explicit-staff-invitation-and-first-password.md) and [ADR 031](../adr/0031-operator-password-recovery-and-scoped-directory.md). The two identity systems are deliberately separate; matching email is not role authority.
 
 ## Choose the right flow
@@ -131,6 +133,30 @@ Install with the `Install customer modules` workflow (it now includes `customer-
 ### Sample invoices and payment records (optional module, ADR061)
 
 Install with the `Install customer modules` workflow (it now includes `customer-invoicing-migrations`, after the billing module, which it needs), then set `CORRIDRA_CUSTOMER_INVOICING_ENABLED=true` next to `CORRIDRA_CUSTOMER_BILLING_ENABLED=true` and deploy. Staff also need `CORRIDRA_DELIVERY_ENABLED=true`. Owners and admins then see an Invoices section on the plan and billing page, and staff see "Customer sample invoices" in the delivery section: periods that need an invoice, issue, record a payment, issue a credit note. Only sample workspaces are served and every note starts with Synthetic. Invoices are labelled sample records, not tax invoices, and are numbered SAMPLE-INV and SAMPLE-CN. Nothing is collected, refunded or converted, and no tax is calculated. A payment record is the team's statement, not a bank confirmation. To stop, unset the switch; tables and history are kept. Real-session acceptance and the first staff issue are not yet observed.
+
+### Owner install checklist for the billing stack (24 October 2026)
+
+Where each thing is done: **GitHub** > repository > Actions > "Install customer modules" > Run workflow, branch `main`, `apply` = `yes`. **Vercel** > the Corridra project > Settings > Environment Variables > Production, add or edit the value, then Deployments > the newest Production deployment > Redeploy. A setting changes nothing until that redeploy. Never paste a secret into the workflow reason or into chat. Do the rows in order; stop at any row you do not want yet.
+
+| Step | Where               | Input or setting                                                                                                        | Result                                                             |
+| ---- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1    | GitHub workflow     | `real_use_action` = `install`                                                                                           | Installs real-use migrations up to 0010 (report switches). Silent. |
+| 2    | GitHub workflow     | `real_billing_action` = `install`, then Vercel `CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED=true`, redeploy, then `enable`   | Real plans open (section below). No money.                         |
+| 3    | GitHub workflow     | `real_invoicing_action` = `install`                                                                                     | Invoices module with made-up supplier fields marked "(madeup)".    |
+| 4    | GitHub workflow     | `real_invoicing_action` = `set_supplier` with your real company JSON                                                    | Replaces the made-up values. Do this before enabling.              |
+| 5    | Vercel, then GitHub | `CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED=true`, redeploy, then `real_invoicing_action` = `enable`                      | Customers can read real invoices. Still no payment provider.       |
+| 6    | Optional            | `simulated_payments_action` = `install`, Vercel `CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED=true`, redeploy, `enable` | A made-up pay and refund flow. Everything says (madeup).           |
+
+The real report switches are Vercel settings only and are described in the next section. Check "what is installed" any time by running the workflow with `apply` = `no`.
+
+### Real report access switches (optional, ADR063, real-use migration 0010)
+
+Two independent owner switches for shared reports of real workspaces. Both are read on each request, so the owner changes a Vercel Production setting and redeploys; the install job is not needed after step 1 above.
+
+- `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED=true` lets anyone holding an unexpired, unrevoked link read that real report and answer its requests without signing in. Off unless set to exactly `true`.
+- `CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED=false` turns off a verified real customer's saved reports, report history, company history, decisions and assigned reports. On unless set to exactly `false`.
+
+Sample workspaces are never affected. Remove a setting to return to its default. No data is touched either way.
 
 ### Real plans and subscriptions (optional module, ADR062)
 

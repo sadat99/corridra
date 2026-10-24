@@ -1,5 +1,7 @@
 # Verification and continuation guide
 
+**Document status: CURRENT.** How to reproduce the checks. See the [plan status register](PLAN_STATUS.md).
+
 Use this with [the current plan](implementation/current-plan.md). It lets Claude Code or another developer check the implementation rather than infer completion from planning prose.
 
 ## Establish the baseline

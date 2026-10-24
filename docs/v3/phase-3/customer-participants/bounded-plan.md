@@ -1,5 +1,7 @@
 # Private participant onboarding
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Bounded synthetic implementation under ADR041; full exact-head CI/source release pending. Touch a new optional participant migration/installer, customer service, scoped API, programme owner controls, participant join/own-registration screens, gates/private headers and new positive/denial/browser tests. Original programme/import/sharing/domain/history stays unchanged.
 
 First increment: owner/admin issues a synthetic single-use code; an independently admitted participant previews the programme, consents to a fictional display label, registers, and sees only their own registration. Organisers see that expressly consented label and registration status. Revocation ends only programme access; independent commercial permissions remain intact. No invented import, automatic workspace membership, copied mission, email or participant commercial disclosure.

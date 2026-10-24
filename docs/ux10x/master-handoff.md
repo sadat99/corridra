@@ -1,5 +1,7 @@
 # CORRIDRA — UX10X MASTER IMPLEMENTATION HANDOFF
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../PLAN_STATUS.md).
+
 **Version:** UX10X.1.0 | **Prepared:** 14 October 2026 | **Status:** Authorized implementation specification; NOT real-data/payment/outreach activation approval  
 **Repository:** `sadat99/corridra` (private) | **Baseline Git commit:** `1e0dbea6f146265b256ca89b5482e789f97acdd9` | **Baseline Vercel production deployment:** `dpl_CrZgwvap4zB6e9qEvKZKfmVLrEN1` (`READY`, `main`, Frankfurt)  
 **Design reference:** `Corridra_Fusion_01_High_Fidelity.zip`, specifically its `index.html`, `styles.css`, `app.js`, `DESIGN_HANDOFF.md`. **Use only as visual/interaction reference, never as domain/authorization/production specification.**  

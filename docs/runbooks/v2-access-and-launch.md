@@ -1,5 +1,7 @@
 # Accessing the revised V2 platform and completing launch
 
+**Document status: CURRENT, DATED.** The steps still describe the module. Counts, dates and rollout notes inside are historical. See the [plan status register](../PLAN_STATUS.md).
+
 The public entry is `/workspace`, linked from the main menu, footer, account and operator workspace. The main menu labels it **Start here**. It groups entry by audience and job, with secondary tool discovery; it does not ask newcomers to understand historical part numbers. See [the current plan](../implementation/current-plan.md) for roadmap status. It maps to actual registered tools and states permissions and activation limits. It does not reveal tenant records or grant membership.
 
 ## Which identity to use

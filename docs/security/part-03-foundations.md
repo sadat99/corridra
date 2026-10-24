@@ -1,5 +1,7 @@
 # Part 03 security contracts
 
+**Document status: CURRENT, DATED.** Security notes for the Part 03 foundations. Still the reference; dated rollout notes inside are historical. See the [plan status register](../PLAN_STATUS.md).
+
 Scope: synthetic operator preview. Read ADRs 002 to 005, 010 and 012 and the release record before enabling infrastructure.
 
 ## Permissions

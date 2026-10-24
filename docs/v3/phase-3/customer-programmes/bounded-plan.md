@@ -1,5 +1,7 @@
 # Canonical customer programme planning
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Requirements:V3-02-045,V3-02-059,V3-06-005 remain PARTIAL. Create/list canonical synthetic planning programmes as a verified admitted workspace owner/admin. Full independent Delegation OS,participant invitations/private missions,dates/agendas/meetings,economics and organisation linking remain unfinished.
 
 Touch:ADR037,explicit optional programme migration/installer,customer service/API,page/component,contextual workspace link,private headers,founder truth,new database/component/closed-route tests and evidence. No new dependencies or navigation family. Existing original routes,actions,staff workflows and sources remain.

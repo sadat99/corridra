@@ -1,5 +1,7 @@
 # Private saved request discovery and progress
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Status: implemented; focused local verification passed; separate exact-head CI/release pending. V3-06-004 remains PARTIAL.
 
 Bounded packet after backend PR68: expose creator-owned request discovery/progress in /account using unchanged gated GET /api/customer-requests. Add a scoped customer-requests.tsx component and separate server flag wiring/navigation in account/page.tsx; preserve customer-workspaces, customer-missions, public/receipt routes and all original assertions. Update precise founder/ledger truth only. No schema,permissions,money,events or activation changes. API is the already verified backend, not a fixture in product code. Protocol tests use actual compiled React component and invented API responses, separately labelled from real database/provider acceptance.

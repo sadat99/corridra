@@ -1,5 +1,7 @@
 # Final V2 implementation traceability
 
+**Document status: HISTORICAL.** Traceability record of a finished V2 part, dated. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 The revised five-part V2 upgrade extends the accepted original V1 Parts 1–8. V1 9–12 are historical allocations partially redistributed into revised V2 4–5; the complete original scope and external assurance were not collectively completed. They are not unfinished replacements of the already accepted foundation. Original documents and release history remain.

@@ -1,5 +1,7 @@
 # Deployment and rollback
 
+**Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
+
 Use the [current plan](../implementation/current-plan.md) for release scope and [verification guide](../verification-guide.md) for evidence. Standing owner authorization permits correctly tested merges and immediate deployment without another approval. It does not waive checks, readiness gates or the prohibition on real operations/providers.
 
 ## Exact project and configuration

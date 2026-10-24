@@ -1,5 +1,7 @@
 # Bounded V3 context
 
+**Document status: CURRENT.** How to read this repository within a token budget. See the [plan status register](../PLAN_STATUS.md).
+
 The contract and release requirements remain authoritative. This workflow reduces repeated context, not verification.
 
 - Before substantive product work, read the full contract and governing product vision once in the session. Then check for changes before rereading unchanged content; inspect affected sections as needed. Documentation maintenance preserves these sources and checks its relevant authorities.

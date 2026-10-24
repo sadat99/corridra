@@ -1,5 +1,7 @@
 # Reviewed commercial decision history
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 V3-02-030,V3-04-073 and V3-05-017 remain PARTIAL. Give customers a scoped view of actual immutable V2 selection records after explicit staff approval;full customer authoring,orders,organisation ownership and the complete commercial workspace remain unfinished. Reuse the original mission engine and saved CLIENT_PROGRESS reports.
 
 Files:new optional decision migration/installer,staff/customer services and separate APIs,staff review and customer history components,new PG/component/compiled-gate tests;existing foundations,privateheaders,commercial report/page and contextual staff delivery disclosure;ADR039,evidence and ledger. No dependency or top-level navigation addition. Original backend APIs and tests remain unchanged.

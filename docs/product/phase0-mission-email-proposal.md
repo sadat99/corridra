@@ -1,5 +1,7 @@
 # Phase 0: first two mission emails
 
+**Document status: PARTLY BUILT.** Approved 23 Oct 2026. Phases A and B are built; the module is installed with its control closed and the switch off. See the [plan status register](../PLAN_STATUS.md).
+
 Status: approved by the owner on 23 October 2026 ("Yes, go for update in database"). Phase A, the database module and installer, and Phase B, the application side, are built and tested. Nothing is installed or switched on: the database control starts closed and `CORRIDRA_MISSION_EMAIL_ENABLED` is off.
 
 ## What is built and tested

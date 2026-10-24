@@ -1,5 +1,7 @@
 # Customer guided request drafts: bounded plan and acceptance record
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Governing decision: [ADR-045](../../../adr/0045-private-customer-mission-drafts.md). Contract sections: 2 (Products 1 to 3), 4 (guided request, Level 1) and 9 (per-PR acceptance). Status of the whole capability: PARTIAL. Source and local evidence only until exact-head CI, merge and a gated deployment are recorded in the ledger.
 
 ## Changed requirement IDs

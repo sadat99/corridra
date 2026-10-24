@@ -1,5 +1,7 @@
 # Corridra V2 five-part implementation plan
 
+**Document status: DONE.** All five V2 parts were built and merged. This records the sequence; do not restart it. See the [plan status register](../PLAN_STATUS.md).
+
 All five revised parts were implemented and merged. This plan records the revised sequence, not an instruction to restart it. UI integration followed in PR #35, access/reliability in PRs #37–38, then UX10X. See [current programme and remaining work](current-plan.md) and [Start here](../START_HERE.md).
 
 Unqualified part numbers refer to the owner's revised five-part V2 roadmap. Original V1 Parts 1–8 remain the accepted baseline. The new packets revise the direction from that baseline; they are not Parts 1–5 of the old twelve-part plan. Later owner packets supersede earlier tentative allocations without waiving existing security/data gates.

@@ -1,5 +1,7 @@
 # UX-02 review packet
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../../PLAN_STATUS.md).
+
 Historical UX-02 package record, implemented and merged in PR 40. Later UX packages and bounded access repairs are also merged. Use [the current plan](../../implementation/current-plan.md) for present work and standing release authority. Original next-package or separate-approval statements below describe the historical packet; they do not restart completed work. Scope acceptance is not complete functional coverage.
 
 UX-02 builds the public discovery, test brief and customer access experience on accepted UX-01 (`21bc01327296edb8a5ee988b57918d94defce898`). The complete [master handoff](../master-handoff.md) remains governing. Fusion 01 is visual reference only; fictional prototype identities, quotations, metrics and readiness controls are not adopted.

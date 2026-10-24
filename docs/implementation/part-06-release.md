@@ -1,5 +1,7 @@
 # Part 06 implementation and release status
 
+**Document status: HISTORICAL.** Finished V1 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Controlled introductions, minimal no-account buyer responses, canonical meeting operations, owned follow-up and durable synthetic outbox dispatch are live at [corridra.vercel.app](https://corridra.vercel.app), released through [PR #19](https://github.com/sadat99/corridra/pull/19). [The requirements map](part-06-scope.md) records the vision and acceptance scope; [ADR-018](../adr/0018-controlled-introductions-and-meeting-truth.md) explains the security and orchestration contracts; [the runbook](../runbooks/part-06-access-and-meetings.md) describes the complete operator, buyer and recovery flows.

@@ -1,5 +1,7 @@
 # V2 Part 02 release record
 
+**Document status: HISTORICAL.** Finished V2 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Status: released in PR #31 and verified in production at `2da05f6d523f7303cf5492b10b62d7abae456ed0`. The preparation history below is followed by the final production acceptance record.

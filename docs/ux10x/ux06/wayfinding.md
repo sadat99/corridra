@@ -1,5 +1,7 @@
 # UX-06 follow-up: getting started and admin navigation
 
+**Document status: HISTORICAL.** Dated UX10X snapshot. Counts and results belong to the revision it names, not to today. See the [plan status register](../../PLAN_STATUS.md).
+
 Historical PR 45 packet. PR 46 subsequently added and accepted bounded owner invitation guidance and existing-staff reset mail; the owner confirmed workspace entry and both reset emails. See [access repair](access-repair.md) and [dated production acceptance](../../implementation/access-recovery-production-acceptance.json). Provider-unavailable statements below describe the earlier investigation, not current accepted delivery.
 
 The owner reported that the deployed experience was confusing even to its founder and asked to prioritise the administrator before other audiences. This packet changes information hierarchy rather than identity, domain behaviour or access grants.

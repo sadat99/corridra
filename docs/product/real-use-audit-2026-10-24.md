@@ -1,8 +1,10 @@
 # Real-use audit of the customer modules (24 October 2026)
 
+**Document status: CURRENT, DATED.** Updated through PR188 (24 Oct 2026). Re-read the code before quoting a row. See the [plan status register](../PLAN_STATUS.md).
+
 Question: which customer modules still work only for sample (synthetic) workspaces, which work for real workspaces, and what proves it?
 
-Method, read from the repository on `main` at `f08840e`, then updated for ADR-062 (no database was queried, no setting was changed):
+Method, read from the repository on `main` at `f08840e`, then updated through ADR-062 to ADR-065 and PR188 (no database was queried, no setting was changed):
 
 1. For every optional customer module, list the database functions that mention a sample gate, and check whether the real-use migrations (`customer-real-use-migrations` 0001 to 0007, `network-real-use-migrations`) replace them with a version that also serves real workspaces. Table policies are covered the same way: ADR-056 adds a parallel `real_use_*` policy next to each sample policy.
 2. List the integration tests that run a module with a real session (`dataMode: 'real'`). A replaced function with no real-mode test is "built, not proven for real".
@@ -35,11 +37,11 @@ Read it with the operating-state ladder in mind: designed, implemented, tested, 
 
 ## Findings
 
-1. **Invoicing is the one module with no real path.** By design (ADR-061) and until stage 2. A real workspace is refused and a test holds that. No change here.
-2. **Two writes label real records "Synthetic".** `customer.programme_bulk_fees_record` writes ledger lines described "Synthetic participant fee from fee schedule version N", and `customer.programme_template_apply` writes a first capacity reason starting "Synthetic capacity from ...". The real-use migration already allows real wording in those columns, so the records are accepted and permanently carry the word. Ledger history is immutable, so this should be fixed before anyone uses bulk fees or template apply for real. Fix: real-use migration 0008 chooses the wording from the workspace (sample keeps the old text, real drops the word). It reaches Production the next time the owner runs Install customer modules with `real_use_action` = install, which leaves the real-use enabled or paused state as it is.
-3. **Company registry search is empty for real workspaces.** The registry holds sample organisations only. This is a data question (is there a real registry yet, and who vets entries), not a code defect. The claim and staff review path works.
-4. **Stale sample wording on two customer forms**: the Website field on the organisation profile and the Link field on the company link still read "example, test or invalid hosts only", and carry `example` placeholders, although the database already accepts real hosts in real mode. The guided request form also labels its email "Test email address" with an `example.invalid` placeholder. Fix: use the real-mode branches that neighbouring labels already use.
-5. **Customer billing "Access required" was misleading.** The page used the same words for "you have no access" and "this workspace type is not served". Fixed in PR 173: a real workspace whose plans are not switched on is told so.
+1. **Invoicing had no real path. (FIXED: built and merged, closed by default.)** Real invoices, credit notes and manual payment records are ADR-064 (PR185, PR186); the simulated provider is ADR-065 (PR188). A real workspace still sees nothing until the owner installs, sets the supplier details, switches it on and runs `enable`. No real payment provider exists.
+2. **Two writes labelled real records "Synthetic". (FIXED in PR179.)** Real fee ledger lines and template capacity reasons no longer carry the word.
+3. **Company registry search is empty for real workspaces. (OPEN, a data question.)** The registry holds sample organisations only. The question is whether a real registry exists yet and who vets entries; it is not a code defect. The claim and staff review path works.
+4. **Stale sample wording on three forms. (FIXED in PR176.)** The organisation Website field, the company Link field and the guided request email now use the real-mode wording, and a scan keeps sample wording out of real mode.
+5. **Customer billing "Access required" was misleading. (FIXED in PR173.)** A real workspace whose plans are not switched on is told so.
 6. **Real-mode test results so far.** Saved reports and company continuity: the test found a real defect. A customer session carries no tenant, so the check that the staff member who made a share link still has access used the sample purpose, and real staff hold only the real purpose. Saving or opening a real report failed with "Link unavailable or expired". Fixed by additive real-use migration 0009 (three functions, one new helper, nothing for sample or staff paths). Companies, listing, isolation between customers and removal pass.
 7. **Finding 6 is closed.** All seven groups now run with a real session. One real defect was found (saved reports, fixed by 0009); the rest passed with no code change.
 8. **(Closed, see 7.) Seven module groups were built for real but never run with a real session in tests.** They are listed as "Built, not proven for real" above. Closing this means one real-mode scenario per group, using the same fixture that `real-customer-modules.test.ts` uses. It is test work, not feature work, and it is the cheapest way to turn "built" into "tested".
@@ -50,10 +52,10 @@ Read it with the operating-state ladder in mind: designed, implemented, tested, 
 - It does not show that a real person can complete a journey. Real-user ease of every screen is unproven until real users try them.
 - It does not approve any module for commercial use. Approval and "live" stay separate from "built" and "tested".
 
-## Suggested order
+## Order of work, as it stands on 24 October 2026
 
-1. Stage 1 billing is merged; the owner installs it in the order in the runbook.
-2. Wording fixes in finding 4 (small, one pull request).
-3. Finding 2 as an additive real-use migration with a real-mode test for bulk fees and template apply.
-4. Real-mode scenarios for the seven groups in finding 6, one pull request per group of related modules.
-5. Stage 2 (real invoices) when the owner supplies the inputs listed in ADR-062.
+1. DONE: stage 1 plans (PR173), wording fixes (PR176, PR179), real-mode scenarios for every group (PR180 to PR182), report access switches (PR184), privacy notice (PR183).
+2. DONE: stage 2 real invoices (PR185, PR186) and stage 3 simulated provider (PR188). All closed by default.
+3. OWNER: install and switch on in the order in the [Neon accounts runbook](../runbooks/neon-auth-accounts.md), starting with the supplier details.
+4. OPEN: finding 3, the real company registry.
+5. OPEN, needs its own ADR, contract and review: a real payment provider.

@@ -1,5 +1,7 @@
 # View-as proposal (Phase 0, item 8)
 
+**Document status: PARTLY BUILT.** Approved (ADR-059). Stage 1 is built; stage 2 waits for the owner. See the [plan status register](../PLAN_STATUS.md).
+
 Date: 2026-10-23. Status: approved by the owner on 23 October 2026 ("yes to both, as long as safe") and recorded as [ADR 059](../adr/0059-view-as-preview.md). Stage 1 is built; later stages are not. The decisions at the end were taken at their proposed defaults.
 
 ## Goal and hard limits

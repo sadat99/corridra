@@ -1,5 +1,7 @@
 # Part 08 implementation and release status
 
+**Document status: HISTORICAL.** Finished V1 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Client and institutional delivery is implemented through [PR #24](https://github.com/sadat99/corridra/pull/24). The PR release evidence records the exact revision, CI, isolated preview, production migration, deployment, live reads and cleanup as each gate completes. The production entry point is [corridra.vercel.app](https://corridra.vercel.app). [The requirement baseline](part-08-scope.md), [ADR-022](../adr/0022-scoped-client-and-institutional-delivery.md) and [the operator runbook](../runbooks/part-08-client-and-institutional-delivery.md) define scope, permissions, import confirmation, reports and rollback.

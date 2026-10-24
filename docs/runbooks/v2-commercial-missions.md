@@ -1,5 +1,7 @@
 # V2 commercial mission operations
 
+**Document status: CURRENT, DATED.** The steps still describe the module. Counts, dates and rollout notes inside are historical. See the [plan status register](../PLAN_STATUS.md).
+
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
 Begin with the existing short synthetic mission intake and operator qualification. Preserve the customer's source declaration. Use current canonical counterparty research to add relevant targets and their source/claim records. No template requires a long public onboarding form.

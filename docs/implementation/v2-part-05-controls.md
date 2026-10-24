@@ -1,5 +1,7 @@
 # V2 Part 5 data, privacy and security controls register
 
+**Document status: HISTORICAL.** Control list of a finished V2 part, dated. Use the deferred controls register for open controls. See the [plan status register](../PLAN_STATUS.md).
+
 Current control boundaries must be read with [the current plan](current-plan.md). Dated provider/account observations below are evidence for their own time, not a fresh settings audit. Implementation and identity-email acceptance do not close unrelated real-data, assurance or pilot gates.
 
 This is a dated investigation and implementation register, not a replacement for the original [deferred controls](deferred-controls.md). Original closures D07 and D09 retain their evidence. An external item is not cleared by recording a PASS observation, a synthetic test or this document. The accepted Part 5 PR records final release evidence.

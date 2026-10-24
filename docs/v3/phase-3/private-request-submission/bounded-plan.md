@@ -1,5 +1,7 @@
 # Private request submission through the existing guided intake
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Status: exact-head CI passed;PR70 merged/deployed9b21351 with exposure closed. Actual private-provider acceptance remains NOT VERIFIED. V3-06-004 remains PARTIAL. This is sample request creation/persistent receipt progress,not full customer commercial mission administration.
 
 Reuse canonical customer request API/module3 and the existing contextual `Intake` component. Public defaults,original technical/commercial fields,receipt capability,old commands and all original assertions remain intact. The selected-workspace page requires both closed flags,fresh verified provider identity,independent request admission and active selected membership. Creation links require admitted request access. POST retains its unchanged independent proof/admission/member checks and shared intake budgets. No new API/SQL/RLS/migration/money/event/provider or dependency.

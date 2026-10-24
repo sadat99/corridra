@@ -1,5 +1,7 @@
 # Part 03: Data, identity, tenancy and trust foundations
 
+**Document status: HISTORICAL.** Finished V1 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Status: the Part 03 implementation and explicit temporary scanner bypass are locally validated. The owner authorized the current system on https://corridra.vercel.app under [ADR-015](../adr/0015-production-domain-and-explicit-unscanned-evidence.md), superseding the prior preview-only and upload-disabled rollout. The production deployment and real browser/API acceptance passed on 2026-10-05. See [the live rollout evidence](part-03-production-rollout.json): merge 3a322a2ffea56faee286604c4d4618c4af598ba0, Vercel dpl_3drqqgN3jsThNmPpnx9Aeeppuod1, Frankfurt fra1. The public Sign in link opens the operator login. No customer import or Part 04 intake is added. Account and infrastructure controls remain open in the [deferred register](deferred-controls.md); they are not represented as passed. Manual exact-SHA deployment preserves the branch's Git hold and existing GitHub rules.

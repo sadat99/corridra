@@ -1,5 +1,7 @@
 # Saved request recovery, phases 2 and 3: proposal
 
+**Document status: PARTLY BUILT.** Phase 1 is built (PR168). Phases 2 and 3 are WAITING OWNER. See the [plan status register](../PLAN_STATUS.md).
+
 Status: phase 1 is built (a notice that says the request is saved, not sent, kept for 24 hours and finished on the same device and browser, plus an address that is filled in on the verify page). Phases 2 and 3 are not built and need the owner's approval. Written on 24 October 2026.
 
 ## The problem

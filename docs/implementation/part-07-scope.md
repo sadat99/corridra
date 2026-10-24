@@ -1,5 +1,7 @@
 # Part 07 requirement baseline
 
+**Document status: HISTORICAL.** Scope packet of a finished V1 part. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 This packet connects Corridra's existing intake, research, controlled introduction, held meeting and owned follow-up to observed commercial progress. The complete constitution, public experience and architecture canvas remain governing requirements in [the document index](../README.md). Originals and working-copy integrity are preserved.

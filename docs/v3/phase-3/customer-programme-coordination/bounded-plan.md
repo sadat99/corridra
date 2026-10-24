@@ -1,5 +1,7 @@
 # Programme coordination and reporting: bounded plan and acceptance record
 
+**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Governing decision: [ADR-047](../../../adr/0047-private-programme-coordination-and-reporting.md). Contract sections: 2 (Product 3, Delegation OS), 6 (new capabilities) and 9 (per-PR acceptance). Status of the whole capability: PARTIAL. Source and local evidence only until exact-head CI, merge and a gated deployment are recorded in the ledger.
 
 ## Changed requirement IDs

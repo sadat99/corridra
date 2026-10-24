@@ -1,6 +1,8 @@
 # Current programme and continuation plan
 
-Use [V3_LEDGER.md](../V3_LEDGER.md) for current source, deployment, PRs, flags, blockers, actual results and next action. This document records the stable implementation order without duplicating release metadata.
+**Document status: CURRENT.** Stable work order. See the [plan status register](../PLAN_STATUS.md).
+
+Use [V3_LEDGER.md](../V3_LEDGER.md) for current source, deployment, PRs, flags, blockers, results and next action. This file records the stable order without release metadata.
 
 ## Requirements and scope
 
@@ -28,7 +30,7 @@ The entire previous current-plan document and dated forward notes are preserved 
 
 ## Guided request drafts packet
 
-PR86 source accepted (chunk118, ADR045). Current installation/activation is in the ledger; genuine production acceptance remains unverified.
+PR86 source accepted (chunk118, ADR045). Installation and activation: see the ledger.
 
 ## Organiser economics packet
 

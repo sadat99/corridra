@@ -1,5 +1,7 @@
 # Part 06 requirement baseline
 
+**Document status: HISTORICAL.** Scope packet of a finished V1 part. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 The governing documents are the complete constitution, public experience and implementation canvas indexed in `docs/README.md`. This packet implements Part 06 of `plan-v1.0.md`; Part 07 commercial opportunities and outcome projections remain later work.

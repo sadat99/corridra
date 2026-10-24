@@ -1,5 +1,7 @@
 # Development environment
 
+**Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
+
 Read [Start here](../START_HERE.md), [the current plan](../implementation/current-plan.md), root/nested `AGENTS.md` and applicable module contracts first. Use the existing checkout; no worktree unless requested. Pinned tools are Node 24.19.0 and pnpm 11.19.0.
 
 ## Install and start

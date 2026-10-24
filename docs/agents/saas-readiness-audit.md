@@ -1,5 +1,7 @@
 # SaaS readiness audit, 15 October 2026
 
+**Document status: CURRENT, DATED.** Describes main at 47a03d0 (15 Oct 2026). Billing has moved on since; use it for tenant and enterprise questions. See the [plan status register](../PLAN_STATUS.md).
+
 A read-only audit of what Corridra can and cannot do today as a paid software product. Nothing was changed to produce it. It is a dated record: it describes `main` at `47a03d0` (plus the production deployment of `f5e6384`, `dpl_Aqz6dLRGuj8ARTJe87CT8SsATeZZ`) and must be re-checked against newer code before it is quoted.
 
 Evidence tags: **[O]** observed in code, migrations, tests or Vercel; **[I]** inference; **[U]** not verified. Implemented, tested, deployed, activated for real customers and commercially production-ready are different things and are kept apart below.

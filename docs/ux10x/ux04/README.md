@@ -1,5 +1,7 @@
 # UX-04 operator commercial experience
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../../PLAN_STATUS.md).
+
 Historical UX-04 package record, implemented and merged in PR 42. Later UX packages and bounded access repairs are also merged. Use [the current plan](../../implementation/current-plan.md) for present work and standing release authority. Original next-package or separate-approval statements below describe the historical packet; they do not restart completed work. Scope acceptance is not complete functional coverage.
 
 Accepted baseline: UX-03 PR #41, merge `fa703fd0572de24dd3ed2e1bbcdf18aee8b1cef6`. PR CI and main CI passed. Its production deployment is READY and passed 30 read-only desktop/mobile route observations, no axe violations, no overflow and anonymous mission denial. The master handoff remains governing; Fusion remains visual reference only.
