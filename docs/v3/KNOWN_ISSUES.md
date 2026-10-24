@@ -1,5 +1,7 @@
 # Known issues and lessons
 
+**Document status: CURRENT.** Read before debugging CI. Entries are lessons, newest last. See the [plan status register](../PLAN_STATUS.md).
+
 Read this before debugging CI or deciding who may merge. Add an entry when a failure takes more than one run to explain. Each entry gives what was seen, the cause (proven or inferred), the fix and how to avoid a repeat. Dates are 2026, UTC.
 
 ## CI and test failures
@@ -124,3 +126,12 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Seen (23 Oct, PR160 after PR161):** each PR passed `verify` alone, git merged both ledger edits without a conflict, and `main` ended at 12,357 bytes, over the cap, so `node scripts/v3-context.mjs verify` failed on `main` and would have failed every later PR.
 - **Do:** after merging main into a branch, and straight after your own merge, run `node scripts/v3-context.mjs verify` and `wc -c docs/V3_LEDGER.md`. Edit the ledger lines in place and condense old history instead of adding lines; keep the ledger under about 12,000 bytes: `status` prints it plus a 23 byte footer and `tests/context-tools.test.mjs` runs it, so the real cap is about 12,265 bytes, not 12,288 (PR164 failed `checks` at 12,279). Fixed by removing a repeated action-group sentence and the two CI failure details already kept in this file.
+
+### KI-21 Red marks that are not code failures, and a stacked-PR routine (24 Oct 2026)
+
+- **A pull request with no CI runs at all** is usually conflicted ("dirty") against `main`: GitHub does not start `pull_request` workflows on a conflicted PR. Merge `origin/main` into the branch, push, and the runs start. Do not push an empty commit.
+- **Vercel preview "Resource is limited ... api-deployments-free-per-day"** is the owner's account limit, not a code failure and not a required check. Deleting old previews or waiting a day clears it.
+- **A main run shown "cancelled"** was superseded by a newer push to `main` (main CI cancels older in-flight runs). Look at the newest main run, not the cancelled one.
+- **Local container only (CI passes):** `customer-mission-shares.test.ts` fails alone (database locale); `y-ux05-governance.spec.ts` alone fails at "Six-digit code"; `workspace.spec.ts:2403` is KI-19. Postgres stops when the container restarts: start it again with the command in KI-15 before any database test or `pnpm preflight`.
+- **Stacked PRs:** after each squash merge, merge `origin/main` into each remaining branch. Expected conflicts: `docs/agents/work-log.md` and `docs/adr/README.md` (keep both sides), `docs/documentation-map.json` (keep both entries) and the audit table in `docs/product/real-use-audit-2026-10-24.md` (take main's version, then re-apply your row edits by line prefix, because prettier pads tables).
+- **Preflight:** start it detached (`setsid nohup node scripts/preflight.mjs quick < /dev/null &`), do not switch branches or run database tests while it runs, stop it by process id, and once your own work is committed run `git status`; generated files under `docs/design-system/evidence` or `docs/v3` that you did not write can be dropped with `git checkout -- <path>`. Never run that command on paths you edited and have not committed.

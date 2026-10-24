@@ -1,5 +1,7 @@
 # Multi-corridor V2 architecture contract
 
+**Document status: CURRENT, DATED.** Design of the V2 multi-corridor model. Still the reference; release notes inside are historical. See the [plan status register](../PLAN_STATUS.md).
+
 Read this contract before changing missions, research, commercial origins, corridor configuration, policy or money. It records V2 Part 1 contracts; later parts added UI, governed provider adapters and operations controls under ADRs 026–031. Read [the current map](v2-current-map.md) and [current plan](../implementation/current-plan.md) for the complete implemented scope. V2 supersedes geographic rollout order, not tenant isolation, historical truth or production-data gates.
 
 ## Global identities and distinct locations

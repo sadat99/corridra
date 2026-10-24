@@ -1,5 +1,7 @@
 # Part 04 release
 
+**Document status: HISTORICAL.** Finished V1 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Scope: five-step no-account test intake, normalized mission records, private status/reply receipts and protected Ops Home. The current live data environment remains synthetic under ADR-015. See ADR-016 for the ingress and state contracts and the mission runbook for operations/rollback.

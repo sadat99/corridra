@@ -1,5 +1,7 @@
 # Repeatable programme templates: bounded plan and acceptance record
 
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Governing decision: [ADR-048](../../../adr/0048-private-programme-templates.md). Contract sections: 2 (Product 3, Delegation OS), 6 (new capabilities) and 9 (per-PR acceptance). Status of the whole capability: PARTIAL. Source and local evidence only until exact-head CI, merge and a gated deployment are recorded in the ledger.
 
 ## Changed requirement IDs

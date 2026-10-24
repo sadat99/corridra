@@ -1,5 +1,7 @@
 # Revised V2 Part 4 operations
 
+**Document status: CURRENT, DATED.** The steps still describe the module. Counts, dates and rollout notes inside are historical. See the [plan status register](../PLAN_STATUS.md).
+
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
 Start with the existing work password/TOTP identity and tenant authority. Use isolated synthetic records for validation. Real invited work additionally requires ADR057 installation and both explicit Network controls. Customer Neon identities do not gain execution access through email matching.

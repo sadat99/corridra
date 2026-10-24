@@ -1,5 +1,7 @@
 # UX-05 operations, governance and trust
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../../PLAN_STATUS.md).
+
 Historical UX-05 package record, implemented and merged in PR 43. Later UX packages and bounded access repairs are also merged. Use [the current plan](../../implementation/current-plan.md) for present work and standing release authority. Original next-package or separate-approval statements below describe the historical packet; they do not restart completed work. Scope acceptance is not complete functional coverage.
 
 Accepted baseline: UX-04 PR #42, merge `2fb94b716cd690fcb60325bda7cd299e5847435f`. Exact-head CI passed. The exact merge tree was deployed READY in the existing Frankfurt project; 30 read-only production route/viewport observations passed with no axe violations, overflow or writes, and anonymous mission access returned 401. The complete master handoff governs scope; Fusion supplies visual reference only.

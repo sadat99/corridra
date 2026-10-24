@@ -1,5 +1,7 @@
 # Account-saved commercial mission workspace
 
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Requirements: V3-06-004,V3-04-015,V3-04-046,V3-05-019,V3-05-023,V3-02-041. All remain PARTIAL for broader product scope. This packet makes approved managed commercial reports persist across visits,and reuses their existing evidence reply workflow. It is not full self-service research,procurement authoring or independent delegation administration.
 
 Touch: optional private bookmark/immutable command audit module and installer;fresh-proof saved mission service;GET/POST customer-saved-missions API;gated account list and account/missions/[resourceId] page/report;existing founder capability copy,private headers and3day browser evidence;new integration/UI/default-off tests;ADR036 and release documents. No dependencies,legacy test edits,old migration/function/ACL/RLS/source/event/money rewrites,provider/admission/intake/activation changes. Original V2 report and declaration engines/components are reused.

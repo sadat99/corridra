@@ -1,5 +1,7 @@
 # Part 05 release: Counterparty research and qualification
 
+**Document status: HISTORICAL.** Finished V1 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Implemented the protected organisation/counterparty workspace, sourced public identity ingestion, relationship-scoped contacts and notes, products/capabilities/certifications/requirements/markets, explicit independent public fact publication, deterministic ambiguous-match review and reversible tenant attribution. An active mission yields a shortlist with fit rationale, original source, uncertainty, evidence gaps and next action. Versioned assessments, role/visibility policies, RLS, idempotent commands and transactional audit/outbox behavior cover the workflows. TARGETING now follows activation and supports hold/resume/cancel; Part 06 outreach remains unavailable.

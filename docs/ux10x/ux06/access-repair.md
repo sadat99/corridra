@@ -1,5 +1,7 @@
 # Access repair scope and acceptance
 
+**Document status: HISTORICAL.** Dated UX10X snapshot. Counts and results belong to the revision it names, not to today. See the [plan status register](../../PLAN_STATUS.md).
+
 The account and operator experiences previously offered too many unrelated choices and did not make a pending owner invitation apparent. PR 45 reorganized the workspace entry and mission workflow. This packet adds invitation guidance, operator password recovery and a named existing-member selector, retaining every original service and permission.
 
 ## Where each person starts

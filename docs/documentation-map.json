@@ -1027,6 +1027,16 @@
       "path": "docs/source/ac1-design-system/ONE_PASTE_AGENT_INSTRUCTION.md",
       "classification": "Preserved source/working copy",
       "use": "Owner-supplied AC/1 design system original (22 Oct 2026); hash-checked, never edit; amend forward in docs/design-system/README.md"
+    },
+    {
+      "path": "docs/PLAN_STATUS.md",
+      "classification": "Current guide/contract",
+      "use": "Read first when a document looks old; one-word status (current, done, partly built, historical, not valid) of every plan, proposal, audit and ADR exception"
+    },
+    {
+      "path": "docs/v3/history/ledger-before-handoff-refresh-2026-10-24.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact 3a85204 active-ledger bytes before the 24 October 2026 handoff refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
     }
   ]
 }

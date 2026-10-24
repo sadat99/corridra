@@ -1,6 +1,6 @@
 # Architecture decision index
 
-Read [Start here](../START_HERE.md), [current plan](../implementation/current-plan.md) and [current architecture](../architecture/v2-current-map.md). ADR numbers have intentional gaps; do not renumber accepted decisions. These are contracts/dated decisions, not an implementation queue. Later explicit amendments supersede only the identified restriction.
+Read [Start here](../START_HERE.md), [current plan](../implementation/current-plan.md) and [current architecture](../architecture/v2-current-map.md). ADR numbers have intentional gaps; the [plan status register](../PLAN_STATUS.md) lists the ADRs that are superseded or only proposed (a `Status:` line inside an ADR is the state on the day it was written); do not renumber accepted decisions. These are contracts/dated decisions, not an implementation queue. Later explicit amendments supersede only the identified restriction.
 
 ADR 014 preview-only deployment was amended by ADR 015 for the retained synthetic production-domain exception. ADR 019/D07 records the historical Git association repair; main Git auto-deployment was disabled until ADR 050 (20 October 2026) switched it on, so a merge to main deploys itself. ADR 020 customer identity remains separate from staff TOTP. ADRs 023–029 add the revised multi-corridor/commercial/intelligence/network/operations scope. ADR 031 supersedes only ADR 030 offline existing-staff password recovery; first invitations, lost MFA and suspended/expired recovery remain reviewed.
 

@@ -1,5 +1,7 @@
 # UX10X coverage reconciliation, 15 October 2026
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../../PLAN_STATUS.md).
+
 Dated verification record for `main` at `bbb7d71`. It answers one question: what do the existing UX ledgers still leave unverified, and what does an executed run show today? It does not replace the UX-06 ledger (`docs/ux10x/ux06/coverage.json`), which is retained unchanged. Nothing here certifies functional preservation, and no real customer operation, provider, outreach, payment or payout was touched.
 
 ## Result in one table
