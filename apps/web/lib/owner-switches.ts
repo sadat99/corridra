@@ -271,7 +271,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_MISSION_EMAIL_ENABLED',
     label: 'Mission emails',
-    line: 'Sends "We have your request" to the verified account holder. Needs the mission mail database module installed and opened, and the sender settings. "Your move" waits for the Mission Road work.',
+    line: 'Sends "We have your request" to the verified account holder. Needs the mission mail database module installed and opened, and the sender settings. "One thing needs you" waits for the Mission Road work.',
     group: 'Delivery',
     kind: 'flag',
   },
