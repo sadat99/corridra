@@ -1,4 +1,4 @@
-// Mission emails to the person who owns a request: "We have your request" and "Your move".
+// Mission emails to the person who owns a request: "We have your request" and "One thing needs you".
 // Pure functions. No network, no logging, no sending. The words live in the catalog so another
 // language only adds a catalog entry. Nothing here sends or schedules anything; the switch, the
 // recipient and the trigger are decided elsewhere (see mission-mail-gate.ts and the proposal).
@@ -34,7 +34,7 @@ export type RequestReceivedInput = Links & {
 };
 
 /**
- * What "Your move" needs. Nothing in the data today records something a customer must do, so this
+ * What "One thing needs you" needs. Nothing in the data today records something a customer must do, so this
  * is a contract for the Mission Road work, not a trigger: the owner of that work fills these fields.
  */
 export type MissionMove = {
@@ -71,7 +71,10 @@ type Catalog = {
     greetingNoName: string;
     intro: string;
     introNoJob: string;
+    /** Used when the request type is not one of the keys of nextByJob. */
     next: string;
+    /** What comes next, by the job phrase mission-mail.ts stores for each request type. */
+    nextByJob: Record<string, string>;
     signInCode: string;
     signInPassword: string;
     reply: string;
@@ -116,7 +119,19 @@ export const missionMailCatalog: Record<string, Catalog> = {
         'Thanks for sending this. Your request about {job} has reached us, and a person on our team will read it.',
       introNoJob:
         'Thanks for sending this. Your request has reached us, and a person on our team will read it.',
-      next: "Here's what comes next. We check the details with you. Then we look for suppliers and check what they say about themselves. When quotes arrive, you'll see them side by side.",
+      next: "Here's what comes next. We check the details with you. Then we tell you the next step in your request.",
+      nextByJob: {
+        'sourcing suppliers':
+          "Here's what comes next. We check the details with you. Then we look for suppliers and check what they say about themselves. When quotes arrive, you'll see them side by side.",
+        'selling in a new market':
+          "Here's what comes next. We check the details with you. Then we look for buyers and partners in your target market and check what they say about themselves. What we find will appear in your request.",
+        'finding customers or distributors':
+          "Here's what comes next. We check the details with you. Then we look for customers or distributors that fit and check what they say about themselves. What we find will appear in your request.",
+        'making an upcoming business trip more productive':
+          "Here's what comes next. We check the details with you. Then we work out who is worth meeting on your trip and what to prepare. Your plan will appear in your request.",
+        'running a multi-company mission':
+          "Here's what comes next. We check the details with you and each company taking part. Then we plan the mission around what each company needs. You'll see the plan in your request.",
+      },
       signInCode:
         'The button below takes you to your request. Sign in with your email address and a code, or with your password.',
       signInPassword: 'The button below takes you to your request. Sign in with your password.',
@@ -125,7 +140,7 @@ export const missionMailCatalog: Record<string, Catalog> = {
       button: 'See your request',
     },
     yourMove: {
-      subject: 'Your move: {move_title}',
+      subject: 'One thing needs you: {move_title}',
       preheader: '{mission_name} is waiting on you.',
       greeting: 'Hi {name},',
       greetingNoName: 'Hi,',
@@ -243,7 +258,7 @@ function compose(input: MissionMailInput, catalog: Catalog): Body {
       paragraphs: [
         name ? fillMission(copy.greeting, { name }) : copy.greetingNoName,
         job ? fillMission(copy.intro, { job }) : copy.introNoJob,
-        copy.next,
+        Object.hasOwn(copy.nextByJob, job) ? copy.nextByJob[job] : copy.next,
         input.codeSignIn ? copy.signInCode : copy.signInPassword,
         ...(founder ? [founder] : []),
         copy.reply,
