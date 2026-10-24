@@ -5,6 +5,7 @@ import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
 import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
 import { JourneyBar } from '../../components/journey-bar';
+import { rememberVerifyEmail } from '../../components/verify-email-handoff';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -543,6 +544,7 @@ function IntakeForm({
               throw new Error(
                 'Your request is saved for 24 hours. Your account could not be created. Try signing in or creating your account below.',
               );
+            rememberVerifyEmail(draft.email);
           } finally {
             setPassword('');
           }

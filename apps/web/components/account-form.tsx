@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
+import { forgetVerifyEmail, recallVerifyEmail, rememberVerifyEmail } from './verify-email-handoff';
 import { announceSessionChange } from './session-events';
 import { accountAccessPath, accountReturnTo } from '../lib/account-return';
 export type AccountFormMode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -53,11 +54,42 @@ export function AccountForm({
   const [waitLeft, setWaitLeft] = useState(0);
   const codeEnabled = mode === 'signin' && codeSignIn;
   const emailInput = useRef<HTMLInputElement>(null);
+  const codeInput = useRef<HTMLInputElement>(null);
+  // True when the address was filled in for the person, so the page can say where the code went.
+  const [emailKnown, setEmailKnown] = useState(false);
   const feedback = useRef<HTMLParagraphElement>(null);
   const inFlight = useRef(false);
   useEffect(() => {
     if (failed && message) feedback.current?.focus();
   }, [failed, message]);
+  useEffect(() => {
+    if (mode !== 'verify') return;
+    let current = true;
+    const fill = (address: string) => {
+      if (!current || !address) return;
+      setEmail((typed) => typed || address);
+      setEmailKnown(true);
+      codeInput.current?.focus();
+    };
+    const remembered = recallVerifyEmail();
+    if (remembered) fill(remembered);
+    else {
+      // Signed in but not verified yet: the account already knows the address.
+      Promise.resolve()
+        .then(() => accountClient.getSession())
+        .then((result) => {
+          const address = result?.data?.user?.email;
+          if (typeof address === 'string' && address.includes('@') && address.length <= 254)
+            fill(address);
+        })
+        .catch(() => {
+          /* Without an answer the person types the address, as before. */
+        });
+    }
+    return () => {
+      current = false;
+    };
+  }, [mode]);
   useEffect(() => {
     if (waitLeft <= 0) return;
     const timer = window.setTimeout(() => setWaitLeft((seconds) => seconds - 1), 1000);
@@ -111,6 +143,7 @@ export function AccountForm({
             'Your account could not be created. Check your details or try signing in.',
           );
         setPassword('');
+        rememberVerifyEmail(email);
         router.replace(accessPath('/verify-email'));
         router.refresh();
       } else if (mode === 'forgot') {
@@ -136,6 +169,7 @@ export function AccountForm({
         if (result.error)
           throw new Error('That code could not be verified. Check it or request a new code.');
         setCode('');
+        forgetVerifyEmail();
         router.replace(accessPath('/signin'));
         router.refresh();
       } else {
@@ -168,9 +202,11 @@ export function AccountForm({
     <form method="post" className="operator-form" onSubmit={submit} aria-label="Account access">
       {mode === 'verify' && (
         <p>
-          Enter the email address you used to sign up and the six-digit code from your email. You do
-          not need a verification link. If you need another code, request one below. If this address
-          already has a verified account, no code is sent: sign in, or reset your password.
+          {emailKnown
+            ? 'Enter the six-digit code from your email. If the address below is wrong, change it. '
+            : 'Enter the email address you used to sign up and the six-digit code from your email. '}
+          You do not need a verification link. If you need another code, request one below. If this
+          address already has a verified account, no code is sent: sign in, or reset your password.
         </p>
       )}
       {mode === 'signup' && (
@@ -231,6 +267,7 @@ export function AccountForm({
         <label className="field">
           Verification code
           <input
+            ref={codeInput}
             value={code}
             disabled={busy}
             onChange={(e) => setCode(e.target.value)}
