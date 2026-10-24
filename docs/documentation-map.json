@@ -374,6 +374,21 @@
       "use": "What the first two mission emails build today, what needs an approved database change, and the privacy wording to review; nothing is switched on"
     },
     {
+      "path": "docs/product/ux-charter.md",
+      "classification": "Owner proposal",
+      "use": "Structure, principles and boundaries of the UX revamp, and the rule for giving any new capability a home; no screens, counts or dates; proposed, awaiting owner approval"
+    },
+    {
+      "path": "docs/product/ux-update-plan-verification-2026-10-24.md",
+      "classification": "Owner proposal",
+      "use": "Dated check of the 24 October UX plan against the system: confirmed facts, differences, flags with default placements, unplaced capabilities and owner decisions; expires as the system changes"
+    },
+    {
+      "path": "docs/product/ux-update-plan-corrected-2026-10-24.md",
+      "classification": "Owner proposal",
+      "use": "Corrected candidate for the final UX update plan: every verified gap and mistake fixed, lane scopes, shared-file rules, waves, gates and owner steps; not final until the owner records it; nothing is executed"
+    },
+    {
       "path": "docs/product/language-switcher-proposal.md",
       "classification": "Owner proposal",
       "use": "Where the language switcher stands against the locked plan, the three ways to choose a language and the owner's choice (option A), the languages and reviewers needed; the foundation is merged, page translation and reviewers remain"
