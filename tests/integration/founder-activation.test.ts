@@ -207,3 +207,14 @@ test('sample plans and subscriptions report their own flag and wait for the work
     ),
   ).toBe('LOCKED_PRODUCTION');
 });
+
+test('sample invoices report their own flag and wait for sample plans and the workspace flag', () => {
+  const invoicing = { ...synthetic, CORRIDRA_CUSTOMER_INVOICING_ENABLED: 'true' };
+  expect(state(invoicing, 'invoicing')).toBe('WAITING_PREREQUISITE');
+  const workspaces = { ...invoicing, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true' };
+  expect(state(workspaces, 'invoicing')).toBe('WAITING_PREREQUISITE');
+  const full = { ...workspaces, CORRIDRA_CUSTOMER_BILLING_ENABLED: 'true' };
+  expect(state(full, 'invoicing')).toBe('ON');
+  expect(state(synthetic, 'invoicing')).toBe('OFF');
+  expect(state({ ...full, VERCEL_ENV: 'production' }, 'invoicing')).toBe('LOCKED_PRODUCTION');
+});

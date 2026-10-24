@@ -3,6 +3,7 @@ import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { CustomerServiceRequests } from './customer-service-requests';
 import { CustomerBilling } from './customer-billing';
+import { CustomerInvoicing } from './customer-invoicing';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
@@ -531,6 +532,7 @@ export function DeliveryExperience(props: Props) {
       )}
       {['owner', 'admin'].includes(props.role) && <CustomerServiceRequests tenant={tenant} />}
       {['owner', 'admin'].includes(props.role) && <CustomerBilling tenant={tenant} />}
+      {['owner', 'admin'].includes(props.role) && <CustomerInvoicing tenant={tenant} />}
       <h3>Counterparty declarations awaiting review</h3>
       {data.responses.length ? (
         data.responses.map((r) => (

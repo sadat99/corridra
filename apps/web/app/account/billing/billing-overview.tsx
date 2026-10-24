@@ -21,7 +21,7 @@ import {
   type SubscriptionSummary,
 } from './billing-client';
 
-type Props = { subject: string; issuer: string; workspaceId: string };
+type Props = { subject: string; issuer: string; workspaceId: string; invoicing?: boolean };
 type Panel = { kind: 'request'; plan: BillingPlan } | { kind: 'cancel' | 'withdraw' } | null;
 
 export function BillingOverviewView(props: Props) {
@@ -46,7 +46,7 @@ function StatusBadge({ s }: { s: SubscriptionSummary }) {
   );
 }
 
-function ScopedOverview({ subject, issuer, workspaceId }: Props) {
+function ScopedOverview({ subject, issuer, workspaceId, invoicing = false }: Props) {
   const id = useId();
   const [overview, setOverview] = useState<BillingOverview | null>(null),
     [plans, setPlans] = useState<BillingPlans | null>(null),
@@ -205,8 +205,9 @@ function ScopedOverview({ subject, issuer, workspaceId }: Props) {
   return (
     <section aria-label="Plan and billing">
       <p>
-        Plans here are samples. Nothing is charged, no invoice is made and no payment is taken. The
-        limits in a plan are shown for information only.
+        {invoicing
+          ? 'Plans here are samples. Nothing is charged and no payment is taken through Corridra. Any invoice is a sample record too, shown further down. The limits in a plan are shown for information only.'
+          : 'Plans here are samples. Nothing is charged, no invoice is made and no payment is taken. The limits in a plan are shown for information only.'}
       </p>
       {state === 'loading' && <p role="status">Loading your plan…</p>}
       {state !== 'loading' && state !== 'ready' && (

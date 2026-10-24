@@ -19,6 +19,7 @@ import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
 import { customerServiceRequestsEnabled } from './customer-service-requests';
 import { customerBillingEnabled } from './customer-billing';
+import { customerInvoicingEnabled } from './customer-invoicing';
 import {
   customerOpenAdmission,
   customerProductionLocked,
@@ -186,6 +187,12 @@ const modules: {
     label: 'Sample plans and subscriptions',
     flag: 'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     enabled: customerBillingEnabled,
+  },
+  {
+    key: 'invoicing',
+    label: 'Sample invoices and payment records',
+    flag: 'CORRIDRA_CUSTOMER_INVOICING_ENABLED',
+    enabled: customerInvoicingEnabled,
   },
 ];
 
