@@ -10,6 +10,8 @@ import {
   type RequestReceivedInput,
   type YourMoveInput,
 } from '../../packages/auth/src/mission-mail-templates';
+import { objectiveOptions } from '../../packages/domain/src/missions';
+import { jobPhrase } from '../../packages/auth/src/mission-mail';
 import {
   signMissionMailMute,
   verifyMissionMailMute,
@@ -55,8 +57,9 @@ describe('message 1, we have your request', () => {
     expect(mail.text).toContain(
       'Your request about Sell in a new market: Germany has reached us, and a person on our team will read it.',
     );
+    // A job phrase that is not one of the five request types gets the general paragraph.
     expect(mail.text).toContain(
-      "Here's what comes next. We check the details with you. Then we look for suppliers and check what they say about themselves. When quotes arrive, you'll see them side by side.",
+      "Here's what comes next. We check the details with you. Then we tell you the next step in your request.",
     );
     expect(mail.text).toContain('If something in your request is wrong, reply to this email.');
     expect(mail.text).toContain('Sadat\nFounder, Corridra');
@@ -98,6 +101,46 @@ describe('message 1, we have your request', () => {
     );
   });
 
+  it('says what comes next for each request type, and only the general words otherwise', () => {
+    const expected: Record<string, string> = {
+      'Source suppliers':
+        "Here's what comes next. We check the details with you. Then we look for suppliers and check what they say about themselves. When quotes arrive, you'll see them side by side.",
+      'Sell in a new market':
+        "Here's what comes next. We check the details with you. Then we look for buyers and partners in your target market and check what they say about themselves. What we find will appear in your request.",
+      'Find customers or distributors':
+        "Here's what comes next. We check the details with you. Then we look for customers or distributors that fit and check what they say about themselves. What we find will appear in your request.",
+      'Make an upcoming business trip more productive':
+        "Here's what comes next. We check the details with you. Then we work out who is worth meeting on your trip and what to prepare. Your plan will appear in your request.",
+      'Run a multi-company mission':
+        "Here's what comes next. We check the details with you and each company taking part. Then we plan the mission around what each company needs. You'll see the plan in your request.",
+    };
+    const general =
+      "Here's what comes next. We check the details with you. Then we tell you the next step in your request.";
+    const seen = new Set<string>();
+    for (const [objective, paragraph] of Object.entries(expected)) {
+      const job = jobPhrase(objective);
+      expect(job, objective).not.toBe('');
+      const text = renderMissionMail(received({ job })).text;
+      expect(text, objective).toContain(paragraph);
+      expect(text, objective).not.toContain(general);
+      seen.add(paragraph);
+    }
+    expect(seen.size).toBe(5);
+    for (const job of ['', undefined, 'Something else entirely', 'constructor', '__proto__']) {
+      const text = renderMissionMail(received({ job })).text;
+      expect(text, String(job)).toContain(general);
+      for (const paragraph of seen) expect(text, String(job)).not.toContain(paragraph);
+    }
+  });
+
+  it('has a paragraph for every request type the form offers', () => {
+    const keys = Object.keys(missionMailCatalog.en.requestReceived.nextByJob).sort();
+    const typed = objectiveOptions.filter((name) => name !== 'Something else');
+    expect(typed.length).toBe(5);
+    expect(keys).toEqual(typed.map((name) => jobPhrase(name)).sort());
+    expect(jobPhrase('Something else')).toBe('');
+  });
+
   it('drops the job phrase when the job is empty, without a doubled "request"', () => {
     for (const job of [undefined, null, '', '  ']) {
       const text = renderMissionMail(received({ job })).text;
@@ -121,7 +164,7 @@ describe('message 1, we have your request', () => {
 describe('message 4, your move', () => {
   it('uses the agreed words and has no personal signature', () => {
     const mail = renderMissionMail(move());
-    expect(mail.subject).toBe('Your move: Confirm your sample size');
+    expect(mail.subject).toBe('One thing needs you: Confirm your sample size');
     expect(mail.preheader).toBe('Germany buyers is waiting on you.');
     expect(mail.text).toContain(
       'Germany buyers needs one thing from you: Confirm your sample size.',
