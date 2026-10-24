@@ -17,3 +17,7 @@
   color: var(--positive);
   background: var(--positive-surface);
 }
+/* In the site header the label sits beside the name, not in the middle of the row. */
+.site-header > .mr-mode {
+  margin-inline-end: auto;
+}

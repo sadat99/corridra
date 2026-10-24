@@ -141,6 +141,19 @@ export const en = {
   'room.evidence.heading': 'What the labels mean',
   'room.evidence.line':
     'Every fact in a report carries one of five labels. The label says how the fact is known, not how good it is.',
+  'fq.legend': 'Pick the closest one. You can change it.',
+  'fq.buyProducts.label': 'Buy products',
+  'fq.buyProducts.hint': 'Find suppliers for goods or materials.',
+  'fq.buyMachine.label': 'Buy a machine',
+  'fq.buyMachine.hint': 'Find suppliers for machinery or equipment.',
+  'fq.sellAbroad.label': 'Sell abroad',
+  'fq.sellAbroad.hint': 'Find buyers, distributors or partners.',
+  'fq.groupTrip.label': 'Lead a group trip',
+  'fq.groupTrip.hint': 'Plan the programme and the meetings.',
+  'fq.somethingElse.label': 'Something else',
+  'fq.somethingElse.hint': 'Trips, visits, meetings or anything else.',
+  'header.modeSample': 'Sample',
+  'header.modeReal': 'Real',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -284,6 +297,19 @@ const bn: Catalog = {
   'room.evidence.heading': 'লেবেলগুলোর অর্থ',
   'room.evidence.line':
     'প্রতিবেদনের প্রতিটি তথ্যে পাঁচটি লেবেলের একটি থাকে। লেবেল বলে তথ্যটি কীভাবে জানা গেছে, তথ্যটি কতটা ভালো তা নয়।',
+  'fq.legend': 'সবচেয়ে কাছেরটি বেছে নিন। পরে বদলাতে পারবেন।',
+  'fq.buyProducts.label': 'পণ্য কিনুন',
+  'fq.buyProducts.hint': 'পণ্য বা কাঁচামালের সরবরাহকারী খুঁজুন।',
+  'fq.buyMachine.label': 'যন্ত্র কিনুন',
+  'fq.buyMachine.hint': 'যন্ত্রপাতির সরবরাহকারী খুঁজুন।',
+  'fq.sellAbroad.label': 'বিদেশে বিক্রি করুন',
+  'fq.sellAbroad.hint': 'ক্রেতা, পরিবেশক বা অংশীদার খুঁজুন।',
+  'fq.groupTrip.label': 'দলগত সফর পরিচালনা করুন',
+  'fq.groupTrip.hint': 'কর্মসূচি ও বৈঠকের পরিকল্পনা করুন।',
+  'fq.somethingElse.label': 'অন্য কিছু',
+  'fq.somethingElse.hint': 'সফর, পরিদর্শন, বৈঠক বা অন্য যেকোনো কিছু।',
+  'header.modeSample': 'নমুনা',
+  'header.modeReal': 'প্রকৃত',
 };
 
 const zh: Catalog = {
@@ -415,6 +441,19 @@ const zh: Catalog = {
   'room.evidence.heading': '标签的含义',
   'room.evidence.line':
     '报告中的每项事实都带有五种标签之一。标签说明该事实是如何得知的，而不是它有多好。',
+  'fq.legend': '请选择最接近的一项。之后可以更改。',
+  'fq.buyProducts.label': '采购产品',
+  'fq.buyProducts.hint': '为商品或原材料寻找供应商。',
+  'fq.buyMachine.label': '采购机器',
+  'fq.buyMachine.hint': '为机械或设备寻找供应商。',
+  'fq.sellAbroad.label': '向海外销售',
+  'fq.sellAbroad.hint': '寻找买家、分销商或合作伙伴。',
+  'fq.groupTrip.label': '带领团组出访',
+  'fq.groupTrip.hint': '规划行程安排与会面。',
+  'fq.somethingElse.label': '其他',
+  'fq.somethingElse.hint': '出访、考察、会面或其他任何事项。',
+  'header.modeSample': '示例',
+  'header.modeReal': '真实',
 };
 
 const es: Catalog = {
@@ -556,6 +595,19 @@ const es: Catalog = {
   'room.evidence.heading': 'Qué significan las etiquetas',
   'room.evidence.line':
     'Cada dato de un informe lleva una de cinco etiquetas. La etiqueta indica cómo se conoce el dato, no cuán bueno es.',
+  'fq.legend': 'Elija la opción más cercana. Podrá cambiarla.',
+  'fq.buyProducts.label': 'Comprar productos',
+  'fq.buyProducts.hint': 'Encuentre proveedores de bienes o materiales.',
+  'fq.buyMachine.label': 'Comprar una máquina',
+  'fq.buyMachine.hint': 'Encuentre proveedores de maquinaria o equipos.',
+  'fq.sellAbroad.label': 'Vender en el extranjero',
+  'fq.sellAbroad.hint': 'Encuentre compradores, distribuidores o socios.',
+  'fq.groupTrip.label': 'Dirigir un viaje en grupo',
+  'fq.groupTrip.hint': 'Planifique el programa y las reuniones.',
+  'fq.somethingElse.label': 'Otra cosa',
+  'fq.somethingElse.hint': 'Viajes, visitas, reuniones o cualquier otra cosa.',
+  'header.modeSample': 'Ejemplo',
+  'header.modeReal': 'Real',
 };
 
 const ar: Catalog = {
@@ -690,6 +742,19 @@ const ar: Catalog = {
   'room.evidence.heading': 'ماذا تعني التسميات',
   'room.evidence.line':
     'كل معلومة في التقرير تحمل واحدة من خمس تسميات. تبيّن التسمية كيف عُرفت المعلومة، لا مدى جودتها.',
+  'fq.legend': 'اختر الأقرب. يمكنك تغييره لاحقًا.',
+  'fq.buyProducts.label': 'شراء منتجات',
+  'fq.buyProducts.hint': 'ابحث عن موردين للسلع أو المواد.',
+  'fq.buyMachine.label': 'شراء آلة',
+  'fq.buyMachine.hint': 'ابحث عن موردين للآلات أو المعدات.',
+  'fq.sellAbroad.label': 'البيع في الخارج',
+  'fq.sellAbroad.hint': 'ابحث عن مشترين أو موزعين أو شركاء.',
+  'fq.groupTrip.label': 'قيادة رحلة جماعية',
+  'fq.groupTrip.hint': 'خطط للبرنامج واللقاءات.',
+  'fq.somethingElse.label': 'شيء آخر',
+  'fq.somethingElse.hint': 'رحلات أو زيارات أو اجتماعات أو أي شيء آخر.',
+  'header.modeSample': 'تجريبي',
+  'header.modeReal': 'فعلي',
 };
 
 export const catalogs: Record<Locale, Catalog> = { en, bn, zh, es, ar };

@@ -5,6 +5,8 @@ import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
 import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
 import { JourneyBar } from '../../components/journey-bar';
+import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
+import { FirstQuestion } from '../../components/mr/first-question';
 import { rememberVerifyEmail } from '../../components/verify-email-handoff';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
@@ -96,16 +98,6 @@ const titles = [
   'What would make this worthwhile?',
   'Where should we respond?',
 ];
-function objectiveForJob(job: string) {
-  if (['sourcing', 'machinery_procurement', 'supplier_evaluation'].includes(job))
-    return 'Source suppliers';
-  if (job === 'delegations') return 'Run a multi-company mission';
-  if (['business_trips', 'factory_visits', 'trade_fairs', 'meetings'].includes(job))
-    return 'Make an upcoming business trip more productive';
-  if (['customers', 'distributors', 'partners'].includes(job))
-    return 'Find customers or distributors';
-  return 'Sell in a new market';
-}
 function saveDraft(draft: Draft, step: number, key: string, storageKey: string) {
   sessionStorage.setItem(
     storageKey,
@@ -139,6 +131,8 @@ type IntakeProps = {
   realMode?: boolean;
   /** From CORRIDRA_CUSTOMER_CODE_SIGNIN on the server. Adds a code sign-in link where a request lives in an account. */
   codeSignIn?: boolean;
+  /** From CORRIDRA_UX_FIRSTQ on the server. The first question is five pictures; every job type stays selectable. Off is the page as it was. */
+  firstQuestion?: boolean;
 };
 export function Intake(props: IntakeProps = {}) {
   return props.realMode && !props.privateSubmission ? (
@@ -158,6 +152,7 @@ function IntakeForm({
   privateSubmission,
   realMode = false,
   codeSignIn = false,
+  firstQuestion = false,
   navigate = missingNavigation,
 }: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
@@ -799,20 +794,31 @@ function IntakeForm({
               {step === 0 && (
                 <fieldset>
                   <legend className="sr-only">Mission objective</legend>
-                  <div className="guide-options">
-                    {objectiveOptions.map((v) => (
-                      <label className="choice" key={v}>
-                        <input
-                          type="radio"
-                          name="objective"
-                          value={v}
-                          checked={draft.objective === v}
-                          onChange={() => change('objective', v)}
-                        />
-                        {v}
-                      </label>
-                    ))}
-                  </div>
+                  {firstQuestion ? (
+                    <FirstQuestion
+                      value={selectedPicture(draft.objective, draft.job)}
+                      onChoose={(key) => {
+                        const picture = pictures.find((item) => item.key === key);
+                        if (picture?.defaultJob) change('job', picture.defaultJob);
+                        else change('objective', 'Something else');
+                      }}
+                    />
+                  ) : (
+                    <div className="guide-options">
+                      {objectiveOptions.map((v) => (
+                        <label className="choice" key={v}>
+                          <input
+                            type="radio"
+                            name="objective"
+                            value={v}
+                            checked={draft.objective === v}
+                            onChange={() => change('objective', v)}
+                          />
+                          {v}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                   {error('objective')}
                   <label className="field guide-more">
                     Commercial job

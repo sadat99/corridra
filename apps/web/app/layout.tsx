@@ -8,6 +8,8 @@ import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { offeredLanguages } from '../lib/i18n/locales';
+import { uxSwitchOn } from '../lib/ux-switches';
+import { realUseEnabled } from '@corridra/auth/customer-production';
 
 // Self-hosted variable fonts (SIL OFL, licences in fonts/). Newsreader sets public and section
 // headings, Geist the product text, Geist Mono labels and references. All three are Latin only.
@@ -76,7 +78,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <LanguageProvider offered={offeredLanguages()}>
           <SkipLink />
           <div className="site-shell">
-            <SiteHeader accounts={readNeonAuthConfig() !== null} />
+            <SiteHeader
+              accounts={readNeonAuthConfig() !== null}
+              mode={
+                uxSwitchOn('CORRIDRA_UX_FIRSTQ')
+                  ? realUseEnabled()
+                    ? 'real'
+                    : 'sample'
+                  : undefined
+              }
+            />
             {children}
             <SiteFooter />
             <CornerDock />
