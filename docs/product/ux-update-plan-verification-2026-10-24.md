@@ -1,6 +1,6 @@
 # UX update plan: verification record and addendum, 24 October 2026
 
-Status: dated record, proposed. The facts here expire; [the UX charter](ux-charter.md) does not. Where this record and the charter differ, the charter wins.
+Status: dated record, proposed. Phase: planning only. Nothing here is executed until the owner marks the plan final (section 11). The facts here expire; [the UX charter](ux-charter.md) does not. Where this record and the charter differ, the charter wins.
 
 Subject: the owner's "final strict plan for parallel Claude Code sessions" of 24 October 2026, supplied in a session. The plan is not stored in the repository, so this record is written to be read without it. Where it mentions the plan's own questions (Q1 to Q3) or waves, it uses the plan's names.
 
@@ -14,6 +14,7 @@ Method: the full V3 contract, product vision v2.1, UI direction, art review shee
 - 17 places have no guidance in the plan: where it meets a locked rule or an existing part, or a part of the system it does not place (sections 4 and 7). Each has a default placement, marked as judgement, so work can proceed without waiting.
 - 7 process gaps would stop or slow parallel lanes (section 5).
 - 8 decisions need the owner (section 8). Four of them block Wave 1.
+- Nothing is being executed. No lane, branch, switch, ADR or code change has started, and none starts until the owner marks the plan final. Section 11 lists every finding in one register and the path to a final plan.
 
 ## 2. Confirmed
 
@@ -150,10 +151,10 @@ Placement follows the charter's section 5. All are proposals.
 | 4   | Confirm the navigation amendment and labels (A1) and the plain-label fallback test (A2).                                  | Approve the amendment. Run the test with both label sets.                                                                                                                                                                                                                                                                       |
 | 5   | Road mapping and holder rules (A5, A6), to be written into ADR-0067.                                                      | Approve the monotone mapping as the default.                                                                                                                                                                                                                                                                                    |
 | 6   | Inline SVG exception for the emblem (A10).                                                                                | Do not approve yet. Try CSS and icons first.                                                                                                                                                                                                                                                                                    |
-| 7   | Parallel width (plan Q1), Bangla interface type (Q2), Lane 9 (Q3).                                                        | Two lanes now, three after the first deletion, four after PR171 merges. Keep the Bengali serif until Bangla is reviewed, then decide. Defer Lane 9.                                                                                                                                                                             |
+| 7   | Parallel width (plan Q1), Bangla interface type (Q2), Lane 9 (Q3).                                                        | When lanes start: two, then three after the first deletion, four after PR171 merges. Keep the Bengali serif until Bangla is reviewed, then decide. Defer Lane 9.                                                                                                                                                                |
 | 8   | When to schedule the helper and founder front doors (A14).                                                                | After Wave 3.                                                                                                                                                                                                                                                                                                                   |
 
-Decisions 1 to 4 block Wave 1.
+Decisions 1 to 4 block Wave 1. Even when they are answered, nothing starts until the plan is final (section 11).
 
 ## 9. Not verified
 
@@ -165,4 +166,62 @@ Decisions 1 to 4 block Wave 1.
 
 ## 10. Line for the integrator once the ledger has room
 
-"UX revamp: charter and verification record in `docs/product/ux-charter.md` and `docs/product/ux-update-plan-verification-2026-10-24.md` (proposed). Lanes 1 and 3 may start after owner decisions 1 to 4. No product code changed."
+"UX revamp: planning only. Charter and verification record in `docs/product/ux-charter.md` and `docs/product/ux-update-plan-verification-2026-10-24.md` (proposed). No lane starts until the owner marks the plan final. No product code changed."
+
+## 11. Finalization register and path to a final plan
+
+Phase: planning. The owner has said not to start executing: organise, record and finalize the plan first. So no lane, branch, switch reservation, ADR, migration or code change begins. Reading, answering questions and documentation of the plan are the only work in this phase. An earlier suggestion in the report to start Lanes 1 and 3 is withdrawn.
+
+### The register
+
+Every finding in this record in one table. Kinds: fact (a statement in the plan that differs from the system), structure, words, rule, boundary, scope, process. Statuses: **Owner decision** needs your call; **Default stands** is the proposed placement and holds unless you object; **Correct the plan text** is a plain fix with no decision; **Add as process rule** goes into the final plan's shared-files or merge sections. The Decision column points to the numbered decisions in section 8.
+
+| ID  | Item                                          | Kind      | Status                                               | Decision |
+| --- | --------------------------------------------- | --------- | ---------------------------------------------------- | -------- |
+| D1  | Branch table out of date                      | Fact      | Owner decision                                       | 2        |
+| D2  | PR171 overlaps Lane 2                         | Fact      | Owner decision                                       | 1        |
+| D3  | No specimen route exists                      | Fact      | Correct the plan text                                | -        |
+| D4  | Saved report file path                        | Fact      | Correct the plan text                                | -        |
+| D5  | Delegation presentation size                  | Fact      | Correct the plan text                                | -        |
+| D6  | Switch entry count                            | Fact      | Correct the plan text                                | -        |
+| D7  | Message 4 template already exists             | Fact      | Correct the plan text                                | -        |
+| D8  | Phase 0 files have no owning session          | Fact      | Default stands                                       | -        |
+| D9  | Service request move source                   | Fact      | Correct the plan text                                | -        |
+| D10 | Ledger writer, room and stale text            | Fact      | Correct the plan text                                | 3        |
+| A1  | Customer navigation is locked                 | Structure | Owner decision                                       | 4        |
+| A2  | Names meet the plain-language rule            | Words     | Owner decision                                       | 4        |
+| A3  | Three pages, three ids, one piece of work     | Structure | Default stands                                       | -        |
+| A4  | Journey bar, next-step card, fact label exist | Structure | Default stands                                       | -        |
+| A5  | Road mapping steps backward                   | Structure | Owner decision                                       | 5        |
+| A6  | Holder badge cannot come from replies         | Structure | Owner decision                                       | 5        |
+| A7  | Workspace and role scope                      | Structure | Default stands                                       | -        |
+| A8  | Start action and move sources                 | Structure | Default stands                                       | -        |
+| A9  | Motion longer than the rule                   | Rule      | Default stands                                       | -        |
+| A10 | Inline SVG ban for seals and emblem           | Rule      | Default stands (approval only if CSS and icons fail) | 6        |
+| A11 | Trip features and the travel boundary         | Boundary  | Default stands                                       | -        |
+| A12 | Gated requirements and per-PR evidence        | Boundary  | Default stands                                       | -        |
+| A13 | Language design, PR171 against Lane 2         | Structure | Owner decision                                       | 1        |
+| A14 | Recipient pages, helper area, founder view    | Scope     | Owner decision (when to schedule)                    | 8        |
+| A15 | Test gate against the locked one              | Rule      | Default stands                                       | -        |
+| A16 | Four states and the accessibility menu        | Rule      | Default stands                                       | -        |
+| A17 | My Work holds delegations                     | Structure | Default stands                                       | -        |
+| P1  | Documentation map and ADR index               | Process   | Add as process rule                                  | -        |
+| P2  | Ledger room and integrator task               | Process   | Add as process rule                                  | 3        |
+| P3  | The merging label does not exist              | Process   | Owner decision (owner creates it)                    | 3        |
+| P4  | Local test traps in the container             | Process   | Add as process rule                                  | -        |
+| P5  | Scroll budget classes for new screens         | Process   | Add as process rule                                  | -        |
+| P6  | Branch names available                        | Process   | Owner decision                                       | 2        |
+| P7  | Branch reuse after squash merge               | Process   | Add as process rule                                  | -        |
+
+Totals: 10 owner decisions, 12 defaults that stand unless you object, 7 corrections to plan text, 5 process rules. The plan's own questions Q1 to Q3 (parallel width, Bangla interface type, Lane 9) are decision 7.
+
+### Path to a final plan
+
+1. **Answer the decisions.** Section 8, in any order. Answering one starts nothing.
+2. **Review the defaults.** Object to any item marked "Default stands". Silence keeps the default as proposed, not as confirmed.
+3. **Assemble one final plan** as a single dated document in the repository, built from the owner's plan, the corrections and defaults in this record, and a pointer to the charter. It replaces pasting lane prompts. Its outline: the charter reference; the corrected facts; the lanes with scope, owned files, premises to verify, switches and done-when lines; the shared-file rules including the documentation map and ADR index; the merge protocol including the label rule and the ledger writer; waves, gates and the test conditions in A15; the owner's own steps.
+4. **Mark it final.** The owner records one dated sentence in the work log. Only then does any lane start, and each lane reads the final plan from the repository.
+
+### Held until then
+
+No lane branches. No reserved switch names or header blocks. No ADR 0062 to 0067. No Move, Road, Room, navigation, language or Reply Page work. PR171 is the owner's call and is not touched by this work. Pull request #172 stays a draft.
