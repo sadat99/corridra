@@ -13,6 +13,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decides whether the app jobs are needed. Only a pull request that changes nothing but
+  # documentation (and not docs/implementation, which a test reads) skips them. A push to main
+  # always runs everything. `checks` still runs on every change and covers the document tests.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Is this change documentation only
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          docs_only=false
+          if [ "$EVENT" = "pull_request" ]; then
+            files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+            echo "$files"
+            other=$(echo "$files" | grep -Ev '^([^/]+\.md|docs/.*)$' || true)
+            tested=$(echo "$files" | grep -E '^docs/implementation/' || true)
+            if [ -n "$files" ] && [ -z "$other" ] && [ -z "$tested" ]; then docs_only=true; fi
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -56,6 +84,8 @@ jobs:
         run: node scripts/v3-context.mjs verify
 
   browser:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -104,15 +134,6 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Browser and accessibility tests
         run: pnpm test:e2e
-      - name: AC/1 UX quality gate (every static route at six widths, ratcheted baseline)
-        run: pnpm test:ux
-      - name: AC/1 UX gate report and screenshots
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ux-gate-report
-          path: work/ux-gate/
-          retention-days: 14
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
@@ -123,6 +144,8 @@ jobs:
           retention-days: 7
 
   operator:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -209,17 +232,95 @@ jobs:
             !test-results/workspace-*/**
           retention-days: 7
 
+  # The UX gate is split three ways so it runs beside the other jobs. --fully-parallel makes every
+  # route its own unit, which is what lets Playwright share them out (otherwise one shard would get
+  # all 48). Together the three shards run exactly the tests `pnpm test:ux` runs.
+  ux:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Isolated PostgreSQL
+        run: pnpm db:local
+      - name: Reviewed database migrations and roles
+        run: pnpm db:prepare-local
+      - name: Real malware scanner readiness
+        run: pnpm scanner:local
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Resilient apt settings
+        run: |
+          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+      - name: Browser runtime
+        id: browser-runtime
+        timeout-minutes: 4
+        continue-on-error: true
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime (retry)
+        if: steps.browser-runtime.outcome != 'success'
+        timeout-minutes: 12
+        run: |
+          sudo pkill -KILL -x apt-get || true
+          sudo pkill -KILL -x dpkg || true
+          sleep 2
+          sudo dpkg --configure -a
+          pnpm exec playwright install --with-deps chromium
+      - name: AC/1 UX quality gate (shard ${{ matrix.shard }} of 3, every static route at six widths, ratcheted baseline)
+        run: pnpm test:ux --shard=${{ matrix.shard }}/3 --fully-parallel
+      - name: AC/1 UX gate report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ux-gate-report-${{ matrix.shard }}
+          path: work/ux-gate/
+          retention-days: 14
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: ux-failure-evidence-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 7
+
   # One required check name for the whole run. Branch protection and the release steps read `validate`.
   # A newer push cancels the older run. `!cancelled()` skips this roll-up in that case, so a
   # superseded head never reports a false failure; a failed or timed-out job still fails it.
   validate:
     if: ${{ !cancelled() }}
-    needs: [checks, browser, operator]
+    needs: [changes, checks, browser, operator, ux]
     runs-on: ubuntu-latest
     steps:
       - name: Every job must have succeeded
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          CHANGES: ${{ needs.changes.result }}
+          CHECKS: ${{ needs.checks.result }}
+          BROWSER: ${{ needs.browser.result }}
+          OPERATOR: ${{ needs.operator.result }}
+          UX: ${{ needs.ux.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
         run: |
-          echo "$RESULTS"
-          for r in $RESULTS; do [ "$r" = "success" ] || exit 1; done
+          echo "changes=$CHANGES checks=$CHECKS browser=$BROWSER operator=$OPERATOR ux=$UX docs_only=$DOCS_ONLY"
+          [ "$CHANGES" = "success" ] || exit 1
+          [ "$CHECKS" = "success" ] || exit 1
+          # The app jobs may be skipped only when the change is documentation only.
+          for r in "$BROWSER" "$OPERATOR" "$UX"; do
+            [ "$r" = "success" ] && continue
+            [ "$r" = "skipped" ] && [ "$DOCS_ONLY" = "true" ] && continue
+            exit 1
+          done

@@ -29,6 +29,7 @@ import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
 import { foundations } from '../../lib/foundations';
 import { AccountHashRedirect } from './hash-redirect';
+import { PendingRequestNotice } from '../../components/pending-request-notice';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -73,6 +74,7 @@ export default async function Page({
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Verify your email." compact>
         <p>Verify the email address on your account to continue.</p>
+        <PendingRequestNotice where="verify" />
         <Link className="primary-link" href="/verify-email">
           Verify email
         </Link>
@@ -106,6 +108,7 @@ export default async function Page({
       <AccountHashRedirect view={view} />
       {view === 'home' && (
         <>
+          <PendingRequestNotice where="account" />
           <NextStepCard
             title={requestCreationEnabled ? 'Start a request' : 'Plan a mission'}
             text={

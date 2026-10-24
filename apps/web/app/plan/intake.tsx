@@ -5,6 +5,7 @@ import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
 import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
 import { JourneyBar } from '../../components/journey-bar';
+import { rememberVerifyEmail } from '../../components/verify-email-handoff';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -543,6 +544,7 @@ function IntakeForm({
               throw new Error(
                 'Your request is saved for 24 hours. Your account could not be created. Try signing in or creating your account below.',
               );
+            rememberVerifyEmail(draft.email);
           } finally {
             setPassword('');
           }
@@ -710,7 +712,8 @@ function IntakeForm({
               <h2 id="pending-request-title">Finish your request.</h2>
               <p>
                 Your request is saved privately for 24 hours while you activate your account and
-                sign in. It is submitted to Corridra after that step.
+                sign in. Use this same device and browser. It is submitted to Corridra after that
+                step.
               </p>
               <div className="guide-actions">
                 {account?.emailVerified ? (

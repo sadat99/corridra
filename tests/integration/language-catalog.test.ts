@@ -140,7 +140,9 @@ describe('where the words come from', () => {
   it('the page is built in English and the language is applied after load', () => {
     expect(read('apps/web/app/layout.tsx')).toContain('<html lang="en"');
     const provider = read('apps/web/components/language-provider.tsx');
-    expect(provider).toContain('useState<Locale>(defaultLocale)');
+    // The first render and the server snapshot are English, so the built page and the first paint match.
+    expect(provider).toContain('useSyncExternalStore');
+    expect(provider).toMatch(/\(\) => defaultLocale,?\s*\)/);
     expect(provider).toContain('document.documentElement.lang');
     expect(provider).toContain('document.documentElement.dir');
   });

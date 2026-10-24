@@ -13,7 +13,18 @@ function evidence(overrides = {}) {
     status: 'completed',
     conclusion: 'success',
   }));
-  const ci = ['checks', 'browser', 'operator (1)', 'operator (2)', 'operator (3)', 'validate'];
+  const ci = [
+    'changes',
+    'checks',
+    'browser',
+    'ux (1)',
+    'ux (2)',
+    'ux (3)',
+    'operator (1)',
+    'operator (2)',
+    'operator (3)',
+    'validate',
+  ];
   return {
     ...{
       repository: 'owner/repo',
@@ -47,18 +58,21 @@ test('only complete CI and uploaded analyses on the exact main source authorize 
 });
 test('a successful workflow cannot hide a skipped required job', async () => {
   const baseline = evidence();
-  await assert.rejects(
-    verifyInstallHead(
-      evidence({
-        request: async (path) => {
-          const value = await baseline.request(path);
-          if (path.includes('/actions/runs/0/jobs')) value.jobs[0].conclusion = 'skipped';
-          return value;
-        },
-      }),
-    ),
-    /successful job: checks/,
-  );
+  for (const skipped of ['checks', 'changes', 'ux (2)', 'operator (3)']) {
+    await assert.rejects(
+      verifyInstallHead(
+        evidence({
+          request: async (path) => {
+            const value = await baseline.request(path);
+            if (path.includes('/actions/runs/0/jobs'))
+              value.jobs.find((job) => job.name === skipped).conclusion = 'skipped';
+            return value;
+          },
+        }),
+      ),
+      (error) => error.message.includes(`successful job: ${skipped}`),
+    );
+  }
 });
 test('old or absent uploaded analyses do not count as current CodeQL evidence', async () => {
   const baseline = evidence();
