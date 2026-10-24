@@ -247,6 +247,13 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Money and pricing',
     kind: 'module',
   },
+  {
+    name: 'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
+    label: 'Real invoices and payment records',
+    line: 'Lets the team issue real invoices and credit notes for real workspaces, with a second person approving each one, and lets real owners and admins read them. Needs real plans on, the real invoices install, and the real invoices control opened by the install job. Nothing is collected.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
   // Delivery
   {
     name: 'CORRIDRA_FOUNDATIONS_ENABLED',

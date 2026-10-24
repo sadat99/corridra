@@ -959,6 +959,11 @@
       "use": "Owner switches for how a real workspace report is read: public link (off by default) and signed-in access (on by default); enforced in the application and the database; export stays refused"
     },
     {
+      "path": "docs/adr/0064-real-invoices-payment-records-and-credit-notes.md",
+      "classification": "Architecture contract/index",
+      "use": "Real invoices, payment records and credit notes (billing stage 2): default-off control, Singapore GST in exact minor units, gap-free yearly legal numbers, second-person approval, manual payments, made-up supplier fields marked on each document; no provider, no money moves"
+    },
+    {
       "path": "docs/product/real-use-audit-2026-10-24.md",
       "classification": "Product audit",
       "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"

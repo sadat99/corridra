@@ -32,6 +32,8 @@ import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
+import { migrateCustomerInvoicingReal } from '../packages/db/src/customer-invoicing-real-migrate';
+import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-real-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { z } from 'zod';
 
@@ -50,6 +52,25 @@ const v = z
     REAL_BILLING_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
+    ),
+    REAL_INVOICING_ACTION: z
+      .enum([
+        'unchanged',
+        'install',
+        'enable',
+        'pause',
+        'set_supplier',
+        'allow_single_approver',
+        'require_second_approver',
+      ])
+      .default('unchanged'),
+    REAL_INVOICING_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    REAL_INVOICING_SUPPLIER_JSON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().max(4000).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     MISSION_MAIL_REASON: z.preprocess(
@@ -94,6 +115,12 @@ if (v.REAL_BILLING_ACTION !== 'unchanged' && !apply)
   throw new Error('Real billing changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.REAL_BILLING_ACTION) && !v.REAL_BILLING_REASON)
   throw new Error('Real billing changes require an explicit reason');
+if (v.REAL_INVOICING_ACTION !== 'unchanged' && !apply)
+  throw new Error('Real invoicing changes require INSTALL_APPLY=yes');
+if (!['unchanged', 'install'].includes(v.REAL_INVOICING_ACTION) && !v.REAL_INVOICING_REASON)
+  throw new Error('Real invoicing changes require an explicit reason');
+if (v.REAL_INVOICING_ACTION === 'set_supplier' && !v.REAL_INVOICING_SUPPLIER_JSON)
+  throw new Error('Setting the supplier details needs the supplier JSON');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -127,6 +154,7 @@ const registries = [
   'customer_real_use_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
+  'customer_invoicing_real_migrations',
   'customer_mission_mail_migrations',
   'view_as_migrations',
 ];
@@ -241,6 +269,33 @@ try {
         });
         console.log(
           `Real plans ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.REAL_INVOICING_ACTION !== 'unchanged') {
+      await migrateCustomerInvoicingReal(pool);
+      if (v.REAL_INVOICING_ACTION === 'install') {
+        // Seeds the supplier details on first install (made-up fields are marked) and leaves the control closed.
+        const result = await configureRealInvoicing(pool, {
+          reason: v.REAL_INVOICING_REASON ?? 'Install real invoicing with the control closed',
+        });
+        console.log(
+          `Real invoices installed; control ${result.enabled ? 'open' : 'closed'}; second approver ${result.requireSecondApprover ? 'required' : 'not required'}; supplier changed=${result.entityChanged}`,
+        );
+      } else {
+        const action = v.REAL_INVOICING_ACTION;
+        const result = await configureRealInvoicing(pool, {
+          reason: v.REAL_INVOICING_REASON,
+          ...(action === 'enable' || action === 'pause' ? { enabled: action === 'enable' } : {}),
+          ...(action === 'allow_single_approver' || action === 'require_second_approver'
+            ? { requireSecondApprover: action === 'require_second_approver' }
+            : {}),
+          ...(action === 'set_supplier'
+            ? { entity: JSON.parse(v.REAL_INVOICING_SUPPLIER_JSON ?? 'null') }
+            : {}),
+        });
+        console.log(
+          `Real invoices: control ${result.enabled ? 'open' : 'closed'}; second approver ${result.requireSecondApprover ? 'required' : 'not required'}; control changed=${result.controlChanged}; supplier changed=${result.entityChanged}`,
         );
       }
     }

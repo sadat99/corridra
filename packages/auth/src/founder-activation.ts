@@ -20,6 +20,7 @@ import { customerSavedMissionsEnabled } from './customer-saved-missions';
 import { customerServiceRequestsEnabled } from './customer-service-requests';
 import { customerBillingEnabled, customerRealBillingEnabled } from './customer-billing';
 import { customerInvoicingEnabled } from './customer-invoicing';
+import { customerRealInvoicingEnabled } from './customer-invoicing-real';
 import {
   customerOpenAdmission,
   customerProductionLocked,
@@ -199,6 +200,12 @@ const modules: {
     label: 'Sample invoices and payment records',
     flag: 'CORRIDRA_CUSTOMER_INVOICING_ENABLED',
     enabled: customerInvoicingEnabled,
+  },
+  {
+    key: 'real-invoicing',
+    label: 'Real invoices and payment records',
+    flag: 'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
+    enabled: customerRealInvoicingEnabled,
   },
 ];
 
