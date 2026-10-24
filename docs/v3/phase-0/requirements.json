@@ -3736,7 +3736,7 @@
     "requirement": "| Billing, entitlements, invoicing and subscriptions | Full automated paid SaaS | P1 before subscription launch |",
     "status": "PARTIAL",
     "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Slices 1 and 2 are implemented with customer and staff screens and locally verified: ADR060 sample plans, subscriptions and entitlements, and ADR061 sample invoices, payment records and credit notes. Both are default off, sample workspaces only, not installed, not enabled and unobserved with real sessions. No payment processor, collection, refund, tax calculation, legal numbering or entitlement enforcement exists, and real billing needs a contracting party, tax rules and provider agreements first. Staff functionality does not establish self-service."
+    "nextAction": "Slices 1 and 2 are implemented with customer and staff screens and locally verified: ADR060 sample plans, subscriptions and entitlements, and ADR061 sample invoices, payment records and credit notes. Both are sample workspaces only and unobserved with real sessions; ADR061 is default off and not installed (the installer list applies it on the owner's next install run, and its switch stays off until set). No payment processor, collection, refund, tax calculation, legal numbering or entitlement enforcement exists, and real billing needs a contracting party, tax rules and provider agreements first. Staff functionality does not establish self-service."
   },
   {
     "id": "V3-06-014",

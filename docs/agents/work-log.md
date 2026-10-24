@@ -1575,6 +1575,6 @@ What exists: optional module `packages/db/customer-invoicing-migrations/0001_sam
 
 Verification (local PostgreSQL 16): invoicing integration 21 of 21 plus real-use file 2 of 2 (restricted logins, staff session rows, concurrency, direct SQL refusals, no other money ledger referenced, events without amounts); browser spec `tests/operator/v3-invoicing-ui.spec.ts` 9 of 9 with axe at four widths. Mutation checks: settled status, member visibility, due-day boundary, payment guard and credit guard each break at least one test.
 
-Limits: not installed in the Frankfurt database; sample records only and labelled so; no processor, collection, refund, tax calculation, legal numbering, PDF or email; any synthetic operator workspace owner or admin with a fresh authenticator check can issue and record (no four-eyes); a payment record is a statement, not a bank confirmation; real-user ease unproven.
+Limits: the invoicing module is not installed in the Frankfurt database (it is on the standard installer list, so the owner's next install run applies it; the switch stays off until set); sample records only and labelled so; no processor, collection, refund, tax calculation, legal numbering, PDF or email; any synthetic operator workspace owner or admin with a fresh authenticator check can issue and record (no four-eyes); a payment record is a statement, not a bank confirmation; real-user ease unproven.
 
 Next: exact-head CI on the draft PR, then merge on owner confirmation. Organiser and customer authoring gaps still wait for a proposal.
