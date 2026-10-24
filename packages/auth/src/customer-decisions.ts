@@ -6,6 +6,7 @@ export function customerDecisionsEnabled(env: NodeJS.ProcessEnv = process.env) {
 }
 export class CustomerDecisionService extends CustomerSessionBoundary {
   async read(resourceId: unknown, expectedSubject?: string, expectedIssuer?: string) {
+    this.requireRealReports();
     const id = z.uuid().parse(resourceId);
     return this.transaction(
       async (db) =>

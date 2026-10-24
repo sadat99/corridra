@@ -12,6 +12,7 @@ const input = z
   .strict();
 export class CustomerCompanyService extends CustomerSessionBoundary {
   async list(value: unknown = {}, expectedSubject?: string, expectedIssuer?: string) {
+    this.requireRealReports();
     const page = input.parse(value);
     return this.transaction(
       async (db) =>

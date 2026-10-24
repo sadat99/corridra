@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { customerProductionUnlocked } from './customer-production';
+import { realReportSignedInEnabled, realReportsOffMessage } from './real-report-access';
 import { DomainError } from '@corridra/domain';
 import {
   assertRestrictedPool,
@@ -84,6 +85,12 @@ export class CustomerSessionBoundary {
     protected options: CustomerWorkspaceOptions,
     private readSession: () => Promise<CustomerSession | null>,
   ) {}
+
+  // Shared-report services call this first. A real session is told plainly when the owner switched them off.
+  protected requireRealReports() {
+    if (this.options.dataMode === 'real' && !realReportSignedInEnabled())
+      throw new DomainError(realReportsOffMessage, 503);
+  }
 
   protected async transaction<T>(
     work: (
@@ -182,8 +189,9 @@ export class CustomerSessionBoundary {
       await db.query('BEGIN');
       await db.query(
         `SELECT set_config('corridra.customer_proof_hash',$1,true),set_config('corridra.session_hash','',true),
-        set_config('corridra.tenant_id','',true),set_config('corridra.customer_workspace_id','',true),set_config('corridra.purpose','synthetic_validation',true)`,
-        [hash],
+        set_config('corridra.tenant_id','',true),set_config('corridra.customer_workspace_id','',true),set_config('corridra.purpose','synthetic_validation',true),
+        set_config('corridra.real_report_signed_in',$2,true)`,
+        [hash, realReportSignedInEnabled() ? 'on' : 'off'],
       );
       const result = await work(db, {
         hash,
