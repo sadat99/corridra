@@ -946,7 +946,7 @@ export function Counterparties({
             <>
               <a
                 className="text-link"
-                href={`/api/workspace/shortlist-export?tenant=${tenant}&mission=${mission}&offset=${shortOffset}`}
+                href={`/api/workspace/shortlist-export?${new URLSearchParams({ tenant, mission, offset: String(shortOffset) })}`}
               >
                 Export this shortlist page as JSON
               </a>
