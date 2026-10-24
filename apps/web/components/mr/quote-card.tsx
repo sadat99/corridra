@@ -3,7 +3,8 @@ import './scripts.css';
 import { FactLabel } from '../fact-label';
 import { mrLabels } from './labels';
 
-export type QuoteTerm = { label: string; value: string | null | undefined };
+import type { QuoteTerm } from './types';
+export type { QuoteTerm } from './types';
 
 /**
  * One supplier offer, drawn as a card. Pure presentation: it takes the result of the existing
@@ -24,6 +25,7 @@ export function QuoteCard({
   reason,
   terms,
   trust = 'Self-declared',
+  provenance,
   labels = mrLabels.quote,
 }: {
   supplier: string;
@@ -39,7 +41,10 @@ export function QuoteCard({
   /** The engine's reason when not comparable (missing terms, an expired quote, a total mismatch). */
   reason?: string;
   terms: QuoteTerm[];
-  trust?: Parameters<typeof FactLabel>[0]['label'];
+  /** The fact label for the price. `null` when the source status is not one of the five names: nothing is guessed. */
+  trust?: Parameters<typeof FactLabel>[0]['label'] | null;
+  /** The source and claim status exactly as the approved report states them; shown when there is no fact label. */
+  provenance?: string;
   labels?: typeof mrLabels.quote;
 }) {
   return (
@@ -66,7 +71,7 @@ export function QuoteCard({
         <span>
           {labels.total}: <span className="mr-num">{total ?? labels.notStated}</span>
         </span>
-        <FactLabel label={trust} />
+        {trust ? <FactLabel label={trust} /> : provenance ? <small>{provenance}</small> : null}
       </div>
       <dl className="mr-quote-terms">
         {terms.map((term) => {

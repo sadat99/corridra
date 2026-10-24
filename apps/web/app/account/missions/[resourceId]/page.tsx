@@ -7,6 +7,7 @@ import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { SavedCommercialReport } from '../saved-commercial-report';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -46,6 +47,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
         subject={session.data.user.id}
         issuer={issuer}
         decisionsEnabled={customerDecisionsEnabled()}
+        lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
       />
     </CustomerShell>
   );

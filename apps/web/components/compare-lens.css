@@ -1,0 +1,46 @@
+.compare-lens {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+.compare-lens-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.compare-lens-bar > div {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.compare-lens-bar p {
+  margin: 0;
+  flex: 1 1 14rem;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.compare-lens-toggle {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding-inline: var(--space-4);
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 0;
+  cursor: pointer;
+}
+.compare-lens-toggle + .compare-lens-toggle {
+  border-inline-start: 1px solid var(--border-strong);
+}
+.compare-lens-toggle[aria-pressed='true'] {
+  font-weight: 600;
+  color: var(--on-brand);
+  background: var(--brand);
+}
+.compare-lens-cards {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}

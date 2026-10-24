@@ -34,7 +34,7 @@ export default async function Page() {
     );
 
   const loaded = await loadMoveInput(session.subject, session.issuer);
-  const model = buildMoveModel(loaded.input);
+  const model = buildMoveModel(loaded.input, { rooms: uxSwitchOn('CORRIDRA_UX_ROAD') });
   const startHref = loaded.requestCreationEnabled
     ? '/account?view=work#customer-workspaces'
     : '/plan';

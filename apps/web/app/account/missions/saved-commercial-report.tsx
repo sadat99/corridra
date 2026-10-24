@@ -12,7 +12,15 @@ import { currency } from '@corridra/domain/opportunities';
 import { requirementFields, offerTerms } from '@corridra/domain/commercial-missions';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
-type Scope = SavedMissionScope & { resourceId: string; decisionsEnabled?: boolean };
+export type ReportSection = 'all' | 'compare' | 'evidence';
+type Scope = SavedMissionScope & {
+  resourceId: string;
+  decisionsEnabled?: boolean;
+  /** UX update (`CORRIDRA_UX_LENSES`, read on the server): the offers as cards. */
+  lenses?: boolean;
+  /** The Room shows the report in two lenses. `all` is the whole page, as it has always been. */
+  section?: ReportSection;
+};
 function date(value: unknown): value is string {
   return typeof value === 'string' && Number.isFinite(Date.parse(value));
 }
@@ -184,7 +192,14 @@ export function SavedCommercialReport(props: Scope) {
     />
   );
 }
-function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }: Scope) {
+function PrivateReport({
+  subject,
+  issuer,
+  resourceId,
+  decisionsEnabled = false,
+  lenses = false,
+  section = 'all',
+}: Scope) {
   const responsePrefix = useId();
   const [data, setData] = useState<DeliveryReport | null>(null),
     [status, setStatus] = useState('loading');
@@ -343,14 +358,19 @@ function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }
       if (!task.signal.aborted) setBusy(false);
     }
   }
+  const showCompare = section === 'all' || section === 'compare';
+  const showEvidence = section === 'all' || section === 'evidence';
+  const showRest = section === 'all';
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
       aria-label="Approved saved commercial report"
     >
-      <a className="text-link ux-back" href="/account#saved-commercial-missions">
-        Back to my saved commercial missions
-      </a>
+      {showRest && (
+        <a className="text-link ux-back" href="/account#saved-commercial-missions">
+          Back to my saved commercial missions
+        </a>
+      )}
       <p>
         {realCustomerInput()
           ? 'Your submitted information. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'
@@ -379,70 +399,87 @@ function PrivateReport({ subject, issuer, resourceId, decisionsEnabled = false }
           </p>
           {data.missions.map((m) => (
             <article className="delivery-card ux-participant-mission" key={m.publicationId}>
-              <MissionPassport mission={m} />
-              <h2>Commercial objective</h2>
-              <p>{m.objective}</p>
-              <p>{m.brief}</p>
-              {m.experience ? (
-                <details className="ux-mission-detail" open>
-                  <summary>Companies,qualification,requirements and original quotations</summary>
-                  <MissionExperienceView experience={m.experience} />
-                </details>
-              ) : (
-                <p>
-                  No company shortlist or supplier quotation has been approved for this report yet.
-                </p>
+              {showCompare && (
+                <>
+                  {showRest && (
+                    <>
+                      <MissionPassport mission={m} />
+                      <h2>Commercial objective</h2>
+                      <p>{m.objective}</p>
+                      <p>{m.brief}</p>
+                    </>
+                  )}
+                  {m.experience ? (
+                    <details className="ux-mission-detail" open>
+                      <summary>
+                        Companies,qualification,requirements and original quotations
+                      </summary>
+                      <MissionExperienceView experience={m.experience} lenses={lenses} />
+                    </details>
+                  ) : (
+                    <p>
+                      No company shortlist or supplier quotation has been approved for this report
+                      yet.
+                    </p>
+                  )}
+                </>
               )}
-              {decisionsEnabled && (
+              {showEvidence && decisionsEnabled && (
                 <DecisionHistory subject={subject} issuer={issuer} resourceId={resourceId} />
               )}
-              <h2>Meetings and visits</h2>
-              {m.itinerary.length ? (
-                <ul>
-                  {m.itinerary.map((meeting, index) => (
-                    <li key={index}>
-                      <strong>{meeting.label}</strong> · {meeting.status}
-                      <p>
-                        {meeting.scheduleChanged
-                          ? 'The schedule changed. A new reviewed itinerary is required.'
-                          : meeting.startsAt
-                            ? displayDate(meeting.startsAt, meeting.timezone ?? 'UTC') +
-                              ' · ' +
-                              (meeting.location ?? 'Location not supplied')
-                            : 'No confirmed appointment time supplied.'}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="ux-empty">
-                  No meetings or visits have been approved for this itinerary yet.
-                </p>
+              {showRest && (
+                <>
+                  <h2>Meetings and visits</h2>
+                  {m.itinerary.length ? (
+                    <ul>
+                      {m.itinerary.map((meeting, index) => (
+                        <li key={index}>
+                          <strong>{meeting.label}</strong> · {meeting.status}
+                          <p>
+                            {meeting.scheduleChanged
+                              ? 'The schedule changed. A new reviewed itinerary is required.'
+                              : meeting.startsAt
+                                ? displayDate(meeting.startsAt, meeting.timezone ?? 'UTC') +
+                                  ' · ' +
+                                  (meeting.location ?? 'Location not supplied')
+                                : 'No confirmed appointment time supplied.'}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="ux-empty">
+                      No meetings or visits have been approved for this itinerary yet.
+                    </p>
+                  )}
+                  <h2>Recorded commercial progress</h2>
+                  <p>
+                    Qualified opportunities: {m.outcomes.qualified}. Proposals:{' '}
+                    {m.outcomes.proposals}. Contracts: {m.outcomes.contracts}. Meetings held:{' '}
+                    {m.outcomes.heldMeetings}.
+                  </p>
+                  {m.totals.length ? (
+                    <ul>
+                      {m.totals.map((t) => (
+                        <li key={t.currency}>
+                          Customer contracts {displayMoney(t.contractMinor, t.currency)} · Invoices{' '}
+                          {displayMoney(t.invoiceMinor, t.currency)} · Confirmed cash{' '}
+                          {displayMoney(t.confirmedCashMinor, t.currency)} · Repeat cash{' '}
+                          {displayMoney(t.repeatCashMinor, t.currency)} (included in confirmed
+                          cash). These are customer trade observations,not Corridra or organiser
+                          revenue.
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>
+                      No financial amounts are shared in this report. Missing shared amounts do not
+                      mean zero.
+                    </p>
+                  )}
+                </>
               )}
-              <h2>Recorded commercial progress</h2>
-              <p>
-                Qualified opportunities: {m.outcomes.qualified}. Proposals: {m.outcomes.proposals}.
-                Contracts: {m.outcomes.contracts}. Meetings held: {m.outcomes.heldMeetings}.
-              </p>
-              {m.totals.length ? (
-                <ul>
-                  {m.totals.map((t) => (
-                    <li key={t.currency}>
-                      Customer contracts {displayMoney(t.contractMinor, t.currency)} · Invoices{' '}
-                      {displayMoney(t.invoiceMinor, t.currency)} · Confirmed cash{' '}
-                      {displayMoney(t.confirmedCashMinor, t.currency)} · Repeat cash{' '}
-                      {displayMoney(t.repeatCashMinor, t.currency)} (included in confirmed cash).
-                      These are customer trade observations,not Corridra or organiser revenue.
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>
-                  No financial amounts are shared in this report. Missing shared amounts do not mean
-                  zero.
-                </p>
-              )}
-              {m.requests && (
+              {showEvidence && m.requests && (
                 <section>
                   <h2>Evidence requests and declarations</h2>
                   {m.requests.length === 0 ? (
