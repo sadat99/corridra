@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../lib/foundations';
 import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
 import { Workspace } from './workspace';
@@ -77,6 +78,7 @@ export default async function Page({
         tenants={tenants}
         initialTenant={selected!}
         ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
+        moveRecords={customerMovesEnabled()}
       />
     </WorkspaceShell>
   );

@@ -86,6 +86,8 @@ import {
   customerWorkspacesEnabled,
 } from '@corridra/auth/customer-workspaces';
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
+import { CustomerMoveService, customerMovesEnabled } from '@corridra/auth/customer-moves';
+import { MissionMoveService } from '@corridra/missions/moves';
 import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
 import { ViewAsService } from '@corridra/auth/view-as';
 import {
@@ -388,6 +390,20 @@ function createServices() {
       },
       readCustomerSession,
     ),
+    customerMoves: new CustomerMoveService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerMovesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    moves: new MissionMoveService(runtimePool),
     customerMemberRoles: new CustomerMemberRoleService(
       runtimePool,
       authPool,

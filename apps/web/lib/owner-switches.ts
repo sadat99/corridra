@@ -447,7 +447,7 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'Staff-set Moves',
     line: 'Lets the Corridra team set what a person must do next. Needs its database module installed.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_REPLY_PAGE',

@@ -29,6 +29,8 @@ import { configureCustomerRealUse } from '../packages/auth/src/customer-real-use
 import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migrate';
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
+import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
@@ -50,6 +52,11 @@ const v = z
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    MOVE_RECORDS_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     REAL_BILLING_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     REAL_BILLING_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -144,6 +151,10 @@ if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
   throw new Error('Mission mail changes require an explicit reason');
+if (v.MOVE_RECORDS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Move record changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.MOVE_RECORDS_ACTION) && !v.MOVE_RECORDS_REASON)
+  throw new Error('Move record changes require an explicit reason');
 
 const registries = [
   'customer_migrations',
@@ -176,6 +187,7 @@ const registries = [
   'customer_invoicing_real_migrations',
   'customer_payments_simulated_migrations',
   'customer_mission_mail_migrations',
+  'customer_move_migrations',
   'view_as_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
@@ -277,6 +289,18 @@ try {
         });
         console.log(
           `Mission mail ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.MOVE_RECORDS_ACTION !== 'unchanged') {
+      await migrateCustomerMoves(pool);
+      if (v.MOVE_RECORDS_ACTION !== 'install') {
+        const result = await configureMoveRecords(pool, {
+          enabled: v.MOVE_RECORDS_ACTION === 'enable',
+          reason: v.MOVE_RECORDS_REASON,
+        });
+        console.log(
+          `Move records ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }

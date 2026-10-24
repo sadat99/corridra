@@ -45,6 +45,15 @@ on:
         description: 'Required reason for enabling or pausing mission mail.'
         required: false
         default: ''
+      move_records_action:
+        description: 'Optional ADR-068 operation for Move records. Install changes nothing anyone can see; enable opens the database side only. The application switch is separate.'
+        type: choice
+        options: [unchanged, install, enable, pause]
+        default: unchanged
+      move_records_reason:
+        description: 'Required reason for enabling or pausing Move records.'
+        required: false
+        default: ''
       real_billing_action:
         description: 'Optional ADR-062 operation for real plans and subscriptions. No money moves. Install changes nothing for anyone; enable opens the database side only.'
         type: choice
@@ -116,7 +125,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.real_invoicing_action != 'unchanged' || inputs.simulated_payments_action != 'unchanged' || inputs.view_as_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.move_records_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.real_invoicing_action != 'unchanged' || inputs.simulated_payments_action != 'unchanged' || inputs.view_as_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -137,6 +146,8 @@ jobs:
           NETWORK_USE_REASON: ${{ inputs.network_use_reason }}
           MISSION_MAIL_ACTION: ${{ inputs.mission_mail_action }}
           MISSION_MAIL_REASON: ${{ inputs.mission_mail_reason }}
+          MOVE_RECORDS_ACTION: ${{ inputs.move_records_action }}
+          MOVE_RECORDS_REASON: ${{ inputs.move_records_reason }}
           REAL_BILLING_ACTION: ${{ inputs.real_billing_action }}
           REAL_BILLING_REASON: ${{ inputs.real_billing_reason }}
           REAL_INVOICING_ACTION: ${{ inputs.real_invoicing_action }}

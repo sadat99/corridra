@@ -9,7 +9,8 @@
     "./bootstrap": "./src/bootstrap.ts",
     "./corridors": "./src/corridors.ts",
     "./commercial": "./src/commercial.ts",
-    "./operations": "./src/operations.ts"
+    "./operations": "./src/operations.ts",
+    "./moves": "./src/moves.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",

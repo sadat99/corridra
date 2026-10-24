@@ -15,6 +15,8 @@ export { moveVerbs, type MoveVerb } from './types';
 export function MoveCard({
   verb,
   object,
+  title,
+  titleLang,
   holder,
   context,
   due,
@@ -25,6 +27,9 @@ export function MoveCard({
   verb: MoveVerb;
   /** What the verb is about, in a few plain words ("your import licence number"). */
   object: string;
+  /** The whole sentence as written by the person who set it, shown as it is (original text is never translated). */
+  title?: string;
+  titleLang?: string;
   holder: Holder;
   /** The request or company this Move belongs to. */
   context?: string;
@@ -38,7 +43,9 @@ export function MoveCard({
     <article className="mr-move" data-holder={holder}>
       <div className="mr-move-body">
         <p className="mr-move-kind">{labels.move.verbs[verb]}</p>
-        <h3>{movePhrase(labels.move.phrase, labels.move.verbs[verb], object)}</h3>
+        <h3 lang={title ? titleLang : undefined}>
+          {title ?? movePhrase(labels.move.phrase, labels.move.verbs[verb], object)}
+        </h3>
         {context ? <p className="mr-move-context">{context}</p> : null}
         <p className="mr-move-meta">
           <HolderBadge holder={holder} labels={labels.holder} />

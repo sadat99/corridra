@@ -209,6 +209,11 @@
       "use": "Lane 6: the picture-first first question and the single Sample or Real label; the mapping table, what stays the same and how to flip or roll back"
     },
     {
+      "path": "docs/product/lane7a-move-records.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 7a: Move records, the staff panel, the customer read, what Your Move shows from them, the owner install steps and rollback"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"
