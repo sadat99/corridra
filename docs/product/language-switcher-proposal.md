@@ -1,6 +1,6 @@
 # Languages and the language switcher: proposal
 
-Status: waiting for two owner decisions (how the language is chosen, and which languages go first). Nothing is built. Written on 24 October 2026 after the owner asked where the language switcher is.
+Status: decided and partly built. The owner chose option A (remembered choice applied in the browser) and English, Bangla, Chinese and Spanish first, then Arabic. The foundation is merged (PR 171 and PR 174, 24 October 2026). What remains is translating the home page, how it works and the request flow, and recording a native reviewer per language. Written on 24 October 2026 after the owner asked where the language switcher is; the sections below keep the original reasoning, and the next section says what exists now.
 
 ## What the plan already says
 
@@ -17,9 +17,22 @@ The locked guided experience standard in `docs/agents/ui-direction.md` (19 Octob
 
 ## What exists today
 
-The page language is fixed to English. A Bangla guide sits inside the request form. The mission email templates already take a language, including right to left. There is no language chip, no message files and no Listen button. The plan's step 1 was never built.
+Built and merged (PR 171, PR 174):
 
-## Decision 1: how the language is chosen
+- Message files for English, Bangla, Chinese, Spanish and Arabic (`apps/web/lib/i18n`). Bangla, Chinese, Spanish and Arabic are drafts until a reviewer is recorded.
+- A language chip in the public header (`language-switcher.tsx`), a provider that applies the remembered or browser language after the page loads, and the page language and direction for the translated header, footer and skip link. Each page's main content stays marked English until that page is on message files.
+- The rule that only reviewed languages are offered: `CORRIDRA_LANGUAGES_REVIEWED` (for example `bn,zh,es`). `CORRIDRA_LANGUAGES_PREVIEW=true` shows labelled drafts for the owner. With neither set, only English is offered and the chip is hidden, which is why the live site looks unchanged.
+
+Not built yet:
+
+- Home page, how it works and the request flow are still English text, not on message files.
+- Listen reads the main content in its own language, but there is no per-language voice check beyond the browser's own.
+- No native reviewer is recorded for any language, so no language is offered to the public.
+- The privacy page does not yet mention the stored language choice (needs the owner's review of legal text).
+
+The Bangla guide inside the request form and the mission email templates (which already take a language, including right to left) are separate and unchanged.
+
+## Decision 1: how the language is chosen (decided: option A)
 
 | Option                                       | Web address                                     | Speed for Bangladesh phones                                                       | Search and sharing             | Effort and risk                                                                                        |
 | -------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -29,7 +42,7 @@ The page language is fixed to English. A Bangla guide sits inside the request fo
 
 Recommendation: **A now, built so B can replace it.** Screens ask for text through one function (`t('key')`), so moving to B later changes where the language comes from and nothing else. Hard to reverse is B, not A.
 
-## Decision 2: which languages first
+## Decision 2: which languages first (decided: English, Bangla, Chinese, Spanish, then Arabic)
 
 Proposed: English, বাংলা, 中文 and español in the first release, then العربية. Arabic needs a right to left layout check and its own reviewer. Each language is switched on only when its reviewer is recorded. Until then it can be shown to the owner as a labelled draft behind a setting, never to the public.
 

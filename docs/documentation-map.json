@@ -376,7 +376,7 @@
     {
       "path": "docs/product/language-switcher-proposal.md",
       "classification": "Owner proposal",
-      "use": "Where the language switcher stands against the locked plan, the three ways to choose a language, the languages and reviewers needed; nothing is built"
+      "use": "Where the language switcher stands against the locked plan, the three ways to choose a language and the owner's choice (option A), the languages and reviewers needed; the foundation is merged, page translation and reviewers remain"
     },
     {
       "path": "docs/product/saved-request-recovery-proposal.md",
