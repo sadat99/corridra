@@ -964,6 +964,11 @@
       "use": "Real invoices, payment records and credit notes (billing stage 2): default-off control, Singapore GST in exact minor units, gap-free yearly legal numbers, second-person approval, manual payments, made-up supplier fields marked on each document; no provider, no money moves"
     },
     {
+      "path": "docs/adr/0065-simulated-payment-provider.md",
+      "classification": "Architecture contract/index",
+      "use": "Simulated payment provider Corridra Pay (madeup), billing stage 3: closed-by-default module, made-up references and refund policy, no network or money, never changes an invoice"
+    },
+    {
       "path": "docs/product/real-use-audit-2026-10-24.md",
       "classification": "Product audit",
       "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"

@@ -34,6 +34,8 @@ import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
 import { migrateCustomerInvoicingReal } from '../packages/db/src/customer-invoicing-real-migrate';
 import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-real-configuration';
+import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-payments-simulated-migrate';
+import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { z } from 'zod';
 
@@ -71,6 +73,17 @@ const v = z
     REAL_INVOICING_SUPPLIER_JSON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().max(4000).optional(),
+    ),
+    SIMULATED_PAYMENTS_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause', 'set_refund_window'])
+      .default('unchanged'),
+    SIMULATED_PAYMENTS_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    SIMULATED_PAYMENTS_REFUND_DAYS: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.coerce.number().int().min(1).max(90).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     MISSION_MAIL_REASON: z.preprocess(
@@ -121,6 +134,12 @@ if (!['unchanged', 'install'].includes(v.REAL_INVOICING_ACTION) && !v.REAL_INVOI
   throw new Error('Real invoicing changes require an explicit reason');
 if (v.REAL_INVOICING_ACTION === 'set_supplier' && !v.REAL_INVOICING_SUPPLIER_JSON)
   throw new Error('Setting the supplier details needs the supplier JSON');
+if (v.SIMULATED_PAYMENTS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Simulated payments changes require INSTALL_APPLY=yes');
+if (!['unchanged', 'install'].includes(v.SIMULATED_PAYMENTS_ACTION) && !v.SIMULATED_PAYMENTS_REASON)
+  throw new Error('Simulated payments changes require an explicit reason');
+if (v.SIMULATED_PAYMENTS_ACTION === 'set_refund_window' && !v.SIMULATED_PAYMENTS_REFUND_DAYS)
+  throw new Error('Setting the refund window needs the number of days');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -155,6 +174,7 @@ const registries = [
   'network_real_use_migrations',
   'customer_billing_real_migrations',
   'customer_invoicing_real_migrations',
+  'customer_payments_simulated_migrations',
   'customer_mission_mail_migrations',
   'view_as_migrations',
 ];
@@ -298,6 +318,23 @@ try {
           `Real invoices: control ${result.enabled ? 'open' : 'closed'}; second approver ${result.requireSecondApprover ? 'required' : 'not required'}; control changed=${result.controlChanged}; supplier changed=${result.entityChanged}`,
         );
       }
+    }
+    if (v.SIMULATED_PAYMENTS_ACTION !== 'unchanged') {
+      await migrateCustomerPaymentsSimulated(pool);
+      const action = v.SIMULATED_PAYMENTS_ACTION;
+      // Install leaves the control closed. The made-up refund window defaults to 14 days.
+      const result = await configureSimulatedPayments(pool, {
+        reason:
+          v.SIMULATED_PAYMENTS_REASON ??
+          'Install the simulated payment flow with the control closed',
+        ...(action === 'enable' || action === 'pause' ? { enabled: action === 'enable' } : {}),
+        ...(action === 'set_refund_window'
+          ? { refundWindowDays: v.SIMULATED_PAYMENTS_REFUND_DAYS }
+          : {}),
+      });
+      console.log(
+        `Simulated payments (madeup): control ${result.enabled ? 'open' : 'closed'}; refund window ${result.refundWindowDays} days (madeup); changed=${result.changed}`,
+      );
     }
     if (v.VIEW_AS_ACTION !== 'unchanged') {
       await migrateViewAs(pool);

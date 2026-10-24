@@ -21,6 +21,7 @@ import { customerServiceRequestsEnabled } from './customer-service-requests';
 import { customerBillingEnabled, customerRealBillingEnabled } from './customer-billing';
 import { customerInvoicingEnabled } from './customer-invoicing';
 import { customerRealInvoicingEnabled } from './customer-invoicing-real';
+import { customerSimulatedPaymentsEnabled } from './customer-payments-simulated';
 import {
   customerOpenAdmission,
   customerProductionLocked,
@@ -206,6 +207,12 @@ const modules: {
     label: 'Real invoices and payment records',
     flag: 'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
     enabled: customerRealInvoicingEnabled,
+  },
+  {
+    key: 'simulated-payments',
+    label: 'Simulated payment flow (madeup)',
+    flag: 'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
+    enabled: customerSimulatedPaymentsEnabled,
   },
 ];
 

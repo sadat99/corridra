@@ -254,6 +254,13 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Money and pricing',
     kind: 'module',
   },
+  {
+    name: 'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
+    label: 'Simulated payment flow (madeup)',
+    line: 'Lets real owners and admins try a made-up payment provider on their real invoices, and lets the team record made-up refunds. It never moves money and never changes an invoice. Needs real invoices on, the simulated payments install, and its control opened by the install job.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
   // Delivery
   {
     name: 'CORRIDRA_FOUNDATIONS_ENABLED',

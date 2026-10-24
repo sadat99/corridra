@@ -156,3 +156,14 @@ Billing stage 2. A real owner or admin can read their invoices and credit notes;
 6. A second owner or admin of the real operator workspace is needed to approve. If only one person exists, run `allow_single_approver` with a reason; each document it covers is marked self approved. `require_second_approver` restores the default.
 
 Every document issued while a supplier field is made up says "Contains made-up organisation data (madeup) ... Not a valid tax invoice". Check the GST rule, your registration status and the numbering (`INV-YYYY-NNNNNN`, `CN-YYYY-NNNNNN`, gap free per Singapore calendar year) with your finance adviser.
+
+### Simulated payment flow (optional module, ADR065)
+
+Billing stage 3. A stand-in provider named "Corridra Pay (madeup)" so owners can try paying an invoice and the team can try a refund. It moves no money, uses no card or bank, and never changes an invoice. Every reference and screen says (madeup). Order of steps:
+
+1. Real invoices must already be installed, set up and open (section above).
+2. Run `Install customer modules` on `main` with `apply` = `yes` and `simulated_payments_action` = `install`. This adds the module and leaves its control closed.
+3. In Production set `CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED=true` and deploy.
+4. Run the workflow with `simulated_payments_action` = `enable` and a reason. To stop, run `pause` (records are kept) or unset the setting. `set_refund_window` with `simulated_payments_refund_days` changes the made-up refund window (default 14 days; later outcomes use the new value).
+
+Approving a simulated payment does not mark an invoice paid. Record real payments on the invoice as before. Replace the made-up refund policy and the provider before any real money is taken.
