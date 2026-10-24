@@ -55,10 +55,18 @@ test('Privacy explains account data, private requests, retention and the deferre
     'Files and deferred scanning',
     'Retention and deletion requests',
     'Replies and next steps',
+    'In short',
+    'What we collect and why',
+    'Who we share information with',
+    'Cookies and browser storage',
+    'Where information is stored',
+    'Your rights',
+    'How we protect information',
+    'Children',
   ])
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'sadat@obsidianglobal.studio', exact: true }),
+    page.getByRole('link', { name: 'sadat@obsidianglobal.studio', exact: true }).first(),
   ).toHaveAttribute('href', 'mailto:sadat@obsidianglobal.studio');
   for (const width of info.project.name === 'desktop' ? [1440, 1920] : [390, 768]) {
     await page.setViewportSize({ width, height: 1000 });
