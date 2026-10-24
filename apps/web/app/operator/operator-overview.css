@@ -1212,3 +1212,119 @@
     margin-top: 0;
   }
 }
+
+/* Phase 2 (24 October 2026): a closed fold-out that would sit alone in a row of the two-column desktop grid takes the
+   whole row, so no half-empty rows remain. Pairs stay as they were. Runs of 1, 3, 5 and 7 are covered. */
+@media (min-width: 64rem) {
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(details:not([open]):not(.phone-fold)):first-child:not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ),
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :not(:is(details:not([open]):not(.phone-fold)))
+    + :is(details:not([open]):not(.phone-fold)):not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ),
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(details:not([open]):not(.phone-fold)):first-child
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold)):not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ),
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :not(:is(details:not([open]):not(.phone-fold)))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold)):not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ),
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :not(:is(details:not([open]):not(.phone-fold)))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold)):not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ),
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :not(:is(details:not([open]):not(.phone-fold)))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold))
+    + :is(details:not([open]):not(.phone-fold)):not(
+      :has(+ :is(details:not([open]):not(.phone-fold)))
+    ) {
+    grid-column: 1 / -1;
+  }
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :is(details:not([open])):first-child:not(:has(+ :is(details:not([open])))),
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :not(:is(details:not([open])))
+    + :is(details:not([open])):not(:has(+ :is(details:not([open])))),
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :is(details:not([open])):first-child
+    + :is(details:not([open]))
+    + :is(details:not([open])):not(:has(+ :is(details:not([open])))),
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :not(:is(details:not([open])))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open])):not(:has(+ :is(details:not([open])))),
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :not(:is(details:not([open])))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open])):not(:has(+ :is(details:not([open])))),
+  .ux-workspace-body
+    .workspace-panel
+    .ux-network
+    > :not(:is(details:not([open])))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open]))
+    + :is(details:not([open])):not(:has(+ :is(details:not([open])))) {
+    grid-column: 1 / -1;
+  }
+}
+/* Phase 2: the jump bar no longer touches the paragraph under it, and the Operations section titles read like the
+   other panel titles. */
+.ux-workspace-body .ux-operator-workbench + :is(p, div, form, section, details, label) {
+  margin-top: var(--space-4);
+}
+.ux-workspace-body .ux-governance-panel > section.ux-operations-panel > h3 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: 500;
+}
