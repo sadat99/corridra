@@ -939,6 +939,11 @@
       "use": "Sample invoices, payment records and credit notes (billing slice 2): default-off, synthetic-only, customers read and staff write, no processor or tax calculation"
     },
     {
+      "path": "docs/adr/0062-real-plans-subscriptions-and-entitlements.md",
+      "classification": "Architecture contract/index",
+      "use": "Real plans, subscriptions and entitlements (billing stage 1): default-off, two switches, real catalogue kept apart from the sample one, no payment or invoice; stages 2 and 3 not built"
+    },
+    {
       "path": "docs/v3/history/ledger-chunks-120-126.md",
       "classification": "Exact historical execution entries",
       "use": "Chunks120 through126 preserved byte-for-byte with a manifest hash; not current state"

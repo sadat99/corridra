@@ -93,15 +93,17 @@ function lines(text: string) {
     .map((l) => l.trim())
     .filter(Boolean);
 }
-function plainError(status: number | null) {
+function plainError(status: number | null, sample: boolean | null = null) {
   return status === 401 || status === 403
-    ? 'Owner or admin access with a fresh authenticator check is required.'
+    ? 'Owner or admin access with a fresh authenticator check is required. For a real workspace, real plans must also be switched on.'
     : status === 503
-      ? 'Plans are unavailable.'
+      ? 'Plans are unavailable. Real workspaces also need real plans switched on.'
       : status === 409
         ? 'The subscription or plan changed, or the details were refused. Reload and check.'
         : status === 400
-          ? 'Check the details. Every note starts with Synthetic, prices are whole minor units and a plan states every limit once.'
+          ? sample === false
+            ? 'Check the details. Notes are plain text, prices are whole minor units and a plan states every limit once.'
+            : 'Check the details. Every note starts with Synthetic, prices are whole minor units and a plan states every limit once.'
           : 'This could not be completed. Try again.';
 }
 const today = () => new Date().toISOString().slice(0, 10);
@@ -131,11 +133,16 @@ function Scoped({ tenant }: { tenant: string }) {
     [message, setMessage] = useState(''),
     [fault, setFault] = useState(''),
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
+    // true: sample workspaces (notes begin with Synthetic); false: real workspaces. Learned from the server's answer.
+    [sample, setSample] = useState<boolean | null>(null),
     [note, setNote] = useState(starter),
     [internal, setInternal] = useState(starter),
     [start, setStart] = useState(today()),
     [draft, setDraft] = useState<Draft | null>(null);
   const task = useRef<AbortController | null>(null);
+  // The prefilled start of a note: sample workspaces need it, real workspaces write plain text.
+  const prefix = sample === false ? '' : starter;
+  const hint = sample === false ? '' : ', start with Synthetic';
   const endpoint = '/api/workspace/customer-billing?tenant=' + encodeURIComponent(tenant);
   const call = useCallback(
     async (query: string, body?: Record<string, unknown>) => {
@@ -168,11 +175,17 @@ function Scoped({ tenant }: { tenant: string }) {
       setFault(plainError(r.status));
       return;
     }
-    const body = r.body as { subscriptions?: Summary[] };
+    const body = r.body as { subscriptions?: Summary[]; synthetic?: boolean };
     if (!Array.isArray(body.subscriptions)) {
       setFault(plainError(0));
       return;
     }
+    const isSample = body.synthetic !== false;
+    if (!isSample) {
+      setNote((n) => (n === starter ? '' : n));
+      setInternal((n) => (n === starter ? '' : n));
+    }
+    setSample(isSample);
     setFault('');
     setRows(body.subscriptions);
   }, [call]);
@@ -235,14 +248,14 @@ function Scoped({ tenant }: { tenant: string }) {
       setMessage(
         unsure
           ? 'Could not confirm that this was saved. Send the same action again; it cannot be done twice.'
-          : plainError(r.status),
+          : plainError(r.status, sample),
       );
       return;
     }
     setPending(null);
     setMessage('Saved.');
-    setNote(starter);
-    setInternal(starter);
+    setNote(prefix);
+    setInternal(prefix);
     if (after === 'detail' && detail) await open(detail.subscription.id);
     else {
       setDraft(null);
@@ -327,11 +340,17 @@ function Scoped({ tenant }: { tenant: string }) {
   };
   const can = (a: string) => !!detail && detail.actions.includes(a);
   return (
-    <section aria-label="Customer sample plans" className="detail-card">
-      <h3>Customer sample plans</h3>
+    <section
+      aria-label={sample === false ? 'Customer plans' : 'Customer sample plans'}
+      className="detail-card"
+    >
+      <h3>{sample === false ? 'Customer plans' : 'Customer sample plans'}</h3>
       <p>
-        Sample plan requests from customer workspaces. Activating a plan records the period only: no
-        payment, no invoice. Plan limits are recorded and not enforced.
+        {sample === false
+          ? 'Plan requests from real customer workspaces.'
+          : 'Sample plan requests from customer workspaces.'}{' '}
+        Activating a plan records the period only: no payment, no invoice. Plan limits are recorded
+        and not enforced.
       </p>
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
@@ -400,7 +419,7 @@ function Scoped({ tenant }: { tenant: string }) {
               onSubmit={(e) =>
                 act(e, 'activate', {
                   periodStart: start,
-                  customerNote: note.trim().length > starter.length ? note.trim() : null,
+                  customerNote: note.trim().length > prefix.length ? note.trim() : null,
                 })
               }
             >
@@ -417,7 +436,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
                 <div className="field">
                   <label htmlFor="billing-activate-note">
-                    Note the customer reads (optional, start with Synthetic)
+                    Note the customer reads (optional{hint})
                   </label>
                   <textarea
                     id="billing-activate-note"
@@ -438,14 +457,12 @@ function Scoped({ tenant }: { tenant: string }) {
               aria-label="Renew"
               onSubmit={(e) =>
                 act(e, 'renew', {
-                  customerNote: note.trim().length > starter.length ? note.trim() : null,
+                  customerNote: note.trim().length > prefix.length ? note.trim() : null,
                 })
               }
             >
               <div className="field">
-                <label htmlFor="billing-renew-note">
-                  Note the customer reads (optional, start with Synthetic)
-                </label>
+                <label htmlFor="billing-renew-note">Note the customer reads (optional{hint})</label>
                 <textarea
                   id="billing-renew-note"
                   rows={2}
@@ -469,7 +486,7 @@ function Scoped({ tenant }: { tenant: string }) {
             >
               <div className="field">
                 <label htmlFor="billing-reason">
-                  Reason the customer reads (start with Synthetic)
+                  Reason the customer reads{sample === false ? '' : ' (start with Synthetic)'}
                 </label>
                 <textarea
                   id="billing-reason"
@@ -499,7 +516,8 @@ function Scoped({ tenant }: { tenant: string }) {
             >
               <div className="field">
                 <label htmlFor="billing-internal">
-                  Internal note, never shown to the customer (start with Synthetic)
+                  Internal note, never shown to the customer
+                  {sample === false ? '' : ' (start with Synthetic)'}
                 </label>
                 <textarea
                   id="billing-internal"
@@ -561,7 +579,11 @@ function Scoped({ tenant }: { tenant: string }) {
                 />
               </div>
               <div className="field">
-                <label htmlFor="plan-title">Title (must say sample)</label>
+                <label htmlFor="plan-title">
+                  {sample === false
+                    ? 'Title (plain name, must not say sample)'
+                    : 'Title (must say sample)'}
+                </label>
                 <input
                   id="plan-title"
                   required
