@@ -1,5 +1,6 @@
 'use client';
 
+import { PhoneFold } from '../../components/phone-fold';
 import { OperatorIcon } from '../../components/operator-icon';
 
 type Member = {
@@ -220,48 +221,55 @@ export function WorkspaceControls({
             customer work, outreach or payouts.
           </p>
         </div>
-        <div className="ux-controls-groups">
-          {groups.map((group) => (
-            <section className="ux-controls-group" key={group.title} aria-label={group.title}>
-              <h4>
-                <OperatorIcon name={group.icon} />
-                {group.title}
-              </h4>
-              {group.items.map(([key, title, description]) => {
-                const active = enabled(key);
-                return (
-                  <article
-                    key={key}
-                    className="ux-controls-feature"
-                    data-feature={key}
-                    aria-label={title}
-                  >
-                    <div className="ux-controls-feature-copy">
-                      <h5>{title}</h5>
-                      <p>{description}</p>
-                    </div>
-                    <div className="ux-controls-feature-action">
-                      <span
-                        className={active ? 'ux-controls-state is-enabled' : 'ux-controls-state'}
-                      >
-                        {active ? 'Enabled' : 'Disabled'}
-                      </span>
-                      <button
-                        type="button"
-                        className="text-link"
-                        aria-label={`${active ? 'Disable' : 'Enable'} ${title.toLowerCase()}`}
-                        disabled={busy}
-                        onClick={() => onChangeFeature(key, !active)}
-                      >
-                        {active ? 'Disable' : 'Enable'}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </section>
-          ))}
-        </div>
+        <PhoneFold
+          summary={`Show all ${groups.reduce((n, g) => n + g.items.length, 0)} tools (${groups.reduce(
+            (n, g) => n + g.items.filter((item) => enabled(item[0])).length,
+            0,
+          )} on)`}
+        >
+          <div className="ux-controls-groups">
+            {groups.map((group) => (
+              <section className="ux-controls-group" key={group.title} aria-label={group.title}>
+                <h4>
+                  <OperatorIcon name={group.icon} />
+                  {group.title}
+                </h4>
+                {group.items.map(([key, title, description]) => {
+                  const active = enabled(key);
+                  return (
+                    <article
+                      key={key}
+                      className="ux-controls-feature"
+                      data-feature={key}
+                      aria-label={title}
+                    >
+                      <div className="ux-controls-feature-copy">
+                        <h5>{title}</h5>
+                        <p>{description}</p>
+                      </div>
+                      <div className="ux-controls-feature-action">
+                        <span
+                          className={active ? 'ux-controls-state is-enabled' : 'ux-controls-state'}
+                        >
+                          {active ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <button
+                          type="button"
+                          className="text-link"
+                          aria-label={`${active ? 'Disable' : 'Enable'} ${title.toLowerCase()}`}
+                          disabled={busy}
+                          onClick={() => onChangeFeature(key, !active)}
+                        >
+                          {active ? 'Disable' : 'Enable'}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </section>
+            ))}
+          </div>
+        </PhoneFold>
       </section>
     </div>
   );

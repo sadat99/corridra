@@ -754,3 +754,461 @@
   padding-top: var(--space-6);
   border-top: 1px solid var(--line);
 }
+
+/* Scroll budget (owner decision 23 Oct 2026, docs/agents/ui-direction.md). Denser operator views:
+   phone folds open from 40rem, a fact grid of two on phones, filters in columns on desktop and
+   tables that scroll sideways instead of breaking every word. Nothing is removed. */
+@media (min-width: 40rem) {
+  .ux-workspace-body .workspace-panel details.phone-fold[data-phone-fold='phone'] {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    overflow: visible;
+  }
+  .ux-workspace-body .workspace-panel details.phone-fold[data-phone-fold='phone'] > * + * {
+    margin-top: var(--space-5);
+  }
+  .ux-workspace-body .workspace-panel details.phone-fold[data-phone-fold='phone'] > summary {
+    display: none;
+  }
+  .ux-workspace-body .workspace-panel details.phone-fold[data-phone-fold='phone'] > :not(summary) {
+    margin-inline: 0;
+  }
+}
+/* Wide record tables (six or more columns) scroll sideways; narrow ones keep their layout. */
+.ux-workspace-body
+  .ux-operations-panel
+  .operations-table
+  table:has(thead th:nth-child(6))
+  :is(th, td) {
+  min-width: 7rem;
+}
+.ux-workspace-body .ux-operations-panel .operations-metrics {
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+}
+.ux-workspace-body .ux-operations-panel .operations-metrics > div {
+  padding: var(--space-3);
+}
+.ux-workspace-body .ux-operations-panel .operations-metrics dt {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+.ux-workspace-body .ux-operations-panel .operations-metrics dd {
+  font-size: var(--text-lg);
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .ux-operations-panel .operations-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .ux-operator-home .workspace-panel .ux-operations-panel .ops-filters form.operator-form {
+    max-width: none;
+  }
+  .ux-operator-home
+    .workspace-panel
+    .ux-operations-panel
+    .ops-filters
+    form.operator-form
+    > fieldset {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+  }
+  .ux-operator-home
+    .workspace-panel
+    .ux-operations-panel
+    .ops-filters
+    form.operator-form
+    > fieldset
+    > button {
+    grid-column: auto;
+    justify-self: start;
+  }
+}
+.ux-workspace-body .ux-operations-panel textarea {
+  field-sizing: content;
+  min-block-size: 6rem;
+  max-block-size: 24rem;
+}
+/* Network: closed disclosures sit close together, in pairs on desktop; an opened one takes the
+   full width. The invitation shortcuts form a grid of two on phones. */
+.ux-workspace-body .workspace-panel .ux-network > details {
+  margin-block: 0;
+}
+@media (max-width: 63.99rem) {
+  .ux-workspace-body .workspace-panel .ux-network > details + details {
+    margin-top: calc(var(--space-2) - var(--space-5));
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-network {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+  .ux-workspace-body .workspace-panel .ux-network > * {
+    grid-column: 1 / -1;
+  }
+  .ux-workspace-body .workspace-panel .ux-network > details:not([open]) {
+    grid-column: auto;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .workspace-panel .ux-network .ux-invitation-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .ux-workspace-body .workspace-panel .ux-network .ux-invitation-links > * {
+    margin: 0;
+    width: 100%;
+  }
+}
+/* Mission dashboard: next actions beside the headline numbers on desktop. Control Center: the
+   business overview beside route configuration on wide screens. */
+.ux-workspace-body .ux-operations-panel .operations-metrics > div {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+.ux-workspace-body .ux-operations-panel .operations-metrics dd {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .ux-operations-panel .ops-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--space-4);
+    align-items: start;
+  }
+  .ux-workspace-body .ux-operations-panel .ops-summary-grid > * {
+    margin-block: 0;
+  }
+  .ux-workspace-body .ux-operations-panel .ops-summary-grid .operations-metrics {
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  }
+  .ux-workspace-body .ux-operations-panel .ops-money-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .ux-workspace-body .ux-operations-panel .ops-notes {
+    columns: 2;
+    column-gap: var(--space-6);
+  }
+  .ux-workspace-body .ux-operations-panel .ops-notes > p {
+    break-inside: avoid;
+    margin-block: 0 var(--space-2);
+  }
+  .ux-workspace-body .ux-operations-panel :is(.ops-center-config, .ops-command) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .ux-workspace-body .ux-operations-panel :is(.ops-center-config, .ops-command) > * {
+    margin-block: 0;
+  }
+  .ux-workspace-body
+    .ux-operations-panel
+    :is(.ops-center-config, .ops-command)
+    > div
+    > :first-child {
+    margin-top: 0;
+  }
+  .ux-workspace-body .ux-operations-panel [aria-labelledby='founder-overview-title'] dl {
+    display: grid;
+    grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+    column-gap: var(--space-6);
+    row-gap: var(--space-3);
+  }
+  .ux-workspace-body .ux-operations-panel [aria-labelledby='founder-overview-title'] :is(dt, dd) {
+    margin: 0;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .ux-governance-panel > .ux-operator-workbench > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .ux-workspace-body .ux-governance-panel > .ux-operator-workbench button {
+    width: 100%;
+    margin: 0;
+    white-space: normal;
+  }
+}
+/* Network records: invitations in pairs on desktop. */
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-invitation-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+  .ux-workspace-body .workspace-panel .ux-invitation-list > article {
+    margin: 0;
+  }
+}
+/* Fold switched off: the section reads as plain content at every width. */
+.ux-workspace-body .workspace-panel details.phone-fold-off[data-phone-fold] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+.ux-workspace-body .workspace-panel details.phone-fold-off[data-phone-fold] > summary {
+  display: none;
+}
+.ux-workspace-body .workspace-panel details.phone-fold-off[data-phone-fold] > :not(summary) {
+  margin-inline: 0;
+}
+/* Network: the paused notice reads in two columns on desktop; the invitation guide is compact. */
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-network-paused {
+    column-count: 2;
+    column-gap: var(--space-6);
+  }
+  .ux-workspace-body .workspace-panel .ux-network-paused > h3 {
+    column-span: all;
+    margin-bottom: var(--space-2);
+  }
+  .ux-workspace-body .workspace-panel .ux-network-paused > p {
+    margin-top: 0;
+    break-inside: avoid;
+  }
+}
+.ux-workspace-body .workspace-panel .ux-invitation-guide ol {
+  gap: var(--space-3);
+}
+.ux-workspace-body .workspace-panel .ux-invitation-guide li > span {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+}
+/* Global operations: the refresh action sits beside the heading. */
+.ux-workspace-body .ux-governance-panel > .ops-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ux-workspace-body .ux-governance-panel > .ops-heading > * {
+  margin-block: 0;
+}
+/* Network on phones: the two work actions stay full width; the plain section links share rows
+   between them, and closed sections fit on one line where they can. */
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .workspace-panel .ux-network > .workspace-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-workspace-body .workspace-panel .ux-network > .workspace-links > .text-link {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-workspace-body .workspace-panel .ux-network > .workspace-links > a:not(.text-link) {
+    flex: 0 1 auto;
+    margin: 0;
+    width: auto;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ux-workspace-body .workspace-panel .ux-network > details > summary {
+    padding-inline: var(--space-4);
+  }
+  .ux-workspace-body .workspace-panel .ux-network .ux-operator-workbench button {
+    overflow-wrap: normal;
+    hyphens: auto;
+  }
+}
+/* Invitation records: the cancel reason and its action share one row on desktop. */
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-invitation-list form.operator-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+    padding: 0;
+  }
+  .ux-workspace-body .workspace-panel .ux-invitation-list form.operator-form > .field {
+    flex: 1 1 12rem;
+    margin: 0;
+  }
+  .ux-workspace-body .workspace-panel .ux-invitation-list form.operator-form > button {
+    margin: 0;
+  }
+}
+
+/* Scroll budget phase 3: readiness, access and audit, workspace controls, introductions,
+   sources and the research record. */
+/* Production readiness: give the next-action column the room so rows wrap less. */
+#ops-gates .operations-table table {
+  table-layout: fixed;
+  min-width: 56rem;
+}
+#ops-gates .operations-table :is(th, td) {
+  max-width: none;
+}
+#ops-gates .operations-table :is(th, td):nth-child(1) {
+  width: 6rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(2) {
+  width: 12rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(3) {
+  width: 9rem;
+}
+#ops-gates .operations-table :is(th, td):nth-child(4) {
+  width: 9rem;
+}
+/* Access and audit: on phones a record stacks its label, time and reference disclosure; from
+   40rem all three share one row. An opened disclosure takes the full width. */
+.ux-workspace-body .ux-audit-events > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+.ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading {
+  display: contents;
+}
+.ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading > strong {
+  grid-column: 1 / -1;
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details {
+  margin: 0;
+  border: 0;
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details > summary {
+  min-height: 2.75rem;
+  padding-inline: var(--space-3);
+}
+.ux-workspace-body .workspace-panel .ux-audit-events > li > details[open] {
+  grid-column: 1 / -1;
+}
+.ux-workspace-body .ux-audit-counts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+@media (min-width: 40rem) {
+  .ux-workspace-body .ux-audit-events > li {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .ux-workspace-body .ux-audit-events > li > .ux-audit-event-heading > strong {
+    grid-column: auto;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .ux-audit-events {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .ux-workspace-body .ux-controls-groups {
+    display: block;
+    columns: 2;
+    column-gap: var(--space-4);
+  }
+  .ux-workspace-body .ux-controls-groups > .ux-controls-group {
+    break-inside: avoid;
+    margin: 0 0 var(--space-4);
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body .ux-audit-counts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body .workspace-panel .ux-controls-members form.operator-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    max-width: none;
+  }
+  .ux-workspace-body
+    .workspace-panel
+    .ux-controls-members
+    form.operator-form
+    > :is(.ux-controls-revoke, button) {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body #workspace-meetings form.operator-form > label.field:has(textarea) {
+    grid-column: auto;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench button {
+    width: 100%;
+    margin: 0;
+    white-space: normal;
+  }
+}
+/* Client and programme delivery: closed sections in pairs and the paid-service and sample-plan
+   panels side by side on desktop. An opened section takes the full width. */
+@media (min-width: 64rem) {
+  .ux-workspace-body #workspace-delivery :is(section.delivery-ops, details.phone-fold > section) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+    row-gap: var(--space-3);
+    align-items: start;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > * {
+    grid-column: 1 / -1;
+    margin-block: 0;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(details:not([open]):not(.phone-fold), section.detail-card) {
+    grid-column: auto;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-workspace-body
+    #workspace-delivery
+    :is(section.delivery-ops, details.phone-fold > section)
+    > :is(button, a) {
+    justify-self: start;
+  }
+}
+/* Research record: sections folded on phones keep the record's tighter rhythm on desktop. */
+@media (min-width: 40rem) {
+  .ux-workspace-body
+    .workspace-panel
+    .research-panel
+    > details.phone-fold[data-phone-fold='phone']
+    > *
+    + * {
+    margin-top: var(--space-3);
+  }
+  .ux-workspace-body
+    .workspace-panel
+    .research-panel
+    > details.phone-fold[data-phone-fold='phone']
+    > h4 {
+    margin-top: 0;
+  }
+}
