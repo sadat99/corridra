@@ -70,7 +70,7 @@ test('a successful workflow cannot hide a skipped required job', async () => {
           },
         }),
       ),
-      new RegExp(`successful job: ${skipped.replace(/[()]/g, '\\$&')}`),
+      (error) => error.message.includes(`successful job: ${skipped}`),
     );
   }
 });
