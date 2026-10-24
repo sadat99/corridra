@@ -65,7 +65,15 @@ function parse(value: unknown): Activation | null {
   };
 }
 
-export function FounderActivation({ tenant }: { tenant: string }) {
+// `folded` puts the module table behind a disclosure on the busy Control Center page; the
+// count sentence above it stays visible. The standalone view keeps the table open.
+export function FounderActivation({
+  tenant,
+  folded = false,
+}: {
+  tenant: string;
+  folded?: boolean;
+}) {
   const [view, setView] = useState<
     { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: Activation }
   >({ status: 'loading' });
@@ -92,19 +100,8 @@ export function FounderActivation({ tenant }: { tenant: string }) {
       </p>
     );
   const { data } = view;
-  return (
-    <div>
-      <p aria-live="polite">
-        This deployment is <strong>{data.environment.deployment}</strong> with{' '}
-        <strong>{data.environment.data}</strong> data. {data.counts.on} of {data.counts.total}{' '}
-        customer modules are on.
-        {data.environment.productionUnlocked
-          ? ' Production is unlocked for synthetic use by the owner.'
-          : ''}
-        {data.environment.openAdmission
-          ? ' Any email-verified account is admitted automatically.'
-          : ''}
-      </p>
+  const table = (
+    <>
       <div className="operations-table" tabIndex={0} role="region" aria-label="Customer modules">
         <table>
           <caption>Customer modules and why each is on or off</caption>
@@ -130,6 +127,29 @@ export function FounderActivation({ tenant }: { tenant: string }) {
           </tbody>
         </table>
       </div>
+    </>
+  );
+  return (
+    <div>
+      <p aria-live="polite">
+        This deployment is <strong>{data.environment.deployment}</strong> with{' '}
+        <strong>{data.environment.data}</strong> data. {data.counts.on} of {data.counts.total}{' '}
+        customer modules are on.
+        {data.environment.productionUnlocked
+          ? ' Production is unlocked for synthetic use by the owner.'
+          : ''}
+        {data.environment.openAdmission
+          ? ' Any email-verified account is admitted automatically.'
+          : ''}
+      </p>
+      {folded ? (
+        <details className="founder-modules">
+          <summary>All {data.counts.total} customer modules and why each is on or off</summary>
+          {table}
+        </details>
+      ) : (
+        table
+      )}
       <p>{data.note}</p>
     </div>
   );
