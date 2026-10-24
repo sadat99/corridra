@@ -5,6 +5,9 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
 import { CornerDock } from '../components/corner-dock';
+import { LanguageProvider } from '../components/language-provider';
+import { SkipLink } from '../components/skip-link';
+import { offeredLanguages } from '../lib/i18n/locales';
 
 // Self-hosted variable fonts (SIL OFL, licences in fonts/). Newsreader sets public and section
 // headings, Geist the product text, Geist Mono labels and references. All three are Latin only.
@@ -70,15 +73,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={fontVariables}>
       <body>
-        <a className="skip-link" href="#main">
-          Skip to content
-        </a>
-        <div className="site-shell">
-          <SiteHeader accounts={readNeonAuthConfig() !== null} />
-          {children}
-          <SiteFooter />
-          <CornerDock />
-        </div>
+        <LanguageProvider offered={offeredLanguages()}>
+          <SkipLink />
+          <div className="site-shell">
+            <SiteHeader accounts={readNeonAuthConfig() !== null} />
+            {children}
+            <SiteFooter />
+            <CornerDock />
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );
