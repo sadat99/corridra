@@ -2,11 +2,13 @@ import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import { customerRealInvoicingEnabled } from '@corridra/auth/customer-invoicing-real';
+import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-payments-simulated';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { BillingOverviewView } from '../billing-overview';
 import { InvoicesSection } from '../invoices-section';
 import { RealInvoicesSection } from '../real-invoices-section';
+import { SimulatedPaymentsSection } from '../simulated-payments-section';
 import { billingSession } from '../session';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -38,6 +40,13 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
       />
       {realUseEnabled() && customerRealInvoicingEnabled() && (
         <RealInvoicesSection
+          subject={session.subject}
+          issuer={session.issuer}
+          workspaceId={id.data}
+        />
+      )}
+      {realUseEnabled() && customerSimulatedPaymentsEnabled() && (
+        <SimulatedPaymentsSection
           subject={session.subject}
           issuer={session.issuer}
           workspaceId={id.data}

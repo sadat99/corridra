@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { customerRealInvoicingEnabled } from '@corridra/auth/customer-invoicing-real';
+import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-payments-simulated';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { PublicShell } from '../../components/public-shell';
 
@@ -11,6 +13,9 @@ export default function Page() {
   const real = realUseEnabled();
   // The first mission email says what it does only while it can actually be sent.
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
+  // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
+  const invoicing = real && customerRealInvoicingEnabled();
+  const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
   return (
     <PublicShell>
       <section className="guide-page-hero">
@@ -156,6 +161,18 @@ export default function Page() {
                 keep a record. Basis: our legitimate interest in answering you, or the law where it
                 requires a record.
               </li>
+              {invoicing && (
+                <li>
+                  <strong>Billing records</strong> (the company name and address you ask us to
+                  invoice, invoice and credit note numbers, amounts, and the payments our team
+                  records as received, with a bank reference). To issue invoices and keep accounting
+                  records. Basis: providing the service you asked for, and our legal duty to keep
+                  accounting records. We do not collect card or bank account details through this
+                  service. Billing records are kept for as long as accounting law requires, which is
+                  longer than the request retention window below, and are not deleted on request
+                  while that duty applies.
+                </li>
+              )}
             </ul>
             <p>
               Under Singapore’s Personal Data Protection Act we rely on your consent, including
@@ -169,6 +186,13 @@ export default function Page() {
               We do not make decisions about people based only on automated processing and we do not
               build advertising profiles.
             </p>
+            {practicePayments && (
+              <p>
+                The practice payment flow on the billing page is a simulation with made-up details
+                (madeup). It asks for no card or bank details, moves no money and does not change an
+                invoice. It records that an attempt was made, its amount and its made-up reference.
+              </p>
+            )}
           </div>
         </article>
         <article id="drafts">

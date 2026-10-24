@@ -45,6 +45,11 @@ const text = async (env: Record<string, string | undefined>) => {
     'DATA_ENVIRONMENT',
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
+    'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
+    'CORRIDRA_CUSTOMER_BILLING_ENABLED',
+    'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
+    'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
+    'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
     'VERCEL_ENV',
   ])
     delete process.env[key];
@@ -62,6 +67,11 @@ afterEach(() => {
     'DATA_ENVIRONMENT',
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
+    'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
+    'CORRIDRA_CUSTOMER_BILLING_ENABLED',
+    'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
+    'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
+    'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
   ])
     delete process.env[key];
 });
@@ -89,6 +99,34 @@ describe('the privacy notice', () => {
     expect(
       await text({ DATA_ENVIRONMENT: 'synthetic', CORRIDRA_MISSION_EMAIL_ENABLED: 'true' }),
     ).not.toContain(emailSentence);
+  });
+  it('billing records are described only while real invoices can be issued, and the practice flow only while it exists', async () => {
+    const billing = 'Billing records';
+    const practice = 'The practice payment flow on the billing page is a simulation';
+    expect(await text(real)).not.toContain(billing);
+    const plans = {
+      CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+      CORRIDRA_CUSTOMER_BILLING_ENABLED: 'true',
+      CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED: 'true',
+    };
+    expect(await text({ ...real, ...plans })).not.toContain(billing);
+    const invoices = { ...plans, CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED: 'true' };
+    const page = await text({ ...real, ...invoices });
+    expect(page).toContain(billing);
+    expect(page).toContain('We do not collect card or bank account details through this service.');
+    expect(page).not.toContain(practice);
+    const practicePage = await text({
+      ...real,
+      ...invoices,
+      CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED: 'true',
+    });
+    expect(practicePage).toContain(practice);
+    expect(practicePage).toContain('(madeup)');
+    // The practice flow switch alone describes nothing, and a sample deployment describes neither.
+    expect(
+      await text({ ...real, CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED: 'true' }),
+    ).not.toContain(practice);
+    expect(await text({ DATA_ENVIRONMENT: 'synthetic', ...invoices })).not.toContain(billing);
   });
   it('test mode: tells people the code is kept on the device, how to remove it and when it is forgotten', async () => {
     const page = await text({ DATA_ENVIRONMENT: 'synthetic' });

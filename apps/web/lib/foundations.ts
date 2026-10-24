@@ -42,6 +42,8 @@ import {
   customerInvoicingEnabled,
 } from '@corridra/auth/customer-invoicing';
 import { CustomerRealInvoicingService } from '@corridra/auth/customer-invoicing-real';
+import { CustomerSimulatedPaymentsService } from '@corridra/auth/customer-payments-simulated';
+import { CustomerSimulatedPaymentsStaffService } from '@corridra/delivery/customer-payments-simulated-staff';
 import { CustomerRealInvoicingStaffService } from '@corridra/delivery/customer-invoicing-real-staff';
 import { CustomerServiceStaffService } from '@corridra/delivery/customer-service-staff';
 import { CustomerBillingStaffService } from '@corridra/delivery/customer-billing-staff';
@@ -419,6 +421,20 @@ function createServices() {
     ),
     customerInvoicingStaff: new CustomerInvoicingStaffService(runtimePool),
     customerRealInvoicingStaff: new CustomerRealInvoicingStaffService(runtimePool),
+    customerSimulatedPaymentsStaff: new CustomerSimulatedPaymentsStaffService(runtimePool),
+    customerSimulatedPayments: new CustomerSimulatedPaymentsService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerRealBillingEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
     customerRealInvoicing: new CustomerRealInvoicingService(
       runtimePool,
       authPool,
