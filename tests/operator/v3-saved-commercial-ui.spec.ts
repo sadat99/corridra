@@ -29,6 +29,8 @@ test.beforeAll(async () => {
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
+    // Components import their own stylesheets; this spec does not mount them for styling.
+    loader: { '.css': 'empty' },
     define: { 'process.env.NODE_ENV': '"production"' },
     metafile: true,
   });
