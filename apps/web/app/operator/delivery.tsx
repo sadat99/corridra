@@ -1,4 +1,5 @@
 'use client';
+import { PhoneFold } from '../../components/phone-fold';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import {
   OperatorWorkbench,
@@ -888,16 +889,18 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           </li>
         ))}
       </ul>
-      <DeliveryExperience
-        role={data?.role ?? ''}
-        key={`${tenant}:${programme}:${missionId}`}
-        tenant={tenant}
-        programme={programme}
-        mission={missionId}
-        participants={data?.participants ?? []}
-        publications={data?.publications ?? []}
-        owners={data?.owners ?? []}
-      />
+      <PhoneFold summary="Mission and delegation experience: context, agenda and recipient scope">
+        <DeliveryExperience
+          role={data?.role ?? ''}
+          key={`${tenant}:${programme}:${missionId}`}
+          tenant={tenant}
+          programme={programme}
+          mission={missionId}
+          participants={data?.participants ?? []}
+          publications={data?.publications ?? []}
+          owners={data?.owners ?? []}
+        />
+      </PhoneFold>
     </section>
   );
 }

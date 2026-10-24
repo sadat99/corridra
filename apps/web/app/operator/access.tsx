@@ -1,4 +1,5 @@
 'use client';
+import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
@@ -387,138 +388,140 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         )}
       </details>
       {manage && (
-        <form
-          className="operator-form detail-card"
-          aria-label="Create private introduction"
-          onSubmit={(e) =>
-            submit(e, (f) => ({
-              action: 'introduce',
-              targetId: field(f, 'targetId'),
-              contactId: field(f, 'contactId'),
-              policyId: field(f, 'policyId'),
-              templateId: field(f, 'templateId'),
-              expiresAt: timestamp(f, 'expiresAt'),
-              introduction: Object.fromEntries(
-                [
-                  'company',
-                  'country',
-                  'capability',
-                  'fit',
-                  'evidence',
-                  'uncertainty',
-                  'conversationPurpose',
-                  'availableDates',
-                ].map((k) => [k, field(f, k)]),
-              ),
-            }))
-          }
-        >
-          <h3>Review and create a private introduction</h3>
-          <label className="field">
-            Introduction target
-            <select
-              name="targetId"
-              required
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-            >
-              <option value="">Choose a mission target</option>
-              {comms.targets.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.supplier} to {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Introduction recipient
-            <select name="contactId" required key={target}>
-              <option value="">Choose a contact for this target</option>
-              {comms.contacts
-                .filter((c) => c.relationship_id === selected?.relationship_id)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.email})
+        <PhoneFold summary="Private introduction form">
+          <form
+            className="operator-form detail-card"
+            aria-label="Create private introduction"
+            onSubmit={(e) =>
+              submit(e, (f) => ({
+                action: 'introduce',
+                targetId: field(f, 'targetId'),
+                contactId: field(f, 'contactId'),
+                policyId: field(f, 'policyId'),
+                templateId: field(f, 'templateId'),
+                expiresAt: timestamp(f, 'expiresAt'),
+                introduction: Object.fromEntries(
+                  [
+                    'company',
+                    'country',
+                    'capability',
+                    'fit',
+                    'evidence',
+                    'uncertainty',
+                    'conversationPurpose',
+                    'availableDates',
+                  ].map((k) => [k, field(f, k)]),
+                ),
+              }))
+            }
+          >
+            <h3>Review and create a private introduction</h3>
+            <label className="field">
+              Introduction target
+              <select
+                name="targetId"
+                required
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+              >
+                <option value="">Choose a mission target</option>
+                {comms.targets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.supplier} to {t.name}
                   </option>
                 ))}
-            </select>
-          </label>
-          <label className="field">
-            Approved policy
-            <select name="policyId" required>
-              <option value="">Choose a current policy</option>
-              {comms.policies
-                .filter((p) => p.enabled)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.jurisdiction} / {p.channel} / {p.contact_purpose.replaceAll('_', ' ')} v
-                    {p.version}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="field">
-            Approved template
-            <select name="templateId" required>
-              <option value="">Choose a template</option>
-              {comms.templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} v{t.version}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Introduced company
-            <input
-              name="company"
-              required
-              minLength={3}
-              maxLength={160}
-              key={`company-${target}`}
-              defaultValue={selected?.supplier}
-            />
-          </label>
-          <label className="field">
-            Introduced company country
-            <select name="country">
-              {['BD', 'ES', 'DE', 'OTHER'].map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          {(
-            [
-              ['capability', 'Relevant capability', 600],
-              ['fit', 'Reason there may be a fit', 1000],
-              ['evidence', 'Evidence highlights for the buyer', 1000],
-              ['uncertainty', 'What remains unverified for the buyer', 1000],
-              ['conversationPurpose', 'Proposed conversation purpose', 600],
-              ['availableDates', 'Available conversation dates', 300],
-            ] as const
-          ).map(([name, label, max]) => (
-            <label key={name} className="field">
-              {label}
-              <textarea name={name} required minLength={3} maxLength={max} />
+              </select>
             </label>
-          ))}
-          <label className="field">
-            Private link expiry (UTC)
-            <input
-              name="expiresAt"
-              type="datetime-local"
-              required
-              defaultValue={defaults.tomorrow}
-            />
-          </label>
-          <label className="check-field">
-            <input type="checkbox" required />I reviewed this introduction and approve the displayed
-            context for this recipient.
-          </label>
-          <button className="primary-link" disabled={busy}>
-            Create private introduction
-          </button>
-        </form>
+            <label className="field">
+              Introduction recipient
+              <select name="contactId" required key={target}>
+                <option value="">Choose a contact for this target</option>
+                {comms.contacts
+                  .filter((c) => c.relationship_id === selected?.relationship_id)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.email})
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="field">
+              Approved policy
+              <select name="policyId" required>
+                <option value="">Choose a current policy</option>
+                {comms.policies
+                  .filter((p) => p.enabled)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.jurisdiction} / {p.channel} / {p.contact_purpose.replaceAll('_', ' ')} v
+                      {p.version}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="field">
+              Approved template
+              <select name="templateId" required>
+                <option value="">Choose a template</option>
+                {comms.templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} v{t.version}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Introduced company
+              <input
+                name="company"
+                required
+                minLength={3}
+                maxLength={160}
+                key={`company-${target}`}
+                defaultValue={selected?.supplier}
+              />
+            </label>
+            <label className="field">
+              Introduced company country
+              <select name="country">
+                {['BD', 'ES', 'DE', 'OTHER'].map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            {(
+              [
+                ['capability', 'Relevant capability', 600],
+                ['fit', 'Reason there may be a fit', 1000],
+                ['evidence', 'Evidence highlights for the buyer', 1000],
+                ['uncertainty', 'What remains unverified for the buyer', 1000],
+                ['conversationPurpose', 'Proposed conversation purpose', 600],
+                ['availableDates', 'Available conversation dates', 300],
+              ] as const
+            ).map(([name, label, max]) => (
+              <label key={name} className="field">
+                {label}
+                <textarea name={name} required minLength={3} maxLength={max} />
+              </label>
+            ))}
+            <label className="field">
+              Private link expiry (UTC)
+              <input
+                name="expiresAt"
+                type="datetime-local"
+                required
+                defaultValue={defaults.tomorrow}
+              />
+            </label>
+            <label className="check-field">
+              <input type="checkbox" required />I reviewed this introduction and approve the
+              displayed context for this recipient.
+            </label>
+            <button className="primary-link" disabled={busy}>
+              Create private introduction
+            </button>
+          </form>
+        </PhoneFold>
       )}
       {buyerPath && (
         <div className="detail-card">
@@ -641,58 +644,60 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         )}
       </details>
       {manage && (
-        <form
-          className="operator-form detail-card"
-          aria-label="Propose meeting"
-          onSubmit={(e) =>
-            submit(
-              e,
-              (f) => ({
-                action: 'propose',
-                messageId: field(f, 'messageId'),
-                title: field(f, 'title'),
-                brief: field(f, 'brief'),
-                participants: field(f, 'participants')
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-                ownerId: field(f, 'ownerId'),
-                nextAction: field(f, 'nextAction'),
-                dueAt: timestamp(f, 'dueAt'),
-                reason: field(f, 'reason'),
-              }),
-              'meeting',
-            )
-          }
-        >
-          <h3>Propose a meeting</h3>
-          <label className="field">
-            Meeting introduction
-            <select name="messageId" required>
-              {comms.messages.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.presentation.company} ({m.decision ?? 'no response'})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Meeting title
-            <input name="title" required minLength={3} maxLength={160} />
-          </label>
-          <label className="field">
-            Meeting brief
-            <textarea name="brief" required minLength={3} maxLength={2000} />
-          </label>
-          <label className="field">
-            Meeting participants, one per line
-            <textarea name="participants" required maxLength={1200} />
-          </label>
-          <Ownership owners={meetings.owners} />
-          <button className="primary-link" disabled={busy}>
-            Propose meeting
-          </button>
-        </form>
+        <PhoneFold summary="Meeting proposal form">
+          <form
+            className="operator-form detail-card"
+            aria-label="Propose meeting"
+            onSubmit={(e) =>
+              submit(
+                e,
+                (f) => ({
+                  action: 'propose',
+                  messageId: field(f, 'messageId'),
+                  title: field(f, 'title'),
+                  brief: field(f, 'brief'),
+                  participants: field(f, 'participants')
+                    .split('\n')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                  ownerId: field(f, 'ownerId'),
+                  nextAction: field(f, 'nextAction'),
+                  dueAt: timestamp(f, 'dueAt'),
+                  reason: field(f, 'reason'),
+                }),
+                'meeting',
+              )
+            }
+          >
+            <h3>Propose a meeting</h3>
+            <label className="field">
+              Meeting introduction
+              <select name="messageId" required>
+                {comms.messages.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.presentation.company} ({m.decision ?? 'no response'})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Meeting title
+              <input name="title" required minLength={3} maxLength={160} />
+            </label>
+            <label className="field">
+              Meeting brief
+              <textarea name="brief" required minLength={3} maxLength={2000} />
+            </label>
+            <label className="field">
+              Meeting participants, one per line
+              <textarea name="participants" required maxLength={1200} />
+            </label>
+            <Ownership owners={meetings.owners} />
+            <button className="primary-link" disabled={busy}>
+              Propose meeting
+            </button>
+          </form>
+        </PhoneFold>
       )}
       <h3>Meeting itinerary</h3>
       <p>
