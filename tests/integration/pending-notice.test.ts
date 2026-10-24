@@ -83,6 +83,12 @@ describe('the saved request notice', () => {
     expect(account).toContain('<PendingRequestNotice where="verify" />');
   });
 
+  it('keeps its live region free of the status role, which the forms it sits beside already use', () => {
+    const source = readFileSync(resolve('apps/web/components/pending-request-notice.tsx'), 'utf8');
+    expect(source).toContain('aria-live="polite"');
+    expect(source).not.toContain('role="status"');
+  });
+
   it('the request page panel tells people to finish in the same device and browser', () => {
     const plan = readFileSync(resolve('apps/web/app/plan/intake.tsx'), 'utf8');
     expect(plan.replace(/\s+/g, ' ')).toContain(

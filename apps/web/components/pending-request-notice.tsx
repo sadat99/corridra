@@ -65,9 +65,5 @@ export function PendingRequestNotice({ where }: { where: PendingNoticeWhere }) {
       });
     return () => controller.abort();
   }, []);
-  return (
-    <div role="status" aria-live="polite">
-      {pending && <PendingRequestMessage where={where} />}
-    </div>
-  );
+  return <div aria-live="polite">{pending && <PendingRequestMessage where={where} />}</div>;
 }
