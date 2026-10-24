@@ -954,6 +954,11 @@
       "use": "Real plans, subscriptions and entitlements (billing stage 1): default-off, two switches, real catalogue kept apart from the sample one, no payment or invoice; stages 2 and 3 not built"
     },
     {
+      "path": "docs/adr/0064-real-invoices-payment-records-and-credit-notes.md",
+      "classification": "Architecture contract/index",
+      "use": "Real invoices, payment records and credit notes (billing stage 2): default-off control, Singapore GST in exact minor units, gap-free yearly legal numbers, second-person approval, manual payments, made-up supplier fields marked on each document; no provider, no money moves"
+    },
+    {
       "path": "docs/product/real-use-audit-2026-10-24.md",
       "classification": "Product audit",
       "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"
