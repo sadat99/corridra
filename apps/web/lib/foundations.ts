@@ -88,6 +88,11 @@ import {
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { CustomerMoveService, customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { MissionMoveService } from '@corridra/missions/moves';
+import {
+  CustomerNotificationService,
+  PulseService,
+  customerNotificationsEnabled,
+} from '@corridra/auth/customer-notifications';
 import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
 import { ViewAsService } from '@corridra/auth/view-as';
 import {
@@ -404,6 +409,23 @@ function createServices() {
       readCustomerSession,
     ),
     moves: new MissionMoveService(runtimePool),
+    customerNotifications: new CustomerNotificationService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerNotificationsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    // Pulse has no address source until the owner chooses one (docs/product/phase2-install.md), so it
+    // queues and seals but never claims or sends. The service is always built: mute links must keep
+    // working if the switch is turned off later.
+    pulse: new PulseService(runtimePool, config.AUTH_SECRET),
     customerMemberRoles: new CustomerMemberRoleService(
       runtimePool,
       authPool,

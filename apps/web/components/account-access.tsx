@@ -25,6 +25,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
               key={mode}
               mode={mode}
               codeSignIn={mode === 'signin' && process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
+              returnToEmailPages={process.env.CORRIDRA_PULSE_ENABLED === 'true'}
             />
           </Suspense>
         ) : (

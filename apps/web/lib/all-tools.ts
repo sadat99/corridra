@@ -4,7 +4,14 @@
 // cannot go missing from this list or from the reasons.
 
 export type ToolModule =
-  'move' | 'serviceRequests' | 'participants' | 'programmes' | 'companies' | 'profiles' | 'billing';
+  | 'move'
+  | 'serviceRequests'
+  | 'participants'
+  | 'programmes'
+  | 'companies'
+  | 'profiles'
+  | 'billing'
+  | 'notifications';
 
 export type ToolGroup = 'Start' | 'Your Move' | 'Missions' | 'Library' | 'Companies' | 'More';
 export const toolGroups: readonly ToolGroup[] = [
@@ -121,6 +128,14 @@ export const tools: readonly Tool[] = [
     module: 'billing',
   },
   {
+    route: '/account/notifications',
+    href: '/account/notifications',
+    label: 'Choose what we email you',
+    line: 'Which messages, one email a day and quiet hours.',
+    group: 'More',
+    module: 'notifications',
+  },
+  {
     route: '/account',
     href: '/account?view=more',
     label: 'Manage your account',
@@ -193,6 +208,10 @@ export const excludedPages: readonly ExcludedPage[] = [
   {
     route: '/buyer',
     why: 'A supplier or buyer opens it from a private link. It is not a signed-in page.',
+  },
+  {
+    route: '/pulse/mute/[requestId]',
+    why: 'A person opens it from an email link to stop messages about one request. It is not a signed-in page.',
   },
   {
     route: '/mute/[requestId]',

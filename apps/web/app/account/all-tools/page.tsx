@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
+import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
@@ -42,6 +43,7 @@ export default async function Page() {
     companies: customerCompaniesEnabled(),
     profiles: customerOrganisationProfilesEnabled(),
     billing: customerBillingEnabled(),
+    notifications: customerNotificationsEnabled(),
   });
   return (
     <CustomerShell tab="more" eyebrow="ALL TOOLS" title="Every tool you can open.">

@@ -1,0 +1,60 @@
+.notifications-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  max-width: 40rem;
+}
+.notifications-form fieldset {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.notifications-form legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.notifications-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-2) 0;
+}
+.notifications-check input {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  margin-block-start: 0.125rem;
+}
+.notifications-check > span {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.notifications-check > span > span,
+.notifications-help {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+.notifications-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+}
+.notifications-note {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.notifications-form .primary-link {
+  justify-self: start;
+  min-height: 2.75rem;
+}

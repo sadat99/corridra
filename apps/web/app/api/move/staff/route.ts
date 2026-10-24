@@ -35,7 +35,23 @@ async function handle(request: Request) {
       throw new DomainError('JSON required', 415);
     const body = await request.text();
     if (body.length > 20000) throw new DomainError('Request too large', 413);
-    return Response.json(await s.moves.command(ctx, JSON.parse(body)), { headers });
+    const input = JSON.parse(body);
+    const outcome = await s.moves.command(ctx, input);
+    // Email about a Move is a separate step after the Move is stored: it can never fail or undo the Move.
+    // It queues nothing unless Pulse is on in the application and the database, and sends nothing until
+    // the owner has chosen where the address comes from.
+    if (input?.action === 'set' && !outcome.replayed && s.pulse.canSend) {
+      try {
+        const jobs = await s.pulse.enqueueForCommand(ctx, outcome.commandId);
+        if (jobs.length > 0) {
+          const { pulseOrchestrator } = await import('../../../../lib/pulse-orchestrator');
+          for (const job of jobs) await pulseOrchestrator.start(job);
+        }
+      } catch {
+        // Mail problems are not Move problems.
+      }
+    }
+    return Response.json(outcome, { headers });
   } catch (error) {
     const status =
       error instanceof DomainError ? error.status : error instanceof z.ZodError ? 400 : 500;

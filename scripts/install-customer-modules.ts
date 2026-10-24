@@ -31,6 +31,8 @@ import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-c
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
 import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
+import { migrateCustomerNotifications } from '../packages/db/src/customer-notification-migrate';
+import { configureNotifications } from '../packages/auth/src/customer-notification-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
@@ -54,6 +56,11 @@ const v = z
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    NOTIFICATIONS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    NOTIFICATIONS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
     ),
@@ -155,6 +162,10 @@ if (v.MOVE_RECORDS_ACTION !== 'unchanged' && !apply)
   throw new Error('Move record changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MOVE_RECORDS_ACTION) && !v.MOVE_RECORDS_REASON)
   throw new Error('Move record changes require an explicit reason');
+if (v.NOTIFICATIONS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Notification changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.NOTIFICATIONS_ACTION) && !v.NOTIFICATIONS_REASON)
+  throw new Error('Notification changes require an explicit reason');
 
 const registries = [
   'customer_migrations',
@@ -188,6 +199,7 @@ const registries = [
   'customer_payments_simulated_migrations',
   'customer_mission_mail_migrations',
   'customer_move_migrations',
+  'customer_notification_migrations',
   'view_as_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
@@ -301,6 +313,18 @@ try {
         });
         console.log(
           `Move records ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.NOTIFICATIONS_ACTION !== 'unchanged') {
+      await migrateCustomerNotifications(pool);
+      if (v.NOTIFICATIONS_ACTION !== 'install') {
+        const result = await configureNotifications(pool, {
+          enabled: v.NOTIFICATIONS_ACTION === 'enable',
+          reason: v.NOTIFICATIONS_REASON,
+        });
+        console.log(
+          `Notifications ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }

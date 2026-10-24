@@ -10,6 +10,9 @@
   "/account/move": {
     "unavailable": 6
   },
+  "/account/notifications": {
+    "unavailable": 6
+  },
   "/account/companies": {},
   "/account/billing": {},
   "/account/delegations": {},

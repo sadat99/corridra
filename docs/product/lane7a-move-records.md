@@ -20,7 +20,7 @@ Status: built and dark, 24 October 2026. Switch `CORRIDRA_UX_MOVE_RECORDS` (off 
 - The object is the team's own words. It is shown as written and marked as English in any language; it is never translated.
 - Audit and domain events hold ids and the verb only, never the object text.
 - Closing the control stops new Moves. Records stay. The mission `next_action` is untouched.
-- Message 4 (a Move for you) is Lane 7b and needs Pulse, which stays off until the owner's privacy review.
+- The email for a Move is Lane 7b ([lane7b-pulse.md](lane7b-pulse.md)); it needs Pulse, which stays off until the owner's privacy review and an address source.
 
 ## Verification
 
@@ -28,7 +28,7 @@ Status: built and dark, 24 October 2026. Switch `CORRIDRA_UX_MOVE_RECORDS` (off 
 - Unit suite `ux-move-records.test.ts` (30 tests): the shape rules, card building from records, folding, switch-off parity.
 - Operator specs `ux-mission-moves.spec.ts` (staff panel, 9 cases) and `ux-move.spec.ts` (Move cards and folded rows) mount the real components with the real stylesheets: 320 to 1440 px, no sideways scroll, 44 px targets, clean accessibility scan.
 
-## Owner steps (nothing is applied by merging)
+## Owner steps (nothing is applied by merging; the full order is in [phase2-install.md](phase2-install.md))
 
 1. Run the install job (`install-customer-modules`, protected environment) with `move_records_action = install` and `apply = yes`. This adds the tables and functions; nobody sees any change.
 2. Run it again with `move_records_action = enable` and a reason of at least ten characters to open the database side.

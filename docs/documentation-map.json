@@ -214,6 +214,16 @@
       "use": "Lane 7a: Move records, the staff panel, the customer read, what Your Move shows from them, the owner install steps and rollback"
     },
     {
+      "path": "docs/product/lane7b-pulse.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 7b: Pulse notification records, the Email choices page, the mute page, what is built, what waits and how it is verified"
+    },
+    {
+      "path": "docs/product/phase2-install.md",
+      "classification": "Owner proposal",
+      "use": "The owner's order of install steps for Move records and Pulse, the open decisions that keep Pulse from sending, and how to roll back"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"

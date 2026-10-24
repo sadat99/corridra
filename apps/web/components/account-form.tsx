@@ -26,16 +26,19 @@ function detail(error: unknown) {
 export function AccountForm({
   mode,
   codeSignIn = false,
+  returnToEmailPages = false,
 }: {
   mode: AccountFormMode;
   /** Set by the server from CORRIDRA_CUSTOMER_CODE_SIGNIN. Off keeps the form exactly as it was. */
   codeSignIn?: boolean;
+  /** Set by the server from CORRIDRA_PULSE_ENABLED. Off keeps `/plan` as the only kept destination. */
+  returnToEmailPages?: boolean;
 }) {
   const router = useRouter();
   const query = useSearchParams();
-  const destination = accountReturnTo(query.get('returnTo'));
+  const destination = accountReturnTo(query.get('returnTo'), returnToEmailPages);
   const accessPath = (page: Parameters<typeof accountAccessPath>[0]) =>
-    accountAccessPath(page, destination);
+    accountAccessPath(page, destination, undefined, returnToEmailPages);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

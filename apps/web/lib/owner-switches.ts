@@ -459,9 +459,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_PULSE_ENABLED',
     label: 'Pulse emails',
-    line: 'Sends the Your Move, Update and Countdown emails to the verified account holder. Needs its database module and the privacy review.',
+    line: 'Email choices page and the Your Move, Update, Countdown and Complete emails to the verified account holder. Needs its database module, the privacy review and a chosen address source; sends nothing until all three exist.',
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_STATUS_LINK',
