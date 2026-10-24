@@ -57,7 +57,16 @@ on:
       real_invoicing_action:
         description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone and seeds the supplier details with made-up fields marked; enable opens the database side only; set_supplier writes new supplier details from the JSON below; allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
         type: choice
-        options: [unchanged, install, enable, pause, set_supplier, allow_single_approver, require_second_approver]
+        options:
+          [
+            unchanged,
+            install,
+            enable,
+            pause,
+            set_supplier,
+            allow_single_approver,
+            require_second_approver,
+          ]
         default: unchanged
       real_invoicing_reason:
         description: 'Required reason for any real invoicing operation other than install.'

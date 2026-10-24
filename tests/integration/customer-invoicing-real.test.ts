@@ -40,7 +40,6 @@ const sessionFor = (subject: string) => async () => ({
 let s: Awaited<ReturnType<typeof realStaffFixture>>;
 let workspaceId: string;
 let otherWorkspaceId: string;
-let memberWorkspaceId: string;
 let subscriptionId: string;
 let periodStart: string;
 let second: {
@@ -134,10 +133,6 @@ const decide = (
     decision,
     ...(reason ? { reason } : {}),
   });
-const issue = async (over: Record<string, unknown> = {}) => {
-  const proposal = await prepare(over);
-  return decide(proposal.proposalId);
-};
 const pendingPeriods = async () => (await staff.pending(first())).periods;
 
 async function writePlanAndActivate(
@@ -214,7 +209,6 @@ beforeAll(async () => {
     ).id as string;
   workspaceId = await provision('inv-owner', 'Dhaka Imports');
   otherWorkspaceId = await provision('inv-other', 'Chattogram Exports');
-  memberWorkspaceId = workspaceId;
   // A plain member of the first workspace.
   const invitation = await new CustomerWorkspaceService(
     ...runtime(),
