@@ -1,0 +1,10 @@
+/* Scripts that join their letters (Bengali, Arabic) are never letter-spaced: spacing breaks the joined
+   forms and reads as broken text. The product sets small spaced capitals in many labels, which is right for
+   Latin and wrong here. The rule applies only when the person has chosen one of these languages, and not to
+   a main region still written in English. With English chosen nothing in this file matches. */
+html[lang='bn'],
+html[lang='bn'] :not(:lang(en)),
+html[lang='ar'],
+html[lang='ar'] :not(:lang(en)) {
+  letter-spacing: 0 !important;
+}

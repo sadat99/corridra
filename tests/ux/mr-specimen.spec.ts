@@ -19,30 +19,23 @@ let styles = '';
 
 const entry = `
 import { createRoot } from 'react-dom/client';
-import { Road, HolderBadge, MoveCard, QuoteCard, GhostState, ModeLabel, mrLabels } from ${JSON.stringify(
+import ${JSON.stringify(resolve('apps/web/components/language-scripts.css'))};
+import { Road, HolderBadge, MoveCard, QuoteCard, GhostState, ModeLabel, mrLabelsFor } from ${JSON.stringify(
   resolve('apps/web/components/mr/index.ts'),
 )};
 
 const long = 'Reference-Corridra-Quotation-Supplier-Bangladesh-Singapore-0000000000000000';
 const statuses = ['DRAFT','QUALIFICATION','ACTIVE','TARGETING','OUTREACH','MEETINGS','FOLLOW_UP','COMMERCIAL_PIPELINE','CLOSED','ON_HOLD','CANCELLED','IN_REVIEW'];
-const arabic = {
-  ...mrLabels.road,
-  title: 'أين وصل هذا الطلب',
-  steps: { define: 'تحديد', find: 'بحث', compare: 'مقارنة', visit: 'زيارة', decide: 'قرار', follow: 'متابعة' },
-  states: { done: 'تم', now: 'الآن', later: 'لاحقا', notTracked: 'لم يُتتبع بعد' },
-};
-const bangla = {
-  ...mrLabels.road,
-  title: 'আপনার অনুরোধ এখন কোথায়',
-  steps: { define: 'নির্ধারণ', find: 'খোঁজ', compare: 'তুলনা', visit: 'সাক্ষাৎ', decide: 'সিদ্ধান্ত', follow: 'পরবর্তী কাজ' },
-  states: { done: 'সম্পন্ন', now: 'এখন', later: 'পরে', notTracked: 'এখনো ট্র্যাক হয়নি' },
-};
-const chinese = {
-  ...mrLabels.road,
-  title: '您的请求目前进展',
-  steps: { define: '明确', find: '寻找', compare: '比较', visit: '拜访', decide: '决定', follow: '跟进' },
-  states: { done: '已完成', now: '进行中', later: '稍后', notTracked: '尚未跟踪' },
-};
+// The real draft catalogues, so the screenshots show the words the product would use.
+const arabic = mrLabelsFor('ar');
+const bangla = mrLabelsFor('bn');
+const chinese = mrLabelsFor('zh');
+const english = mrLabelsFor('en');
+const banglaTerms = [
+  { label: 'সরবরাহের সময়', value: '৪৫ দিন' },
+  { label: 'অর্থপ্রদানের শর্ত', value: '৩০% অগ্রিম, বাকি ৭০% জাহাজে তোলার আগে' },
+  { label: 'স্থাপন', value: undefined },
+];
 const terms = [
   { label: 'Lead time', value: '45 days' },
   { label: 'Payment terms', value: '30% deposit, 70% before shipping' },
@@ -53,7 +46,7 @@ const terms = [
 
 function App() {
   return (
-    <main id="mr-specimen" className="ux-workspace ux-customer">
+    <main id="mr-specimen" lang="en" className="ux-workspace ux-customer">
       <h1>Teaching layer specimen</h1>
       <section aria-labelledby="sp-road"><h2 id="sp-road">The Road</h2>
         {statuses.map((s) => (
@@ -64,9 +57,9 @@ function App() {
         ))}
       </section>
       <section aria-labelledby="sp-scripts"><h2 id="sp-scripts">Bangla, Chinese, Arabic and right to left</h2>
-        <div lang="bn"><Road status="MEETINGS" labels={bangla} showLegend={false} /></div>
-        <div lang="zh"><Road status="MEETINGS" labels={chinese} showLegend={false} /></div>
-        <div lang="ar" dir="rtl"><Road status="MEETINGS" labels={arabic} showLegend={false} /></div>
+        <div lang="bn"><Road status="MEETINGS" labels={bangla.road} showLegend={false} /></div>
+        <div lang="zh"><Road status="MEETINGS" labels={chinese.road} showLegend={false} /></div>
+        <div lang="ar" dir="rtl"><Road status="MEETINGS" labels={arabic.road} showLegend={false} /></div>
       </section>
       <section aria-labelledby="sp-holders"><h2 id="sp-holders">Holder badge</h2>
         <p style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
@@ -76,21 +69,32 @@ function App() {
       </section>
       <section aria-labelledby="sp-moves"><h2 id="sp-moves">Move card</h2>
         <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-          <MoveCard verb="Add" object="your import licence number" holder="you" context="Automatic fabric cutting machine" due="5 November 2026" href="/account" action="Add it" />
+          <MoveCard verb="Add" object="your import licence number" holder="you" context="Automatic fabric cutting machine" due="5 November 2026" labels={english} href="/account" action="Add it" />
           <MoveCard verb="Read" object="the new reply" holder="you" href="/account" action="Open the Room" />
           <MoveCard verb="Confirm" object="your visit dates" holder="team" context="Waiting on the Corridra team" />
           <MoveCard verb="Send" object={long} holder="third" due={long} href="/account" action={long} />
-          <div lang="bn"><MoveCard verb="Answer" object="আপনার আমদানি লাইসেন্স নম্বর যোগ করুন, দয়া করে দ্রুত জানান" holder="you" href="/account" action="উত্তর দিন" /></div>
-          <div lang="zh"><MoveCard verb="Add" object="您的进口许可证编号，请尽快提供以便继续处理" holder="you" href="/account" action="添加" /></div>
-          <div lang="ar" dir="rtl"><MoveCard verb="Add" object="رقم رخصة الاستيراد الخاصة بك" holder="you" href="/account" action="أضف" /></div>
+          <div lang="bn"><MoveCard verb="Add" object="আপনার আমদানি লাইসেন্স নম্বর" holder="you" context="স্বয়ংক্রিয় কাপড় কাটার মেশিন" due="৫ নভেম্বর ২০২৬" labels={bangla} href="/account" action="যোগ করুন" /></div>
+          <div lang="zh"><MoveCard verb="Add" object="您的进口许可证编号，请尽快提供以便继续处理" holder="you" labels={chinese} href="/account" action="添加" /></div>
+          <div lang="ar" dir="rtl"><MoveCard verb="Add" object="رقم رخصة الاستيراد الخاصة بك" holder="you" labels={arabic} href="/account" action="أضف" /></div>
         </div>
       </section>
       <section aria-labelledby="sp-quotes"><h2 id="sp-quotes">Quote card</h2>
         <div style={{ display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 16rem), 1fr))' }}>
           <QuoteCard supplier="Lantern Cutting Works" place="Guangzhou, China" revision={2} currency="USD" unitPrice="USD 18,400.00" total="USD 18,400.00" comparable terms={terms.slice(0, 2)} />
           <QuoteCard supplier="绿野机械有限公司" supplierLang="zh" place="Foshan, China" revision={1} currency="CNY" unitPrice="CNY 128,000.00" total="CNY 128,000.00" comparable={false} reason="Missing: Installation, Spares" terms={terms} />
+          <div lang="bn"><QuoteCard supplier="লণ্ঠন কাটিং ওয়ার্কস" place="গুয়াংজু, চীন" revision={2} currency="USD" unitPrice="USD 18,400.00" total="USD 18,400.00" comparable={false} reason="অনুপস্থিত: স্থাপন" terms={banglaTerms} labels={bangla.quote} /></div>
           <QuoteCard supplier={long} revision={3} currency="USD" comparable={false} reason="Quote expired on 15 October 2026" terms={terms} />
         </div>
+      </section>
+      <section aria-labelledby="sp-table" lang="bn"><h2 id="sp-table">বাংলা টেবিল</h2>
+        <table style={{ width: '100%', tableLayout: 'fixed', overflowWrap: 'anywhere' }}>
+          <caption>প্রাপ্ত প্রস্তাবের তুলনা</caption>
+          <thead><tr><th scope="col">সরবরাহকারী</th><th scope="col">একক মূল্য</th><th scope="col">সরবরাহের সময়</th><th scope="col">অবস্থা</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">লণ্ঠন কাটিং ওয়ার্কস</th><td>USD 18,400.00</td><td>৪৫ দিন</td><td>{bangla.quote.comparable}</td></tr>
+            <tr><th scope="row">গ্রিন ফিল্ড মেশিনারি</th><td>CNY 128,000.00</td><td>{bangla.quote.notStated}</td><td>{bangla.quote.notComparable}</td></tr>
+          </tbody>
+        </table>
       </section>
       <section aria-labelledby="sp-ghost"><h2 id="sp-ghost">Ghost state and mode label</h2>
         <GhostState title="Nothing here yet" text="Your offers will appear here when the Corridra team delivers a report.">
@@ -142,6 +146,8 @@ async function mount(page: Page, width: number) {
   await page.addScriptTag({ content: 'window.process = { env: { NODE_ENV: "production" } };' });
   await page.addScriptTag({ content: script, type: 'module' });
   await page.waitForSelector('#mr-specimen');
+  // The page language a person gets after choosing Bangla; the main region keeps its own English.
+  await page.evaluate(() => (document.documentElement.lang = 'bn'));
 }
 
 for (const width of widths) {
@@ -215,6 +221,23 @@ for (const width of widths) {
     });
     expect(copy, 'Bangla, Chinese and Arabic line height under 1.3').toEqual([]);
 
+    // Bengali and Arabic are never letter-spaced (spacing breaks the joined forms).
+    const spaced = await page.evaluate(() =>
+      [
+        ...document.querySelectorAll(
+          '#mr-specimen :is([lang="bn"], [lang="ar"]), #mr-specimen :is([lang="bn"], [lang="ar"]) *',
+        ),
+      ]
+        .filter((el) => /[ঀ-৿؀-ۿ]/.test(el.textContent || ''))
+        .map((el) => ({ el, spacing: getComputedStyle(el).letterSpacing }))
+        .filter(({ spacing }) => spacing !== 'normal' && parseFloat(spacing) !== 0)
+        .map(
+          ({ el, spacing }) =>
+            `${el.tagName.toLowerCase()}.${(el as HTMLElement).className} ${spacing}`,
+        ),
+    );
+    expect(spaced, 'letter-spaced Bengali or Arabic').toEqual([]);
+
     // 5. The right-to-left sample really lays out right to left.
     const rtl = await page.evaluate(() => {
       const box = document.querySelector('[dir="rtl"] .mr-move') as HTMLElement;
@@ -227,5 +250,17 @@ for (const width of widths) {
     expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
 
     await page.screenshot({ path: join(shotDir, `mr-specimen-${width}.png`), fullPage: true });
+
+    // Bangla draft in a Road, a button, a label and a table, kept for the owner's type question.
+    for (const [name, selector] of [
+      ['road', 'section[aria-labelledby="sp-scripts"] [lang="bn"]'],
+      ['move-card', 'section[aria-labelledby="sp-moves"] [lang="bn"]'],
+      ['quote-card', 'section[aria-labelledby="sp-quotes"] [lang="bn"]'],
+      ['table', 'section[aria-labelledby="sp-table"]'],
+    ] as const)
+      await page
+        .locator(selector)
+        .first()
+        .screenshot({ path: join(shotDir, `bangla-${name}-${width}.png`) });
   });
 }

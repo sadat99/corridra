@@ -1,5 +1,6 @@
 'use client';
 
+import './language-scripts.css';
 import {
   createContext,
   useCallback,
