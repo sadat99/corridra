@@ -53,6 +53,27 @@ export function roomLinkFor(requestId: string, assignments: unknown): RoomLink {
   return { reportAvailable, savedResourceId };
 }
 
+/**
+ * Assignments are listed by id, not by request, so a request's report can be on any page. This stops as
+ * soon as it is found and otherwise follows every page before it declares the report absent. The bound
+ * only guards against a provider that never ends (200 pages of 25 is 5,000 assignments).
+ */
+export async function followAssignments(
+  requestId: string,
+  page: (after?: string) => Promise<{ assignments?: unknown[]; nextAfter?: string | null }>,
+  maxPages = 200,
+): Promise<RoomLink> {
+  const rows: unknown[] = [];
+  let after: string | undefined;
+  for (let n = 0; n < maxPages; n += 1) {
+    const result = await page(after);
+    rows.push(...(result.assignments ?? []));
+    if (roomLinkFor(requestId, rows).reportAvailable || !result.nextAfter) break;
+    after = result.nextAfter;
+  }
+  return roomLinkFor(requestId, rows);
+}
+
 /** The records the Road may read for Compare and Decide. A decision is not readable here, so it is never claimed. */
 export function roadRecords(link: RoomLink) {
   return { compare: link.reportAvailable, decide: false };

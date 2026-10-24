@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compareOffers } from '../../packages/domain/src/commercial-missions';
-import { emblemFor, roadRecords, roomLinkFor } from '../../apps/web/lib/room';
+import { emblemFor, followAssignments, roadRecords, roomLinkFor } from '../../apps/web/lib/room';
 import { factNameFor, quoteCardsFrom, reasonFor } from '../../apps/web/lib/quote-cards';
 import { buildMoveModel } from '../../apps/web/lib/move-cards';
 
@@ -277,5 +277,58 @@ describe('the switches and the pages', () => {
   });
   it('the comparison matrix file is not touched', () => {
     expect(read('apps/web/components/comparison-matrix.tsx')).not.toContain('QuoteCard');
+  });
+});
+
+describe('following every page of assignments', () => {
+  const request = '11111111-1111-4111-8111-111111111111';
+  const other = '22222222-2222-4222-8222-222222222222';
+  const saved = '33333333-3333-4333-8333-333333333333';
+  /** Pages of 25 assignments, ordered by id and not by request: the request's report can be anywhere. */
+  const pages = (count: number, at: number | null) => {
+    const calls: (string | undefined)[] = [];
+    const page = async (after?: string) => {
+      calls.push(after);
+      const n = after ? Number(after) : 0;
+      return {
+        assignments:
+          at === n
+            ? [{ requestId: request, available: true, savedResourceId: saved }]
+            : Array.from({ length: 25 }, () => ({ requestId: other, available: true })),
+        nextAfter: n + 1 < count ? String(n + 1) : null,
+      };
+    };
+    return { page, calls };
+  };
+  it('finds a report on a late page, past the first hundred assignments', async () => {
+    const { page, calls } = pages(12, 9);
+    expect(await followAssignments(request, page)).toEqual({
+      reportAvailable: true,
+      savedResourceId: saved,
+    });
+    expect(calls).toHaveLength(10);
+  });
+  it('declares a report absent only after the last page', async () => {
+    const { page, calls } = pages(12, null);
+    expect(await followAssignments(request, page)).toEqual({
+      reportAvailable: false,
+      savedResourceId: null,
+    });
+    expect(calls).toHaveLength(12);
+  });
+  it('stops at the bound for a provider that never ends', async () => {
+    const { page, calls } = pages(1000, null);
+    await followAssignments(request, page, 5);
+    expect(calls).toHaveLength(5);
+  });
+  it('an unavailable assignment on an early page does not stop the search', async () => {
+    let n = 0;
+    const link = await followAssignments(request, async () => {
+      n += 1;
+      return n === 1
+        ? { assignments: [{ requestId: request, available: false }], nextAfter: 'next' }
+        : { assignments: [{ requestId: request, available: true }], nextAfter: null };
+    });
+    expect(link.reportAvailable).toBe(true);
   });
 });
