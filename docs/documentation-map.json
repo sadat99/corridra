@@ -384,6 +384,11 @@
       "use": "Dated check of the 24 October UX plan against the system: confirmed facts, differences, flags with default placements, unplaced capabilities and owner decisions; expires as the system changes"
     },
     {
+      "path": "docs/product/ux-update-plan-corrected-2026-10-24.md",
+      "classification": "Owner proposal",
+      "use": "Corrected candidate for the final UX update plan: every verified gap and mistake fixed, lane scopes, shared-file rules, waves, gates and owner steps; not final until the owner records it; nothing is executed"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"

@@ -15,6 +15,7 @@ Method: the full V3 contract, product vision v2.1, UI direction, art review shee
 - 7 process gaps would stop or slow parallel lanes (section 5).
 - 8 decisions need the owner (section 8). Four of them block Wave 1.
 - A visual before and after of five of the changes is in a private canvas: https://claude.ai/artifact/VygHw5v3aSAtgfPuLC44Fd . It illustrates the proposals with example content and is not a specification.
+- A corrected candidate plan now applies every fix in this record: [the corrected plan](ux-update-plan-corrected-2026-10-24.md). Where a decision is still yours, it applies the recommended option and says so.
 - Nothing is being executed. No lane, branch, switch, ADR or code change has started, and none starts until the owner marks the plan final. Section 11 lists every finding in one register and the path to a final plan.
 
 ## 2. Confirmed
@@ -169,7 +170,7 @@ Decisions 1 to 4 block Wave 1. Even when they are answered, nothing starts until
 
 ## 10. Line for the integrator once the ledger has room
 
-"UX revamp: planning only. Charter and verification record in `docs/product/ux-charter.md` and `docs/product/ux-update-plan-verification-2026-10-24.md` (proposed). No lane starts until the owner marks the plan final. No product code changed."
+"UX revamp: planning only. Charter, verification record and corrected candidate plan in `docs/product/ux-charter.md`, `docs/product/ux-update-plan-verification-2026-10-24.md` and `docs/product/ux-update-plan-corrected-2026-10-24.md` (proposed). No lane starts until the owner marks the plan final. No product code changed."
 
 ## 11. Finalization register and path to a final plan
 
@@ -179,43 +180,43 @@ Phase: planning. The owner has said not to start executing: organise, record and
 
 Every finding in this record in one table. Kinds: fact (a statement in the plan that differs from the system), structure, words, rule, boundary, scope, process. Statuses: **Owner decision** needs your call; **Default stands** is the proposed placement and holds unless you object; **Correct the plan text** is a plain fix with no decision; **Add as process rule** goes into the final plan's shared-files or merge sections. The Decision column points to the numbered decisions in section 8.
 
-| ID  | Item                                          | Kind      | Status                                               | Decision |
-| --- | --------------------------------------------- | --------- | ---------------------------------------------------- | -------- |
-| D1  | Branch table out of date                      | Fact      | Owner decision                                       | 2        |
-| D2  | PR171 overlaps Lane 2                         | Fact      | Owner decision                                       | 1        |
-| D3  | No specimen route exists                      | Fact      | Correct the plan text                                | -        |
-| D4  | Saved report file path                        | Fact      | Correct the plan text                                | -        |
-| D5  | Delegation presentation size                  | Fact      | Correct the plan text                                | -        |
-| D6  | Switch entry count                            | Fact      | Correct the plan text                                | -        |
-| D7  | Message 4 template already exists             | Fact      | Correct the plan text                                | -        |
-| D8  | Phase 0 files have no owning session          | Fact      | Default stands                                       | -        |
-| D9  | Service request move source                   | Fact      | Correct the plan text                                | -        |
-| D10 | Ledger writer, room and stale text            | Fact      | Correct the plan text                                | 3        |
-| D11 | Supplier quote write already exists           | Fact      | Correct the plan text                                | -        |
-| A1  | Customer navigation is locked                 | Structure | Owner decision                                       | 4        |
-| A2  | Names meet the plain-language rule            | Words     | Owner decision                                       | 4        |
-| A3  | Three pages, three ids, one piece of work     | Structure | Default stands                                       | -        |
-| A4  | Journey bar, next-step card, fact label exist | Structure | Default stands                                       | -        |
-| A5  | Road mapping steps backward                   | Structure | Owner decision                                       | 5        |
-| A6  | Holder badge cannot come from replies         | Structure | Owner decision                                       | 5        |
-| A7  | Workspace and role scope                      | Structure | Default stands                                       | -        |
-| A8  | Start action and move sources                 | Structure | Default stands                                       | -        |
-| A9  | Motion longer than the rule                   | Rule      | Default stands                                       | -        |
-| A10 | Inline SVG ban for seals and emblem           | Rule      | Default stands (approval only if CSS and icons fail) | 6        |
-| A11 | Trip features and the travel boundary         | Boundary  | Default stands                                       | -        |
-| A12 | Gated requirements and per-PR evidence        | Boundary  | Default stands                                       | -        |
-| A13 | Language design, PR171 against Lane 2         | Structure | Owner decision                                       | 1        |
-| A14 | Recipient pages, helper area, founder view    | Scope     | Owner decision (when to schedule)                    | 8        |
-| A15 | Test gate against the locked one              | Rule      | Default stands                                       | -        |
-| A16 | Four states and the accessibility menu        | Rule      | Default stands                                       | -        |
-| A17 | My Work holds delegations                     | Structure | Default stands                                       | -        |
-| P1  | Documentation map and ADR index               | Process   | Add as process rule                                  | -        |
-| P2  | Ledger room and integrator task               | Process   | Add as process rule                                  | 3        |
-| P3  | The merging label does not exist              | Process   | Owner decision (owner creates it)                    | 3        |
-| P4  | Local test traps in the container             | Process   | Add as process rule                                  | -        |
-| P5  | Scroll budget classes for new screens         | Process   | Add as process rule                                  | -        |
-| P6  | Branch names available                        | Process   | Owner decision                                       | 2        |
-| P7  | Branch reuse after squash merge               | Process   | Add as process rule                                  | -        |
+| ID  | Item                                          | Kind      | Status                                               | Decision | In the corrected plan                              |
+| --- | --------------------------------------------- | --------- | ---------------------------------------------------- | -------- | -------------------------------------------------- |
+| D1  | Branch table out of date                      | Fact      | Owner decision                                       | 2        | Recommended option applied, awaiting your decision |
+| D2  | PR171 overlaps Lane 2                         | Fact      | Owner decision                                       | 1        | Recommended option applied, awaiting your decision |
+| D3  | No specimen route exists                      | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D4  | Saved report file path                        | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D5  | Delegation presentation size                  | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D6  | Switch entry count                            | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D7  | Message 4 template already exists             | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D8  | Phase 0 files have no owning session          | Fact      | Default stands                                       | -        | Applied                                            |
+| D9  | Service request move source                   | Fact      | Correct the plan text                                | -        | Applied                                            |
+| D10 | Ledger writer, room and stale text            | Fact      | Correct the plan text                                | 3        | Applied                                            |
+| D11 | Supplier quote write already exists           | Fact      | Correct the plan text                                | -        | Applied                                            |
+| A1  | Customer navigation is locked                 | Structure | Owner decision                                       | 4        | Recommended option applied, awaiting your decision |
+| A2  | Names meet the plain-language rule            | Words     | Owner decision                                       | 4        | Recommended option applied, awaiting your decision |
+| A3  | Three pages, three ids, one piece of work     | Structure | Default stands                                       | -        | Applied                                            |
+| A4  | Journey bar, next-step card, fact label exist | Structure | Default stands                                       | -        | Applied                                            |
+| A5  | Road mapping steps backward                   | Structure | Owner decision                                       | 5        | Recommended option applied, awaiting your decision |
+| A6  | Holder badge cannot come from replies         | Structure | Owner decision                                       | 5        | Recommended option applied, awaiting your decision |
+| A7  | Workspace and role scope                      | Structure | Default stands                                       | -        | Applied                                            |
+| A8  | Start action and move sources                 | Structure | Default stands                                       | -        | Applied                                            |
+| A9  | Motion longer than the rule                   | Rule      | Default stands                                       | -        | Applied                                            |
+| A10 | Inline SVG ban for seals and emblem           | Rule      | Default stands (approval only if CSS and icons fail) | 6        | Applied                                            |
+| A11 | Trip features and the travel boundary         | Boundary  | Default stands                                       | -        | Applied                                            |
+| A12 | Gated requirements and per-PR evidence        | Boundary  | Default stands                                       | -        | Applied                                            |
+| A13 | Language design, PR171 against Lane 2         | Structure | Owner decision                                       | 1        | Recommended option applied, awaiting your decision |
+| A14 | Recipient pages, helper area, founder view    | Scope     | Owner decision (when to schedule)                    | 8        | Recommended option applied, awaiting your decision |
+| A15 | Test gate against the locked one              | Rule      | Default stands                                       | -        | Applied                                            |
+| A16 | Four states and the accessibility menu        | Rule      | Default stands                                       | -        | Applied                                            |
+| A17 | My Work holds delegations                     | Structure | Default stands                                       | -        | Applied                                            |
+| P1  | Documentation map and ADR index               | Process   | Add as process rule                                  | -        | Applied                                            |
+| P2  | Ledger room and integrator task               | Process   | Add as process rule                                  | 3        | Applied                                            |
+| P3  | The merging label does not exist              | Process   | Owner decision (owner creates it)                    | 3        | Recommended option applied, awaiting your decision |
+| P4  | Local test traps in the container             | Process   | Add as process rule                                  | -        | Applied                                            |
+| P5  | Scroll budget classes for new screens         | Process   | Add as process rule                                  | -        | Applied                                            |
+| P6  | Branch names available                        | Process   | Owner decision                                       | 2        | Recommended option applied, awaiting your decision |
+| P7  | Branch reuse after squash merge               | Process   | Add as process rule                                  | -        | Applied                                            |
 
 Totals: 10 owner decisions, 12 defaults that stand unless you object, 8 corrections to plan text, 5 process rules (35 findings). The plan's own questions Q1 to Q3 (parallel width, Bangla interface type, Lane 9) are decision 7.
 
@@ -223,8 +224,8 @@ Totals: 10 owner decisions, 12 defaults that stand unless you object, 8 correcti
 
 1. **Answer the decisions.** Section 8, in any order. Answering one starts nothing.
 2. **Review the defaults.** Object to any item marked "Default stands". Silence keeps the default as proposed, not as confirmed.
-3. **Assemble one final plan** as a single dated document in the repository, built from the owner's plan, the corrections and defaults in this record, and a pointer to the charter. It replaces pasting lane prompts. Its outline: the charter reference; the corrected facts; the lanes with scope, owned files, premises to verify, switches and done-when lines; the shared-file rules including the documentation map and ADR index; the merge protocol including the label rule and the ledger writer; waves, gates and the test conditions in A15; the owner's own steps.
-4. **Mark it final.** The owner records one dated sentence in the work log. Only then does any lane start, and each lane reads the final plan from the repository.
+3. **Read the corrected candidate plan**, [ux-update-plan-corrected-2026-10-24.md](ux-update-plan-corrected-2026-10-24.md). It is the single dated document built from the owner's plan, the corrections and defaults in this record, and a pointer to the charter. It replaces pasting lane prompts. Change anything you disagree with; the decisions marked in it are the only open points. Its outline: the charter reference; the corrected facts; the lanes with scope, owned files, premises to verify, switches and done-when lines; the shared-file rules including the documentation map and ADR index; the merge protocol including the label rule and the ledger writer; waves, gates and the test conditions in A15; the owner's own steps.
+4. **Mark it final.** The owner records one dated sentence in the work log naming the corrected plan. Only then does any lane start, and each lane reads the final plan from the repository.
 
 ### Held until then
 
