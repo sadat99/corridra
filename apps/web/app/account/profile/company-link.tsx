@@ -458,12 +458,14 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                 </div>
                 <div>
                   <label htmlFor={id + 'eu'}>
-                    Link (optional, example, test or invalid hosts only)
+                    {realCustomerInput()
+                      ? 'Link (optional)'
+                      : 'Link (optional, example, test or invalid hosts only)'}
                   </label>
                   <input
                     id={id + 'eu'}
                     maxLength={200}
-                    placeholder="https://registry.example"
+                    placeholder={realCustomerInput() ? 'https://' : 'https://registry.example'}
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                   />
