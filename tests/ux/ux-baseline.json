@@ -4,6 +4,12 @@
   "/account": {
     "redirectsTo:/signin": 1
   },
+  "/account/all-tools": {
+    "unavailable": 6
+  },
+  "/account/move": {
+    "unavailable": 6
+  },
   "/account/companies": {},
   "/account/billing": {},
   "/account/delegations": {},
