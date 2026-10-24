@@ -24,7 +24,27 @@ export class DeliveryService {
     private pool: DatabasePool,
     private missions: MissionService,
     private secret: string,
+    // Owner switch: lets a public link open a report that belongs to a real workspace. Off by default.
+    private publicRealReports: () => boolean = () => false,
   ) {}
+  // Anonymous view and respond calls. With the owner switch on they carry a transaction setting that the database
+  // honours only for a non-sample tenant; with it off they run exactly as before.
+  private async publicQuery(text: string, values: unknown[]) {
+    if (!this.publicRealReports()) return this.pool.query(text, values);
+    const db = await this.pool.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query("SELECT set_config('corridra.real_report_public','on',true)");
+      const result = await db.query(text, values);
+      await db.query('COMMIT');
+      return result;
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  }
   private token(tenant: string, command: string) {
     return createHmac('sha256', this.secret)
       .update(`delivery-link:${tenant}:${command}`)
@@ -445,11 +465,11 @@ export class DeliveryService {
     const v = publicDeliveryInput.parse(input),
       h = digest(v.token);
     if (v.action === 'view')
-      return (await this.pool.query('SELECT app.delivery_report($1,$2) report', [h, v.audience]))
+      return (await this.publicQuery('SELECT app.delivery_report($1,$2) report', [h, v.audience]))
         .rows[0].report as DeliveryReport;
     if (v.action === 'respond')
       return (
-        await this.pool.query('SELECT app.delivery_respond($1,$2,$3,$4) result', [
+        await this.publicQuery('SELECT app.delivery_respond($1,$2,$3,$4) result', [
           h,
           v.commandId,
           v.requestId,

@@ -25,11 +25,12 @@ export type SwitchGroup = (typeof switchGroups)[number];
  * module: a customer module whose real state comes from founderActivation (it also checks the
  *   switches it depends on).
  * flag: the setting is exactly "true" or not.
+ * flagDefaultOn: the feature is on unless the setting is exactly "false".
  * mode: state comes from the shared helper that combines several settings.
  * setting: a value, not a switch. Only "Set" or "Not set" is ever shown, never the value.
  * planned: the switch is reserved for work that is not built yet, so it is not shown as on or off.
  */
-export type SwitchKind = 'module' | 'flag' | 'mode' | 'setting' | 'planned';
+export type SwitchKind = 'module' | 'flag' | 'flagDefaultOn' | 'mode' | 'setting' | 'planned';
 
 export type SwitchEntry = {
   name: string;
@@ -269,6 +270,20 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED',
+    label: 'Public report links for real workspaces',
+    line: 'Lets anyone holding an unexpired, unrevoked link open a real workspace report without signing in. Off by default. Needs real use. Sample reports are not affected.',
+    group: 'Delivery',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED',
+    label: 'Signed-in report access for real workspaces',
+    line: 'Lets a verified real customer save, open and answer a shared report, see its decisions and company history, and accept an assigned report. On unless set to false. Sample reports are not affected.',
+    group: 'Delivery',
+    kind: 'flagDefaultOn',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_DELIVERY_ENABLED',
     label: 'Assigned missions',
     line: 'Lets a customer see missions the team assigned to them.',
@@ -411,6 +426,7 @@ function resolve(
     if (entry.name === 'CORRIDRA_REAL_USE_ENABLED') return realUseEnabled(env) ? on : off;
     return off;
   }
+  if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
   return env[entry.name] === 'true' ? on : off;
 }
 
