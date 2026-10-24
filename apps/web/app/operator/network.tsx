@@ -1,5 +1,6 @@
 'use client';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { PhoneFold } from '../../components/phone-fold';
 import { ContributorInvitations } from './contributor-invitations';
 import {
   SubmissionFailure,
@@ -372,10 +373,10 @@ export function ExecutionNetwork({
         <a href="#workspace-missions">Open missions</a>
         <a href="#workspace-sources">Open sources and claims</a>
         <a href="#workspace-authenticator">Verify current access</a>
+        <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
+          Open assigned task access
+        </Link>
       </div>
-      <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
-        Open assigned task access
-      </Link>
       {admin && (
         <details>
           <summary>Review an invited contributor profile</summary>
@@ -471,150 +472,155 @@ export function ExecutionNetwork({
           </form>
         </details>
       )}
-      <h3>Current disclosed tasks</h3>
-      {data && !data.tasks.length && (
-        <p>
-          No disclosed tasks are recorded in this workspace. Eligibility and exact assignment remain
-          required before work can start.
-        </p>
-      )}
-      {data?.tasks.map((task) => (
-        <article key={task.id}>
-          <h3>
-            {task.configuration.kind.replaceAll('_', ' ')} · {task.configuration.market}
-          </h3>
-          <p>{task.configuration.instructions}</p>
-          {task.late_submission && (
-            <p>
-              Submitted after the original deadline. Assess timeliness and the disclosed
-              late-submission terms.
-            </p>
-          )}
+      <PhoneFold
+        summary={`Disclosed tasks in this workspace (${data?.tasks.length ?? 0})`}
+        className="ux-network-tasks"
+      >
+        <h3>Current disclosed tasks</h3>
+        {data && !data.tasks.length && (
           <p>
-            {task.status} · version {task.version} · reference {task.id}
+            No disclosed tasks are recorded in this workspace. Eligibility and exact assignment
+            remain required before work can start.
           </p>
-          <details>
-            <summary>Original work and review history</summary>
-            {task.history?.map((h) => (
-              <div key={h.version}>
-                <p>
-                  {h.action}: {h.reason}
-                </p>
-                {h.details.body && <p>{h.details.body}</p>}
-                {h.details.rationale && <p>{h.details.rationale}</p>}
-              </div>
-            ))}
-          </details>
-          {task.status === 'CREATED' && admin && (
-            <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-              <input type="hidden" name="action" value="ASSIGN" />
-              <label className="field">
-                Reviewed profile
-                <select name="profileId" required>
-                  <option value="">Choose eligible work profile</option>
-                  {data.profiles
-                    .filter(
-                      (p) =>
-                        p.configuration.status === 'ACTIVE' &&
-                        !data.profiles.some(
-                          (other) =>
-                            other.principal_id === p.principal_id && other.version > p.version,
-                        ),
-                    )
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.configuration.alias} · {p.configuration.capabilities.join(', ')}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <label className="field">
-                Relationship disclosure
-                <input name="relationshipDisclosure" required minLength={3} maxLength={500} />
-              </label>
-              <Fields names={['reason']} />
-              <button className="primary-link" disabled={busy || !data.enabled}>
-                Approve exact assignment
-              </button>
-            </form>
-          )}
-          {task.status === 'SUBMIT' && (
-            <form className="operator-form" onSubmit={(e) => review(e, task)}>
-              <label className="field">
-                Evidence quality (0–4)
-                <input type="number" name="quality" min={0} max={4} required />
-              </label>
-              <label className="field">
-                Timeliness (0–4)
-                <input type="number" name="timeliness" min={0} max={4} required />
-              </label>
-              <label className="field">
-                Review rationale
-                <input name="rationale" required minLength={3} maxLength={500} />
-              </label>
-              <Fields names={['reason']} />
-              <button className="primary-link" disabled={busy || !data.enabled}>
-                Review original submitted declaration
-              </button>
-            </form>
-          )}
-          {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
-            <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-              <label className="field">
-                Evidence decision
-                <select name="action">
-                  {task.status === 'REVIEW' && (
-                    <option value="COMPLETE">Complete reviewed task</option>
-                  )}
-                  {task.status === 'DISPUTE' ? (
-                    <option value="RESOLVE">Resolve dispute, preserve history</option>
-                  ) : (
-                    <>
-                      <option value="REQUEST_CORRECTION">Request corrected evidence</option>
-                      <option value="REJECT">Reject submitted work</option>
-                    </>
-                  )}
-                </select>
-              </label>
-              {task.status === 'DISPUTE' && (
+        )}
+        {data?.tasks.map((task) => (
+          <article key={task.id}>
+            <h3>
+              {task.configuration.kind.replaceAll('_', ' ')} · {task.configuration.market}
+            </h3>
+            <p>{task.configuration.instructions}</p>
+            {task.late_submission && (
+              <p>
+                Submitted after the original deadline. Assess timeliness and the disclosed
+                late-submission terms.
+              </p>
+            )}
+            <p>
+              {task.status} · version {task.version} · reference {task.id}
+            </p>
+            <details>
+              <summary>Original work and review history</summary>
+              {task.history?.map((h) => (
+                <div key={h.version}>
+                  <p>
+                    {h.action}: {h.reason}
+                  </p>
+                  {h.details.body && <p>{h.details.body}</p>}
+                  {h.details.rationale && <p>{h.details.rationale}</p>}
+                </div>
+              ))}
+            </details>
+            {task.status === 'CREATED' && admin && (
+              <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                <input type="hidden" name="action" value="ASSIGN" />
                 <label className="field">
-                  Dispute disposition
-                  <select name="resolution">
-                    <option value="REOPEN">Reopen evidence review</option>
-                    <option value="REJECT">Reject disputed work</option>
-                    <option value="UPHOLD">Uphold previously completed work</option>
+                  Reviewed profile
+                  <select name="profileId" required>
+                    <option value="">Choose eligible work profile</option>
+                    {data.profiles
+                      .filter(
+                        (p) =>
+                          p.configuration.status === 'ACTIVE' &&
+                          !data.profiles.some(
+                            (other) =>
+                              other.principal_id === p.principal_id && other.version > p.version,
+                          ),
+                      )
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.configuration.alias} · {p.configuration.capabilities.join(', ')}
+                        </option>
+                      ))}
                   </select>
                 </label>
-              )}
-              <Fields names={['reason']} />
-              <button className="primary-link" disabled={busy || !data.enabled}>
-                Save independent decision
-              </button>
-            </form>
-          )}
-          {task.status === 'COMPLETE' && ['owner', 'admin', 'operator'].includes(role) && (
-            <form
-              className="operator-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void act(
-                  'network-assess',
-                  {
-                    taskId: task.id,
-                    reason: new FormData(e.currentTarget).get('reason'),
-                  },
-                  e.currentTarget,
-                );
-              }}
-            >
-              <Fields names={['reason']} />
-              <button className="primary-link" disabled={busy || !data.enabled}>
-                Assess contribution once
-              </button>
-            </form>
-          )}
-        </article>
-      ))}
+                <label className="field">
+                  Relationship disclosure
+                  <input name="relationshipDisclosure" required minLength={3} maxLength={500} />
+                </label>
+                <Fields names={['reason']} />
+                <button className="primary-link" disabled={busy || !data.enabled}>
+                  Approve exact assignment
+                </button>
+              </form>
+            )}
+            {task.status === 'SUBMIT' && (
+              <form className="operator-form" onSubmit={(e) => review(e, task)}>
+                <label className="field">
+                  Evidence quality (0–4)
+                  <input type="number" name="quality" min={0} max={4} required />
+                </label>
+                <label className="field">
+                  Timeliness (0–4)
+                  <input type="number" name="timeliness" min={0} max={4} required />
+                </label>
+                <label className="field">
+                  Review rationale
+                  <input name="rationale" required minLength={3} maxLength={500} />
+                </label>
+                <Fields names={['reason']} />
+                <button className="primary-link" disabled={busy || !data.enabled}>
+                  Review original submitted declaration
+                </button>
+              </form>
+            )}
+            {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
+              <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                <label className="field">
+                  Evidence decision
+                  <select name="action">
+                    {task.status === 'REVIEW' && (
+                      <option value="COMPLETE">Complete reviewed task</option>
+                    )}
+                    {task.status === 'DISPUTE' ? (
+                      <option value="RESOLVE">Resolve dispute, preserve history</option>
+                    ) : (
+                      <>
+                        <option value="REQUEST_CORRECTION">Request corrected evidence</option>
+                        <option value="REJECT">Reject submitted work</option>
+                      </>
+                    )}
+                  </select>
+                </label>
+                {task.status === 'DISPUTE' && (
+                  <label className="field">
+                    Dispute disposition
+                    <select name="resolution">
+                      <option value="REOPEN">Reopen evidence review</option>
+                      <option value="REJECT">Reject disputed work</option>
+                      <option value="UPHOLD">Uphold previously completed work</option>
+                    </select>
+                  </label>
+                )}
+                <Fields names={['reason']} />
+                <button className="primary-link" disabled={busy || !data.enabled}>
+                  Save independent decision
+                </button>
+              </form>
+            )}
+            {task.status === 'COMPLETE' && ['owner', 'admin', 'operator'].includes(role) && (
+              <form
+                className="operator-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void act(
+                    'network-assess',
+                    {
+                      taskId: task.id,
+                      reason: new FormData(e.currentTarget).get('reason'),
+                    },
+                    e.currentTarget,
+                  );
+                }}
+              >
+                <Fields names={['reason']} />
+                <button className="primary-link" disabled={busy || !data.enabled}>
+                  Assess contribution once
+                </button>
+              </form>
+            )}
+          </article>
+        ))}
+      </PhoneFold>
       <details>
         <summary>Reviewed work dimensions by task category</summary>
         <p>

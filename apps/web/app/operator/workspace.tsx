@@ -1,4 +1,5 @@
 'use client';
+import { PhoneFold } from '../../components/phone-fold';
 import Link from 'next/link';
 import { OperatorIcon } from '../../components/operator-icon';
 import { ReviewSettings } from './review-settings';
@@ -586,41 +587,43 @@ function TenantWorkspace({
                 ))}
               </ul>
               {data.role !== 'viewer' && (
-                <form className="operator-form" onSubmit={source}>
-                  <label className="field">
-                    Source type
-                    <select name="kind" defaultValue="observation">
-                      <option value="observation">Observed information</option>
-                      <option value="public_record">Existing public record</option>
-                      <option value="self_declaration">Original declaration</option>
-                    </select>
-                  </label>
-                  <label className="field">
-                    Source visibility
-                    <select name="classification" defaultValue="INTERNAL">
-                      <option value="INTERNAL">Internal</option>
-                      <option value="PUBLIC">Already public</option>
-                    </select>
-                  </label>
-                  <label className="field">
-                    Source AI permission
-                    <select name="aiPolicy" defaultValue="DENY">
-                      <option value="DENY">Do not use for AI</option>
-                      <option value="REVIEW_REQUIRED">Requires a separate rights review</option>
-                    </select>
-                  </label>
-                  <p>
-                    Public visibility describes an already public source. A separate rights review
-                    and approved provider policy are required before inference.
-                  </p>
-                  <label className="field">
-                    Source description
-                    <input name="locator" required maxLength={500} />
-                  </label>
-                  <button className="primary-link" disabled={busy}>
-                    Record source
-                  </button>
-                </form>
+                <PhoneFold summary="Record a new source (4 fields)">
+                  <form className="operator-form" onSubmit={source}>
+                    <label className="field">
+                      Source type
+                      <select name="kind" defaultValue="observation">
+                        <option value="observation">Observed information</option>
+                        <option value="public_record">Existing public record</option>
+                        <option value="self_declaration">Original declaration</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      Source visibility
+                      <select name="classification" defaultValue="INTERNAL">
+                        <option value="INTERNAL">Internal</option>
+                        <option value="PUBLIC">Already public</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      Source AI permission
+                      <select name="aiPolicy" defaultValue="DENY">
+                        <option value="DENY">Do not use for AI</option>
+                        <option value="REVIEW_REQUIRED">Requires a separate rights review</option>
+                      </select>
+                    </label>
+                    <p>
+                      Public visibility describes an already public source. A separate rights review
+                      and approved provider policy are required before inference.
+                    </p>
+                    <label className="field">
+                      Source description
+                      <input name="locator" required maxLength={500} />
+                    </label>
+                    <button className="primary-link" disabled={busy}>
+                      Record source
+                    </button>
+                  </form>
+                </PhoneFold>
               )}
             </section>
             <section className="detail-card">
@@ -637,26 +640,28 @@ function TenantWorkspace({
                 ))}
               </ul>
               {data.role !== 'viewer' && (
-                <form className="operator-form" onSubmit={claim}>
-                  <label className="field">
-                    Source
-                    <select name="source" required>
-                      <option value="">Choose a source</option>
-                      {data.sources.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.locator}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="field">
-                    Claim
-                    <textarea name="statement" required maxLength={2000} />
-                  </label>
-                  <button className="primary-link" disabled={busy}>
-                    Record claim
-                  </button>
-                </form>
+                <PhoneFold summary="Record a new claim (2 fields)">
+                  <form className="operator-form" onSubmit={claim}>
+                    <label className="field">
+                      Source
+                      <select name="source" required>
+                        <option value="">Choose a source</option>
+                        {data.sources.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.locator}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      Claim
+                      <textarea name="statement" required maxLength={2000} />
+                    </label>
+                    <button className="primary-link" disabled={busy}>
+                      Record claim
+                    </button>
+                  </form>
+                </PhoneFold>
               )}
             </section>
             <section className="detail-card">

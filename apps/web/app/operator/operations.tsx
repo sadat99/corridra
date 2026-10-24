@@ -1,5 +1,6 @@
 'use client';
 import { FounderOverview } from '../../components/founder-overview';
+import { PhoneFold } from '../../components/phone-fold';
 import {
   OperatorWorkbench,
   useFormChangeGuard,
@@ -465,6 +466,17 @@ export function Operations({
       setBusy(false);
     }
   }
+  const historyCount = controls
+    ? [
+        controls.budgets,
+        controls.documents,
+        controls.ledger,
+        controls.effort,
+        controls.contexts,
+        controls.policies,
+        controls.privacy,
+      ].reduce((sum, rows) => sum + rows.length, 0)
+    : 0;
   return (
     <section
       id="workspace-operations"
@@ -475,7 +487,16 @@ export function Operations({
       onChangeCapture={onChangeCapture}
       onResetCapture={onResetCapture}
     >
-      <h2>Global operations</h2>
+      <div className="ops-heading">
+        <h2>Global operations</h2>
+        <button
+          className="button button-secondary"
+          disabled={busy}
+          onClick={() => void load(filters)}
+        >
+          {busy ? 'Loading operations…' : dashboard ? 'Refresh operations' : 'Load operations'}
+        </button>
+      </div>
       <OperatorWorkbench
         label="Operations workflow sections"
         sections={[
@@ -513,13 +534,6 @@ export function Operations({
           ? 'Founder visibility, route readiness and accountable recovery for this authorized workspace. Provider activation and independent approvals remain separate.'
           : 'Founder visibility, route readiness and accountable recovery. The current environment uses synthetic missions. Account signup does not authorize real mission intake.'}
       </p>
-      <button
-        className="button button-secondary"
-        disabled={busy}
-        onClick={() => void load(filters)}
-      >
-        {busy ? 'Loading operations…' : dashboard ? 'Refresh operations' : 'Load operations'}
-      </button>
       <p role="status" aria-live="polite" aria-label="Operations status">
         {message}
       </p>
@@ -542,249 +556,297 @@ export function Operations({
         hidden={activeSection !== 'ops-dashboard'}
       >
         <h3>Mission Operations dashboard</h3>
-        <form onSubmit={filter} className="operator-form">
-          <fieldset disabled={busy}>
-            <legend>Filter canonical records in this workspace</legend>
-            <label className="field">
-              Directional route
-              <select name="route">
-                <option value="">All routes, including unresolved</option>
-                {catalogue?.routes.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.origin_market} → {r.destination_market}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {(['corridor', 'type', 'customer', 'industry', 'owner', 'programme'] as const).map(
-              (k) => (
-                <label className="field" key={k}>
-                  {
+        <PhoneFold summary="Filter the records (10 filters)" className="ops-filters">
+          <form onSubmit={filter} className="operator-form">
+            <fieldset disabled={busy}>
+              <legend>Filter canonical records in this workspace</legend>
+              <label className="field">
+                Directional route
+                <select name="route">
+                  <option value="">All routes, including unresolved</option>
+                  {catalogue?.routes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.origin_market} → {r.destination_market}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {(['corridor', 'type', 'customer', 'industry', 'owner', 'programme'] as const).map(
+                (k) => (
+                  <label className="field" key={k}>
                     {
-                      corridor: 'Corridor ID',
-                      type: 'Mission type key',
-                      customer: 'Recorded customer reference',
-                      industry: 'Recorded industry',
-                      owner: 'Owner ID',
-                      programme: 'Programme ID',
-                    }[k]
-                  }
-                  <input name={k} />
-                </label>
-              ),
-            )}
-            <label className="field">
-              From intake date
-              <input type="date" name="from" />
-            </label>
-            <label className="field">
-              Through intake date
-              <input type="date" name="to" />
-            </label>
-            <label className="field">
-              Commercial stage
-              <select name="stage">
-                <option value="">All stages</option>
-                {[
-                  'LEAD',
-                  'QUALIFIED_OPPORTUNITY',
-                  'PROPOSAL',
-                  'COMMITMENT',
-                  'CONTRACT',
-                  'INVOICE',
-                  'CASH_COLLECTED',
-                  'RECURRING_REVENUE',
-                  'LOST',
-                ].map((k) => (
-                  <option key={k}>{k}</option>
-                ))}
-              </select>
-            </label>
-            <button className="button" type="submit">
-              Apply filters
-            </button>
-          </fieldset>
-        </form>
+                      {
+                        corridor: 'Corridor ID',
+                        type: 'Mission type key',
+                        customer: 'Recorded customer reference',
+                        industry: 'Recorded industry',
+                        owner: 'Owner ID',
+                        programme: 'Programme ID',
+                      }[k]
+                    }
+                    <input name={k} />
+                  </label>
+                ),
+              )}
+              <label className="field">
+                From intake date
+                <input type="date" name="from" />
+              </label>
+              <label className="field">
+                Through intake date
+                <input type="date" name="to" />
+              </label>
+              <label className="field">
+                Commercial stage
+                <select name="stage">
+                  <option value="">All stages</option>
+                  {[
+                    'LEAD',
+                    'QUALIFIED_OPPORTUNITY',
+                    'PROPOSAL',
+                    'COMMITMENT',
+                    'CONTRACT',
+                    'INVOICE',
+                    'CASH_COLLECTED',
+                    'RECURRING_REVENUE',
+                    'LOST',
+                  ].map((k) => (
+                    <option key={k}>{k}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="button" type="submit">
+                Apply filters
+              </button>
+            </fieldset>
+          </form>
+        </PhoneFold>
         {dashboard && (
           <>
             <p>{dashboard.definitions.scope}</p>
-            <section className="ux-next-action" aria-label="Recorded mission action queue">
-              <h4>Recorded next actions on this page</h4>
-              <p>
-                {dashboard.missions.length} records on this page of{' '}
-                {value(dashboard.summary.submitted)} matching submissions. Filter totals cover all
-                matching records. The list keeps server order and shows at most five recorded next
-                actions.
-              </p>
-              <ul>
-                {dashboard.missions
-                  .filter((m) => m.next_action)
-                  .slice(0, 5)
-                  .map((m) => (
-                    <li key={String(m.id)}>
-                      <strong>{value(m.next_action)}</strong>
-                      <p>
-                        Mission {value(m.id)} · Owner {value(m.owner_id)} · Due{' '}
-                        {m.due_at ? displayDate(String(m.due_at)) : 'Unknown'}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-              {!dashboard.missions.some((m) => m.next_action) && (
+            <div className="ops-summary-grid">
+              <section className="ux-next-action" aria-label="Recorded mission action queue">
+                <h4>Recorded next actions on this page</h4>
                 <p>
-                  No next action is recorded on this page. This does not imply that work is
-                  complete.
+                  {dashboard.missions.length} records on this page of{' '}
+                  {value(dashboard.summary.submitted)} matching submissions. Filter totals cover all
+                  matching records. The list keeps server order and shows at most five recorded next
+                  actions.
                 </p>
-              )}
-              <a className="text-link" href="#workspace-missions">
-                Open mission review queue
-              </a>
-            </section>
-            <dl className="operations-metrics">
-              {Object.entries(dashboard.summary).map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k.replaceAll('_', ' ')}</dt>
-                  <dd>{value(v)}</dd>
-                </div>
-              ))}
-            </dl>
-            <p>
-              Rejected missions, first useful result acceptance, retention rate and forecasts:
-              Unknown. Cancellation is shown separately. First recorded target timing is an
-              observable proxy.
-            </p>
-            <h4>Corridra fee revenue and delivery economics</h4>
-            <p>
-              {dashboard.financeAvailable
-                ? 'Original currency and integer minor units. Earned fee, invoiced fee and collected fee are distinct observations.'
-                : 'Financial records require owner/admin access. Their absence here does not mean zero.'}
-            </p>
-            <Table
-              label="Corridra financial observations"
-              rows={dashboard.corridraMoney}
-              columns={[
-                ['origin_market', 'Origin'],
-                ['destination_market', 'Destination'],
-                ['mission_type', 'Offering'],
-                ['kind', 'Record'],
-                ['currency', 'Currency'],
-                ['observed_minor', 'Observed minor units'],
-                ['recorded_mission_denominator', 'Recorded missions'],
-                ['completed_observed_minor', 'Completed mission amount'],
-                ['completed_recorded_denominator', 'Completed recorded missions'],
-              ]}
-            />
-            <Table
-              label="Per-mission contribution and effort"
-              rows={dashboard.economics.map((r) => ({
-                ...r,
-                contribution_margin:
-                  r.contribution_margin_minor === null || r.contribution_margin_minor === undefined
-                    ? 'Unknown; incomplete fee/cost coverage'
-                    : formatMoney(String(r.contribution_margin_minor), currency.parse(r.currency)),
-                effort:
-                  r.effort_minutes === null || r.effort_minutes === undefined
-                    ? 'Unknown'
-                    : `${r.effort_minutes} recorded minutes; completeness ${r.effort_complete === true ? 'attested' : 'unknown'}`,
-              }))}
-              columns={[
-                ['id', 'Mission'],
-                ['origin_market', 'Origin'],
-                ['destination_market', 'Destination'],
-                ['mission_type', 'Offering'],
-                ['status', 'Mission status'],
-                ['currency', 'Currency'],
-                ['observed_fee_minor', 'Observed earned fee minor units'],
-                ['observed_delivery_cost_minor', 'Observed delivery cost minor units'],
-                ['observed_reward_minor', 'Reward obligations minor units'],
-                ['contribution_margin', 'Contribution margin'],
-                ['effort', 'Effort'],
-              ]}
-            />
-            <h4>Customer trade outcomes</h4>
-            <p>
-              These are customer contract, invoice and cash observations. They are never counted as
-              Corridra revenue.
-            </p>
-            <Table
-              label="Customer trade amounts"
-              rows={dashboard.customerTrade}
-              columns={[
-                ['kind', 'Record'],
-                ['currency', 'Currency'],
-                ['observed_minor', 'Customer minor units'],
-                ['mission_denominator', 'Recorded missions'],
-              ]}
-            />
-            <Table
-              label="Commercial activity totals"
-              rows={dashboard.commercialActivityTotals}
-              columns={[
-                ['kind', 'Activity'],
-                ['recorded_observations', 'Recorded original observations'],
-                ['mission_denominator', 'Visible mission denominator'],
-              ]}
-            />
-            <Table
-              label="Programme yield and denominators"
-              rows={dashboard.programmes}
-              columns={[
-                ['name', 'Programme'],
-                ['matched_participants', 'Matching participants'],
-                ['total_participants', 'Total visible participants'],
-                ['participants_with_held_meetings', 'Participants with held meetings'],
-                ['completed_participants', 'Completed participants'],
-              ]}
-            />
-            <Table
-              label="Recorded repeat missions"
-              rows={dashboard.repeat}
-              columns={[
-                ['customer_reference', 'Customer reference'],
-                ['recorded_missions', 'Recorded missions'],
-                ['completed_missions', 'Completed missions'],
-              ]}
-            />
-            <Table
-              label="Filtered mission records"
-              rows={dashboard.missions}
-              columns={[
-                ['id', 'Mission'],
-                ['status', 'Status'],
-                ['mission_type', 'Type'],
-                ['owner_id', 'Owner'],
-                ['customer_reference', 'Customer'],
-                ['industry', 'Industry'],
-                ['acquisition_source', 'Acquisition observation'],
-                ['effort_minutes', 'Recorded effort minutes'],
-                ['first_useful_result_at', 'Recorded useful result'],
-                ['first_commercial_outcome_at', 'First observed contract or cash'],
-                ['commercial_counts', 'Commercial activities'],
-                ['opportunities', 'Opportunities and loss reasons'],
-                ['next_action', 'Next action'],
-                ['due_at', 'Due'],
-              ]}
-            />
-            <button
-              className="button button-secondary"
-              disabled={busy || dashboard.offset === 0}
-              onClick={() => void load(filters + `&offset=${Math.max(0, dashboard.offset - 50)}`)}
-            >
-              Previous missions
-            </button>
-            <button
-              className="button button-secondary"
-              disabled={
-                busy ||
-                dashboard.offset + dashboard.missions.length >= Number(dashboard.summary.submitted)
-              }
-              onClick={() => void load(filters + `&offset=${dashboard.offset + 50}`)}
-            >
-              Next missions
-            </button>
-            {dashboard.warnings.map((w) => (
-              <p key={w}>{w}</p>
-            ))}
+                <ul>
+                  {dashboard.missions
+                    .filter((m) => m.next_action)
+                    .slice(0, 5)
+                    .map((m) => (
+                      <li key={String(m.id)}>
+                        <strong>{value(m.next_action)}</strong>
+                        <p>
+                          Mission {value(m.id)} · Owner {value(m.owner_id)} · Due{' '}
+                          {m.due_at ? displayDate(String(m.due_at)) : 'Unknown'}
+                        </p>
+                      </li>
+                    ))}
+                </ul>
+                {!dashboard.missions.some((m) => m.next_action) && (
+                  <p>
+                    No next action is recorded on this page. This does not imply that work is
+                    complete.
+                  </p>
+                )}
+                <a className="text-link" href="#workspace-missions">
+                  Open mission review queue
+                </a>
+              </section>
+              <div>
+                <dl className="operations-metrics">
+                  {Object.entries(dashboard.summary)
+                    .slice(0, 6)
+                    .map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{k.replaceAll('_', ' ')}</dt>
+                        <dd>{value(v)}</dd>
+                      </div>
+                    ))}
+                </dl>
+                <details className="ops-more-counts">
+                  <summary>
+                    {`${Math.max(0, Object.keys(dashboard.summary).length - 6)} more counts: denominators, unknown values and timing`}
+                  </summary>
+                  <dl className="operations-metrics">
+                    {Object.entries(dashboard.summary)
+                      .slice(6)
+                      .map(([k, v]) => (
+                        <div key={k}>
+                          <dt>{k.replaceAll('_', ' ')}</dt>
+                          <dd>{value(v)}</dd>
+                        </div>
+                      ))}
+                  </dl>
+                  <p>
+                    Rejected missions, first useful result acceptance, retention rate and forecasts:
+                    Unknown. Cancellation is shown separately. First recorded target timing is an
+                    observable proxy.
+                  </p>
+                </details>
+              </div>
+            </div>
+            <div className="ops-money-grid">
+              <PhoneFold
+                summary="Service economics: fees, costs and contribution (2 tables)"
+                className="ops-money"
+              >
+                <h4>Corridra fee revenue and delivery economics</h4>
+                <p>
+                  {dashboard.financeAvailable
+                    ? 'Original currency and integer minor units. Earned fee, invoiced fee and collected fee are distinct observations.'
+                    : 'Financial records require owner/admin access. Their absence here does not mean zero.'}
+                </p>
+                <Table
+                  label="Corridra financial observations"
+                  rows={dashboard.corridraMoney}
+                  columns={[
+                    ['origin_market', 'Origin'],
+                    ['destination_market', 'Destination'],
+                    ['mission_type', 'Offering'],
+                    ['kind', 'Record'],
+                    ['currency', 'Currency'],
+                    ['observed_minor', 'Observed minor units'],
+                    ['recorded_mission_denominator', 'Recorded missions'],
+                    ['completed_observed_minor', 'Completed mission amount'],
+                    ['completed_recorded_denominator', 'Completed recorded missions'],
+                  ]}
+                />
+                <Table
+                  label="Per-mission contribution and effort"
+                  rows={dashboard.economics.map((r) => ({
+                    ...r,
+                    contribution_margin:
+                      r.contribution_margin_minor === null ||
+                      r.contribution_margin_minor === undefined
+                        ? 'Unknown; incomplete fee/cost coverage'
+                        : formatMoney(
+                            String(r.contribution_margin_minor),
+                            currency.parse(r.currency),
+                          ),
+                    effort:
+                      r.effort_minutes === null || r.effort_minutes === undefined
+                        ? 'Unknown'
+                        : `${r.effort_minutes} recorded minutes; completeness ${r.effort_complete === true ? 'attested' : 'unknown'}`,
+                  }))}
+                  columns={[
+                    ['id', 'Mission'],
+                    ['origin_market', 'Origin'],
+                    ['destination_market', 'Destination'],
+                    ['mission_type', 'Offering'],
+                    ['status', 'Mission status'],
+                    ['currency', 'Currency'],
+                    ['observed_fee_minor', 'Observed earned fee minor units'],
+                    ['observed_delivery_cost_minor', 'Observed delivery cost minor units'],
+                    ['observed_reward_minor', 'Reward obligations minor units'],
+                    ['contribution_margin', 'Contribution margin'],
+                    ['effort', 'Effort'],
+                  ]}
+                />
+              </PhoneFold>
+              <PhoneFold
+                summary="Customer trade, activity, programme and repeat records (4 tables)"
+                className="ops-money"
+              >
+                <h4>Customer trade outcomes</h4>
+                <p>
+                  These are customer contract, invoice and cash observations. They are never counted
+                  as Corridra revenue.
+                </p>
+                <Table
+                  label="Customer trade amounts"
+                  rows={dashboard.customerTrade}
+                  columns={[
+                    ['kind', 'Record'],
+                    ['currency', 'Currency'],
+                    ['observed_minor', 'Customer minor units'],
+                    ['mission_denominator', 'Recorded missions'],
+                  ]}
+                />
+                <Table
+                  label="Commercial activity totals"
+                  rows={dashboard.commercialActivityTotals}
+                  columns={[
+                    ['kind', 'Activity'],
+                    ['recorded_observations', 'Recorded original observations'],
+                    ['mission_denominator', 'Visible mission denominator'],
+                  ]}
+                />
+                <Table
+                  label="Programme yield and denominators"
+                  rows={dashboard.programmes}
+                  columns={[
+                    ['name', 'Programme'],
+                    ['matched_participants', 'Matching participants'],
+                    ['total_participants', 'Total visible participants'],
+                    ['participants_with_held_meetings', 'Participants with held meetings'],
+                    ['completed_participants', 'Completed participants'],
+                  ]}
+                />
+                <Table
+                  label="Recorded repeat missions"
+                  rows={dashboard.repeat}
+                  columns={[
+                    ['customer_reference', 'Customer reference'],
+                    ['recorded_missions', 'Recorded missions'],
+                    ['completed_missions', 'Completed missions'],
+                  ]}
+                />
+              </PhoneFold>
+            </div>
+            <details className="ops-records">
+              <summary>{`Mission records on this page (${dashboard.missions.length})`}</summary>
+              <Table
+                label="Filtered mission records"
+                rows={dashboard.missions}
+                columns={[
+                  ['id', 'Mission'],
+                  ['status', 'Status'],
+                  ['mission_type', 'Type'],
+                  ['owner_id', 'Owner'],
+                  ['customer_reference', 'Customer'],
+                  ['industry', 'Industry'],
+                  ['acquisition_source', 'Acquisition observation'],
+                  ['effort_minutes', 'Recorded effort minutes'],
+                  ['first_useful_result_at', 'Recorded useful result'],
+                  ['first_commercial_outcome_at', 'First observed contract or cash'],
+                  ['commercial_counts', 'Commercial activities'],
+                  ['opportunities', 'Opportunities and loss reasons'],
+                  ['next_action', 'Next action'],
+                  ['due_at', 'Due'],
+                ]}
+              />
+              <button
+                className="button button-secondary"
+                disabled={busy || dashboard.offset === 0}
+                onClick={() => void load(filters + `&offset=${Math.max(0, dashboard.offset - 50)}`)}
+              >
+                Previous missions
+              </button>
+              <button
+                className="button button-secondary"
+                disabled={
+                  busy ||
+                  dashboard.offset + dashboard.missions.length >=
+                    Number(dashboard.summary.submitted)
+                }
+                onClick={() => void load(filters + `&offset=${dashboard.offset + 50}`)}
+              >
+                Next missions
+              </button>
+            </details>
+            <details className="ops-notes-fold">
+              <summary>{`How to read these numbers (${dashboard.warnings.length} notes)`}</summary>
+              <div className="ops-notes">
+                {dashboard.warnings.map((w) => (
+                  <p key={w}>{w}</p>
+                ))}
+              </div>
+            </details>
           </>
         )}
       </section>
@@ -797,135 +859,144 @@ export function Operations({
         >
           <h3>Global Corridor Control Center</h3>
           <FounderOverview tenant={tenant} />
-          <details>
-            <summary>Configured country and market scopes</summary>
-            <Table
-              label="Configured market scopes"
-              rows={
-                controls?.markets.filter((m) =>
-                  catalogue?.routes.some(
-                    (r) => r.origin_market === m.key || r.destination_market === m.key,
-                  ),
-                ) ?? []
-              }
-              columns={[
-                ['key', 'Scope key'],
-                ['kind', 'Scope kind'],
-                ['name', 'Name'],
-                ['country_code', 'Country identity'],
-              ]}
-            />
-          </details>
-          <p>
-            Create routes and install reusable templates in{' '}
-            <a href="#workspace-settings">Corridors and policies</a>. Manage approved models in{' '}
-            <a href="#workspace-ai">AI assistance</a> and contributors in{' '}
-            <a href="#workspace-network">Execution network</a>. Credentials stay in secure provider
-            settings.
-          </p>
-          <label className="field">
-            Control Center route
-            <select
-              disabled={busy}
-              value={route}
-              onChange={(e) => {
-                changeScope(() => {
-                  setRoute(e.target.value);
-                  setType('');
-                  setPreview(null);
-                });
-              }}
-            >
-              <option value="">Choose a configured route</option>
-              {catalogue?.routes.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.origin_market} → {r.destination_market}
-                </option>
-              ))}
-            </select>
-          </label>
-          {route && !pack && (
-            <p>
-              This route has no effective pack. Create a reviewed configuration in Corridors and
-              policies before readiness review.
-            </p>
-          )}
-          {pack && (
-            <>
-              <p>
-                Current pack {pack.id}, version {pack.version}, {pack.status}. Changing
-                configuration invalidates readiness for the new version; historical assignments
-                remain pinned.
-              </p>
+          <div className="ops-center-config">
+            <div>
+              <details>
+                <summary>Configured country and market scopes</summary>
+                <Table
+                  label="Configured market scopes"
+                  rows={
+                    controls?.markets.filter((m) =>
+                      catalogue?.routes.some(
+                        (r) => r.origin_market === m.key || r.destination_market === m.key,
+                      ),
+                    ) ?? []
+                  }
+                  columns={[
+                    ['key', 'Scope key'],
+                    ['kind', 'Scope kind'],
+                    ['name', 'Name'],
+                    ['country_code', 'Country identity'],
+                  ]}
+                />
+              </details>
               <label className="field">
-                Route service
+                Control Center route
                 <select
                   disabled={busy}
-                  value={type}
-                  onChange={(e) => changeScope(() => setType(e.target.value))}
+                  value={route}
+                  onChange={(e) => {
+                    changeScope(() => {
+                      setRoute(e.target.value);
+                      setType('');
+                      setPreview(null);
+                    });
+                  }}
                 >
-                  <option value="">Choose an enabled mission type</option>
-                  {pack.configuration.missionTypes.map((t) => (
-                    <option key={t}>{t}</option>
+                  <option value="">Choose a configured route</option>
+                  {catalogue?.routes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.origin_market} → {r.destination_market}
+                    </option>
                   ))}
                 </select>
               </label>
+              {route && !pack && (
+                <p>
+                  This route has no effective pack. Create a reviewed configuration in Corridors and
+                  policies before readiness review.
+                </p>
+              )}
+              {pack && (
+                <>
+                  <p>
+                    Current pack {pack.id}, version {pack.version}, {pack.status}. Changing
+                    configuration invalidates readiness for the new version; historical assignments
+                    remain pinned.
+                  </p>
+                  <label className="field">
+                    Route service
+                    <select
+                      disabled={busy}
+                      value={type}
+                      onChange={(e) => changeScope(() => setType(e.target.value))}
+                    >
+                      <option value="">Choose an enabled mission type</option>
+                      {pack.configuration.missionTypes.map((t) => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="button button-secondary"
+                    disabled={busy || role !== 'owner'}
+                    onClick={preparePack}
+                  >
+                    Prepare next configuration version
+                  </button>
+                </>
+              )}
+              <PhoneFold summary="How to edit the configuration and where related settings are">
+                <p>
+                  Create routes and install reusable templates in{' '}
+                  <a href="#workspace-settings">Corridors and policies</a>. Manage approved models
+                  in <a href="#workspace-ai">AI assistance</a> and contributors in{' '}
+                  <a href="#workspace-network">Execution network</a>. Credentials stay in secure
+                  provider settings.
+                </p>
+                <p>
+                  Edit enabled missionTypes, languages, currencies, timeZones, localities, clusters,
+                  approved sourceCategories, channels, operatorCapabilities, coverage and exact
+                  requirement/assessment/policy IDs. Bounded JSON is configuration data; no code or
+                  policy expressions execute. Unsupported bindings fail validation.
+                </p>
+              </PhoneFold>
+            </div>
+            <div>
+              <label className="field">
+                Configuration draft
+                <textarea
+                  rows={12}
+                  maxLength={8192}
+                  value={packDraft}
+                  onChange={(e) => {
+                    setPackDraft(e.target.value);
+                    setPreview(null);
+                  }}
+                />
+              </label>
               <button
                 className="button button-secondary"
-                disabled={busy || role !== 'owner'}
-                onClick={preparePack}
+                disabled={busy || !packDraft}
+                onClick={() => void inspect()}
               >
-                Prepare next configuration version
+                Preview configuration effects
               </button>
-            </>
-          )}
-          <label className="field">
-            Configuration draft
-            <textarea
-              rows={12}
-              maxLength={8192}
-              value={packDraft}
-              onChange={(e) => {
-                setPackDraft(e.target.value);
-                setPreview(null);
-              }}
-            />
-          </label>
-          <p>
-            Edit enabled missionTypes, languages, currencies, timeZones, localities, clusters,
-            approved sourceCategories, channels, operatorCapabilities, coverage and exact
-            requirement/assessment/policy IDs. Bounded JSON is configuration data; no code or policy
-            expressions execute. Unsupported bindings fail validation.
-          </p>
-          <button
-            className="button button-secondary"
-            disabled={busy || !packDraft}
-            onClick={() => void inspect()}
-          >
-            Preview configuration effects
-          </button>
-          {preview && (
-            <>
-              <p>
-                Changed fields: {value(preview.changedFields)}. Historical assignments preserved:{' '}
-                {value(preview.historicalAssignmentsPreserved)}. Public operational activation: No.
-              </p>
-              <button
-                className="button"
-                disabled={busy || role !== 'owner'}
-                onClick={() =>
-                  void send({
-                    action: 'propose',
-                    basePackId: preview.basePackId,
-                    pack: preview.pack,
-                    reason: 'Submit the previewed exact configuration for independent review',
-                  })
-                }
-              >
-                Submit configuration proposal
-              </button>
-            </>
-          )}
+              {preview && (
+                <>
+                  <p>
+                    Changed fields: {value(preview.changedFields)}. Historical assignments
+                    preserved: {value(preview.historicalAssignmentsPreserved)}. Public operational
+                    activation: No.
+                  </p>
+                  <button
+                    className="button"
+                    disabled={busy || role !== 'owner'}
+                    onClick={() =>
+                      void send({
+                        action: 'propose',
+                        basePackId: preview.basePackId,
+                        pack: preview.pack,
+                        reason: 'Submit the previewed exact configuration for independent review',
+                      })
+                    }
+                  >
+                    Submit configuration proposal
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
           {controls?.proposals
             .filter((p) => !p.decision)
             .map((p) => (
@@ -1097,162 +1168,171 @@ export function Operations({
           )}
           <h4>Financial, effort and case records</h4>
           <p>
-            AI budgets use action ai-budget, missionId, version, amountMinor as lifetime USD minor
-            units, sourceId and validUntil. A zero ceiling stops new reservations. Existing
-            tenant/day and task limits still apply. Templates use action template, kind
-            MISSION_TYPE/REQUIREMENT/ASSESSMENT, typeKey, version and description; only registered
-            schemas are released.
-          </p>
-          <p>
-            Record evidence-backed service invoices/receipts, earned fees/costs, effort,
-            completeness and owned recovery/privacy cases. Use original minor units and currency.
-            Compensations reference the original ID; no history is edited.
-          </p>
-          <p>
             Configuration publication and template changes retain owner-only authority. A different
             authorized owner must review a proposal. Financial and operational observations require
             fresh owner/admin authentication.
           </p>
-          <Table
-            label="Mission AI budget versions"
-            rows={controls?.budgets ?? []}
-            columns={[
-              ['mission_id', 'Mission'],
-              ['version', 'Version'],
-              ['amount_minor', 'Lifetime reserved USD minor-unit ceiling'],
-              ['source_id', 'Approval evidence'],
-              ['valid_until', 'Valid until'],
-            ]}
-          />
-          <label className="field">
-            Operational command JSON
-            <textarea
-              rows={10}
-              maxLength={8192}
-              value={advanced}
-              onChange={(e) => setAdvanced(e.target.value)}
+          <div className="ops-command">
+            <label className="field">
+              Operational command JSON
+              <textarea
+                rows={10}
+                maxLength={8192}
+                value={advanced}
+                onChange={(e) => setAdvanced(e.target.value)}
+              />
+            </label>
+            <div>
+              <details>
+                <summary>Command fields</summary>
+                <p>
+                  AI budgets use action ai-budget, missionId, version, amountMinor as lifetime USD
+                  minor units, sourceId and validUntil. A zero ceiling stops new reservations.
+                  Existing tenant/day and task limits still apply. Templates use action template,
+                  kind MISSION_TYPE/REQUIREMENT/ASSESSMENT, typeKey, version and description; only
+                  registered schemas are released.
+                </p>
+                <p>
+                  Record evidence-backed service invoices/receipts, earned fees/costs, effort,
+                  completeness and owned recovery/privacy cases. Use original minor units and
+                  currency. Compensations reference the original ID; no history is edited.
+                </p>
+                <p>
+                  All commands use id, action and reason. document: missionId, kind INVOICE/RECEIPT,
+                  parentId, reverseOf, amountMinor, currency, sourceId, externalReference,
+                  occurredAt. ledger: missionId, kind SERVICE_FEE/DELIVERY_COST, reverseOf,
+                  amountMinor, currency, sourceId, externalReference, occurredAt. effort: missionId,
+                  operatorId, minutes, sourceId, occurredAt, reverseOf. context: missionId, version,
+                  customerReference, industry, acquisitionSource, payingStatus
+                  UNKNOWN/PAYING/NON_PAYING, optional intakeDecision UNKNOWN/ACCEPTED/REJECTED and
+                  firstUsefulResultAt, revenueComplete, costComplete, effortComplete, sourceId.
+                  case: key, version, kind, subjectId, state, ownerId, dueAt, sourceId. Nullable
+                  values must be explicit null. Amounts are strings. Dates include their offset.
+                </p>
+              </details>
+              <label>
+                <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
+                reviewed the evidence, scope, original amounts and authorization.
+              </label>
+              <button
+                className="button"
+                disabled={busy || !ack || !advanced}
+                onClick={() => {
+                  try {
+                    void send(JSON.parse(advanced));
+                  } catch {
+                    setMessage('Invalid command JSON. Your draft is retained.');
+                  }
+                }}
+              >
+                Record reviewed operational command
+              </button>
+            </div>
+          </div>
+          <details className="ops-history">
+            <summary>
+              {`Recorded budgets, documents, ledger, effort, context and policy history (${historyCount} records)`}
+            </summary>
+            <Table
+              label="Mission AI budget versions"
+              rows={controls?.budgets ?? []}
+              columns={[
+                ['mission_id', 'Mission'],
+                ['version', 'Version'],
+                ['amount_minor', 'Lifetime reserved USD minor-unit ceiling'],
+                ['source_id', 'Approval evidence'],
+                ['valid_until', 'Valid until'],
+              ]}
             />
-          </label>
-          <details>
-            <summary>Command fields</summary>
+            <Table
+              label="Service documents"
+              rows={controls?.documents ?? []}
+              columns={[
+                ['id', 'ID'],
+                ['mission_id', 'Mission'],
+                ['kind', 'Kind'],
+                ['parent_id', 'Original invoice parent'],
+                ['external_reference', 'Original reference'],
+                ['occurred_at', 'Recorded occurrence'],
+                ['amount_minor', 'Minor units'],
+                ['currency', 'Currency'],
+                ['source_id', 'Source'],
+                ['reverse_of', 'Compensates'],
+              ]}
+            />
+            <Table
+              label="Recent service ledger and compensation references, first 100"
+              rows={controls?.ledger ?? []}
+              columns={[
+                ['id', 'Ledger ID'],
+                ['mission_id', 'Mission'],
+                ['kind', 'Kind'],
+                ['amount_minor', 'Original minor units'],
+                ['currency', 'Currency'],
+                ['source_id', 'Evidence source'],
+                ['reverse_of', 'Compensates'],
+                ['external_reference', 'Reference'],
+              ]}
+            />
+            <Table
+              label="Recent effort history, first 100"
+              rows={controls?.effort ?? []}
+              columns={[
+                ['id', 'Effort ID'],
+                ['mission_id', 'Mission'],
+                ['operator_id', 'Operator'],
+                ['minutes', 'Recorded minutes'],
+                ['source_id', 'Evidence source'],
+                ['reverse_of', 'Compensates'],
+              ]}
+            />
+            <Table
+              label="Current mission operations context"
+              rows={controls?.contexts ?? []}
+              columns={[
+                ['id', 'Version ID'],
+                ['mission_id', 'Mission'],
+                ['customer_reference', 'Customer reference'],
+                ['industry', 'Industry'],
+                ['paying_status', 'Paying classification'],
+                ['revenue_complete', 'Fee coverage attested'],
+                ['cost_complete', 'Cost coverage attested'],
+                ['source_id', 'Evidence source'],
+              ]}
+            />
+            <Table
+              label="Recorded communication policy versions"
+              rows={controls?.policies ?? []}
+              columns={[
+                ['id', 'Policy reference'],
+                ['version', 'Version'],
+                ['jurisdiction', 'Jurisdiction'],
+                ['channel', 'Channel'],
+                ['basis', 'Recorded basis'],
+                ['enabled', 'Enabled flag'],
+                ['effective_from', 'Effective from'],
+                ['valid_until', 'Valid until'],
+              ]}
+            />
             <p>
-              All commands use id, action and reason. document: missionId, kind INVOICE/RECEIPT,
-              parentId, reverseOf, amountMinor, currency, sourceId, externalReference, occurredAt.
-              ledger: missionId, kind SERVICE_FEE/DELIVERY_COST, reverseOf, amountMinor, currency,
-              sourceId, externalReference, occurredAt. effort: missionId, operatorId, minutes,
-              sourceId, occurredAt, reverseOf. context: missionId, version, customerReference,
-              industry, acquisitionSource, payingStatus UNKNOWN/PAYING/NON_PAYING, optional
-              intakeDecision UNKNOWN/ACCEPTED/REJECTED and firstUsefulResultAt, revenueComplete,
-              costComplete, effortComplete, sourceId. case: key, version, kind, subjectId, state,
-              ownerId, dueAt, sourceId. Nullable values must be explicit null. Amounts are strings.
-              Dates include their offset.
+              A recorded enabled flag does not approve outreach. Current policy, purpose, rights,
+              opt-out and deployment checks still apply to each communication.
             </p>
+            <Table
+              label="Privacy policy versions"
+              rows={controls?.privacy ?? []}
+              columns={[
+                ['id', 'Version ID'],
+                ['source_id', 'Source'],
+                ['data_role', 'Role'],
+                ['jurisdictions', 'Jurisdictions'],
+                ['processing_locations', 'Processing'],
+                ['retention_until', 'Retention'],
+                ['legal_hold', 'Legal hold'],
+                ['transfer_status', 'Transfer review'],
+              ]}
+            />
           </details>
-          <label>
-            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
-            reviewed the evidence, scope, original amounts and authorization.
-          </label>
-          <button
-            className="button"
-            disabled={busy || !ack || !advanced}
-            onClick={() => {
-              try {
-                void send(JSON.parse(advanced));
-              } catch {
-                setMessage('Invalid command JSON. Your draft is retained.');
-              }
-            }}
-          >
-            Record reviewed operational command
-          </button>
-          <Table
-            label="Service documents"
-            rows={controls?.documents ?? []}
-            columns={[
-              ['id', 'ID'],
-              ['mission_id', 'Mission'],
-              ['kind', 'Kind'],
-              ['parent_id', 'Original invoice parent'],
-              ['external_reference', 'Original reference'],
-              ['occurred_at', 'Recorded occurrence'],
-              ['amount_minor', 'Minor units'],
-              ['currency', 'Currency'],
-              ['source_id', 'Source'],
-              ['reverse_of', 'Compensates'],
-            ]}
-          />
-          <Table
-            label="Recent service ledger and compensation references, first 100"
-            rows={controls?.ledger ?? []}
-            columns={[
-              ['id', 'Ledger ID'],
-              ['mission_id', 'Mission'],
-              ['kind', 'Kind'],
-              ['amount_minor', 'Original minor units'],
-              ['currency', 'Currency'],
-              ['source_id', 'Evidence source'],
-              ['reverse_of', 'Compensates'],
-              ['external_reference', 'Reference'],
-            ]}
-          />
-          <Table
-            label="Recent effort history, first 100"
-            rows={controls?.effort ?? []}
-            columns={[
-              ['id', 'Effort ID'],
-              ['mission_id', 'Mission'],
-              ['operator_id', 'Operator'],
-              ['minutes', 'Recorded minutes'],
-              ['source_id', 'Evidence source'],
-              ['reverse_of', 'Compensates'],
-            ]}
-          />
-          <Table
-            label="Current mission operations context"
-            rows={controls?.contexts ?? []}
-            columns={[
-              ['id', 'Version ID'],
-              ['mission_id', 'Mission'],
-              ['customer_reference', 'Customer reference'],
-              ['industry', 'Industry'],
-              ['paying_status', 'Paying classification'],
-              ['revenue_complete', 'Fee coverage attested'],
-              ['cost_complete', 'Cost coverage attested'],
-              ['source_id', 'Evidence source'],
-            ]}
-          />
-          <Table
-            label="Recorded communication policy versions"
-            rows={controls?.policies ?? []}
-            columns={[
-              ['id', 'Policy reference'],
-              ['version', 'Version'],
-              ['jurisdiction', 'Jurisdiction'],
-              ['channel', 'Channel'],
-              ['basis', 'Recorded basis'],
-              ['enabled', 'Enabled flag'],
-              ['effective_from', 'Effective from'],
-              ['valid_until', 'Valid until'],
-            ]}
-          />
-          <p>
-            A recorded enabled flag does not approve outreach. Current policy, purpose, rights,
-            opt-out and deployment checks still apply to each communication.
-          </p>
-          <Table
-            label="Privacy policy versions"
-            rows={controls?.privacy ?? []}
-            columns={[
-              ['id', 'Version ID'],
-              ['source_id', 'Source'],
-              ['data_role', 'Role'],
-              ['jurisdictions', 'Jurisdictions'],
-              ['processing_locations', 'Processing'],
-              ['retention_until', 'Retention'],
-              ['legal_hold', 'Legal hold'],
-              ['transfer_status', 'Transfer review'],
-            ]}
-          />
         </section>
       )}
       <section
