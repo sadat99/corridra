@@ -1,6 +1,6 @@
 # Account-saved commercial mission workspace
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 Requirements: V3-06-004,V3-04-015,V3-04-046,V3-05-019,V3-05-023,V3-02-041. All remain PARTIAL for broader product scope. This packet makes approved managed commercial reports persist across visits,and reuses their existing evidence reply workflow. It is not full self-service research,procurement authoring or independent delegation administration.
 

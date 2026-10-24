@@ -1,6 +1,6 @@
 # Private request submission through the existing guided intake
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 Status: exact-head CI passed;PR70 merged/deployed9b21351 with exposure closed. Actual private-provider acceptance remains NOT VERIFIED. V3-06-004 remains PARTIAL. This is sample request creation/persistent receipt progress,not full customer commercial mission administration.
 

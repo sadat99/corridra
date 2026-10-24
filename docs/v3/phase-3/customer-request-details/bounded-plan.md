@@ -1,6 +1,6 @@
 # Original request detail workspace
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 Requirements: V3-06-004,V3-04-069,V3-04-070. Status: verified bounded gated source release PR71,merge3ad4e8d. Actual private-provider acceptance remains NOT VERIFIED. This is original submitted requirements and receipt progress,not all customer research,shortlists,qualification,quotations,meetings or commercial results.
 

@@ -1,6 +1,6 @@
 # Customer programme context: bounded concern
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 Baseline f447b2108c82ddf203e2fe54f30789b13df32b01, following verified PR78. Requirements V3-02-045/046/062 and the V3-06 self-service delegation family remain PARTIAL. Shared activities V3-02-051 remain PARTIAL and communications V3-02-054 remain MISSING. This increment adds organiser-owned canonical programme details and expressly shared participant reads, not a complete independent Delegation OS.
 

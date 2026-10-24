@@ -1,6 +1,6 @@
 # Approved mission delivery in the customer's account
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 Scope:advance V3-06-004 through explicit delivery to the original request creator,without private-link discovery. Reuse original V2 request mission,reviewed client publication/link and existing save/read/reply/comparison/company/decision functions. This is managed commercial delivery,not full customer research/quotation/meeting/decision authoring or canonical organisation ownership.
 

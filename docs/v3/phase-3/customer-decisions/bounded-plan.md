@@ -1,6 +1,6 @@
 # Reviewed commercial decision history
 
-**Document status: DONE.** Planned and built as source. The capability stays PARTIAL for the whole product, so use this as the design record and the requirement register for status. It is not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
 
 V3-02-030,V3-04-073 and V3-05-017 remain PARTIAL. Give customers a scoped view of actual immutable V2 selection records after explicit staff approval;full customer authoring,orders,organisation ownership and the complete commercial workspace remain unfinished. Reuse the original mission engine and saved CLIENT_PROGRESS reports.
 
