@@ -283,6 +283,20 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_LANGUAGES_REVIEWED',
+    label: 'Languages with reviewed text',
+    line: 'Codes of the languages a native speaker has reviewed, for example bn,zh,es. Only these appear in the language chip. English is always there. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'setting',
+  },
+  {
+    name: 'CORRIDRA_LANGUAGES_PREVIEW',
+    label: 'Show draft languages',
+    line: 'Shows every draft language in the language chip, marked as a draft, so you can read them before a reviewer has. Keep it off for the public. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'MISSION_EMAIL_FOUNDER_LINE',
     label: 'Founder sentence in the first email',
     line: 'One sentence in your words, shown in the first email. Empty shows nothing. Its text is never shown here.',
