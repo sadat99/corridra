@@ -38,6 +38,10 @@ test('V3 founder clarity retains source-backed operations and denies the ordinar
   await page.goto(`/operator?workspace=${seed.tenantId}#ops-center`);
   const overview = page.getByRole('region', { name: 'Business overview' });
   await expect(overview).toBeVisible();
+  // The answers fold behind their summary line; open them before reading the links.
+  await overview
+    .getByText('What Corridra can do, what is on and what is blocked (5 answers)', { exact: true })
+    .click();
   await expect(overview).toContainText('Synthetic mission operations only.');
   await expect(overview).toContainText('MISSING');
   await expect(overview).toContainText('GATED');
