@@ -16,6 +16,7 @@ Method: the full V3 contract, product vision v2.1, UI direction, art review shee
 - 9 decisions need the owner (section 8). Four of them block Wave 1.
 - A visual before and after of five of the changes is in a private canvas: https://claude.ai/artifact/VygHw5v3aSAtgfPuLC44Fd . It illustrates the proposals with example content and is not a specification.
 - A second private canvas shows all 18 journeys before and after, read from the code and the corrected plan: https://claude.ai/artifact/BSEqtWi9aZr55E2LwmFE43 . Each "before" step is read from the code today; each "after" step is a proposal.
+- A third private canvas shows the screens working (phone and laptop, English and Bangla, the supplier Reply Page in English and Chinese): https://claude.ai/artifact/7ojpirbA99vjZAoczQJiVB . It uses invented data and draft translations and is not a specification.
 - A corrected candidate plan now applies every fix in this record: [the corrected plan](ux-update-plan-corrected-2026-10-24.md). Where a decision is still yours, it applies the recommended option and says so.
 - Nothing is being executed. No lane, branch, switch, ADR or code change has started, and none starts until the owner marks the plan final. Section 11 lists every finding in one register and the path to a final plan.
 
