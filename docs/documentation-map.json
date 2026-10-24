@@ -374,6 +374,16 @@
       "use": "What the first two mission emails build today, what needs an approved database change, and the privacy wording to review; nothing is switched on"
     },
     {
+      "path": "docs/product/ux-charter.md",
+      "classification": "Owner proposal",
+      "use": "Structure, principles and boundaries of the UX revamp, and the rule for giving any new capability a home; no screens, counts or dates; proposed, awaiting owner approval"
+    },
+    {
+      "path": "docs/product/ux-update-plan-verification-2026-10-24.md",
+      "classification": "Owner proposal",
+      "use": "Dated check of the 24 October UX plan against the system: confirmed facts, differences, flags with default placements, unplaced capabilities and owner decisions; expires as the system changes"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
