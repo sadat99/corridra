@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 
-import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
@@ -33,9 +32,8 @@ async function readSignedIn(path: string, signal: AbortSignal) {
 function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
   const [who, setWho] = useState<'customer' | 'staff' | null>(null);
   // The customer preview for staff makes no network request at all, so the header stays quiet there.
-  const quiet = usePathname().startsWith('/operator/view-as');
   useEffect(() => {
-    if (quiet) return;
+    if (window.location.pathname.startsWith('/operator/view-as')) return;
     let controller = new AbortController();
     function check() {
       controller.abort();
@@ -64,8 +62,8 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
       window.removeEventListener('focus', refocus);
       window.removeEventListener('pageshow', check);
     };
-  }, [accounts, quiet]);
-  return quiet ? null : who;
+  }, [accounts]);
+  return who;
 }
 
 export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
