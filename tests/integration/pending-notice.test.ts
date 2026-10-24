@@ -83,6 +83,12 @@ describe('the saved request notice', () => {
     expect(account).toContain('<PendingRequestNotice where="verify" />');
   });
 
+  it('reads the answer body whether or not the answer is ok, so the page can settle', () => {
+    const source = readFileSync(resolve('apps/web/components/pending-request-notice.tsx'), 'utf8');
+    expect(source).toContain('await response.text()');
+    expect(source).not.toMatch(/response\.ok\s*\?\s*response\.json\(\)\s*:\s*null/);
+  });
+
   it('keeps its live region free of the status role, which the forms it sits beside already use', () => {
     const source = readFileSync(resolve('apps/web/components/pending-request-notice.tsx'), 'utf8');
     expect(source).toContain('aria-live="polite"');

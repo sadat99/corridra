@@ -56,7 +56,12 @@ export function PendingRequestNotice({ where }: { where: PendingNoticeWhere }) {
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/intake/pending', { cache: 'no-store', signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
+      .then(async (response) => {
+        // Read the body in every case. An answer that is never read keeps the browser's network
+        // counted as busy, which hangs anything that waits for the page to settle.
+        const text = await response.text();
+        return response.ok ? JSON.parse(text) : null;
+      })
       .then((body) => {
         if (body && body.pending === true) setPending(true);
       })
