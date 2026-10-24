@@ -179,6 +179,16 @@
       "use": "The Road: the mapping from mission status to six steps, the Compare and Decide records, and the never-steps-back rule"
     },
     {
+      "path": "docs/adr/0066-language-phase-2.md",
+      "classification": "Architecture decision",
+      "use": "Language phase 2: what the language foundation does as built, the teaching-layer words, the formatter test, no letter-spacing for Bengali and Arabic, and the Bangla type questions"
+    },
+    {
+      "path": "docs/product/language-review-record.md",
+      "classification": "Owner proposal",
+      "use": "Per language: the named native reviewer and date that release a language, what a reviewer reads, and how the owner turns a language on"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"

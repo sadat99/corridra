@@ -2,7 +2,7 @@ import Link from 'next/link';
 import './move-card.css';
 import './scripts.css';
 import { HolderBadge, type Holder } from './holder-badge';
-import { mrLabels } from './labels';
+import { mrLabels, movePhrase, type MrLabels } from './labels';
 
 /** The fixed list of verbs a Move can use. One verb, one object, one holder, a date only if real. */
 export const moveVerbs = ['Read', 'Answer', 'Add', 'Confirm', 'Choose', 'Send'] as const;
@@ -33,13 +33,13 @@ export function MoveCard({
   due?: string | null;
   href?: string;
   action?: string;
-  labels?: Pick<typeof mrLabels, 'holder' | 'move'>;
+  labels?: Pick<MrLabels, 'holder' | 'move'>;
 }) {
   return (
     <article className="mr-move" data-holder={holder}>
       <div className="mr-move-body">
-        <p className="mr-move-kind">{verb}</p>
-        <h3>{`${verb} ${object}`}</h3>
+        <p className="mr-move-kind">{labels.move.verbs[verb]}</p>
+        <h3>{movePhrase(labels.move.phrase, labels.move.verbs[verb], object)}</h3>
         {context ? <p className="mr-move-context">{context}</p> : null}
         <p className="mr-move-meta">
           <HolderBadge holder={holder} labels={labels.holder} />

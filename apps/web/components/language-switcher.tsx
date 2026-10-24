@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import './language-switcher.css';
 import { localeMeta } from '../lib/i18n/locales';
 import { useLanguage } from './language-provider';
 

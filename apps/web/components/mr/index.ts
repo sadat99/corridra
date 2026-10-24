@@ -16,4 +16,5 @@ export {
   type RoadStepState,
   type MissionStatusName,
 } from './road-status';
-export { mrLabels, type MrLabels } from './labels';
+export { mrLabels, mrLabelsFor, movePhrase, type MrLabels } from './labels';
+export { useMrLabels } from './use-labels';

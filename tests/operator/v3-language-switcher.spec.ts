@@ -10,6 +10,7 @@ import AxeBuilder from '@axe-core/playwright';
 // not prove the reviewed text: that is a native reviewer's job, recorded by the owner.
 let server: Server, origin: string;
 let bundle = '';
+let componentCss = '';
 const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
 const all = 'en,bn,zh,es,ar';
 
@@ -34,6 +35,8 @@ test.beforeAll(async () => {
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
     write: false,
+    outdir: 'out',
+    loader: { '.css': 'css' },
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -58,7 +61,9 @@ test.beforeAll(async () => {
       },
     ],
   });
-  bundle = result.outputFiles[0].text;
+  bundle = result.outputFiles.find((file) => file.path.endsWith('.js'))!.text;
+  // The chip and language styles now sit beside their components and load after the global sheet, as in the app.
+  componentCss = result.outputFiles.find((file) => file.path.endsWith('.css'))?.text ?? '';
   server = createServer((req, res) => {
     const path = new URL(req.url!, 'http://fixture.invalid').pathname;
     if (path === '/fixture.js') {
@@ -68,7 +73,7 @@ test.beforeAll(async () => {
     }
     if (path === '/app.css') {
       res.setHeader('content-type', 'text/css');
-      res.end(css);
+      res.end(`${css}\n${componentCss}`);
       return;
     }
     res.setHeader('content-type', 'text/html');
