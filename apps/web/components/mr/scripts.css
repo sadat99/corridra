@@ -1,0 +1,36 @@
+/* Bangla, Chinese and Arabic need more line height than Latin. Applies inside any element tagged
+   with that language, so a component keeps its Latin rhythm elsewhere. */
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(bn),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(zh),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(ar),
+:lang(bn) > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost),
+:lang(zh) > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost),
+:lang(ar) > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost) {
+  line-height: 1.55;
+}
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(bn)
+  :is(h3, b, a, span, p, small, dt, dd, h2),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(zh)
+  :is(h3, b, a, span, p, small, dt, dd, h2),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost):lang(ar)
+  :is(h3, b, a, span, p, small, dt, dd, h2),
+:lang(bn)
+  > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2),
+:lang(zh)
+  > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2),
+:lang(ar)
+  > :is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2) {
+  line-height: 1.55;
+}
+/* The element itself carries the language (for example a supplier name tagged lang="zh"). */
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2):lang(bn),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2):lang(zh),
+:is(.mr-move, .mr-quote, .mr-road-wrap, .mr-ghost)
+  :is(h3, b, a, span, p, small, dt, dd, h2):lang(ar) {
+  line-height: 1.55;
+}
