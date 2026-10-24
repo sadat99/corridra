@@ -100,11 +100,36 @@ describe('the privacy notice', () => {
   });
   it('keeps the request notice version the database pins, and the new date', async () => {
     expect(await text(real)).toContain(
-      'Updated 23 October 2026. Request notice version: real-intake-2026-10-21-v1.',
+      'Updated 24 October 2026. Request notice version: real-intake-2026-10-21-v1.',
     );
     expect(await text({ DATA_ENVIRONMENT: 'synthetic' })).toContain(
-      'Updated 23 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
+      'Updated 24 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
     );
+  });
+  it('names the responsible company, the contact and the standard sections', async () => {
+    const page = await text(real);
+    expect(page).toContain('Corridra Pte Ltd, 101 Robinson Road, Singapore 180239');
+    expect(page).toContain('sadat@obsidianglobal.studio');
+    for (const heading of [
+      'In short',
+      'What we collect and why',
+      'Who we share information with',
+      'Cookies and browser storage',
+      'Where information is stored',
+      'Your rights',
+      'How we protect information',
+      'Children',
+    ])
+      expect(page).toContain(heading);
+    expect(page).toContain('We do not sell personal information');
+    expect(page).toContain('Personal Data Protection Commission');
+  });
+  it('lists the possession cookie only while real use is on, and never claims tracking cookies', async () => {
+    const cookie = 'A private cookie carries a possession token for a pending request';
+    expect(await text(real)).toContain(cookie);
+    expect(await text({ DATA_ENVIRONMENT: 'synthetic' })).not.toContain(cookie);
+    for (const env of [real, { DATA_ENVIRONMENT: 'synthetic' }])
+      expect(await text(env)).toContain('does not use advertising, analytics or tracking cookies');
   });
   it('uses no dashes as punctuation', async () => {
     for (const env of [
