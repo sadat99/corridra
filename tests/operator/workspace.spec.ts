@@ -907,6 +907,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .fill('Would a short conversation about hospitality requirements be useful?');
   await template.getByRole('button', { name: 'Approve template', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
+  await page.getByText('Review and create a private introduction', { exact: true }).click();
   const form = page.getByRole('form', { name: 'Create private introduction' });
   await form.getByLabel('Introduction target').selectOption(target.id);
   await form.getByLabel('Introduction recipient').selectOption(detail.contacts[0].id);
@@ -1027,6 +1028,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     ).status(),
   ).toBe(403);
   await page.getByRole('button', { name: 'Refresh access and meetings' }).click();
+  await page.getByText('Propose a meeting', { exact: true }).click();
   const proposal = page.getByRole('form', { name: 'Propose meeting' });
   await proposal
     .getByRole('combobox', { name: 'Meeting introduction', exact: true })

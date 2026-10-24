@@ -12,7 +12,10 @@ export function FounderOverview({ tenant }: { tenant: string }) {
         These are implementation capabilities. Mission operations use sample records; an account, a
         passing test or a deployment does not approve real commercial activity.
       </p>
-      <PhoneFold summary="What Corridra can do, what is on and what is blocked (5 answers)">
+      <PhoneFold
+        summary="What Corridra can do, what is on and what is blocked (5 answers)"
+        fold="always"
+      >
         <dl>
           <dt>What can Corridra do?</dt>
           <dd>
