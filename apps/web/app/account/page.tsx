@@ -29,6 +29,7 @@ import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
 import { foundations } from '../../lib/foundations';
 import { AccountHashRedirect } from './hash-redirect';
+import { uxSwitchOn } from '../../lib/ux-switches';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -81,6 +82,10 @@ export default async function Page({
         <AccountSignout />
       </WorkspaceShell>
     );
+  // UX update: the bare address is the front door, Your Move, once both switches are on. Any `?view=` address
+  // and the older hashes keep working, so no saved link breaks.
+  if (requested === undefined && uxSwitchOn('CORRIDRA_UX_NAV') && uxSwitchOn('CORRIDRA_UX_MOVE'))
+    redirect('/account/move');
   const workspaceIssuer = customerWorkspacesEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
@@ -306,6 +311,19 @@ export default async function Page({
                   </li>
                 )}
               </ul>
+              {uxSwitchOn('CORRIDRA_UX_NAV') && (
+                <>
+                  <h2>Find any tool</h2>
+                  <ul className="ux-link-list">
+                    <li>
+                      <Link prefetch={false} href="/account/all-tools">
+                        <strong>All tools</strong>
+                        <span>Every page you can open, each with a plain verb.</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </>
+              )}
               <h2>Start something</h2>
               <ul className="ux-link-list">
                 <li>

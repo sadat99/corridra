@@ -1,6 +1,7 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import type { ReactNode } from 'react';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
+import { uxSwitchOn } from '../lib/ux-switches';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { WorkspaceShell } from './workspace-shell';
 
@@ -31,7 +32,14 @@ export function CustomerShell({
           )}
         </p>
       }
-      nav={<CustomerNav current={tab} companies={customerCompaniesEnabled()} />}
+      nav={
+        <CustomerNav
+          current={tab}
+          companies={customerCompaniesEnabled()}
+          plainNames={uxSwitchOn('CORRIDRA_UX_NAV')}
+          move={uxSwitchOn('CORRIDRA_UX_MOVE')}
+        />
+      }
     >
       {children}
     </WorkspaceShell>
