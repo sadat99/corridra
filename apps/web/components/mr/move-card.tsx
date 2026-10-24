@@ -4,9 +4,8 @@ import './scripts.css';
 import { HolderBadge, type Holder } from './holder-badge';
 import { mrLabels, movePhrase, type MrLabels } from './labels';
 
-/** The fixed list of verbs a Move can use. One verb, one object, one holder, a date only if real. */
-export const moveVerbs = ['Read', 'Answer', 'Add', 'Confirm', 'Choose', 'Send'] as const;
-export type MoveVerb = (typeof moveVerbs)[number];
+import type { MoveVerb } from './types';
+export { moveVerbs, type MoveVerb } from './types';
 
 /**
  * One thing a person must do next, drawn as a card. The date is shown only when a real, already

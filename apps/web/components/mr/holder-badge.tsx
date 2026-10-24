@@ -1,9 +1,8 @@
 import './holder-badge.css';
 import { mrLabels } from './labels';
 
-/** Who is holding a piece of work. Fixed shapes; the word is always shown, never colour alone. */
-export type Holder = 'you' | 'team' | 'third';
-export const holders: readonly Holder[] = ['you', 'team', 'third'];
+import type { Holder } from './types';
+export { holders, type Holder } from './types';
 
 export function HolderBadge({
   holder,

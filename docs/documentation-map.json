@@ -189,6 +189,11 @@
       "use": "Per language: the named native reviewer and date that release a language, what a reviewer reads, and how the owner turns a language on"
     },
     {
+      "path": "docs/product/lane4-front-door.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 4: Your Move, the new navigation names and All tools; the parity table, what Your Move reads, the switches and how to flip or roll back"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"

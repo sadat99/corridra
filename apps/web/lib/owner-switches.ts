@@ -405,14 +405,14 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'New customer navigation',
     line: 'Swaps the customer navigation for Your Move, Missions, Companies, Library and More. Every page stays reachable.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_MOVE',
     label: 'Your Move front door',
     line: 'A first screen that lists what is waiting for the person and who holds it.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_ROAD',

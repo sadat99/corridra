@@ -313,13 +313,18 @@ describe('the stylesheets of the teaching layer', () => {
     }
   });
 
-  it('are imported by their component and by nothing a production route uses yet', () => {
+  it('are imported by their component and only by the screens that mount them', () => {
     const app = resolve('apps/web/app');
     const walk = (d: string): string[] =>
       readdirSync(d, { withFileTypes: true }).flatMap((e) =>
         e.isDirectory() ? walk(resolve(d, e.name)) : [resolve(d, e.name)],
       );
-    for (const file of walk(app).filter((f) => /\.(tsx?|css)$/.test(f)))
-      expect(readFileSync(file, 'utf8'), file).not.toMatch(/components\/mr\b/);
+    // Each lane that mounts the layer adds its screen here, in the same pull request that builds it.
+    const mounts = ['app/account/move/move-view.tsx'];
+    const importers = walk(app)
+      .filter((f) => /\.(tsx?|css)$/.test(f))
+      .filter((f) => /components\/mr\b/.test(readFileSync(f, 'utf8')))
+      .map((f) => f.slice(resolve('apps/web').length + 1));
+    expect(importers.sort()).toEqual(mounts.sort());
   });
 });
