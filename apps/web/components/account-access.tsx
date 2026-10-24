@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountForm, type AccountFormMode } from './account-form';
+import { PendingRequestNotice } from './pending-request-notice';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
@@ -15,6 +16,9 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             ? 'This changes your customer account password only. It does not change a team password.'
             : 'Sign in to see your account and the missions shared with you.'}
         </p>
+        {(mode === 'signin' || mode === 'signup' || mode === 'verify') && (
+          <PendingRequestNotice where={mode} />
+        )}
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>
             <AccountForm

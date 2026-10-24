@@ -710,7 +710,8 @@ function IntakeForm({
               <h2 id="pending-request-title">Finish your request.</h2>
               <p>
                 Your request is saved privately for 24 hours while you activate your account and
-                sign in. It is submitted to Corridra after that step.
+                sign in. Use this same device and browser. It is submitted to Corridra after that
+                step.
               </p>
               <div className="guide-actions">
                 {account?.emailVerified ? (
