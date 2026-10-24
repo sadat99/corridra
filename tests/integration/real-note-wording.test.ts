@@ -121,9 +121,7 @@ test('applying a programme template to a real programme records a capacity reaso
     },
     retired: false,
   });
-  const templateId =
-    (saved as { template?: { id: string }; id?: string }).template?.id ??
-    (saved as { id: string }).id;
+  const templateId = saved.template.id;
   await templates().apply({
     commandId: randomUUID(),
     workspaceId,
@@ -178,9 +176,7 @@ test('recording participant fees for a real programme writes ledger lines withou
     },
     retired: false,
   });
-  const templateId =
-    (template as { template?: { id: string }; id?: string }).template?.id ??
-    (template as { id: string }).id;
+  const templateId = template.template.id;
   await pricing().applySchedule({
     commandId: randomUUID(),
     workspaceId,
