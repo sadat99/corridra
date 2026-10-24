@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
@@ -31,7 +32,10 @@ async function readSignedIn(path: string, signal: AbortSignal) {
  */
 function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
   const [who, setWho] = useState<'customer' | 'staff' | null>(null);
+  // The customer preview for staff makes no network request at all, so the header stays quiet there.
+  const quiet = usePathname().startsWith('/operator/view-as');
   useEffect(() => {
+    if (quiet) return;
     let controller = new AbortController();
     function check() {
       controller.abort();
@@ -60,14 +64,14 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
       window.removeEventListener('focus', refocus);
       window.removeEventListener('pageshow', check);
     };
-  }, [accounts]);
-  return who;
+  }, [accounts, quiet]);
+  return quiet ? null : who;
 }
 
 export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
   const t = useT();
   const who = useSignedIn(accounts);
-  const { busy, message, signOut } = useSignOut(who === 'staff' ? 'staff' : 'customer');
+  const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
@@ -128,14 +132,16 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
             >
               {who === 'staff' ? t('header.workspace') : t('header.account')}
             </Link>
-            <button
-              type="button"
-              className="header-link nav-signout"
-              disabled={busy}
-              onClick={signOut}
-            >
-              {busy ? t('header.signingOut') : t('header.signOut')}
-            </button>
+            {who === 'customer' && (
+              <button
+                type="button"
+                className="header-link nav-signout"
+                disabled={busy}
+                onClick={signOut}
+              >
+                {busy ? t('header.signingOut') : t('header.signOut')}
+              </button>
+            )}
           </>
         ) : (
           <Link prefetch={false} href="/signin" onClick={close}>

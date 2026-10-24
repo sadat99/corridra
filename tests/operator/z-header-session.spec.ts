@@ -126,7 +126,7 @@ test('the header treats a failed or malformed session answer as signed out', asy
   }
 });
 
-test('the header shows the team workspace and Sign out for a signed-in team member, not Sign in', async ({
+test('the header shows the team workspace link, not Sign in, for a signed-in team member; sign-out stays on the workspace page', async ({
   page,
 }) => {
   test.setTimeout(90000);
@@ -193,9 +193,8 @@ test('the header shows the team workspace and Sign out for a signed-in team memb
     await expect(workspace).toHaveAttribute('href', '/operator');
     await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
-    await nav.getByRole('button', { name: 'Sign out', exact: true }).click();
-    await expect(page).toHaveURL('http://127.0.0.1:3404/operator/signin');
-    expect(signOuts).toEqual(['POST']);
+    await expect(nav.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+    expect(signOuts).toEqual([]);
   } finally {
     server.kill('SIGTERM');
   }
