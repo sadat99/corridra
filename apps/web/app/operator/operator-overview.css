@@ -1328,3 +1328,29 @@
   font-size: var(--text-xl);
   font-weight: 500;
 }
+
+/* Phase 3 (24 October 2026): a select with its label above it, and a paging row (count, then Previous and Next) laid out
+   as one aligned row instead of text and buttons jammed together. */
+.ux-workspace-body .workspace-panel label.operator-select-field {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 36rem;
+  margin-block: var(--space-4);
+  font-weight: 600;
+}
+.ux-workspace-body .workspace-panel label.operator-select-field select {
+  font-weight: 400;
+}
+.ux-workspace-body .workspace-panel .operator-pager,
+.ux-workspace-body .workspace-panel .hero-actions:has(> p) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+.ux-workspace-body .workspace-panel .operator-pager {
+  margin-block: var(--space-2);
+}
+.ux-workspace-body .workspace-panel .hero-actions:has(> p) > p {
+  margin: 0;
+}

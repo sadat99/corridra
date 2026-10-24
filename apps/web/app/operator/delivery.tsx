@@ -405,7 +405,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       <button disabled={busy} onClick={() => void act(async () => {})}>
         Refresh delivery
       </button>
-      <label>
+      <label className="operator-select-field">
         Programme
         <select
           disabled={busy}
@@ -428,7 +428,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           ))}
         </select>
       </label>
-      <p>
+      <p className="operator-pager">
         Programmes {Math.min(offset + 1, data.programmeTotal)} to{' '}
         {Math.min(offset + 100, data.programmeTotal)} of {data.programmeTotal}{' '}
         <button
@@ -589,7 +589,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
               ))}
             </select>
           </label>
-          <p>
+          <p className="operator-pager">
             <button
               disabled={missionOffset === 0 || busy}
               onClick={() => setMissionOffset((v) => Math.max(0, v - 100))}
