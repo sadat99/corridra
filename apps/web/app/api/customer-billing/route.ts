@@ -5,6 +5,8 @@ import {
   realBillingOffMessage,
 } from '@corridra/auth/customer-billing';
 import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
+import { realInvoicingOffMessage } from '@corridra/auth/customer-invoicing-real';
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -33,12 +35,22 @@ function context(request: Request) {
     request.headers.get('x-corridra-customer-issuer') ?? undefined,
   ] as const;
 }
-// Sample invoices are read-only for customers and have their own switch on top of the billing switch.
+// Invoices are read-only for customers. A real deployment reads real invoices (ADR-064, behind their own switch and a
+// closed database control); a sample deployment reads sample invoices (ADR-061, behind theirs).
 async function invoices(
   s: Awaited<ReturnType<typeof services>>,
   query: Record<string, string>,
   who: readonly [string | undefined, string | undefined],
 ) {
+  if (realUseEnabled()) {
+    try {
+      return await s.customerRealInvoicing.overview(query, ...who);
+    } catch (error) {
+      if ((error as { code?: string }).code === '55000')
+        throw new DomainError(realInvoicingOffMessage, 503);
+      throw error;
+    }
+  }
   if (!customerInvoicingEnabled()) throw new DomainError('Plans are unavailable', 503);
   return s.customerInvoicing.overview(query, ...who);
 }
