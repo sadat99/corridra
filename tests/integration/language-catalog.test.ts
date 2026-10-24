@@ -131,6 +131,7 @@ describe('where the words come from', () => {
       'apps/web/components/skip-link.tsx',
       'apps/web/components/language-switcher.tsx',
       'apps/web/components/ways-to-work.ts',
+      'apps/web/components/mr/labels.ts',
     ]
       .map(read)
       .join('\n');
