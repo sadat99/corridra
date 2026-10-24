@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
+import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import { foundations } from '../../../../lib/foundations';
 import {
   boundedBody,
@@ -30,16 +31,30 @@ async function handle(request: Request) {
     };
     if (request.method === 'GET') {
       const scope = query.get('scope') ?? 'list';
+      // Sample invoices have their own switch on top of the billing switch.
+      if (['pending', 'invoices', 'invoice'].includes(scope) && !customerInvoicingEnabled())
+        throw new DomainError(unavailable, 503);
       const body =
-        scope === 'plans'
-          ? await s.customerBillingStaff.plans(ctx)
-          : scope === 'detail'
-            ? await s.customerBillingStaff.view(ctx, z.uuid().parse(query.get('subscription')))
-            : scope === 'list'
-              ? await s.customerBillingStaff.list(ctx, {
-                  ...(query.get('after') ? { after: query.get('after') } : {}),
-                })
-              : null;
+        scope === 'pending'
+          ? await s.customerInvoicingStaff.pending(ctx)
+          : scope === 'invoices'
+            ? await s.customerInvoicingStaff.list(ctx, {
+                ...(query.get('after') ? { after: query.get('after') } : {}),
+              })
+            : scope === 'invoice'
+              ? await s.customerInvoicingStaff.view(ctx, z.uuid().parse(query.get('invoiceId')))
+              : scope === 'plans'
+                ? await s.customerBillingStaff.plans(ctx)
+                : scope === 'detail'
+                  ? await s.customerBillingStaff.view(
+                      ctx,
+                      z.uuid().parse(query.get('subscription')),
+                    )
+                  : scope === 'list'
+                    ? await s.customerBillingStaff.list(ctx, {
+                        ...(query.get('after') ? { after: query.get('after') } : {}),
+                      })
+                    : null;
       if (body === null) throw new DomainError('Unknown scope', 400);
       return Response.json(body, { headers: deliveryHeaders });
     }
@@ -53,8 +68,11 @@ async function handle(request: Request) {
     >;
     // A plan change is its own command shape; every other action is a subscription command.
     const { action, ...rest } = input;
-    const result =
-      action === 'plan'
+    const invoicing = action === 'issue' || action === 'payment' || action === 'credit';
+    if (invoicing && !customerInvoicingEnabled()) throw new DomainError(unavailable, 503);
+    const result = invoicing
+      ? await s.customerInvoicingStaff.command(ctx, input)
+      : action === 'plan'
         ? await s.customerBillingStaff.revisePlan(ctx, rest)
         : await s.customerBillingStaff.command(ctx, input);
     return Response.json(result, { headers: deliveryHeaders });

@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
+import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { BillingOverviewView } from '../billing-overview';
+import { InvoicesSection } from '../invoices-section';
 import { billingSession } from '../session';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -20,7 +22,11 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         subject={session.subject}
         issuer={session.issuer}
         workspaceId={id.data}
+        invoicing={customerInvoicingEnabled()}
       />
+      {customerInvoicingEnabled() && (
+        <InvoicesSection subject={session.subject} issuer={session.issuer} workspaceId={id.data} />
+      )}
     </CustomerShell>
   );
 }

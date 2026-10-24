@@ -9,6 +9,12 @@ import type {
   SubscriptionSummary,
   SubscriptionTimelineEntry,
 } from '@corridra/auth/customer-billing';
+import type {
+  Invoice,
+  InvoiceBalance,
+  InvoiceStatus,
+  InvoicingOverview,
+} from '@corridra/auth/customer-invoicing';
 import {
   dateTimeText,
   dayText,
@@ -162,6 +168,46 @@ export function validOverview(value: unknown): value is BillingOverview {
     Array.isArray(v.actions) &&
     Array.isArray(v.subscriptions) &&
     v.subscriptions.every((s) => typeof s.id === 'string' && Array.isArray(s.timeline)) &&
+    Number.isFinite(Date.parse(v.expiresAt))
+  );
+}
+
+// Sample invoices (ADR-061) are read through the same endpoint with their own scope.
+export type { Invoice, InvoiceBalance, InvoiceStatus, InvoicingOverview };
+export const invoiceStatusLabel: Record<
+  InvoiceStatus,
+  { text: string; tone: 'neutral' | 'positive' | 'caution' | 'critical' | 'info' | 'unknown' }
+> = {
+  unpaid: { text: 'Unpaid', tone: 'caution' },
+  partly_paid: { text: 'Partly paid', tone: 'info' },
+  paid: { text: 'Paid', tone: 'positive' },
+  credited: { text: 'Credited', tone: 'unknown' },
+  settled: { text: 'Settled', tone: 'positive' },
+};
+export const methodText: Record<string, string> = {
+  bank_transfer: 'Bank transfer',
+  cash: 'Cash',
+  other: 'Other',
+};
+export function validInvoicing(value: unknown): value is InvoicingOverview {
+  const v = value as InvoicingOverview | null;
+  return (
+    !!v &&
+    customerProvenanceAllowed(v.synthetic) &&
+    typeof v.workspaceId === 'string' &&
+    typeof v.canRead === 'boolean' &&
+    typeof v.invoicesExist === 'boolean' &&
+    v.paymentTaken === false &&
+    Array.isArray(v.invoices) &&
+    v.invoices.every(
+      (i) =>
+        typeof i.id === 'string' &&
+        typeof i.number === 'string' &&
+        typeof i.totalMinor === 'string' &&
+        Array.isArray(i.payments) &&
+        Array.isArray(i.credits),
+    ) &&
+    Array.isArray(v.balances) &&
     Number.isFinite(Date.parse(v.expiresAt))
   );
 }

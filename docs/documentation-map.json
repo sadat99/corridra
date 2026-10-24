@@ -934,6 +934,11 @@
       "use": "Synthetic plans, subscriptions and entitlements (billing slice 1): default-off, synthetic-only, no payment or invoice, entitlements recorded and not enforced"
     },
     {
+      "path": "docs/adr/0061-sample-invoices-payment-records-and-credit-notes.md",
+      "classification": "Architecture contract/index",
+      "use": "Sample invoices, payment records and credit notes (billing slice 2): default-off, synthetic-only, customers read and staff write, no processor or tax calculation"
+    },
+    {
       "path": "docs/v3/history/ledger-chunks-120-126.md",
       "classification": "Exact historical execution entries",
       "use": "Chunks120 through126 preserved byte-for-byte with a manifest hash; not current state"
