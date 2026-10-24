@@ -1,5 +1,7 @@
 # Evidence storage: Blob now, S3 later
 
+**Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
+
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
 ## Current synthetic Blob configuration

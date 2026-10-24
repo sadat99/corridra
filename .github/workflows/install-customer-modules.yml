@@ -54,6 +54,41 @@ on:
         description: 'Required reason for enabling or pausing real plans.'
         required: false
         default: ''
+      real_invoicing_action:
+        description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone and seeds the supplier details with made-up fields marked; enable opens the database side only; set_supplier writes new supplier details from the JSON below; allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
+        type: choice
+        options:
+          [
+            unchanged,
+            install,
+            enable,
+            pause,
+            set_supplier,
+            allow_single_approver,
+            require_second_approver,
+          ]
+        default: unchanged
+      real_invoicing_reason:
+        description: 'Required reason for any real invoicing operation other than install.'
+        required: false
+        default: ''
+      real_invoicing_supplier_json:
+        description: 'Only for set_supplier: the supplier details as JSON (legalName, address, country, uen, gstRegistered, gstRegistrationNo, taxLabel, gstRateBps, paymentTermsDays, paymentInstructions, financeLabel, approverEmail, madeupFields). Leave out madeupFields entries once the value is real.'
+        required: false
+        default: ''
+      simulated_payments_action:
+        description: 'Optional ADR-065 operation for the simulated payment provider Corridra Pay (madeup). Install changes nothing for anyone. enable opens the database side only; set_refund_window sets the made-up refund window in days. No money ever moves and no invoice is changed.'
+        type: choice
+        options: [unchanged, install, enable, pause, set_refund_window]
+        default: unchanged
+      simulated_payments_reason:
+        description: 'Required reason for any simulated payments operation other than install.'
+        required: false
+        default: ''
+      simulated_payments_refund_days:
+        description: 'Only for set_refund_window: the made-up refund window in days (1 to 90).'
+        required: false
+        default: ''
       view_as_action:
         description: 'Optional Phase 0 operation for the view-as preview audit function. Install shows nothing to anyone.'
         type: choice
@@ -81,7 +116,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.view_as_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.real_invoicing_action != 'unchanged' || inputs.simulated_payments_action != 'unchanged' || inputs.view_as_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -104,5 +139,11 @@ jobs:
           MISSION_MAIL_REASON: ${{ inputs.mission_mail_reason }}
           REAL_BILLING_ACTION: ${{ inputs.real_billing_action }}
           REAL_BILLING_REASON: ${{ inputs.real_billing_reason }}
+          REAL_INVOICING_ACTION: ${{ inputs.real_invoicing_action }}
+          REAL_INVOICING_REASON: ${{ inputs.real_invoicing_reason }}
+          REAL_INVOICING_SUPPLIER_JSON: ${{ inputs.real_invoicing_supplier_json }}
+          SIMULATED_PAYMENTS_ACTION: ${{ inputs.simulated_payments_action }}
+          SIMULATED_PAYMENTS_REASON: ${{ inputs.simulated_payments_reason }}
+          SIMULATED_PAYMENTS_REFUND_DAYS: ${{ inputs.simulated_payments_refund_days }}
           VIEW_AS_ACTION: ${{ inputs.view_as_action }}
         run: pnpm exec tsx scripts/install-customer-modules.ts

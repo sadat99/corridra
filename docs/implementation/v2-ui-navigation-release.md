@@ -1,5 +1,7 @@
 # Revised V2 Parts 1–4 UI navigation
 
+**Document status: HISTORICAL.** Finished V2 release, kept as a dated record. Its next steps are old. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 This follow-up connects the existing V2 foundation, commercial missions, customer/institution delivery and governed intelligence/execution screens. It does not start Part 5 or activate unapproved operations.

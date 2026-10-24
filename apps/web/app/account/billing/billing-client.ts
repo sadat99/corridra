@@ -15,6 +15,15 @@ import type {
   InvoiceStatus,
   InvoicingOverview,
 } from '@corridra/auth/customer-invoicing';
+import type {
+  RealInvoice,
+  RealInvoiceStatus,
+  RealInvoicingOverview,
+} from '@corridra/auth/customer-invoicing-real';
+import type {
+  SimulatedPayment,
+  SimulatedPaymentsOverview,
+} from '@corridra/auth/customer-payments-simulated';
 import {
   dateTimeText,
   dayText,
@@ -44,10 +53,11 @@ export async function callBillingApi<T>(
   body: Record<string, unknown> | null,
   check: (value: unknown) => boolean,
   signal?: AbortSignal,
+  path: string = endpoint,
 ): Promise<Outcome<T>> {
   try {
     const response = await fetch(
-      endpoint + (query ? '?' + new URLSearchParams(query).toString() : ''),
+      path + (query ? '?' + new URLSearchParams(query).toString() : ''),
       {
         method: body ? 'POST' : 'GET',
         credentials: 'same-origin',
@@ -211,3 +221,110 @@ export function validInvoicing(value: unknown): value is InvoicingOverview {
     Number.isFinite(Date.parse(v.expiresAt))
   );
 }
+
+// Real invoices (ADR-064) come from the same endpoint and scope; a real deployment answers with the real shape.
+export type { RealInvoice, RealInvoiceStatus, RealInvoicingOverview };
+export function validRealInvoicing(value: unknown): value is RealInvoicingOverview {
+  const v = value as RealInvoicingOverview | null;
+  return (
+    !!v &&
+    v.synthetic === false &&
+    customerProvenanceAllowed(v.synthetic) &&
+    typeof v.workspaceId === 'string' &&
+    typeof v.canRead === 'boolean' &&
+    typeof v.invoicesExist === 'boolean' &&
+    v.paymentTaken === false &&
+    Array.isArray(v.invoices) &&
+    v.invoices.every(
+      (i) =>
+        typeof i.id === 'string' &&
+        typeof i.number === 'string' &&
+        typeof i.totalMinor === 'string' &&
+        typeof i.supplier?.legalName === 'string' &&
+        typeof i.billTo?.name === 'string' &&
+        Array.isArray(i.madeupFields) &&
+        Array.isArray(i.payments) &&
+        Array.isArray(i.credits),
+    ) &&
+    Array.isArray(v.balances) &&
+    Number.isFinite(Date.parse(v.expiresAt))
+  );
+}
+// Plain names for the supplier fields the owner has not supplied yet.
+export const madeupFieldText: Record<string, string> = {
+  legal_name: 'company name',
+  address: 'address',
+  country: 'country',
+  uen: 'company registration number (UEN)',
+  gst_registered: 'GST registration status',
+  gst_registration_no: 'GST registration number',
+  tax_label: 'tax name',
+  gst_rate_bps: 'tax rate',
+  payment_terms_days: 'payment terms',
+  payment_instructions: 'payment instructions',
+  finance_label: 'finance contact',
+};
+export const realInvoiceStatusLabel: Record<
+  RealInvoiceStatus,
+  { text: string; tone: 'neutral' | 'positive' | 'caution' | 'critical' | 'info' | 'unknown' }
+> = invoiceStatusLabel;
+export function ratePercent(bps: number | null) {
+  return bps === null ? null : String(bps / 100) + '%';
+}
+
+// ADR-065: the simulated payment provider. Everything it shows says (madeup); an answer that does not is refused.
+export type { SimulatedPayment, SimulatedPaymentsOverview };
+export const simulatedPaymentsPath = '/api/customer-billing/simulated-payments';
+const madeupText = (value: unknown) => typeof value === 'string' && value.endsWith('(madeup)');
+export function validSimulatedPayments(value: unknown): value is SimulatedPaymentsOverview {
+  const v = value as SimulatedPaymentsOverview | null;
+  return (
+    !!v &&
+    v.synthetic === false &&
+    customerProvenanceAllowed(v.synthetic) &&
+    v.simulated === true &&
+    v.moneyMoves === false &&
+    v.paymentTaken === false &&
+    typeof v.workspaceId === 'string' &&
+    typeof v.canPay === 'boolean' &&
+    madeupText(v.provider?.name) &&
+    madeupText(v.provider?.refundPolicy) &&
+    Array.isArray(v.payable) &&
+    v.payable.every(
+      (p) =>
+        typeof p.invoiceId === 'string' &&
+        typeof p.number === 'string' &&
+        typeof p.outstandingMinor === 'string',
+    ) &&
+    Array.isArray(v.attempts) &&
+    v.attempts.every(validSimulatedAttempt) &&
+    Number.isFinite(Date.parse(v.expiresAt))
+  );
+}
+export function validSimulatedAttempt(a: SimulatedPayment) {
+  return (
+    !!a &&
+    typeof a.id === 'string' &&
+    typeof a.amountMinor === 'string' &&
+    a.simulated === true &&
+    a.madeup === true &&
+    a.moneyMoves === false &&
+    madeupText(a.providerRef) &&
+    madeupText(a.providerName) &&
+    ['started', 'expired', 'succeeded', 'declined'].includes(a.state) &&
+    Array.isArray(a.refunds)
+  );
+}
+export function validSimulatedCommand(value: unknown): value is { attempt: SimulatedPayment } {
+  const v = value as { attempt?: SimulatedPayment } | null;
+  return !!v && !!v.attempt && validSimulatedAttempt(v.attempt);
+}
+export const simulatedStateLabel: Record<
+  SimulatedPayment['state'],
+  { text: string; tone: 'neutral' | 'positive' | 'caution' | 'critical' | 'info' | 'unknown' }
+> = {
+  started: { text: 'Waiting at checkout (madeup)', tone: 'info' },
+  succeeded: { text: 'Approved (madeup)', tone: 'positive' },
+  declined: { text: 'Declined (madeup)', tone: 'caution' },
+  expired: { text: 'Expired (madeup)', tone: 'unknown' },
+};

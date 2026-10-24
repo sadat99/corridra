@@ -1,5 +1,7 @@
 # Deferred controls register
 
+**Document status: CURRENT.** The register of controls that stay closed. Its dated observations are evidence for their own day. See the [plan status register](../PLAN_STATUS.md).
+
 Current control boundaries must be read with [the current plan](current-plan.md). Dated provider/account observations below are evidence for their own time, not a fresh settings audit. Implementation and identity-email acceptance do not close unrelated real-data, assurance or pilot gates.
 
 The owner authorized deferral on 2026-10-05 to put the implemented Part 03 system on corridra.vercel.app with explicit unscanned-file handling. See [ADR-015](../adr/0015-production-domain-and-explicit-unscanned-evidence.md), which supersedes the earlier preview-only decision. Open items remain open until the listed evidence exists; a deployed page does not close them. [Dated live acceptance](part-03-production-rollout.json) records the current deployment and its temporary scan exception.

@@ -969,6 +969,21 @@
       "use": "Real plans, subscriptions and entitlements (billing stage 1): default-off, two switches, real catalogue kept apart from the sample one, no payment or invoice; stages 2 and 3 not built"
     },
     {
+      "path": "docs/adr/0063-real-report-access-switches.md",
+      "classification": "Architecture contract/index",
+      "use": "Owner switches for how a real workspace report is read: public link (off by default) and signed-in access (on by default); enforced in the application and the database; export stays refused"
+    },
+    {
+      "path": "docs/adr/0064-real-invoices-payment-records-and-credit-notes.md",
+      "classification": "Architecture contract/index",
+      "use": "Real invoices, payment records and credit notes (billing stage 2): default-off control, Singapore GST in exact minor units, gap-free yearly legal numbers, second-person approval, manual payments, made-up supplier fields marked on each document; no provider, no money moves"
+    },
+    {
+      "path": "docs/adr/0065-simulated-payment-provider.md",
+      "classification": "Architecture contract/index",
+      "use": "Simulated payment provider Corridra Pay (madeup), billing stage 3: closed-by-default module, made-up references and refund policy, no network or money, never changes an invoice"
+    },
+    {
       "path": "docs/product/real-use-audit-2026-10-24.md",
       "classification": "Product audit",
       "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"
@@ -1027,6 +1042,16 @@
       "path": "docs/source/ac1-design-system/ONE_PASTE_AGENT_INSTRUCTION.md",
       "classification": "Preserved source/working copy",
       "use": "Owner-supplied AC/1 design system original (22 Oct 2026); hash-checked, never edit; amend forward in docs/design-system/README.md"
+    },
+    {
+      "path": "docs/PLAN_STATUS.md",
+      "classification": "Current guide/contract",
+      "use": "Read first when a document looks old; one-word status (current, done, partly built, historical, not valid) of every plan, proposal, audit and ADR exception"
+    },
+    {
+      "path": "docs/v3/history/ledger-before-handoff-refresh-2026-10-24.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact 3a85204 active-ledger bytes before the 24 October 2026 handoff refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
     }
   ]
 }

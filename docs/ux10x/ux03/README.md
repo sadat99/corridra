@@ -1,5 +1,7 @@
 # UX-03 participant journeys
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../../PLAN_STATUS.md).
+
 Historical UX-03 package record, implemented and merged in PR 41. Later UX packages and bounded access repairs are also merged. Use [the current plan](../../implementation/current-plan.md) for present work and standing release authority. Original next-package or separate-approval statements below describe the historical packet; they do not restart completed work. Scope acceptance is not complete functional coverage.
 
 Accepted baseline: `1a1c3e14f6d79a6340340a5df07e17ada1eb28b4`, merged UX-02 PR #40. Its main CI passed. The master handoff remains governing and Fusion remains visual reference only.

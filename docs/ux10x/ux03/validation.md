@@ -1,5 +1,7 @@
 # UX-03 validation
 
+**Document status: HISTORICAL.** Dated UX10X snapshot. Counts and results belong to the revision it names, not to today. See the [plan status register](../../PLAN_STATUS.md).
+
 Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
 
 UX-02 main CI `38604184935` passed. Its file tree is the accepted baseline. A pre-change local build and all 12 protected tests passed, with six-width capture hooks exercising actual synthetic participant flows.

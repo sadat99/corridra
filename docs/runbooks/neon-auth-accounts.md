@@ -1,5 +1,7 @@
 # Customer and staff identity, setup and recovery
 
+**Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
+
 Current guidance as reconciled on 15 October 2026. See [access and administration](v2-access-and-launch.md), [ADR 020](../adr/0020-neon-auth-accounts-and-preserved-operator-mfa.md), [ADR 030](../adr/0030-explicit-staff-invitation-and-first-password.md) and [ADR 031](../adr/0031-operator-password-recovery-and-scoped-directory.md). The two identity systems are deliberately separate; matching email is not role authority.
 
 ## Choose the right flow
@@ -132,6 +134,30 @@ Install with the `Install customer modules` workflow (it now includes `customer-
 
 Install with the `Install customer modules` workflow (it now includes `customer-invoicing-migrations`, after the billing module, which it needs), then set `CORRIDRA_CUSTOMER_INVOICING_ENABLED=true` next to `CORRIDRA_CUSTOMER_BILLING_ENABLED=true` and deploy. Staff also need `CORRIDRA_DELIVERY_ENABLED=true`. Owners and admins then see an Invoices section on the plan and billing page, and staff see "Customer sample invoices" in the delivery section: periods that need an invoice, issue, record a payment, issue a credit note. Only sample workspaces are served and every note starts with Synthetic. Invoices are labelled sample records, not tax invoices, and are numbered SAMPLE-INV and SAMPLE-CN. Nothing is collected, refunded or converted, and no tax is calculated. A payment record is the team's statement, not a bank confirmation. To stop, unset the switch; tables and history are kept. Real-session acceptance and the first staff issue are not yet observed.
 
+### Owner install checklist for the billing stack (24 October 2026)
+
+Where each thing is done: **GitHub** > repository > Actions > "Install customer modules" > Run workflow, branch `main`, `apply` = `yes`. **Vercel** > the Corridra project > Settings > Environment Variables > Production, add or edit the value, then Deployments > the newest Production deployment > Redeploy. A setting changes nothing until that redeploy. Never paste a secret into the workflow reason or into chat. Do the rows in order; stop at any row you do not want yet. Every billing row also needs `CORRIDRA_CUSTOMER_WORKSPACES_ENABLED` and `CORRIDRA_CUSTOMER_BILLING_ENABLED` to be `true` in Production (both were `true` when checked on 24 Oct 2026), and each module needs the one before it. Run the workflow once with `apply` = `no` first: it only reports what is installed.
+
+| Step | Where               | Input or setting                                                                                                        | Result                                                                                                          |
+| ---- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1    | GitHub workflow     | `real_use_action` = `install`                                                                                           | Adds every pending real-use migration (0009 and 0010 if not yet installed). It does not open or close anything. |
+| 2    | GitHub workflow     | `real_billing_action` = `install`, then Vercel `CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED=true`, redeploy, then `enable`   | Real plans open (section below). No money.                                                                      |
+| 3    | GitHub workflow     | `real_invoicing_action` = `install`                                                                                     | Invoices module with made-up supplier fields marked "(madeup)".                                                 |
+| 4    | GitHub workflow     | `real_invoicing_action` = `set_supplier` with your real company JSON                                                    | Replaces the made-up values. Do this before enabling.                                                           |
+| 5    | Vercel, then GitHub | `CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED=true`, redeploy, then `real_invoicing_action` = `enable`                      | Customers can read real invoices. Still no payment provider.                                                    |
+| 6    | Optional            | `simulated_payments_action` = `install`, Vercel `CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED=true`, redeploy, `enable` | A made-up pay and refund flow. Everything says (madeup).                                                        |
+
+The real report switches are Vercel settings only and are described in the next section. Check "what is installed" any time by running the workflow with `apply` = `no`.
+
+### Real report access switches (optional, ADR063, real-use migration 0010)
+
+Two independent owner switches for shared reports of real workspaces. Both are read on each request, so the owner changes a Vercel Production setting and redeploys; the install job is not needed after step 1 above.
+
+- `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED=true` lets anyone holding an unexpired, unrevoked link read that real report and answer its requests without signing in. Off unless set to exactly `true`.
+- `CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED=false` turns off a verified real customer's saved reports, report history, company history, decisions and assigned reports. On unless set to exactly `false`.
+
+Sample workspaces are never affected. Remove a setting to return to its default. No data is touched either way.
+
 ### Real plans and subscriptions (optional module, ADR062)
 
 This is billing stage 1 for real workspaces. It records which plan a real workspace holds and for which period. Nothing is invoiced, charged or collected, and the invoicing module is not touched. Order of steps, each one on purpose:
@@ -142,4 +168,28 @@ This is billing stage 1 for real workspaces. It records which plan a real worksp
 4. As the owner or an admin of the operator workspace (fresh authenticator check) open the delivery section, then "Customer plans", and write the real plans: name, price in whole minor units, currency, interval, tax treatment, what is included and left out, and every limit. The real catalogue starts empty, and a real plan title must not say "sample".
 5. A real workspace owner or admin then sees the plan on "Plan and billing", reads it whole, and can ask for it. Staff activate the request for an explicit period.
 
-Say to customers only what is true: the subscription is a record, nothing has been billed. Real invoices are stage 2 and need the billing entity, tax rules, legal invoice number format and a named finance person first.
+Say to customers only what is true: the subscription is a record until real invoices are on (below).
+
+### Real invoices (optional module, ADR064)
+
+Billing stage 2. A real owner or admin can read their invoices and credit notes; the team prepares each one and a second person approves it. Nothing is collected: there is no payment provider and no money moves. Order of steps, each one on purpose:
+
+1. Real plans must already be installed and open (section above).
+2. Run `Install customer modules` on `main` with `apply` = `yes` and `real_invoicing_action` = `install`. This adds the module, leaves the control closed and writes the supplier details Corridra Pte Ltd, 101 Robinson Road, Singapore 180239 with every missing legal detail made up and marked "(madeup)".
+3. Replace the made-up values before any document is sent to anyone. Run the workflow with `real_invoicing_action` = `set_supplier`, a reason, and the supplier JSON in `real_invoicing_supplier_json` (legalName, address, country, uen, gstRegistered, gstRegistrationNo, taxLabel, gstRateBps, paymentTermsDays, paymentInstructions, financeLabel, approverEmail, madeupFields). Every key is required except `approverEmail` and `madeupFields`; `uen` and `gstRegistrationNo` may be `null` (but `gstRegistered: true` needs a number). `madeupFields` may list only `uen`, `gst_registration_no`, `gst_registered`, `payment_instructions` and `finance_label`; leave a field out once its value is real. Text must be plain: no `@` and no `://`, so write bank instructions without an email address or link. `country` is two capital letters (for example `SG`) and `gstRateBps` is in basis points (900 is 9 percent). `approverEmail` must be the staff account of your finance person; then only that account can approve.
+4. In Production set `CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED=true` and deploy.
+5. Run the workflow with `real_invoicing_action` = `enable` and a reason. To stop, run `pause` (records are kept) or unset the setting.
+6. A second owner or admin of the real operator workspace is needed to approve. If only one person exists, run `allow_single_approver` with a reason; each document it covers is marked self approved. `require_second_approver` restores the default.
+
+Every document issued while a supplier field is made up says "Contains made-up organisation data (madeup) ... Not a valid tax invoice". Check the GST rule, your registration status and the numbering (`INV-YYYY-NNNNNN`, `CN-YYYY-NNNNNN`, gap free per Singapore calendar year) with your finance adviser.
+
+### Simulated payment flow (optional module, ADR065)
+
+Billing stage 3. A stand-in provider named "Corridra Pay (madeup)" so owners can try paying an invoice and the team can try a refund. It moves no money, uses no card or bank, and never changes an invoice. Every reference and screen says (madeup). Order of steps:
+
+1. Real invoices must already be installed, set up and open (section above).
+2. Run `Install customer modules` on `main` with `apply` = `yes` and `simulated_payments_action` = `install`. This adds the module and leaves its control closed.
+3. In Production set `CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED=true` and deploy.
+4. Run the workflow with `simulated_payments_action` = `enable` and a reason. To stop, run `pause` (records are kept) or unset the setting. `set_refund_window` with `simulated_payments_refund_days` changes the made-up refund window (default 14 days; later outcomes use the new value).
+
+Approving a simulated payment does not mark an invoice paid. Record real payments on the invoice as before. Replace the made-up refund policy and the provider before any real money is taken.

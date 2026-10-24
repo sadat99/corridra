@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { displayDate, displayMoney } from '@corridra/domain/locale';
 
 type Summary = {
@@ -80,6 +80,35 @@ const modeOptions: Record<'count' | 'flag', [string, string][]> = {
     ['excluded', 'Not included'],
   ],
 };
+// What the person sees after each kind of save, said next to the form they used.
+const savedText: Record<string, string> = {
+  activate: 'Saved. The plan is active for the period you set.',
+  renew: 'Saved. The plan is renewed for the next period.',
+  decline: 'Saved. The request is declined and the customer can read your reason.',
+  end: 'Saved. The plan has ended and the customer can read your reason.',
+  note: 'Saved. The internal note is added to the history.',
+};
+function Notice({
+  text,
+  innerRef,
+}: {
+  text: string;
+  innerRef: RefObject<HTMLParagraphElement | null>;
+}) {
+  const ok = text.startsWith('Saved.');
+  return (
+    <p
+      ref={innerRef}
+      tabIndex={-1}
+      className="billing-notice"
+      data-tone={ok ? 'ok' : 'error'}
+      role={ok ? 'status' : 'alert'}
+    >
+      {!ok && <strong>Problem.</strong>}
+      {text}
+    </p>
+  );
+}
 function money(minor: string, currency: string) {
   try {
     return displayMoney(minor, currency);
@@ -131,6 +160,9 @@ function Scoped({ tenant }: { tenant: string }) {
     [catalogue, setCatalogue] = useState<PlanList | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
+    // Where the message is shown: beside the plan form, beside the request actions, or at the top of the panel.
+    [messageAt, setMessageAt] = useState<'plans' | 'detail' | 'top'>('top'),
+    [savedKey, setSavedKey] = useState(''),
     [fault, setFault] = useState(''),
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
     // true: sample workspaces (notes begin with Synthetic); false: real workspaces. Learned from the server's answer.
@@ -140,6 +172,10 @@ function Scoped({ tenant }: { tenant: string }) {
     [start, setStart] = useState(today()),
     [draft, setDraft] = useState<Draft | null>(null);
   const task = useRef<AbortController | null>(null);
+  const noticeRef = useRef<HTMLParagraphElement | null>(null);
+  useEffect(() => {
+    if (message) noticeRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [message]);
   // The prefilled start of a note: sample workspaces need it, real workspaces write plain text.
   const prefix = sample === false ? '' : starter;
   const hint = sample === false ? '' : ', start with Synthetic';
@@ -225,6 +261,7 @@ function Scoped({ tenant }: { tenant: string }) {
         task.current?.abort();
         setDetail(null);
         setRows(null);
+        setMessageAt('top');
         setMessage('Customer details were cleared while you were away. Reload to continue.');
       }
     };
@@ -239,6 +276,8 @@ function Scoped({ tenant }: { tenant: string }) {
     setPending(body);
     setBusy(true);
     setMessage('');
+    setSavedKey('');
+    setMessageAt(after === 'plans' ? 'plans' : 'detail');
     const r = await call('', body);
     setBusy(false);
     if (!r) return;
@@ -253,7 +292,16 @@ function Scoped({ tenant }: { tenant: string }) {
       return;
     }
     setPending(null);
-    setMessage('Saved.');
+    const reply = r.body as { planKey?: string; version?: number; active?: boolean } | null;
+    if (after === 'plans') {
+      const title = typeof body.title === 'string' ? body.title : 'The plan';
+      setSavedKey(reply?.planKey ?? (typeof body.planKey === 'string' ? body.planKey : ''));
+      setMessage(
+        typeof reply?.version === 'number'
+          ? `Saved. ${title} is now version ${reply.version} and ${reply.active === false ? 'not on offer to customers' : 'on offer to customers'}. Earlier versions are kept.`
+          : 'Saved.',
+      );
+    } else setMessage(savedText[String(body.action)] ?? 'Saved.');
     setNote(prefix);
     setInternal(prefix);
     if (after === 'detail' && detail) await open(detail.subscription.id);
@@ -339,6 +387,8 @@ function Scoped({ tenant }: { tenant: string }) {
     setPending(null);
   };
   const can = (a: string) => !!detail && detail.actions.includes(a);
+  const at = !message ? null : messageAt === 'detail' && !detail ? 'top' : messageAt;
+  const status = (v: string) => v.replace('_', ' ');
   return (
     <section
       aria-label={sample === false ? 'Customer plans' : 'Customer sample plans'}
@@ -353,21 +403,30 @@ function Scoped({ tenant }: { tenant: string }) {
         and not enforced.
       </p>
       {fault && <p role="alert">{fault}</p>}
-      {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
+      {at === 'top' && <Notice text={message} innerRef={noticeRef} />}
       {rows === null && !fault && <p role="status">Loading plan requests…</p>}
       {rows && rows.length === 0 && <p>No customer has asked for a plan.</p>}
       {rows && rows.length > 0 && (
-        <ul>
+        <ul className="billing-requests">
           {rows.map((r) => (
-            <li key={r.id}>
-              <strong>{r.planTitle}</strong> · {r.workspaceName} · {r.status.replace('_', ' ')}
-              {r.periodElapsed ? ' (period ended)' : ''}{' '}
+            <li key={r.id} className="billing-request">
+              <span>
+                <strong>{r.planTitle}</strong> · {r.workspaceName} ·{' '}
+                <span
+                  className="billing-badge"
+                  data-tone={r.status === 'active' ? 'ok' : undefined}
+                >
+                  {status(r.status)}
+                </span>
+                {r.periodElapsed ? ' (period ended)' : ''}
+              </span>
               <button
                 type="button"
                 className="text-link"
                 onClick={() => {
                   setPending(null);
                   setMessage('');
+                  setMessageAt('detail');
                   void open(r.id);
                 }}
               >
@@ -378,7 +437,7 @@ function Scoped({ tenant }: { tenant: string }) {
         </ul>
       )}
       {detail && (
-        <section aria-label="Plan request detail">
+        <section aria-label="Plan request detail" className="billing-detail">
           <h4>
             {detail.subscription.planTitle} for {detail.subscription.workspaceName}
           </h4>
@@ -399,7 +458,7 @@ function Scoped({ tenant }: { tenant: string }) {
               This workspace already holds a plan. Activating this request ends that plan.
             </p>
           )}
-          <ol>
+          <ol className="billing-timeline">
             {detail.events.map((ev) => (
               <li key={ev.seq}>
                 {ev.kind.replace('_', ' ')} · {ev.actorKind} ·{' '}
@@ -413,6 +472,7 @@ function Scoped({ tenant }: { tenant: string }) {
               </li>
             ))}
           </ol>
+          {at === 'detail' && <Notice text={message} innerRef={noticeRef} />}
           {can('activate') && (
             <form
               aria-label="Activate"
@@ -544,179 +604,237 @@ function Scoped({ tenant }: { tenant: string }) {
         }}
       >
         <summary>Plans on offer and plan versions</summary>
+        {at === 'plans' && <Notice text={message} innerRef={noticeRef} />}
         {!catalogue && <p role="status">Loading plans…</p>}
         {catalogue && (
           <>
-            <ul>
+            <ul className="billing-plans">
               {catalogue.plans.map((p) => (
-                <li key={p.key}>
-                  <strong>{p.title}</strong> · version {p.version} ·{' '}
-                  {money(p.priceMinor, p.currency)} per {p.interval} ·{' '}
-                  {p.active ? 'on offer' : 'retired'}{' '}
+                <li
+                  key={p.key}
+                  className="billing-plan"
+                  data-saved={p.key === savedKey ? 'true' : undefined}
+                >
+                  <span className="billing-plan-name">
+                    {p.title}
+                    <span className="billing-badge" data-tone={p.active ? 'ok' : 'quiet'}>
+                      {p.active ? 'on offer' : 'retired'}
+                    </span>
+                    {p.key === savedKey && (
+                      <span className="billing-badge" data-tone="ok">
+                        just saved
+                      </span>
+                    )}
+                  </span>
+                  <p className="billing-plan-facts">
+                    Version {p.version} · {money(p.priceMinor, p.currency)} per {p.interval}
+                  </p>
                   <button type="button" className="text-link" onClick={() => edit(p)}>
                     New version of {p.title}
                   </button>
                 </li>
               ))}
             </ul>
-            <button type="button" className="text-link" onClick={() => edit(null)}>
+            <button type="button" className="button button-secondary" onClick={() => edit(null)}>
               Add a new plan
             </button>
           </>
         )}
         {draft && catalogue && (
-          <form onSubmit={submitPlan} aria-label="Plan version">
+          <form onSubmit={submitPlan} aria-label="Plan version" className="billing-form">
+            <h4>{draft.expectedVersion > 0 ? `New version of ${draft.title}` : 'New plan'}</h4>
+            <p>
+              Saving adds a new version. Earlier versions stay as they were, so no past price
+              changes.
+            </p>
             <fieldset disabled={busy}>
-              <div className="field">
-                <label htmlFor="plan-key">Plan key (letters, digits and hyphens)</label>
-                <input
-                  id="plan-key"
-                  required
-                  pattern="[a-z][a-z0-9\-]{2,59}"
-                  readOnly={draft.expectedVersion > 0}
-                  value={draft.key}
-                  onChange={(e) => change(() => setDraft({ ...draft, key: e.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="plan-title">
-                  {sample === false
-                    ? 'Title (plain name, must not say sample)'
-                    : 'Title (must say sample)'}
-                </label>
-                <input
-                  id="plan-title"
-                  required
-                  maxLength={120}
-                  value={draft.title}
-                  onChange={(e) => change(() => setDraft({ ...draft, title: e.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="plan-summary">Summary</label>
-                <textarea
-                  id="plan-summary"
-                  required
-                  rows={2}
-                  maxLength={400}
-                  value={draft.summary}
-                  onChange={(e) => change(() => setDraft({ ...draft, summary: e.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="plan-interval">Billed</label>
-                <select
-                  id="plan-interval"
-                  value={draft.interval}
-                  onChange={(e) => change(() => setDraft({ ...draft, interval: e.target.value }))}
-                >
-                  <option value="month">Every month</option>
-                  <option value="year">Every year</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="plan-price">Price in whole minor units (for example 4900)</label>
-                <input
-                  id="plan-price"
-                  required
-                  inputMode="numeric"
-                  pattern="0|[1-9][0-9]{0,10}"
-                  value={draft.price}
-                  onChange={(e) => change(() => setDraft({ ...draft, price: e.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="plan-currency">Currency</label>
-                <select
-                  id="plan-currency"
-                  value={draft.currency}
-                  onChange={(e) => change(() => setDraft({ ...draft, currency: e.target.value }))}
-                >
-                  {currencies.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="plan-tax">Tax</label>
-                <select
-                  id="plan-tax"
-                  value={draft.tax}
-                  onChange={(e) => change(() => setDraft({ ...draft, tax: e.target.value }))}
-                >
-                  {taxOptions.map(([v, l]) => (
-                    <option key={v} value={v}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="plan-included">What is included (one per line)</label>
-                <textarea
-                  id="plan-included"
-                  required
-                  rows={3}
-                  value={draft.included}
-                  onChange={(e) => change(() => setDraft({ ...draft, included: e.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="plan-excluded">What is left out (one per line)</label>
-                <textarea
-                  id="plan-excluded"
-                  required
-                  rows={3}
-                  value={draft.excluded}
-                  onChange={(e) => change(() => setDraft({ ...draft, excluded: e.target.value }))}
-                />
-              </div>
-              {catalogue.entitlementKeys.map((k) => {
-                const g = draft.grants[k.key]!;
-                return (
-                  <div className="field" key={k.key}>
-                    <label htmlFor={'grant-' + k.key}>{k.label}</label>
+              <fieldset className="billing-group">
+                <legend>Plan</legend>
+                <div className="field">
+                  <label htmlFor="plan-key">Plan key (letters, digits and hyphens)</label>
+                  <input
+                    id="plan-key"
+                    required
+                    pattern="[a-z][a-z0-9\-]{2,59}"
+                    readOnly={draft.expectedVersion > 0}
+                    value={draft.key}
+                    onChange={(e) => change(() => setDraft({ ...draft, key: e.target.value }))}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="plan-title">
+                    {sample === false
+                      ? 'Title (plain name, must not say sample)'
+                      : 'Title (must say sample)'}
+                  </label>
+                  <input
+                    id="plan-title"
+                    required
+                    maxLength={120}
+                    value={draft.title}
+                    onChange={(e) => change(() => setDraft({ ...draft, title: e.target.value }))}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="plan-summary">Summary</label>
+                  <textarea
+                    id="plan-summary"
+                    required
+                    rows={2}
+                    maxLength={400}
+                    value={draft.summary}
+                    onChange={(e) => change(() => setDraft({ ...draft, summary: e.target.value }))}
+                  />
+                </div>
+              </fieldset>
+              <fieldset className="billing-group">
+                <legend>Price</legend>
+                <div className="billing-pair" data-aligned="true">
+                  <div className="field">
+                    <label htmlFor="plan-interval">Billed</label>
                     <select
-                      id={'grant-' + k.key}
-                      value={g.mode}
+                      id="plan-interval"
+                      value={draft.interval}
                       onChange={(e) =>
-                        change(() =>
-                          setDraft({
-                            ...draft,
-                            grants: { ...draft.grants, [k.key]: { ...g, mode: e.target.value } },
-                          }),
-                        )
+                        change(() => setDraft({ ...draft, interval: e.target.value }))
                       }
                     >
-                      {modeOptions[k.unit].map(([v, l]) => (
+                      <option value="month">Every month</option>
+                      <option value="year">Every year</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="plan-price">
+                      Price in whole minor units (for example 4900)
+                    </label>
+                    <input
+                      id="plan-price"
+                      required
+                      inputMode="numeric"
+                      pattern="0|[1-9][0-9]{0,10}"
+                      aria-describedby="plan-price-hint"
+                      value={draft.price}
+                      onChange={(e) => change(() => setDraft({ ...draft, price: e.target.value }))}
+                    />
+                    <small id="plan-price-hint" className="billing-hint">
+                      {/^(0|[1-9][0-9]{0,10})$/.test(draft.price)
+                        ? 'Customers see ' + money(draft.price, draft.currency)
+                        : 'Whole minor units: 4900 is 49.00'}
+                    </small>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="plan-currency">Currency</label>
+                    <select
+                      id="plan-currency"
+                      value={draft.currency}
+                      onChange={(e) =>
+                        change(() => setDraft({ ...draft, currency: e.target.value }))
+                      }
+                    >
+                      {currencies.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="plan-tax">Tax</label>
+                    <select
+                      id="plan-tax"
+                      value={draft.tax}
+                      onChange={(e) => change(() => setDraft({ ...draft, tax: e.target.value }))}
+                    >
+                      {taxOptions.map(([v, l]) => (
                         <option key={v} value={v}>
                           {l}
                         </option>
                       ))}
                     </select>
-                    {g.mode === 'limit' && (
-                      <input
-                        aria-label={k.label + ' limit'}
-                        inputMode="numeric"
-                        required
-                        pattern="[0-9]{1,6}"
-                        value={g.limit}
-                        onChange={(e) =>
-                          change(() =>
-                            setDraft({
-                              ...draft,
-                              grants: {
-                                ...draft.grants,
-                                [k.key]: { ...g, limit: e.target.value },
-                              },
-                            }),
-                          )
-                        }
-                      />
-                    )}
                   </div>
-                );
-              })}
+                </div>
+              </fieldset>
+              <fieldset className="billing-group">
+                <legend>What customers read</legend>
+                <div className="billing-pair">
+                  <div className="field">
+                    <label htmlFor="plan-included">What is included (one per line)</label>
+                    <textarea
+                      id="plan-included"
+                      required
+                      rows={3}
+                      value={draft.included}
+                      onChange={(e) =>
+                        change(() => setDraft({ ...draft, included: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="plan-excluded">What is left out (one per line)</label>
+                    <textarea
+                      id="plan-excluded"
+                      required
+                      rows={3}
+                      value={draft.excluded}
+                      onChange={(e) =>
+                        change(() => setDraft({ ...draft, excluded: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+              </fieldset>
+              <fieldset className="billing-group">
+                <legend>Limits</legend>
+                <div className="billing-pair">
+                  {catalogue.entitlementKeys.map((k) => {
+                    const g = draft.grants[k.key]!;
+                    return (
+                      <div className="field" key={k.key}>
+                        <label htmlFor={'grant-' + k.key}>{k.label}</label>
+                        <select
+                          id={'grant-' + k.key}
+                          value={g.mode}
+                          onChange={(e) =>
+                            change(() =>
+                              setDraft({
+                                ...draft,
+                                grants: {
+                                  ...draft.grants,
+                                  [k.key]: { ...g, mode: e.target.value },
+                                },
+                              }),
+                            )
+                          }
+                        >
+                          {modeOptions[k.unit].map(([v, l]) => (
+                            <option key={v} value={v}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>
+                        {g.mode === 'limit' && (
+                          <input
+                            aria-label={k.label + ' limit'}
+                            inputMode="numeric"
+                            required
+                            pattern="[0-9]{1,6}"
+                            value={g.limit}
+                            onChange={(e) =>
+                              change(() =>
+                                setDraft({
+                                  ...draft,
+                                  grants: {
+                                    ...draft.grants,
+                                    [k.key]: { ...g, limit: e.target.value },
+                                  },
+                                }),
+                              )
+                            }
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
               <label style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <input
                   type="checkbox"
@@ -726,9 +844,19 @@ function Scoped({ tenant }: { tenant: string }) {
                 On offer to customers
               </label>
             </fieldset>
-            <button type="submit" className="button" disabled={busy}>
-              Save as a new version
-            </button>
+            <div className="billing-actions">
+              <button type="submit" className="button" disabled={busy}>
+                {busy ? 'Saving…' : 'Save as a new version'}
+              </button>
+              <button
+                type="button"
+                className="button button-secondary"
+                disabled={busy}
+                onClick={() => setDraft(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         )}
       </details>

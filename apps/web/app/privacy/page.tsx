@@ -1,16 +1,21 @@
 import Link from 'next/link';
+import { customerRealInvoicingEnabled } from '@corridra/auth/customer-invoicing-real';
+import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-payments-simulated';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { PublicShell } from '../../components/public-shell';
 
 export const metadata = {
-  title: 'Privacy and request notice | Corridra',
+  title: 'Privacy notice | Corridra',
   description:
-    'How Corridra handles account information, mission requests, private access and retention.',
+    'Who is responsible for your information, what Corridra collects and why, who it is shared with, where it is stored, how long it is kept and how to use your rights.',
 };
 export default function Page() {
   const real = realUseEnabled();
   // The first mission email says what it does only while it can actually be sent.
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
+  // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
+  const invoicing = real && customerRealInvoicingEnabled();
+  const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
   return (
     <PublicShell>
       <section className="guide-page-hero">
@@ -22,7 +27,7 @@ export default function Page() {
             <span aria-hidden="true">/</span>
             <span aria-current="page">Privacy</span>
           </nav>
-          <p className="label">PRIVACY AND REQUEST NOTICE</p>
+          <p className="label">PRIVACY NOTICE</p>
           <h1>{real ? 'Your information, clearly explained.' : 'Use test details for now.'}</h1>
           <p className="guide-lead">
             {real
@@ -30,18 +35,47 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated 23 October 2026. Request notice version:{' '}
+            Updated 24 October 2026. Request notice version:{' '}
             {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
           </p>
         </div>
       </section>
       <section className="guide-doc" aria-label="How Corridra handles information">
+        <article id="summary">
+          <h2>In short</h2>
+          <div>
+            <ul>
+              <li>We collect only what is needed to run your account and handle your requests.</li>
+              <li>
+                We do not sell personal information and we do not run advertising or tracking.
+              </li>
+              <li>
+                Your information is stored in Frankfurt, Germany. Only the service providers listed
+                below handle it for us.
+              </li>
+              <li>
+                Request information is not automatically sent to AI, outreach or payment providers.
+              </li>
+              <li>
+                You can ask to see, correct or delete your information at any time. See your rights
+                below.
+              </li>
+            </ul>
+          </div>
+        </article>
         <article id="contact">
           <h2>Who is responsible</h2>
           <div>
             <p>
-              Corridra is operated by Sadat in Gulshan, Dhaka. For account help, privacy questions,
-              corrections or a deletion request, contact{' '}
+              Corridra is operated by Corridra Pte Ltd, 101 Robinson Road, Singapore 180239, with
+              operations in Gulshan, Dhaka, Bangladesh. Corridra Pte Ltd decides why and how
+              personal information in this service is used. In data protection terms it is the
+              organisation responsible for that information (the controller under the GDPR, the
+              organisation under Singapore’s Personal Data Protection Act).
+            </p>
+            <p>
+              For account help, privacy questions, corrections, a deletion request or to contact our
+              data protection contact, write to{' '}
               <a href="mailto:sadat@obsidianglobal.studio">sadat@obsidianglobal.studio</a>.
             </p>
             <p>
@@ -93,6 +127,72 @@ export default function Page() {
               operators use them to review the request, clarify the work and record progress and
               replies. Request information is not automatically sent to AI or outreach providers.
             </p>
+          </div>
+        </article>
+        <article id="purposes">
+          <h2>What we collect and why</h2>
+          <div>
+            <ul>
+              <li>
+                <strong>Account information</strong> (name, email address, sign-in and session
+                details). To create and secure your account and let you sign in. Basis: providing
+                the service you asked for, and keeping it secure.
+              </li>
+              <li>
+                <strong>Request and company information</strong> (what you submit about your
+                business, market, requirements and contacts). To review your request, do the work
+                and keep a record of it. Basis: providing the service you asked for.
+              </li>
+              <li>
+                <strong>Workspace and team information</strong> (workspace names, members, roles,
+                invitations). To let the right people in your organisation work together. Basis:
+                providing the service, and the legitimate interest of the organisation that invited
+                you.
+              </li>
+              <li>
+                <strong>Technical and security records</strong> (event and audit history, request
+                identifiers, and short-lived abuse-limit counters that hold a keyed hash of your
+                network address, not the address itself). To keep the service secure, prevent abuse
+                and show who did what. Basis: our legitimate interest in security and
+                accountability.
+              </li>
+              <li>
+                <strong>Messages you send us</strong> (support and privacy requests). To reply and
+                keep a record. Basis: our legitimate interest in answering you, or the law where it
+                requires a record.
+              </li>
+              {invoicing && (
+                <li>
+                  <strong>Billing records</strong> (the company name and address you ask us to
+                  invoice, invoice and credit note numbers, amounts, and the payments our team
+                  records as received, with a bank reference). To issue invoices and keep accounting
+                  records. Basis: providing the service you asked for, and our legal duty to keep
+                  accounting records. We do not collect card or bank account details through this
+                  service. Billing records are kept for as long as accounting law requires, which is
+                  longer than the request retention window below, and are not deleted on request
+                  while that duty applies.
+                </li>
+              )}
+            </ul>
+            <p>
+              Under Singapore’s Personal Data Protection Act we rely on your consent, including
+              consent given by taking the step of making a request or using a feature, on what is
+              necessary to provide the service you asked for, and on the other grounds that Act
+              allows. Where we process information because the law requires it, we say so at the
+              point it applies. You may withdraw consent at any time by contacting us. This may mean
+              we can no longer provide part of the service.
+            </p>
+            <p>
+              We do not make decisions about people based only on automated processing and we do not
+              build advertising profiles.
+            </p>
+            {practicePayments && (
+              <p>
+                The practice payment flow on the billing page is a simulation with made-up details
+                (madeup). It asks for no card or bank details, moves no money and does not change an
+                invoice. It records that an attempt was made, its amount and its made-up reference.
+              </p>
+            )}
           </div>
         </article>
         <article id="drafts">
@@ -184,6 +284,68 @@ export default function Page() {
             </div>
           </article>
         )}
+        <article id="sharing">
+          <h2>Who we share information with</h2>
+          <div>
+            <p>
+              We do not sell personal information. We use these service providers to run Corridra:
+            </p>
+            <ul>
+              <li>Neon: database hosting and customer account services, in Frankfurt, Germany.</li>
+              <li>Vercel: application hosting, in the Frankfurt region.</li>
+              <li>Resend: verification and password recovery emails, sent from Ireland.</li>
+            </ul>
+            <p>
+              They process information for us under their own terms and only for these purposes. We
+              share information with others only when you ask us to, when a workflow you use says so
+              (for example a programme or delivery you have joined), or when the law requires it.
+              Corridra staff see the records they need to deliver and support the work, and no more.
+            </p>
+          </div>
+        </article>
+        <article id="storage">
+          <h2>Cookies and browser storage</h2>
+          <div>
+            <p>
+              Corridra does not use advertising, analytics or tracking cookies. It uses only what
+              the service needs:
+            </p>
+            <ul>
+              <li>Necessary session cookies from the account provider keep you signed in.</li>
+              {real && (
+                <li>
+                  A private cookie carries a possession token for a pending request while you create
+                  or activate your account. It lasts at most 24 hours.
+                </li>
+              )}
+              <li>
+                Your browser tab keeps form drafts and short-lived working state in session storage.
+                It is removed when you close the tab.
+              </li>
+              <li>
+                If you choose a language, your browser remembers the choice in local storage. It is
+                not sent to us and you can clear it in your browser settings at any time.
+              </li>
+            </ul>
+            <p>
+              Because these items are needed to provide what you asked for, they do not need a
+              consent banner. You can block them in your browser, but sign-in and forms will then
+              not work.
+            </p>
+          </div>
+        </article>
+        <article id="transfers">
+          <h2>Where information is stored</h2>
+          <div>
+            <p>
+              Application data and customer accounts are stored in Frankfurt, Germany. Corridra
+              staff in Singapore and Bangladesh can reach that data to provide and support the
+              service, so information may be accessed from outside the country where you live. If
+              you are in the European Economic Area or the United Kingdom and want to know what
+              safeguards apply to that access, contact us.
+            </p>
+          </div>
+        </article>
         <article id="files">
           <h2>Files and deferred scanning</h2>
           <div>
@@ -218,6 +380,60 @@ export default function Page() {
             </p>
           </div>
         </article>
+        <article id="rights">
+          <h2>Your rights</h2>
+          <div>
+            <p>You can ask us to:</p>
+            <ul>
+              <li>tell you what personal information we hold about you and give you a copy;</li>
+              <li>correct information that is wrong or incomplete;</li>
+              <li>delete your information, subject to records we must keep;</li>
+              <li>
+                stop or limit how we use it, or object to a use based on our legitimate interest;
+              </li>
+              <li>give you your information in a common format so you can move it;</li>
+              <li>withdraw a consent you gave.</li>
+            </ul>
+            <p>
+              Write to <a href="mailto:sadat@obsidianglobal.studio">sadat@obsidianglobal.studio</a>
+              from the email address on your account so we can confirm it is you. We aim to respond
+              within 30 days and will tell you if we need longer or cannot act on a request, and
+              why. There is no charge for a reasonable request.
+            </p>
+            <p>
+              If you are not satisfied with our answer you can complain to the data protection
+              authority where you live. In Singapore this is the Personal Data Protection Commission
+              (pdpc.gov.sg). In the European Economic Area it is your national supervisory
+              authority. We would like the chance to put things right first.
+            </p>
+          </div>
+        </article>
+        <article id="security">
+          <h2>How we protect information</h2>
+          <div>
+            <p>
+              Connections use HTTPS. Passwords are handled by the account provider and stored as
+              hashes. Private links and possession tokens are stored as hashes, not in readable
+              form. Access follows roles and workspace permissions, enforced in the database as well
+              as in the application. Staff use a separate identity with an authenticator. Important
+              changes are recorded in an event history.
+            </p>
+            <p>
+              No system is perfectly secure. If a breach of personal information is likely to harm
+              you, we will tell you and the authority concerned as the law requires.
+            </p>
+          </div>
+        </article>
+        <article id="children">
+          <h2>Children</h2>
+          <div>
+            <p>
+              Corridra is a business service. It is not intended for anyone under 18 and we do not
+              knowingly collect information from children. If you think a child has given us
+              information, contact us and we will delete it.
+            </p>
+          </div>
+        </article>
         <article id="updates">
           <h2>Replies and next steps</h2>
           <div>
@@ -238,9 +454,9 @@ export default function Page() {
               </p>
             )}
             <p>
-              We update this notice when handling changes. A new request records the notice version
-              acknowledged at submission. If anything is unclear, contact us before adding sensitive
-              information.
+              We update this notice when handling changes and show the date at the top. A new
+              request records the notice version acknowledged at submission. If anything is unclear,
+              contact us before adding sensitive information.
             </p>
             <p>
               <Link className="text-link" prefetch={false} href="/about">

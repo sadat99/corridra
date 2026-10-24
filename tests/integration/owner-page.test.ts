@@ -91,11 +91,28 @@ describe('switch states', () => {
 
   it('shows nothing as on when no setting is present', () => {
     const view = states({});
-    expect([...view].filter(([, text]) => text === 'On')).toEqual([]);
+    // A switch that is on by default (it keeps behaviour that existed before the switch) is the only exception.
+    const onByDefault = new Set(
+      switchRegistry.filter((entry) => entry.kind === 'flagDefaultOn').map((entry) => entry.name),
+    );
+    expect([...view].filter(([name, text]) => text === 'On' && !onByDefault.has(name))).toEqual([]);
     expect(view.get('CORRIDRA_NETWORK_ENABLED')).toBe('Off');
     expect(view.get('CORRIDRA_CUSTOMER_CODE_SIGNIN')).toBe('Off');
     expect(view.get('CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED')).toBe('Off');
     expect(view.get('CORRIDRA_MISSION_EMAIL_ENABLED')).toBe('Off');
+  });
+  it('shows a default-on switch as on unless it is exactly false', () => {
+    const name = 'CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED';
+    expect(states({}).get(name)).toBe('On');
+    expect(states({ [name]: 'true' }).get(name)).toBe('On');
+    expect(states({ [name]: 'FALSE' }).get(name)).toBe('On');
+    expect(states({ [name]: 'false' }).get(name)).toBe('Off');
+    expect(states({}).get('CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED')).toBe('Off');
+    expect(
+      states({ CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED: 'true' }).get(
+        'CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED',
+      ),
+    ).toBe('On');
   });
   it('reads a plain switch only when it is exactly true', () => {
     expect(states({ CORRIDRA_NETWORK_ENABLED: 'true' }).get('CORRIDRA_NETWORK_ENABLED')).toBe('On');

@@ -1,5 +1,7 @@
 # Founder activation view: bounded plan and acceptance record
 
+**Document status: DONE.** Source built and present on main (checked 24 Oct 2026). Words such as "pending" or "once they exist" below are the wording of the day it was written. The capability stays PARTIAL for the whole product; use the requirement register for status. Not a to-do list. See the [plan status register](../../../PLAN_STATUS.md).
+
 Contract sections: 4 (the founder's clarity layer), 6 (founder overview, P1) and 9 (Phase 4 founder controls). Status of the whole capability: PARTIAL.
 
 ## Changed requirement IDs

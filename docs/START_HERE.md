@@ -22,7 +22,7 @@ V3 remains partial and commercially gated. Implemented, tested, deployed, enable
 
 ## Continue and release
 
-Use the [current work sequence](implementation/current-plan.md),[agent plan pointer](agents/master-plan.md) and live ledger. The [implementation matrix](implementation/implementation-matrix.json) and UX coverage ledgers are dated baseline indexes, not exhaustive current V3 acceptance. V1 Parts 1-8 and revised V2/UX work are retained foundations; do not restart historical V1 Parts 9-12.
+Check the [plan status register](PLAN_STATUS.md) before trusting any plan: every plan, scope packet, proposal and audit starts with `Document status: WORD` (CURRENT, CURRENT DATED, DONE, PARTLY BUILT, WAITING OWNER, HISTORICAL, NOT VALID, FROZEN) and the register lists which is in force. Use the [current work sequence](implementation/current-plan.md),[agent plan pointer](agents/master-plan.md) and live ledger. The [implementation matrix](implementation/implementation-matrix.json) and UX coverage ledgers are dated baseline indexes, not exhaustive current V3 acceptance. V1 Parts 1-8 and revised V2/UX work are retained foundations; do not restart historical V1 Parts 9-12.
 
 Run focused checks while editing and every mandatory frozen-revision gate from AGENTS and the [release runbook](runbooks/deployment.md). Never weaken a test to pass. Save full logs under work/ and report exact exits/totals/limits. Correct checked merges and exact-source deployment have standing owner authorization; no force push, protection override, real-operation activation or unreviewed destructive action follows from it. Verify full merge tree, READY/source/region/aliases and actual scoped live observations.
 

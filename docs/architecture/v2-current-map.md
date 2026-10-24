@@ -1,5 +1,7 @@
 # Current Corridra V2 architecture map
 
+**Document status: CURRENT, DATED.** Map of the V2 architecture. Newer modules are in the ADR index. See the [plan status register](../PLAN_STATUS.md).
+
 ```mermaid
 flowchart TD
   Visitor[Public job and corridor pages] --> Intake[Synthetic adaptive intake and receipt]

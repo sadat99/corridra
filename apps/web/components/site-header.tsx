@@ -8,10 +8,10 @@ import { useT } from './language-provider';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
-/** Asks the account service whether this browser is signed in. Never throws; unknown means out. */
-async function readSignedIn(signal: AbortSignal) {
+/** Asks one identity service whether this browser is signed in. Never throws; unknown means out. */
+async function readSignedIn(path: string, signal: AbortSignal) {
   try {
-    const response = await fetch('/api/auth/get-session', {
+    const response = await fetch(path, {
       cache: 'no-store',
       credentials: 'same-origin',
       signal,
@@ -25,21 +25,29 @@ async function readSignedIn(signal: AbortSignal) {
 }
 
 /**
- * Whether this visitor is signed in. Only asked where customer accounts exist, and again when a
+ * Who is signed in here: a customer account, a Corridra team member (a separate sign-in), or no one.
+ * The customer service is only asked where customer accounts exist. Both are asked again when a
  * sign-in or sign-out happens, when the tab regains focus or when it returns from the back button.
  */
-function useSignedIn(accounts: boolean) {
-  const [signedIn, setSignedIn] = useState(false);
+function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
+  const [who, setWho] = useState<'customer' | 'staff' | null>(null);
+  // The customer preview for staff makes no network request at all, so the header stays quiet there.
   useEffect(() => {
-    if (!accounts) return;
+    if (window.location.pathname.startsWith('/operator/view-as')) return;
     let controller = new AbortController();
     function check() {
       controller.abort();
       controller = new AbortController();
       const current = controller;
-      void readSignedIn(current.signal).then((value) => {
-        if (!current.signal.aborted) setSignedIn(value);
-      });
+      void (async () => {
+        const customer = accounts && (await readSignedIn('/api/auth/get-session', current.signal));
+        const next = customer
+          ? 'customer'
+          : (await readSignedIn('/api/operator-auth/get-session', current.signal))
+            ? 'staff'
+            : null;
+        if (!current.signal.aborted) setWho(next);
+      })();
     }
     function refocus() {
       if (document.visibilityState === 'visible') check();
@@ -55,12 +63,12 @@ function useSignedIn(accounts: boolean) {
       window.removeEventListener('pageshow', check);
     };
   }, [accounts]);
-  return accounts && signedIn;
+  return who;
 }
 
 export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
   const t = useT();
-  const signedIn = useSignedIn(accounts);
+  const who = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -113,19 +121,25 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
         <Link prefetch={false} href="/corridors" onClick={close}>
           {t('header.routes')}
         </Link>
-        {signedIn ? (
+        {who ? (
           <>
-            <Link prefetch={false} href="/account" onClick={close}>
-              {t('header.account')}
-            </Link>
-            <button
-              type="button"
-              className="header-link nav-signout"
-              disabled={busy}
-              onClick={signOut}
+            <Link
+              prefetch={false}
+              href={who === 'staff' ? '/operator' : '/account'}
+              onClick={close}
             >
-              {busy ? t('header.signingOut') : t('header.signOut')}
-            </button>
+              {who === 'staff' ? t('header.workspace') : t('header.account')}
+            </Link>
+            {who === 'customer' && (
+              <button
+                type="button"
+                className="header-link nav-signout"
+                disabled={busy}
+                onClick={signOut}
+              >
+                {busy ? t('header.signingOut') : t('header.signOut')}
+              </button>
+            )}
           </>
         ) : (
           <Link prefetch={false} href="/signin" onClick={close}>

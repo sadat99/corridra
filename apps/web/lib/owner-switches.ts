@@ -25,11 +25,12 @@ export type SwitchGroup = (typeof switchGroups)[number];
  * module: a customer module whose real state comes from founderActivation (it also checks the
  *   switches it depends on).
  * flag: the setting is exactly "true" or not.
+ * flagDefaultOn: the feature is on unless the setting is exactly "false".
  * mode: state comes from the shared helper that combines several settings.
  * setting: a value, not a switch. Only "Set" or "Not set" is ever shown, never the value.
  * planned: the switch is reserved for work that is not built yet, so it is not shown as on or off.
  */
-export type SwitchKind = 'module' | 'flag' | 'mode' | 'setting' | 'planned';
+export type SwitchKind = 'module' | 'flag' | 'flagDefaultOn' | 'mode' | 'setting' | 'planned';
 
 export type SwitchEntry = {
   name: string;
@@ -246,6 +247,20 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Money and pricing',
     kind: 'module',
   },
+  {
+    name: 'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
+    label: 'Real invoices and payment records',
+    line: 'Lets the team issue real invoices and credit notes for real workspaces, with a second person approving each one, and lets real owners and admins read them. Needs real plans on, the real invoices install, and the real invoices control opened by the install job. Nothing is collected.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
+  {
+    name: 'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
+    label: 'Simulated payment flow (madeup)',
+    line: 'Lets real owners and admins try a made-up payment provider on their real invoices, and lets the team record made-up refunds. It never moves money and never changes an invoice. Needs real invoices on, the simulated payments install, and its control opened by the install job.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
   // Delivery
   {
     name: 'CORRIDRA_FOUNDATIONS_ENABLED',
@@ -267,6 +282,20 @@ export const switchRegistry: SwitchEntry[] = [
     line: 'Lets the team build and send scoped reports and delivery links.',
     group: 'Delivery',
     kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED',
+    label: 'Public report links for real workspaces',
+    line: 'Lets anyone holding an unexpired, unrevoked link open a real workspace report without signing in. Off by default. Needs real use. Sample reports are not affected.',
+    group: 'Delivery',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED',
+    label: 'Signed-in report access for real workspaces',
+    line: 'Lets a verified real customer save, open and answer a shared report, see its decisions and company history, and accept an assigned report. On unless set to false. Sample reports are not affected.',
+    group: 'Delivery',
+    kind: 'flagDefaultOn',
   },
   {
     name: 'CORRIDRA_CUSTOMER_DELIVERY_ENABLED',
@@ -411,6 +440,7 @@ function resolve(
     if (entry.name === 'CORRIDRA_REAL_USE_ENABLED') return realUseEnabled(env) ? on : off;
     return off;
   }
+  if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
   return env[entry.name] === 'true' ? on : off;
 }
 

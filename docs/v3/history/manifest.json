@@ -166,6 +166,14 @@
       "bytes": 11677,
       "sha256": "672fff5375e2c75a0a1f9afc968db1cf124841a5c949104a9a43f1331f0d3c00",
       "meaning": "Exact active-index snapshot before retiring the PR126 to PR131 release summaries to make room for Phase 0 owner-tool entries; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "3a85204",
+      "archive": "docs/v3/history/ledger-before-handoff-refresh-2026-10-24.md",
+      "bytes": 12234,
+      "sha256": "a7eabd5b774b14960861824669e6a1729c57501f31f2b7216bad6451847eca31",
+      "meaning": "Exact active-index snapshot before the 24 October 2026 handoff refresh, which replaced the stale Resume and Current state text (PR132 era) with the state after PR188; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

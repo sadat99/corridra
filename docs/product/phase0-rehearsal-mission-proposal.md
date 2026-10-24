@@ -1,5 +1,7 @@
 # Rehearsal Mission proposal (Phase 0, item 7)
 
+**Document status: PARTLY BUILT.** Approved 23 Oct 2026. The first safe pieces and the exclusion test are built; the rest waits for the owner. See the [plan status register](../PLAN_STATUS.md).
+
 Date: 2026-10-23. Status: approved proposal. This file itself adds no code and no migration. The owner approved this proposal on 23 October 2026 ("yes to both, as long as safe"). Built so far: the report notice fix (4.2, first row) and the exclusion test (4.4), see the section 9 note.
 
 Owner goal: click through the whole mission journey without touching a real customer.

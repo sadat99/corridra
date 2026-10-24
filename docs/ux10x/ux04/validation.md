@@ -1,5 +1,7 @@
 # UX-04 validation
 
+**Document status: HISTORICAL.** Dated UX10X snapshot. Counts and results belong to the revision it names, not to today. See the [plan status register](../../PLAN_STATUS.md).
+
 Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](../README.md) and [current plan](../../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
 
 Accepted UX-03 main CI run `38617980749` passed. Baseline operator execution passed eleven cases; a new capture hook ran after the existing sign-out and failed to locate its panel, after the financial assertions had already passed. The hook now runs before sign-out. Its missing baseline images were captured by reopening the same fixed local synthetic database through actual MFA, with no financial/data reset. All 36 baseline observations report no axe violations and no document overflow.

@@ -1,5 +1,7 @@
 # UX-01 architecture and preservation contract
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../PLAN_STATUS.md).
+
 ## Authority and scope
 
 This contract originated in UX-01 and remains a preservation contract for later UX changes. UX-01 through UX-05 are merged, with bounded UX-06/access repairs; see [current programme](../implementation/current-plan.md). The UX10X.1.0 handoff governs UX within current server/domain contracts. Fusion 01 supplies visual reference only. Its fictional metrics, approval controls and historical implementation instructions do not define production behavior. The sequential programme requirements remain; implementation of a phase is not exhaustive functional acceptance.

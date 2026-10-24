@@ -1,5 +1,7 @@
 # UX-01 validation
 
+**Document status: HISTORICAL.** Dated UX10X snapshot. Counts and results belong to the revision it names, not to today. See the [plan status register](../PLAN_STATUS.md).
+
 Dated phase inventory/validation record. Its counts, execution results and open issues belong to the captured revision, not an exhaustive current audit. See [the programme index](README.md) and [current plan](../implementation/current-plan.md). Preserve the paired ledger and evidence manifests; source discovery is not functional verification.
 
 Baseline: `1e0dbea6f146265b256ca89b5482e789f97acdd9`. Tests use local synthetic PostgreSQL and malware scanning; customer providers and production operations are not activated. Original domain packages, API handlers, migrations, source documents, recovery resource implementation and lockfile have no diff against this baseline.

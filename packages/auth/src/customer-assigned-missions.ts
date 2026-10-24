@@ -20,6 +20,7 @@ export const acceptAssignedMissionInput = z
   .strict();
 export class CustomerAssignedMissionService extends CustomerSessionBoundary {
   async list(input: unknown = {}, expectedSubject?: string, expectedIssuer?: string) {
+    this.requireRealReports();
     const p = pageInput.parse(input);
     return this.transaction(
       async (db) =>
@@ -34,6 +35,7 @@ export class CustomerAssignedMissionService extends CustomerSessionBoundary {
     );
   }
   async accept(input: unknown, expectedSubject?: string, expectedIssuer?: string) {
+    this.requireRealReports();
     const v = acceptAssignedMissionInput.parse(input);
     return this.transaction(
       async (db) =>

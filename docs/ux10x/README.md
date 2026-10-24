@@ -1,5 +1,7 @@
 # UX10X programme and evidence index
 
+**Document status: HISTORICAL.** The UX10X programme was merged (UX-01 to UX-05 and bounded UX-06). This is a dated record, not a to-do list. See the [plan status register](../PLAN_STATUS.md).
+
 Read [the current plan](../implementation/current-plan.md) and [developer handoff](../START_HERE.md). UX-01 through UX-05 were implemented and merged in PRs 39–43. Bounded UX-06 presentation, wayfinding and access repairs followed in PRs 44–46. Full UX10X functional acceptance remains incomplete. The complete [master handoff](master-handoff.md) is preserved; Fusion is the visual reference only.
 
 | Phase | Packet                                                                                                                | Status                                         |

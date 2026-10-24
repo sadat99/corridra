@@ -1,4 +1,5 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
 import {
   CustomerMissionDraftService,
   customerMissionDraftsEnabled,
@@ -40,6 +41,10 @@ import {
   CustomerInvoicingService,
   customerInvoicingEnabled,
 } from '@corridra/auth/customer-invoicing';
+import { CustomerRealInvoicingService } from '@corridra/auth/customer-invoicing-real';
+import { CustomerSimulatedPaymentsService } from '@corridra/auth/customer-payments-simulated';
+import { CustomerSimulatedPaymentsStaffService } from '@corridra/delivery/customer-payments-simulated-staff';
+import { CustomerRealInvoicingStaffService } from '@corridra/delivery/customer-invoicing-real-staff';
 import { CustomerServiceStaffService } from '@corridra/delivery/customer-service-staff';
 import { CustomerBillingStaffService } from '@corridra/delivery/customer-billing-staff';
 import { CustomerInvoicingStaffService } from '@corridra/delivery/customer-invoicing-staff';
@@ -415,6 +420,34 @@ function createServices() {
       customerRealBillingEnabled(),
     ),
     customerInvoicingStaff: new CustomerInvoicingStaffService(runtimePool),
+    customerRealInvoicingStaff: new CustomerRealInvoicingStaffService(runtimePool),
+    customerSimulatedPaymentsStaff: new CustomerSimulatedPaymentsStaffService(runtimePool),
+    customerSimulatedPayments: new CustomerSimulatedPaymentsService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerRealBillingEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerRealInvoicing: new CustomerRealInvoicingService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerRealBillingEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
     customerInvoicing: new CustomerInvoicingService(
       runtimePool,
       authPool,
@@ -545,6 +578,7 @@ function createServices() {
       runtimePool,
       new MissionService(runtimePool, config.AUTH_SECRET, realUseEnabled() ? 'real' : 'synthetic'),
       config.AUTH_SECRET,
+      () => realReportPublicLinkEnabled(),
     ),
     deliveryExperience: new DeliveryExperienceService(runtimePool),
     meetings: new MeetingService(runtimePool),

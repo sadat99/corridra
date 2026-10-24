@@ -1,5 +1,7 @@
 # V2 Part 3 release record
 
+**Document status: HISTORICAL.** Finished V2 part, kept as a dated record. Its statuses, counts and next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 Status at PR preparation: implementation and local acceptance complete. The accepted PR records final-head CI, live migration, exact production deployment and cleanup. Those later release steps are not implied by this preparation record. Accepted baseline is Part 2 merge `2da05f6d523f7303cf5492b10b62d7abae456ed0`, PR #31. This bounded Part 3 used `feat/v2-03-customer-experience`. It was subsequently accepted in PR #33 at main `ca7894301cf4c1b69a2718d6b6cf55ecfca2042d`, with exact-SHA production acceptance recorded in that PR. Revised Part 4 is now separately authorized and in progress; original V1 numbering is not resumed.

@@ -1,6 +1,6 @@
 # Corridra documentation
 
-Begin with [Start here](START_HERE.md), then [the current plan](implementation/current-plan.md) and [verification guide](verification-guide.md). This index separates current guidance from the retained historical requirements and release evidence. The [documentation catalogue](documentation-map.md) classifies every Markdown document in this directory.
+Begin with [Start here](START_HERE.md), then [the current plan](implementation/current-plan.md) and [verification guide](verification-guide.md). This index separates current guidance from the retained historical requirements and release evidence. The [plan status register](PLAN_STATUS.md) says which plan, proposal or decision is current, finished, waiting for the owner, historical or not valid. The [documentation catalogue](documentation-map.md) classifies every Markdown document in this directory.
 
 ## Current engineering handoff
 

@@ -1,5 +1,7 @@
 # Revised V2 Parts 1–5 access completion
 
+**Document status: HISTORICAL.** Finished V2 follow-up. Its next steps are old and are not instructions. See the [plan status register](../PLAN_STATUS.md).
+
 Historical implementation packet for its named revision. Its scope, acceptance and next-step statements are dated context. Use [the current plan](current-plan.md) and [developer handoff](../START_HERE.md) for present status; old task sequencing or unclosed-at-the-time issues are not current instructions. Do not infer full requirement acceptance from this packet.
 
 The accepted Part 5 baseline is PR #36, main `712a750d48f4a6f9d41fe867346c5c3b6e93c18a`, migration 0028 and the live synthetic environment. This follow-up changes navigation, access recovery and compatible dependencies; it does not migrate data or activate real operations. The accepted follow-up PR records exact final release evidence.
