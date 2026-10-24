@@ -16,7 +16,18 @@ export async function verifyInstallHead({ repository, sha, ref, request }) {
     const jobs = (await request(`${base}/actions/runs/${run.id}/jobs?per_page=100`)).jobs;
     const expected =
       name === 'CI'
-        ? ['checks', 'browser', 'operator (1)', 'operator (2)', 'operator (3)', 'validate']
+        ? [
+            'changes',
+            'checks',
+            'browser',
+            'ux (1)',
+            'ux (2)',
+            'ux (3)',
+            'operator (1)',
+            'operator (2)',
+            'operator (3)',
+            'validate',
+          ]
         : ['Analyze (actions)', 'Analyze (javascript-typescript)', 'Analyze (python)'];
     for (const job of expected)
       if (

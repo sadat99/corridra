@@ -233,6 +233,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
+    label: 'Real plans and subscriptions',
+    line: 'Lets a real workspace see plans and ask for one. Needs sample plans on, the real plans install, and the real plans control opened by the install job. Nothing is charged and no invoice is made.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_INVOICING_ENABLED',
     label: 'Sample invoices and payment records',
     line: 'Lets the team issue sample invoices and record payments for sample workspaces. Needs sample plans. Nothing is collected.',
@@ -271,8 +278,22 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_MISSION_EMAIL_ENABLED',
     label: 'Mission emails',
-    line: 'Sends "We have your request" to the verified account holder. Needs the mission mail database module installed and opened, and the sender settings. "Your move" waits for the Mission Road work.',
+    line: 'Sends "We have your request" to the verified account holder. Needs the mission mail database module installed and opened, and the sender settings. "One thing needs you" waits for the Mission Road work.',
     group: 'Delivery',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_LANGUAGES_REVIEWED',
+    label: 'Languages with reviewed text',
+    line: 'Codes of the languages a native speaker has reviewed, for example bn,zh,es. Only these appear in the language chip. English is always there. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'setting',
+  },
+  {
+    name: 'CORRIDRA_LANGUAGES_PREVIEW',
+    label: 'Show draft languages',
+    line: 'Shows every draft language in the language chip, marked as a draft, so you can read them before a reviewer has. Keep it off for the public. Needs a new deploy.',
+    group: 'Accounts and requests',
     kind: 'flag',
   },
   {

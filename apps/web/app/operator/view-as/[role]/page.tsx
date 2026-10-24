@@ -87,7 +87,7 @@ export default async function Page({
           Close preview
         </Link>
       </div>
-      <main id="main" tabIndex={-1} className="operator-page ux-workspace">
+      <main id="main" lang="en" dir="ltr" tabIndex={-1} className="operator-page ux-workspace">
         <header className="ux-page-heading">
           <p className="label">PREVIEW</p>
           <h1>What a customer sees.</h1>

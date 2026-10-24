@@ -9025,3 +9025,78 @@ samp {
     padding-top: var(--space-2);
   }
 }
+
+/* Language chip. Rendered only when more than one language is offered, so with English alone the
+   header is unchanged. Tokens only; logical properties so right to left mirrors it. */
+.lang-switcher {
+  position: relative;
+}
+.lang-switcher > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  list-style: none;
+}
+.lang-switcher > summary::-webkit-details-marker {
+  display: none;
+}
+.lang-switcher ul {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-end: 0;
+  z-index: 4;
+  min-width: 12rem;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+}
+.lang-switcher li {
+  margin: 0;
+}
+.lang-switcher button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--text-1);
+  text-align: start;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.lang-switcher button:hover {
+  background: var(--surface-2);
+}
+.lang-switcher button[aria-current='true'] {
+  font-weight: 600;
+  background: var(--selected-surface);
+}
+.lang-switcher small {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+@media (max-width: 1000px) {
+  .lang-switcher > summary {
+    align-self: flex-start;
+  }
+  .lang-switcher ul {
+    position: static;
+    box-shadow: none;
+  }
+}

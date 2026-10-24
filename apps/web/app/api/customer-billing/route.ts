@@ -2,6 +2,7 @@ import { DomainError } from '@corridra/domain';
 import {
   customerBillingCommandInput,
   customerBillingEnabled,
+  realBillingOffMessage,
 } from '@corridra/auth/customer-billing';
 import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import { foundations } from '../../../lib/foundations';
@@ -16,10 +17,14 @@ async function services() {
   return s;
 }
 function failure(error: unknown) {
+  const code = (error as { code?: string }).code ?? '';
+  // 55000: the workspace is real and the database side of real plans is not open (ADR-062).
   return deliveryError(
-    ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
-      ? new DomainError('Plans are unavailable', 503)
-      : error,
+    code === '55000'
+      ? new DomainError(realBillingOffMessage, 503)
+      : ['42P01', '3F000', '42883'].includes(code)
+        ? new DomainError('Plans are unavailable', 503)
+        : error,
   );
 }
 function context(request: Request) {

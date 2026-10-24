@@ -18,7 +18,7 @@ import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
 import { customerServiceRequestsEnabled } from './customer-service-requests';
-import { customerBillingEnabled } from './customer-billing';
+import { customerBillingEnabled, customerRealBillingEnabled } from './customer-billing';
 import { customerInvoicingEnabled } from './customer-invoicing';
 import {
   customerOpenAdmission,
@@ -187,6 +187,12 @@ const modules: {
     label: 'Sample plans and subscriptions',
     flag: 'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     enabled: customerBillingEnabled,
+  },
+  {
+    key: 'real-billing',
+    label: 'Real plans and subscriptions',
+    flag: 'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
+    enabled: customerRealBillingEnabled,
   },
   {
     key: 'invoicing',

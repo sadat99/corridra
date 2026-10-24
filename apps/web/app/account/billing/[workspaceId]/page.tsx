@@ -23,10 +23,16 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         issuer={session.issuer}
         workspaceId={id.data}
         invoicing={customerInvoicingEnabled()}
+        sampleOnly={
+          customerInvoicingEnabled() ? (
+            <InvoicesSection
+              subject={session.subject}
+              issuer={session.issuer}
+              workspaceId={id.data}
+            />
+          ) : null
+        }
       />
-      {customerInvoicingEnabled() && (
-        <InvoicesSection subject={session.subject} issuer={session.issuer} workspaceId={id.data} />
-      )}
     </CustomerShell>
   );
 }

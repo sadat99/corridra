@@ -1,12 +1,20 @@
 import { z } from 'zod';
+import { DomainError } from '@corridra/domain';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerWorkspacesEnabled } from './customer-workspaces';
 
-// ADR-060: synthetic plans, subscriptions and entitlements. Off unless the owner sets the switch, and then only for
-// synthetic workspaces: the database refuses any other workspace. No payment, invoice or processor exists here.
+// ADR-060: plans, subscriptions and entitlements. Off unless the owner sets the switch. With only that switch on,
+// sample workspaces are served and the database refuses any other workspace. No payment, invoice or processor exists
+// here.
 export function customerBillingEnabled(env: NodeJS.ProcessEnv = process.env) {
   return customerWorkspacesEnabled(env) && env.CORRIDRA_CUSTOMER_BILLING_ENABLED === 'true';
 }
+// ADR-062: real workspaces need this second switch, and the database side opened by the owner-run install job. Both
+// must be on; either one off keeps real workspaces refused. It never turns on money: nothing here charges or invoices.
+export function customerRealBillingEnabled(env: NodeJS.ProcessEnv = process.env) {
+  return customerBillingEnabled(env) && env.CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED === 'true';
+}
+export const realBillingOffMessage = 'Plans are not switched on for real workspaces yet';
 const planKey = z.string().regex(/^[a-z][a-z0-9-]{2,59}$/);
 export const customerBillingCommandInput = z.discriminatedUnion('action', [
   z
@@ -60,7 +68,7 @@ export type BillingPlan = {
   entitlements: BillingEntitlement[];
   digest: string;
   active: boolean;
-  synthetic: true;
+  synthetic: boolean;
   invoicing: 'not_enabled';
   paymentTaken: false;
 };
@@ -71,7 +79,7 @@ export type BillingPlans = {
   entitlementsEnforced: false;
   invoicing: 'not_enabled';
   paymentTaken: false;
-  synthetic: true;
+  synthetic: boolean;
   expiresAt: string;
 };
 export type SubscriptionSummary = {
@@ -113,14 +121,22 @@ export type BillingOverview = {
   actions: ('request' | 'withdraw' | 'cancel' | 'keep')[];
   invoicing: 'not_enabled';
   paymentTaken: false;
-  synthetic: true;
+  synthetic: boolean;
   expiresAt: string;
 };
 export type BillingCommandResult = SubscriptionSummary & {
   commandId: string;
   operation: 'request' | 'withdraw' | 'cancel' | 'keep';
-  synthetic: true;
+  synthetic: boolean;
 };
+
+// A real workspace is served only while the application switch is on. The answer is checked inside the transaction, so a
+// refusal rolls back anything the call recorded (for example that a plan was shown).
+function realOnlyIfSwitched<T extends { synthetic?: boolean }>(result: T) {
+  if (result.synthetic === false && !customerRealBillingEnabled())
+    throw new DomainError(realBillingOffMessage, 503);
+  return result;
+}
 
 // Server-only: the current provider session decides who is acting; the workspace role comes from the database.
 export class CustomerBillingService extends CustomerSessionBoundary {
@@ -128,11 +144,14 @@ export class CustomerBillingService extends CustomerSessionBoundary {
     const q = customerBillingWorkspaceQuery.parse(input);
     return this.transaction(
       async (db) =>
-        (
-          await db.query<{ result: BillingPlans }>('SELECT customer.billing_plans($1) AS result', [
-            q.workspaceId,
-          ])
-        ).rows[0].result,
+        realOnlyIfSwitched(
+          (
+            await db.query<{ result: BillingPlans }>(
+              'SELECT customer.billing_plans($1) AS result',
+              [q.workspaceId],
+            )
+          ).rows[0].result,
+        ),
       subject,
       issuer,
     );
@@ -141,12 +160,14 @@ export class CustomerBillingService extends CustomerSessionBoundary {
     const q = customerBillingWorkspaceQuery.parse(input);
     return this.transaction(
       async (db) =>
-        (
-          await db.query<{ result: BillingOverview }>(
-            'SELECT customer.billing_overview($1) AS result',
-            [q.workspaceId],
-          )
-        ).rows[0].result,
+        realOnlyIfSwitched(
+          (
+            await db.query<{ result: BillingOverview }>(
+              'SELECT customer.billing_overview($1) AS result',
+              [q.workspaceId],
+            )
+          ).rows[0].result,
+        ),
       subject,
       issuer,
     );
@@ -155,12 +176,14 @@ export class CustomerBillingService extends CustomerSessionBoundary {
     const { action, commandId, ...payload } = customerBillingCommandInput.parse(input);
     return this.transaction(
       async (db) =>
-        (
-          await db.query<{ result: BillingCommandResult }>(
-            'SELECT customer.billing_command($1,$2,$3) AS result',
-            [commandId, action, JSON.stringify(payload)],
-          )
-        ).rows[0].result,
+        realOnlyIfSwitched(
+          (
+            await db.query<{ result: BillingCommandResult }>(
+              'SELECT customer.billing_command($1,$2,$3) AS result',
+              [commandId, action, JSON.stringify(payload)],
+            )
+          ).rows[0].result,
+        ),
       subject,
       issuer,
     );

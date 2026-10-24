@@ -13,7 +13,13 @@ export default async function MutePage({ params }: { params: Promise<{ requestId
   const { requestId } = await params;
   if (!uuid.test(requestId)) notFound();
   return (
-    <main id="main" tabIndex={-1} className="operator-page ux-workspace ux-access">
+    <main
+      id="main"
+      lang="en"
+      dir="ltr"
+      tabIndex={-1}
+      className="operator-page ux-workspace ux-access"
+    >
       <header className="ux-page-heading">
         <p className="label">YOUR REQUEST</p>
         <h1>Mute messages about this request.</h1>
