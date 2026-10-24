@@ -125,8 +125,11 @@ function displayDate(day: string) {
     timeZone: 'UTC',
   });
 }
-const today = () => new Date().toISOString().slice(0, 10);
-const inDays = (n: number) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+// Invoices, payments and credit notes are dated by the Singapore calendar day, so the screen uses it too.
+const singaporeDay = (n: number) =>
+  new Date(Date.now() + 8 * 3600000 + n * 86400000).toISOString().slice(0, 10);
+const today = () => singaporeDay(0);
+const inDays = (n: number) => singaporeDay(n);
 
 export function CustomerRealInvoicing({ tenant }: { tenant: string }) {
   // Real invoices exist only in a real deployment; a sample deployment asks the server nothing about them.
