@@ -1073,7 +1073,7 @@ function Guided(scope: Scope) {
               {...common('website')}
               value={form.website}
               maxLength={200}
-              placeholder="https://company.example"
+              placeholder={realCustomerInput() ? 'https://' : 'https://company.example'}
               onChange={(e) => set('website', e.target.value)}
             />,
           )}
@@ -1089,13 +1089,13 @@ function Guided(scope: Scope) {
           )}
           {field(
             'contactEmail',
-            'Test email address',
+            realCustomerInput() ? 'Email address' : 'Test email address',
             <input
               {...common('contactEmail')}
               type="email"
               value={form.contactEmail}
               maxLength={254}
-              placeholder="name@example.invalid"
+              placeholder={realCustomerInput() ? 'name@yourcompany.com' : 'name@example.invalid'}
               onChange={(e) => set('contactEmail', e.target.value.toLowerCase())}
             />,
             'Used only so staff can reply to this request.',

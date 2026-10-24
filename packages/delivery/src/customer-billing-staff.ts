@@ -1,9 +1,11 @@
 import { z } from 'zod';
-import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerLabelAllowed, realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { DomainError } from '@corridra/domain';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 
 const control = /[\u0000-\u001f\u007f]/u;
-// Notes that staff write about a subscription are invented text. The database repeats this rule.
+// Notes that staff write about a subscription: invented text for a sample workspace, plain text for a real one. The
+// database applies the rule that fits the workspace.
 const synthetic = (max: number) =>
   z
     .string()
@@ -72,8 +74,10 @@ export const staffPlanInput = z
     commandId: z.uuid(),
     planKey: z.string().regex(/^[a-z][a-z0-9-]{2,59}$/),
     expectedVersion: z.number().int().min(0).max(2147483646),
+    // A sample plan must say it is a sample and a real plan must not. The database holds both rules; here real
+    // wording is accepted only where real input is, as for every other customer form.
     title: plain(3, 120).refine(
-      (v) => /(sample|synthetic)/i.test(v),
+      (v) => realCustomerInput() || /(sample|synthetic)/i.test(v),
       'The title must say the plan is a sample',
     ),
     summary: plain(10, 400),
@@ -95,42 +99,45 @@ export const staffBillingListQuery = z
   })
   .strict();
 
-// Staff side of synthetic billing. Authority is the existing protected staff authority (owner or admin with a fresh
-// authenticator check in an operator workspace); the database repeats the check on the live session.
+// Staff side of billing. Authority is the existing protected staff authority (owner or admin with a fresh
+// authenticator check in an operator workspace); the database repeats the check on the live session. A real operator
+// workspace reaches real subscriptions only while `allowReal` says the application switch is on (ADR-062); the answer
+// is checked inside the transaction so a refusal rolls back.
 export class CustomerBillingStaffService {
-  constructor(private pool: DatabasePool) {}
+  constructor(
+    private pool: DatabasePool,
+    private allowReal: () => boolean = () => false,
+  ) {}
+  private checked<T extends { synthetic?: boolean }>(result: T) {
+    if (result.synthetic === false && !this.allowReal())
+      throw new DomainError('Plans are not switched on for real workspaces yet', 503);
+    return result;
+  }
   async list(ctx: RequestContext, input: unknown = {}) {
     const q = staffBillingListQuery.parse(input);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>
+      this.checked(
         (
           await db.query('SELECT app.billing_staff_list($1,$2) result', [
             q.after ?? null,
             q.pageSize,
           ])
         ).rows[0].result,
+      ),
     );
   }
   async view(ctx: RequestContext, subscriptionId: string) {
     const id = z.uuid().parse(subscriptionId);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>
+      this.checked(
         (await db.query('SELECT app.billing_staff_view($1) result', [id])).rows[0].result,
+      ),
     );
   }
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = staffBillingCommandInput.parse(input);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>
+      this.checked(
         (
           await db.query('SELECT app.billing_staff_command($1,$2,$3) result', [
             commandId,
@@ -138,30 +145,25 @@ export class CustomerBillingStaffService {
             JSON.stringify(payload),
           ])
         ).rows[0].result,
+      ),
     );
   }
   async plans(ctx: RequestContext) {
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
-        (await db.query('SELECT app.billing_plan_staff_list() result')).rows[0].result,
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>
+      this.checked((await db.query('SELECT app.billing_plan_staff_list() result')).rows[0].result),
     );
   }
   async revisePlan(ctx: RequestContext, input: unknown) {
     const { commandId, ...payload } = staffPlanInput.parse(input);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>
+      this.checked(
         (
           await db.query('SELECT app.billing_plan_staff_command($1,$2) result', [
             commandId,
             JSON.stringify(payload),
           ])
         ).rows[0].result,
+      ),
     );
   }
 }

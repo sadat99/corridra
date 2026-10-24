@@ -14,8 +14,9 @@ const subscriptionId = '00000000-0000-4000-8000-0000000000b2';
 const tenant = '00000000-0000-4000-8000-0000000000d4';
 const digest = 'a'.repeat(64);
 let server: Server, origin: string;
-test.beforeAll(async () => {
-  const result = await build({
+let realJavascript = '';
+async function bundle(realMode: boolean) {
+  return build({
     stdin: {
       contents: `import {createRoot} from 'react-dom/client';
 import {BillingOverviewView} from ${JSON.stringify(resolve('apps/web/app/account/billing/billing-overview.tsx'))};
@@ -25,6 +26,7 @@ const q=new URLSearchParams(location.search),subject='synthetic-alice',issuer=${
 const view=q.get('view');
 const el=view==='workspaces'?<CustomerWorkspaces subject={subject} issuer={issuer} billingEnabled={q.get('plans')!=='off'}/>
 :view==='staff'?<CustomerBilling tenant={${JSON.stringify(tenant)}}/>
+:view==='slot'?<BillingOverviewView subject={subject} issuer={issuer} workspaceId={workspaceId} invoicing sampleOnly={<p>Sample invoices section</p>}/>
 :<BillingOverviewView subject={subject} issuer={issuer} workspaceId={workspaceId}/>;
 createRoot(document.getElementById('fixture')).render(el);`,
       loader: 'tsx',
@@ -36,9 +38,16 @@ createRoot(document.getElementById('fixture')).render(el);`,
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
-    define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
+    define: {
+      'process.env.NODE_ENV': '"production"',
+      'process.env': realMode ? '{"NEXT_PUBLIC_CORRIDRA_REAL_USE_ENABLED":"true"}' : '{}',
+    },
     metafile: true,
   });
+}
+test.beforeAll(async () => {
+  const result = await bundle(false);
+  realJavascript = (await bundle(true)).outputFiles[0].text;
   // The browser bundle must carry no server authority code.
   expect(
     Object.keys(result.metafile!.inputs).some((path) => path.includes('packages/auth/src')),
@@ -70,6 +79,9 @@ createRoot(document.getElementById('fixture')).render(el);`,
     if (path === '/fixture.js') {
       response.setHeader('Content-Type', 'text/javascript');
       response.end(javascript);
+    } else if (path === '/fixture-real.js') {
+      response.setHeader('Content-Type', 'text/javascript');
+      response.end(realJavascript);
     } else if (path === '/fixture.css') {
       response.setHeader('Content-Type', 'text/css');
       response.end(css);
@@ -86,7 +98,7 @@ createRoot(document.getElementById('fixture')).render(el);`,
     } else if (path === '/') {
       response.setHeader('Content-Type', 'text/html');
       response.end(
-        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sample plan fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="operator-page ux-workspace" style="max-width:960px;margin:24px auto;padding:16px"><h1>Sample plan fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
+        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sample plan fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="operator-page ux-workspace" style="max-width:960px;margin:24px auto;padding:16px"><h1>Sample plan fixture</h1><div id="fixture"></div></main><script type="module" src="${new URL(request.url ?? '/', 'http://fixture.invalid').searchParams.get('real') === '1' ? '/fixture-real.js' : '/fixture.js'}"></script></body></html>`,
       );
     } else {
       response.statusCode = 404;
@@ -766,4 +778,148 @@ test('staff denial and unavailable states are plain', async ({ page }) => {
   await serveStaff(page, () => ({ status: 503, json: { error: 'x' } }));
   await page.goto(origin + '/?view=staff');
   await expect(page.getByRole('alert')).toContainText('Plans are unavailable.');
+});
+
+// ADR-062: a real workspace reads the same screens with honest wording. The real bundle carries the public real-use
+// value that real answers need to be accepted at all.
+const realPlan = (over: Record<string, unknown> = {}) =>
+  plan({
+    key: 'growth-monthly',
+    title: 'Growth monthly',
+    summary: 'A monthly plan for a company that runs several programmes at once.',
+    priceMinor: '4900000',
+    currency: 'BDT',
+    taxTreatment: 'tax_to_be_confirmed',
+    synthetic: false,
+    ...over,
+  });
+const realReads =
+  (overview: Record<string, unknown> = {}) =>
+  (url: URL) => ({
+    json:
+      url.searchParams.get('scope') === 'plans'
+        ? plansBody({ synthetic: false, plans: [realPlan()] })
+        : overviewBody({
+            synthetic: false,
+            current: null,
+            entitlements: [],
+            subscriptions: [],
+            actions: ['request'],
+            ...overview,
+          }),
+  });
+
+test('a real workspace is told its plan is a record, sees its own plans and never the sample invoices', async ({
+  page,
+}) => {
+  await serve(page, realReads());
+  await page.goto(origin + '/?real=1&view=slot');
+  await expect(page.getByRole('heading', { name: 'Growth monthly' }).first()).toBeVisible();
+  await expect(page.getByText(/record of the plan your workspace holds/)).toBeVisible();
+  await expect(page.getByText(/Invoices are not issued from this page/)).toBeVisible();
+  await expect(page.getByText(/Plans here are samples/)).toHaveCount(0);
+  await expect(page.locator('#fixture').getByText(/sample/i)).toHaveCount(0);
+  await expect(page.getByText('BDT 49,000.00 per month')).toBeVisible();
+  await expect(page.getByText('Sample invoices section')).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
+});
+
+test('a sample workspace still gets the sample wording and its sample invoices', async ({
+  page,
+}) => {
+  await serve(page, reads());
+  await page.goto(origin + '/?view=slot');
+  await expect(page.getByText(/Plans here are samples/)).toBeVisible();
+  await expect(page.getByText('Sample invoices section')).toBeVisible();
+});
+
+test('a real workspace can ask for a plan after reading it, with the exact version and fingerprint', async ({
+  page,
+}) => {
+  const posts: Record<string, unknown>[] = [];
+  await serve(page, (url, method, body) => {
+    if (method === 'POST') {
+      posts.push(body!);
+      return {
+        json: sub({
+          status: 'requested',
+          periodStart: null,
+          periodEnd: null,
+          planTitle: 'Growth monthly',
+          synthetic: false,
+        }),
+      };
+    }
+    return realReads()(url);
+  });
+  await page.goto(origin + '/?real=1');
+  await page.getByRole('button', { name: 'Ask for this plan' }).first().click();
+  const form = page.getByRole('form', { name: 'Ask for Growth monthly' });
+  await form.getByLabel(/I have read the price/).check();
+  await form.getByRole('button', { name: 'Send request' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+  expect(posts).toHaveLength(1);
+  expect(posts[0]).toMatchObject({
+    action: 'request',
+    planKey: 'growth-monthly',
+    planVersion: 1,
+    planDigest: digest,
+    acknowledged: true,
+  });
+});
+
+test('a real workspace whose plans are switched off is told so plainly, not that access is denied', async ({
+  page,
+}) => {
+  await serve(page, () => ({
+    status: 503,
+    json: { error: 'Plans are not switched on for real workspaces yet' },
+  }));
+  await page.goto(origin + '/?real=1');
+  await expect(page.getByText('Temporarily unavailable')).toBeVisible();
+  await expect(page.getByText('Plans are not switched on here.')).toBeVisible();
+  await expect(page.getByText('Access required')).toHaveCount(0);
+});
+
+test('staff in a real operator workspace see plain-text notes and a title that must not say sample', async ({
+  page,
+}) => {
+  await serveStaff(page, (url) => {
+    const scope = url.searchParams.get('scope');
+    if (scope === 'detail')
+      return {
+        json: staffDetail({
+          synthetic: false,
+          plan: realPlan(),
+          subscription: staffSummary({
+            planTitle: 'Growth monthly',
+            workspaceName: 'Dhaka Imports',
+          }),
+        }),
+      };
+    if (scope === 'plans')
+      return {
+        json: {
+          plans: [realPlan()],
+          entitlementKeys: entitlements.map((e) => ({ key: e.key, unit: e.unit, label: e.label })),
+          synthetic: false,
+        },
+      };
+    return {
+      json: {
+        subscriptions: [
+          staffSummary({ planTitle: 'Growth monthly', workspaceName: 'Dhaka Imports' }),
+        ],
+        nextAfter: null,
+        synthetic: false,
+      },
+    };
+  });
+  await page.goto(origin + '/?real=1&view=staff');
+  await expect(page.getByRole('heading', { name: 'Customer plans' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Growth monthly for Dhaka Imports' }).click();
+  const form = page.getByRole('form', { name: 'Activate' });
+  await expect(form.getByLabel(/Note the customer reads \(optional\)/)).toHaveValue('');
+  await expect(page.getByText(/start with Synthetic/)).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
 });

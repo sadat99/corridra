@@ -389,6 +389,16 @@
       "use": "Corrected candidate for the final UX update plan: every verified gap and mistake fixed, lane scopes, shared-file rules, waves, gates and owner steps; not final until the owner records it; nothing is executed"
     },
     {
+      "path": "docs/product/language-switcher-proposal.md",
+      "classification": "Owner proposal",
+      "use": "Where the language switcher stands against the locked plan, the three ways to choose a language and the owner's choice (option A), the languages and reviewers needed; the foundation is merged, page translation and reviewers remain"
+    },
+    {
+      "path": "docs/product/saved-request-recovery-proposal.md",
+      "classification": "Owner proposal",
+      "use": "Saved request recovery phases 2 and 3: finish from another device, keep three days, one reminder email, with the privacy effect and limits; nothing is built"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -952,6 +962,16 @@
       "path": "docs/adr/0061-sample-invoices-payment-records-and-credit-notes.md",
       "classification": "Architecture contract/index",
       "use": "Sample invoices, payment records and credit notes (billing slice 2): default-off, synthetic-only, customers read and staff write, no processor or tax calculation"
+    },
+    {
+      "path": "docs/adr/0062-real-plans-subscriptions-and-entitlements.md",
+      "classification": "Architecture contract/index",
+      "use": "Real plans, subscriptions and entitlements (billing stage 1): default-off, two switches, real catalogue kept apart from the sample one, no payment or invoice; stages 2 and 3 not built"
+    },
+    {
+      "path": "docs/product/real-use-audit-2026-10-24.md",
+      "classification": "Product audit",
+      "use": "Which customer modules work for real workspaces, which are only built, and which are still sample only, with the evidence and the suggested order of fixes"
     },
     {
       "path": "docs/v3/history/ledger-chunks-120-126.md",

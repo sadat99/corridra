@@ -3,6 +3,8 @@
 import Link from 'next/link';
 
 import { useEffect, useRef, useState } from 'react';
+import { LanguageSwitcher } from './language-switcher';
+import { useT } from './language-provider';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
@@ -57,6 +59,7 @@ function useSignedIn(accounts: boolean) {
 }
 
 export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
+  const t = useT();
   const signedIn = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
@@ -79,7 +82,7 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
         }
       }}
     >
-      <Link prefetch={false} className="brand" href="/" aria-label="Corridra home">
+      <Link prefetch={false} className="brand" href="/" aria-label={t('header.home')}>
         <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <path
             d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
@@ -96,23 +99,24 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
         aria-controls="public-navigation"
         onClick={() => setOpen(!open)}
       >
-        {open ? 'Close menu' : 'Menu'} <span aria-hidden="true">{open ? '−' : '+'}</span>
+        {open ? t('header.menuClose') : t('header.menu')}{' '}
+        <span aria-hidden="true">{open ? '−' : '+'}</span>
       </button>
       <nav
         id="public-navigation"
         className={open ? 'public-nav is-open' : 'public-nav'}
-        aria-label="Main navigation"
+        aria-label={t('header.nav')}
       >
         <Link prefetch={false} href="/how-it-works" onClick={close}>
-          How it works
+          {t('header.howItWorks')}
         </Link>
         <Link prefetch={false} href="/corridors" onClick={close}>
-          Routes
+          {t('header.routes')}
         </Link>
         {signedIn ? (
           <>
             <Link prefetch={false} href="/account" onClick={close}>
-              Your account
+              {t('header.account')}
             </Link>
             <button
               type="button"
@@ -120,16 +124,17 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
               disabled={busy}
               onClick={signOut}
             >
-              {busy ? 'Signing out…' : 'Sign out'}
+              {busy ? t('header.signingOut') : t('header.signOut')}
             </button>
           </>
         ) : (
           <Link prefetch={false} href="/signin" onClick={close}>
-            Sign in
+            {t('header.signIn')}
           </Link>
         )}
+        <LanguageSwitcher />
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
-          Start a request <span className="sr-only">(sample request)</span>
+          {t('header.start')} <span className="sr-only">{t('header.sample')}</span>
         </Link>
       </nav>
       {message && (

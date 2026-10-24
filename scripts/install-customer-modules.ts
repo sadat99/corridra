@@ -30,6 +30,8 @@ import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migra
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
+import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
+import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { z } from 'zod';
 
@@ -44,6 +46,11 @@ const v = z
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    REAL_BILLING_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    REAL_BILLING_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     MISSION_MAIL_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -83,6 +90,10 @@ if (['enable', 'pause'].includes(v.NETWORK_USE_ACTION) && !v.NETWORK_USE_REASON)
   throw new Error('Network changes require an explicit reason');
 if (v.VIEW_AS_ACTION !== 'unchanged' && !apply)
   throw new Error('View-as changes require INSTALL_APPLY=yes');
+if (v.REAL_BILLING_ACTION !== 'unchanged' && !apply)
+  throw new Error('Real billing changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.REAL_BILLING_ACTION) && !v.REAL_BILLING_REASON)
+  throw new Error('Real billing changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -115,6 +126,7 @@ const registries = [
   'customer_invoicing_migrations',
   'customer_real_use_migrations',
   'network_real_use_migrations',
+  'customer_billing_real_migrations',
   'customer_mission_mail_migrations',
   'view_as_migrations',
 ];
@@ -217,6 +229,18 @@ try {
         });
         console.log(
           `Mission mail ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.REAL_BILLING_ACTION !== 'unchanged') {
+      await migrateCustomerBillingReal(pool);
+      if (v.REAL_BILLING_ACTION !== 'install') {
+        const result = await configureRealBilling(pool, {
+          enabled: v.REAL_BILLING_ACTION === 'enable',
+          reason: v.REAL_BILLING_REASON,
+        });
+        console.log(
+          `Real plans ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }
