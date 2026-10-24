@@ -374,6 +374,16 @@
       "use": "What the first two mission emails build today, what needs an approved database change, and the privacy wording to review; nothing is switched on"
     },
     {
+      "path": "docs/product/language-switcher-proposal.md",
+      "classification": "Owner proposal",
+      "use": "Where the language switcher stands against the locked plan, the three ways to choose a language, the languages and reviewers needed; nothing is built"
+    },
+    {
+      "path": "docs/product/saved-request-recovery-proposal.md",
+      "classification": "Owner proposal",
+      "use": "Saved request recovery phases 2 and 3: finish from another device, keep three days, one reminder email, with the privacy effect and limits; nothing is built"
+    },
+    {
       "path": "docs/product/public-experience-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
