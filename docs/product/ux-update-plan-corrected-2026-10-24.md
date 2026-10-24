@@ -1,12 +1,36 @@
 # Corridra UX update plan, corrected candidate, 24 October 2026
 
-Status: candidate for the owner's approval. It is not final until the owner records one dated sentence in the work log. Nothing in it is being executed: the planning freeze in [the verification record](ux-update-plan-verification-2026-10-24.md) stands.
+Status: **approved for execution by the owner's delegation** (24 October 2026, see section 0). The charter governs; where this plan and the charter differ, the charter wins.
 
 What this is: the owner's plan of 24 October 2026 with every gap and mistake found in the verification fixed. It is built on [the UX charter](ux-charter.md), which governs. Where this plan and the charter differ, the charter wins. A lane session reads this file from the repository; nothing is pasted.
 
 How it stays true as the system changes: it does not state facts that go stale (counts, line numbers, branch lists). Each lane starts with "premises to verify" and stops if one is false. The findings behind each fix are in the verification record, cited here as A1 to A17, D1 to D11 and P1 to P7.
 
 Owner decisions that are still open are marked **[Decision N]**. Where one is open, this plan applies the recommended option and says so, so the plan is complete and can be changed in one place.
+
+## 0. Execution record (24 October 2026)
+
+**Owner direction, in chat, 24 October 2026, verbatim:** "no, u work alone here in this session 100% completely, correctly, by selfdriven move. i am givin u advance permission and approval for executing, production level works etc, even if migration is required. i will be away for for some hours. i want u to finish the entire upgrade 100% compeltely by yourself, without my interventions." And: "when done, merge & deploy and keep going by yourself."
+
+What this changes: the plan is final for execution. The assistant works alone in one session, one lane at a time, each as its own pull request from the designated branch, merged and deployed once every required check is green on the exact head (the standing rule of 22 October). The decisions below are taken by the assistant under that delegation.
+
+What this does not change, and stays closed: the gates D01 to D06 and D08; real operations and provider activation; legal, privacy and consent wording (proposals go in pull request descriptions, the pages stay as they are); the contributor sign-in change (waits for a security review); email sending to real customers (Pulse stays off until the owner's privacy review); money, permissions and data meaning. Everything ships behind its switch, off by default, with the switch-off page byte for byte as main. Migrations are additive and are installed only through the existing owner-run install job and its protected environment; nothing is applied by merging.
+
+**Decisions taken by delegation**
+
+| #   | Decision                       | Taken                                                                                                                                                 |
+| --- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | PR171                          | Already merged (with PR174). Lane 2 phase 2 builds on main.                                                                                           |
+| 2   | Branch names                   | One designated branch, reused in sequence after each squash merge (KI-17). No other branch is touched or deleted.                                     |
+| 3   | Merge label and integrator     | Not needed with one writer. The standing merge routine in KI-07 and KI-21 applies.                                                                    |
+| 4   | Navigation and labels          | Your Move, Missions, Companies, Library, More, with the plain fallback labels kept as a data table. UI direction is amended in Lane 4's first commit. |
+| 5   | Road mapping and holder        | As in 5.3. No holder badge on the Road in phase 1.                                                                                                    |
+| 6   | Inline SVG                     | No exception. Shapes are CSS; icons go through `CorridraIcon`.                                                                                        |
+| 7   | Width, Bangla type, Lane 9     | No new Bangla face. Lane 9 is built last and only if every other lane is done.                                                                        |
+| 8   | Helper and founder front doors | Built last as small, switch-gated pages that link to what exists.                                                                                     |
+| 9   | One starter set                | One mapping table feeds the first question, the home cards and the guided starters.                                                                   |
+
+**Changes in the system since the plan was written.** ADR numbers 0062 to 0065 were taken by billing and report access (0062 real plans, 0063 report access switches, 0064 real invoices, 0065 simulated provider), so this plan's ADRs are renumbered: 0066 language phase 2, 0067 notification records and Pulse, 0068 Move records, 0069 Reply Page, 0070 decision card and sharing, 0071 Road mapping. Another session may take numbers; each pull request checks the index first and takes the next free one.
 
 ## 1. The target in one paragraph
 
@@ -174,7 +198,7 @@ A date appears only where a real date exists. No streaks, no badges, no invented
 
 The Room is keyed by the request. It shows a deterministic emblem built from the name (never stock imagery), the received date, the Road, a message strip of the team's replies, and the lens tabs. The team's replies are read only today and the Room adds no reply box. It composes the existing request page and mission page (and keeps the mission passport, whose "YOUR NEXT MOVE" shows the staff-approved next action) and mounts the existing comparison matrix and `SavedCommercialReport` as the Compare and Evidence lenses only where a readable link between the request and a saved mission exists. Where none exists it links out. Both old URLs keep working and every old action stays reachable from the Room.
 
-The Road shows six steps. The marker follows this mapping, which is proposed for ADR-0067 **[Decision 5]**:
+The Road shows six steps. The marker follows this mapping, which is proposed for ADR-0071 **[Decision 5]**:
 
 | Mission status                         | Road step                                                            |
 | -------------------------------------- | -------------------------------------------------------------------- |
@@ -204,7 +228,7 @@ The Reply Page extends the existing supplier response on `/buyer` (`recipient-re
 
 ### 5.6 Language (A13, D2)
 
-PR171 is the base: browser-stored choice, five languages, release by `CORRIDRA_LANGUAGES_REVIEWED`, drafts by `CORRIDRA_LANGUAGES_PREVIEW`. A language is offered only after a native reviewer is recorded with a name and a date. New strings for new components go into the same message module. The UI language list is tied by a test to what `displayDate` and `displayMoney` accept. Mission mail stays English until ADR-0063 stores a language in notification preferences. The privacy page does not mention the stored choice yet; that wording is the owner's. Bangla currently falls back to a serif face; whether to add a sans face is the owner's call (plan question 2). French and German are later additions. Arabic PDFs need a font and shaping first, so Arabic users get the CSV until then.
+PR171 is the base: browser-stored choice, five languages, release by `CORRIDRA_LANGUAGES_REVIEWED`, drafts by `CORRIDRA_LANGUAGES_PREVIEW`. A language is offered only after a native reviewer is recorded with a name and a date. New strings for new components go into the same message module. The UI language list is tied by a test to what `displayDate` and `displayMoney` accept. Mission mail stays English until ADR-0067 stores a language in notification preferences. The privacy page does not mention the stored choice yet; that wording is the owner's. Bangla currently falls back to a serif face; whether to add a sans face is the owner's call (plan question 2). French and German are later additions. Arabic PDFs need a font and shaping first, so Arabic users get the CSV until then.
 
 ### 5.7 Pulse (D7, A12)
 
@@ -235,11 +259,11 @@ Tasks, in order:
 
 ### Lane 2. Language, phase 2 (Wave 1, after PR171 merges)
 
-Branch `ux/l2-language-phase2`. Depends on PR171 merged **[Decision 1]**. Writes ADR-0062.
+Branch `ux/l2-language-phase2`. Depends on PR171 merged **[Decision 1]**. Writes ADR-0066.
 
 **Owns:** `docs/adr/0062-*.md`, additions to the message module and tests added by PR171, the review record for each released language (reviewer name and date), a pure move of language styles out of `globals.css`. **Reads only:** `packages/domain/src/locale.ts`, fonts.
 
-Tasks: write ADR-0062 (proposed) recording what PR171 does: browser-stored choice, release by setting, drafts by preview setting, right-to-left, numerals, and what is deliberately not done (cookie, server knowledge of the language). Add a test tying the UI language list to what `displayDate` and `displayMoney` accept. Add strings for the new components (Your Move, Room, Road, quote cards, first question) in English and as drafts for review. Move PR171's stylesheet lines into a component stylesheet without changing a rule. Record screenshots of Bangla text in buttons, labels and a table, and list the Bangla type question for the owner. Localization standard for every string: scannable at a glance; buttons one to three words; Bangla in a modern corporate register with transliterated tech words in Bengali script; terms like B2B and RFQ stay as professionals say them; words with legal or commercial weight translated for exact meaning; the five trust names never weakened; figures of speech translated by meaning.
+Tasks: write ADR-0066 (proposed) recording what PR171 does: browser-stored choice, release by setting, drafts by preview setting, right-to-left, numerals, and what is deliberately not done (cookie, server knowledge of the language). Add a test tying the UI language list to what `displayDate` and `displayMoney` accept. Add strings for the new components (Your Move, Room, Road, quote cards, first question) in English and as drafts for review. Move PR171's stylesheet lines into a component stylesheet without changing a rule. Record screenshots of Bangla text in buttons, labels and a table, and list the Bangla type question for the owner. Localization standard for every string: scannable at a glance; buttons one to three words; Bangla in a modern corporate register with transliterated tech words in Bengali script; terms like B2B and RFQ stay as professionals say them; words with legal or commercial weight translated for exact meaning; the five trust names never weakened; figures of speech translated by meaning.
 
 **Done when:** with both language settings unset the page is byte for byte as main; tests pass. Then stop.
 
@@ -249,10 +273,10 @@ Branch `ux/l3-adr-pack`. Depends on nothing. Touches only `docs/` (ADR files, `d
 
 Write four ADRs (status proposed) and one design note, then stop for approval. Each states the goal, the exact data, who can read and write, row-level security, the blast radius, abuse cases, rollback, the test plan and the controlling switch.
 
-- **ADR-0063 Notification records and Pulse.** Align with `docs/product/phase0-mission-email-proposal.md`. Messages 5, 6 and mission complete; message 4 exists. Mute per request, daily digest, quiet hours by time zone, a stored language preference for mail, recipient only the verified account holder, titles and dates only, web push after email.
-- **ADR-0064 Move records.** A staff-set record with a verb from a fixed list of about twelve, a holder, a date and a status, read by the customer through a security-definer function with row security, like `customer.private_requests`. Reuse the typed `MissionMove` input already in the mail code. State why the mission `next_action` must not be reused.
-- **ADR-0065 Reply Page.** Extends the existing supplier response. Record that the database function already accepts the extra terms, list only the form and web changes, the review step, the link model, leakage, scraping, look-alike pages, rate limits, URL fragments in the WeChat and WhatsApp in-app browsers, the staff-entry fallback and the real-outreach gate that keeps the path sample only.
-- **ADR-0066 Decision card and sharing.** A read-only, expiring card for a co-owner or bank using the existing link model. Team sharing stays off by default. Any sharing is explicit, revocable and audited.
+- **ADR-0067 Notification records and Pulse.** Align with `docs/product/phase0-mission-email-proposal.md`. Messages 5, 6 and mission complete; message 4 exists. Mute per request, daily digest, quiet hours by time zone, a stored language preference for mail, recipient only the verified account holder, titles and dates only, web push after email.
+- **ADR-0068 Move records.** A staff-set record with a verb from a fixed list of about twelve, a holder, a date and a status, read by the customer through a security-definer function with row security, like `customer.private_requests`. Reuse the typed `MissionMove` input already in the mail code. State why the mission `next_action` must not be reused.
+- **ADR-0069 Reply Page.** Extends the existing supplier response. Record that the database function already accepts the extra terms, list only the form and web changes, the review step, the link model, leakage, scraping, look-alike pages, rate limits, URL fragments in the WeChat and WhatsApp in-app browsers, the staff-entry fallback and the real-outreach gate that keeps the path sample only.
+- **ADR-0070 Decision card and sharing.** A read-only, expiring card for a co-owner or bank using the existing link model. Team sharing stays off by default. Any sharing is explicit, revocable and audited.
 - **Design note** `docs/product/phase2-interviews.md`: the 10 to 15 questions that decide whether the decision card and Pulse are worth building.
 
 Add a short "Decision needed" list at the end of ADR-0058 without changing its status. **Done when:** the documents are merged and the pull request lists each owner decision in plain words. Wave 3 code lanes cannot start until the owner marks each ADR accepted.
@@ -269,11 +293,11 @@ Tasks: (1) **First commit:** amend UI direction's customer navigation row, custo
 
 ### Lane 5. Room, Road and lenses (Wave 2)
 
-Branch `ux/l5-room`. Depends on Lanes 1 and 2 phase 2 merged. Writes ADR-0067.
+Branch `ux/l5-room`. Depends on Lanes 1 and 2 phase 2 merged. Writes ADR-0071.
 
 **Owns:** `apps/web/app/account/rooms/[requestId]/**` (new), consumers of the Lane 1 components (compose, never edit them), `apps/web/components/comparison-matrix.tsx` (add a cards view beside the matrix and keep the matrix), `apps/web/app/account/missions/saved-commercial-report.tsx` (only to mount the lens), tests. **Does not own** `apps/web/app/account/requests/[requestId]/page.tsx` (link to the Room from it only with one line behind the switch).
 
-Tasks: write ADR-0067 (proposed): the Road displays the real status a customer may already read, the mapping in 5.3, the holder rule, and what the page says when `available` is false. Build the Room per 5.3 and the lenses per 5.4. Scroll budget: a record, 4 phone screens and 2.5 desktop. Tests: mapping for every status; `available` false; no mission data reaches the page for another customer; comparison output unchanged against the existing engine tests. Switches `CORRIDRA_UX_ROAD`, `CORRIDRA_UX_LENSES`; `CORRIDRA_UX_TRIP` stays planned unless the inventory allows the Trip lens.
+Tasks: write ADR-0071 (proposed): the Road displays the real status a customer may already read, the mapping in 5.3, the holder rule, and what the page says when `available` is false. Build the Room per 5.3 and the lenses per 5.4. Scroll budget: a record, 4 phone screens and 2.5 desktop. Tests: mapping for every status; `available` false; no mission data reaches the page for another customer; comparison output unchanged against the existing engine tests. Switches `CORRIDRA_UX_ROAD`, `CORRIDRA_UX_LENSES`; `CORRIDRA_UX_TRIP` stays planned unless the inventory allows the Trip lens.
 
 **Done when:** switches off equals main; on, the Room works for a sample mission; the comparison tests are untouched and green. Then stop.
 
@@ -289,7 +313,7 @@ Tasks: (1) a picture-first first question behind `CORRIDRA_UX_FIRSTQ`: Buy produ
 
 ### Lane 7. Move records and Pulse (Wave 3)
 
-Branch `ux/l7-moves-pulse`. Depends on Lanes 4 and 5 merged, Gate 2 passed, and ADR-0063 and ADR-0064 accepted. If either is not accepted, stop at once.
+Branch `ux/l7-moves-pulse`. Depends on Lanes 4 and 5 merged, Gate 2 passed, and ADR-0067 and ADR-0068 accepted. If either is not accepted, stop at once.
 
 **Owns:** `packages/db/customer-move-migrations/**` and `packages/db/customer-notification-migrations/**` (new, additive), the installer wiring (first in line), `packages/auth/src/customer-moves.ts` and `customer-notifications.ts` (new), `apps/web/app/api/move/**`, `apps/web/app/api/pulse/**`, an operator panel for setting a Move (a new file, mounted with a one-line edit), the Your Move source for Move records, and new template functions for messages 5, 6 and mission complete. Message 1 is not edited. Message 4 gets its trigger from Move records.
 
@@ -297,11 +321,11 @@ Build exactly what the accepted ADRs say, and the mail rules in 5.7. Tests: deni
 
 ### Lane 8. Reply Page (Wave 3)
 
-Branch `ux/l8-reply-page`. Depends on Lanes 4 and 5 merged, Gate 2 passed and ADR-0065 accepted. Merges after Lane 7 on the installer files, if it needs them.
+Branch `ux/l8-reply-page`. Depends on Lanes 4 and 5 merged, Gate 2 passed and ADR-0069 accepted. Merges after Lane 7 on the installer files, if it needs them.
 
-**Owns:** additions to the supplier response under `apps/web/app/buyer/**` or a `reply` route as ADR-0065 decides, a migration module only if a check shows the database function cannot accept the new terms, `apps/web/app/api/reply/**`, the operator review queue as a new file mounted with a one-line edit, a limited Chinese catalogue for this page, tests.
+**Owns:** additions to the supplier response under `apps/web/app/buyer/**` or a `reply` route as ADR-0069 decides, a migration module only if a check shows the database function cannot accept the new terms, `apps/web/app/api/reply/**`, the operator review queue as a new file mounted with a one-line edit, a limited Chinese catalogue for this page, tests.
 
-Build exactly what ADR-0065 says, per 5.5. Add the missing terms to the form first; they need no database change. Operator side: review beside the requirement with the engine's gaps highlighted; actions to publish to the customer, ask the supplier for missing terms (a pre-filled link), or reject with a reason. Tests: link expiry and revocation, replay, tampering, field allow-listing, rate limits, a narrow mobile viewport, and a written manual test plan for the WeChat and WhatsApp in-app browsers. Nothing is enabled by merging. Switch `CORRIDRA_REPLY_PAGE`.
+Build exactly what ADR-0069 says, per 5.5. Add the missing terms to the form first; they need no database change. Operator side: review beside the requirement with the engine's gaps highlighted; actions to publish to the customer, ask the supplier for missing terms (a pre-filled link), or reject with a reason. Tests: link expiry and revocation, replay, tampering, field allow-listing, rate limits, a narrow mobile viewport, and a written manual test plan for the WeChat and WhatsApp in-app browsers. Nothing is enabled by merging. Switch `CORRIDRA_REPLY_PAGE`.
 
 ### Lane 9. Operator URLs and view-as stage 2 (Wave 3, optional)
 
