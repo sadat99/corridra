@@ -8,7 +8,7 @@ export function PublicShell({
   className?: string;
 }) {
   return (
-    <main id="main" tabIndex={-1} className={`ux-public ${className}`}>
+    <main id="main" lang="en" dir="ltr" tabIndex={-1} className={`ux-public ${className}`}>
       {children}
     </main>
   );

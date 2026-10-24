@@ -6,6 +6,7 @@ import { rawContext } from './support';
 import { sessionHash, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerBilling } from '../../packages/db/src/customer-billing-migrate';
+import { migrateCustomerBillingReal } from '../../packages/db/src/customer-billing-real-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import {
   CustomerWorkspaceService,
@@ -29,6 +30,7 @@ import {
 const issuer = 'https://ep-billing-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const options = { enabled: true, synthetic: true, production: false, issuer };
 const people = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'gina'];
+const withRealModule = process.env.BILLING_WITH_REAL_MODULE === '1';
 let f: Awaited<ReturnType<typeof accessFixture>>;
 let workspaceId: string, otherWorkspace: string;
 let staff: CustomerBillingStaffService;
@@ -292,69 +294,82 @@ beforeAll(async () => {
   });
   before = await snapshot();
   await migrateCustomerBilling(f.owner);
+  // customer-billing-with-real-module.test.ts runs this whole file again with the real-billing module installed
+  // (control closed): sample workspaces must behave exactly as they do without it.
+  if (withRealModule) await migrateCustomerBillingReal(f.owner);
 }, 120000);
 afterAll(async () => {
   await f?.close();
 });
 
-test('installing the module on a populated database adds only new objects and changes no existing function, table, policy or row', async () => {
-  const after = await snapshot();
-  const oldFunctions = new Map(before.functions.map((r) => [r.name, r]));
-  for (const [name, row] of oldFunctions) {
-    const now = after.functions.find((r) => r.name === name)!;
-    expect(now).toEqual(row);
-  }
-  const added = after.functions.filter((r) => !oldFunctions.has(r.name)).map((r) => r.name);
-  expect(added.filter((n) => !/^(customer|customer_private|app)\.billing_/.test(n))).toEqual([]);
-  expect(added).toContain('customer.billing_command(uuid,text,jsonb)');
-  const oldTables = new Set(before.tables.map((t) => t.nspname + '.' + t.relname));
-  expect(
-    after.tables
-      .map((t) => t.nspname + '.' + t.relname)
-      .filter((t) => !oldTables.has(t))
-      .sort(),
-  ).toEqual(
-    [
-      'command',
-      'entitlement_key',
-      'plan_entitlement',
-      'plan_version',
-      'plan_view',
-      'staff_command',
-      'subscription',
-      'subscription_event',
-    ]
-      .map((n) => 'customer_private.billing_' + n)
-      .sort(),
-  );
-  for (const [name, digest] of Object.entries(before.records))
-    expect(after.records[name]).toBe(digest);
-  expect(
-    after.policies.filter(
-      (p) =>
-        !before.policies.some((q) => q.policyname === p.policyname && q.tablename === p.tablename),
-    ),
-  ).toEqual([]);
-  for (const t of before.tables) {
-    const n = after.tables.find((x) => x.nspname === t.nspname && x.relname === t.relname)!;
-    expect(n.acl).toBe(t.acl);
-    expect(n.relrowsecurity).toBe(t.relrowsecurity);
-  }
-  const triggers = after.triggers.filter(
-    (t) => !before.triggers.some((o) => o.relname === t.relname && o.tgname === t.tgname),
-  );
-  expect(triggers.every((t) => /^billing_/.test(t.relname))).toBe(true);
-  // The module stands alone: it does not need the paid-service module and nothing else reads its tables.
-  expect(
-    (await f.owner.query("SELECT to_regclass('customer_private.service_request') r")).rows[0].r,
-  ).toBeNull();
-  const applied = (
-    await f.owner.query('SELECT name,sha256 FROM customer_billing_migrations.applied')
-  ).rows;
-  expect(applied).toHaveLength(1);
-  const sql = await readFile('packages/db/customer-billing-migrations/' + applied[0].name, 'utf8');
-  expect(applied[0].sha256).toBe(createHash('sha256').update(sql).digest('hex'));
-});
+// Skipped in the run with the real-billing module: that module replaces functions on purpose, and its own test
+// (customer-billing-real.test.ts) holds its install to the guards it carries.
+test.skipIf(withRealModule)(
+  'installing the module on a populated database adds only new objects and changes no existing function, table, policy or row',
+  async () => {
+    const after = await snapshot();
+    const oldFunctions = new Map(before.functions.map((r) => [r.name, r]));
+    for (const [name, row] of oldFunctions) {
+      const now = after.functions.find((r) => r.name === name)!;
+      expect(now).toEqual(row);
+    }
+    const added = after.functions.filter((r) => !oldFunctions.has(r.name)).map((r) => r.name);
+    expect(added.filter((n) => !/^(customer|customer_private|app)\.billing_/.test(n))).toEqual([]);
+    expect(added).toContain('customer.billing_command(uuid,text,jsonb)');
+    const oldTables = new Set(before.tables.map((t) => t.nspname + '.' + t.relname));
+    expect(
+      after.tables
+        .map((t) => t.nspname + '.' + t.relname)
+        .filter((t) => !oldTables.has(t))
+        .sort(),
+    ).toEqual(
+      [
+        'command',
+        'entitlement_key',
+        'plan_entitlement',
+        'plan_version',
+        'plan_view',
+        'staff_command',
+        'subscription',
+        'subscription_event',
+      ]
+        .map((n) => 'customer_private.billing_' + n)
+        .sort(),
+    );
+    for (const [name, digest] of Object.entries(before.records))
+      expect(after.records[name]).toBe(digest);
+    expect(
+      after.policies.filter(
+        (p) =>
+          !before.policies.some(
+            (q) => q.policyname === p.policyname && q.tablename === p.tablename,
+          ),
+      ),
+    ).toEqual([]);
+    for (const t of before.tables) {
+      const n = after.tables.find((x) => x.nspname === t.nspname && x.relname === t.relname)!;
+      expect(n.acl).toBe(t.acl);
+      expect(n.relrowsecurity).toBe(t.relrowsecurity);
+    }
+    const triggers = after.triggers.filter(
+      (t) => !before.triggers.some((o) => o.relname === t.relname && o.tgname === t.tgname),
+    );
+    expect(triggers.every((t) => /^billing_/.test(t.relname))).toBe(true);
+    // The module stands alone: it does not need the paid-service module and nothing else reads its tables.
+    expect(
+      (await f.owner.query("SELECT to_regclass('customer_private.service_request') r")).rows[0].r,
+    ).toBeNull();
+    const applied = (
+      await f.owner.query('SELECT name,sha256 FROM customer_billing_migrations.applied')
+    ).rows;
+    expect(applied).toHaveLength(1);
+    const sql = await readFile(
+      'packages/db/customer-billing-migrations/' + applied[0].name,
+      'utf8',
+    );
+    expect(applied[0].sha256).toBe(createHash('sha256').update(sql).digest('hex'));
+  },
+);
 
 test('the runtime and auth logins can reach only the eight intended functions and none of the tables', async () => {
   const tables = [
@@ -1418,7 +1433,8 @@ test('a plan must state every entitlement once with a mode that suits its unit, 
     f.owner.query(
       "INSERT INTO customer_private.billing_plan_version(plan_key,version,title,summary,billing_interval,price_minor,currency,tax_treatment,included,excluded,active,synthetic,source) VALUES('example-direct',1,'Direct plan (sample plan)','A direct insert used to test the guard.','month',100,'USD','tax_to_be_confirmed',ARRAY['Something included'],ARRAY['Something excluded'],true,false,'SEED')",
     ),
-  ).rejects.toThrow(/check constraint/i);
+    // With the real-billing module installed the catalogue trigger answers before the table rule does.
+  ).rejects.toThrow(/check constraint|control to be open/i);
 });
 
 test('direct SQL cannot write a move the lifecycle forbids, a note for the wrong actor or a period that does not fit', async () => {
@@ -1528,7 +1544,8 @@ test('direct SQL cannot write a move the lifecycle forbids, a note for the wrong
       staffTenant,
       'no marker',
     ]),
-  ).rejects.toThrow(/check constraint/i);
+    // The invented-text rule is applied by the timeline guard once the real-billing module is installed.
+  ).rejects.toThrow(/check constraint|invented text/i);
   await expect(
     insert('seq,kind,status_after,actor_kind,customer_actor,customer_note', [
       2,
@@ -1598,7 +1615,7 @@ test('billing records are synthetic only: a workspace that is not synthetic read
         "INSERT INTO customer_private.billing_subscription_event(subscription_id,tenant_id,seq,kind,status_after,actor_kind,customer_actor) SELECT $1,$2,2,'withdrawn','withdrawn','customer',created_by FROM customer_private.billing_subscription WHERE id=$1",
         [sub, target],
       ),
-    ).rejects.toThrow(/synthetic only/i);
+    ).rejects.toThrow(/synthetic only|sample workspace or the real billing control/i);
   } finally {
     await f.owner.query('UPDATE app.tenant SET synthetic=true WHERE id=$1', [target]);
   }

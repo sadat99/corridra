@@ -131,3 +131,15 @@ Install with the `Install customer modules` workflow (it now includes `customer-
 ### Sample invoices and payment records (optional module, ADR061)
 
 Install with the `Install customer modules` workflow (it now includes `customer-invoicing-migrations`, after the billing module, which it needs), then set `CORRIDRA_CUSTOMER_INVOICING_ENABLED=true` next to `CORRIDRA_CUSTOMER_BILLING_ENABLED=true` and deploy. Staff also need `CORRIDRA_DELIVERY_ENABLED=true`. Owners and admins then see an Invoices section on the plan and billing page, and staff see "Customer sample invoices" in the delivery section: periods that need an invoice, issue, record a payment, issue a credit note. Only sample workspaces are served and every note starts with Synthetic. Invoices are labelled sample records, not tax invoices, and are numbered SAMPLE-INV and SAMPLE-CN. Nothing is collected, refunded or converted, and no tax is calculated. A payment record is the team's statement, not a bank confirmation. To stop, unset the switch; tables and history are kept. Real-session acceptance and the first staff issue are not yet observed.
+
+### Real plans and subscriptions (optional module, ADR062)
+
+This is billing stage 1 for real workspaces. It records which plan a real workspace holds and for which period. Nothing is invoiced, charged or collected, and the invoicing module is not touched. Order of steps, each one on purpose:
+
+1. Run the `Install customer modules` workflow on `main` with `apply` = `yes` and `real_billing_action` = `install`. This adds the module and changes nothing for anyone: the control starts closed.
+2. In Production set `CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED=true` (it needs `CORRIDRA_CUSTOMER_BILLING_ENABLED=true` and the real-use settings already on) and deploy.
+3. Run the workflow again with `real_billing_action` = `enable` and a reason of at least ten characters. This opens the database side. To stop, run it with `pause` (records are kept) or unset the setting.
+4. As the owner or an admin of the operator workspace (fresh authenticator check) open the delivery section, then "Customer plans", and write the real plans: name, price in whole minor units, currency, interval, tax treatment, what is included and left out, and every limit. The real catalogue starts empty, and a real plan title must not say "sample".
+5. A real workspace owner or admin then sees the plan on "Plan and billing", reads it whole, and can ask for it. Staff activate the request for an explicit period.
+
+Say to customers only what is true: the subscription is a record, nothing has been billed. Real invoices are stage 2 and need the billing entity, tax rules, legal invoice number format and a named finance person first.

@@ -10,11 +10,16 @@ function subscribe(onChange: () => void) {
   return () => window.speechSynthesis.removeEventListener('voiceschanged', onChange);
 }
 
+/** The language of what Listen reads: the main region's own language, not the chrome around it. */
+function contentLanguage() {
+  return document.getElementById('main')?.lang || document.documentElement.lang || 'en';
+}
+
 /** True only when this browser can speak the page language. Otherwise Listen is not shown. */
 function canSpeak() {
   if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined')
     return false;
-  const language = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+  const language = contentLanguage().slice(0, 2).toLowerCase();
   const voices = window.speechSynthesis.getVoices();
   // Voices load late in some browsers. Until they are listed, trust English only.
   if (voices.length === 0) return language === 'en';
@@ -42,7 +47,7 @@ export function CornerDock() {
     const text = document.getElementById('main')?.innerText.trim();
     if (!text) return;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = document.documentElement.lang || 'en';
+    utterance.lang = contentLanguage();
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
     synth.cancel();
