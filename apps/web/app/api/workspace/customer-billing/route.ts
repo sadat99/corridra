@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
+import {
+  customerRealInvoicingEnabled,
+  realInvoicingOffMessage,
+} from '@corridra/auth/customer-invoicing-real';
 import { foundations } from '../../../../lib/foundations';
 import {
   boundedBody,
@@ -29,8 +33,29 @@ async function handle(request: Request) {
       tenantId: z.uuid().parse(query.get('tenant')),
       purpose: 'synthetic_validation',
     };
+    // Real invoices (ADR-064) are their own namespace: ?invoicing=real. Their command names overlap the sample ones.
+    const real = query.get('invoicing') === 'real';
+    if (real && !customerRealInvoicingEnabled())
+      throw new DomainError(realInvoicingOffMessage, 503);
     if (request.method === 'GET') {
       const scope = query.get('scope') ?? 'list';
+      if (real) {
+        const body =
+          scope === 'pending'
+            ? await s.customerRealInvoicingStaff.pending(ctx)
+            : scope === 'invoices'
+              ? await s.customerRealInvoicingStaff.list(ctx, {
+                  ...(query.get('after') ? { after: query.get('after') } : {}),
+                })
+              : scope === 'invoice'
+                ? await s.customerRealInvoicingStaff.view(
+                    ctx,
+                    z.uuid().parse(query.get('invoiceId')),
+                  )
+                : null;
+        if (body === null) throw new DomainError('Unknown scope', 400);
+        return Response.json(body, { headers: deliveryHeaders });
+      }
       // Sample invoices have their own switch on top of the billing switch.
       if (['pending', 'invoices', 'invoice'].includes(scope) && !customerInvoicingEnabled())
         throw new DomainError(unavailable, 503);
@@ -66,6 +91,10 @@ async function handle(request: Request) {
       string,
       unknown
     >;
+    if (real)
+      return Response.json(await s.customerRealInvoicingStaff.command(ctx, input), {
+        headers: deliveryHeaders,
+      });
     // A plan change is its own command shape; every other action is a subscription command.
     const { action, ...rest } = input;
     const invoicing = action === 'issue' || action === 'payment' || action === 'credit';

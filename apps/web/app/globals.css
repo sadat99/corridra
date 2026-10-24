@@ -9100,3 +9100,33 @@ samp {
     box-shadow: none;
   }
 }
+
+/* Real invoices (ADR-064): a two column from and bill-to block, a visible made-up notice, and a print rule that
+   prints only the invoice whose button was pressed. */
+.real-invoice-parties {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+.real-invoice-madeup {
+  border-left: 4px solid currentColor;
+  padding-left: 0.75rem;
+}
+@media print {
+  body[data-print-invoice] * {
+    visibility: hidden;
+  }
+  body[data-print-invoice] .real-invoice[data-printing],
+  body[data-print-invoice] .real-invoice[data-printing] * {
+    visibility: visible;
+  }
+  body[data-print-invoice] .real-invoice[data-printing] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  body[data-print-invoice] .real-invoice-actions {
+    display: none;
+  }
+}

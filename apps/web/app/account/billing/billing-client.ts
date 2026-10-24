@@ -15,6 +15,11 @@ import type {
   InvoiceStatus,
   InvoicingOverview,
 } from '@corridra/auth/customer-invoicing';
+import type {
+  RealInvoice,
+  RealInvoiceStatus,
+  RealInvoicingOverview,
+} from '@corridra/auth/customer-invoicing-real';
 import {
   dateTimeText,
   dayText,
@@ -210,4 +215,54 @@ export function validInvoicing(value: unknown): value is InvoicingOverview {
     Array.isArray(v.balances) &&
     Number.isFinite(Date.parse(v.expiresAt))
   );
+}
+
+// Real invoices (ADR-064) come from the same endpoint and scope; a real deployment answers with the real shape.
+export type { RealInvoice, RealInvoiceStatus, RealInvoicingOverview };
+export function validRealInvoicing(value: unknown): value is RealInvoicingOverview {
+  const v = value as RealInvoicingOverview | null;
+  return (
+    !!v &&
+    v.synthetic === false &&
+    customerProvenanceAllowed(v.synthetic) &&
+    typeof v.workspaceId === 'string' &&
+    typeof v.canRead === 'boolean' &&
+    typeof v.invoicesExist === 'boolean' &&
+    v.paymentTaken === false &&
+    Array.isArray(v.invoices) &&
+    v.invoices.every(
+      (i) =>
+        typeof i.id === 'string' &&
+        typeof i.number === 'string' &&
+        typeof i.totalMinor === 'string' &&
+        typeof i.supplier?.legalName === 'string' &&
+        typeof i.billTo?.name === 'string' &&
+        Array.isArray(i.madeupFields) &&
+        Array.isArray(i.payments) &&
+        Array.isArray(i.credits),
+    ) &&
+    Array.isArray(v.balances) &&
+    Number.isFinite(Date.parse(v.expiresAt))
+  );
+}
+// Plain names for the supplier fields the owner has not supplied yet.
+export const madeupFieldText: Record<string, string> = {
+  legal_name: 'company name',
+  address: 'address',
+  country: 'country',
+  uen: 'company registration number (UEN)',
+  gst_registered: 'GST registration status',
+  gst_registration_no: 'GST registration number',
+  tax_label: 'tax name',
+  gst_rate_bps: 'tax rate',
+  payment_terms_days: 'payment terms',
+  payment_instructions: 'payment instructions',
+  finance_label: 'finance contact',
+};
+export const realInvoiceStatusLabel: Record<
+  RealInvoiceStatus,
+  { text: string; tone: 'neutral' | 'positive' | 'caution' | 'critical' | 'info' | 'unknown' }
+> = invoiceStatusLabel;
+export function ratePercent(bps: number | null) {
+  return bps === null ? null : String(bps / 100) + '%';
 }
