@@ -388,7 +388,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         )}
       </details>
       {manage && (
-        <PhoneFold summary="Private introduction form">
+        <PhoneFold summary="Review and create a private introduction" fold="always">
           <form
             className="operator-form detail-card"
             aria-label="Create private introduction"
@@ -644,7 +644,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         )}
       </details>
       {manage && (
-        <PhoneFold summary="Meeting proposal form">
+        <PhoneFold summary="Propose a meeting" fold="always">
           <form
             className="operator-form detail-card"
             aria-label="Propose meeting"
