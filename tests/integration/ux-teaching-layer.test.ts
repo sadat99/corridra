@@ -323,6 +323,7 @@ describe('the stylesheets of the teaching layer', () => {
     const mounts = [
       'app/account/move/move-view.tsx',
       'app/account/rooms/[requestId]/room-view.tsx',
+      'app/plan/intake.tsx',
     ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))

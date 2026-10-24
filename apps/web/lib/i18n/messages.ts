@@ -152,8 +152,6 @@ export const en = {
   'fq.groupTrip.hint': 'Plan the programme and the meetings.',
   'fq.somethingElse.label': 'Something else',
   'fq.somethingElse.hint': 'Trips, visits, meetings or anything else.',
-  'header.modeSample': 'Sample',
-  'header.modeReal': 'Real',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -308,8 +306,6 @@ const bn: Catalog = {
   'fq.groupTrip.hint': 'কর্মসূচি ও বৈঠকের পরিকল্পনা করুন।',
   'fq.somethingElse.label': 'অন্য কিছু',
   'fq.somethingElse.hint': 'সফর, পরিদর্শন, বৈঠক বা অন্য যেকোনো কিছু।',
-  'header.modeSample': 'নমুনা',
-  'header.modeReal': 'প্রকৃত',
 };
 
 const zh: Catalog = {
@@ -452,8 +448,6 @@ const zh: Catalog = {
   'fq.groupTrip.hint': '规划行程安排与会面。',
   'fq.somethingElse.label': '其他',
   'fq.somethingElse.hint': '出访、考察、会面或其他任何事项。',
-  'header.modeSample': '示例',
-  'header.modeReal': '真实',
 };
 
 const es: Catalog = {
@@ -606,8 +600,6 @@ const es: Catalog = {
   'fq.groupTrip.hint': 'Planifique el programa y las reuniones.',
   'fq.somethingElse.label': 'Otra cosa',
   'fq.somethingElse.hint': 'Viajes, visitas, reuniones o cualquier otra cosa.',
-  'header.modeSample': 'Ejemplo',
-  'header.modeReal': 'Real',
 };
 
 const ar: Catalog = {
@@ -753,8 +745,6 @@ const ar: Catalog = {
   'fq.groupTrip.hint': 'خطط للبرنامج واللقاءات.',
   'fq.somethingElse.label': 'شيء آخر',
   'fq.somethingElse.hint': 'رحلات أو زيارات أو اجتماعات أو أي شيء آخر.',
-  'header.modeSample': 'تجريبي',
-  'header.modeReal': 'فعلي',
 };
 
 export const catalogs: Record<Locale, Catalog> = { en, bn, zh, es, ar };
