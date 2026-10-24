@@ -9130,3 +9130,240 @@ samp {
     display: none;
   }
 }
+
+/* Staff plans panel (owner request, 24 October 2026). The result of a save is shown beside the form that was used, the plan
+   that was just saved is marked in the list, and the plan form is grouped instead of one long column. Tokens only. */
+.billing-notice {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-left-width: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-weight: 600;
+  scroll-margin-block: var(--space-16);
+}
+.billing-notice[data-tone='ok'] {
+  border-color: var(--positive);
+  background: var(--positive-surface);
+}
+.billing-notice[data-tone='error'] {
+  border-color: var(--critical);
+  background: var(--critical-surface);
+}
+.billing-notice strong {
+  margin-right: var(--space-2);
+}
+.billing-plans {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+}
+.billing-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.billing-plan[data-saved] {
+  border-color: var(--positive);
+  background: var(--positive-surface);
+}
+.billing-plan-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.billing-plan-facts {
+  grid-column: 1;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.billing-plan .text-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 2.75rem;
+  padding: 0 var(--space-2);
+}
+.billing-badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  vertical-align: middle;
+}
+.billing-badge[data-tone='ok'] {
+  border-color: var(--positive);
+  background: var(--positive-surface);
+}
+.billing-badge[data-tone='quiet'] {
+  color: var(--text-2);
+}
+.billing-form {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.billing-form fieldset {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.billing-form legend {
+  margin-bottom: var(--space-3);
+  padding: 0;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.billing-group {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.billing-pair {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+}
+.billing-requests {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+}
+.billing-request {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.billing-request .text-link {
+  min-height: 2.75rem;
+}
+.billing-timeline {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding-left: var(--space-6);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.billing-detail {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+.billing-detail form {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+@media (max-width: 640px) {
+  .billing-plan {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .billing-plan .text-link {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+  .billing-form {
+    padding: var(--space-4);
+  }
+}
+
+/* Billing hub: the five staff billing panels stack in one full-width column under a jump bar instead of sharing a
+   narrow two-column grid with their forms. */
+.billing-hub {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-6);
+  width: 100%;
+  min-width: 0;
+}
+.billing-hub > h3 {
+  margin: 0;
+}
+.billing-hub > div {
+  min-width: 0;
+  scroll-margin-top: var(--space-16);
+}
+.billing-hub .detail-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  max-width: 64rem;
+}
+.billing-hub .detail-card > h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+.billing-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.billing-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-weight: 600;
+  text-decoration: none;
+}
+.billing-jump a:hover {
+  border-color: var(--selected);
+  background: var(--selected-surface);
+}
+.billing-hint {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+@media (min-width: 900px) {
+  .billing-pair[data-aligned] .field > label {
+    min-height: 2.8em;
+  }
+}
