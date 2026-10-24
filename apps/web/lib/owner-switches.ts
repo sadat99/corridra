@@ -233,6 +233,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
+    label: 'Real plans and subscriptions',
+    line: 'Lets a real workspace see plans and ask for one. Needs sample plans on, the real plans install, and the real plans control opened by the install job. Nothing is charged and no invoice is made.',
+    group: 'Money and pricing',
+    kind: 'module',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_INVOICING_ENABLED',
     label: 'Sample invoices and payment records',
     line: 'Lets the team issue sample invoices and record payments for sample workspaces. Needs sample plans. Nothing is collected.',

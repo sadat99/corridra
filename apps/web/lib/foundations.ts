@@ -31,7 +31,11 @@ import {
   CustomerServiceRequestService,
   customerServiceRequestsEnabled,
 } from '@corridra/auth/customer-service-requests';
-import { CustomerBillingService, customerBillingEnabled } from '@corridra/auth/customer-billing';
+import {
+  CustomerBillingService,
+  customerBillingEnabled,
+  customerRealBillingEnabled,
+} from '@corridra/auth/customer-billing';
 import {
   CustomerInvoicingService,
   customerInvoicingEnabled,
@@ -407,7 +411,9 @@ function createServices() {
     ),
     staffOrganisationLinks: new StaffOrganisationLinkService(runtimePool),
     customerServiceStaff: new CustomerServiceStaffService(runtimePool),
-    customerBillingStaff: new CustomerBillingStaffService(runtimePool),
+    customerBillingStaff: new CustomerBillingStaffService(runtimePool, () =>
+      customerRealBillingEnabled(),
+    ),
     customerInvoicingStaff: new CustomerInvoicingStaffService(runtimePool),
     customerInvoicing: new CustomerInvoicingService(
       runtimePool,
