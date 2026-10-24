@@ -147,3 +147,28 @@ describe('where the words come from', () => {
     expect(provider).toContain('document.documentElement.dir');
   });
 });
+
+// Until a page is on message files its main content is English, so the chosen language must not be put on it, and
+// Listen must read it in the language it is actually written in.
+describe('main content keeps its own language', () => {
+  const root = resolve(__dirname, '../..');
+  const mains = [
+    'apps/web/components/public-shell.tsx',
+    'apps/web/components/workspace-shell.tsx',
+    'apps/web/app/mute/[requestId]/page.tsx',
+    'apps/web/app/operator/view-as/[role]/page.tsx',
+    'apps/web/app/not-found.tsx',
+  ];
+  it.each(mains)('%s marks its main region lang="en" dir="ltr"', (file) => {
+    const text = readFileSync(resolve(root, file), 'utf8');
+    const open = text.slice(text.indexOf('<main'), text.indexOf('>', text.indexOf('<main')));
+    expect(open).toContain('id="main"');
+    expect(open).toContain('lang="en"');
+    expect(open).toContain('dir="ltr"');
+  });
+  it('Listen takes its language from the main region, not the chrome around it', () => {
+    const text = readFileSync(resolve(root, 'apps/web/components/corner-dock.tsx'), 'utf8');
+    expect(text).toContain("document.getElementById('main')?.lang");
+    expect(text).not.toMatch(/utterance\.lang = document\.documentElement\.lang/);
+  });
+});

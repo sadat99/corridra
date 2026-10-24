@@ -23,6 +23,8 @@ export function WorkspaceShell({
   return (
     <main
       id="main"
+      lang="en"
+      dir="ltr"
       tabIndex={-1}
       className={`operator-page ux-workspace${compact ? ' ux-access' : ''}${nav ? ' ux-customer' : ''} ${className}`}
     >

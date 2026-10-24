@@ -181,6 +181,22 @@ test('blocked browser storage does not break the page or the choice for this vis
   await expect(page.getByRole('link', { name: 'Cómo funciona' })).toBeVisible();
 });
 
+test('a failed save keeps the new choice for this visit instead of snapping back to the old one', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('corridra.language', 'bn');
+    Storage.prototype.setItem = () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+  });
+  await page.goto(`${origin}/?offered=en,bn,es`);
+  expect((await attrs(page)).lang).toBe('bn');
+  await pick(page, 'Español');
+  await expect(page.getByRole('link', { name: 'Cómo funciona' })).toBeVisible();
+  expect((await attrs(page)).lang).toBe('es');
+});
+
 test.describe('first visit, matching the browser language', () => {
   test.use({ locale: 'es-ES' });
   test('a Spanish browser gets Spanish when Spanish is offered, and English when it is not', async ({

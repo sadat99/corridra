@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <main id="main" tabIndex={-1} className="ux-public">
+    <main id="main" lang="en" dir="ltr" tabIndex={-1} className="ux-public">
       <section className="guide-page-hero guide-lost">
         <div>
           <p className="label">CORRIDRA</p>
