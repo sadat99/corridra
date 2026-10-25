@@ -11,13 +11,21 @@ import './notifications-form.css';
 
 // The words people read here are plain English. Another language needs a reviewed catalog entry first;
 // the page is not offered in any other language until then (ADR-066).
+// Only "One thing needs you" is sent today. The others are listed so a person can say yes in advance, and each
+// says plainly that it is not sent yet, so no box is ticked for something that cannot arrive.
 const kindWords: Record<NotificationKind, { label: string; line: string }> = {
   'your-move': { label: 'One thing needs you', line: 'When the team asks you to do something.' },
-  update: { label: 'Your request moved forward', line: 'When a request reaches a new step.' },
-  countdown: { label: 'A date is coming up', line: 'When a date in your plan is close.' },
+  update: {
+    label: 'Your request moved forward',
+    line: 'When a request reaches a new step. Not sent yet.',
+  },
+  countdown: {
+    label: 'A date is coming up',
+    line: 'When a date in your plan is close. Not sent yet.',
+  },
   complete: {
     label: 'Your mission is complete',
-    line: 'When a mission closes and its report is ready.',
+    line: 'When a mission closes and its report is ready. Not sent yet.',
   },
 };
 const languageWords: Record<string, string> = {
@@ -89,12 +97,14 @@ export function NotificationsForm({
       current.includes(kind) ? current.filter((k) => k !== kind) : [...current, kind],
     );
 
-  // Switching on with nothing chosen starts from all four messages; the person can untick any.
+  // While the database side is closed a person can still switch email off, never on.
   const switchTo = (next: boolean) => {
+    if (closed && next) return;
     setOn(next);
     setMessage('');
     setFailed(false);
-    if (next && kinds.length === 0) setKinds([...notificationKinds]);
+    // Switching on starts with the one message that is sent today. The others are the person's own tick.
+    if (next && kinds.length === 0) setKinds(['your-move']);
   };
 
   async function save(event: FormEvent) {
@@ -159,6 +169,7 @@ export function NotificationsForm({
         <p role="note" className="notifications-note">
           Email about your requests is not switched on yet. You can look at the choices, but they
           cannot be saved until it is.
+          {savedOn ? ' You can still switch your email off.' : ''}
         </p>
       )}
       <section
@@ -179,16 +190,19 @@ export function NotificationsForm({
             type="checkbox"
             checked={on}
             onChange={(event) => switchTo(event.target.checked)}
-            disabled={closed}
+            disabled={closed && !savedOn}
           />
           <span>
             <strong>Email me when something needs me</strong>
             <span>
-              Goes to the verified address on your account. Titles and dates only: never a price, a
-              supplier name or a file. Switch it off whenever you like.
+              Goes to the verified address on your account. Short descriptions and dates only, never
+              a file or an attachment. Switch it off whenever you like.
             </span>
           </span>
         </label>
+        <p className="notifications-help">
+          How we handle this is in the <a href="/privacy">privacy notice</a>.
+        </p>
       </section>
       {on && (
         <>
@@ -293,13 +307,13 @@ export function NotificationsForm({
             </p>
           </fieldset>
           <p className="notifications-help">
-            Every email has a link to mute messages about one request. Muting never changes the
+            Each email about one request has a link to mute that request. Muting never changes the
             request itself.
           </p>
         </>
       )}
       {buttonWords && (
-        <button className="primary-link" type="submit" disabled={busy || closed}>
+        <button className="primary-link" type="submit" disabled={busy || (closed && on)}>
           {buttonWords}
         </button>
       )}

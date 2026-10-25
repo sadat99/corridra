@@ -15,6 +15,9 @@ export const maxMoveObject = 80;
 const control = /[\u0000-\u001f\u007f<>]/u;
 const link = /(https?:|www\.|@|\.(com|net|org|io|co|cn|bd|es)\b)/i;
 const currencyWord = /\b(usd|eur|gbp|bdt|cny|rmb|inr)\b/i;
+// A run of seven or more digits is an identity, passport, phone or account number, never plain words. The Move
+// words can become an email subject and a kept record, so they must not carry one (privacy review, 25 Oct 2026).
+const longNumber = /\d{7,}/;
 const money = new RegExp(
   [
     '[$€£৳¥]',
@@ -30,6 +33,7 @@ export function moveObjectProblem(value: string): string | null {
   if (control.test(value)) return 'Use plain words, without markup or control characters.';
   if (link.test(value)) return 'Leave out links and email addresses.';
   if (currencyWord.test(value) || money.test(value)) return 'Leave out amounts and prices.';
+  if (longNumber.test(value)) return 'Leave out ID, passport, phone and account numbers.';
   return null;
 }
 

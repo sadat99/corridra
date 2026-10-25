@@ -61,7 +61,7 @@ const text = async (env: Record<string, string | undefined>) => {
 const real = { DATA_ENVIRONMENT: 'real', CORRIDRA_REAL_USE_ENABLED: 'true' };
 const emailSentence = 'We email the verified address on your account when we receive your request.';
 const pulseSentence =
-  'If you switch on email about your requests, we email the verified address on your account when something needs you.';
+  'Email about your requests is off until you switch it on, on the Email choices page.';
 const deviceSentence =
   'a private code for it is kept in your browser on this device so you can check its status later';
 
@@ -108,9 +108,19 @@ describe('the privacy notice', () => {
     expect(await text(real)).not.toContain(pulseSentence);
     const page = await text({ ...real, CORRIDRA_PULSE_ENABLED: 'true' });
     expect(page).toContain(pulseSentence);
-    expect(page).toContain('Email is off until you switch it on');
-    expect(page).toContain('do not store it');
-    expect(page).toContain('never your address');
+    expect(page).toContain('We do not keep your address in our own database.');
+    expect(page).toContain('Resend keeps its own delivery record');
+    expect(page).toContain('a short description of what is needed as written by our team');
+    expect(page).toContain('Basis: your consent.');
+    // The processor line, the purposes list and the storage list change with the paragraph, so the notice is
+    // true in both states.
+    expect(page).toContain('the request emails you switch on');
+    expect(page).toContain('Email about your requests (your email choices');
+    expect(page).toContain('If you close the email prompt with Not now');
+    const off = await text(real);
+    expect(off).not.toContain('the request emails you switch on');
+    expect(off).not.toContain('If you close the email prompt with Not now');
+    expect(off).not.toContain('Email you switch on is delivered by Resend');
     for (const value of ['TRUE', 'yes', '1', ' true', ''])
       expect(await text({ ...real, CORRIDRA_PULSE_ENABLED: value })).not.toContain(pulseSentence);
     expect(
@@ -155,10 +165,10 @@ describe('the privacy notice', () => {
   });
   it('keeps the request notice version the database pins, and the new date', async () => {
     expect(await text(real)).toContain(
-      'Updated 24 October 2026. Request notice version: real-intake-2026-10-21-v1.',
+      'Updated 25 October 2026. Request notice version: real-intake-2026-10-21-v1.',
     );
     expect(await text({ DATA_ENVIRONMENT: 'synthetic' })).toContain(
-      'Updated 24 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
+      'Updated 25 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
     );
   });
   it('names the responsible company, the contact and the standard sections', async () => {

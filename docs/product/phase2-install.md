@@ -38,7 +38,7 @@ Do the privacy review before you open the control. Opening it is what allows ema
 ## What Pulse never does
 
 - It never emails a teammate, a supplier or an address typed by anyone. Only the verified account holder who owns the request.
-- It never puts a price, a supplier name, a file or free text from the team in an email. A title and a real date only.
+- It never puts a price, a supplier name or a file in an email, and a subject never carries the team's words. The body has the person's first name, the team's short description of the Move (80 characters at most, a long number is refused) and a real date. Staff are warned on the Move screen that these words are emailed and kept.
 - It never sends while a request is muted, while a kind is switched off by the person, or after the Move it is about is done or cleared.
 - It never keeps an address: the queue holds ids, a plain title and a date.
 - Quiet hours and the daily email only delay a message (it stays valid for a day from when it can first be sent); they never drop one that is still wanted.

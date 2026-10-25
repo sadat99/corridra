@@ -221,7 +221,12 @@
     {
       "path": "docs/product/pulse-email-review-pack.md",
       "classification": "UX programme/contract/packet",
-      "use": "Pulse email review pack for the owner: the five email texts rendered, who is emailed, what is kept, what is not built, the privacy notice wording and the steps to open and undo Pulse"
+      "use": "Pulse email review pack for the owner (after the privacy review fixes): the five email texts rendered, who is emailed, what is kept, what is not built, the privacy notice wording and the steps to open and undo Pulse"
+    },
+    {
+      "path": "docs/product/pulse-privacy-review-2026-10-25.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Pulse privacy review record of 25 October 2026 (engineering review by Claude on the owner's instruction, not legal advice): findings and decisions, conditions before opening, residual risks and the owner query for a data request"
     },
     {
       "path": "docs/product/lane8-reply-page.md",

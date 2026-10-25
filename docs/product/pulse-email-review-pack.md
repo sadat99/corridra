@@ -1,26 +1,27 @@
 # Pulse email: review pack for the owner
 
-Written 25 October 2026 so the privacy review can be done in one sitting. Pulse is built and closed. Nothing is sent to anyone until you have read this, accepted or changed it, and opened it (steps at the end). This pack is a plain description of what the system does, not legal advice; the privacy lawyer review in the ledger is separate.
+Written 25 October 2026. Pulse is built and closed. Nothing is sent to anyone until it is opened (steps at the end). The engineering privacy review you asked me to do is recorded in [pulse-privacy-review-2026-10-25.md](pulse-privacy-review-2026-10-25.md): it found three blockers, two are fixed and one is a check only you can do (the replies mailbox). This pack is a plain description of what the system does after those fixes. It is not legal advice; the privacy lawyer review of the notice is still a separate later step.
 
 ## What you are deciding
 
-| #   | Decision                                                                                                                                       | My recommendation                                                                                     |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1   | Are the email texts below acceptable as they stand?                                                                                            | Yes for message 1, the only one that can be sent today.                                               |
-| 2   | Is it acceptable that a record of each message (a plain title, a date and its status, never the address) is kept as history and never deleted? | Yes for now. The same words already sit in the Move records. A deletion process needs its own design. |
-| 3   | Does the reply address read by a human? Message 1 says "reply and tell us".                                                                    | Confirm the mailbox set for mission mail (`CUSTOMER_AUTH_MAIL_REPLY_TO`) is watched before opening.   |
-| 4   | Does the privacy notice wording below say the right things?                                                                                    | Yes. It appears on the privacy page only while Pulse is on.                                           |
+| #   | What only you can confirm                                                                                                           | Why                                                                                                                  |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | The replies mailbox (`CUSTOMER_AUTH_MAIL_REPLY_TO`) is read by a person.                                                            | Message 1 says "reply and tell us". The value is encrypted in Vercel, so I cannot read it. Mission mail uses it too. |
+| 2   | In the Resend account: how long delivery records are kept and where, and that the notice matches.                                   | Resend keeps its own record of each email (address and content). The notice says so; I cannot see the account.       |
+| 3   | You are comfortable that message records (a verb and the team's short words, a date, a status) are kept with no automatic deletion. | Disclosed in the notice. A deletion process needs its own design with the privacy lawyer.                            |
+
+Everything else in the review is fixed or accepted, with the reason, in the review record.
 
 ## Who is emailed, and when
 
-- Only the verified account holder who owns the request, at the verified address on their account. Never a teammate, a supplier, a buyer or an address typed by anyone.
+- Only the verified account holder who owns the request, at the verified address on their account. Never a teammate, a supplier, a buyer or an address typed by anyone. The greeting uses the name on their account.
 - Only if that person switched email on. Email is off for everyone until they do (Email choices page). Each person is told: the page leads with the switch, and Your Move and the request page show an "Email is off" prompt until they choose.
 - Never for a request they muted, never for a kind they switched off, never after the thing it is about is done or cleared, never from a sample workspace.
 - At most three messages a day for one request and ten a day for one person. Quiet hours and the daily email only delay a message; it stays valid for 24 hours after it can first be sent, and then it expires unsent.
 
 ## The messages (rendered with sample data)
 
-Every email is a single column with a plain-text twin, no open-tracking pixel, and titles and dates only. A price, a supplier name, a file or free text from the team never appears.
+Every email is a single column with a plain-text twin and no open-tracking pixel. The body has the person's first name, a short description written by the Corridra team (a verb from a fixed list plus up to 80 plain characters, a run of seven or more digits is refused) and a date. A subject never carries the team's words, so nothing from the team shows on a lock screen. The Move screen warns staff that these words are emailed and kept. No price, supplier field or file is ever read into an email.
 
 ### 1. One thing needs you
 
@@ -31,7 +32,7 @@ The only message that can be sent today. The Corridra team sets a Move that the 
 Plain text:
 
 ```text
-Subject: One thing needs you: Add your import licence number
+Subject: One thing needs you
 
 Hi Amina,
 
@@ -79,7 +80,7 @@ Text and template exist. Nothing triggers it yet.
 Plain text:
 
 ```text
-Subject: Your Madrid visit is coming up
+Subject: A date is coming up
 
 Hi Amina,
 
@@ -118,7 +119,7 @@ Language: en
 
 ### 5. The daily email
 
-Sent instead of single messages when the person chose "one email a day". It gathers what is due into one message at 08:00 in their time zone.
+Sent instead of single messages when the person chose "one email a day". It gathers what is due into one message at 08:00 in their time zone. It has no mute link because it covers several requests; it has Manage messages, where the daily email or all email can be switched off.
 
 ![5. The daily email](../design-system/evidence/lane7b-pulse/emails/digest.png)
 
@@ -146,13 +147,13 @@ The words come from `packages/auth/src/pulse-templates.ts`. English only: a pers
 
 ## What is kept, and where
 
-| Item            | What it holds                                                                                                                                                                                                                                         | How long                                                                                                                                      |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Email choices   | Which messages, daily email, quiet hours, time zone, language, and the time each choice was saved. Saving at least one kind is the opt-in; saving none is the opt-out.                                                                                | Every version is kept (append only). This is the record of consent.                                                                           |
-| Message record  | Request id, person id, kind, the plain title (the team's Move words), a date, status, times, and digests of two tokens. Never an address, a name, a price or free text.                                                                               | Kept as history (append only, never deleted). A message that cannot be sent within 24 hours of becoming due is marked expired; the row stays. |
-| Mute record     | The request id only.                                                                                                                                                                                                                                  | Kept.                                                                                                                                         |
-| Activity events | Ids and the kind only.                                                                                                                                                                                                                                | Kept with the other audit events.                                                                                                             |
-| The address     | Read from the sign-in account (`neon_auth.user`, verified addresses only) inside the database at the moment of sending, held in memory for that one send, and handed to the mail provider (Resend, the same one used for sign-in and mission emails). | Not written to any Corridra table or log.                                                                                                     |
+| Item            | What it holds                                                                                                                                                                                                                                                                                      | How long                                                                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email choices   | Which messages, daily email, quiet hours, time zone, language, and the time each choice was saved. Saving at least one kind is the opt-in; saving none is the opt-out.                                                                                                                             | Every version is kept (append only). This is the record of consent. It carries the time of each choice but not the notice version shown.      |
+| Message record  | Request id, person id, kind, the team's Move words (verb plus up to 80 characters), a date, status, times, and digests of two tokens. Never an address or a name. The words are staff-written, so they are warned on screen and a long number is refused.                                          | Kept as history (append only, never deleted). A message that cannot be sent within 24 hours of becoming due is marked expired; the row stays. |
+| Mute record     | The request id only.                                                                                                                                                                                                                                                                               | Kept.                                                                                                                                         |
+| Activity events | Ids and the kind only.                                                                                                                                                                                                                                                                             | Kept with the other audit events.                                                                                                             |
+| The address     | Read from the sign-in account (`neon_auth.user`, verified addresses only) inside the database at the moment of sending, held in memory for that one send, and handed to the mail provider (Resend, the same one used for sign-in and mission emails) together with the name and the email content. | Not written to any Corridra table or log. Resend keeps its own delivery record for a limited time under its terms.                            |
 
 ## What is not built
 
@@ -163,7 +164,9 @@ The words come from `packages/auth/src/pulse-templates.ts`. English only: a pers
 
 ## Privacy notice wording (appears only while Pulse is on)
 
-> If you switch on email about your requests, we email the verified address on your account when something needs you. Email is off until you switch it on, and you can switch it off at any time on the Email choices page. We read the address from your account at the moment we send and do not store it. Each email shows only a plain title and a date, with a link to your request and a link to mute messages about that request, and is sent through Resend, like account verification emails. We keep your email choices, with the time you made them, and a record of each message (its title, date and status, never your address) in the Frankfurt application database as part of your request history.
+The privacy page (dated 25 October 2026) gains a purposes line, a processors line, a storage line and this paragraph. All of it is hidden while Pulse is off, so the notice and the feature open in the same deploy.
+
+> Email about your requests is off until you switch it on, on the Email choices page. You can switch it off there at any time, or mute one request from the link in an email. If you switch it on, we email the verified address on your account when the Corridra team sets something you need to do, or once a day if you choose. When we send, we read your name and verified address from your account and pass them to Resend, which delivers the email, with sending configured in Ireland. Resend keeps its own delivery record, including the address and the content, for a limited time under its terms. We do not keep your address in our own database. Each email contains your name, a short description of what is needed as written by our team, a date if there is one, a link to the request or to Your Move, and a link to your email choices. Emails about one request also have a link to mute that request. We keep each version of your email choices with its time, as the record of your consent, and a record of each message (which request, its description, date and status, never your address) in the Frankfurt application database. These records are not deleted automatically; contact us to have them reviewed. Basis: your consent.
 
 ## Opening Pulse, and undoing it
 

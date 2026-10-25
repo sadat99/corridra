@@ -81,7 +81,7 @@ describe('what a person may choose', () => {
   });
 });
 
-describe('every message says titles and dates only', () => {
+describe('what every message says', () => {
   it.each(['your-move', 'update', 'countdown', 'complete'] as const)(
     '%s renders with a plain-text twin',
     (kind) => {
@@ -101,7 +101,11 @@ describe('every message says titles and dates only', () => {
 
   it('the Your Move email names the Move and the real date, or offers more time without one', () => {
     const dated = renderPulse(move());
-    expect(dated.subject).toBe('One thing needs you: Add your import licence number');
+    // The subject never carries the team's words: it shows on a lock screen and stays in the mail provider's log.
+    expect(dated.subject).toBe('One thing needs you');
+    expect(dated.text).toContain(
+      'Your request needs one thing from you: Add your import licence number.',
+    );
     expect(dated.text).toContain('Please do it by 23 November 2026.');
     const open = renderPulse(move({ date: null }));
     expect(open.text).toContain('If you need more time, reply and tell us.');
@@ -126,6 +130,7 @@ describe('every message says titles and dates only', () => {
   it('escapes markup, drops line breaks from the subject and refuses a title that is too short or too long', () => {
     const mail = renderPulse(move({ title: 'Add <b>x</b>\nBcc: someone@example.com' }));
     expect(mail.subject).not.toMatch(/[\r\n<>]/);
+    expect(mail.subject).not.toContain('someone@example.com');
     expect(mail.html).not.toContain('<b>x</b>');
     expect(() => renderPulse(move({ title: 'ab' }))).toThrow('3 to 120');
     expect(() => renderPulse(move({ title: 'x'.repeat(121) }))).toThrow('3 to 120');
@@ -527,5 +532,45 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
     expect(renderPulse(move()).text).toContain(
       'You are getting this because you switched on email about your requests in Corridra.',
     );
+  });
+
+  it('no subject ever carries the team words, whatever the kind', () => {
+    const words = 'Zephyr Quartz words';
+    for (const kind of ['your-move', 'update', 'countdown', 'complete'] as const)
+      expect(renderPulse(move({ kind, title: words })).subject).not.toContain('Zephyr');
+    const digest = renderPulse({
+      kind: 'digest',
+      name: 'Amina',
+      link: 'https://corridra.test/account/move',
+      manageLink: links.manageLink,
+      items: [{ kind: 'your-move', title: words, date: null }],
+    });
+    expect(digest.subject).not.toContain('Zephyr');
+  });
+
+  it('the owner pack shows the subjects the templates really produce and says what the email holds', () => {
+    const pack = read('docs/product/pulse-email-review-pack.md');
+    const subjects = [...pack.matchAll(/^Subject: (.+)$/gm)].map((m) => m[1]);
+    const produced = [
+      renderPulse(move()).subject,
+      renderPulse(move({ kind: 'update', date: null })).subject,
+      renderPulse(move({ kind: 'countdown' })).subject,
+      renderPulse(move({ kind: 'complete', date: null })).subject,
+      pulseCatalog.en.digest.subject,
+    ];
+    expect(subjects).toEqual(produced);
+    expect(pack).toContain('The greeting uses the name on their account.');
+    expect(pack).toContain('Resend keeps its own');
+    expect(pack).toContain('pulse-privacy-review-2026-10-25.md');
+    expect(pack).not.toMatch(/never appears|titles and dates only|free text from the team never/i);
+  });
+
+  it('the review record lists every condition before opening and is not presented as legal advice', () => {
+    const record = read('docs/product/pulse-privacy-review-2026-10-25.md');
+    expect(record).toContain('not legal advice');
+    expect(record).toContain('CUSTOMER_AUTH_MAIL_REPLY_TO');
+    expect(record).toMatch(/Resend account for retention and data location/);
+    for (const id of ['B1', 'B2', 'B3', 'NB1', 'NB11', 'R1', 'R4'])
+      expect(record).toContain(`| ${id} `);
   });
 });

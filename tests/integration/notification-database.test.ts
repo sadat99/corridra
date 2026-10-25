@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { fixture } from './support';
 import { sessionHash, withTenant, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
@@ -363,6 +364,20 @@ describe('installation', () => {
     ).toBe(1);
     expect(await prefs(p)).toMatchObject({ open: false, version: 0 });
     expect(await savePrefs(p)).toEqual({ saved: false, reason: 'closed' });
+  });
+
+  test('while the control is closed a person can still switch email off, and nothing else is saved', async () => {
+    // The control starts closed here. A yes already given must be withdrawable, but a new yes must not be saved.
+    const p = await person(undefined, undefined, false);
+    expect(await savePrefs(p, { kinds: ['your-move'] })).toEqual({
+      saved: false,
+      reason: 'closed',
+    });
+    expect(await savePrefs(p, { kinds: [] })).toEqual({ saved: true, version: 1 });
+    expect(await prefs(p)).toMatchObject({ open: false, version: 1, kinds: [] });
+    await expect(savePrefs(p, { kinds: [], zone: 'Mars/Olympus' })).rejects.toMatchObject({
+      code: '23514',
+    });
   });
 
   test('runtime and auth roles cannot read or write any table, or run the internal functions', async () => {
@@ -1062,7 +1077,8 @@ describe('the application service', () => {
     expect(sent).toHaveLength(1);
     const mail = sent[0];
     expect(mail).toMatchObject({ to: p.email, key: `pulse:${job.queueId}` });
-    expect(mail.subject).toBe('One thing needs you: Add your import licence number');
+    expect(mail.subject).toBe('One thing needs you');
+    expect(mail.text).toContain('Add your import licence number');
     expect(mail.text).toContain(`https://corridra.test/account/requests/${p.requestId}`);
     expect(mail.text).toContain(
       `https://corridra.test/pulse/mute/${p.requestId}#t=${signPulseMute(secret, p.requestId)}`,
@@ -1411,5 +1427,18 @@ describe('email is off until a person switches it on, and the address is read at
     await savePrefs(changedMind, { kinds: [] });
     expect(await service().send(held, env)).toBe('SUPPRESSED');
     expect(sent).toHaveLength(0);
+  });
+  test('the owner queries in the privacy review record run against the installed tables', async () => {
+    const record = readFileSync('docs/product/pulse-privacy-review-2026-10-25.md', 'utf8');
+    const block = record.match(/```sql\n([\s\S]*?)```/)?.[1] ?? '';
+    const statements = block
+      .split(';')
+      .map((statement) => statement.trim())
+      .filter(Boolean);
+    expect(statements).toHaveLength(3);
+    for (const statement of statements)
+      await expect(
+        f.owner.query(statement.replaceAll('<sign-in subject>', randomUUID())),
+      ).resolves.toBeDefined();
   });
 });

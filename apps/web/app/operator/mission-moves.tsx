@@ -81,6 +81,11 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
         characters, with no links, no amounts and no contact details. Setting new Moves replaces the
         open ones. Every earlier Move stays in the history below.
       </p>
+      <p>
+        If the person has switched email on, these words are emailed, and kept as a record that is
+        never deleted. Never write ID or document numbers, people&apos;s names, or health, legal or
+        money details.
+      </p>
       {message && <p role="status">{message}</p>}
       {rows === null ? (
         <p>Reading Moves…</p>
