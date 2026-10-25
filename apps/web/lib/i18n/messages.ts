@@ -114,6 +114,8 @@ export const en = {
   'move.wait.owner': 'Workspace owner or admin',
   'move.capped':
     'Showing items from your first {count} workspaces. Open your missions for the rest.',
+  'move.partial':
+    'Some of your lists were too long to read in full. Open your missions to see everything.',
   'compare.cards': 'Cards',
   'compare.table': 'Table',
   'compare.note':
@@ -255,6 +257,8 @@ const bn: Catalog = {
   'move.wait.owner': 'ওয়ার্কস্পেসের মালিক বা অ্যাডমিন',
   'move.capped':
     'আপনার প্রথম {count}টি ওয়ার্কস্পেসের বিষয় দেখানো হচ্ছে। বাকিগুলোর জন্য আপনার মিশনগুলো খুলুন।',
+  'move.partial':
+    'আপনার কিছু তালিকা পুরোটা পড়ার জন্য অনেক বড় ছিল। সবকিছু দেখতে আপনার মিশনগুলো খুলুন।',
   'compare.cards': 'কার্ড',
   'compare.table': 'টেবিল',
   'compare.note':
@@ -388,6 +392,7 @@ const zh: Catalog = {
   'move.forget': '忘记此设备上已读的回复',
   'move.wait.owner': '工作区所有者或管理员',
   'move.capped': '显示您前 {count} 个工作区的事项。其余请在您的任务中查看。',
+  'move.partial': '您的部分列表太长，未能全部读取。请在您的任务中查看全部内容。',
   'compare.cards': '卡片',
   'compare.table': '表格',
   'compare.note': '每张卡片上的结论来自比较本身。表格并排显示原始条款。',
@@ -523,6 +528,8 @@ const es: Catalog = {
   'move.wait.owner': 'Propietario o administrador del espacio',
   'move.capped':
     'Se muestran los elementos de sus primeros {count} espacios. Abra sus misiones para ver el resto.',
+  'move.partial':
+    'Algunas de sus listas eran demasiado largas para leerlas completas. Abra sus misiones para verlo todo.',
   'compare.cards': 'Tarjetas',
   'compare.table': 'Tabla',
   'compare.note':
@@ -659,6 +666,7 @@ const ar: Catalog = {
   'move.forget': 'انسَ الردود التي قرأتها على هذا الجهاز',
   'move.wait.owner': 'مالك مساحة العمل أو مشرفها',
   'move.capped': 'تُعرض عناصر أول {count} مساحات عمل لديك. افتح مهامك لعرض الباقي.',
+  'move.partial': 'بعض قوائمك أطول من أن تُقرأ كاملة. افتح مهامك لعرض كل شيء.',
   'compare.cards': 'بطاقات',
   'compare.table': 'جدول',
   'compare.note':
