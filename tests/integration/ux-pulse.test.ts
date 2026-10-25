@@ -20,6 +20,7 @@ import { signMissionMailMute } from '../../packages/auth/src/mission-mail-mute';
 import {
   databaseRecipientSource,
   noRecipientSource,
+  customerNotificationWithdrawalEnabled,
   pulseApplicationEnabled,
   pulseCapability,
 } from '../../packages/auth/src/customer-notifications';
@@ -304,13 +305,32 @@ describe('every switch-off path', () => {
   it('the owner registry lists the switch as a real flag', () => {
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_PULSE_ENABLED')?.kind).toBe('flag');
   });
-  it('the preference page and its route answer 404 and 503 when the switch is off', () => {
+  it('with the switch off the page answers 404 and the route 503, except for a person who already said yes switching email off', () => {
     const page = read('apps/web/app/account/notifications/page.tsx');
-    expect(page).toContain('if (!customerNotificationsEnabled()) notFound();');
+    expect(page).toContain('const dark = !customerNotificationsEnabled();');
+    expect(page).toContain('if (dark && !customerNotificationWithdrawalEnabled()) notFound();');
+    // Signed out, unavailable, never chose or already off: the page does not exist.
+    expect(page).toContain('if (dark) notFound();');
+    expect(page).toContain(
+      'if (unavailable || initial.version === 0 || !emailIsOn(initial)) notFound();',
+    );
+    // What a dark page shows is the paused form: nothing can be switched on.
+    expect(page).toContain('initial = { ...initial, open: false };');
     const route = read('apps/web/app/api/pulse/preferences/route.ts');
     expect(route).toContain(
-      "if (!customerNotificationsEnabled()) throw new DomainError('Email choices are unavailable', 503);",
+      'if (!customerNotificationsEnabled() && !(switchingOff && customerNotificationWithdrawalEnabled()))',
     );
+    expect(route).toContain("throw new DomainError('Email choices are unavailable', 503);");
+    // Only a body that saves an empty list counts as switching off.
+    expect(route).toContain(
+      'notificationPreferencesInput.safeParse(value).data?.kinds.length === 0',
+    );
+  });
+  it('the notification service is built from the customer area, so the page and route decide what the Pulse switch allows', () => {
+    expect(read('apps/web/lib/foundations.ts')).toContain(
+      'enabled: customerNotificationWithdrawalEnabled(),',
+    );
+    expect(customerNotificationWithdrawalEnabled({} as NodeJS.ProcessEnv)).toBe(false);
   });
   it('the email-link mute works whatever the sending switch says, so an old link keeps working', () => {
     const route = read('apps/web/app/api/pulse/mute/route.ts');
@@ -553,6 +573,22 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
     expect(renderPulse(move()).text).toContain(
       'You are getting this because you switched on email about your requests in Corridra.',
     );
+  });
+
+  it('no catalog puts the title in a subject, and a catalog that tried would throw', () => {
+    for (const [locale, catalog] of Object.entries(pulseCatalog)) {
+      for (const [name, copy] of Object.entries(catalog))
+        if (typeof copy === 'object' && copy && 'subject' in copy)
+          expect((copy as { subject: string }).subject, `${locale}.${name}`).not.toContain('{');
+    }
+    const en = pulseCatalog.en;
+    const original = en.yourMove.subject;
+    en.yourMove.subject = 'One thing needs you: {title}';
+    try {
+      expect(() => renderPulse(move())).toThrow();
+    } finally {
+      en.yourMove.subject = original;
+    }
   });
 
   it('no subject ever carries the team words, whatever the kind', () => {

@@ -19,6 +19,14 @@ import { signPulseMute } from './pulse-mute';
 export function customerNotificationsEnabled(env: NodeJS.ProcessEnv = process.env) {
   return customerRequestsEnabled(env) && env.CORRIDRA_PULSE_ENABLED === 'true';
 }
+/**
+ * Saying no never depends on the Pulse switch. With `CORRIDRA_PULSE_ENABLED` off, a signed-in person who already
+ * said yes can still reach their email choices and switch email off; nothing else is offered and nothing can be
+ * switched on. It needs the customer area itself, which the person is already inside.
+ */
+export function customerNotificationWithdrawalEnabled(env: NodeJS.ProcessEnv = process.env) {
+  return customerRequestsEnabled(env);
+}
 /** Sending needs this switch, real use, and in the database the notification control. All three. */
 export function pulseApplicationEnabled(env: NodeJS.ProcessEnv = process.env) {
   return env.CORRIDRA_PULSE_ENABLED === 'true' && realUseEnabled(env);

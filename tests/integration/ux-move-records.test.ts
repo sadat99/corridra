@@ -50,6 +50,8 @@ describe('the shape of a Move', () => {
     ['add passport number A01234567', 'identity numbers'],
     ['add NID 19951234567890', 'identity numbers'],
     ['call 01712345678', 'identity numbers'],
+    ['add NID ১২৩৪৫৬৭৮৯০', 'identity numbers'],
+    ['add number ١٢٣٤٥٦٧٨٩٠', 'identity numbers'],
     ['line one\nline two', 'markup'],
   ])('refuses %s (%s)', (object) => {
     expect(moveObjectProblem(object)).not.toBeNull();

@@ -1,6 +1,6 @@
 // Pulse email (ADR-067): "One thing needs you", "Your request moved forward", "A date is coming up", "Your
 // mission is complete" and the daily digest. Pure functions: no network, no logging, no sending. A body shows
-// the person's first name, a short description written by the team (80 characters at most, checked in the
+// the name on the person's account, a short description written by the team (80 characters at most, checked in the
 // database) and a date; a subject never carries the team's words, and no price, file or document number is
 // meant to appear. The words live in the catalog, so another language only adds a catalog entry (English until one is reviewed).
 // Mission mail's templates are not edited; this file only reuses their exported helpers.
@@ -196,7 +196,7 @@ function compose(input: PulseInput | PulseDigestInput, catalog: Catalog): Body {
   if (input.kind === 'your-move') {
     const copy = catalog.yourMove;
     return {
-      subject: fillPulse(copy.subject, { title }),
+      subject: fillPulse(copy.subject, {}),
       preheader: copy.preheader,
       paragraphs: [
         greeting,
@@ -222,7 +222,7 @@ function compose(input: PulseInput | PulseDigestInput, catalog: Catalog): Body {
   if (input.kind === 'countdown') {
     const copy = catalog.countdown;
     return {
-      subject: fillPulse(copy.subject, { title }),
+      subject: fillPulse(copy.subject, {}),
       preheader: copy.preheader,
       paragraphs: [
         greeting,

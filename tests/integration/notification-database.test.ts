@@ -1442,4 +1442,18 @@ describe('email is off until a person switches it on, and the address is read at
         f.owner.query(statement.replaceAll('<sign-in subject>', randomUUID())),
       ).resolves.toBeDefined();
   });
+  test('a yes given while open is withdrawn while paused, and reopening queues nothing for that person', async () => {
+    const p = await person();
+    expect(await prefs(p)).toMatchObject({ open: true, version: 1 });
+    await setControl(false);
+    try {
+      expect(await savePrefs(p, { kinds: [] })).toEqual({ saved: true, version: 2 });
+    } finally {
+      await setControl(true);
+    }
+    expect(await prefs(p)).toMatchObject({ open: true, version: 2, kinds: [] });
+    const set = await setMoves(p, [{ object: 'your import licence number' }]);
+    expect(set.queued).toBe(0);
+    expect(set.jobs).toEqual([]);
+  });
 });

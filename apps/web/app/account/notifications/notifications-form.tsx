@@ -307,8 +307,8 @@ export function NotificationsForm({
             </p>
           </fieldset>
           <p className="notifications-help">
-            Each email about one request has a link to mute that request. Muting never changes the
-            request itself.
+            Emails sent one at a time have a link to mute that request. The daily email has none:
+            switch it off here. Muting never changes the request itself.
           </p>
         </>
       )}

@@ -21,7 +21,7 @@ Everything else in the review is fixed or accepted, with the reason, in the revi
 
 ## The messages (rendered with sample data)
 
-Every email is a single column with a plain-text twin and no open-tracking pixel. The body has the person's first name, a short description written by the Corridra team (a verb from a fixed list plus up to 80 plain characters, a run of seven or more digits is refused) and a date. A subject never carries the team's words, so nothing from the team shows on a lock screen. The Move screen warns staff that these words are emailed and kept. No price, supplier field or file is ever read into an email.
+Every email is a single column with a plain-text twin and no open-tracking pixel. The body has the name on the person's account, a short description written by the Corridra team (a verb from a fixed list plus up to 80 plain characters, a run of seven or more digits is refused) and a date. A subject never carries the team's words, so nothing from the team shows on a lock screen. The Move screen warns staff that these words are emailed and kept. No price, supplier field or file is ever read into an email.
 
 ### 1. One thing needs you
 
@@ -119,7 +119,7 @@ Language: en
 
 ### 5. The daily email
 
-Sent instead of single messages when the person chose "one email a day". It gathers what is due into one message at 08:00 in their time zone. It has no mute link because it covers several requests; it has Manage messages, where the daily email or all email can be switched off.
+Sent instead of single messages when the person chose "one email a day". It gathers what is due into one message at 08:00 in their time zone. It has no mute link, even when it holds one request; it has Manage messages, where the daily email or all email can be switched off.
 
 ![5. The daily email](../design-system/evidence/lane7b-pulse/emails/digest.png)
 
@@ -166,7 +166,7 @@ The words come from `packages/auth/src/pulse-templates.ts`. English only: a pers
 
 The privacy page (dated 25 October 2026) gains a purposes line, a processors line, a storage line and this paragraph. All of it is hidden while Pulse is off, so the notice and the feature open in the same deploy.
 
-> Email about your requests is off until you switch it on, on the Email choices page. You can switch it off there at any time, or mute one request from the link in an email. If you switch it on, we email the verified address on your account when the Corridra team sets something you need to do, or once a day if you choose. When we send, we read your name and verified address from your account and pass them to Resend, which delivers the email, with sending configured in Ireland. Resend keeps its own delivery record, including the address and the content, for a limited time under its terms. We do not keep your address in our own database. Each email contains your name, a short description of what is needed as written by our team, a date if there is one, a link to the request or to Your Move, and a link to your email choices. Emails about one request also have a link to mute that request. We keep each version of your email choices with its time, as the record of your consent, and a record of each message (which request, its description, date and status, never your address) in the Frankfurt application database. These records are not deleted automatically; contact us to have them reviewed. Basis: your consent.
+> Email about your requests is off until you switch it on, on the Email choices page. You can switch it off there at any time, or mute one request from the link in an email. If you switch it on, we email the verified address on your account when the Corridra team sets something you need to do, or once a day if you choose. When we send, we read your name and verified address from your account and pass them to Resend, which delivers the email, with sending configured in Ireland. Resend keeps its own delivery record, including the address and the content, for a limited time under its terms. Our email records do not hold your address. Each email contains your name, a short description of what is needed as written by our team, a date if there is one, a link to the request or to Your Move, and a link to your email choices. Emails sent one at a time about a request also have a link to mute that request; the daily email has none, and you can switch it off on the Email choices page. We keep each version of your email choices with its time, as the record of your consent, and a record of each message (which request, its description, date and status, never your address) in the Frankfurt application database. These records are not deleted automatically; contact us to have them reviewed. Basis: your consent.
 
 ## Opening Pulse, and undoing it
 

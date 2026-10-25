@@ -484,12 +484,13 @@ export default function Page() {
                 send, we read your name and verified address from your account and pass them to
                 Resend, which delivers the email, with sending configured in Ireland. Resend keeps
                 its own delivery record, including the address and the content, for a limited time
-                under its terms. We do not keep your address in our own database. Each email
-                contains your name, a short description of what is needed as written by our team, a
-                date if there is one, a link to the request or to Your Move, and a link to your
-                email choices. Emails about one request also have a link to mute that request. We
-                keep each version of your email choices with its time, as the record of your
-                consent, and a record of each message (which request, its description, date and
+                under its terms. Our email records do not hold your address. Each email contains
+                your name, a short description of what is needed as written by our team, a date if
+                there is one, a link to the request or to Your Move, and a link to your email
+                choices. Emails sent one at a time about a request also have a link to mute that
+                request; the daily email has none, and you can switch it off on the Email choices
+                page. We keep each version of your email choices with its time, as the record of
+                your consent, and a record of each message (which request, its description, date and
                 status, never your address) in the Frankfurt application database. These records are
                 not deleted automatically; contact us to have them reviewed. Basis: your consent.
               </p>

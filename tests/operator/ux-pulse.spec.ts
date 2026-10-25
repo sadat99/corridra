@@ -146,7 +146,7 @@ test.describe('email choices', () => {
       page.getByText('Email is sent in English until a reviewed version exists'),
     ).toBeVisible();
     await expect(
-      page.getByText('Each email about one request has a link to mute that request.'),
+      page.getByText('Emails sent one at a time have a link to mute that request.'),
     ).toBeVisible();
   });
 

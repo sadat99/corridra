@@ -108,7 +108,8 @@ describe('the privacy notice', () => {
     expect(await text(real)).not.toContain(pulseSentence);
     const page = await text({ ...real, CORRIDRA_PULSE_ENABLED: 'true' });
     expect(page).toContain(pulseSentence);
-    expect(page).toContain('We do not keep your address in our own database.');
+    expect(page).toContain('Our email records do not hold your address.');
+    expect(page).toContain('the daily email has none');
     expect(page).toContain('Resend keeps its own delivery record');
     expect(page).toContain('a short description of what is needed as written by our team');
     expect(page).toContain('Basis: your consent.');
