@@ -69,7 +69,7 @@ Today, with every switch off, no person sees any difference.
 ## What was checked
 
 - Every lane has unit tests for its rules, an operator spec that mounts its real screens with the real stylesheets at 320, 390, 768 and 1440 px (no sideways scroll, 44 px targets, clean accessibility scan), and a test of every switch-off path. Database parts have their own database suites (additive, repeatable, append only, closed to the runtime roles, refusing another tenant).
-- Each pull request passed the required checks on its exact head before it was merged, and main CI and the Vercel production deploy were confirmed for each merge commit.
+- Each pull request passed the required checks on its exact head before it was merged. Main CI and the Vercel production deploy were checked for each merge commit; the governing ledger records the last confirmed one.
 - Review findings from Codex, and from a separate read-only review of every pull request before it was merged, were fixed in the same pull requests. The separate reviews found real defects that the tests had not: a Pulse message refused when a Move was written at the end of the five minute authenticator window, Register shown as done from a partial list and counts left stale in the Programme Room, the Operations panel empty on its direct address, the customer preview drawing links, and a fair name that was too small to tap. Each was reproduced or traced in the code and fixed with a test.
 - The pull requests that carried the update are 193 to 199, and the last one holds Lanes 9, 11 and 12 with this document.
 - Gates D01 to D06 and D08, real operations and provider activation are untouched and closed.
