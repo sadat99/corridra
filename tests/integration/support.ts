@@ -9,7 +9,7 @@ export const connection = (
   password = sandbox.ownerPassword,
 ) => ({ host: '127.0.0.1', port: 54329, database, user, password });
 export async function freshDatabase(name: string) {
-  if (!/^corridra_(integration|upgrade|restore)$/.test(name))
+  if (!/^corridra_(integration|upgrade|upgrade_third|restore)$/.test(name))
     throw new Error('Only isolated integration databases may be reset');
   const admin = new Pool(connection('postgres'));
   await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);

@@ -92,7 +92,7 @@ import {
   CustomerNotificationService,
   PulseService,
   databaseRecipientSource,
-  customerNotificationsEnabled,
+  customerNotificationWithdrawalEnabled,
 } from '@corridra/auth/customer-notifications';
 import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
 import { ViewAsService } from '@corridra/auth/view-as';
@@ -415,7 +415,8 @@ function createServices() {
       runtimePool,
       authPool,
       {
-        enabled: customerNotificationsEnabled(),
+        // The page and the route decide what the Pulse switch allows (only switching off when it is off).
+        enabled: customerNotificationWithdrawalEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),

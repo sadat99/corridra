@@ -146,7 +146,7 @@ test.describe('email choices', () => {
       page.getByText('Email is sent in English until a reviewed version exists'),
     ).toBeVisible();
     await expect(
-      page.getByText('Every email has a link to mute messages about one request.'),
+      page.getByText('Emails sent one at a time have a link to mute that request.'),
     ).toBeVisible();
   });
 
@@ -165,27 +165,30 @@ test.describe('email choices', () => {
     await expect(page.getByRole('button')).toHaveCount(0);
   });
 
-  test('switching on starts from all four messages, sends the choice and says email is on', async ({
+  test("switching on starts with the one message that is sent today, and the others are the person's own tick", async ({
     page,
   }) => {
     const sent = await openChoices(page, { initial: neverChose() });
     // A person with no saved choice starts from the time zone of their own browser.
     const browserZone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
     await page.getByRole('checkbox', { name: /Email me when something needs me/ }).check();
+    await expect(page.getByRole('checkbox', { name: /One thing needs you/ })).toBeChecked();
     for (const label of [
-      'One thing needs you',
       'Your request moved forward',
       'A date is coming up',
       'Your mission is complete',
-    ])
-      await expect(page.getByRole('checkbox', { name: new RegExp(label) })).toBeChecked();
+    ]) {
+      const box = page.getByRole('checkbox', { name: new RegExp(label) });
+      await expect(box).not.toBeChecked();
+    }
+    await expect(page.getByText('Not sent yet.')).toHaveCount(3);
     await page.getByRole('button', { name: 'Switch email on' }).click();
     await expect(
       page.getByRole('status').filter({ hasText: 'Email is on. These choices apply from now on.' }),
     ).toBeVisible();
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
-      kinds: ['your-move', 'update', 'countdown', 'complete'],
+      kinds: ['your-move'],
       timeZone: browserZone,
     });
     await expect(
@@ -314,10 +317,32 @@ test.describe('email choices', () => {
   test('while email is not switched on, the choices can be read but not changed', async ({
     page,
   }) => {
-    await openChoices(page, { initial: initial({ open: false }) });
+    await openChoices(page, { initial: neverChose({ open: false }) });
     await expect(page.getByRole('note')).toContainText('not switched on yet');
-    await expect(page.getByRole('button', { name: 'Save my choices' })).toBeDisabled();
     for (const box of await page.getByRole('checkbox').all()) await expect(box).toBeDisabled();
+    await expect(page.getByRole('button')).toHaveCount(0);
+  });
+
+  test('while the control is closed a person who said yes can still say no, and cannot say yes again', async ({
+    page,
+  }) => {
+    const sent = await openChoices(page, { initial: initial({ open: false }) });
+    await expect(page.getByRole('note')).toContainText('You can still switch your email off.');
+    const master = page.getByRole('checkbox', { name: /Email me when something needs me/ });
+    await expect(master).toBeEnabled();
+    // The master switch is the first checkbox; every other choice stays locked while the control is closed.
+    for (const box of (await page.getByRole('checkbox').all()).slice(1))
+      await expect(box).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Save my choices' })).toBeDisabled();
+    await master.uncheck();
+    // Clicking it again must not switch email back on while the control is closed.
+    await master.click();
+    await expect(master).not.toBeChecked();
+    await page.getByRole('button', { name: 'Switch email off' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+    ).toBeVisible();
+    expect(sent[0]).toMatchObject({ kinds: [] });
   });
 
   test('says so plainly when the page cannot be read', async ({ page }) => {

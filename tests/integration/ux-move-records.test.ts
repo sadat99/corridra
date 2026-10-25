@@ -28,6 +28,7 @@ describe('the shape of a Move', () => {
     'your import licence number',
     'your visit on week 3',
     'passport number for 2 people',
+    'the 2026 visit list',
     'the delivery date',
     'কারখানা পরিদর্শনের তারিখ',
   ])('accepts plain words: %s', (object) => {
@@ -46,6 +47,11 @@ describe('the shape of a Move', () => {
     ['confirm the 1,200 total', 'amounts'],
     ['send $300', 'amounts'],
     ['accept 5k deposit', 'amounts'],
+    ['add passport number A01234567', 'identity numbers'],
+    ['add NID 19951234567890', 'identity numbers'],
+    ['call 01712345678', 'identity numbers'],
+    ['add NID ১২৩৪৫৬৭৮৯০', 'identity numbers'],
+    ['add number ١٢٣٤٥٦٧٨٩٠', 'identity numbers'],
     ['line one\nline two', 'markup'],
   ])('refuses %s (%s)', (object) => {
     expect(moveObjectProblem(object)).not.toBeNull();

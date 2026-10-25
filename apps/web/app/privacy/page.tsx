@@ -13,6 +13,8 @@ export default function Page() {
   const real = realUseEnabled();
   // The first mission email says what it does only while it can actually be sent.
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
+  // Email about what needs a person (Pulse) is described only while it can actually be sent.
+  const pulseEmail = real && process.env.CORRIDRA_PULSE_ENABLED === 'true';
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
@@ -35,7 +37,7 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated 24 October 2026. Request notice version:{' '}
+            Updated 25 October 2026. Request notice version:{' '}
             {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
           </p>
         </div>
@@ -52,6 +54,8 @@ export default function Page() {
               <li>
                 Your information is stored in Frankfurt, Germany. Only the service providers listed
                 below handle it for us.
+                {pulseEmail &&
+                  ' Email you switch on is delivered by Resend, which keeps its own delivery record.'}
               </li>
               <li>
                 Request information is not automatically sent to AI, outreach or payment providers.
@@ -90,8 +94,9 @@ export default function Page() {
           <div>
             <p>
               Customer account names, email addresses, password hashes and sessions are stored
-              through Neon Auth in Frankfurt, Germany. Verification and password recovery emails use
-              Resend, with sending configured in Ireland.
+              through Neon Auth in Frankfurt, Germany. Verification and password recovery emails
+              {pulseEmail && ', and the request emails you switch on,'} use Resend, with sending
+              configured in Ireland.
             </p>
             <p>
               Your password goes to the account provider. It is not saved in mission requests,
@@ -161,6 +166,14 @@ export default function Page() {
                 keep a record. Basis: our legitimate interest in answering you, or the law where it
                 requires a record.
               </li>
+              {pulseEmail && (
+                <li>
+                  <strong>Email about your requests</strong> (your email choices with the time you
+                  made them, and a record of each message). To tell you when something needs you,
+                  only if you switch email on. Basis: your consent, which you can withdraw on the
+                  Email choices page.
+                </li>
+              )}
               {invoicing && (
                 <li>
                   <strong>Billing records</strong> (the company name and address you ask us to
@@ -293,7 +306,10 @@ export default function Page() {
             <ul>
               <li>Neon: database hosting and customer account services, in Frankfurt, Germany.</li>
               <li>Vercel: application hosting, in the Frankfurt region.</li>
-              <li>Resend: verification and password recovery emails, sent from Ireland.</li>
+              <li>
+                Resend: verification and password recovery emails
+                {pulseEmail && ', and the request emails you switch on'}, sent from Ireland.
+              </li>
             </ul>
             <p>
               They process information for us under their own terms and only for these purposes. We
@@ -326,6 +342,12 @@ export default function Page() {
                 If you choose a language, your browser remembers the choice in local storage. It is
                 not sent to us and you can clear it in your browser settings at any time.
               </li>
+              {pulseEmail && (
+                <li>
+                  If you close the email prompt with Not now, your browser remembers that in local
+                  storage for 14 days. It is not sent to us.
+                </li>
+              )}
             </ul>
             <p>
               Because these items are needed to provide what you asked for, they do not need a
@@ -451,6 +473,26 @@ export default function Page() {
                 for at most 24 hours, only to send the email, and we do not share it with anyone
                 else. These emails are sent through Resend, like account verification emails.
                 Sign-in and password emails are separate.
+              </p>
+            )}
+            {pulseEmail && (
+              <p>
+                Email about your requests is off until you switch it on, on the Email choices page.
+                You can switch it off there at any time, or mute one request from the link in an
+                email. If you switch it on, we email the verified address on your account when the
+                Corridra team sets something you need to do, or once a day if you choose. When we
+                send, we read your name and verified address from your account and pass them to
+                Resend, which delivers the email, with sending configured in Ireland. Resend keeps
+                its own delivery record, including the address and the content, for a limited time
+                under its terms. Our email records do not hold your address. Each email contains
+                your name, a short description of what is needed as written by our team, a date if
+                there is one, a link to the request or to Your Move, and a link to your email
+                choices. Emails sent one at a time about a request also have a link to mute that
+                request; the daily email has none, and you can switch it off on the Email choices
+                page. We keep each version of your email choices with its time, as the record of
+                your consent, and a record of each message (which request, its description, date and
+                status, never your address) in the Frankfurt application database. These records are
+                not deleted automatically; contact us to have them reviewed. Basis: your consent.
               </p>
             )}
             <p>
