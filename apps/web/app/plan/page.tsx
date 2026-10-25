@@ -1,5 +1,6 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { PublicShell } from '../../components/public-shell';
+import { uxSwitchOn } from '../../lib/ux-switches';
 import { Intake } from './intake';
 export const metadata = {
   title: 'Plan a mission | Corridra',
@@ -21,6 +22,7 @@ export default function Page() {
         <Intake
           realMode={realUseEnabled()}
           codeSignIn={process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
+          firstQuestion={uxSwitchOn('CORRIDRA_UX_FIRSTQ')}
         />
       </section>
     </PublicShell>

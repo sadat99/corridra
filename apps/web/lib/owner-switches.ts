@@ -433,7 +433,7 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'Picture-first first question',
     line: 'Starts a request with one picture question. Every request type stays available.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_TRIP',

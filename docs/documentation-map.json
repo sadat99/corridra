@@ -199,6 +199,16 @@
       "use": "Lane 5: the Room, the Road on a request and the Compare and Evidence lenses; what each reads, what is left out and why, and how to flip or roll back"
     },
     {
+      "path": "docs/design-system/home-tiles-proposal.md",
+      "classification": "Owner proposal",
+      "use": "The three home cards today beside a four-tile home that mirrors the first question; for the owner's decision, nothing changed"
+    },
+    {
+      "path": "docs/product/lane6-first-question.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 6: the picture-first first question and the single Sample or Real label; the mapping table, what stays the same and how to flip or roll back"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"

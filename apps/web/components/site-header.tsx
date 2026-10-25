@@ -4,7 +4,9 @@ import Link from 'next/link';
 
 import { useEffect, useRef, useState } from 'react';
 import { LanguageSwitcher } from './language-switcher';
-import { useT } from './language-provider';
+import { ModeLabel } from './mr/mode-label';
+import { mrLabelsFor } from './mr/labels';
+import { useLanguage, useT } from './language-provider';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
@@ -66,8 +68,19 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
   return who;
 }
 
-export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
+export function SiteHeader({
+  accounts = false,
+  mode,
+}: {
+  accounts?: boolean;
+  /**
+   * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): one Sample or Real label for the whole site
+   * replaces the "(sample request)" screen-reader text on the start button. Absent is the header as it was.
+   */
+  mode?: 'sample' | 'real';
+}) {
   const t = useT();
+  const { locale } = useLanguage();
   const who = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
@@ -100,6 +113,7 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
         </svg>
         <span>Corridra</span>
       </Link>
+      {mode && <ModeLabel real={mode === 'real'} labels={mrLabelsFor(locale).mode} />}
       <button
         ref={toggle}
         className="menu-toggle"
@@ -148,7 +162,13 @@ export function SiteHeader({ accounts = false }: { accounts?: boolean }) {
         )}
         <LanguageSwitcher />
         <Link prefetch={false} className="primary-link nav-cta" href="/plan" onClick={close}>
-          {t('header.start')} <span className="sr-only">{t('header.sample')}</span>
+          {t('header.start')}
+          {!mode && (
+            <>
+              {' '}
+              <span className="sr-only">{t('header.sample')}</span>
+            </>
+          )}
         </Link>
       </nav>
       {message && (

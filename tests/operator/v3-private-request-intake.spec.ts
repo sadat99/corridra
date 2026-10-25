@@ -35,6 +35,8 @@ test.beforeAll(async () => {
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
+    // Components import their own stylesheets; this spec does not mount them for styling.
+    loader: { '.css': 'empty' },
     // Next normally replaces browser environment references. The standalone
     // protocol bundle must supply the same empty public environment boundary.
     define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
