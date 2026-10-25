@@ -485,11 +485,18 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'planned',
   },
   {
+    name: 'CORRIDRA_UX_FRONT_DOORS',
+    label: 'Founder and helper front doors',
+    line: 'Adds a short list of cards that link to existing pages: five areas on the founder page, and the three ways in on the helper page.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_PROGRAMME',
     label: 'Programme Room',
     line: 'Groups every programme panel into one room per programme. Nothing is removed.',
     group: 'Programmes and delegations',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_FAIRS',
