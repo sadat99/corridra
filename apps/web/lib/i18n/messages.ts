@@ -3,8 +3,10 @@
 // bn, zh, es, ar, fr and de entries are drafts until a native reviewer is recorded (see locales.ts); they
 // are never shown to the public before that.
 import { defaultLocale, type Locale } from './locales';
+import { homeEn, homeWords } from './home-words';
 
 export const en = {
+  ...homeEn,
   skip: 'Skip to content',
   'header.home': 'Corridra home',
   'header.menu': 'Menu',
@@ -158,6 +160,7 @@ export type MessageKey = keyof typeof en;
 type Catalog = Record<MessageKey, string>;
 
 const bn: Catalog = {
+  ...homeWords.bn,
   skip: 'মূল বিষয়বস্তুতে যান',
   'header.home': 'Corridra হোম',
   'header.menu': 'মেনু',
@@ -309,6 +312,7 @@ const bn: Catalog = {
 };
 
 const zh: Catalog = {
+  ...homeWords.zh,
   skip: '跳到主要内容',
   'header.home': 'Corridra 首页',
   'header.menu': '菜单',
@@ -451,6 +455,7 @@ const zh: Catalog = {
 };
 
 const es: Catalog = {
+  ...homeWords.es,
   skip: 'Ir al contenido',
   'header.home': 'Corridra, inicio',
   'header.menu': 'Menú',
@@ -603,6 +608,7 @@ const es: Catalog = {
 };
 
 const ar: Catalog = {
+  ...homeWords.ar,
   skip: 'انتقل إلى المحتوى',
   'header.home': 'Corridra، الصفحة الرئيسية',
   'header.menu': 'القائمة',
@@ -748,6 +754,7 @@ const ar: Catalog = {
 };
 
 const fr: Catalog = {
+  ...homeWords.fr,
   skip: 'Aller au contenu',
   'header.home': 'Accueil Corridra',
   'header.menu': 'Menu',
@@ -901,6 +908,7 @@ const fr: Catalog = {
 };
 
 const de: Catalog = {
+  ...homeWords.de,
   skip: 'Zum Inhalt springen',
   'header.home': 'Corridra Startseite',
   'header.menu': 'Menü',

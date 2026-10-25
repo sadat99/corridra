@@ -8,6 +8,7 @@ import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { offeredLanguages } from '../lib/i18n/locales';
+import { languagesWithPages } from '../lib/i18n/pages';
 import { uxSwitchOn } from '../lib/ux-switches';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 
@@ -92,7 +93,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={fontVariables}>
       <body>
-        <LanguageProvider offered={offeredLanguages()}>
+        <LanguageProvider offered={offeredLanguages()} pageLocales={languagesWithPages()}>
           <SkipLink />
           <div className="site-shell">
             <SiteHeader

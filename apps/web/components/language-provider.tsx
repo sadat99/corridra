@@ -19,10 +19,13 @@ import {
   type OfferedLanguage,
 } from '../lib/i18n/locales';
 import { translate, type MessageKey } from '../lib/i18n/messages';
+import { localeFor } from '../lib/i18n/pages';
 
 type LanguageState = {
   locale: Locale;
   offered: readonly OfferedLanguage[];
+  /** True when page words follow the chosen language: the owner has released that language in `CORRIDRA_LANGUAGES_PAGES`. */
+  pages: boolean;
   choose: (locale: Locale) => void;
   t: (key: MessageKey) => string;
 };
@@ -31,6 +34,7 @@ const english: readonly OfferedLanguage[] = [{ code: defaultLocale, draft: false
 const Context = createContext<LanguageState>({
   locale: defaultLocale,
   offered: english,
+  pages: false,
   choose: () => {},
   t: (key) => translate(defaultLocale, key),
 });
@@ -71,14 +75,18 @@ function resolve(codes: readonly Locale[]): Locale {
  * Pages are built in English and stay static. After the page loads, the remembered language (or, on
  * a first visit, the browser's own language when it is offered) is applied: text, the page language
  * and its direction. Nothing about the person is sent anywhere; the choice stays in this browser.
- * The main content of a page is still English until a page is on message files, so each page's main
- * region says lang="en" dir="ltr" itself and only the translated chrome follows the choice.
+ * The main content of a page is English until the page is on message files and the language's page words are
+ * released, so each such page's main region says lang="en" dir="ltr" itself and only the translated chrome
+ * follows the choice. A page on message files carries the chosen language and direction itself (TranslatedMain).
  */
 export function LanguageProvider({
   offered,
+  pageLocales = [],
   children,
 }: {
   offered: readonly OfferedLanguage[];
+  /** The languages whose page words are released (`CORRIDRA_LANGUAGES_PAGES`). */
+  pageLocales?: readonly Locale[];
   children: React.ReactNode;
 }) {
   const codes = useMemo(() => offered.map((item) => item.code), [offered]);
@@ -108,9 +116,17 @@ export function LanguageProvider({
     [codes],
   );
 
+  // Page words stay English until the chosen language's page words are released, whatever language is chosen.
+  const pages = pageLocales.includes(locale);
   const value = useMemo<LanguageState>(
-    () => ({ locale, offered, choose, t: (key) => translate(locale, key) }),
-    [locale, offered, choose],
+    () => ({
+      locale,
+      offered,
+      pages,
+      choose,
+      t: (key) => translate(localeFor(locale, key, pages), key),
+    }),
+    [locale, offered, pages, choose],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

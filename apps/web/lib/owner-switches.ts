@@ -4,6 +4,7 @@ import {
   customerProductionUnlocked,
   realUseEnabled,
 } from '@corridra/auth/customer-production';
+import { languagesWithPages } from './i18n/pages';
 
 /**
  * Plain-language registry of every CORRIDRA_* setting the application reads.
@@ -319,6 +320,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'setting',
   },
   {
+    name: 'CORRIDRA_LANGUAGES_PAGES',
+    label: 'Page words in the chosen language',
+    line: 'Shows the home page (and later the request form) in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, those pages read in English whatever language is chosen. Set it only after the owner has recorded a review of the page words of each language. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_LANGUAGES_PREVIEW',
     label: 'Show draft languages',
     line: 'Shows every draft language in the language chip, marked as a draft, so you can read them before a reviewer has. Keep it off for the public. Needs a new deploy.',
@@ -554,6 +562,14 @@ function resolve(
     return off;
   }
   if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
+  if (entry.name === 'CORRIDRA_LANGUAGES_PAGES') {
+    // `true` or a list of language codes: the row says what visitors really get.
+    const released = languagesWithPages(env);
+    if (released.length === 0) return off;
+    return env[entry.name]?.trim().toLowerCase() === 'true'
+      ? on
+      : { text: `On for ${released.join(', ')}`, tone: 'positive' as const };
+  }
   return env[entry.name] === 'true' ? on : off;
 }
 

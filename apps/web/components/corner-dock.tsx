@@ -4,10 +4,51 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from './corridra-icon';
 
+/** What Listen reads: the main region and its language. A change in either means support must be asked again. */
+function contentSignature() {
+  const main = document.getElementById('main');
+  return { main, language: main?.lang || document.documentElement.lang || 'en' };
+}
+
+/**
+ * Calls `changed` when what Listen would read changes: the main region is replaced (a link opened another page)
+ * or its language changes (the person's choice is applied on the client after the page has loaded). The dock
+ * stays through both. One lookup, at most once per frame.
+ */
+function watchContent(changed: () => void) {
+  let seen = contentSignature();
+  let frame = 0;
+  const recheck = () => {
+    frame = 0;
+    const now = contentSignature();
+    if (now.main === seen.main && now.language === seen.language) return;
+    seen = now;
+    changed();
+  };
+  const observer = new MutationObserver(() => {
+    if (!frame) frame = requestAnimationFrame(recheck);
+  });
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['lang'],
+  });
+  return () => {
+    observer.disconnect();
+    if (frame) cancelAnimationFrame(frame);
+  };
+}
+
+/** Listen asks again whether the browser can speak what is now on the page. */
 function subscribe(onChange: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return () => {};
   window.speechSynthesis.addEventListener('voiceschanged', onChange);
-  return () => window.speechSynthesis.removeEventListener('voiceschanged', onChange);
+  const stopWatching = watchContent(onChange);
+  return () => {
+    window.speechSynthesis.removeEventListener('voiceschanged', onChange);
+    stopWatching();
+  };
 }
 
 /** The language of what Listen reads: the main region's own language, not the chrome around it. */
@@ -36,6 +77,16 @@ export function CornerDock() {
   const [open, setOpen] = useState(false);
   const helpButton = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
+
+  // A reading belongs to the page and language it started on. When either changes it stops, so it is never left
+  // running with no way to stop it (Listen may not be offered for the new page's language).
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+    return watchContent(() => {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+    });
+  }, []);
 
   function toggleListen() {
     const synth = window.speechSynthesis;

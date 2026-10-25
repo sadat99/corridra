@@ -33,3 +33,7 @@ Status: built and dark, 25 October 2026. Nothing is offered to the public: Frenc
 
 - Unit suite `language-catalog.test.ts` (updated for two more languages): the existing key, dash, brand and fallback rules now run for `fr` and `de`; every placeholder is kept in every language; both are labelled drafts and are not offered without the preview setting; the formal address; short labels; the browser-language match. 70 tests pass.
 - Operator spec `ux-pseudo-language.spec.ts` (5 tests): the 40 percent longer language through the real screens at four widths. Screenshot in `docs/design-system/evidence/lane11-languages/`.
+
+## Page words and the page switch (25 October 2026)
+
+Pages follow the chosen language only where their words are message keys and the language's page words are released. The home page is the first (`apps/web/lib/i18n/home-words.ts`). `CORRIDRA_LANGUAGES_PAGES` is unset by default, which shows English everywhere; `true` releases every language and a list such as `es,de` releases only those. The owner records a review of the page words per language in [the review record](language-review-record.md) before setting it. The request form is the next page and stays English until then; legal and consent text is never part of a translation until a qualified reviewer per language has read it.
