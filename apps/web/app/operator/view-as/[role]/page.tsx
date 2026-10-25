@@ -9,6 +9,8 @@ import { AccessState } from '../../../../components/access-state';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { foundations } from '../../../../lib/foundations';
 import { chooseOwnerTenant } from '../../../../lib/owner-access';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
+import { SampleScreens } from './sample-screens';
 
 export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ role: string }> }) {
@@ -109,6 +111,7 @@ export default async function Page({
               <h2>Sample messages</h2>
               <p>No messages yet. Replies from the Corridra team appear here.</p>
             </section>
+            {uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS') && <SampleScreens />}
           </div>
         </div>
       </main>

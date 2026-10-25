@@ -23,6 +23,7 @@ import { GovernedAssistance } from './intelligence';
 import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
 import { workspaceSections } from '../../lib/workspace-navigation';
+import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -60,17 +61,22 @@ export function Workspace({
   initialTenant,
   ownerPage = false,
   moveRecords = false,
+  initialSection = '',
 }: {
   tenants: Tenant[];
   initialTenant: string;
   ownerPage?: boolean;
   moveRecords?: boolean;
+  /** The section named by the address (Lane 9), used when the address has no `#` part. */
+  initialSection?: string;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
   function switchTenant(next: string) {
     setTenant(next);
-    router.replace('/operator?workspace=' + encodeURIComponent(next) + window.location.hash, {
+    // On a section address the person stays on it; everywhere else this is the address it always was.
+    const base = (initialSection && operatorSectionPath(initialSection)) || '/operator';
+    router.replace(base + '?workspace=' + encodeURIComponent(next) + window.location.hash, {
       scroll: false,
     });
   }
@@ -82,6 +88,7 @@ export function Workspace({
       switchTenant={switchTenant}
       ownerPage={ownerPage}
       moveRecords={moveRecords}
+      initialSection={initialSection}
     />
   );
 }
@@ -91,12 +98,14 @@ function TenantWorkspace({
   switchTenant,
   ownerPage,
   moveRecords,
+  initialSection,
 }: {
   tenants: Tenant[];
   tenant: string;
   switchTenant: (next: string) => void;
   ownerPage: boolean;
   moveRecords: boolean;
+  initialSection: string;
 }) {
   const router = useRouter();
   const edited = useRef(false);
@@ -180,11 +189,12 @@ function TenantWorkspace({
   const [fragment, setFragment] = useState('');
   useEffect(() => {
     if (!loaded) return;
-    const read = () => setFragment(window.location.hash.slice(1));
+    // A `#` part always wins, so the old links keep working on a section address too.
+    const read = () => setFragment(fragmentFor(window.location.hash, initialSection));
     read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
-  }, [loaded]);
+  }, [loaded, initialSection]);
   const sectionAllowed = workspaceSections.some(
     (section) =>
       section.id === fragment && (section.roles as readonly string[]).includes(currentRole ?? ''),

@@ -482,7 +482,7 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'Team workspace addresses',
     line: 'Gives each team workspace section its own address. The old links keep working.',
     group: 'Team access',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_FRONT_DOORS',
