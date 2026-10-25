@@ -169,6 +169,7 @@ test('squad files hold procedure only: no plan facts, no em dashes', () => {
   const paths = [
     ...Object.keys(SQUAD).map((name) => `.claude/agents/${name}.md`),
     '.claude/skills/corridra-squad/SKILL.md',
+    '.claude/skills/corridra-squad/quality-bar.md',
     '.claude/workflows/corridra-squad.js',
   ];
   for (const path of paths) {
@@ -183,6 +184,27 @@ test('squad files hold procedure only: no plan facts, no em dashes', () => {
       );
     }
   }
+});
+
+test('the quality bar is complete and bound to the agents that plan, build and review', () => {
+  const bar = read('.claude/skills/corridra-squad/quality-bar.md');
+  for (const section of [
+    'Clean',
+    'Secure',
+    'Easy to use',
+    'Durable',
+    'Maintainable',
+    'Easy to change and scale',
+    'Observable',
+    'Fast enough',
+  ])
+    assert.ok(bar.includes(`\n## ${section}\n`), `quality bar lacks ${section}`);
+  for (const name of ['corridra-architect', 'corridra-builder', 'corridra-reviewer'])
+    assert.ok(
+      read(`.claude/agents/${name}.md`).includes('.claude/skills/corridra-squad/quality-bar.md'),
+      `${name} must apply the quality bar`,
+    );
+  assert.ok(read('.claude/skills/corridra-squad/SKILL.md').includes('(quality-bar.md)'));
 });
 
 test('the workflow compiles and routes only to squad agents the skill documents', () => {

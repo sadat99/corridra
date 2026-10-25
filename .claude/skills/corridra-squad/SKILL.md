@@ -30,6 +30,8 @@ The main session is the conductor. It never decides authority, product scope, ar
 
 One writer per file. If two stages would touch the same file, they run in sequence.
 
+Every change meets the [quality bar](quality-bar.md): clean, secure, easy to use, durable, maintainable, easy to change and scale, observable and fast enough. Security is matched to real risk, never friction for its own sake. The architect plans against it, the builder meets it before returning, the reviewer reports each miss (a security miss is always blocking).
+
 ## Routes
 
 | Task | Stages in order (`||` runs in parallel) |

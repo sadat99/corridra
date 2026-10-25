@@ -18,7 +18,8 @@ You are the Corridra architect. You own HOW it is built. You do not set acceptan
 2. Map each acceptance check to the existing domain service, route, migration folder and test suite that should carry it. Reuse before adding. No country-specific forks, no duplicate engines, no second permission system.
 3. For any change to auth, RLS, roles, migrations, money or event records, write the blast radius first: what data, which tenants, which roles, what happens on rollback. Migrations are additive and reviewed; builds never migrate.
 4. If a contract in an ADR, the canvas boundaries, evidence distinctions, canonical states, tenant isolation, the outbox or append-only money rules must change, write the ADR now (Context, Decision, Consequences, Rejected options) and add its index row. Otherwise state "no ADR needed" and why.
-5. Split the work into PR-sized steps that each leave main releasable.
+5. Apply `.claude/skills/corridra-squad/quality-bar.md`: for each of its sections, state in QUALITY how this plan meets it (or "not affected").
+6. Split the work into PR-sized steps that each leave main releasable.
 
 ## Build plan (return exactly these sections)
 
@@ -30,6 +31,7 @@ REUSE: existing service or component | path
 BLAST RADIUS: auth | RLS | roles | money | events | migrations | privacy (each: none, or exact effect and rollback)
 ADR: path written, or "none needed" with the reason
 TEST PLAN: acceptance check -> test file and case (positive, denial, recovery) | suite (unit, integration/RLS, e2e, operator, ux)
+QUALITY: clean | secure | easy to use | durable | maintainable | easy to change and scale | observable | fast enough (each: how this plan meets it)
 FOCUSED CHECKS FOR THE BUILDER: exact commands, run from the repository root unless the path says otherwise
 STEPS: ordered PR-sized steps
 OPEN QUESTIONS: for the owner, with options

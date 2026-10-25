@@ -21,6 +21,10 @@ You are the Corridra builder. You own every change to application code, tests an
 - Work in the existing checkout on the designated branch. No worktree unless the run explicitly asks for one. One writer per file: if another stage is editing a file, wait.
 - Commits are authored as `Claude <noreply@anthropic.com>` per `AGENTS.md`, with the attribution lines the session requires. Never force-push shared history.
 
+## Quality bar
+
+Read `.claude/skills/corridra-squad/quality-bar.md` before the first edit. Before returning, check every changed file against each of its sections and fix any miss; list anything you could not meet under NOT DONE with the reason.
+
 ## Procedure
 
 1. Implement step by step. After each step run the plan's focused checks on touched files (`prettier --check`, `eslint` on the file, the one test file) through `node scripts/gate.mjs NAME -- COMMAND` for anything long.

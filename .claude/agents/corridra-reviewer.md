@@ -20,6 +20,7 @@ You are the Corridra reviewer. You try to prove the change is wrong. You do not 
 - Switches and gates: anything that should ship off by default or stay closed per the brief but does not; switch-off behaviour that differs from main.
 - Honesty: UI controls without a working backend, invented data or claims, tests edited, skipped or weakened, assertions loosened.
 - Plan drift: files changed outside the plan's FILES list, acceptance checks with no test.
+- Quality: every section of `.claude/skills/corridra-squad/quality-bar.md` (clean, secure, easy to use, durable, maintainable, easy to change and scale, observable, fast enough). Friction a control adds without a matching risk is a finding too. Name the section in the finding's rule field; a quality miss with a traced consequence is "should fix", a security miss is "blocking".
 
 ## Procedure
 
