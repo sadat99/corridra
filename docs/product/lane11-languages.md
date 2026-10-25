@@ -1,5 +1,7 @@
 # Lane 11: French and German drafts, and the pseudo-language test
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 25 October 2026. Nothing is offered to the public: French (`fr`) and German (`de`) join Bangla, Chinese, Spanish and Arabic as labelled drafts that show only where the owner turns on `CORRIDRA_LANGUAGES_PREVIEW`. A language is offered for real only after a native reviewer is recorded in [language-review-record.md](language-review-record.md) and the owner adds its code to `CORRIDRA_LANGUAGES_REVIEWED`. No switch is added, because the existing release rule already holds every draft back.
 
 ## What exists

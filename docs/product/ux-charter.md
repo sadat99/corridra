@@ -1,5 +1,7 @@
 # Corridra UX charter
 
+**Document status: CURRENT.** Applied as governing for UX work through the owner's delegation of 24 October 2026 (section 0 of the [corrected plan](ux-update-plan-corrected-2026-10-24.md)); the owner has not signed it separately. The V3 contract, product vision and UI direction still govern it. See the [plan status register](../PLAN_STATUS.md).
+
 Status: proposed on 24 October 2026, for the owner's approval. It sets the structure, the principles and the boundaries of the UX revamp. It does not set screens, counts, step names, file lists, build order, language lists or dates. Those change, and they live in dated plans such as [the verification record](ux-update-plan-verification-2026-10-24.md).
 
 Authority: the [V3 contract](../V3_CONTRACT.md), the [product vision v2.1](corridra-product-vision-v2.1.md) and the [UI direction](../agents/ui-direction.md) govern. This charter applies them and never overrides them. Where the charter needs a locked rule in UI direction to change, UI direction is changed first, with the reason and the owner's approval, as that file requires.

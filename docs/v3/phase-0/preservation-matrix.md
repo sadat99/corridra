@@ -1,5 +1,7 @@
 # V2 to V3 preservation matrix
 
+**Document status: CURRENT, DATED.** Static baseline inventory; re-check against code and fresh runtime evidence before claiming preservation. See the [plan status register](../../PLAN_STATUS.md).
+
 Baseline: e9ed2e53d97f543c30bace29d9ef38d568a65236. Phase 0 removes no functions. Static discovery is not verified preservation.
 
 ## Capability families

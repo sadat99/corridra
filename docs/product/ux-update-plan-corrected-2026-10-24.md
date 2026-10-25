@@ -1,5 +1,7 @@
 # Corridra UX update plan, corrected candidate, 24 October 2026
 
+**Document status: DONE.** Executed under the owner's delegation of 24 October 2026; every lane is built behind its switch or explicitly not built. What happened is in the [handoff](ux-update-handoff-2026-10-25.md). See the [plan status register](../PLAN_STATUS.md).
+
 Status: **approved for execution by the owner's delegation** (24 October 2026, see section 0). The charter governs; where this plan and the charter differ, the charter wins.
 
 What this is: the owner's plan of 24 October 2026 with every gap and mistake found in the verification fixed. It is built on [the UX charter](ux-charter.md), which governs. Where this plan and the charter differ, the charter wins. A lane session reads this file from the repository; nothing is pasted.

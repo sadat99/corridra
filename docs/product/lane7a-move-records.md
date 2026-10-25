@@ -1,5 +1,7 @@
 # Lane 7a: Move records
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 24 October 2026. Switch `CORRIDRA_UX_MOVE_RECORDS` (off by default) and a database control that starts closed. Decision record: [ADR-068](../adr/0068-move-records.md). With the switch unset and the control closed, every page, address and database behaviour is what it was.
 
 ## What exists

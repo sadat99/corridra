@@ -1,5 +1,7 @@
 # Phase 2 interview questions
 
+**Document status: WAITING OWNER.** Interview design for the owner; nothing is built because of it. See the [plan status register](../PLAN_STATUS.md).
+
 Status: design note for the owner, 24 October 2026. Ten to fifteen conversations decide whether the decision card ([ADR-070](../adr/0070-decision-card-and-sharing.md)) and Pulse email ([ADR-067](../adr/0067-notification-records-and-pulse.md)) are worth switching on. Nothing here is built because of an answer; each answer only changes what the owner enables.
 
 ## Who to ask

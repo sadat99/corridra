@@ -1,5 +1,7 @@
 # Lane 8: the supplier Reply Page and the team's review of replies
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 25 October 2026. Switch `CORRIDRA_REPLY_PAGE` (off by default) for both the supplier page and the team's review; the review also needs a database module that starts closed. Decision record: [ADR-069](../adr/0069-reply-page.md), with the amendment recorded there. Owner steps: [phase2-install.md](phase2-install.md).
 
 ## What exists when the switch is on

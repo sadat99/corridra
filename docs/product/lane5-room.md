@@ -1,5 +1,7 @@
 # Lane 5: the Room, the Road on a request and the lenses
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 24 October 2026. Switches `CORRIDRA_UX_ROAD` and `CORRIDRA_UX_LENSES`, both off by default. With both unset every customer page is exactly what it was, and the Room address answers "not found".
 
 ## What exists when the switches are on
