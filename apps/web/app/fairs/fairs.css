@@ -19,6 +19,14 @@
   margin: 0 0 var(--space-1);
   font-size: var(--text-lg);
 }
+.fairs-list h2 a {
+  display: inline-block;
+  min-height: 44px;
+  padding-block: var(--space-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 6px;
+}
 .fairs-list p,
 .fairs-dates dd {
   margin: var(--space-1) 0 0;

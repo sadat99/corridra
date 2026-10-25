@@ -137,6 +137,19 @@ test('the list shows the next checked date, the days to it and the day it was la
   await expect(page.getByText('Dates last checked 2026-10-21')).toBeVisible();
 });
 
+test("each fair's name is a link with a 44 pixel target that looks like a link", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await go(page, [fair]);
+  const link = page.getByRole('link', { name: 'Example Trade Fair' });
+  const box = await link.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(43.5);
+  expect(await link.evaluate((node) => getComputedStyle(node).textDecorationLine)).toBe(
+    'underline',
+  );
+});
+
 test('a fair with nothing still to come says no date has been checked, not a guess', async ({
   page,
 }) => {

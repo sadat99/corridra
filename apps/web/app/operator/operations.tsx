@@ -302,23 +302,17 @@ export function Operations({
     },
     [admin, request],
   );
+  // The workspace passes the section it is showing, which follows the address hash and, with the section
+  // addresses on, the path (/operator/dashboard). Reading the section rather than the hash loads the same
+  // data from either address.
   useEffect(() => {
-    const navigate = () => {
-      if (
-        [
-          '#workspace-operations',
-          '#ops-dashboard',
-          '#ops-center',
-          '#ops-health',
-          '#ops-gates',
-        ].includes(window.location.hash)
+    if (
+      ['workspace-operations', 'ops-dashboard', 'ops-center', 'ops-health', 'ops-gates'].includes(
+        section,
       )
-        void load(currentFilters.current);
-    };
-    navigate();
-    window.addEventListener('hashchange', navigate);
-    return () => window.removeEventListener('hashchange', navigate);
-  }, [load]);
+    )
+      void load(currentFilters.current);
+  }, [section, load]);
   async function send(command: Row, form?: HTMLFormElement) {
     const fingerprint = JSON.stringify(command);
     if (pending.current && pending.current.fingerprint !== fingerprint) {

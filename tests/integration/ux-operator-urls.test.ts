@@ -131,5 +131,16 @@ describe('every switch-off path', () => {
     // A plain server component with fixed invented data: the preview folder holds no client code.
     expect(samples).not.toMatch(/['"]use (client|server)['"]/);
     expect(samples).not.toMatch(/fetch\(|XMLHttpRequest|sendBeacon|localStorage|cookie/);
+    // The protected preview rule: nothing that can act, so no link, no button and no form, and no
+    // reading of this browser (the real Your Move screen has links and a "forget" button, so it is not used).
+    expect(samples).not.toMatch(/<(Link|a|button|form|input)\b|href=|MoveView/);
+    expect(samples).toContain('<MoveCard');
+  });
+  it('the Operations panel loads from the section it is shown for, so a section address loads it as a # part does', () => {
+    const operations = read('apps/web/app/operator/operations.tsx');
+    expect(operations).toContain('}, [section, load]);');
+    expect(operations).not.toMatch(/window\.location\.hash|hashchange/);
+    // The workspace hands it the section that follows the # part and, with the switch on, the address.
+    expect(read('apps/web/app/operator/workspace.tsx')).toContain('section={fragment}');
   });
 });

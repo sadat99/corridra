@@ -5,10 +5,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 
-// View as, stage 2 (Lane 9): the real Your Move screen and the Room header and Road drawn from fixed
-// sample data inside the preview's inert stage, with the real stylesheets. What is proved: the samples
-// are the real components, nothing in them can be pressed or focused, they say they are samples, and
-// they fit a phone. No database, no sign-in.
+// View as, stage 2 (Lane 9): the Your Move cards and the Room header and Road drawn from fixed sample
+// data inside the preview's inert stage, with the real stylesheets. What is proved: the samples use the
+// real Move card, holder badge and Road, they hold no link, button or form (the preview must hold
+// nothing that can act), nothing in them can be pressed or focused, and they fit a phone. No database,
+// no sign-in.
 let server: Server, origin: string;
 let bundle = '';
 let componentCss = '';
@@ -94,7 +95,7 @@ test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
 
-test('the real Your Move and Room are drawn from sample data and say so', async ({ page }) => {
+test('the Move cards and the Room are drawn from sample data and say so', async ({ page }) => {
   await page.goto(origin);
   await expect(page.getByRole('heading', { name: 'Sample: Your Move' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sample: the Room' })).toBeVisible();
@@ -107,23 +108,24 @@ test('the real Your Move and Room are drawn from sample data and say so', async 
   await expect(page.locator('.room-emblem')).toHaveText('HT');
 });
 
-test('nothing in the samples can be pressed or focused', async ({ page }) => {
+test('nothing in the samples can be pressed or focused, and there is no link or button to press', async ({
+  page,
+}) => {
   await page.goto(origin);
   await expect(page.locator('.view-as-content')).toHaveAttribute('inert', '');
+  // The same rule the protected preview test holds the real page to.
+  await expect(page.locator('main a, main button, main form, main input')).toHaveCount(0);
+  // Nothing is read from this browser: a stored "read" mark makes no Forget button appear.
+  await page.evaluate(() => localStorage.setItem('corridra.move.seen', '{"x":"2026-10-01"}'));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Sample: Your Move' })).toBeVisible();
+  await expect(page.locator('main button')).toHaveCount(0);
   // Press Tab through the page: focus never lands inside the stage.
   for (let i = 0; i < 12; i++) {
     await page.keyboard.press('Tab');
     const inside = await page.evaluate(() => !!document.activeElement?.closest('.view-as-content'));
     expect(inside).toBe(false);
   }
-  // A click on a card goes nowhere: the address does not change.
-  const before = page.url();
-  await page
-    .locator('.view-as-content a, .view-as-content button')
-    .first()
-    .click({ force: true, trial: false })
-    .catch(() => undefined);
-  expect(page.url()).toBe(before);
 });
 
 for (const width of [320, 390, 768, 1440]) {
