@@ -131,6 +131,13 @@ test('shows five pictures that choose a start, and keeps every job type selectab
   await expect(job(page)).toHaveValue('delegations');
   await page.getByRole('radio', { name: /Something else/ }).check();
   await expect(page.getByRole('radio', { name: /Something else/ })).toBeChecked();
+  // This picture has no default job: the person chooses one, and nothing is filled in for them.
+  await expect(job(page)).toHaveValue('');
+  await job(page).selectOption('factory_visits');
+  await expect(page.getByRole('radio', { name: /Something else/ })).toBeChecked();
+  // Choosing the picture again keeps the job the person chose.
+  await page.getByRole('radio', { name: /Something else/ }).check();
+  await expect(job(page)).toHaveValue('factory_visits');
   // Every one of the fifteen jobs, plus the prompt, is still there.
   await expect(job(page).locator('option')).toHaveCount(16);
 });

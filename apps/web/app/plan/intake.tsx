@@ -323,20 +323,22 @@ function IntakeForm({
       );
     }
   }
-  function change(field: keyof Draft, value: string | boolean | string[]) {
+  function change(field: keyof Draft, value: string | boolean | string[], openJob = false) {
     const v = { ...draft, [field]: value };
     if (field === 'job' && value) v.objective = objectiveForJob(String(value));
     if (field === 'objective')
-      v.job = (
-        {
-          'Sell in a new market': 'buyers',
-          'Find customers or distributors': 'distributors',
-          'Source suppliers': 'sourcing',
-          'Make an upcoming business trip more productive': 'business_trips',
-          'Run a multi-company mission': 'delegations',
-          'Something else': 'market_validation',
-        } as Record<string, string>
-      )[String(value)];
+      v.job = openJob
+        ? ''
+        : (
+            {
+              'Sell in a new market': 'buyers',
+              'Find customers or distributors': 'distributors',
+              'Source suppliers': 'sourcing',
+              'Make an upcoming business trip more productive': 'business_trips',
+              'Run a multi-company mission': 'delegations',
+              'Something else': 'market_validation',
+            } as Record<string, string>
+          )[String(value)];
     if (v.job !== draft.job)
       for (const k of [
         'technicalPurpose',
@@ -800,7 +802,10 @@ function IntakeForm({
                       onChoose={(key) => {
                         const picture = pictures.find((item) => item.key === key);
                         if (picture?.defaultJob) change('job', picture.defaultJob);
-                        else change('objective', 'Something else');
+                        // "Something else" has no default job: the person picks one from the list. The
+                        // older objective handler would fill in "Validate a market", so it is not used.
+                        else if (selectedPicture(draft.objective, draft.job) !== key)
+                          change('objective', 'Something else', true);
                       }}
                     />
                   ) : (

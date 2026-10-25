@@ -120,6 +120,17 @@ describe('which picture is chosen', () => {
   });
 });
 
+describe('the picture with no default job', () => {
+  it('leaves the job for the person to choose instead of using the older objective default', () => {
+    const intake = readFileSync(resolve('apps/web/app/plan/intake.tsx'), 'utf8');
+    expect(intake).toContain("change('objective', 'Something else', true)");
+    expect(intake).toContain('openJob = false');
+    // The older radios still get their older default, so the switch-off behaviour is unchanged.
+    expect(intake).toContain("'Something else': 'market_validation'");
+    expect(intake).toContain("onChange={() => change('objective', v)}");
+  });
+});
+
 describe('the pictures', () => {
   it('are five real radio buttons with an icon, a label and a line of help, and mark the chosen one by more than colour', async () => {
     const { FirstQuestion } = await load('components/mr/first-question');

@@ -30,6 +30,8 @@ One file, `apps/web/lib/first-question.ts`. Each job type sits under exactly one
 
 `tests/integration/ux-first-question.test.ts` checks the table against the job catalogue the code holds (nothing missing, nothing twice), against the objectives each guided-draft starter accepts, against the three home cards and against every public page that opens the plan, so the places cannot disagree.
 
+Choosing "Something else" clears the job: it has no default, so the person picks one from the list and nothing is filled in for them (found in review: the older objective handler would have set "Validate a market"). Choosing the picture again keeps a job the person already chose. The six older radios keep their older default, so the switch-off page is unchanged.
+
 ## Flow-step budget
 
 No step is added. The first step still has one choice and one optional refinement; the pictures replace the radios and the Continue button is unchanged.
