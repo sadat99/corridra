@@ -1,0 +1,28 @@
+.programme-room .room-head h3 {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.programme-room .room-head > div {
+  min-width: 0;
+}
+.programme-boarding {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.programme-boarding strong {
+  margin-inline-end: var(--space-2);
+}
+.programme-room > section[hidden] {
+  display: none;
+}
+.programme-room > section {
+  min-width: 0;
+}
+.programme-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-width: 60ch;
+}

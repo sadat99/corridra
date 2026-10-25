@@ -15,7 +15,9 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { CustomerProgrammes } from '../customer-programmes';
+import { ProgrammeRoomStyles } from '../programme-room-styles';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -56,6 +58,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="MY WORK" title="Plan delegations">
+      {uxSwitchOn('CORRIDRA_UX_PROGRAMME') && <ProgrammeRoomStyles />}
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
@@ -69,6 +72,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         termsEnabled={customerProgrammeTermsEnabled()}
         pricingEnabled={customerProgrammePricingEnabled()}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
+        roomEnabled={uxSwitchOn('CORRIDRA_UX_PROGRAMME')}
       />
     </CustomerShell>
   );

@@ -496,7 +496,7 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'Programme Room',
     line: 'Groups every programme panel into one room per programme. Nothing is removed.',
     group: 'Programmes and delegations',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_FAIRS',

@@ -324,6 +324,8 @@ describe('the stylesheets of the teaching layer', () => {
       'app/account/move/move-view.tsx',
       'app/account/rooms/[requestId]/room-view.tsx',
       'app/plan/intake.tsx',
+      'app/account/delegations/programme-room.tsx',
+      'app/account/delegations/programme-room-styles.tsx',
     ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))

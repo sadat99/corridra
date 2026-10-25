@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
+import { ProgrammeRoom } from './programme-room';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
@@ -49,6 +50,7 @@ type Props = {
   termsEnabled?: boolean;
   pricingEnabled?: boolean;
   serviceRequestsEnabled?: boolean;
+  roomEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -91,6 +93,7 @@ function ScopedProgrammes({
   termsEnabled = false,
   pricingEnabled = false,
   serviceRequestsEnabled = false,
+  roomEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
@@ -369,167 +372,289 @@ function ScopedProgrammes({
             <ul>
               {rows.map((p) => (
                 <li key={p.id}>
-                  <h3>{p.name}</h3>
-                  <p>{p.reportingPurpose}</p>
-                  <p>
-                    {' '}
-                    {realCustomerInput()
-                      ? 'Planning record only · data'
-                      : 'Planning record only · Sample data'}{' '}
-                  </p>
-                  {serviceRequestsEnabled && (
-                    <p>
-                      <a
-                        className="text-link"
-                        href={
-                          '/account/service-requests/new?kind=programme&ref=' +
-                          encodeURIComponent(p.id) +
-                          '&workspace=' +
-                          encodeURIComponent(workspaceId)
-                        }
-                      >
-                        Request help with this programme
-                      </a>
-                    </p>
-                  )}
-                  {contextEnabled && (
-                    <ProgrammeContext
-                      subject={subject}
-                      issuer={issuer}
-                      workspaceId={workspaceId}
+                  {roomEnabled ? (
+                    <ProgrammeRoom
                       programmeId={p.id}
+                      name={p.name}
+                      purpose={p.reportingPurpose}
+                      notes={
+                        <>
+                          <p>
+                            {' '}
+                            {realCustomerInput()
+                              ? 'Planning record only · data'
+                              : 'Planning record only · Sample data'}{' '}
+                          </p>
+                          {serviceRequestsEnabled && (
+                            <p>
+                              <a
+                                className="text-link"
+                                href={
+                                  '/account/service-requests/new?kind=programme&ref=' +
+                                  encodeURIComponent(p.id) +
+                                  '&workspace=' +
+                                  encodeURIComponent(workspaceId)
+                                }
+                              >
+                                Request help with this programme
+                              </a>
+                            </p>
+                          )}
+                        </>
+                      }
+                      scope={{ subject, issuer, workspaceId, programmeId: p.id }}
+                      participantsEnabled={participantsEnabled}
+                      sharedMoneyNote={templatesEnabled || pricingEnabled}
+                      panels={{
+                        overview: contextEnabled ? (
+                          <ProgrammeContext
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                          />
+                        ) : null,
+                        people: participantsEnabled ? (
+                          <Suspense
+                            fallback={
+                              <p role="status">
+                                {' '}
+                                {realCustomerInput()
+                                  ? 'Loading participant tools…'
+                                  : 'Loading sample participant tools…'}{' '}
+                              </p>
+                            }
+                          >
+                            <ProgrammeParticipants
+                              subject={subject}
+                              issuer={issuer}
+                              workspaceId={workspaceId}
+                              missionSharesEnabled={missionSharesEnabled}
+                              programmeId={p.id}
+                            />
+                          </Suspense>
+                        ) : null,
+                        plan:
+                          participantsEnabled && coordinationEnabled ? (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading coordination tools…'
+                                    : 'Loading sample coordination tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeCoordination
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          ) : null,
+                        terms:
+                          participantsEnabled && termsEnabled ? (
+                            <Suspense fallback={<p role="status">Loading terms and places…</p>}>
+                              <ProgrammeTerms
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                                coordinationEnabled={coordinationEnabled}
+                              />
+                            </Suspense>
+                          ) : null,
+                        money:
+                          participantsEnabled && economicsEnabled ? (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading finance tools…'
+                                    : 'Loading sample finance tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeEconomics
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          ) : null,
+                      }}
                     />
-                  )}
-                  {participantsEnabled && (
+                  ) : (
                     <>
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() =>
-                          setSelectedProgramme(selectedProgramme === p.id ? null : p.id)
-                        }
-                      >
-                        {selectedProgramme === p.id
-                          ? realCustomerInput()
-                            ? 'Hide participants'
-                            : 'Hide sample participants'
-                          : realCustomerInput()
-                            ? 'Manage participants'
-                            : 'Manage sample participants'}
-                      </button>
-                      {selectedProgramme === p.id && (
-                        <Suspense
-                          fallback={
-                            <p role="status">
-                              {' '}
-                              {realCustomerInput()
-                                ? 'Loading participant tools…'
-                                : 'Loading sample participant tools…'}{' '}
-                            </p>
-                          }
-                        >
-                          <ProgrammeParticipants
-                            subject={subject}
-                            issuer={issuer}
-                            workspaceId={workspaceId}
-                            missionSharesEnabled={missionSharesEnabled}
-                            programmeId={p.id}
-                          />
-                        </Suspense>
+                      <h3>{p.name}</h3>
+                      <p>{p.reportingPurpose}</p>
+                      <p>
+                        {' '}
+                        {realCustomerInput()
+                          ? 'Planning record only · data'
+                          : 'Planning record only · Sample data'}{' '}
+                      </p>
+                      {serviceRequestsEnabled && (
+                        <p>
+                          <a
+                            className="text-link"
+                            href={
+                              '/account/service-requests/new?kind=programme&ref=' +
+                              encodeURIComponent(p.id) +
+                              '&workspace=' +
+                              encodeURIComponent(workspaceId)
+                            }
+                          >
+                            Request help with this programme
+                          </a>
+                        </p>
                       )}
-                    </>
-                  )}
-                  {participantsEnabled && coordinationEnabled && (
-                    <>
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() =>
-                          setCoordinationProgramme(coordinationProgramme === p.id ? null : p.id)
-                        }
-                      >
-                        {coordinationProgramme === p.id
-                          ? 'Hide coordination and report'
-                          : 'Coordinate and report'}
-                      </button>
-                      {coordinationProgramme === p.id && (
-                        <Suspense
-                          fallback={
-                            <p role="status">
-                              {' '}
-                              {realCustomerInput()
-                                ? 'Loading coordination tools…'
-                                : 'Loading sample coordination tools…'}{' '}
-                            </p>
-                          }
-                        >
-                          <ProgrammeCoordination
-                            subject={subject}
-                            issuer={issuer}
-                            workspaceId={workspaceId}
-                            programmeId={p.id}
-                          />
-                        </Suspense>
+                      {contextEnabled && (
+                        <ProgrammeContext
+                          subject={subject}
+                          issuer={issuer}
+                          workspaceId={workspaceId}
+                          programmeId={p.id}
+                        />
                       )}
-                    </>
-                  )}
-                  {participantsEnabled && termsEnabled && (
-                    <>
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() => setTermsProgramme(termsProgramme === p.id ? null : p.id)}
-                      >
-                        {termsProgramme === p.id
-                          ? 'Hide terms, eligibility and places'
-                          : 'Terms, eligibility and places'}
-                      </button>
-                      {termsProgramme === p.id && (
-                        <Suspense fallback={<p role="status">Loading terms and places…</p>}>
-                          <ProgrammeTerms
-                            subject={subject}
-                            issuer={issuer}
-                            workspaceId={workspaceId}
-                            programmeId={p.id}
-                            coordinationEnabled={coordinationEnabled}
-                          />
-                        </Suspense>
+                      {participantsEnabled && (
+                        <>
+                          <button
+                            type="button"
+                            className="text-link"
+                            onClick={() =>
+                              setSelectedProgramme(selectedProgramme === p.id ? null : p.id)
+                            }
+                          >
+                            {selectedProgramme === p.id
+                              ? realCustomerInput()
+                                ? 'Hide participants'
+                                : 'Hide sample participants'
+                              : realCustomerInput()
+                                ? 'Manage participants'
+                                : 'Manage sample participants'}
+                          </button>
+                          {selectedProgramme === p.id && (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading participant tools…'
+                                    : 'Loading sample participant tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeParticipants
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                missionSharesEnabled={missionSharesEnabled}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-                  {participantsEnabled && economicsEnabled && (
-                    <>
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() => setFinanceProgramme(financeProgramme === p.id ? null : p.id)}
-                      >
-                        {financeProgramme === p.id
-                          ? realCustomerInput()
-                            ? 'Hide finances'
-                            : 'Hide sample finances'
-                          : realCustomerInput()
-                            ? 'Record fees and costs'
-                            : 'Record sample fees and costs'}
-                      </button>
-                      {financeProgramme === p.id && (
-                        <Suspense
-                          fallback={
-                            <p role="status">
-                              {' '}
-                              {realCustomerInput()
-                                ? 'Loading finance tools…'
-                                : 'Loading sample finance tools…'}{' '}
-                            </p>
-                          }
-                        >
-                          <ProgrammeEconomics
-                            subject={subject}
-                            issuer={issuer}
-                            workspaceId={workspaceId}
-                            programmeId={p.id}
-                          />
-                        </Suspense>
+                      {participantsEnabled && coordinationEnabled && (
+                        <>
+                          <button
+                            type="button"
+                            className="text-link"
+                            onClick={() =>
+                              setCoordinationProgramme(coordinationProgramme === p.id ? null : p.id)
+                            }
+                          >
+                            {coordinationProgramme === p.id
+                              ? 'Hide coordination and report'
+                              : 'Coordinate and report'}
+                          </button>
+                          {coordinationProgramme === p.id && (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading coordination tools…'
+                                    : 'Loading sample coordination tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeCoordination
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          )}
+                        </>
+                      )}
+                      {participantsEnabled && termsEnabled && (
+                        <>
+                          <button
+                            type="button"
+                            className="text-link"
+                            onClick={() => setTermsProgramme(termsProgramme === p.id ? null : p.id)}
+                          >
+                            {termsProgramme === p.id
+                              ? 'Hide terms, eligibility and places'
+                              : 'Terms, eligibility and places'}
+                          </button>
+                          {termsProgramme === p.id && (
+                            <Suspense fallback={<p role="status">Loading terms and places…</p>}>
+                              <ProgrammeTerms
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                                coordinationEnabled={coordinationEnabled}
+                              />
+                            </Suspense>
+                          )}
+                        </>
+                      )}
+                      {participantsEnabled && economicsEnabled && (
+                        <>
+                          <button
+                            type="button"
+                            className="text-link"
+                            onClick={() =>
+                              setFinanceProgramme(financeProgramme === p.id ? null : p.id)
+                            }
+                          >
+                            {financeProgramme === p.id
+                              ? realCustomerInput()
+                                ? 'Hide finances'
+                                : 'Hide sample finances'
+                              : realCustomerInput()
+                                ? 'Record fees and costs'
+                                : 'Record sample fees and costs'}
+                          </button>
+                          {financeProgramme === p.id && (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading finance tools…'
+                                    : 'Loading sample finance tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeEconomics
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          )}
+                        </>
                       )}
                     </>
                   )}
