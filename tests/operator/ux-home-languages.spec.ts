@@ -38,11 +38,12 @@ test.beforeAll(async () => {
       contents: `import{createRoot}from'react-dom/client';
       import{LanguageProvider}from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
       import Home from ${JSON.stringify(resolve('apps/web/app/page.tsx'))};
+      import{CornerDock}from ${JSON.stringify(resolve('apps/web/components/corner-dock.tsx'))};
       const offered=['en','bn','zh','es','ar','fr','de'].map((code)=>({code,draft:false}));
       const released=new URLSearchParams(location.search).get('pages')||'';
       const pageLocales=released==='1'?['bn','zh','es','ar','fr','de']:released.split(',').filter((code)=>['bn','zh','es','ar','fr','de'].includes(code));
       createRoot(document.getElementById('fixture')).render(
-        <LanguageProvider offered={offered} pageLocales={pageLocales}><Home/></LanguageProvider>);`,
+        <LanguageProvider offered={offered} pageLocales={pageLocales}>{new URLSearchParams(location.search).get('dock')==='1'?<CornerDock/>:null}<Home/></LanguageProvider>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -190,6 +191,34 @@ test('with Arabic chosen but its page words not released, the English page keeps
   for (const selector of ['.ac1-route-arrow', '.ac1-job-go', '.arrow-icon'])
     for (const arrow of await page.locator(selector).all())
       expect(await arrow.evaluate((el) => getComputedStyle(el).transform), selector).toBe('none');
+});
+
+test('Listen is asked again when a link replaces the main region with a page the browser can speak', async ({
+  page,
+}) => {
+  // A browser with English voices only: Listen must be hidden on an Arabic page and back on an English one.
+  await page.addInitScript(() => {
+    window.speechSynthesis.getVoices = () => [
+      { lang: 'en-US', name: 'English' } as SpeechSynthesisVoice,
+    ];
+    localStorage.setItem('corridra.language', 'ar');
+  });
+  await page.goto(`${origin}/?pages=1&dock=1`);
+  await expect(page.locator('main#main')).toHaveAttribute('lang', 'ar');
+  const listen = page.getByRole('button', { name: 'Listen to this page' });
+  await expect(listen).toHaveCount(0);
+  await page.evaluate(() => {
+    const next = document.createElement('main');
+    next.id = 'main';
+    next.lang = 'en';
+    next.textContent = 'An English page';
+    document.getElementById('main')!.replaceWith(next);
+  });
+  await expect(listen).toBeVisible();
+  await page.evaluate(() => {
+    document.getElementById('main')!.lang = 'ar';
+  });
+  await expect(listen).toHaveCount(0);
 });
 
 test('read right to left, arrows point the other way and the arrow keys swap on the example tabs', async ({

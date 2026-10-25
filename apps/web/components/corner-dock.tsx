@@ -4,20 +4,40 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from './corridra-icon';
 
+/** What Listen reads: the main region and its language. A change in either means support must be asked again. */
+function contentSignature() {
+  const main = document.getElementById('main');
+  return { main, language: main?.lang || document.documentElement.lang || 'en' };
+}
+
 function subscribe(onChange: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return () => {};
   window.speechSynthesis.addEventListener('voiceschanged', onChange);
-  // A page on message files changes its main region's language after the page has loaded (the person's choice
-  // is applied on the client), so Listen asks again whether the browser can speak the new language.
-  const languageChanges = new MutationObserver(onChange);
-  languageChanges.observe(document.documentElement, {
+  // The main region changes language after the page has loaded (the person's choice is applied on the client)
+  // and is replaced when a link opens another page, while this dock stays. Either way Listen asks again whether
+  // the browser can speak what is now on the page. The check is one lookup, at most once per frame.
+  let seen = contentSignature();
+  let frame = 0;
+  const recheck = () => {
+    frame = 0;
+    const now = contentSignature();
+    if (now.main === seen.main && now.language === seen.language) return;
+    seen = now;
+    onChange();
+  };
+  const changes = new MutationObserver(() => {
+    if (!frame) frame = requestAnimationFrame(recheck);
+  });
+  changes.observe(document.documentElement, {
     subtree: true,
+    childList: true,
     attributes: true,
     attributeFilter: ['lang'],
   });
   return () => {
     window.speechSynthesis.removeEventListener('voiceschanged', onChange);
-    languageChanges.disconnect();
+    changes.disconnect();
+    if (frame) cancelAnimationFrame(frame);
   };
 }
 
