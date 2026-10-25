@@ -58,3 +58,25 @@
   justify-self: start;
   min-height: 2.75rem;
 }
+.notifications-switch {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.notifications-switch h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+.notifications-switch h2 span {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.notifications-switch p {
+  margin: 0;
+}
+.notifications-switch[data-state='off'] {
+  border-style: dashed;
+}

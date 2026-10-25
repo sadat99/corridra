@@ -47,3 +47,19 @@ export async function configureNotifications(pool: DatabasePool, input: unknown)
     db.release();
   }
 }
+
+/**
+ * Whether the database owner can read the sign-in provider's user table with the columns the send-time address
+ * lookup needs (ADR-067). Opening email is refused while this is false. A failure to ask counts as not ready, so
+ * closing email never depends on it.
+ */
+export async function emailAddressSourceReady(pool: Pick<DatabasePool, 'query'>) {
+  try {
+    const answer = await pool.query<{ ready: boolean | null }>(
+      'SELECT customer.notification_recipient_ready() AS ready',
+    );
+    return answer.rows[0]?.ready === true;
+  } catch {
+    return false;
+  }
+}

@@ -46,6 +46,10 @@ export const notificationPreferencesInput = z
   });
 export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesInput>;
 
+/** True when the person has switched email on: at least one kind of message is chosen. */
+export const emailIsOn = (preferences: Pick<NotificationPreferencesInput, 'kinds'>) =>
+  preferences.kinds.length > 0;
+
 export type NotificationPreferences = NotificationPreferencesInput & {
   /** 0 until the person has saved a choice. */
   version: number;
@@ -54,9 +58,12 @@ export type NotificationPreferences = NotificationPreferencesInput & {
   synthetic: boolean;
 };
 
-/** The choices in force when the person has made none. */
+/**
+ * The choices in force when the person has made none. Email is off until they switch it on: an empty list of
+ * kinds means no email at all, and saving a list with at least one kind is the opt-in (ADR-067).
+ */
 export const defaultNotificationPreferences: NotificationPreferencesInput = {
-  kinds: [...notificationKinds],
+  kinds: [],
   digest: false,
   quietStart: null,
   quietEnd: null,
