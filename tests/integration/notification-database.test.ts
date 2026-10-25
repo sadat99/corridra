@@ -750,6 +750,65 @@ describe('sending', () => {
     expect(await finish(second.jobs[0].queueId, 'PERMANENT')).toEqual({ status: 'DEAD' });
   });
 
+  test('a Move written at the end of the five minute check is still queued and sealed, and a check older than ten minutes is refused', async () => {
+    const p = await person();
+    const commandId = randomUUID();
+    await moves.command(staff(p), {
+      action: 'set',
+      commandId,
+      missionId: p.missionId,
+      moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object: 'your trade licence' }],
+    });
+    const queueAfter = async (age: string) => {
+      await f.owner.query(`UPDATE identity.assurance SET verified_at=now()-interval '${age}'`);
+      try {
+        return await withTenant(f.runtime, staff(p), 'missions.manage', async ({ db }) => {
+          const r = (
+            await db.query('SELECT customer.enqueue_move_notifications($1) AS r', [commandId])
+          ).rows[0].r as { queued: number; jobs: Job[] };
+          for (const job of r.jobs)
+            await db.query('SELECT customer.seal_notification($1,$2,$3)', [
+              job.queueId,
+              sha(pulseCapability(secret, job.queueId)),
+              sha(signPulseMute(secret, job.requestId)),
+            ]);
+          return r;
+        });
+      } finally {
+        await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
+      }
+    };
+    await expect(queueAfter('11 minutes')).rejects.toMatchObject({ code: '42501' });
+    const queued = await queueAfter('6 minutes');
+    expect(queued.queued).toBe(1);
+    expect((await claim(queued.jobs[0].queueId)).status).toBe('CLAIMED');
+  });
+
+  test('a retry never moves a message past its own expiry', async () => {
+    const p = await person();
+    const set = await setMoves(p, [{ object: 'your trade licence' }]);
+    const id = set.jobs[0].queueId;
+    expect((await claim(id)).status).toBe('CLAIMED');
+    await f.owner.query(
+      'ALTER TABLE customer_private.notification_outbox DISABLE TRIGGER notification_outbox_guard',
+    );
+    try {
+      await f.owner.query(
+        "UPDATE customer_private.notification_outbox SET available_at=clock_timestamp()-interval '23 hours',expires_at=clock_timestamp()+interval '3 seconds',created_at=clock_timestamp()-interval '24 hours' WHERE id=$1",
+        [id],
+      );
+    } finally {
+      await f.owner.query(
+        'ALTER TABLE customer_private.notification_outbox ENABLE TRIGGER notification_outbox_guard',
+      );
+    }
+    expect(await finish(id, 'TRANSIENT')).toEqual({ status: 'PENDING' });
+    const after = await row(id);
+    expect(new Date(after.available_at).getTime()).toBeLessThan(
+      new Date(after.expires_at).getTime(),
+    );
+  });
+
   test('an expired message is dead and cannot be claimed', async () => {
     const p = await person();
     const set = await setMoves(p, [{ object: 'your trade licence' }]);

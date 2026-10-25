@@ -410,11 +410,17 @@ describe('found in review: the workflow, the caps and the claim', () => {
   });
   it('queueing needs a fresh authenticator check, a recent command and a request still retained, and a missing outcome is refused', () => {
     const enqueue = sql.slice(sql.indexOf('CREATE FUNCTION customer.enqueue_move_notifications'));
-    expect(enqueue.slice(0, 1800)).toContain('NOT app.fresh_mfa()');
+    expect(enqueue.slice(0, 1800)).toContain('NOT customer_private.mfa_recent()');
     expect(enqueue).toContain("cmd.created_at<clock_timestamp()-interval '10 minutes'");
     expect(enqueue).toContain("skipped:='expired'");
     const seal = sql.slice(sql.indexOf('CREATE FUNCTION customer.seal_notification'));
-    expect(seal.slice(0, 600)).toContain('NOT app.fresh_mfa()');
+    expect(seal.slice(0, 600)).toContain('NOT customer_private.mfa_recent()');
+    // The check behind queueing and sealing is ten minutes, the window of the command it follows; the
+    // Move itself still needs the five minute check, enforced when its command row is written.
+    const recent = sql.slice(sql.indexOf('CREATE FUNCTION customer_private.mfa_recent'));
+    expect(recent.slice(0, 500)).toContain("a.verified_at>now()-interval '10 minutes'");
+    const finishFn = sql.slice(sql.indexOf('CREATE FUNCTION customer.finish_notification'));
+    expect(finishFn).toContain("least(expires_at-interval '1 second',");
     expect(sql).toContain('OR outcome IS NULL OR outcome NOT IN');
   });
 });

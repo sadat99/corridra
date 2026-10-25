@@ -45,6 +45,17 @@ CREATE FUNCTION customer_private.notification_open() RETURNS boolean
  AND coalesce((SELECT enabled FROM customer_private.notification_control ORDER BY version DESC LIMIT 1),false)
 $$;
 
+-- The authenticator check is made when the Move is written (the command guard needs a check from the last five
+-- minutes). Queueing and sealing run in the transaction after it, so they accept a check from the last ten
+-- minutes, the window the command stays usable for. A Move written at the very end of the five minutes is not
+-- stored and then refused its message because the second transaction started a moment later.
+CREATE FUNCTION customer_private.mfa_recent() RETURNS boolean
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT EXISTS(SELECT 1 FROM identity.session s JOIN identity.assurance a ON a.session_id=s.id
+ WHERE encode(sha256(convert_to(s.token,'UTF8')),'hex')=current_setting('corridra.session_hash',true)
+ AND a.verified_at>now()-interval '10 minutes' AND app.actor_id() IS NOT NULL)
+$$;
+
 -- What a person chose. A new version replaces the old one; every version stays. No row means the
 -- defaults: all four kinds, no digest, no quiet hours, English.
 CREATE TABLE customer_private.notification_preference (
@@ -261,7 +272,7 @@ BEGIN
  SELECT * INTO cmd FROM app.mission_move_command WHERE id=command;
  IF NOT FOUND OR cmd.kind<>'SET' OR cmd.actor_id IS DISTINCT FROM app.actor_id()
   OR app.member_role(cmd.tenant_id) IS NULL OR app.member_role(cmd.tenant_id) NOT IN ('owner','admin','operator')
-  OR NOT app.fresh_mfa() OR cmd.created_at<clock_timestamp()-interval '10 minutes'
+  OR NOT customer_private.mfa_recent() OR cmd.created_at<clock_timestamp()-interval '10 minutes'
  THEN RAISE EXCEPTION 'Notification access denied' USING ERRCODE='42501'; END IF;
  IF NOT customer_private.notification_open() THEN RETURN jsonb_build_object('queued',0,'jobs','[]'::jsonb,'reason','closed'); END IF;
  FOR mv IN SELECT m.id,m.verb,m.object,m.due_on FROM app.mission_move m
@@ -304,7 +315,7 @@ CREATE FUNCTION customer.seal_notification(queue uuid, capability_digest text, m
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE q customer_private.notification_outbox%ROWTYPE;
 BEGIN
- IF queue IS NULL OR app.actor_id() IS NULL OR NOT app.fresh_mfa() OR capability_digest IS NULL OR capability_digest !~ '^[a-f0-9]{64}$'
+ IF queue IS NULL OR app.actor_id() IS NULL OR NOT customer_private.mfa_recent() OR capability_digest IS NULL OR capability_digest !~ '^[a-f0-9]{64}$'
   OR mute_digest IS NULL OR mute_digest !~ '^[a-f0-9]{64}$' THEN RAISE EXCEPTION 'Notification access denied' USING ERRCODE='42501'; END IF;
  SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue FOR UPDATE;
  IF NOT FOUND OR app.member_role(q.tenant_id) IS NULL OR app.member_role(q.tenant_id) NOT IN ('owner','admin','operator')
@@ -381,7 +392,8 @@ BEGIN
   WHERE status='LEASED' AND (id=queue OR (q.group_id IS NOT NULL AND group_id=q.group_id));
  ELSE
   UPDATE customer_private.notification_outbox SET status='PENDING',lease_until=NULL,group_id=NULL,
-   available_at=greatest(available_at,clock_timestamp()+make_interval(secs=>least(60,5*power(2,q.attempts-1)::integer)))
+   available_at=least(expires_at-interval '1 second',
+    greatest(available_at,clock_timestamp()+make_interval(secs=>least(60,5*power(2,q.attempts-1)::integer))))
   WHERE status='LEASED' AND (id=queue OR (q.group_id IS NOT NULL AND group_id=q.group_id));
  END IF;
  RETURN jsonb_build_object('status',(SELECT status FROM customer_private.notification_outbox WHERE id=queue));
@@ -409,7 +421,7 @@ BEGIN
  RETURN jsonb_build_object('muted',true,'already',added=0);
 END $$;
 
-REVOKE ALL ON FUNCTION customer_private.notification_open(),customer_private.notification_outbox_guard(),customer_private.notification_due_at(timestamptz,text,time,time,boolean),
+REVOKE ALL ON FUNCTION customer_private.notification_open(),customer_private.mfa_recent(),customer_private.notification_outbox_guard(),customer_private.notification_due_at(timestamptz,text,time,time,boolean),
  customer_private.notification_preference_of(uuid),customer_private.notification_valid(customer_private.notification_outbox),customer_private.notification_suppress(uuid),
  customer_private.notification_expire(),customer_private.notification_record(uuid,text,text,text,jsonb,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
 REVOKE ALL ON FUNCTION customer.notification_preferences(),customer.set_notification_preferences(text[],boolean,text,text,text,text),
