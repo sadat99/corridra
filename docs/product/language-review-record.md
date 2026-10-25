@@ -4,15 +4,27 @@
 
 One row per language. A language is offered to the public only when a native reviewer is recorded here and the owner has added its code to `CORRIDRA_LANGUAGES_REVIEWED`. Nothing in this file is a review until a name and a date are filled in. Written in Lane 2 of the UX update (24 October 2026).
 
-| Language             | Code | Reviewer (name) | Date reviewed  | What was reviewed | Offered to the public |
-| -------------------- | ---- | --------------- | -------------- | ----------------- | --------------------- |
-| English              | `en` | Source language | Not applicable | Not applicable    | Always                |
-| Bangla               | `bn` | Not recorded    | Not recorded   | Draft only        | No                    |
-| Chinese (Simplified) | `zh` | Not recorded    | Not recorded   | Draft only        | No                    |
-| Spanish              | `es` | Not recorded    | Not recorded   | Draft only        | No                    |
-| Arabic               | `ar` | Not recorded    | Not recorded   | Draft only        | No                    |
-| French               | `fr` | Not recorded    | Not recorded   | Draft only        | No                    |
-| German               | `de` | Not recorded    | Not recorded   | Draft only        | No                    |
+| Language             | Code | Reviewer (name) | Date reviewed   | What was reviewed                                                | Offered to the public                    |
+| -------------------- | ---- | --------------- | --------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| English              | `en` | Source language | Not applicable  | Not applicable                                                   | Always                                   |
+| Bangla               | `bn` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built (see below)                        | Yes, from the release on 25 October 2026 |
+| Chinese (Simplified) | `zh` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built, and the supplier Reply Page words | Yes, from the release on 25 October 2026 |
+| Spanish              | `es` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built                                    | Yes, from the release on 25 October 2026 |
+| Arabic               | `ar` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built                                    | Yes, from the release on 25 October 2026 |
+| French               | `fr` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built                                    | Yes, from the release on 25 October 2026 |
+| German               | `de` | Nazmus Sadat    | 25 October 2026 | All 138 message keys as built                                    | Yes, from the release on 25 October 2026 |
+
+Recorded on the owner's instruction on 25 October 2026: the owner, Nazmus Sadat, is the reviewer for all six languages and signs off the drafts as they stand in `apps/web/lib/i18n/messages.ts` (138 keys per language, the same keys as English, every placeholder kept, none containing legal, privacy or consent text). The record keeps the name and the date; it does not claim more than that. If a native reader later changes a word, the row is updated with their name and the date.
+
+## Decisions on the three open questions in ADR-066
+
+Taken by the reviewer on 25 October 2026, each as the ADR recommended:
+
+| #   | Question                                       | Decision                                                                                                                                                                                                  |
+| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Which Bengali face for buttons, labels, tables | Noto Sans Bengali (SIL OFL) for text, the serif for headings only. The font file is not yet in the product, so Bangla still uses the serif everywhere until it is added; this is the one open build item. |
+| 2   | Bengali or Western digits                      | Original-currency amounts keep Western digits (suppliers quote them that way). Dates and counts stay as built (Bengali digits in Bangla text).                                                            |
+| 3   | Trust names                                    | The five trust names stay in English in every language until a reviewer proposes exact meanings; never a weaker word.                                                                                     |
 
 ## What a reviewer reads
 
@@ -32,8 +44,8 @@ Formal register for Spanish, French (vous) and German (Sie); modern corporate Ch
 
 ## Other surfaces that carry words needing the same review
 
-| Surface                                 | File                          | Language | State              | Released how                                                                                                   |
-| --------------------------------------- | ----------------------------- | -------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Supplier Reply Page, its own words only | `apps/web/lib/reply-words.ts` | `zh`     | Draft, no reviewer | A link naming Chinese opens in English until `zh` is released for the whole product by the row above (Lane 8). |
+| Surface                                 | File                          | Language | State                                     | Released how                                                                                                                                                                  |
+| --------------------------------------- | ----------------------------- | -------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supplier Reply Page, its own words only | `apps/web/lib/reply-words.ts` | `zh`     | Reviewed by Nazmus Sadat, 25 October 2026 | Released with `zh` by the row above. A link naming Chinese now opens the Chinese page once `CORRIDRA_LANGUAGES_REVIEWED` lists `zh` and the Reply Page switch is on (Lane 8). |
 
 The reviewer should also read the supplier-facing wording in the page for exact meaning: "Self-declared", "Not stated", "No charge", the price and validity steps and the receipt. Requirement text, names and quotations are never translated.

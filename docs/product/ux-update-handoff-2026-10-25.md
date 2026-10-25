@@ -55,7 +55,7 @@ Today, with every switch off, no person sees any difference.
 ## Your decisions
 
 1. **Where Pulse gets a verified address** (identity provider read, or a person's opt-in) and a privacy review of the email texts and the queue's retention. Until then nothing is sent, even with the switch and the control on.
-2. **A native reviewer for each language** (Bangla, Chinese, Spanish, Arabic, French, German). Record the name and date in the language review record, then list the code in `CORRIDRA_LANGUAGES_REVIEWED`. Legal and privacy text needs a qualified reviewer per language.
+2. **A reviewer for each language** (Bangla, Chinese, Spanish, Arabic, French, German). Settled on 25 October 2026: the owner is recorded as the reviewer for all six in the language review record, and the six codes are listed in `CORRIDRA_LANGUAGES_REVIEWED`. Still open: the Noto Sans Bengali font file, and legal and privacy text, which needs a qualified reviewer per language.
 3. **Gate 3** (before you switch Wave 4 on for real use): the 10 to 15 interviews on co-owner or bank involvement, the supplier test with about ten real suppliers, and service promises per route.
 4. **Whether fair pages may be found by search**, and who adds and re-checks fairs. The list ships empty on purpose.
 5. **WeChat and WhatsApp in-app browsers**: a person with each app runs the short test plan in lane 8 before any real outreach is opened.
