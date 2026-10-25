@@ -42,14 +42,19 @@ END $$;
 
 -- Whether the sign-in provider's user table can be read by this database owner, with the columns the lookup
 -- above needs. The install job asks before it opens email, so a missing grant stops the opening with a plain
--- message instead of leaving messages that can never be sent. Owner only; no application role may call it.
+-- message instead of leaving messages that can never be sent. It looks the schema and the table up by their
+-- object ids, so a missing grant answers false and never raises. Owner only; no application role may call it.
 CREATE FUNCTION customer.notification_recipient_ready() RETURNS boolean
- LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
- SELECT to_regclass('neon_auth."user"') IS NOT NULL
-  AND has_table_privilege('neon_auth."user"','SELECT')
-  AND (SELECT count(*) FROM pg_attribute a WHERE a.attrelid=to_regclass('neon_auth."user"')
-   AND a.attname IN ('id','email','name','emailVerified') AND NOT a.attisdropped)=4
-$$;
+ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE schema_oid oid;table_oid oid;
+BEGIN
+ SELECT n.oid INTO schema_oid FROM pg_namespace n WHERE n.nspname='neon_auth';
+ IF schema_oid IS NULL OR NOT has_schema_privilege(schema_oid,'USAGE') THEN RETURN false; END IF;
+ SELECT c.oid INTO table_oid FROM pg_class c WHERE c.relnamespace=schema_oid AND c.relname='user' AND c.relkind IN ('r','p','v','m','f');
+ IF table_oid IS NULL OR NOT has_table_privilege(table_oid,'SELECT') THEN RETURN false; END IF;
+ RETURN (SELECT count(*) FROM pg_attribute a WHERE a.attrelid=table_oid AND a.attnum>0 AND NOT a.attisdropped
+  AND a.attname IN ('id','email','name','emailVerified'))=4;
+END $$;
 
 REVOKE ALL ON FUNCTION customer.notification_recipient(uuid,text) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION customer.notification_recipient(uuid,text) TO corridra_runtime;

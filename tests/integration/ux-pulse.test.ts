@@ -484,11 +484,18 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
       'new PulseService(runtimePool, config.AUTH_SECRET, databaseRecipientSource(runtimePool))',
     );
   });
-  it('the install job will not open email while the sign-in table cannot be read', () => {
+  it('the install job will not open email while the sign-in table cannot be read, and closing never depends on it', () => {
     const script = read('scripts/install-customer-modules.ts');
-    expect(script).toContain('SELECT customer.notification_recipient_ready() AS ready');
-    expect(script).toContain("v.NOTIFICATIONS_ACTION === 'enable' && addressReady !== true");
+    const helper = read('packages/auth/src/customer-notification-configuration.ts');
+    expect(helper).toContain('SELECT customer.notification_recipient_ready() AS ready');
+    expect(helper).toMatch(/catch \{\s*return false;\s*\}/);
+    expect(script).toContain('const addressReady = await emailAddressSourceReady(pool);');
+    expect(script).toContain("v.NOTIFICATIONS_ACTION === 'enable' && !addressReady");
     expect(script).toContain('Email was not opened');
+    expect(script).toContain('The email control was not changed');
+    expect(script).not.toContain('The control stays closed');
+    expect(sql).toContain('has_schema_privilege(schema_oid,');
+    expect(sql).toContain('has_table_privilege(table_oid,');
   });
   it('the Email choices page leads with a clear on and off switch and says email is off until it is on', () => {
     const form = read('apps/web/app/account/notifications/notifications-form.tsx');

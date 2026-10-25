@@ -7,7 +7,10 @@ import { migrateCustomerNotifications } from '../../packages/db/src/customer-not
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMoveRecords } from '../../packages/auth/src/customer-move-configuration';
-import { configureNotifications } from '../../packages/auth/src/customer-notification-configuration';
+import {
+  configureNotifications,
+  emailAddressSourceReady,
+} from '../../packages/auth/src/customer-notification-configuration';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { MissionService } from '../../packages/missions/src/index';
@@ -379,6 +382,7 @@ describe('installation', () => {
         'customer_private.notification_open()',
         'customer_private.notification_expire()',
         "customer_private.notification_due_at(now(),'UTC',NULL,NULL,false)",
+        'customer_private.notification_preference_of(gen_random_uuid())',
       ])
         await expect(pool.query(`SELECT ${fn}`)).rejects.toMatchObject({ code: '42501' });
     }
@@ -1197,6 +1201,10 @@ describe('email is off until a person switches it on, and the address is read at
     expect((await claim(set.jobs[0].queueId)).status).toBe('CLAIMED');
     return set.jobs[0].queueId as string;
   };
+  beforeAll(async () => {
+    await f.owner.query('CREATE SCHEMA IF NOT EXISTS neon_auth');
+    await f.owner.query(`${providerTable.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS')}`);
+  });
   const queuedByService = async (who: Person) => {
     const commandId = randomUUID();
     await moves.command(staff(who), {
@@ -1237,22 +1245,59 @@ describe('email is off until a person switches it on, and the address is read at
     expect((await claim(set.jobs[0].queueId)).status).toBe('SUPPRESSED');
   });
 
+  const ready = async () =>
+    (await f.owner.query('SELECT customer.notification_recipient_ready() AS r')).rows[0].r;
+  const providerTable =
+    'CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text,email text,"emailVerified" boolean NOT NULL DEFAULT false)';
+
   test('the sign-in table must be readable with the columns the lookup needs before email can be opened', async () => {
-    const ready = async () =>
-      (await f.owner.query('SELECT customer.notification_recipient_ready() AS r')).rows[0].r;
+    await f.owner.query('DROP TABLE IF EXISTS neon_auth."user"');
     expect(await ready()).toBe(false);
+    expect(await emailAddressSourceReady(f.owner)).toBe(false);
     await expect(
       f.runtime.query('SELECT customer.notification_recipient_ready()'),
     ).rejects.toMatchObject({ code: '42501' });
     await expect(
       f.auth.query('SELECT customer.notification_recipient_ready()'),
     ).rejects.toMatchObject({ code: '42501' });
-    await f.owner.query('CREATE SCHEMA IF NOT EXISTS neon_auth');
     await f.owner.query(
       'CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,email text,"emailVerified" boolean NOT NULL DEFAULT false)',
     );
     expect(await ready()).toBe(false);
     await f.owner.query('ALTER TABLE neon_auth."user" ADD COLUMN name text');
+    expect(await ready()).toBe(true);
+    expect(await emailAddressSourceReady(f.owner)).toBe(true);
+  });
+
+  test('a database owner without access to the provider schema or table gets false, never an error, and a failure to ask counts as not ready', async () => {
+    // Run as an owner with no rights: the function is owned by an ordinary role for this one transaction.
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('CREATE ROLE pulse_probe_owner NOLOGIN');
+      await db.query('GRANT CREATE ON SCHEMA customer TO pulse_probe_owner');
+      await db.query(
+        'ALTER FUNCTION customer.notification_recipient_ready() OWNER TO pulse_probe_owner',
+      );
+      const answer = async () =>
+        (await db.query('SELECT customer.notification_recipient_ready() AS r')).rows[0].r;
+      expect(await answer()).toBe(false);
+      await db.query('GRANT USAGE ON SCHEMA neon_auth TO pulse_probe_owner');
+      expect(await answer()).toBe(false);
+      await db.query('GRANT SELECT ON neon_auth."user" TO pulse_probe_owner');
+      expect(await answer()).toBe(true);
+      await db.query('REVOKE USAGE ON SCHEMA neon_auth FROM pulse_probe_owner');
+      expect(await answer()).toBe(false);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+    const failing = {
+      query: async () => {
+        throw new Error('permission denied');
+      },
+    };
+    expect(await emailAddressSourceReady(failing)).toBe(false);
     expect(await ready()).toBe(true);
   });
 
@@ -1273,6 +1318,34 @@ describe('email is off until a person switches it on, and the address is read at
     });
     // Once finished it is no longer leased, so the address cannot be read for it again.
     await finish(id, 'SENT');
+    await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('no address is given while the control is closed or after the lease has run out', async () => {
+    const p = await person();
+    await addUser(p);
+    const id = await leased(p);
+    expect((await recipient(id)).found).toBe(true);
+    await setControl(false);
+    try {
+      await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+    } finally {
+      await setControl(true);
+    }
+    expect((await recipient(id)).found).toBe(true);
+    await f.owner.query(
+      'ALTER TABLE customer_private.notification_outbox DISABLE TRIGGER notification_outbox_guard',
+    );
+    try {
+      await f.owner.query(
+        "UPDATE customer_private.notification_outbox SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+        [id],
+      );
+    } finally {
+      await f.owner.query(
+        'ALTER TABLE customer_private.notification_outbox ENABLE TRIGGER notification_outbox_guard',
+      );
+    }
     await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
   });
 
