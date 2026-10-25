@@ -11,7 +11,7 @@ import { configureMoveRecords } from '../../packages/auth/src/customer-move-conf
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 
 // The path production takes: the first notification file (0001) is already installed with its control closed,
-// and the second (0002, email off until chosen) arrives afterwards. Proves the upgrade applies only the new
+// and the next two (0002 email off until chosen, 0003 withdrawal and the issuer check) arrive afterwards. Proves the upgrade applies only the new
 // file, leaves the installed file's hash alone, keeps what the replaced function guarded (its owner, its
 // access list and its settings), changes the default for a person with no choice and not for a person with
 // one, and gives the new functions the access they need and no more.
@@ -96,7 +96,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
     expect(chosenBefore).toEqual(['complete']);
   });
 
-  test('the runner applies only the new file, leaves the installed hash alone and is repeatable', async () => {
+  test('the runner applies only the new files, leaves the installed hash alone and is repeatable', async () => {
     await migrateCustomerNotifications(f.owner);
     const applied = (
       await f.owner.query(
@@ -106,16 +106,20 @@ describe('upgrading from the installed first file to email off until chosen', ()
     expect(applied.map((r) => r.name)).toEqual([
       '0001_notifications.sql',
       '0002_email_off_until_chosen.sql',
+      '0003_withdrawal_and_issuer_check.sql',
     ]);
     expect(applied[0].sha256).toBe(sha(first));
     expect(applied[1].sha256).toBe(
       sha(readFileSync(`${directory}/0002_email_off_until_chosen.sql`, 'utf8')),
     );
+    expect(applied[2].sha256).toBe(
+      sha(readFileSync(`${directory}/0003_withdrawal_and_issuer_check.sql`, 'utf8')),
+    );
     await migrateCustomerNotifications(f.owner);
     expect(
       (await f.owner.query('SELECT count(*)::int n FROM customer_notification_migrations.applied'))
         .rows[0].n,
-    ).toBe(2);
+    ).toBe(3);
   });
 
   test('a person with no choice now has email off, and a person who chose keeps their choice', async () => {

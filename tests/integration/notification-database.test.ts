@@ -326,12 +326,13 @@ describe('installation', () => {
     expect((await snapshot()).tb.length - before.tb.length).toBeGreaterThanOrEqual(4);
   });
 
-  test('is idempotent, records both applied files with their hashes and refuses a changed history', async () => {
+  test('is idempotent, records every applied file with its hash and refuses a changed history', async () => {
     const was = (await f.owner.query('SELECT * FROM customer_notification_migrations.applied'))
       .rows;
     expect(was.map((r) => r.name)).toEqual([
       '0001_notifications.sql',
       '0002_email_off_until_chosen.sql',
+      '0003_withdrawal_and_issuer_check.sql',
     ]);
     await migrateCustomerNotifications(f.owner);
     expect(

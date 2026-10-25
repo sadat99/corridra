@@ -477,6 +477,27 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
     expect(body).toContain('SECURITY DEFINER SET search_path=pg_catalog');
     expect(body).not.toMatch(/\bINSERT\b|\bUPDATE\b|\bDELETE\b/);
   });
+  it('the third migration replaces two functions without touching a table, a drop or an access list', () => {
+    const third = read(
+      'packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql',
+    ).replace(/--.*$/gm, '');
+    expect(third).not.toMatch(/\b(CREATE|ALTER|DROP)\s+TABLE\b/i);
+    expect(third).not.toMatch(/\bDROP\b/i);
+    expect(third).not.toMatch(/\b(GRANT|REVOKE)\b/i);
+    expect([...third.matchAll(/CREATE OR REPLACE FUNCTION ([\w.]+)\(/g)].map((m) => m[1])).toEqual([
+      'customer.notification_recipient',
+      'customer.set_notification_preferences',
+    ]);
+    expect(third).not.toMatch(/CREATE FUNCTION/);
+    // The lookup now also requires the account to belong to the pinned issuer.
+    expect(third).toContain(
+      'EXISTS(SELECT FROM customer_private.configuration c WHERE c.issuer=p.issuer)',
+    );
+    // Withdrawal (an empty list) works while the control is closed; switching on does not.
+    expect(third).toContain(
+      'IF NOT customer_private.notification_open() AND (chosen IS NULL OR cardinality(chosen)>0) THEN',
+    );
+  });
   it('the application reads the address through that lookup and keeps it for the one send only', () => {
     const service = read('packages/auth/src/customer-notifications.ts');
     expect(service).toContain("'SELECT customer.notification_recipient($1,$2) AS r'");

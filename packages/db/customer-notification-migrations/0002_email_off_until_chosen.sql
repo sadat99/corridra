@@ -34,8 +34,7 @@ BEGIN
  IF cardinality((customer_private.notification_preference_of(q.principal_id)).kinds)=0 THEN RETURN jsonb_build_object('found',false); END IF;
  SELECT u.email AS address,u.name AS display INTO who
  FROM customer_private.principal p JOIN neon_auth."user" u ON u.id::text=p.subject
- WHERE p.id=q.principal_id AND p.disabled_at IS NULL AND u."emailVerified" IS TRUE
-  AND EXISTS(SELECT FROM customer_private.configuration c WHERE c.issuer=p.issuer) AND length(u.email) BETWEEN 6 AND 320
+ WHERE p.id=q.principal_id AND p.disabled_at IS NULL AND u."emailVerified" IS TRUE AND length(u.email) BETWEEN 6 AND 320
   AND u.email ~ '^[^[:space:]@<>,;]{1,64}@[^[:space:]@<>,;]{1,255}$';
  IF NOT FOUND THEN RETURN jsonb_build_object('found',false); END IF;
  RETURN jsonb_build_object('found',true,'address',who.address,'name',left(coalesce(who.display,''),80));
@@ -55,34 +54,6 @@ BEGIN
  IF table_oid IS NULL OR NOT has_table_privilege(table_oid,'SELECT') THEN RETURN false; END IF;
  RETURN (SELECT count(*) FROM pg_attribute a WHERE a.attrelid=table_oid AND a.attnum>0 AND NOT a.attisdropped
   AND a.attname IN ('id','email','name','emailVerified'))=4;
-END $$;
-
--- Withdrawing consent works whenever the person can reach the page. While the control is closed a person can still
--- save an empty list of kinds (email off), so a paused control can never trap a yes that was already given and
--- bring it back when the control reopens. Anything else is refused while closed, exactly as before.
-CREATE OR REPLACE FUNCTION customer.set_notification_preferences(chosen text[], daily boolean, quiet_from text, quiet_to text, zone text, mail_language text) RETURNS jsonb
- LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE actor uuid:=customer_private.request_actor();old customer_private.notification_preference;next_version integer;
-BEGIN
- IF NOT customer_private.notification_open() AND (chosen IS NULL OR cardinality(chosen)>0) THEN
-  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer request access expired' USING ERRCODE='42501'; END IF;
-  RETURN jsonb_build_object('saved',false,'reason','closed');
- END IF;
- IF chosen IS NULL OR daily IS NULL OR zone IS NULL OR cardinality(chosen)>4
-  OR NOT (chosen <@ ARRAY['your-move','update','countdown','complete']::text[])
-  OR (SELECT count(DISTINCT k) FROM unnest(chosen) k)<>cardinality(chosen)
-  OR NOT EXISTS(SELECT FROM pg_timezone_names WHERE name=zone)
-  OR (quiet_from IS NULL)<>(quiet_to IS NULL)
-  OR (quiet_from IS NOT NULL AND (quiet_from !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' OR quiet_to !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' OR quiet_from=quiet_to))
-  OR (mail_language IS NOT NULL AND mail_language NOT IN ('en','bn','zh','es','ar'))
- THEN RAISE EXCEPTION 'Invalid notification preferences' USING ERRCODE='23514'; END IF;
- PERFORM pg_advisory_xact_lock(hashtextextended('customer.notification_preference:'||actor::text,0));
- old:=customer_private.notification_preference_of(actor);
- next_version:=old.version+1;
- INSERT INTO customer_private.notification_preference(principal_id,version,kinds,digest,quiet_start,quiet_end,time_zone,language)
- VALUES(actor,next_version,chosen,daily,quiet_from::time,quiet_to::time,zone,mail_language);
- IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer request access expired' USING ERRCODE='42501'; END IF;
- RETURN jsonb_build_object('saved',true,'version',next_version);
 END $$;
 
 REVOKE ALL ON FUNCTION customer.notification_recipient(uuid,text) FROM PUBLIC,corridra_auth;
