@@ -239,6 +239,11 @@
       "use": "Lane 13: the founder and helper front doors, what each card links to, what is not built and how it is verified"
     },
     {
+      "path": "docs/product/lane11-languages.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 11: French and German drafts, the pseudo-language test, the short-label rule and the owner steps to release a language"
+    },
+    {
       "path": "docs/product/phase2-install.md",
       "classification": "Owner proposal",
       "use": "The owner's order of install steps for Move records, Pulse and Reply review, the open decisions that keep Pulse from sending, and how to roll back"

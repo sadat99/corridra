@@ -2,7 +2,7 @@
 // the public only when its text has been reviewed by a native speaker (ui-direction.md, rule 3), and
 // the owner records that by listing it in CORRIDRA_LANGUAGES_REVIEWED. CORRIDRA_LANGUAGES_PREVIEW
 // shows the unreviewed drafts, labelled, so the owner can read them before a reviewer does.
-export const localeCodes = ['en', 'bn', 'zh', 'es', 'ar'] as const;
+export const localeCodes = ['en', 'bn', 'zh', 'es', 'ar', 'fr', 'de'] as const;
 export type Locale = (typeof localeCodes)[number];
 export const defaultLocale: Locale = 'en';
 export const languageStorageKey = 'corridra.language';
@@ -13,6 +13,8 @@ export const localeMeta: Record<Locale, { name: string; html: string; dir: 'ltr'
   zh: { name: '中文', html: 'zh-Hans', dir: 'ltr' },
   es: { name: 'Español', html: 'es', dir: 'ltr' },
   ar: { name: 'العربية', html: 'ar', dir: 'rtl' },
+  fr: { name: 'Français', html: 'fr', dir: 'ltr' },
+  de: { name: 'Deutsch', html: 'de', dir: 'ltr' },
 };
 
 export type OfferedLanguage = { code: Locale; draft: boolean };
