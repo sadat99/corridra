@@ -221,6 +221,47 @@ test('Listen is asked again when a link replaces the main region with a page the
   await expect(listen).toHaveCount(0);
 });
 
+test('a reading stops when the page or its language changes, so it is never left running with no way to stop it', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const synth = window.speechSynthesis;
+    const counts = { spoken: 0, cancelled: 0 };
+    (window as unknown as { counts: typeof counts }).counts = counts;
+    synth.getVoices = () => [{ lang: 'en-US', name: 'English' } as SpeechSynthesisVoice];
+    synth.speak = () => {
+      counts.spoken += 1;
+    };
+    synth.cancel = () => {
+      counts.cancelled += 1;
+    };
+    localStorage.setItem('corridra.language', 'en');
+  });
+  await page.goto(`${origin}/?pages=1&dock=1`);
+  await page.getByRole('button', { name: 'Listen to this page' }).click();
+  await expect(page.getByRole('button', { name: 'Stop reading' })).toBeVisible();
+  const counts = () =>
+    page.evaluate(
+      () => (window as unknown as { counts: { spoken: number; cancelled: number } }).counts,
+    );
+  expect((await counts()).spoken).toBe(1);
+  const before = (await counts()).cancelled;
+  // The person picks Arabic: only English voices exist, so Listen is no longer offered, and the reading must stop.
+  await page.evaluate(() => {
+    document.getElementById('main')!.lang = 'ar';
+  });
+  await expect(page.getByRole('button', { name: /Listen to this page|Stop reading/ })).toHaveCount(
+    0,
+  );
+  expect((await counts()).cancelled).toBeGreaterThan(before);
+  // Back on a page the browser can speak, Listen is offered fresh, not stuck on Stop.
+  await page.evaluate(() => {
+    document.getElementById('main')!.lang = 'en';
+  });
+  await expect(page.getByRole('button', { name: 'Listen to this page' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Stop reading' })).toHaveCount(0);
+});
+
 test('read right to left, arrows point the other way and the arrow keys swap on the example tabs', async ({
   page,
 }) => {
