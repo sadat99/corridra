@@ -20,11 +20,11 @@ Recorded on the owner's instruction on 25 October 2026: the owner, Nazmus Sadat,
 
 Taken by the reviewer on 25 October 2026, each as the ADR recommended:
 
-| #   | Question                                       | Decision                                                                                                                                                                                                  |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Which Bengali face for buttons, labels, tables | Noto Sans Bengali (SIL OFL) for text, the serif for headings only. The font file is not yet in the product, so Bangla still uses the serif everywhere until it is added; this is the one open build item. |
-| 2   | Bengali or Western digits                      | Original-currency amounts keep Western digits (suppliers quote them that way). Dates and counts stay as built (Bengali digits in Bangla text).                                                            |
-| 3   | Trust names                                    | The five trust names stay in English in every language until a reviewer proposes exact meanings; never a weaker word.                                                                                     |
+| #   | Question                                       | Decision                                                                                                                                                                                                                                                                                                                 |
+| --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Which Bengali face for buttons, labels, tables | Noto Sans Bengali (SIL OFL) for text, the serif for headings only. Shipped on 25 October 2026: `apps/web/app/fonts/noto-sans-bengali-variable.woff2` with its licence, a lazy face (fetched only when a page has Bengali characters, never preloaded). Buttons, labels, tables and text use it; headings keep the serif. |
+| 2   | Bengali or Western digits                      | Original-currency amounts keep Western digits (suppliers quote them that way). Dates and counts stay as built (Bengali digits in Bangla text).                                                                                                                                                                           |
+| 3   | Trust names                                    | The five trust names stay in English in every language until a reviewer proposes exact meanings; never a weaker word.                                                                                                                                                                                                    |
 
 ## What a reviewer reads
 

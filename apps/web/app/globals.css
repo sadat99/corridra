@@ -2049,17 +2049,19 @@ summary:hover {
    ========================================================================== */
 :root {
   /* Owner decision 23 Oct 2026: Newsreader (headings), Geist (text), Geist Mono (labels and
-     references), Noto Serif Bengali behind the Latin faces. Files are self-hosted in app/fonts. */
+     references), Noto Serif Bengali behind the Latin faces. Files are self-hosted in app/fonts.
+     Owner decision 25 Oct 2026 (ADR-066, decision 1): Noto Sans Bengali for text and labels, the
+     serif for headings only. */
   --font-ui:
-    var(--font-geist), var(--font-bengali), 'Noto Sans SC', 'Microsoft YaHei', system-ui,
-    -apple-system, 'Segoe UI', Arial, sans-serif;
+    var(--font-geist), var(--font-bengali-sans), var(--font-bengali), 'Noto Sans SC',
+    'Microsoft YaHei', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --sans: var(--font-ui);
   --serif:
     var(--font-newsreader), var(--font-bengali), 'Noto Serif SC', Georgia, 'Iowan Old Style',
     'Palatino Linotype', 'Book Antiqua', serif;
   --font-mono:
-    var(--font-geist-mono), var(--font-bengali), ui-monospace, SFMono-Regular, Menlo, Consolas,
-    monospace;
+    var(--font-geist-mono), var(--font-bengali-sans), var(--font-bengali), ui-monospace,
+    SFMono-Regular, Menlo, Consolas, monospace;
   /* AC/1 Atlantic Cobalt primitives: the only raw colour values in the product.
      Source: docs/source/ac1-design-system/atlantic-cobalt.tokens.json. Crosswalk: docs/design-system/README.md. */
   --ac-navy: #142438;

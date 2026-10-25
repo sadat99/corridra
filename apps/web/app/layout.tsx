@@ -49,11 +49,28 @@ const notoSerifBengali = localFont({
     },
   ],
 });
+// The Bangla sans is the face for buttons, labels, tables and text (ADR-066 decision 1, recorded in
+// the language review record). It is lazy in the same way: fetched only when a page has Bengali
+// characters, never preloaded. The serif above stays for headings.
+const notoSansBengali = localFont({
+  src: './fonts/noto-sans-bengali-variable.woff2',
+  variable: '--font-bengali-sans',
+  weight: '100 900',
+  display: 'swap',
+  preload: false,
+  declarations: [
+    {
+      prop: 'unicode-range',
+      value: 'U+0951-0952,U+0964-0965,U+0980-09FE,U+200C-200D,U+20B9,U+25CC',
+    },
+  ],
+});
 const fontVariables = [
   newsreader.variable,
   geist.variable,
   geistMono.variable,
   notoSerifBengali.variable,
+  notoSansBengali.variable,
 ].join(' ');
 
 export const metadata: Metadata = {
