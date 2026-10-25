@@ -46,6 +46,21 @@ export const founderDoor: readonly DoorItem[] = [
   },
 ];
 
+const workspaceId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The same cards with each workspace link carrying the workspace the page is showing. Without it a link
+ * opens the person's first workspace, not the one they chose. The fragment is kept.
+ */
+export function withWorkspace(items: readonly DoorItem[], workspace: string): readonly DoorItem[] {
+  if (!workspaceId.test(workspace)) return items;
+  return items.map((item) =>
+    item.href.startsWith('/operator#')
+      ? { ...item, href: `/operator?workspace=${workspace}${item.href.slice('/operator'.length)}` }
+      : item,
+  );
+}
+
 export const helperDoor: readonly DoorItem[] = [
   {
     id: 'accept',

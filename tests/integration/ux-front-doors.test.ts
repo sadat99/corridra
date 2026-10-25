@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { founderDoor, helperDoor } from '../../apps/web/lib/front-doors';
+import { founderDoor, helperDoor, withWorkspace } from '../../apps/web/lib/front-doors';
 import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import { uxSwitchNames } from '../../apps/web/lib/ux-switches';
@@ -19,6 +19,24 @@ describe('the founder door', () => {
       'People and access',
       'Ready to start?',
     ]);
+  });
+  it('opens the workspace the page is showing, not the first one, and keeps the section', () => {
+    const id = '3f2b8c1e-6a4d-4c0e-9b7a-1d2e3f4a5b6c';
+    const items = withWorkspace(founderDoor, id);
+    expect(items).toHaveLength(founderDoor.length);
+    items.forEach((item, index) => {
+      const base = founderDoor[index];
+      expect(item.href).toBe(`/operator?workspace=${id}#${base.href.split('#')[1]}`);
+      expect({ ...item, href: '' }).toEqual({ ...base, href: '' });
+    });
+    // Anything that is not a workspace id leaves the links as they were.
+    expect(withWorkspace(founderDoor, 'not-an-id')).toBe(founderDoor);
+    expect(withWorkspace(founderDoor, `${id}&x=1`)).toBe(founderDoor);
+    // Links that are not workspace sections are untouched.
+    expect(withWorkspace(helperDoor, id)).toEqual(helperDoor);
+    expect(read('apps/web/app/operator/owner/page.tsx')).toContain(
+      'items={withWorkspace(founderDoor, tenant.id)}',
+    );
   });
   it('links only to real workspace sections that an owner and an admin can open', () => {
     for (const item of founderDoor) {

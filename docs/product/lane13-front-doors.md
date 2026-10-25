@@ -18,6 +18,8 @@ On `/operator/owner`, above the existing page, five cards using the words of the
 | People and access   | `/operator#workspace-audit`      | Who has access, and the audit trail.                       |
 | Ready to start?     | `/operator#ops-gates` (primary)  | Production readiness: what is still open before real work. |
 
+Each card carries the workspace the page is showing: on the Owner page for a second workspace the links read `/operator?workspace=<id>#workspace-commercial`, so a card opens the workspace the person chose and not their first one (found in review; the fragment and the section are unchanged). A test covers the rewrite and that anything that is not a workspace id leaves the links as they were.
+
 A test checks that every card points at a real workspace section that both an owner and an admin can open, and that the address is one the sign-in return list already accepts, so a card survives a sign-in. The page's own "what is on and off" content is unchanged below the door.
 
 ## The helper door

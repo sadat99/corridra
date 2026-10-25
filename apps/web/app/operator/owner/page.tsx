@@ -8,7 +8,7 @@ import { AccessState, StatusBadge } from '../../../components/access-state';
 import { FrontDoor } from '../../../components/front-door';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
-import { founderDoor } from '../../../lib/front-doors';
+import { founderDoor, withWorkspace } from '../../../lib/front-doors';
 import {
   chooseOwnerTenant,
   ownerCapable,
@@ -77,7 +77,7 @@ export default async function Page({
   return (
     <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
       {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
-        <FrontDoor label="Founder areas" items={founderDoor} />
+        <FrontDoor label="Founder areas" items={withWorkspace(founderDoor, tenant.id)} />
       )}
       <p className="owner-lede">
         This page only reads. It changes nothing. Each state comes from the settings of the
