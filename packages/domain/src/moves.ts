@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Move records: what a person must do next, set by the Corridra team about one request. The rules for
 // the words are here and in the database (the database is the authority; this gives the early, plain
-// message). A Move is plain: no link, no markup, no address and nothing that looks like money, so it
+// message), except the long-number rule, which only this file and the server that parses with it enforce. A Move is plain: no link, no markup, no address and nothing that looks like money, so it
 // can never become a side channel for a price, a payment instruction or a contact detail.
 export const moveVerbs = ['Read', 'Answer', 'Add', 'Confirm', 'Choose', 'Send'] as const;
 export type MoveVerbName = (typeof moveVerbs)[number];
@@ -15,6 +15,11 @@ export const maxMoveObject = 80;
 const control = /[\u0000-\u001f\u007f<>]/u;
 const link = /(https?:|www\.|@|\.(com|net|org|io|co|cn|bd|es)\b)/i;
 const currencyWord = /\b(usd|eur|gbp|bdt|cny|rmb|inr)\b/i;
+// A run of seven or more digits, in any script (Bangla and Arabic-Indic digits count), is an identity, passport,
+// phone or account number, never plain words. The Move words go into an email body and a kept record, so they
+// must not carry one (privacy review, 25 Oct 2026). Spaces or dashes between groups are not caught: the warning
+// on the staff screen covers that.
+const longNumber = /\p{Nd}{7,}/u;
 const money = new RegExp(
   [
     '[$€£৳¥]',
@@ -30,6 +35,7 @@ export function moveObjectProblem(value: string): string | null {
   if (control.test(value)) return 'Use plain words, without markup or control characters.';
   if (link.test(value)) return 'Leave out links and email addresses.';
   if (currencyWord.test(value) || money.test(value)) return 'Leave out amounts and prices.';
+  if (longNumber.test(value)) return 'Leave out ID, passport, phone and account numbers.';
   return null;
 }
 

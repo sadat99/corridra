@@ -20,6 +20,7 @@ import { signMissionMailMute } from '../../packages/auth/src/mission-mail-mute';
 import {
   databaseRecipientSource,
   noRecipientSource,
+  customerNotificationWithdrawalEnabled,
   pulseApplicationEnabled,
   pulseCapability,
 } from '../../packages/auth/src/customer-notifications';
@@ -81,7 +82,7 @@ describe('what a person may choose', () => {
   });
 });
 
-describe('every message says titles and dates only', () => {
+describe('what every message says', () => {
   it.each(['your-move', 'update', 'countdown', 'complete'] as const)(
     '%s renders with a plain-text twin',
     (kind) => {
@@ -101,7 +102,11 @@ describe('every message says titles and dates only', () => {
 
   it('the Your Move email names the Move and the real date, or offers more time without one', () => {
     const dated = renderPulse(move());
-    expect(dated.subject).toBe('One thing needs you: Add your import licence number');
+    // The subject never carries the team's words: it shows on a lock screen and stays in the mail provider's log.
+    expect(dated.subject).toBe('One thing needs you');
+    expect(dated.text).toContain(
+      'Your request needs one thing from you: Add your import licence number.',
+    );
     expect(dated.text).toContain('Please do it by 23 November 2026.');
     const open = renderPulse(move({ date: null }));
     expect(open.text).toContain('If you need more time, reply and tell us.');
@@ -126,6 +131,7 @@ describe('every message says titles and dates only', () => {
   it('escapes markup, drops line breaks from the subject and refuses a title that is too short or too long', () => {
     const mail = renderPulse(move({ title: 'Add <b>x</b>\nBcc: someone@example.com' }));
     expect(mail.subject).not.toMatch(/[\r\n<>]/);
+    expect(mail.subject).not.toContain('someone@example.com');
     expect(mail.html).not.toContain('<b>x</b>');
     expect(() => renderPulse(move({ title: 'ab' }))).toThrow('3 to 120');
     expect(() => renderPulse(move({ title: 'x'.repeat(121) }))).toThrow('3 to 120');
@@ -299,13 +305,32 @@ describe('every switch-off path', () => {
   it('the owner registry lists the switch as a real flag', () => {
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_PULSE_ENABLED')?.kind).toBe('flag');
   });
-  it('the preference page and its route answer 404 and 503 when the switch is off', () => {
+  it('with the switch off the page answers 404 and the route 503, except for a person who already said yes switching email off', () => {
     const page = read('apps/web/app/account/notifications/page.tsx');
-    expect(page).toContain('if (!customerNotificationsEnabled()) notFound();');
+    expect(page).toContain('const dark = !customerNotificationsEnabled();');
+    expect(page).toContain('if (dark && !customerNotificationWithdrawalEnabled()) notFound();');
+    // Signed out, unavailable, never chose or already off: the page does not exist.
+    expect(page).toContain('if (dark) notFound();');
+    expect(page).toContain(
+      'if (unavailable || initial.version === 0 || !emailIsOn(initial)) notFound();',
+    );
+    // What a dark page shows is the paused form: nothing can be switched on.
+    expect(page).toContain('initial = { ...initial, open: false };');
     const route = read('apps/web/app/api/pulse/preferences/route.ts');
     expect(route).toContain(
-      "if (!customerNotificationsEnabled()) throw new DomainError('Email choices are unavailable', 503);",
+      'if (!customerNotificationsEnabled() && !(switchingOff && customerNotificationWithdrawalEnabled()))',
     );
+    expect(route).toContain("throw new DomainError('Email choices are unavailable', 503);");
+    // Only a body that saves an empty list counts as switching off.
+    expect(route).toContain(
+      'notificationPreferencesInput.safeParse(value).data?.kinds.length === 0',
+    );
+  });
+  it('the notification service is built from the customer area, so the page and route decide what the Pulse switch allows', () => {
+    expect(read('apps/web/lib/foundations.ts')).toContain(
+      'enabled: customerNotificationWithdrawalEnabled(),',
+    );
+    expect(customerNotificationWithdrawalEnabled({} as NodeJS.ProcessEnv)).toBe(false);
   });
   it('the email-link mute works whatever the sending switch says, so an old link keeps working', () => {
     const route = read('apps/web/app/api/pulse/mute/route.ts');
@@ -472,6 +497,27 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
     expect(body).toContain('SECURITY DEFINER SET search_path=pg_catalog');
     expect(body).not.toMatch(/\bINSERT\b|\bUPDATE\b|\bDELETE\b/);
   });
+  it('the third migration replaces two functions without touching a table, a drop or an access list', () => {
+    const third = read(
+      'packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql',
+    ).replace(/--.*$/gm, '');
+    expect(third).not.toMatch(/\b(CREATE|ALTER|DROP)\s+TABLE\b/i);
+    expect(third).not.toMatch(/\bDROP\b/i);
+    expect(third).not.toMatch(/\b(GRANT|REVOKE)\b/i);
+    expect([...third.matchAll(/CREATE OR REPLACE FUNCTION ([\w.]+)\(/g)].map((m) => m[1])).toEqual([
+      'customer.notification_recipient',
+      'customer.set_notification_preferences',
+    ]);
+    expect(third).not.toMatch(/CREATE FUNCTION/);
+    // The lookup now also requires the account to belong to the pinned issuer.
+    expect(third).toContain(
+      'EXISTS(SELECT FROM customer_private.configuration c WHERE c.issuer=p.issuer)',
+    );
+    // Withdrawal (an empty list) works while the control is closed; switching on does not.
+    expect(third).toContain(
+      'IF NOT customer_private.notification_open() AND (chosen IS NULL OR cardinality(chosen)>0) THEN',
+    );
+  });
   it('the application reads the address through that lookup and keeps it for the one send only', () => {
     const service = read('packages/auth/src/customer-notifications.ts');
     expect(service).toContain("'SELECT customer.notification_recipient($1,$2) AS r'");
@@ -527,5 +573,61 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
     expect(renderPulse(move()).text).toContain(
       'You are getting this because you switched on email about your requests in Corridra.',
     );
+  });
+
+  it('no catalog puts the title in a subject, and a catalog that tried would throw', () => {
+    for (const [locale, catalog] of Object.entries(pulseCatalog)) {
+      for (const [name, copy] of Object.entries(catalog))
+        if (typeof copy === 'object' && copy && 'subject' in copy)
+          expect((copy as { subject: string }).subject, `${locale}.${name}`).not.toContain('{');
+    }
+    const en = pulseCatalog.en;
+    const original = en.yourMove.subject;
+    en.yourMove.subject = 'One thing needs you: {title}';
+    try {
+      expect(() => renderPulse(move())).toThrow();
+    } finally {
+      en.yourMove.subject = original;
+    }
+  });
+
+  it('no subject ever carries the team words, whatever the kind', () => {
+    const words = 'Zephyr Quartz words';
+    for (const kind of ['your-move', 'update', 'countdown', 'complete'] as const)
+      expect(renderPulse(move({ kind, title: words })).subject).not.toContain('Zephyr');
+    const digest = renderPulse({
+      kind: 'digest',
+      name: 'Amina',
+      link: 'https://corridra.test/account/move',
+      manageLink: links.manageLink,
+      items: [{ kind: 'your-move', title: words, date: null }],
+    });
+    expect(digest.subject).not.toContain('Zephyr');
+  });
+
+  it('the owner pack shows the subjects the templates really produce and says what the email holds', () => {
+    const pack = read('docs/product/pulse-email-review-pack.md');
+    const subjects = [...pack.matchAll(/^Subject: (.+)$/gm)].map((m) => m[1]);
+    const produced = [
+      renderPulse(move()).subject,
+      renderPulse(move({ kind: 'update', date: null })).subject,
+      renderPulse(move({ kind: 'countdown' })).subject,
+      renderPulse(move({ kind: 'complete', date: null })).subject,
+      pulseCatalog.en.digest.subject,
+    ];
+    expect(subjects).toEqual(produced);
+    expect(pack).toContain('The greeting uses the name on their account.');
+    expect(pack).toContain('Resend keeps its own');
+    expect(pack).toContain('pulse-privacy-review-2026-10-25.md');
+    expect(pack).not.toMatch(/never appears|titles and dates only|free text from the team never/i);
+  });
+
+  it('the review record lists every condition before opening and is not presented as legal advice', () => {
+    const record = read('docs/product/pulse-privacy-review-2026-10-25.md');
+    expect(record).toContain('not legal advice');
+    expect(record).toContain('CUSTOMER_AUTH_MAIL_REPLY_TO');
+    expect(record).toMatch(/Resend account for retention and data location/);
+    for (const id of ['B1', 'B2', 'B3', 'NB1', 'NB11', 'R1', 'R4'])
+      expect(record).toContain(`| ${id} `);
   });
 });

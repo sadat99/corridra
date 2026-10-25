@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation';
-import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
-import { defaultNotificationPreferences } from '@corridra/domain/notifications';
+import {
+  customerNotificationsEnabled,
+  customerNotificationWithdrawalEnabled,
+} from '@corridra/auth/customer-notifications';
+import { defaultNotificationPreferences, emailIsOn } from '@corridra/domain/notifications';
 import { CustomerShell } from '../../../components/customer-shell';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { customerPageSession } from '../../../lib/customer-page-session';
@@ -16,13 +19,16 @@ export const metadata = {
 
 /**
  * What the person is emailed, when, and in which language. Behind `CORRIDRA_PULSE_ENABLED`: with the switch
- * off this address does not exist. Saving needs the database control to be open as well; until then the
- * page says so plainly and saves nothing.
+ * off this address does not exist, except for a signed-in person who already said yes: saying no never depends
+ * on a switch, so they get the form in its paused mode (switching off only). Saving needs the database control
+ * to be open as well; until then the page says so plainly and saves nothing but a withdrawal.
  */
 export default async function Page() {
-  if (!customerNotificationsEnabled()) notFound();
+  const dark = !customerNotificationsEnabled();
+  if (dark && !customerNotificationWithdrawalEnabled()) notFound();
   const session = await customerPageSession();
-  if (!session.ok)
+  if (!session.ok) {
+    if (dark) notFound();
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Email choices are unavailable." compact>
         <p role="status">{session.message}</p>
@@ -31,6 +37,7 @@ export default async function Page() {
         </a>
       </WorkspaceShell>
     );
+  }
   const services = foundations();
   let initial = { ...defaultNotificationPreferences, version: 0, open: false, synthetic: false };
   let unavailable = false;
@@ -40,6 +47,11 @@ export default async function Page() {
     initial = await services.customerNotifications.read(session.subject, session.issuer);
   } catch {
     unavailable = true;
+  }
+  if (dark) {
+    // Only a person with a saved yes sees the page while the switch is off, and only to switch email off.
+    if (unavailable || initial.version === 0 || !emailIsOn(initial)) notFound();
+    initial = { ...initial, open: false };
   }
   return (
     <CustomerShell tab="more" eyebrow="EMAIL CHOICES" title="Choose what we email you.">
