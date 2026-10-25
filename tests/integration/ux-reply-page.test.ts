@@ -177,7 +177,10 @@ describe('what a link says about language and the terms asked for', () => {
     `t=short&l=zh`,
     `x=${token}`,
     `t=${token.toUpperCase()}`,
-    `${token}&l=zh`,
+    `${token}l=zh`,
+    `${token}x&l=zh`,
+    `${'g'.repeat(64)}&l=zh`,
+    `${token}&${'a=b&'.repeat(200)}`,
     `t=${token}&${'a=b&'.repeat(200)}`,
   ])('treats %j as no link', (fragment) => {
     expect(parseReplyFragment(fragment).token).toBe('');
@@ -193,6 +196,24 @@ describe('what a link says about language and the terms asked for', () => {
       language: 'zh',
       ask: ['leadTime', 'validUntil'],
     });
+  });
+  it('reads the link the system issues with the suffix added to its end, as the team is told to do', () => {
+    // The issued link is `/buyer#<token>`; the queue tells the team to add the suffix after it.
+    const suffix = replyLinkSuffix('zh', ['leadTime', 'validUntil']);
+    expect(parseReplyFragment(`${token}${suffix}`)).toEqual({
+      token,
+      language: 'zh',
+      ask: ['leadTime', 'validUntil'],
+    });
+    expect(parseReplyFragment(`${token}&ask=unit`)).toEqual({
+      token,
+      language: 'en',
+      ask: ['unit'],
+    });
+    // A token with nothing meaningful after the ampersand is still that token, in English.
+    expect(parseReplyFragment(`${token}&`)).toEqual({ token, language: 'en', ask: [] });
+    // Anything not after the token's own ampersand is no link: a token is exactly 64 characters.
+    expect(parseReplyFragment(`${token}0&l=zh`).token).toBe('');
   });
 });
 

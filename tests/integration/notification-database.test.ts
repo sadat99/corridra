@@ -814,6 +814,30 @@ describe('sending', () => {
     expect(await finish(ids[0], 'SENT')).toEqual({ status: 'SENT' });
     expect((await row(ids[1])).status).toBe('SENT');
   });
+
+  test('two claims for one person at the same moment make one digest, never two', async () => {
+    // Found in review: each claim used to lock its own row first, skip the other's, and lead its own group.
+    for (let round = 0; round < 8; round += 1) {
+      const p = await person();
+      await savePrefs(p, { digest: true });
+      const again = await person(p.email, p.subject);
+      const first = await setMoves(p, [{ object: 'your trade licence' }]);
+      const second = await setMoves(again, [{ object: 'your bank letter' }]);
+      const ids = [first.jobs[0].queueId, second.jobs[0].queueId];
+      for (const id of ids) await makeDue(id);
+      const results = await Promise.all(ids.map((id) => claim(id)));
+      const claimed = results.filter((r) => r.status === 'CLAIMED');
+      expect(claimed, `round ${round}`).toHaveLength(1);
+      expect(claimed[0].items, `round ${round}`).toHaveLength(2);
+      expect(
+        results.filter((r) => r.status === 'LEASED'),
+        `round ${round}`,
+      ).toHaveLength(1);
+      const lead = results[0].status === 'CLAIMED' ? ids[0] : ids[1];
+      expect(await finish(lead, 'SENT')).toEqual({ status: 'SENT' });
+      for (const id of ids) expect((await row(id)).status).toBe('SENT');
+    }
+  });
 });
 
 describe('muting', () => {

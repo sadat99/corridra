@@ -315,9 +315,16 @@ DECLARE q customer_private.notification_outbox%ROWTYPE;o customer_private.notifi
  gid uuid:=gen_random_uuid();items jsonb;
 BEGIN
  IF queue IS NULL OR capability IS NULL OR length(capability) NOT BETWEEN 20 AND 200 THEN RAISE EXCEPTION 'Notification is not available' USING ERRCODE='42501'; END IF;
- SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue FOR UPDATE;
+ -- Check the capability first, without a lock, so a caller without it can never make anyone wait.
+ SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue;
  IF NOT FOUND OR q.capability_hash IS NULL OR q.capability_hash<>encode(sha256(convert_to(capability,'UTF8')),'hex')
  THEN RAISE EXCEPTION 'Notification is not available' USING ERRCODE='42501'; END IF;
+ -- One claim at a time for one person, taken before any queue row is locked. Without this, two claims for
+ -- the same person on a daily digest could each lock their own row, each skip the other's row, and each
+ -- send a separate email. The second claim now waits, then finds its message already leased in the
+ -- first claim's group and returns LEASED.
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.notification_claim:'||q.principal_id::text,0));
+ SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue FOR UPDATE;
  PERFORM customer_private.notification_expire();
  SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue;
  IF q.status IN ('SENT','DEAD','SUPPRESSED') THEN RETURN jsonb_build_object('status',q.status); END IF;

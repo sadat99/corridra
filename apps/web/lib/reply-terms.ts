@@ -169,16 +169,21 @@ const hex = /^[a-f0-9]{64}$/;
 
 /**
  * Reads the part of the address after the hash. An older link is the bare token and means English with
- * nothing asked. A link from the Reply Page is `t=<token>&l=en|zh&ask=<term>,<term>`. The language is a
+ * nothing asked. The same token followed by `&l=zh&ask=<terms>` (what the team adds to the issued link),
+ * and `t=<token>&l=en|zh&ask=<term>,<term>`, are the two ways to say more. The language is a
  * fixed list of two and the terms asked for are a fixed list of eighteen, so no other value can reach
  * the page. Nothing here is stored.
  */
 export function parseReplyFragment(fragment: string): ReplyFragment {
   const none: ReplyFragment = { token: '', language: 'en', ask: [] };
   if (hex.test(fragment)) return { token: fragment, language: 'en', ask: [] };
-  if (fragment.length > 600 || !fragment.includes('=')) return none;
-  const params = new URLSearchParams(fragment);
-  const token = params.get('t') ?? '';
+  if (fragment.length > 600) return none;
+  // The link the system issues is `<token>`; the team adds `&l=zh&ask=<terms>` to the end of it, which
+  // gives `<token>&l=zh&ask=<terms>`. The newer form names the token: `t=<token>&l=...`.
+  const lead = /^([a-f0-9]{64})&(.*)$/.exec(fragment);
+  if (!lead && !fragment.includes('=')) return none;
+  const params = new URLSearchParams(lead ? lead[2] : fragment);
+  const token = lead ? lead[1]! : (params.get('t') ?? '');
   if (!hex.test(token)) return none;
   const language = (replyLanguages as readonly string[]).includes(params.get('l') ?? '')
     ? (params.get('l') as ReplyLanguage)
