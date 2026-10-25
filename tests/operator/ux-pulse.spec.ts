@@ -207,6 +207,36 @@ test.describe('email choices', () => {
     ).toBeVisible();
   });
 
+  test('switching off still works after a quiet-hours time was cleared, and sends the last saved settings', async ({
+    page,
+  }) => {
+    const sent = await openChoices(page, {
+      initial: initial({
+        quietStart: '22:00',
+        quietEnd: '07:00',
+        timeZone: 'Asia/Dhaka',
+        language: 'bn',
+      }),
+    });
+    // An invalid half-edit, then switch email off: the hidden field must not be sent.
+    await page.getByLabel('Quiet from').fill('');
+    await page.getByRole('checkbox', { name: /Email me when something needs me/ }).uncheck();
+    await page.getByRole('button', { name: 'Switch email off' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+    ).toBeVisible();
+    expect(sent).toEqual([
+      {
+        kinds: [],
+        digest: false,
+        quietStart: '22:00',
+        quietEnd: '07:00',
+        timeZone: 'Asia/Dhaka',
+        language: 'bn',
+      },
+    ]);
+  });
+
   test('refuses to switch on with no message chosen, without asking the server', async ({
     page,
   }) => {

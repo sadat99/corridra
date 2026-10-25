@@ -35,6 +35,11 @@ const zones = (() => {
   }
 })();
 
+type SavedSettings = Pick<
+  NotificationPreferences,
+  'digest' | 'quietStart' | 'quietEnd' | 'timeZone' | 'language'
+>;
+
 export function NotificationsForm({
   initial,
   unavailable,
@@ -62,6 +67,15 @@ export function NotificationsForm({
       : initial.timeZone,
   );
   const [language, setLanguage] = useState(initial.language ?? 'en');
+  // The settings the server last accepted. Switching email off sends these, so a half-edited field that is
+  // no longer on screen (a cleared quiet-hours time, for one) can never stop a person from turning email off.
+  const [lastSaved, setLastSaved] = useState<SavedSettings>({
+    digest: initial.digest,
+    quietStart: initial.quietStart,
+    quietEnd: initial.quietEnd,
+    timeZone: initial.timeZone,
+    language: initial.language,
+  });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
@@ -93,17 +107,20 @@ export function NotificationsForm({
       return;
     }
     setBusy(true);
+    const chosen: SavedSettings = {
+      digest,
+      quietStart: quiet ? quietStart : null,
+      quietEnd: quiet ? quietEnd : null,
+      timeZone,
+      language,
+    };
     try {
       const response = await fetch('/api/pulse/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           kinds: on ? notificationKinds.filter((kind) => kinds.includes(kind)) : [],
-          digest,
-          quietStart: quiet ? quietStart : null,
-          quietEnd: quiet ? quietEnd : null,
-          timeZone,
-          language,
+          ...(on ? chosen : lastSaved),
         }),
       });
       const data = await response.json();
@@ -112,6 +129,7 @@ export function NotificationsForm({
         setFailed(true);
         setMessage('Email is not switched on yet, so nothing was saved.');
       } else {
+        if (on) setLastSaved(chosen);
         setSavedOn(on);
         setMessage(
           on
