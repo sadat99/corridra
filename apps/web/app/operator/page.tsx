@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../lib/foundations';
 import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
+import { uxSwitchOn } from '../../lib/ux-switches';
+import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -74,12 +76,14 @@ export default async function Page({
       title="Your workspace."
       className="ux-operator-home"
     >
-      <Workspace
-        tenants={tenants}
-        initialTenant={selected!}
-        ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
-        moveRecords={customerMovesEnabled()}
-      />
+      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
+        <Workspace
+          tenants={tenants}
+          initialTenant={selected!}
+          ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
+          moveRecords={customerMovesEnabled()}
+        />
+      </OperatorFlags>
     </WorkspaceShell>
   );
 }

@@ -134,6 +134,7 @@ import { CounterpartyService } from '@corridra/counterparties';
 import { MissionService } from '@corridra/missions';
 import { DeliveryService } from '@corridra/delivery';
 import { DeliveryExperienceService } from '@corridra/delivery/experience';
+import { ReplyReviewService } from '@corridra/delivery/reply-review';
 import { OpportunityService } from '@corridra/opportunities';
 import { MeetingService } from '@corridra/missions/meetings';
 import { CommercialMissionService } from '@corridra/missions/commercial';
@@ -619,6 +620,7 @@ function createServices() {
       () => realReportPublicLinkEnabled(),
     ),
     deliveryExperience: new DeliveryExperienceService(runtimePool),
+    replyReview: new ReplyReviewService(runtimePool),
     meetings: new MeetingService(runtimePool),
     commercialMissions: new CommercialMissionService(runtimePool),
     corridors: new CorridorService(runtimePool),

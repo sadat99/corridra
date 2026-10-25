@@ -7,6 +7,7 @@ import { CustomerInvoicing } from './customer-invoicing';
 import { CustomerRealInvoicing } from './customer-real-invoicing';
 import { CustomerSimulatedPayments } from './customer-simulated-payments';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { ReplyReview } from './reply-review';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
 import { displayMoney } from '@corridra/domain/locale';
@@ -34,6 +35,7 @@ type Experience = {
   responses: {
     id: string;
     link_id: string;
+    created_at?: string;
     body: {
       body: string;
       meetingInterest: boolean;
@@ -585,6 +587,12 @@ export function DeliveryExperience(props: Props) {
       ) : (
         <p>No detailed counterparty declarations have been received.</p>
       )}
+      <ReplyReview
+        tenant={tenant}
+        role={props.role}
+        responses={data.responses}
+        disclosures={data.disclosures}
+      />
     </section>
   );
 }

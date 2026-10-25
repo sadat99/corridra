@@ -31,14 +31,41 @@ const labels = {
   NEED_INFO: 'Need more information',
   NOT_RELEVANT: 'Not relevant',
 } as const;
-export function BuyerIntroduction({ replyPage = false }: { replyPage?: boolean }) {
+export function BuyerIntroduction({
+  replyPage = false,
+  chineseReleased = false,
+}: {
+  replyPage?: boolean;
+  chineseReleased?: boolean;
+}) {
   const capability = usePrivateCapability();
-  return <ScopedIntroduction key={capability} capability={capability} replyPage={replyPage} />;
+  return (
+    <ScopedIntroduction
+      key={capability}
+      capability={capability}
+      replyPage={replyPage}
+      chineseReleased={chineseReleased}
+    />
+  );
 }
-function ScopedIntroduction({ capability, replyPage }: { capability: string; replyPage: boolean }) {
+function ScopedIntroduction({
+  capability,
+  replyPage,
+  chineseReleased,
+}: {
+  capability: string;
+  replyPage: boolean;
+  chineseReleased: boolean;
+}) {
   // The Reply Page reads `t=<token>&l=<language>&ask=<terms>`; an older link is the bare token. With the
   // switch off the whole fragment is the token, exactly as before.
-  const fragment = replyPage ? parseReplyFragment(capability) : null;
+  const parsed = replyPage ? parseReplyFragment(capability) : null;
+  // A draft language is never shown to a supplier before its native reviewer is recorded (the language
+  // review record): until then a link that names Chinese opens in English.
+  const fragment =
+    parsed && parsed.language === 'zh' && !chineseReleased
+      ? { ...parsed, language: 'en' as const }
+      : parsed;
   const linkToken = fragment ? fragment.token : capability;
   const words = replyWords[fragment?.language ?? 'en'];
   const [data, setData] = useState<View | null>(null),

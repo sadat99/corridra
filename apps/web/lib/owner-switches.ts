@@ -452,9 +452,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_REPLY_PAGE',
     label: 'Supplier Reply Page',
-    line: 'One question at a time for a supplier who opens a private link. Sample only until real outreach opens.',
+    line: "One question at a time for a supplier who opens a private link, the full quote form with a receipt, and the team's review of supplier replies (needs its database module). Sample only until real outreach opens.",
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_PULSE_ENABLED',

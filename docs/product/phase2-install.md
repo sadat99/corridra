@@ -4,12 +4,13 @@ Status: written 24 October 2026 with Lane 7 of the UX update. Nothing here is ap
 
 ## What exists after Lane 7 merges
 
-| Module                        | Switch                     | Database control       | What a person sees when it is on                                                    |
-| ----------------------------- | -------------------------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| Move records (ADR-068)        | `CORRIDRA_UX_MOVE_RECORDS` | `move_records_action`  | The Corridra team can set what a person must do next; Your Move shows it as a card. |
-| Pulse notifications (ADR-067) | `CORRIDRA_PULSE_ENABLED`   | `notifications_action` | An Email choices page, and the Your Move email once an address source exists.       |
+| Module                        | Switch                     | Database control       | What a person sees when it is on                                                                          |
+| ----------------------------- | -------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| Move records (ADR-068)        | `CORRIDRA_UX_MOVE_RECORDS` | `move_records_action`  | The Corridra team can set what a person must do next; Your Move shows it as a card.                       |
+| Pulse notifications (ADR-067) | `CORRIDRA_PULSE_ENABLED`   | `notifications_action` | An Email choices page, and the Your Move email once an address source exists.                             |
+| Reply review (ADR-069)        | `CORRIDRA_REPLY_PAGE`      | `reply_review_action`  | The team reviews supplier replies beside the requirement; the supplier page is the new one-question form. |
 
-With every switch unset and every control closed, every page, address and email is exactly what it was before Lane 7.
+With every switch unset and every control closed, every page, address and email is exactly what it was before Lanes 7 and 8.
 
 ## Order
 
@@ -19,6 +20,8 @@ With every switch unset and every control closed, every page, address and email 
 4. To open Move records: run the job with `move_records_action = enable` and a reason of at least ten characters, then set `CORRIDRA_UX_MOVE_RECORDS=true` (and `CORRIDRA_UX_MOVE=true` for Your Move itself).
 5. To open the Email choices page: run the job with `notifications_action = enable` and a reason, then set `CORRIDRA_PULSE_ENABLED=true`. The page lets people save their choices. It sends nothing.
 6. Email stays off until the privacy review below is done and an address source is chosen.
+7. To open the team's review of supplier replies: run the job with `reply_review_action = install` and `apply = yes` (nothing visible changes), then `reply_review_action = enable` with a reason of at least ten characters, then set `CORRIDRA_REPLY_PAGE=true`. This also switches the supplier page to the new form. Reply review installs the real-use functions first if they are missing. Pause with `reply_review_action = pause`; every reply and review is kept.
+8. Before real outreach is ever opened, run the in-app browser test plan in [lane8-reply-page.md](lane8-reply-page.md) with a person who has WeChat and WhatsApp.
 
 Rolling back: run the job with `pause` (every record stays; queued messages expire within a day) or unset the switch. Pausing a control stops new work at once and loses nothing.
 

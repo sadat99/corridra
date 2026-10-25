@@ -298,7 +298,7 @@ describe('every switch-off path', () => {
   });
   it('with the switch off the whole fragment is the token and the older form is what renders', () => {
     const intro = read('apps/web/app/buyer/introduction.tsx');
-    expect(intro).toContain('const fragment = replyPage ? parseReplyFragment(capability) : null;');
+    expect(intro).toContain('const parsed = replyPage ? parseReplyFragment(capability) : null;');
     expect(intro).toContain('const linkToken = fragment ? fragment.token : capability;');
     expect(intro).toContain('if (replyPage && data && fragment)');
     expect(intro).toContain('<RecipientResponse');
@@ -306,6 +306,16 @@ describe('every switch-off path', () => {
     const older = read('apps/web/app/buyer/recipient-response.tsx');
     expect(older).toContain('Reply or request clarification');
     expect(older).toContain("action: 'detail-response'");
+  });
+  it('shows Chinese only once zh is offered by the language release setting, otherwise English', () => {
+    const page = read('apps/web/app/buyer/page.tsx');
+    expect(page).toContain(
+      "chineseReleased={offeredLanguages().some((language) => language.code === 'zh')}",
+    );
+    const intro = read('apps/web/app/buyer/introduction.tsx');
+    expect(intro).toContain("parsed.language === 'zh' && !chineseReleased");
+    // The safe default: nothing releases Chinese unless the page says so.
+    expect(intro).toContain('chineseReleased = false');
   });
   it('sends the same command the older form sent, so the database and its rules are unchanged', () => {
     const journey = read('apps/web/app/buyer/reply-journey.tsx');

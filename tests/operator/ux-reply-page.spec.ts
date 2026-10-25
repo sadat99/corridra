@@ -45,7 +45,7 @@ test.beforeAll(async () => {
       import{BuyerIntroduction}from ${JSON.stringify(resolve('apps/web/app/buyer/introduction.tsx'))};
       const q=new URLSearchParams(location.search);
       createRoot(document.getElementById('fixture')).render(
-        <main className="operator-page ux-workspace"><h1>Private introduction</h1><BuyerIntroduction replyPage={q.get('old')!=='1'}/></main>);`,
+        <main className="operator-page ux-workspace"><h1>Private introduction</h1><BuyerIntroduction replyPage={q.get('old')!=='1'} chineseReleased={q.get('nozh')!=='1'}/></main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -96,6 +96,7 @@ async function open(
     view?: Record<string, unknown>;
     failDetail?: number;
     old?: boolean;
+    zhNotReleased?: boolean;
   } = {},
 ) {
   const sent: Sent[] = [];
@@ -116,7 +117,10 @@ async function open(
     }
     return json(400, { error: 'unexpected' });
   });
-  await page.goto(`${origin}/${options.old ? '?old=1' : ''}#${options.hash ?? `t=${token}`}`);
+  const query = [options.old ? 'old=1' : '', options.zhNotReleased ? 'nozh=1' : '']
+    .filter(Boolean)
+    .join('&');
+  await page.goto(`${origin}/${query ? `?${query}` : ''}#${options.hash ?? `t=${token}`}`);
   return sent;
 }
 const detail = (sent: Sent[]) => sent.filter((c) => c.action === 'detail-response');
@@ -376,6 +380,20 @@ test('with the switch off the older form and its words are what the page shows',
   await open(page, { hash: token, old: true, view: { decision: 'INTERESTED' } });
   await expect(page.getByRole('heading', { name: 'Reply or request clarification' })).toBeVisible();
   await expect(page.getByText('Step 1 of')).toHaveCount(0);
+});
+
+test('a link that names Chinese opens in English until a native reviewer is recorded', async ({
+  page,
+}) => {
+  await open(page, { hash: `t=${token}&l=zh`, zhNotReleased: true });
+  await expect(
+    page.getByRole('heading', { name: 'Would this company be relevant to you?' }),
+  ).toBeVisible();
+  await expect(page.locator('section[aria-label="Private introduction"]')).toHaveAttribute(
+    'lang',
+    'en',
+  );
+  await expect(page.getByRole('heading', { name: '这家公司与您相关吗？' })).toHaveCount(0);
 });
 
 test('the Chinese catalogue covers the page words, and the page sets its own language', async ({
