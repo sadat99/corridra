@@ -225,7 +225,7 @@ describe('every switch-off and install path', () => {
   it('the queue shows itself only where the switch is on, and nothing changes in the old list', () => {
     const queue = read('apps/web/app/operator/reply-review.tsx');
     expect(queue).toContain('if (!replyReview || responses.length === 0) return null;');
-    expect(read('apps/web/app/operator/page.tsx')).toContain(
+    expect(read('apps/web/app/operator/operator-entry.tsx')).toContain(
       "replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}",
     );
     const mount = read('apps/web/app/operator/delivery-experience.tsx');

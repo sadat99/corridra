@@ -1,5 +1,6 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import Link from 'next/link';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
@@ -645,8 +646,10 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
       )}
       {['owner', 'admin'].includes(data.role) && data.enabled && !data.freshMfa && (
         <p>
-          <a href="/operator/signin">Sign in and verify your authenticator again</a> before
-          confirming cash, correcting money or rebuilding reports.
+          <Link prefetch={false} href="/operator/signin">
+            Sign in and verify your authenticator again
+          </Link>{' '}
+          before confirming cash, correcting money or rebuilding reports.
         </p>
       )}
       {manage && (

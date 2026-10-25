@@ -224,7 +224,7 @@ describe('the switches and the paths', () => {
   it('the panel is mounted only where the flag is on, and only for a person who can manage', () => {
     const missions = read('apps/web/app/operator/missions.tsx');
     expect(missions).toContain('{manage && moveRecords && <MissionMoves');
-    expect(read('apps/web/app/operator/page.tsx')).toContain(
+    expect(read('apps/web/app/operator/operator-entry.tsx')).toContain(
       'moveRecords={customerMovesEnabled()}',
     );
   });

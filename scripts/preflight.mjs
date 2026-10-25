@@ -88,12 +88,14 @@ const quick = [
   step('typecheck', ['pnpm', 'typecheck']),
   step('docs-tests', ['pnpm', 'test']),
   step('ledger', ['node', 'scripts/v3-context.mjs', 'verify']),
-  // CI checks out one commit, so the full-history scan is not the same question. This asks it of
-  // the commits this branch adds. The scanner binary is downloaded by scripts/security-scan.mjs.
+  // CI scans the whole history of the pull request, so a secret-looking line in any commit fails it even
+  // if a later commit removes the line. This asks the same question of the commits this branch adds.
+  // The scanner binary is downloaded by scripts/security-scan.mjs. A finding must fail this step: the
+  // skip message is only for a missing scanner (an earlier `a && b || echo` form swallowed findings).
   step('security-scan', [
     'sh',
     '-c',
-    `node scripts/security-scan.mjs >/dev/null 2>&1; test -x .cache/security/gitleaks && .cache/security/gitleaks git . --redact=100 --no-banner --log-opts='${base}..HEAD' || echo 'scanner unavailable, skipped'`,
+    `node scripts/security-scan.mjs >/dev/null 2>&1; if [ -x .cache/security/gitleaks ]; then .cache/security/gitleaks git . --redact=100 --no-banner --log-opts='${base}..HEAD'; else echo 'scanner unavailable, skipped'; fi`,
   ]),
 ];
 

@@ -229,9 +229,29 @@
       "use": "Lane 10: the Programme Room, what the road and boarding line read, what is not built and how parity with the old list is proved"
     },
     {
+      "path": "docs/product/lane12-fairs.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 12: fair pages with checked dates, the Countdown rules, how a fair is added, and why the books are not built"
+    },
+    {
       "path": "docs/product/lane13-front-doors.md",
       "classification": "UX programme/contract/packet",
       "use": "Lane 13: the founder and helper front doors, what each card links to, what is not built and how it is verified"
+    },
+    {
+      "path": "docs/product/ux-update-handoff-2026-10-25.md",
+      "classification": "Owner proposal",
+      "use": "The owner's end-of-build summary of the UX update: every lane and switch, what is not built, the decisions that are the owner's, and the install and switch order"
+    },
+    {
+      "path": "docs/product/lane11-languages.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 11: French and German drafts, the pseudo-language test, the short-label rule and the owner steps to release a language"
+    },
+    {
+      "path": "docs/product/lane9-operator-urls.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 9: addresses for the 18 team workspace sections, view as stage 2 samples, what is not built and how it is verified"
     },
     {
       "path": "docs/product/phase2-install.md",

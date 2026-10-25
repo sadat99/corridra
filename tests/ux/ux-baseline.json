@@ -28,6 +28,9 @@
   "/coming-soon": {
     "redirectsTo:/": 1
   },
+  "/fairs": {
+    "unavailable": 6
+  },
   "/contributor": {},
   "/contributor/setup": {},
   "/corridors": {},

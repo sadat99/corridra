@@ -482,7 +482,7 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'Team workspace addresses',
     line: 'Gives each team workspace section its own address. The old links keep working.',
     group: 'Team access',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_FRONT_DOORS',
@@ -501,9 +501,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_FAIRS',
     label: 'Fair pages and Countdown',
-    line: 'Fair pages with checked dates, and a countdown on a request that has a real date.',
+    line: 'Fair pages with dates the Corridra team has checked, and the days to each date. The list stays empty until a checked entry is added.',
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_BOOKS',

@@ -9,6 +9,8 @@ One row per language. A language is offered to the public only when a native rev
 | Chinese (Simplified) | `zh` | Not recorded    | Not recorded   | Draft only        | No                    |
 | Spanish              | `es` | Not recorded    | Not recorded   | Draft only        | No                    |
 | Arabic               | `ar` | Not recorded    | Not recorded   | Draft only        | No                    |
+| French               | `fr` | Not recorded    | Not recorded   | Draft only        | No                    |
+| German               | `de` | Not recorded    | Not recorded   | Draft only        | No                    |
 
 ## What a reviewer reads
 
@@ -18,7 +20,7 @@ One row per language. A language is offered to the public only when a native rev
 
 ## Rules for a reviewer
 
-Formal register for Spanish; modern corporate Chinese; Modern Standard Arabic in an enterprise register; Bangla in a modern corporate register with technology words in Bengali script. Words with legal or commercial weight are translated for exact meaning. The five trust names are never weakened. Company names, original text and quotations are never translated. Legal and privacy text is not part of this review: it needs a qualified reviewer per language.
+Formal register for Spanish, French (vous) and German (Sie); modern corporate Chinese; Modern Standard Arabic in an enterprise register; Bangla in a modern corporate register with technology words in Bengali script. Words with legal or commercial weight are translated for exact meaning. The five trust names are never weakened. Company names, original text and quotations are never translated. Legal and privacy text is not part of this review: it needs a qualified reviewer per language.
 
 ## How a language is released
 
