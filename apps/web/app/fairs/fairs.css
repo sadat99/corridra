@@ -1,0 +1,50 @@
+.fairs-note {
+  max-width: 60ch;
+  color: var(--text-muted);
+}
+.fairs-list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fairs-list li {
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.fairs-list h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-lg);
+}
+.fairs-list p,
+.fairs-dates dd {
+  margin: var(--space-1) 0 0;
+}
+.fairs-checked,
+.fairs-source {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.fairs-source {
+  display: block;
+  margin-top: var(--space-1);
+}
+.fairs-dates {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.fairs-dates dt {
+  font-weight: 700;
+}
+.fairs-dates dd {
+  margin-inline-start: 0;
+  font-variant-numeric: tabular-nums;
+}
+.countdown[data-state='today'],
+.countdown[data-state='future'] {
+  font-weight: 700;
+}
