@@ -147,6 +147,10 @@ export const excludedPages: readonly ExcludedPage[] = [
     why: 'Needs one request. It opens from the request list under Missions and from Your Move.',
   },
   {
+    route: '/account/rooms/[requestId]',
+    why: 'Needs one request. It opens from the saved request page and from Your Move, and shows the Road, replies and report for that request.',
+  },
+  {
     route: '/account/drafts/[workspaceId]',
     why: 'Needs a workspace. It opens from the workspace under Missions and from Your Move.',
   },

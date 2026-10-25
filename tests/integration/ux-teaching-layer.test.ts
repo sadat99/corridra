@@ -320,7 +320,10 @@ describe('the stylesheets of the teaching layer', () => {
         e.isDirectory() ? walk(resolve(d, e.name)) : [resolve(d, e.name)],
       );
     // Each lane that mounts the layer adds its screen here, in the same pull request that builds it.
-    const mounts = ['app/account/move/move-view.tsx'];
+    const mounts = [
+      'app/account/move/move-view.tsx',
+      'app/account/rooms/[requestId]/room-view.tsx',
+    ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))
       .filter((f) => /components\/mr\b/.test(readFileSync(f, 'utf8')))

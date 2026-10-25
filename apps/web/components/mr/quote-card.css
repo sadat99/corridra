@@ -105,3 +105,7 @@
   background: var(--caution-surface);
   border-radius: 4px;
 }
+.mr-quote-price small {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}

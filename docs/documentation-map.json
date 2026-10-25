@@ -194,6 +194,11 @@
       "use": "Lane 4: Your Move, the new navigation names and All tools; the parity table, what Your Move reads, the switches and how to flip or roll back"
     },
     {
+      "path": "docs/product/lane5-room.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 5: the Room, the Road on a request and the Compare and Evidence lenses; what each reads, what is left out and why, and how to flip or roll back"
+    },
+    {
       "path": "docs/product/phase2-interviews.md",
       "classification": "Owner proposal",
       "use": "The ten to fifteen interview questions that decide whether the decision card and Pulse email are worth switching on"

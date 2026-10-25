@@ -1,5 +1,7 @@
 'use client';
 import { ComparisonMatrix } from '../components/comparison-matrix';
+import { CompareLens } from '../components/compare-lens';
+import { quoteCardsFrom } from '../lib/quote-cards';
 import { StatusBadge } from '../components/access-state';
 import { useId, useState } from 'react';
 import type { AgendaItem, MissionExperience } from '@corridra/delivery/report';
@@ -57,7 +59,14 @@ export function AgendaView({
     <p>No agenda activities have been approved for this view.</p>
   );
 }
-export function MissionExperienceView({ experience: e }: { experience: MissionExperience }) {
+export function MissionExperienceView({
+  experience: e,
+  lenses = false,
+}: {
+  experience: MissionExperience;
+  /** UX update (`CORRIDRA_UX_LENSES`, read on the server): offers as cards with the table one tap away. Off renders exactly as before. */
+  lenses?: boolean;
+}) {
   const [language, setLanguage] = useState('en'),
     [lens, setLens] = useState('all');
   const lensId = useId(),
@@ -241,7 +250,19 @@ export function MissionExperienceView({ experience: e }: { experience: MissionEx
         <option value="current">Current requirement and assignment</option>
         <option value="review">Requires updated scope review</option>
       </select>
-      <ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />
+      {lenses ? (
+        <CompareLens
+          cards={quoteCardsFrom({
+            offers: e.quotations.filter(inLens),
+            verdicts: comparisons.filter((_, index) => inLens(e.quotations[index])),
+            shortlist: e.shortlist,
+            language,
+          })}
+          matrix={<ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />}
+        />
+      ) : (
+        <ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />
+      )}
       {e.quotations.length ? (
         e.quotations.map(
           (q, index) =>

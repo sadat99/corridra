@@ -81,7 +81,14 @@ const writer = (role: WorkspaceRole) => role === 'owner' || role === 'admin';
  * evidence they owe. Cards that need an owner or admin go to `waiting` for a member, never to
  * "You", so a card never claims an action the person cannot take.
  */
-export function buildMoveModel(input: MoveInput): MoveModel {
+export function buildMoveModel(
+  input: MoveInput,
+  options: {
+    /** UX update (`CORRIDRA_UX_ROAD`): a request opens in its Room. */ rooms?: boolean;
+  } = {},
+): MoveModel {
+  const requestHref = (id: string) =>
+    options.rooms ? `/account/rooms/${id}` : `/account/requests/${id}`;
   const many = input.workspaces.length > 1;
   const role = new Map(input.workspaces.map((w) => [w.id, w.role] as const));
   const name = new Map(input.workspaces.map((w) => [w.id, w.name] as const));
@@ -150,7 +157,7 @@ export function buildMoveModel(input: MoveInput): MoveModel {
   const replyCandidates: MoveModel['replyCandidates'] = [];
   for (const request of input.requests) {
     if (!request.progress) continue;
-    const href = `/account/requests/${request.id}`;
+    const href = requestHref(request.id);
     const received = request.progress.receivedAt.slice(0, 10);
     const replies = request.progress.replies;
     if (replies.length > 0)
@@ -182,7 +189,7 @@ export function buildMoveModel(input: MoveInput): MoveModel {
           id: newest.id,
           createdAt: newest.createdAt,
           status: newest.progress?.status ?? null,
-          href: `/account/requests/${newest.id}`,
+          href: requestHref(newest.id),
         }
       : null,
   };

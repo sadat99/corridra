@@ -419,14 +419,14 @@ export const switchRegistry: SwitchEntry[] = [
     label: 'The Road on a request',
     line: 'Shows where a request stands in six steps, from the status the person may already read.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_LENSES',
     label: 'Compare and Evidence views',
     line: 'Shows supplier offers as cards and the trust label on each fact.',
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_FIRSTQ',

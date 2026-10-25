@@ -74,11 +74,12 @@ test.beforeAll(async () => {
       const input=JSON.parse(q.get('input'));
       const offered=(q.get('offered')||'en').split(',').map(code=>({code,draft:code!=='en'}));
       const skipped=Number(q.get('skipped')||0);
+      const partial=q.get('partial')==='1';
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={offered}>
           <WorkspaceShell eyebrow="YOUR MOVE" title="Here is what is waiting for you."
             nav={<CustomerNav current="move" plainNames move companies/>}>
-            <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped}/>
+            <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped} partial={partial}/>
           </WorkspaceShell>
         </LanguageProvider>);`,
       loader: 'tsx',
@@ -236,6 +237,19 @@ test('shows five cards and the rest behind one control', async ({ page }) => {
 test('says when only the first workspaces were read', async ({ page }) => {
   await open(page, 'many', '&skipped=3');
   await expect(page.getByText('Showing items from your first 8 workspaces.')).toBeVisible();
+});
+
+test('says when a list was too long to read in full, and says nothing otherwise', async ({
+  page,
+}) => {
+  await open(page, 'nothing', '&partial=1');
+  await expect(
+    page.getByText(
+      'Some of your lists were too long to read in full. Open your missions to see everything.',
+    ),
+  ).toBeVisible();
+  await open(page, 'nothing');
+  await expect(page.getByText('too long to read in full')).toHaveCount(0);
 });
 
 for (const width of [320, 390, 768, 1440]) {

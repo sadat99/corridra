@@ -90,10 +90,13 @@ export function MoveView({
   model,
   startHref,
   skippedWorkspaces = 0,
+  partial = false,
 }: {
   model: MoveModel;
   startHref: string;
   skippedWorkspaces?: number;
+  /** True when a list was longer than the pages read. */
+  partial?: boolean;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -223,6 +226,11 @@ export function MoveView({
       {skippedWorkspaces > 0 ? (
         <p className="move-explainer" role="note">
           {fill(say('move.capped'), { count: moveWorkspaceCap })}
+        </p>
+      ) : null}
+      {partial ? (
+        <p className="move-explainer" role="note">
+          {say('move.partial')}
         </p>
       ) : null}
 

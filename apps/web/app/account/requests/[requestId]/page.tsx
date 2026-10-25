@@ -8,6 +8,7 @@ import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -47,6 +48,13 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="MY WORK" title="Your saved request">
+      {uxSwitchOn('CORRIDRA_UX_ROAD') && (
+        <p>
+          <a className="text-link" href={`/account/rooms/${parsed.data}`}>
+            Open this request in its Room
+          </a>
+        </p>
+      )}
       <CustomerRequestDetail
         requestId={parsed.data}
         subject={session.data.user.id}

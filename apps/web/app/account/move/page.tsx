@@ -5,6 +5,7 @@ import { customerPageSession } from '../../../lib/customer-page-session';
 import { buildMoveModel } from '../../../lib/move-cards';
 import { loadMoveInput } from '../../../lib/move-loader';
 import { uxSwitchOn } from '../../../lib/ux-switches';
+import { PendingRequestNotice } from '../../../components/pending-request-notice';
 import { AccountHashRedirect } from '../hash-redirect';
 import { MoveView } from './move-view';
 
@@ -34,14 +35,20 @@ export default async function Page() {
     );
 
   const loaded = await loadMoveInput(session.subject, session.issuer);
-  const model = buildMoveModel(loaded.input);
+  const model = buildMoveModel(loaded.input, { rooms: uxSwitchOn('CORRIDRA_UX_ROAD') });
   const startHref = loaded.requestCreationEnabled
     ? '/account?view=work#customer-workspaces'
     : '/plan';
   return (
     <CustomerShell tab="move" eyebrow="YOUR MOVE" title="Here is what is waiting for you.">
       <AccountHashRedirect view="move" />
-      <MoveView model={model} startHref={startHref} skippedWorkspaces={loaded.skippedWorkspaces} />
+      <PendingRequestNotice where="account" />
+      <MoveView
+        model={model}
+        startHref={startHref}
+        skippedWorkspaces={loaded.skippedWorkspaces}
+        partial={loaded.partial}
+      />
     </CustomerShell>
   );
 }

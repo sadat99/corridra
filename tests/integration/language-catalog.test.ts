@@ -133,6 +133,8 @@ describe('where the words come from', () => {
       'apps/web/components/ways-to-work.ts',
       'apps/web/components/mr/labels.ts',
       'apps/web/app/account/move/move-view.tsx',
+      'apps/web/app/account/rooms/[requestId]/room-view.tsx',
+      'apps/web/components/compare-lens.tsx',
     ]
       .map(read)
       .join('\n');

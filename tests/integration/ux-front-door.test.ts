@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { buildMoveModel, unreadReplies, type MoveInput } from '../../apps/web/lib/move-cards';
 import { fill } from '../../apps/web/lib/i18n/fill';
+import { followPages } from '../../apps/web/lib/move-pages';
 import { uxSwitchOn } from '../../apps/web/lib/ux-switches';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 
@@ -403,5 +404,56 @@ describe('the bare address and the old links', () => {
     expect(page).toContain('AccountHashRedirect');
     expect(page).toContain('notFound()');
     expect(page).toContain("uxSwitchOn('CORRIDRA_UX_MOVE')");
+  });
+});
+
+describe('reading a whole list before saying nothing is waiting', () => {
+  const pages = (sizes: number[], failAt?: number) => {
+    const calls: (string | undefined)[] = [];
+    const read = async (after?: string) => {
+      calls.push(after);
+      const n = after ? Number(after) : 0;
+      if (n === failAt) throw new Error('provider down');
+      return {
+        items: Array.from({ length: sizes[n] }, (_, i) => `${n}-${i}`),
+        nextAfter: n + 1 < sizes.length ? String(n + 1) : null,
+      };
+    };
+    return { read, calls };
+  };
+  it('follows the cursor to the end and reports a complete list', async () => {
+    const { read, calls } = pages([100, 100, 3]);
+    const result = await followPages(read, 5);
+    expect(result).toMatchObject({ complete: true, failed: false });
+    expect(result.items).toHaveLength(203);
+    expect(calls).toEqual([undefined, '1', '2']);
+  });
+  it('stops at the bound and says the list was not read in full', async () => {
+    const { read, calls } = pages([100, 100, 100, 100, 100, 100, 100]);
+    const result = await followPages(read, 5);
+    expect(result).toMatchObject({ complete: false, failed: false });
+    expect(result.items).toHaveLength(500);
+    expect(calls).toHaveLength(5);
+  });
+  it('leaves a source out when its first page fails, and keeps a partial list when a later page fails', async () => {
+    expect(await followPages(pages([10, 10], 0).read, 5)).toEqual({
+      items: [],
+      complete: false,
+      failed: true,
+    });
+    const later = await followPages(pages([10, 10, 10], 1).read, 5);
+    expect(later).toMatchObject({ complete: false, failed: false });
+    expect(later.items).toHaveLength(10);
+  });
+  it('the loader follows pages for requests, drafts and quotes and tells the page when a list was partial', () => {
+    const loader = readFileSync(resolve('apps/web/lib/move-loader.ts'), 'utf8');
+    expect(loader.match(/followPages\(/g)).toHaveLength(3);
+    expect(loader).toContain('partial ||= !');
+    const page = readFileSync(resolve('apps/web/app/account/move/page.tsx'), 'utf8');
+    expect(page).toContain('partial={loaded.partial}');
+  });
+  it('Your Move keeps the saved-request recovery notice that Home shows', () => {
+    const page = readFileSync(resolve('apps/web/app/account/move/page.tsx'), 'utf8');
+    expect(page).toContain('<PendingRequestNotice where="account" />');
   });
 });

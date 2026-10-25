@@ -114,6 +114,33 @@ export const en = {
   'move.wait.owner': 'Workspace owner or admin',
   'move.capped':
     'Showing items from your first {count} workspaces. Open your missions for the rest.',
+  'move.partial':
+    'Some of your lists were too long to read in full. Open your missions to see everything.',
+  'compare.cards': 'Cards',
+  'compare.table': 'Table',
+  'compare.note':
+    'The verdict on each card comes from the comparison itself. The table shows the original terms side by side.',
+  'room.received': 'Received {date}',
+  'room.replies.heading': 'Replies from the Corridra team',
+  'room.replies.none': 'No replies yet.',
+  'room.replies.all': 'Read every reply',
+  'room.lens.overview': 'Overview',
+  'room.lens.compare': 'Compare',
+  'room.lens.evidence': 'Evidence',
+  'room.lens.none':
+    'Offers and evidence appear here once the Corridra team delivers a report for this request and you save it.',
+  'room.open.request': 'Open the saved request',
+  'room.open.help': 'Request help with this',
+  'room.open.report': 'Open the saved report',
+  'room.open.library': 'Find the delivered report in your Library',
+  'room.gone': 'The original request is no longer available. Its retention period may have ended.',
+  'room.loading': 'Opening your request…',
+  'room.failed': 'Your request could not be loaded. Try again.',
+  'room.denied':
+    'Your private request access could not be confirmed. No request details are shown.',
+  'room.evidence.heading': 'What the labels mean',
+  'room.evidence.line':
+    'Every fact in a report carries one of five labels. The label says how the fact is known, not how good it is.',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -230,6 +257,33 @@ const bn: Catalog = {
   'move.wait.owner': 'ওয়ার্কস্পেসের মালিক বা অ্যাডমিন',
   'move.capped':
     'আপনার প্রথম {count}টি ওয়ার্কস্পেসের বিষয় দেখানো হচ্ছে। বাকিগুলোর জন্য আপনার মিশনগুলো খুলুন।',
+  'move.partial':
+    'আপনার কিছু তালিকা পুরোটা পড়ার জন্য অনেক বড় ছিল। সবকিছু দেখতে আপনার মিশনগুলো খুলুন।',
+  'compare.cards': 'কার্ড',
+  'compare.table': 'টেবিল',
+  'compare.note':
+    'প্রতিটি কার্ডের সিদ্ধান্ত তুলনা থেকেই আসে। টেবিলে মূল শর্তগুলো পাশাপাশি দেখানো হয়।',
+  'room.received': '{date} তারিখে পাওয়া গেছে',
+  'room.replies.heading': 'Corridra টিমের উত্তর',
+  'room.replies.none': 'এখনও কোনো উত্তর নেই।',
+  'room.replies.all': 'সব উত্তর পড়ুন',
+  'room.lens.overview': 'সারসংক্ষেপ',
+  'room.lens.compare': 'তুলনা',
+  'room.lens.evidence': 'প্রমাণ',
+  'room.lens.none':
+    'Corridra টিম এই অনুরোধের জন্য একটি প্রতিবেদন পাঠালে এবং আপনি তা সংরক্ষণ করলে প্রস্তাব ও প্রমাণ এখানে দেখা যাবে।',
+  'room.open.request': 'সংরক্ষিত অনুরোধ খুলুন',
+  'room.open.help': 'এ বিষয়ে সহায়তা চান',
+  'room.open.report': 'সংরক্ষিত প্রতিবেদন খুলুন',
+  'room.open.library': 'পাঠানো প্রতিবেদন আপনার লাইব্রেরিতে খুঁজুন',
+  'room.gone': 'মূল অনুরোধটি আর পাওয়া যাচ্ছে না। এর সংরক্ষণের মেয়াদ শেষ হয়ে থাকতে পারে।',
+  'room.loading': 'আপনার অনুরোধ খোলা হচ্ছে…',
+  'room.failed': 'আপনার অনুরোধটি লোড করা যায়নি। আবার চেষ্টা করুন।',
+  'room.denied':
+    'আপনার ব্যক্তিগত অনুরোধে প্রবেশাধিকার নিশ্চিত করা যায়নি। অনুরোধের কোনো তথ্য দেখানো হচ্ছে না।',
+  'room.evidence.heading': 'লেবেলগুলোর অর্থ',
+  'room.evidence.line':
+    'প্রতিবেদনের প্রতিটি তথ্যে পাঁচটি লেবেলের একটি থাকে। লেবেল বলে তথ্যটি কীভাবে জানা গেছে, তথ্যটি কতটা ভালো তা নয়।',
 };
 
 const zh: Catalog = {
@@ -338,6 +392,29 @@ const zh: Catalog = {
   'move.forget': '忘记此设备上已读的回复',
   'move.wait.owner': '工作区所有者或管理员',
   'move.capped': '显示您前 {count} 个工作区的事项。其余请在您的任务中查看。',
+  'move.partial': '您的部分列表太长，未能全部读取。请在您的任务中查看全部内容。',
+  'compare.cards': '卡片',
+  'compare.table': '表格',
+  'compare.note': '每张卡片上的结论来自比较本身。表格并排显示原始条款。',
+  'room.received': '收到于 {date}',
+  'room.replies.heading': 'Corridra 团队的回复',
+  'room.replies.none': '暂无回复。',
+  'room.replies.all': '阅读全部回复',
+  'room.lens.overview': '概览',
+  'room.lens.compare': '比较',
+  'room.lens.evidence': '证据',
+  'room.lens.none': 'Corridra 团队为此需求提交报告且您保存后，报价和证据会显示在这里。',
+  'room.open.request': '打开已保存的需求',
+  'room.open.help': '就此申请协助',
+  'room.open.report': '打开已保存的报告',
+  'room.open.library': '在您的资料库中查找已提交的报告',
+  'room.gone': '原始需求已不可用，其保留期限可能已结束。',
+  'room.loading': '正在打开您的需求…',
+  'room.failed': '无法加载您的需求。请重试。',
+  'room.denied': '无法确认您对私有需求的访问权限，因此不显示任何需求详情。',
+  'room.evidence.heading': '标签的含义',
+  'room.evidence.line':
+    '报告中的每项事实都带有五种标签之一。标签说明该事实是如何得知的，而不是它有多好。',
 };
 
 const es: Catalog = {
@@ -451,6 +528,34 @@ const es: Catalog = {
   'move.wait.owner': 'Propietario o administrador del espacio',
   'move.capped':
     'Se muestran los elementos de sus primeros {count} espacios. Abra sus misiones para ver el resto.',
+  'move.partial':
+    'Algunas de sus listas eran demasiado largas para leerlas completas. Abra sus misiones para verlo todo.',
+  'compare.cards': 'Tarjetas',
+  'compare.table': 'Tabla',
+  'compare.note':
+    'El veredicto de cada tarjeta proviene de la propia comparación. La tabla muestra los términos originales lado a lado.',
+  'room.received': 'Recibida el {date}',
+  'room.replies.heading': 'Respuestas del equipo de Corridra',
+  'room.replies.none': 'Aún no hay respuestas.',
+  'room.replies.all': 'Leer todas las respuestas',
+  'room.lens.overview': 'Resumen',
+  'room.lens.compare': 'Comparar',
+  'room.lens.evidence': 'Pruebas',
+  'room.lens.none':
+    'Las ofertas y las pruebas aparecerán aquí cuando el equipo de Corridra entregue un informe para esta solicitud y usted lo guarde.',
+  'room.open.request': 'Abrir la solicitud guardada',
+  'room.open.help': 'Pedir ayuda con esto',
+  'room.open.report': 'Abrir el informe guardado',
+  'room.open.library': 'Busque el informe entregado en su Biblioteca',
+  'room.gone':
+    'La solicitud original ya no está disponible. Es posible que haya terminado su plazo de conservación.',
+  'room.loading': 'Abriendo su solicitud…',
+  'room.failed': 'No se pudo cargar su solicitud. Inténtelo de nuevo.',
+  'room.denied':
+    'No se pudo confirmar su acceso privado a la solicitud. No se muestra ningún detalle.',
+  'room.evidence.heading': 'Qué significan las etiquetas',
+  'room.evidence.line':
+    'Cada dato de un informe lleva una de cinco etiquetas. La etiqueta indica cómo se conoce el dato, no cuán bueno es.',
 };
 
 const ar: Catalog = {
@@ -561,6 +666,30 @@ const ar: Catalog = {
   'move.forget': 'انسَ الردود التي قرأتها على هذا الجهاز',
   'move.wait.owner': 'مالك مساحة العمل أو مشرفها',
   'move.capped': 'تُعرض عناصر أول {count} مساحات عمل لديك. افتح مهامك لعرض الباقي.',
+  'move.partial': 'بعض قوائمك أطول من أن تُقرأ كاملة. افتح مهامك لعرض كل شيء.',
+  'compare.cards': 'بطاقات',
+  'compare.table': 'جدول',
+  'compare.note':
+    'الحكم على كل بطاقة يأتي من المقارنة نفسها. يعرض الجدول الشروط الأصلية جنبًا إلى جنب.',
+  'room.received': 'تم الاستلام في {date}',
+  'room.replies.heading': 'ردود فريق Corridra',
+  'room.replies.none': 'لا توجد ردود بعد.',
+  'room.replies.all': 'اقرأ كل الردود',
+  'room.lens.overview': 'نظرة عامة',
+  'room.lens.compare': 'المقارنة',
+  'room.lens.evidence': 'الأدلة',
+  'room.lens.none': 'ستظهر العروض والأدلة هنا عندما يسلّم فريق Corridra تقريرًا لهذا الطلب وتحفظه.',
+  'room.open.request': 'افتح الطلب المحفوظ',
+  'room.open.help': 'اطلب المساعدة في هذا',
+  'room.open.report': 'افتح التقرير المحفوظ',
+  'room.open.library': 'ابحث عن التقرير المسلَّم في مكتبتك',
+  'room.gone': 'الطلب الأصلي لم يعد متاحًا. ربما انتهت مدة الاحتفاظ به.',
+  'room.loading': 'جارٍ فتح طلبك…',
+  'room.failed': 'تعذّر تحميل طلبك. حاول مرة أخرى.',
+  'room.denied': 'تعذّر تأكيد وصولك إلى الطلب الخاص. لا تُعرض أي تفاصيل.',
+  'room.evidence.heading': 'ماذا تعني التسميات',
+  'room.evidence.line':
+    'كل معلومة في التقرير تحمل واحدة من خمس تسميات. تبيّن التسمية كيف عُرفت المعلومة، لا مدى جودتها.',
 };
 
 export const catalogs: Record<Locale, Catalog> = { en, bn, zh, es, ar };

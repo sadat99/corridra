@@ -9,7 +9,8 @@ import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { foundations } from './foundations';
 import type { MoveInput } from './move-cards';
 
-import { moveWorkspaceCap } from './move-constants';
+import { movePageCap, moveWorkspaceCap } from './move-constants';
+import { followPages } from './move-pages';
 
 type Loaded = {
   input: MoveInput;
@@ -17,6 +18,8 @@ type Loaded = {
   skippedWorkspaces: number;
   /** True when a request can be started from a workspace (the same test the account page uses). */
   requestCreationEnabled: boolean;
+  /** True when a list was longer than the pages read, so what is shown may not be everything. */
+  partial: boolean;
 };
 
 async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
@@ -32,6 +35,7 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
     input: { workspaces: [], drafts: [], quotes: [], companyLinks: [], requests: [] },
     skippedWorkspaces: 0,
     requestCreationEnabled: false,
+    partial: false,
   };
   if (!customerWorkspacesEnabled()) return empty;
   const services = foundations();
@@ -55,27 +59,30 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
   const [drafts, quotes, links, requests] = await Promise.all([
     Promise.all(
       customerMissionDraftsEnabled()
-        ? read.map((workspace) =>
-            attempt(() =>
-              services.customerMissionDrafts.list(
-                { workspaceId: workspace.id, pageSize: 25 },
+        ? read.map(async (workspace) => ({
+            workspaceId: workspace.id,
+            ...(await followPages(async (after) => {
+              const page = await services.customerMissionDrafts.list(
+                { workspaceId: workspace.id, pageSize: 100, ...(after ? { after } : {}) },
                 subject,
                 issuer,
-              ),
-            ),
-          )
+              );
+              return { items: page.drafts, nextAfter: page.nextAfter };
+            }, movePageCap)),
+          }))
         : [],
     ),
     Promise.all(
       customerServiceRequestsEnabled()
-        ? read.map((workspace) =>
-            attempt(() =>
-              services.customerServiceRequests.list(
-                { workspaceId: workspace.id, pageSize: 50 },
+        ? read.map(async (workspace) =>
+            followPages(async (after) => {
+              const page = await services.customerServiceRequests.list(
+                { workspaceId: workspace.id, pageSize: 50, ...(after ? { after } : {}) },
                 subject,
                 issuer,
-              ),
-            ),
+              );
+              return { items: page.requests, nextAfter: page.nextAfter };
+            }, movePageCap),
           )
         : [],
     ),
@@ -83,21 +90,34 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
       ? attempt(() => services.customerOrganisationLinks.overview(subject, issuer))
       : null,
     customerRequestsEnabled()
-      ? attempt(() => services.customerRequests.list({ pageSize: 25 }, subject, issuer))
+      ? followPages(async (after) => {
+          const page = (await services.customerRequests.list(
+            { pageSize: 100, ...(after ? { after } : {}) },
+            subject,
+            issuer,
+          )) as { requests: unknown[]; nextAfter?: string | null };
+          return { items: page.requests, nextAfter: page.nextAfter };
+        }, movePageCap)
       : null,
   ]);
 
-  for (const page of drafts)
-    for (const draft of page?.drafts ?? [])
+  let partial = false;
+  for (const page of drafts) {
+    if (page.failed) continue;
+    partial ||= !page.complete;
+    for (const draft of page.items)
       if (draft.status === 'OPEN')
         input.drafts.push({
           id: draft.id,
-          workspaceId: page!.workspaceId,
+          workspaceId: page.workspaceId,
           title: draft.title,
           updatedAt: draft.updatedAt,
         });
-  for (const page of quotes)
-    for (const request of page?.requests ?? [])
+  }
+  for (const page of quotes) {
+    if (page.failed) continue;
+    partial ||= !page.complete;
+    for (const request of page.items)
       if (request.status === 'quoted')
         input.quotes.push({
           id: request.id,
@@ -105,30 +125,35 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
           title: request.serviceTitle,
           contextLabel: request.contextLabel,
         });
+  }
   for (const link of links?.workspaces ?? [])
     if (link.status === 'needs_evidence')
       input.companyLinks.push({
         workspaceId: link.workspaceId,
         organisationName: link.organisationName,
       });
-  for (const row of (requests?.requests ?? []) as {
-    id: string;
-    workspaceId: string;
-    createdAt: string;
-    available: boolean;
-    progress: MoveInput['requests'][number]['progress'];
-  }[])
-    input.requests.push({
-      id: row.id,
-      workspaceId: row.workspaceId,
-      createdAt: row.createdAt,
-      progress: row.available ? row.progress : null,
-    });
+  if (requests && !requests.failed) {
+    partial ||= !requests.complete;
+    for (const row of requests.items as {
+      id: string;
+      workspaceId: string;
+      createdAt: string;
+      available: boolean;
+      progress: MoveInput['requests'][number]['progress'];
+    }[])
+      input.requests.push({
+        id: row.id,
+        workspaceId: row.workspaceId,
+        createdAt: row.createdAt,
+        progress: row.available ? row.progress : null,
+      });
+  }
 
   return {
     input,
     skippedWorkspaces: Math.max(0, workspaces.length - read.length),
     // Same test as the account page: the request list answers, so a request can be started.
-    requestCreationEnabled: requests !== null,
+    requestCreationEnabled: requests !== null && !requests.failed,
+    partial,
   };
 }
