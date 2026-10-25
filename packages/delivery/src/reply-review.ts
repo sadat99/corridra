@@ -13,14 +13,16 @@ import {
 export class ReplyReviewService {
   constructor(private pool: DatabasePool) {}
 
-  /** Whether the database side is open, and every review in this workspace, oldest first. */
+  /** Whether the database side is open, and the newest 500 reviews in this workspace, oldest first. */
   list(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'delivery.read', async ({ db, tenantId }) => {
       const open = (await db.query<{ open: boolean }>('SELECT app.reply_review_status() AS open'))
         .rows[0].open;
       const { rows } = await db.query(
-        `SELECT id,response_id,decision,reason_code,ask_terms,note,created_at
-         FROM app.recipient_reply_review WHERE tenant_id=$1 ORDER BY created_at,id LIMIT 500`,
+        `SELECT id,response_id,decision,reason_code,ask_terms,note,created_at FROM (
+           SELECT id,response_id,decision,reason_code,ask_terms,note,created_at
+           FROM app.recipient_reply_review WHERE tenant_id=$1 ORDER BY created_at DESC,id DESC LIMIT 500
+         ) newest ORDER BY created_at,id`,
         [tenantId],
       );
       return {

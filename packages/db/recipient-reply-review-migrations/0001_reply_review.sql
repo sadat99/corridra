@@ -54,17 +54,22 @@ CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON app.recipient_reply_review F
 -- Events hold ids, the decision and the reason code, never the note or any term the supplier typed.
 CREATE TRIGGER recipient_reply_review_event AFTER INSERT ON app.recipient_reply_review FOR EACH ROW EXECUTE FUNCTION app.record_change();
 -- The team reads; nobody writes directly. The staff function below is the only way in.
+-- A review is readable only by someone who can read the reply it is about: the subquery runs with the
+-- reader's own rights, so the reply table's own read policy (including access to its communication) applies.
 CREATE POLICY read ON app.recipient_reply_review FOR SELECT TO corridra_runtime
- USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation'));
+ USING(app.can_access(tenant_id,'INTERNAL','synthetic_validation')
+  AND EXISTS(SELECT FROM app.recipient_detail_response r WHERE r.tenant_id=recipient_reply_review.tenant_id AND r.id=recipient_reply_review.response_id));
 CREATE POLICY real_use_read ON app.recipient_reply_review FOR SELECT TO corridra_runtime
- USING(app.real_use_allowed(tenant_id) AND app.can_access(tenant_id,'INTERNAL',app.tenant_processing_purpose(tenant_id)));
+ USING(app.real_use_allowed(tenant_id) AND app.can_access(tenant_id,'INTERNAL',app.tenant_processing_purpose(tenant_id))
+  AND EXISTS(SELECT FROM app.recipient_detail_response r WHERE r.tenant_id=recipient_reply_review.tenant_id AND r.id=recipient_reply_review.response_id));
 REVOKE ALL ON app.recipient_reply_review FROM PUBLIC,corridra_auth,corridra_runtime;
 GRANT SELECT ON app.recipient_reply_review TO corridra_runtime;
 
 -- One review, in the caller's own workspace and transaction. It re-checks everything the application
 -- checked, so a direct call cannot skip a step: a signed-in staff actor who is owner or admin of this
 -- workspace, a fresh authenticator check, an open control, a reply that belongs to this workspace and is
--- still retained, and that no final decision exists yet. Idempotent by command id: the same command with
+-- still retained and readable by this actor (the same test as the reply table's own read policy), and that
+-- no final decision exists yet. Idempotent by command id: the same command with
 -- the same content is a replay; a different one under the same id conflicts.
 CREATE FUNCTION app.review_recipient_reply(command uuid, reply uuid, outcome text, code text, asked text[], remark text) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
@@ -83,7 +88,8 @@ BEGIN
   OR (outcome='PUBLISH' AND (code IS NOT NULL OR asked IS NOT NULL))
  THEN RAISE EXCEPTION 'Invalid review' USING ERRCODE='23514'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('app.reply_review:'||tenant::text||':'||reply::text,0));
- IF NOT EXISTS(SELECT FROM app.recipient_detail_response r WHERE r.tenant_id=tenant AND r.id=reply AND r.retention_until>clock_timestamp())
+ IF NOT EXISTS(SELECT FROM app.recipient_detail_response r WHERE r.tenant_id=tenant AND r.id=reply AND r.retention_until>clock_timestamp()
+  AND app.buyer_link_access(r.tenant_id,r.link_id))
  THEN RAISE EXCEPTION 'Reply not found' USING ERRCODE='42501'; END IF;
  SELECT * INTO old FROM app.recipient_reply_review WHERE tenant_id=tenant AND command_id=command;
  IF old.id IS NOT NULL THEN

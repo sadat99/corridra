@@ -378,3 +378,43 @@ describe('what the database module keeps', () => {
     expect(form).not.toContain('<svg');
   });
 });
+
+describe('found in review: the workflow, the caps and the claim', () => {
+  const sql = readFileSync(
+    resolve('packages/db/customer-notification-migrations/0001_notifications.sql'),
+    'utf8',
+  );
+  it('a wait for quiet hours or a digest does not use up the attempts, and can last two days', () => {
+    const workflow = readFileSync(resolve('apps/web/workflows/pulse.ts'), 'utf8');
+    expect(workflow).toContain('while (tries < 60 && waits < 120)');
+    expect(workflow).toContain("if (status === 'WAIT') {");
+    // 120 waits of thirty minutes is sixty hours; the latest a message can first be due is under forty-eight.
+    expect(120 * 30).toBeGreaterThan(48 * 60);
+  });
+  it('the cap per person is serialized by person, before the cap per request, in a fixed order', () => {
+    const person = sql.indexOf("'customer.notification.person:'");
+    const request = sql.indexOf("'customer.notification:'");
+    expect(person).toBeGreaterThan(-1);
+    expect(person).toBeLessThan(request);
+  });
+  it('a claim serializes by person after the capability check and before any row is locked', () => {
+    const claim = sql.slice(sql.indexOf('CREATE FUNCTION customer.claim_notification'));
+    const check = claim.indexOf('q.capability_hash<>encode');
+    const lock = claim.indexOf(
+      "pg_advisory_xact_lock(hashtextextended('customer.notification_claim:'",
+    );
+    const rows = claim.indexOf('WHERE id=queue FOR UPDATE');
+    expect(check).toBeGreaterThan(-1);
+    expect(check).toBeLessThan(lock);
+    expect(lock).toBeLessThan(rows);
+  });
+  it('queueing needs a fresh authenticator check, a recent command and a request still retained, and a missing outcome is refused', () => {
+    const enqueue = sql.slice(sql.indexOf('CREATE FUNCTION customer.enqueue_move_notifications'));
+    expect(enqueue.slice(0, 1800)).toContain('NOT app.fresh_mfa()');
+    expect(enqueue).toContain("cmd.created_at<clock_timestamp()-interval '10 minutes'");
+    expect(enqueue).toContain("skipped:='expired'");
+    const seal = sql.slice(sql.indexOf('CREATE FUNCTION customer.seal_notification'));
+    expect(seal.slice(0, 600)).toContain('NOT app.fresh_mfa()');
+    expect(sql).toContain('OR outcome IS NULL OR outcome NOT IN');
+  });
+});

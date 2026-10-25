@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../../../lib/foundations';
+import { boundedBody } from '../../../../lib/delivery-http';
+import { staffRefusal } from '../../../../lib/staff-db-error';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -33,9 +35,7 @@ async function handle(request: Request) {
       );
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
-    const body = await request.text();
-    if (body.length > 20000) throw new DomainError('Request too large', 413);
-    const input = JSON.parse(body);
+    const input = JSON.parse((await boundedBody(request, 20000)).toString('utf8'));
     const outcome = await s.moves.command(ctx, input);
     // Email about a Move is a separate step after the Move is stored: it can never fail or undo the Move.
     // It queues nothing unless Pulse is on in the application and the database, and sends nothing until
@@ -53,14 +53,21 @@ async function handle(request: Request) {
     }
     return Response.json(outcome, { headers });
   } catch (error) {
+    const refusal = staffRefusal(error);
     const status =
-      error instanceof DomainError ? error.status : error instanceof z.ZodError ? 400 : 500;
+      error instanceof DomainError
+        ? error.status
+        : error instanceof z.ZodError || error instanceof SyntaxError
+          ? 400
+          : (refusal?.status ?? 500);
     const message =
       error instanceof DomainError
         ? error.message
         : error instanceof z.ZodError
           ? (error.issues[0]?.message ?? 'Check the request')
-          : 'Request failed';
+          : error instanceof SyntaxError
+            ? 'Check the request'
+            : (refusal?.message ?? 'Request failed');
     return Response.json({ error: message }, { status, headers });
   }
 }

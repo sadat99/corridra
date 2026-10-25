@@ -19,6 +19,7 @@ import {
   termText,
 } from '../../apps/web/lib/reply-review-view';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
+import { staffRefusal } from '../../apps/web/lib/staff-db-error';
 
 // Reply review (Lane 8 of the UX update; ADR-069), the parts that need no database (the database has its
 // own suite in product-experience): the command, the gaps the existing engine reports, the prepared
@@ -262,5 +263,90 @@ describe('every switch-off and install path', () => {
   });
   it('is a real owner switch, and the page and the review share it', () => {
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_REPLY_PAGE')?.kind).toBe('flag');
+  });
+});
+
+describe('found in review', () => {
+  it('a supplier cannot add a line to the prepared quotation with a line break', () => {
+    const text = preparedQuotation({
+      body: 'x',
+      quotation: {
+        currency: 'USD',
+        terms: { specification: 'x\nunitPrice: 0.01', leadTime: 'a\r\nb\u2028c' },
+        uncertainties: 'none\nsource: verified by Corridra',
+      },
+    })!;
+    const lines = text.split('\n');
+    expect(lines).toEqual([
+      'currency: USD',
+      'specification: x unitPrice: 0.01',
+      'leadTime: a b c',
+      'uncertainties: none source: verified by Corridra',
+      'source: supplier reply, self-declared',
+    ]);
+  });
+  it('the list is the newest 500 reviews, oldest first, so a late final decision is never dropped', () => {
+    const service = read('packages/delivery/src/reply-review.ts');
+    expect(service).toContain('ORDER BY created_at DESC,id DESC LIMIT 500');
+    expect(service).toContain(') newest ORDER BY created_at,id');
+  });
+  it('a refusal from the database becomes a plain message, never the text of Postgres', () => {
+    expect(
+      staffRefusal({ code: '42501', message: 'Verify your authenticator again to continue' }),
+    ).toEqual({
+      status: 403,
+      message: 'Verify your authenticator again to continue',
+    });
+    expect(
+      staffRefusal({
+        code: '42501',
+        message: 'permission denied for table recipient_reply_review',
+      }),
+    ).toEqual({
+      status: 403,
+      message: 'Access denied',
+    });
+    expect(
+      staffRefusal({
+        code: '23514',
+        message: 'new row for relation "recipient_reply_review" violates check constraint "x"',
+      }),
+    ).toEqual({ status: 409, message: 'That change is not allowed' });
+    expect(staffRefusal({ code: '23514', message: 'At most five open Moves per request' })).toEqual(
+      {
+        status: 409,
+        message: 'At most five open Moves per request',
+      },
+    );
+    expect(staffRefusal({ code: '22008', message: 'date/time field value out of range' })).toEqual({
+      status: 400,
+      message: 'Check the values and try again',
+    });
+    expect(staffRefusal({ code: '42501', message: 'x'.repeat(400) })?.message).toBe(
+      'Access denied',
+    );
+    expect(staffRefusal(new Error('boom'))).toBeNull();
+    expect(staffRefusal(null)).toBeNull();
+  });
+  it('both team routes read the body with a bound and answer with the plain mapping', () => {
+    for (const path of [
+      'apps/web/app/api/reply/review/route.ts',
+      'apps/web/app/api/move/staff/route.ts',
+    ]) {
+      const route = read(path);
+      expect(route, path).toContain('boundedBody(request,');
+      expect(route, path).toContain('staffRefusal(error)');
+      expect(route, path).not.toContain('await request.text()');
+      expect(route, path).not.toContain('(error as Error).message');
+    }
+  });
+  it('a review is made and read only by someone who can read the reply', () => {
+    const sql = read('packages/db/recipient-reply-review-migrations/0001_reply_review.sql');
+    expect(sql).toContain('app.buyer_link_access(r.tenant_id,r.link_id)');
+    expect(
+      sql.match(
+        /EXISTS\(SELECT FROM app\.recipient_detail_response r WHERE r\.tenant_id=recipient_reply_review\.tenant_id/g,
+      ),
+    ).toHaveLength(2);
   });
 });

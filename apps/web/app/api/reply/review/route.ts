@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../../lib/foundations';
+import { boundedBody } from '../../../../lib/delivery-http';
+import { staffRefusal } from '../../../../lib/staff-db-error';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,36 +34,30 @@ async function handle(request: Request) {
     if (request.method === 'GET') return Response.json(await s.replyReview.list(ctx), { headers });
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
-    const body = await request.text();
-    if (body.length > 4000) throw new DomainError('Request too large', 413);
+    const body = (await boundedBody(request, 4000)).toString('utf8');
     return Response.json(await s.replyReview.review(ctx, JSON.parse(body)), { headers });
   } catch (error) {
-    const code = (error as { code?: string }).code;
     // The module is optional: not installed means unavailable, not a server error.
+    const code = (error as { code?: string }).code;
+    const refusal = staffRefusal(error);
     const status =
       error instanceof DomainError
         ? error.status
-        : error instanceof z.ZodError
+        : error instanceof z.ZodError || error instanceof SyntaxError
           ? 400
           : ['42P01', '3F000', '42883'].includes(code ?? '')
             ? 503
-            : code === '42501'
-              ? 403
-              : code === '23514'
-                ? 409
-                : 500;
+            : (refusal?.status ?? 500);
     const message =
       error instanceof DomainError
         ? error.message
         : error instanceof z.ZodError
           ? (error.issues[0]?.message ?? 'Check the request')
-          : status === 503
-            ? 'Reply review is unavailable'
-            : status === 403
-              ? (error as Error).message || 'Access denied'
-              : status === 409
-                ? (error as Error).message || 'That review conflicts with an earlier one'
-                : 'Request failed';
+          : error instanceof SyntaxError
+            ? 'Check the request'
+            : status === 503
+              ? 'Reply review is unavailable'
+              : (refusal?.message ?? 'Request failed');
     return Response.json({ error: message }, { status, headers });
   }
 }

@@ -91,6 +91,9 @@ CREATE FUNCTION app.guard_mission_move_command() RETURNS trigger
  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  IF NEW.actor_id IS DISTINCT FROM app.actor_id() THEN RAISE EXCEPTION 'Actor mismatch' USING ERRCODE='42501'; END IF;
+ -- Every Move write begins with a command row, so the authenticator check is made here as well as in the
+ -- application: a path that reaches the pool without it cannot write a Move five minutes after the last check.
+ IF NOT app.fresh_mfa() THEN RAISE EXCEPTION 'Verify your authenticator again to continue' USING ERRCODE='42501'; END IF;
  IF NOT customer_private.move_open() THEN RAISE EXCEPTION 'Move records are not open' USING ERRCODE='42501'; END IF;
  RETURN NEW;
 END $$;
@@ -101,7 +104,8 @@ BEGIN
  SELECT * INTO cmd FROM app.mission_move_command WHERE id=NEW.command_id;
  IF NOT FOUND OR cmd.kind<>'SET' OR (cmd.tenant_id,cmd.mission_id,cmd.actor_id) IS DISTINCT FROM (NEW.tenant_id,NEW.mission_id,NEW.created_by)
   OR NEW.created_by IS DISTINCT FROM app.actor_id() THEN RAISE EXCEPTION 'Move does not belong to this command' USING ERRCODE='42501'; END IF;
- IF NEW.due_on IS NOT NULL AND (NEW.due_on<current_date OR NEW.due_on>current_date+365) THEN RAISE EXCEPTION 'A due date must be today or up to a year ahead' USING ERRCODE='23514'; END IF;
+ -- Today in any time zone: a day of grace on the past side, because the database date is UTC and staff may be behind it.
+ IF NEW.due_on IS NOT NULL AND (NEW.due_on<current_date-1 OR NEW.due_on>current_date+365) THEN RAISE EXCEPTION 'A due date must be today or up to a year ahead' USING ERRCODE='23514'; END IF;
  SELECT count(*) INTO open_now FROM app.mission_move m WHERE m.tenant_id=NEW.tenant_id AND m.mission_id=NEW.mission_id
   AND NOT EXISTS(SELECT FROM app.mission_move_close c WHERE c.move_id=m.id);
  IF open_now>=5 THEN RAISE EXCEPTION 'At most five open Moves per request' USING ERRCODE='23514'; END IF;

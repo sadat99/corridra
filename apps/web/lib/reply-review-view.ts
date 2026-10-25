@@ -57,6 +57,9 @@ export function minorToMajor(value: string, code: string) {
 export function preparedQuotation(reply: ReplyBody) {
   const quotation = reply.quotation;
   if (!quotation?.terms) return null;
+  // The supplier's text may hold line breaks. Each value is kept to one line, so nothing a supplier types can
+  // add a line of its own (for example a `source:` line) to the block the team copies.
+  const oneLine = (value: string) => value.replace(/[\r\n\u2028\u2029\u0085]+/g, ' ');
   const currency = quotation.currency ?? '';
   const lines = [`currency: ${currency}`];
   for (const key of replyTermNames) {
@@ -65,10 +68,10 @@ export function preparedQuotation(reply: ReplyBody) {
     lines.push(
       key.endsWith('Minor')
         ? `${key.slice(0, -5)}: ${minorToMajor(value, currency)}`
-        : `${key}: ${value}`,
+        : `${key}: ${oneLine(value)}`,
     );
   }
-  lines.push(`uncertainties: ${quotation.uncertainties ?? ''}`);
+  lines.push(`uncertainties: ${oneLine(quotation.uncertainties ?? '')}`);
   lines.push('source: supplier reply, self-declared');
   return lines.join('\n');
 }

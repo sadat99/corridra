@@ -261,6 +261,7 @@ BEGIN
  SELECT * INTO cmd FROM app.mission_move_command WHERE id=command;
  IF NOT FOUND OR cmd.kind<>'SET' OR cmd.actor_id IS DISTINCT FROM app.actor_id()
   OR app.member_role(cmd.tenant_id) IS NULL OR app.member_role(cmd.tenant_id) NOT IN ('owner','admin','operator')
+  OR NOT app.fresh_mfa() OR cmd.created_at<clock_timestamp()-interval '10 minutes'
  THEN RAISE EXCEPTION 'Notification access denied' USING ERRCODE='42501'; END IF;
  IF NOT customer_private.notification_open() THEN RETURN jsonb_build_object('queued',0,'jobs','[]'::jsonb,'reason','closed'); END IF;
  FOR mv IN SELECT m.id,m.verb,m.object,m.due_on FROM app.mission_move m
@@ -269,9 +270,14 @@ BEGIN
   FOR owned IN SELECT * FROM customer_private.owned_request r WHERE r.mission_tenant_id=cmd.tenant_id AND r.mission_id=cmd.mission_id LOOP
    IF app.tenant_is_synthetic(owned.workspace_id) THEN skipped:='sample-workspace'; CONTINUE; END IF;
    IF EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=owned.id) THEN skipped:='revoked'; CONTINUE; END IF;
+   IF NOT EXISTS(SELECT FROM app.mission_intake i WHERE i.id=owned.mission_id AND i.tenant_id=owned.mission_tenant_id AND i.retention_until>clock_timestamp())
+   THEN skipped:='expired'; CONTINUE; END IF;
    IF EXISTS(SELECT FROM customer_private.notification_mute WHERE request_id=owned.id) THEN skipped:='muted'; CONTINUE; END IF;
    pref:=customer_private.notification_preference_of(owned.principal_id);
    IF NOT ('your-move' = ANY (pref.kinds)) THEN skipped:='kind-off'; CONTINUE; END IF;
+   -- The ten a day cap counts every request of the person, so it is serialized by person first; the three a
+   -- day cap counts one request and is serialized by request. Always in this order, so two calls cannot deadlock.
+   PERFORM pg_advisory_xact_lock(hashtextextended('customer.notification.person:'||owned.principal_id::text,0));
    PERFORM pg_advisory_xact_lock(hashtextextended('customer.notification:'||owned.id::text,0));
    PERFORM customer_private.notification_expire();
    IF (SELECT count(*) FROM customer_private.notification_outbox WHERE request_id=owned.id AND created_at>clock_timestamp()-interval '24 hours')>=3
@@ -298,7 +304,7 @@ CREATE FUNCTION customer.seal_notification(queue uuid, capability_digest text, m
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE q customer_private.notification_outbox%ROWTYPE;
 BEGIN
- IF queue IS NULL OR app.actor_id() IS NULL OR capability_digest IS NULL OR capability_digest !~ '^[a-f0-9]{64}$'
+ IF queue IS NULL OR app.actor_id() IS NULL OR NOT app.fresh_mfa() OR capability_digest IS NULL OR capability_digest !~ '^[a-f0-9]{64}$'
   OR mute_digest IS NULL OR mute_digest !~ '^[a-f0-9]{64}$' THEN RAISE EXCEPTION 'Notification access denied' USING ERRCODE='42501'; END IF;
  SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue FOR UPDATE;
  IF NOT FOUND OR app.member_role(q.tenant_id) IS NULL OR app.member_role(q.tenant_id) NOT IN ('owner','admin','operator')
@@ -360,7 +366,7 @@ CREATE FUNCTION customer.finish_notification(queue uuid, capability text, outcom
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE q customer_private.notification_outbox%ROWTYPE;
 BEGIN
- IF queue IS NULL OR capability IS NULL OR length(capability) NOT BETWEEN 20 AND 200 OR outcome NOT IN ('SENT','TRANSIENT','PERMANENT')
+ IF queue IS NULL OR capability IS NULL OR length(capability) NOT BETWEEN 20 AND 200 OR outcome IS NULL OR outcome NOT IN ('SENT','TRANSIENT','PERMANENT')
  THEN RAISE EXCEPTION 'Notification is not available' USING ERRCODE='42501'; END IF;
  SELECT * INTO q FROM customer_private.notification_outbox WHERE id=queue FOR UPDATE;
  IF NOT FOUND OR q.capability_hash IS NULL OR q.capability_hash<>encode(sha256(convert_to(capability,'UTF8')),'hex')

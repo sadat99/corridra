@@ -245,3 +245,28 @@ describe('the switches and the paths', () => {
     expect(sql).toContain('customer_private.move_open()');
   });
 });
+
+describe('found in review: dates and the authenticator check in the database', () => {
+  it('refuses a date that is not on the calendar', () => {
+    for (const bad of ['2026-02-30', '2026-13-01', '2026-00-10', '2026-04-31'])
+      expect(
+        moveInput.safeParse({ verb: 'Add', object: 'a thing', holder: 'team', dueOn: bad }).success,
+        bad,
+      ).toBe(false);
+    expect(
+      moveInput.safeParse({ verb: 'Add', object: 'a thing', holder: 'team', dueOn: '2028-02-29' })
+        .success,
+    ).toBe(true);
+  });
+  it('the database makes the authenticator check itself, and gives staff behind UTC a day of grace', () => {
+    const sql = readFileSync(
+      resolve('packages/db/customer-move-migrations/0001_move_records.sql'),
+      'utf8',
+    );
+    const guard = sql.slice(sql.indexOf('CREATE FUNCTION app.guard_mission_move_command'));
+    expect(guard.slice(0, guard.indexOf('CREATE FUNCTION app.guard_mission_move()'))).toContain(
+      'app.fresh_mfa()',
+    );
+    expect(sql).toContain('NEW.due_on<current_date-1');
+  });
+});

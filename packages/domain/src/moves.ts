@@ -43,7 +43,13 @@ export const moveObject = z
     if (problem) ctx.addIssue({ code: 'custom', message: problem });
   });
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date as year-month-day');
+const day = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date as year-month-day')
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }, 'Use a real date');
 
 export const moveInput = z
   .object({
