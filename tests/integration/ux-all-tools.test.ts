@@ -34,6 +34,7 @@ const allOn: ToolModules = {
   companies: true,
   profiles: true,
   billing: true,
+  notifications: true,
 };
 const allOff = Object.fromEntries(Object.keys(allOn).map((k) => [k, false])) as ToolModules;
 

@@ -58,6 +58,29 @@ const cases = {
     requests: [],
   },
   nothing: { workspaces: [], drafts: [], quotes: [], companyLinks: [], requests: [] },
+  moves: {
+    workspaces: [owner],
+    drafts: [],
+    quotes: [],
+    companyLinks: [],
+    requests: [request('r1', 'MEETINGS')],
+    moves: [
+      {
+        requestId: 'r1',
+        moves: [
+          {
+            id: 'm1',
+            verb: 'Add',
+            object: 'your import licence number',
+            holder: 'customer',
+            dueOn: '2026-11-05',
+          },
+          { id: 'm2', verb: 'Confirm', object: 'the visit dates', holder: 'team', dueOn: null },
+          { id: 'm3', verb: 'Send', object: 'the quotation', holder: 'third', dueOn: null },
+        ],
+      },
+    ],
+  },
 } as const;
 type Case = keyof typeof cases;
 
@@ -174,6 +197,27 @@ test('the cards show what is waiting for the person and who holds the rest', asy
     'aria-current',
     'page',
   );
+});
+
+test('shows a Move the team set as a card with its real date, and folds the others under waiting', async ({
+  page,
+}) => {
+  await open(page, 'moves');
+  const card = page.locator('.mr-move').filter({ hasText: 'Add your import licence number' });
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('You');
+  await expect(card.locator('time')).toHaveText('Nov 5, 2026');
+  await expect(card.getByRole('link', { name: 'Open the request' })).toHaveAttribute(
+    'href',
+    '/account/requests/r1',
+  );
+  const waiting = page.getByRole('heading', { name: 'Waiting on others' }).locator('..');
+  await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
+  await expect(waiting.getByText('Corridra team', { exact: true }).first()).toBeVisible();
+  await expect(waiting.getByText('Send the quotation')).toBeVisible();
+  await expect(waiting.getByText('Supplier or Buyer')).toBeVisible();
+  // The team's words are theirs: shown as written, marked as English in any language.
+  await expect(card.locator('h3')).toHaveAttribute('lang', 'en');
 });
 
 test('a new reply is kept on this device only, and can be marked read and forgotten', async ({

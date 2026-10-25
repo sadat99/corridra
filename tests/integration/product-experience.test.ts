@@ -15,6 +15,11 @@ import { initialRoutes } from '../../packages/domain/src/corridors';
 import { displayMoney, displayDate, originalAmountToMinor } from '../../packages/domain/src/locale';
 import { briefSchema } from '../../packages/domain/src/missions';
 import { migrate } from '../../packages/db/src/migrate';
+import { buildReplyTerms, replyTermKeys, noCharge } from '../../apps/web/lib/reply-terms';
+import { ReplyReviewService } from '../../packages/delivery/src/reply-review';
+import { migrateReplyReview } from '../../packages/db/src/recipient-reply-review-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { configureReplyReview } from '../../packages/delivery/src/reply-review-configuration';
 const account = vi.hoisted(() => ({ session: null as unknown, services: null as unknown }));
 vi.mock('../../apps/web/lib/neon-auth', () => ({
   neonAuth: () => ({ getSession: async () => account.session }),
@@ -362,6 +367,383 @@ test('supplier disclosure and declaration reuse expiring recipient capability wi
   await f.communications.command(f.ctx, command('revoke', { linkId: intro.id, reason }));
   await expect(f.communications.buyer({ action: 'read', token: intro.token })).rejects.toThrow();
   await expect(f.communications.buyer(reply)).rejects.toThrow();
+});
+
+test('the Reply Page form sends all eighteen terms the database function accepts, leaves blanks out, and records exactly what was typed', async () => {
+  const j = await sourceJourney(),
+    intro = await f.introduction(j.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: intro.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: j.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: true,
+    approved: true,
+    reason,
+  });
+  const built = buildReplyTerms(
+    {
+      specification: 'Polyester curtain track, 4 m, white',
+      quantity: '1200',
+      moq: '200',
+      unit: 'pieces',
+      unitPriceMinor: '12.50',
+      totalPriceMinor: '15000',
+      toolingMinor: noCharge,
+      setupMinor: '300',
+      packagingMinor: '45.5',
+      leadTime: '6 weeks after the deposit',
+      validUntil: '2099-12-31',
+      incoterm: 'FOB',
+      paymentTerms: '30 percent deposit, balance before shipping',
+      shipping: 'EXCLUDED',
+      warranty: 'Two years on parts',
+      installation: 'Not included',
+      training: 'One day on site',
+      spares: 'Ten percent spare parts shipped free',
+    },
+    'USD',
+  );
+  expect(built.ok).toBe(true);
+  if (!built.ok) return;
+  expect(Object.keys(built.terms).sort()).toEqual([...replyTermKeys].sort());
+  const reply = {
+    action: 'detail-response',
+    token: intro.token,
+    responseId: randomUUID(),
+    body: '您好，附上我们的报价。',
+    meetingInterest: false,
+    quotation: { currency: 'USD', terms: built.terms, uncertainties: 'Freight is not yet known' },
+    acknowledged: true,
+  };
+  expect(await f.communications.buyer(reply)).toMatchObject({
+    recorded: true,
+    sourceKind: 'SELF_DECLARATION',
+  });
+  const stored = (
+    await f.owner.query('SELECT body FROM app.recipient_detail_response WHERE link_id=$1', [
+      intro.id,
+    ])
+  ).rows[0].body;
+  expect(stored).toEqual({
+    body: reply.body,
+    meetingInterest: false,
+    quotation: reply.quotation,
+    acknowledged: true,
+  });
+  // A blank stays out of the record: nothing is stored as zero.
+  expect(stored.quotation.terms.warrantyMinor).toBeUndefined();
+  // A term the form does not offer is still refused.
+  const other = await sourceJourney(),
+    link = await f.introduction(other.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: link.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: other.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: true,
+    approved: true,
+    reason,
+  });
+  await expect(
+    f.communications.buyer({
+      ...reply,
+      token: link.token,
+      responseId: randomUUID(),
+      quotation: {
+        currency: 'USD',
+        terms: { discount: '5' },
+        uncertainties: 'Freight is not yet known',
+      },
+    }),
+  ).rejects.toThrow();
+});
+
+// Reply review (ADR-069): the Corridra team's append-only decision about one supplier reply.
+async function replyFor() {
+  const j = await sourceJourney(),
+    link = await f.introduction(j.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: link.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: j.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: false,
+    approved: true,
+    reason,
+  });
+  const responseId = randomUUID();
+  await f.communications.buyer({
+    action: 'detail-response',
+    token: link.token,
+    responseId,
+    body: 'Original supplier reply, quote follows.',
+    meetingInterest: false,
+    quotation: {
+      currency: 'USD',
+      terms: { specification: 'Polyester curtain track', unitPriceMinor: '1250' },
+      uncertainties: 'Lead time and validity not yet known',
+    },
+    acknowledged: true,
+  });
+  return { linkId: link.id, responseId };
+}
+const reviewReason = 'Owner approved reply review for the local fixture tests';
+const ask = (responseId: string, commandId = randomUUID()) => ({
+  commandId,
+  responseId,
+  decision: 'ASK' as const,
+  askTerms: ['leadTime', 'validUntil'],
+  note: 'Please state the lead time and how long the quote is valid',
+});
+
+test('reply review installs additively and closed, and the staff function refuses until the owner opens it', async () => {
+  const reviews = new ReplyReviewService(f.runtime);
+  const snapshot = async () =>
+    (
+      await f.owner.query(
+        `SELECT 'f' AS k,p.oid::int AS oid,pg_get_functiondef(p.oid) AS def,p.proacl::text AS acl FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('app','identity')
+         UNION ALL SELECT 't',c.oid::int,coalesce((SELECT string_agg(pg_get_expr(po.polqual,po.polrelid)||po.polname,'|' ORDER BY po.polname) FROM pg_policy po WHERE po.polrelid=c.oid),''),c.relacl::text||c.relrowsecurity::text
+         FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND n.nspname IN ('app','identity') ORDER BY 1,2`,
+      )
+    ).rows;
+  // Its one dependency (the real-use functions the policy pair names) is installed first, as the install job does.
+  await migrateCustomerRealUse(f.owner);
+  const before = await snapshot();
+  await migrateReplyReview(f.owner);
+  const after = await snapshot();
+  const known = new Set(before.map((r) => `${r.k}${r.oid}`));
+  expect(after.filter((r) => known.has(`${r.k}${r.oid}`))).toEqual(before);
+  expect(after.length).toBeGreaterThan(before.length);
+  const once = (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied'))
+    .rows;
+  expect(once).toHaveLength(1);
+  await migrateReplyReview(f.owner);
+  expect(
+    (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied')).rows,
+  ).toEqual(once);
+  await f.owner.query("UPDATE recipient_reply_review_migrations.applied SET sha256=repeat('0',64)");
+  await expect(migrateReplyReview(f.owner)).rejects.toThrow('history mismatch');
+  await f.owner.query('UPDATE recipient_reply_review_migrations.applied SET sha256=$1', [
+    once[0].sha256,
+  ]);
+
+  const r = await replyFor();
+  expect((await f.runtime.query('SELECT app.reply_review_status() AS open')).rows[0].open).toBe(
+    false,
+  );
+  expect(await reviews.list(f.users.owner.ctx)).toEqual({ open: false, reviews: [] });
+  await expect(reviews.review(f.users.owner.ctx, ask(r.responseId))).rejects.toMatchObject({
+    code: '42501',
+  });
+  expect(
+    (await f.owner.query('SELECT count(*)::int n FROM app.recipient_reply_review')).rows[0].n,
+  ).toBe(0);
+});
+
+test('reply review is configured only by the offline owner, and runtime and auth roles cannot touch its tables', async () => {
+  await expect(
+    configureReplyReview(f.runtime, { enabled: true, reason: reviewReason }),
+  ).rejects.toThrow();
+  await expect(
+    configureReplyReview(f.auth, { enabled: true, reason: reviewReason }),
+  ).rejects.toThrow();
+  await expect(configureReplyReview(f.owner, { enabled: true, reason: 'short' })).rejects.toThrow();
+  expect(await configureReplyReview(f.owner, { enabled: false, reason: reviewReason })).toEqual({
+    enabled: false,
+    changed: false,
+  });
+  expect(await configureReplyReview(f.owner, { enabled: true, reason: reviewReason })).toEqual({
+    enabled: true,
+    changed: true,
+  });
+  expect(await configureReplyReview(f.owner, { enabled: true, reason: reviewReason })).toEqual({
+    enabled: true,
+    changed: false,
+  });
+  await expect(
+    f.owner.query('UPDATE app.reply_review_control SET enabled=false'),
+  ).rejects.toThrow();
+  for (const pool of [f.runtime, f.auth]) {
+    await expect(pool.query('SELECT * FROM app.reply_review_control')).rejects.toMatchObject({
+      code: '42501',
+    });
+    await expect(pool.query('SELECT app.reply_review_open()')).rejects.toMatchObject({
+      code: '42501',
+    });
+  }
+  await expect(f.auth.query('SELECT * FROM app.recipient_reply_review')).rejects.toMatchObject({
+    code: '42501',
+  });
+  // The team may read reviews through its own session, but no role can write one directly.
+  await expect(
+    f.runtime.query(
+      "INSERT INTO app.recipient_reply_review(tenant_id,response_id,command_id,decision,reviewed_by) VALUES($1,$2,$3,'PUBLISH',$4)",
+      [f.tenantA, randomUUID(), randomUUID(), f.users.owner.id],
+    ),
+  ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('an owner can ask, then publish; publish and reject are final; a replay is safe and a reused key conflicts', async () => {
+  const reviews = new ReplyReviewService(f.runtime);
+  const r = await replyFor();
+  const first = ask(r.responseId);
+  const recorded = await reviews.review(f.users.owner.ctx, first);
+  expect(recorded).toMatchObject({ replayed: false });
+  expect(await reviews.review(f.users.owner.ctx, first)).toEqual({
+    id: recorded.id,
+    replayed: true,
+  });
+  await expect(
+    reviews.review(f.users.owner.ctx, { ...first, askTerms: ['unit'] }),
+  ).rejects.toMatchObject({ code: '23514' });
+  // An ask keeps the reply open; asking again and then publishing both work.
+  await reviews.review(f.users.owner.ctx, ask(r.responseId));
+  const published = await reviews.review(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    responseId: r.responseId,
+    decision: 'PUBLISH',
+  });
+  expect(published.replayed).toBe(false);
+  for (const attempt of [
+    { commandId: randomUUID(), responseId: r.responseId, decision: 'PUBLISH' },
+    {
+      commandId: randomUUID(),
+      responseId: r.responseId,
+      decision: 'REJECT',
+      reasonCode: 'OTHER',
+      note: 'Changed my mind',
+    },
+    ask(r.responseId),
+  ])
+    await expect(reviews.review(f.users.owner.ctx, attempt)).rejects.toMatchObject({
+      code: '23514',
+    });
+  const list = await reviews.list(f.users.owner.ctx);
+  expect(list.open).toBe(true);
+  expect(list.reviews.filter((x) => x.responseId === r.responseId).map((x) => x.decision)).toEqual([
+    'ASK',
+    'ASK',
+    'PUBLISH',
+  ]);
+  const second = await replyFor();
+  await reviews.review(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    responseId: second.responseId,
+    decision: 'REJECT',
+    reasonCode: 'NOT_A_FIT',
+  });
+  await expect(
+    reviews.review(f.users.owner.ctx, {
+      commandId: randomUUID(),
+      responseId: second.responseId,
+      decision: 'PUBLISH',
+    }),
+  ).rejects.toMatchObject({ code: '23514' });
+  // The database refuses what the schema would also refuse, even when called straight.
+  await expect(
+    reviews.review(f.users.owner.ctx, {
+      commandId: randomUUID(),
+      responseId: second.responseId,
+      decision: 'REJECT',
+    } as never),
+  ).rejects.toBeTruthy();
+});
+
+test('only an owner or admin with a fresh authenticator check, in the workspace that holds the reply, can review', async () => {
+  const reviews = new ReplyReviewService(f.runtime);
+  const r = await replyFor();
+  const decision = () => ({
+    commandId: randomUUID(),
+    responseId: r.responseId,
+    decision: 'PUBLISH' as const,
+  });
+  // Operators, reviewers and viewers read but never review (the permission is refused before the database).
+  for (const who of [f.users.operator, f.users.reviewer, f.users.viewer])
+    await expect(reviews.review(who.ctx, decision())).rejects.toBeTruthy();
+  // Another workspace's owner cannot see or review this reply.
+  await expect(reviews.review(f.users.other.ctx, decision())).rejects.toBeTruthy();
+  expect((await reviews.list(f.users.other.ctx)).reviews).toEqual([]);
+  // A stale authenticator check is refused, in the service and in the database.
+  await f.owner.query(
+    "UPDATE identity.assurance SET verified_at=now()-interval '6 minutes' WHERE session_id=$1",
+    [f.users.owner.sessionId],
+  );
+  try {
+    await expect(reviews.review(f.users.owner.ctx, decision())).rejects.toMatchObject({
+      status: 401,
+    });
+  } finally {
+    await f.owner.query('UPDATE identity.assurance SET verified_at=now() WHERE session_id=$1', [
+      f.users.owner.sessionId,
+    ]);
+  }
+  // A reply that does not exist, or that belongs to another workspace, is not found.
+  await expect(
+    reviews.review(f.users.owner.ctx, {
+      commandId: randomUUID(),
+      responseId: randomUUID(),
+      decision: 'PUBLISH',
+    }),
+  ).rejects.toMatchObject({ code: '42501' });
+  expect(
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.recipient_reply_review WHERE response_id=$1',
+        [r.responseId],
+      )
+    ).rows[0].n,
+  ).toBe(0);
+});
+
+test('reviews are append only and their events hold the decision and the reason, never the words', async () => {
+  const reviews = new ReplyReviewService(f.runtime);
+  const r = await replyFor();
+  const note = 'Private note about the supplier price';
+  const saved = await reviews.review(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    responseId: r.responseId,
+    decision: 'REJECT',
+    reasonCode: 'PRICE_NOT_CREDIBLE',
+    note,
+  });
+  await expect(
+    f.owner.query("UPDATE app.recipient_reply_review SET decision='PUBLISH' WHERE id=$1", [
+      saved.id,
+    ]),
+  ).rejects.toThrow();
+  await expect(
+    f.owner.query('DELETE FROM app.recipient_reply_review WHERE id=$1', [saved.id]),
+  ).rejects.toThrow();
+  const events = (
+    await f.owner.query('SELECT payload FROM app.domain_event WHERE aggregate_id=$1', [saved.id])
+  ).rows;
+  expect(events.length).toBeGreaterThan(0);
+  expect(JSON.stringify(events)).not.toContain(note);
+  expect(JSON.stringify(events)).not.toContain('Polyester');
+  expect(
+    (
+      await f.owner.query(
+        "SELECT count(*)::int n FROM app.audit_event WHERE action='recipient_reply.reject'",
+      )
+    ).rows[0].n,
+  ).toBeGreaterThan(0);
+  // The reply itself is unchanged: review reads it and writes nothing to it.
+  const stored = (
+    await f.owner.query('SELECT body FROM app.recipient_detail_response WHERE id=$1', [
+      r.responseId,
+    ])
+  ).rows[0].body;
+  expect(stored.body).toBe('Original supplier reply, quote follows.');
 });
 
 test('client publication exposes only selected records; a matching account email grants no private mission', async () => {

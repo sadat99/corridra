@@ -9,6 +9,9 @@ import {
 } from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
 import { RecipientResponse } from './recipient-response';
+import { ReplyJourney } from './reply-journey';
+import { parseReplyFragment } from '../../lib/reply-terms';
+import { replyHtmlLang, replyWords } from '../../lib/reply-words';
 type View = {
   capability?: string;
   role?: string;
@@ -28,13 +31,47 @@ const labels = {
   NEED_INFO: 'Need more information',
   NOT_RELEVANT: 'Not relevant',
 } as const;
-export function BuyerIntroduction() {
+export function BuyerIntroduction({
+  replyPage = false,
+  chineseReleased = false,
+}: {
+  replyPage?: boolean;
+  chineseReleased?: boolean;
+}) {
   const capability = usePrivateCapability();
-  return <ScopedIntroduction key={capability} capability={capability} />;
+  return (
+    <ScopedIntroduction
+      key={capability}
+      capability={capability}
+      replyPage={replyPage}
+      chineseReleased={chineseReleased}
+    />
+  );
 }
-function ScopedIntroduction({ capability }: { capability: string }) {
+function ScopedIntroduction({
+  capability,
+  replyPage,
+  chineseReleased,
+}: {
+  capability: string;
+  replyPage: boolean;
+  chineseReleased: boolean;
+}) {
+  // The Reply Page reads `t=<token>&l=<language>&ask=<terms>`; an older link is the bare token. With the
+  // switch off the whole fragment is the token, exactly as before.
+  const parsed = replyPage ? parseReplyFragment(capability) : null;
+  // A draft language is never shown to a supplier before its native reviewer is recorded (the language
+  // review record): until then a link that names Chinese opens in English.
+  const fragment =
+    parsed && parsed.language === 'zh' && !chineseReleased
+      ? { ...parsed, language: 'en' as const }
+      : parsed;
+  const linkToken = fragment ? fragment.token : capability;
+  const words = replyWords[fragment?.language ?? 'en'];
   const [data, setData] = useState<View | null>(null),
-    [message, setMessage] = useState('Loading your introduction…'),
+    [message, setMessage] = useState(
+      replyPage ? `${words.loading}…` : 'Loading your introduction…',
+    ),
     [busy, setBusy] = useState(false),
     [optOut, setOptOut] = useState(false),
     [declined, setDeclined] = useState(false),
@@ -49,11 +86,15 @@ function ScopedIntroduction({ capability }: { capability: string }) {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    token.current = capability;
+    token.current = linkToken;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
         if (active)
-          setMessage('This private link is unavailable. Open the complete link you received.');
+          setMessage(
+            replyPage
+              ? words.unavailable
+              : 'This private link is unavailable. Open the complete link you received.',
+          );
       });
       return () => {
         active = false;
@@ -84,6 +125,7 @@ function ScopedIntroduction({ capability }: { capability: string }) {
       active = false;
       controller.abort();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the link decides everything here
   }, [capability]);
   async function respond(decision: keyof typeof labels) {
     if (inFlight.current) return;
@@ -107,7 +149,7 @@ function ScopedIntroduction({ capability }: { capability: string }) {
       await checkedResponse(r);
       const v = await r.json();
       setData((current) => (current ? { ...current, decision: v.decision } : current));
-      setMessage('Thank you. Your response has been recorded.');
+      setMessage(replyPage ? words.recorded : 'Thank you. Your response has been recorded.');
       setPending(null);
       if (command.optOut) setDeclined(true);
     } catch (e) {
@@ -150,6 +192,40 @@ function ScopedIntroduction({ capability }: { capability: string }) {
       setBusy(false);
     }
   }
+  if (replyPage && data && fragment)
+    return (
+      <section
+        className="detail-card buyer-card"
+        aria-label="Private introduction"
+        lang={replyHtmlLang[fragment.language].lang}
+        dir={replyHtmlLang[fragment.language].dir}
+      >
+        <p role="status" aria-live="polite">
+          {message}
+        </p>
+        <ReplyJourney
+          data={data}
+          token={data.capability ?? ''}
+          language={fragment.language}
+          ask={fragment.ask}
+          busy={busy}
+          pending={pending ? pending.decision : null}
+          declined={declined}
+          optOut={optOut}
+          onOptOut={setOptOut}
+          onRespond={(decision) => void respond(decision)}
+          onStop={() => void stopContact()}
+          onAccessDenied={() => {
+            setData(null);
+            setMessage(
+              replyPage
+                ? words.unavailable
+                : 'This private link is unavailable. Request a new reviewed link.',
+            );
+          }}
+        />
+      </section>
+    );
   return (
     <section className="detail-card buyer-card" aria-label="Private introduction">
       <p role="status" aria-live="polite">

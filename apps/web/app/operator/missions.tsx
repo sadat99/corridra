@@ -5,6 +5,7 @@ import { AccessState, StatusBadge } from '../../components/access-state';
 import { displayDate } from '@corridra/domain/locale';
 import type { MissionBrief } from '@corridra/domain/missions';
 import { CommercialMission } from './commercial-mission';
+import { MissionMoves } from './mission-moves';
 import { CountryOptions } from './country-options';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { missionStatus } from '@corridra/domain/missions';
@@ -46,7 +47,16 @@ type Queue = {
   }[];
   replies: { id: string; mission_id: string; body: string }[];
 };
-export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: () => void }) {
+export function Missions({
+  tenant,
+  onChanged,
+  moveRecords = false,
+}: {
+  tenant: string;
+  onChanged?: () => void;
+  /** UX update (`CORRIDRA_UX_MOVE_RECORDS`, read on the server): the panel for setting a Move. Off adds nothing. */
+  moveRecords?: boolean;
+}) {
   const { ref: formRootRef, onChangeCapture, onResetCapture, confirmChange } = useFormChangeGuard();
   const [queue, setQueue] = useState<Queue | null>(null),
     [message, setMessage] = useState(''),
@@ -538,6 +548,7 @@ export function Missions({ tenant, onChanged }: { tenant: string; onChanged?: ()
                 </button>
               </form>
             )}
+            {manage && moveRecords && <MissionMoves tenant={tenant} missionId={m.id} />}
           </article>
         ))
       )}

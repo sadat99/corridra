@@ -59,10 +59,12 @@ export function Workspace({
   tenants,
   initialTenant,
   ownerPage = false,
+  moveRecords = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
   ownerPage?: boolean;
+  moveRecords?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -79,6 +81,7 @@ export function Workspace({
       tenant={tenant}
       switchTenant={switchTenant}
       ownerPage={ownerPage}
+      moveRecords={moveRecords}
     />
   );
 }
@@ -87,11 +90,13 @@ function TenantWorkspace({
   tenant,
   switchTenant,
   ownerPage,
+  moveRecords,
 }: {
   tenants: Tenant[];
   tenant: string;
   switchTenant: (next: string) => void;
   ownerPage: boolean;
+  moveRecords: boolean;
 }) {
   const router = useRouter();
   const edited = useRef(false);
@@ -452,6 +457,7 @@ function TenantWorkspace({
               key={tenant}
               tenant={tenant}
               onChanged={() => setMissionRevision((v) => v + 1)}
+              moveRecords={moveRecords}
             />
             <a className="text-link" href="#workspace-navigation">
               Back to workspace sections

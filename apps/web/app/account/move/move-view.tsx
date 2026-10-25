@@ -65,12 +65,12 @@ function commit(value: Record<string, string>) {
   listeners.forEach((listener) => listener());
 }
 
-const verbOf: Record<MoveCardData['kind'], MoveVerb> = {
+const verbOf: Record<Exclude<MoveCardData['kind'], 'move'>, MoveVerb> = {
   draft: 'Send',
   quote: 'Answer',
   company: 'Add',
 };
-const objectKey: Record<MoveCardData['kind'], MessageKey> = {
+const objectKey: Record<Exclude<MoveCardData['kind'], 'move'>, MessageKey> = {
   draft: 'move.card.draft.object',
   quote: 'move.card.quote.object',
   company: 'move.card.company.object',
@@ -79,7 +79,18 @@ const actionKey: Record<MoveCardData['kind'], MessageKey> = {
   draft: 'move.card.draft.action',
   quote: 'move.card.quote.action',
   company: 'move.card.company.action',
+  move: 'move.card.reply.action',
 };
+/** A real due date (year-month-day) in the person's language. */
+function day(value: string, locale: string) {
+  try {
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(
+      new Date(`${value}T00:00:00Z`),
+    );
+  } catch {
+    return value;
+  }
+}
 
 /**
  * Your Move, drawn. The server decides what exists (see `buildMoveModel`); this only chooses words
@@ -134,27 +145,44 @@ export function MoveView({
     )),
     ...model.cards.map((card) => (
       <li key={card.id}>
-        <MoveCard
-          verb={verbOf[card.kind]}
-          object={say(objectKey[card.kind])}
-          holder={card.holder}
-          context={card.context}
-          href={card.href}
-          action={say(actionKey[card.kind])}
-          labels={labels}
-        />
+        {card.kind === 'move' ? (
+          <MoveCard
+            verb={card.verb}
+            object={card.object ?? ''}
+            title={`${card.verb} ${card.object ?? ''}`}
+            titleLang="en"
+            holder={card.holder}
+            context={card.context}
+            due={card.dueOn ? day(card.dueOn, locale) : null}
+            href={card.href}
+            action={say(actionKey.move)}
+            labels={labels}
+          />
+        ) : (
+          <MoveCard
+            verb={verbOf[card.kind]}
+            object={say(objectKey[card.kind])}
+            holder={card.holder}
+            context={card.context}
+            href={card.href}
+            action={say(actionKey[card.kind])}
+            labels={labels}
+          />
+        )}
       </li>
     )),
   ];
   const nothing = items.length === 0;
 
   const waitingLine = (row: WaitingRow) =>
-    row.kind === 'quote'
-      ? say('move.wait.quote')
-      : row.kind === 'company'
-        ? say('move.wait.company')
-        : (labels.road.sublines[row.status as keyof typeof labels.road.sublines] ??
-          labels.road.sublines.ACTIVE);
+    row.kind === 'move'
+      ? (row.title ?? '')
+      : row.kind === 'quote'
+        ? say('move.wait.quote')
+        : row.kind === 'company'
+          ? say('move.wait.company')
+          : (labels.road.sublines[row.status as keyof typeof labels.road.sublines] ??
+            labels.road.sublines.ACTIVE);
   const ownerHolders = { ...labels.holder, third: say('move.wait.owner') };
 
   return (
@@ -205,15 +233,17 @@ export function MoveView({
                 <p>
                   <HolderBadge
                     holder={row.holder === 'team' ? 'team' : 'third'}
-                    labels={row.holder === 'team' ? labels.holder : ownerHolders}
+                    labels={row.holder === 'owner' ? ownerHolders : labels.holder}
                   />
                 </p>
-                {row.title || row.received ? (
+                {(row.kind !== 'move' && row.title) || row.received ? (
                   <p className="move-wait-title">
-                    {row.title ?? fill(say('move.received'), { date: row.received ?? '' })}
+                    {row.kind !== 'move' && row.title
+                      ? row.title
+                      : fill(say('move.received'), { date: row.received ?? '' })}
                   </p>
                 ) : null}
-                <p>{waitingLine(row)}</p>
+                <p lang={row.kind === 'move' ? 'en' : undefined}>{waitingLine(row)}</p>
                 <Link prefetch={false} className="text-link ux-action" href={row.href}>
                   {say('move.wait.open')}
                 </Link>

@@ -36,3 +36,11 @@ Unset `CORRIDRA_REPLY_PAGE` (the old form returns), or pause the review module. 
 ## Required acceptance
 
 Unit tests: the form maps to exactly the keys the function accepts; blank means Not stated; the language allow-list; the Chinese catalogue has every key the English one has. Database tests: the review module is repeatable, append only, closed to runtime and auth roles, needs the permission and a fresh authenticator check, and refuses another tenant. A narrow-viewport test for the page and the queue, and the written manual test plan for the in-app browsers.
+
+## Amendment: as built in Lane 8 (25 October 2026)
+
+- **Staff-entry fallback is not built.** The decision says staff enter the same form when a supplier cannot use the page. The reply table is immutable and each row is the supplier's own statement, so a row written by staff would look like a supplier's. It needs a separate provenance (who typed it, from what source) and an owner decision. Until then the fallback for a failed link is the manual test plan in [lane8-reply-page.md](../product/lane8-reply-page.md) and a short reviewed message asking the supplier to open the link in a browser.
+- **Prefill is a prepared quotation, not an automatic form.** Publish records one decision and shows the quotation in the existing form's shape with the source "supplier reply, self-declared". The team confirms it through the existing form.
+- **Ask makes a link suffix, not a stored link.** The queue shows `&l=<language>&ask=<terms>` to add to that recipient's link. Nothing about the language or the ask is stored on the recipient.
+- **Chinese is released like every other language.** The Chinese Reply Page words are a draft listed in the language review record. A link that names Chinese opens in English until `zh` is released by `CORRIDRA_LANGUAGES_REVIEWED` (or the preview setting is on).
+- **The review reads the reply table and writes none of the existing tables.** Its own function accepts exactly the eighteen term names the form sends, checked against the SQL by a test.

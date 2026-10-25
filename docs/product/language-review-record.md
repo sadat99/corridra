@@ -25,3 +25,11 @@ Formal register for Spanish; modern corporate Chinese; Modern Standard Arabic in
 1. The reviewer reads the drafts and the screenshots and signs off in writing.
 2. The owner records the reviewer's name and the date in the table above.
 3. The owner adds the language code to `CORRIDRA_LANGUAGES_REVIEWED` in the deployment settings.
+
+## Other surfaces that carry words needing the same review
+
+| Surface                                 | File                          | Language | State              | Released how                                                                                                   |
+| --------------------------------------- | ----------------------------- | -------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Supplier Reply Page, its own words only | `apps/web/lib/reply-words.ts` | `zh`     | Draft, no reviewer | A link naming Chinese opens in English until `zh` is released for the whole product by the row above (Lane 8). |
+
+The reviewer should also read the supplier-facing wording in the page for exact meaning: "Self-declared", "Not stated", "No charge", the price and validity steps and the receipt. Requirement text, names and quotations are never translated.

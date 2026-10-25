@@ -14,6 +14,17 @@ export type MoveInput = {
   quotes: { id: string; workspaceId: string; title: string; contextLabel: string }[];
   /** Company links whose status is `needs_evidence`. */
   companyLinks: { workspaceId: string; organisationName: string | null }[];
+  /** The open Moves the Corridra team set about the person's requests (empty while Move records are off). */
+  moves?: {
+    requestId: string;
+    moves: {
+      id: string;
+      verb: MoveVerb;
+      object: string;
+      holder: 'customer' | 'team' | 'third';
+      dueOn: string | null;
+    }[];
+  }[];
   /** Requests with the progress a customer may read. */
   requests: {
     id: string;
@@ -27,7 +38,7 @@ export type MoveInput = {
   }[];
 };
 
-export type MoveCardKind = 'draft' | 'quote' | 'company';
+export type MoveCardKind = 'draft' | 'quote' | 'company' | 'move';
 
 /** A card is data only. The words for each kind come from the message module, in the person's language. */
 export type MoveCardData = {
@@ -38,13 +49,16 @@ export type MoveCardData = {
   /** The request or workspace the card belongs to. Present when it helps tell cards apart. */
   context?: string;
   href: string;
+  /** For a Move the team set: the words as written, and the real due date if there is one. */
+  object?: string;
+  dueOn?: string | null;
 };
 
 export type WaitingRow = {
   id: string;
   /** Who holds it. `owner` means a workspace owner or admin, not the person reading. */
-  holder: 'team' | 'owner';
-  kind: 'request' | 'quote' | 'company';
+  holder: 'team' | 'owner' | 'third';
+  kind: 'request' | 'quote' | 'company' | 'move';
   /** Free text the person or the team wrote (a service title, a company name), or null for a request. */
   title: string | null;
   /** The mission status for a request the team holds; null otherwise. */
@@ -154,6 +168,39 @@ export function buildMoveModel(
       });
   }
 
+  // Moves the Corridra team set (Move records). The words are theirs, shown as written. A Move the
+  // person holds is a card; one the team or a supplier or buyer holds is folded under waiting.
+  const received = new Map(
+    input.requests.map((r) => [r.id, r.progress?.receivedAt.slice(0, 10) ?? null] as const),
+  );
+  for (const entry of input.moves ?? [])
+    for (const move of entry.moves) {
+      const href = requestHref(entry.requestId);
+      if (move.holder === 'customer')
+        cards.push({
+          id: `move:${move.id}`,
+          kind: 'move',
+          verb: move.verb,
+          holder: 'you',
+          context: received.get(entry.requestId)
+            ? `Request received ${received.get(entry.requestId)}`
+            : undefined,
+          href,
+          object: move.object,
+          dueOn: move.dueOn,
+        });
+      else
+        waiting.push({
+          id: `move:${move.id}`,
+          holder: move.holder,
+          kind: 'move',
+          title: `${move.verb} ${move.object}`,
+          status: null,
+          received: received.get(entry.requestId) ?? null,
+          href,
+        });
+    }
+
   const replyCandidates: MoveModel['replyCandidates'] = [];
   for (const request of input.requests) {
     if (!request.progress) continue;
@@ -180,6 +227,7 @@ export function buildMoveModel(
   }
 
   const newest = [...input.requests].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  cards.sort((a, b) => Number(b.kind === 'move') - Number(a.kind === 'move'));
   return {
     cards,
     waiting,

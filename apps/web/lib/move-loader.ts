@@ -1,6 +1,7 @@
 // Reads, for one signed-in person, the records Your Move is built from. Server only. Every source is
 // read only when its own module is on (a closed gate must not touch provider state or private data),
 // and a source that fails is left out: Your Move shows what it can prove and never guesses.
+import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
@@ -56,7 +57,7 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
     requests: [],
   };
 
-  const [drafts, quotes, links, requests] = await Promise.all([
+  const [drafts, quotes, links, requests, moveRecords] = await Promise.all([
     Promise.all(
       customerMissionDraftsEnabled()
         ? read.map(async (workspace) => ({
@@ -98,6 +99,9 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
           )) as { requests: unknown[]; nextAfter?: string | null };
           return { items: page.requests, nextAfter: page.nextAfter };
         }, movePageCap)
+      : null,
+    customerMovesEnabled()
+      ? attempt(() => services.customerMoves.list({ pageSize: 100 }, subject, issuer))
       : null,
   ]);
 
@@ -148,6 +152,8 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
         progress: row.available ? row.progress : null,
       });
   }
+
+  input.moves = (moveRecords?.requests ?? []) as NonNullable<MoveInput['moves']>;
 
   return {
     input,

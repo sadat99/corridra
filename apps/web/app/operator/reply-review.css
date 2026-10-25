@@ -1,0 +1,129 @@
+.reply-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+.reply-review-note {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+.reply-review-list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reply-review-card {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.reply-review-card p,
+.reply-review-card h4 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.reply-review-meta {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.reply-review-state {
+  font-weight: 600;
+}
+.reply-review-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4);
+}
+.reply-review-columns section {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.reply-review-terms {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.reply-review-terms > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.reply-review-terms dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.reply-review-terms dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.reply-review-terms > div[data-gap='true'] {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--critical);
+}
+.reply-review-flag {
+  color: var(--critical);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.reply-review-ok {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.reply-review-gap {
+  color: var(--critical);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.reply-review-history > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+.reply-review-link code,
+.reply-review-prepared pre {
+  display: block;
+  margin: 0;
+  padding: var(--space-3);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--paper);
+  border: 1px solid var(--border-subtle);
+  font: inherit;
+}
+.reply-review-prepared {
+  display: grid;
+  gap: var(--space-2);
+}
+.reply-review-actions fieldset {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.reply-review-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.reply-review-buttons button,
+.reply-review-prepared button {
+  min-height: 2.75rem;
+}
+.reply-review-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-2);
+}
