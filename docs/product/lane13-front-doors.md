@@ -1,6 +1,6 @@
 # Lane 13: the founder and helper front doors
 
-Status: built and dark, 25 October 2026, scoped under the owner's delegation (decision 8 of the corrected plan: small, switch-gated pages that link to what exists). Switch `CORRIDRA_UX_FRONT_DOORS`, off by default. With it unset the founder page and the helper page are exactly what they were.
+Status: built and dark, 25 October 2026, scoped under the owner's delegation (decision 8 of the corrected plan: small, switch-gated pages that link to what exists). Switch `CORRIDRA_UX_FRONT_DOORS`, off by default. With it unset the founder page and the helper page are exactly what they were. (The door's stylesheet is part of those pages' stylesheet list either way, because Next collects stylesheets from imports; none of its rules match anything on the page with the switch off.)
 
 ## What a front door is
 

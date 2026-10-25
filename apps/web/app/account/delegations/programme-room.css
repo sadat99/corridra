@@ -26,3 +26,7 @@
   color: var(--text-muted);
   max-width: 60ch;
 }
+
+.programme-refresh {
+  margin-inline-start: var(--space-3);
+}

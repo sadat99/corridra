@@ -79,10 +79,21 @@ export function programmeRoadStates(
     states.register = 'later';
     return states;
   }
+  // A list longer than the page is only a sample. An invitation still open proves Register is now; that no
+  // invitation is open, or that everyone registered, cannot be known from a sample, so it is not marked.
+  if (!counts.complete) {
+    states.invite = counts.invitations > 0 ? 'done' : 'notTracked';
+    states.register = counts.open > 0 ? 'now' : 'notTracked';
+    return states;
+  }
   states.invite = 'done';
   states.register = counts.open > 0 || counts.registered === 0 ? 'now' : 'done';
   return states;
 }
+
+/** What "not tracked yet" means on the programme Road: the room reads only invitations and registrations. */
+export const programmeRoadLegend =
+  "Not tracked yet means this room does not read that step's records, or could not read them just now.";
 
 /** The views of a programme room, in order. A view appears only where its panel is on. */
 export const roomLenses = [

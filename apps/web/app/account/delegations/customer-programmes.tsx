@@ -404,7 +404,7 @@ function ScopedProgrammes({
                       }
                       scope={{ subject, issuer, workspaceId, programmeId: p.id }}
                       participantsEnabled={participantsEnabled}
-                      sharedMoneyNote={templatesEnabled || pricingEnabled}
+                      sharedMoneyNote={templatesEnabled && pricingEnabled}
                       panels={{
                         overview: contextEnabled ? (
                           <ProgrammeContext

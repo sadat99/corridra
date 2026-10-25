@@ -65,13 +65,14 @@ test.beforeAll(async () => {
       import{ProgrammeRoomStyles}from ${JSON.stringify(resolve('apps/web/app/account/delegations/programme-room-styles.tsx'))};
       const q=new URLSearchParams(location.search);
       const room=q.get('room')==='1';
+      const bare=q.get('bare')==='1';
       createRoot(document.getElementById('fixture')).render(
         <main className="operator-page ux-workspace">
           <h1>Plan delegations</h1>
           {room&&<ProgrammeRoomStyles/>}
           <CustomerProgrammes subject="synthetic-alice" issuer=${JSON.stringify(issuer)} workspaceId=${JSON.stringify(workspaceId)}
-            participantsEnabled coordinationEnabled termsEnabled economicsEnabled templatesEnabled={false}
-            roomEnabled={room}/>
+            participantsEnabled={!bare} coordinationEnabled={!bare} termsEnabled={!bare} economicsEnabled={!bare}
+            templatesEnabled={false} roomEnabled={room}/>
         </main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -133,9 +134,19 @@ test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
 
+const programmeIdAt = (n: number) =>
+  `00000000-0000-4000-8000-0000000003${String(n).padStart(2, '0')}`;
 async function open(
   page: Page,
-  options: { room: boolean; participants?: unknown; denied?: boolean } = { room: true },
+  options: {
+    room: boolean;
+    participants?: unknown;
+    denied?: boolean;
+    programmes?: number;
+    log?: string[];
+    answer?: () => unknown;
+    bare?: boolean;
+  } = { room: true },
 ) {
   // Any panel this spec does not exercise answers "unavailable", which each panel reads calmly.
   await page.route('**/api/customer-programme-*', (route) =>
@@ -143,19 +154,33 @@ async function open(
   );
   await page.route('**/api/customer-programmes*', (route) =>
     route.fulfill({
-      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+      json: {
+        workspaceId,
+        programmes: options.programmes
+          ? Array.from({ length: options.programmes }, (_, index) => ({
+              ...programme,
+              id: programmeIdAt(index + 1),
+              name: `${programme.name} ${index + 1}`,
+            }))
+          : [programme],
+        nextAfter: null,
+        synthetic: true,
+      },
     }),
   );
-  await page.route('**/api/customer-programme-participants*', (route) =>
-    options.denied
-      ? route.fulfill({ status: 403, json: { error: 'denied' } })
-      : route.fulfill({
-          json:
-            options.participants ??
-            manage([invitation(1, 'USED'), invitation(2, 'ISSUED')], [registration(1)]),
-        }),
-  );
-  await page.goto(`${origin}/?room=${options.room ? '1' : '0'}`);
+  await page.route('**/api/customer-programme-participants*', (route) => {
+    const requested = new URL(route.request().url()).searchParams.get('programmeId');
+    if (requested) options.log?.push(requested);
+    if (options.denied) return route.fulfill({ status: 403, json: { error: 'denied' } });
+    const body = (options.answer?.() ??
+      options.participants ??
+      manage([invitation(1, 'USED'), invitation(2, 'ISSUED')], [registration(1)])) as Record<
+      string,
+      unknown
+    >;
+    return route.fulfill({ json: { ...body, programmeId: requested ?? body.programmeId } });
+  });
+  await page.goto(`${origin}/?room=${options.room ? '1' : '0'}${options.bare ? '&bare=1' : ''}`);
 }
 
 test('the room shows the programme, a road and a boarding line from what the panel reads', async ({
@@ -177,6 +202,7 @@ test('the room shows the programme, a road and a boarding line from what the pan
   for (const index of [3, 4, 5])
     await expect(steps.nth(index)).toHaveAttribute('data-state', 'notTracked');
   await expect(room.locator('[aria-current="step"]')).toHaveCount(1);
+  await expect(room.locator('.mr-road-legend')).toContainText("does not read that step's records");
 });
 
 test('a programme with no invitations says invite is next, and a long list is not measured', async ({
@@ -194,6 +220,48 @@ test('a programme with no invitations says invite is next, and a long list is no
   });
   await expect(other.getByText(/Not measured yet: there are more participants/)).toBeVisible();
   await expect(other.getByText(/\d of \d invitations used/)).toHaveCount(0);
+  // Every invitation read was used and someone registered, but the list went on: Register is not done.
+  const steps2 = other.locator('.mr-road li');
+  await expect(steps2.nth(1)).toHaveAttribute('data-state', 'done');
+  await expect(steps2.nth(2)).toHaveAttribute('data-state', 'notTracked');
+});
+
+test('Refresh counts reads again, and a changed list shows after it', async ({ page }) => {
+  const log: string[] = [];
+  let body: unknown = manage([], []);
+  await open(page, { room: true, log, answer: () => body });
+  await expect(page.getByText('No invitations yet')).toBeVisible();
+  expect(log).toEqual([programmeId]);
+  body = manage([invitation(1, 'ISSUED')], []);
+  await page.getByRole('button', { name: 'Refresh counts' }).click();
+  await expect(page.getByText('0 of 1 invitations used')).toBeVisible();
+  expect(log).toHaveLength(2);
+  // Coming back from another view reads again too, so the numbers beside a panel are not left behind.
+  body = manage([invitation(1, 'USED')], [registration(1)]);
+  await page.getByRole('button', { name: 'Money', exact: true }).click();
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
+  await expect(page.getByText('1 of 1 invitations used')).toBeVisible();
+});
+
+test('only the programmes on screen are read, and the rest are read when scrolled to', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const log: string[] = [];
+  await open(page, { room: true, programmes: 8, log });
+  await expect(page.getByText('1 of 2 invitations used').first()).toBeVisible();
+  expect(log).toContain(programmeIdAt(1));
+  expect(log).not.toContain(programmeIdAt(8));
+  expect(new Set(log).size).toBeLessThan(8);
+  await page.getByRole('article', { name: `${programme.name} 8` }).scrollIntoViewIfNeeded();
+  await expect.poll(() => log).toContain(programmeIdAt(8));
+});
+
+test('a room with no other view does not tell the person to choose one', async ({ page }) => {
+  await open(page, { room: true, bare: true });
+  const views = page.getByRole('group', { name: 'Programme views' });
+  await expect(views.getByRole('button')).toHaveCount(1);
+  await expect(page.getByText('Choose a view above to work on this programme.')).toHaveCount(0);
 });
 
 test('with access denied the road marks nothing it cannot read', async ({ page }) => {

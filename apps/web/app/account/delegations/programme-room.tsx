@@ -1,10 +1,11 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { mrLabels } from '../../../components/mr/labels';
 import { emblemFor } from '../../../lib/room';
 import {
   boardingCounts,
   boardingLine,
+  programmeRoadLegend,
   programmeRoadStates,
   programmeRoadSteps,
   roomLenses,
@@ -14,7 +15,7 @@ import {
 import { useParticipantView, type ParticipantScope } from './participant-client';
 
 // The Programme Room (Lane 10): one programme in one place. Its styles come from programme-room-styles.tsx,
-// which the page mounts with the switch, so this file (and the delegation screens that import it) draws
+// which the page mounts with the switch, so this file (and the delegation screens that import it) imports
 // no stylesheet of its own. It wraps panels that already exist and
 // changes none of them: the same components, the same props, the same data. Each view mounts its panel
 // the first time it is opened and keeps it mounted afterwards, so anything typed in a panel is still
@@ -58,25 +59,64 @@ function Road({ counts }: { counts: BoardingCounts | null }) {
           );
         })}
       </ol>
-      <p className="mr-road-legend">{labels.legend}</p>
+      <p className="mr-road-legend">{programmeRoadLegend}</p>
     </div>
   );
 }
 
-function Status({ counts }: { counts: BoardingCounts | null }) {
+function Status({
+  counts,
+  notice = '',
+  onRefresh,
+}: {
+  counts: BoardingCounts | null;
+  notice?: string;
+  onRefresh?: () => void;
+}) {
   return (
     <>
       <Road counts={counts} />
       <p className="programme-boarding">
         <strong>Boarding</strong> {boardingLine(counts)}
+        {onRefresh && (
+          <button type="button" className="text-link programme-refresh" onClick={onRefresh}>
+            Refresh counts
+          </button>
+        )}
       </p>
+      {!counts && notice && <p className="programme-note">{notice}</p>}
     </>
   );
 }
 
+// True while the room is on screen (with a little room around it). A long list of programmes then reads
+// only the ones the person can see, instead of every programme at once, and a room scrolled far away
+// stops refreshing. Where the browser cannot tell, the room counts as on screen.
+function useOnScreen() {
+  const [onScreen, setOnScreen] = useState(false);
+  const watch = useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setOnScreen(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const last = entries[entries.length - 1];
+        if (last) setOnScreen(last.isIntersecting);
+      },
+      { rootMargin: '200px 0px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [onScreen, watch] as const;
+}
+
 // Reads the invitations and consented registrations the participants panel reads, with the same
-// access rules and the same hiding when the page is hidden. Counts only.
-function LiveStatus({ scope }: { scope: ParticipantScope }) {
+// access rules and the same hiding when the page is hidden. Counts only. The participants panel keeps its
+// own copy of the same read, so the room reads again whenever the person changes view or asks for it.
+function LiveStatus({ scope, onRefresh }: { scope: ParticipantScope; onRefresh: () => void }) {
   const view = useParticipantView(scope, noop);
   const counts =
     view.status === 'ready' && view.data
@@ -87,7 +127,7 @@ function LiveStatus({ scope }: { scope: ParticipantScope }) {
           moreRegistrations: !!view.data.nextRegistrationAfter,
         })
       : null;
-  return <Status counts={counts} />;
+  return <Status counts={counts} notice={view.notice} onRefresh={onRefresh} />;
 }
 
 export function ProgrammeRoom({
@@ -113,14 +153,18 @@ export function ProgrammeRoom({
 }) {
   const [lens, setLens] = useState<RoomLensKey>('overview');
   const [opened, setOpened] = useState<ReadonlySet<RoomLensKey>>(new Set(['overview']));
+  const [reads, setReads] = useState(0);
+  const [onScreen, watch] = useOnScreen();
   const available = roomLenses.filter((item) => item.key === 'overview' || panels[item.key]);
   const emblem = emblemFor(name);
+  const refresh = () => setReads((count) => count + 1);
   function choose(key: RoomLensKey) {
+    if (key !== lens) refresh();
     setLens(key);
     setOpened((current) => (current.has(key) ? current : new Set(current).add(key)));
   }
   return (
-    <article className="room programme-room" aria-label={name}>
+    <article ref={watch} className="room programme-room" aria-label={name}>
       <header className="room-head">
         <span className="room-emblem" data-tone={emblem.tone} aria-hidden="true">
           {emblem.initials}
@@ -131,7 +175,11 @@ export function ProgrammeRoom({
           {notes}
         </div>
       </header>
-      {participantsEnabled ? <LiveStatus scope={scope} /> : <Status counts={null} />}
+      {participantsEnabled && onScreen ? (
+        <LiveStatus key={reads} scope={scope} onRefresh={refresh} />
+      ) : (
+        <Status counts={null} />
+      )}
       <div className="room-lenses" role="group" aria-label="Programme views">
         {available.map((item) => (
           <button
@@ -155,11 +203,11 @@ export function ProgrammeRoom({
               aria-label={item.label}
               hidden={lens !== item.key}
             >
-              {item.key === 'overview' && !panels.overview ? (
-                <p className="programme-note">Choose a view above to work on this programme.</p>
-              ) : (
-                panels[item.key]
-              )}
+              {item.key === 'overview' && !panels.overview
+                ? available.length > 1 && (
+                    <p className="programme-note">Choose a view above to work on this programme.</p>
+                  )
+                : panels[item.key]}
               {item.key === 'money' && sharedMoneyNote && (
                 <p className="programme-note">
                   Fee schedules, pricing templates and series are shared across your programmes and

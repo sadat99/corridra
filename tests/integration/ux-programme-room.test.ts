@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   boardingCounts,
   boardingLine,
+  programmeRoadLegend,
   programmeRoadSteps,
   programmeRoadStates,
   roomLenses,
@@ -90,6 +91,30 @@ describe('the programme road', () => {
       register: 'done',
     });
   });
+  it('does not claim Register is done from a partial list, but an open invitation still proves it is now', () => {
+    expect(
+      states(
+        boarding({ moreInvitations: true, invitations: [inv('USED')], registrations: [reg()] }),
+      ),
+    ).toMatchObject({ invite: 'done', register: 'notTracked' });
+    expect(
+      states(
+        boarding({ moreRegistrations: true, invitations: [inv('USED')], registrations: [reg()] }),
+      ),
+    ).toMatchObject({ invite: 'done', register: 'notTracked' });
+    expect(
+      states(
+        boarding({
+          moreInvitations: true,
+          invitations: [inv('USED'), inv('ISSUED')],
+          registrations: [reg()],
+        }),
+      ),
+    ).toMatchObject({ invite: 'done', register: 'now' });
+  });
+  it('has a legend that says what the room reads, not what a record is', () => {
+    expect(programmeRoadLegend).toContain("does not read that step's records");
+  });
   it('never claims a step it does not read: the days, the run and the report stay not tracked', () => {
     for (const b of [
       boarding({}),
@@ -154,6 +179,15 @@ describe('the room wraps the same panels', () => {
     // A panel is mounted when first opened and then kept, hidden, so nothing typed is lost.
     expect(room).toContain('opened.has(item.key) &&');
     expect(room).toContain('hidden={lens !== item.key}');
+  });
+  it('reads only while on screen, again on a change of view or on request, and points at no missing view', () => {
+    const room = read('apps/web/app/account/delegations/programme-room.tsx');
+    expect(room).toContain('IntersectionObserver');
+    expect(room).toContain('<LiveStatus key={reads}');
+    expect(room).toContain('Refresh counts');
+    expect(room).toContain('available.length > 1');
+    // The money note names the panels that are on the page: pricing needs templates too.
+    expect(list).toContain('sharedMoneyNote={templatesEnabled && pricingEnabled}');
   });
   it('reads nothing a participant wrote: counts and states only', () => {
     const room = read('apps/web/app/account/delegations/programme-room.tsx');
