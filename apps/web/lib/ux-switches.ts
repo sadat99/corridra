@@ -20,6 +20,7 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_PROGRAMME',
   'CORRIDRA_UX_FAIRS',
   'CORRIDRA_UX_BOOKS',
+  'CORRIDRA_UX_FRONT_DOORS',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { FrontDoor } from '../../components/front-door';
 import { foundations } from '../../lib/foundations';
+import { helperDoor } from '../../lib/front-doors';
+import { uxSwitchOn } from '../../lib/ux-switches';
 import { ContributorSignout } from './signout';
 import { TaskBoard } from './task-board';
 export const dynamic = 'force-dynamic';
@@ -43,15 +46,21 @@ export default async function Page({
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
         </p>
-        <Link className="primary-link" href="/contributor/setup">
-          Accept a reviewed contributor invitation
-        </Link>
-        <Link className="text-link" href="/network">
-          How assigned work works
-        </Link>
-        <Link className="text-link" href="/signin">
-          Choose your sign-in route
-        </Link>
+        {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') ? (
+          <FrontDoor label="Ways in for a helper" items={helperDoor} />
+        ) : (
+          <>
+            <Link className="primary-link" href="/contributor/setup">
+              Accept a reviewed contributor invitation
+            </Link>
+            <Link className="text-link" href="/network">
+              How assigned work works
+            </Link>
+            <Link className="text-link" href="/signin">
+              Choose your sign-in route
+            </Link>
+          </>
+        )}
         <Link className="text-link" href="/">
           Back to Corridra
         </Link>

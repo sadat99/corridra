@@ -5,8 +5,10 @@ import { notFound, redirect } from 'next/navigation';
 import { randomUUID } from 'node:crypto';
 import { founderActivation } from '@corridra/auth/founder-activation';
 import { AccessState, StatusBadge } from '../../../components/access-state';
+import { FrontDoor } from '../../../components/front-door';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
+import { founderDoor } from '../../../lib/front-doors';
 import {
   chooseOwnerTenant,
   ownerCapable,
@@ -16,6 +18,7 @@ import {
 import { gapSignal, ownerGaps } from '../../../lib/owner-gaps';
 import { describeSwitches } from '../../../lib/owner-switches';
 import { waitingOnTeam } from '../../../lib/owner-waiting';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -73,6 +76,9 @@ export default async function Page({
   const activation = founderActivation();
   return (
     <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
+      {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
+        <FrontDoor label="Founder areas" items={founderDoor} />
+      )}
       <p className="owner-lede">
         This page only reads. It changes nothing. Each state comes from the settings of the
         deployment you are using right now.

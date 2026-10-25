@@ -224,6 +224,11 @@
       "use": "Lane 8: the supplier Reply Page, the team's review of replies, the Chinese release gate, the in-app browser test plan and what is not built"
     },
     {
+      "path": "docs/product/lane13-front-doors.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Lane 13: the founder and helper front doors, what each card links to, what is not built and how it is verified"
+    },
+    {
       "path": "docs/product/phase2-install.md",
       "classification": "Owner proposal",
       "use": "The owner's order of install steps for Move records, Pulse and Reply review, the open decisions that keep Pulse from sending, and how to roll back"
