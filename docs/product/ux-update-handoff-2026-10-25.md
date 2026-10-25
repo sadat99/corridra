@@ -66,6 +66,8 @@ Today, with every switch off, no person sees any difference.
 3. Turn on the switches that need no install in any order: they change only what a person sees, and unsetting one restores the old page.
 4. Never turn on email (Pulse sending) until decision 1 is settled.
 
+The `install-customer-modules` job runs in the protected `customer-modules-install` environment and waits for your approval there, so it cannot be run for you. A report-only run (apply set to anything but yes) was started while this update was being finished, saw the wait, and was cancelled so that no approval request is left pending.
+
 ## What was checked
 
 - Every lane has unit tests for its rules, an operator spec that mounts its real screens with the real stylesheets at 320, 390, 768 and 1440 px (no sideways scroll, 44 px targets, clean accessibility scan), and a test of every switch-off path. Database parts have their own database suites (additive, repeatable, append only, closed to the runtime roles, refusing another tenant).
