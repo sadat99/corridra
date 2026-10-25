@@ -7,7 +7,18 @@ import { CorridraIcon } from './corridra-icon';
 function subscribe(onChange: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return () => {};
   window.speechSynthesis.addEventListener('voiceschanged', onChange);
-  return () => window.speechSynthesis.removeEventListener('voiceschanged', onChange);
+  // A page on message files changes its main region's language after the page has loaded (the person's choice
+  // is applied on the client), so Listen asks again whether the browser can speak the new language.
+  const languageChanges = new MutationObserver(onChange);
+  languageChanges.observe(document.documentElement, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['lang'],
+  });
+  return () => {
+    window.speechSynthesis.removeEventListener('voiceschanged', onChange);
+    languageChanges.disconnect();
+  };
 }
 
 /** The language of what Listen reads: the main region's own language, not the chrome around it. */

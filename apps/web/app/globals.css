@@ -793,7 +793,11 @@ summary:hover {
 .arrow-icon {
   display: inline-block;
   vertical-align: middle;
-  margin-left: 5px;
+  margin-inline-start: 5px;
+}
+/* Arrows that point along the reading direction point the other way when the text reads right to left. */
+[dir='rtl'] :is(.arrow-icon, .ac1-job-go, .ac1-route-arrow) {
+  transform: scaleX(-1);
 }
 .operator-page {
   padding: 55px 0;
@@ -7550,7 +7554,7 @@ th {
   cursor: pointer;
 }
 .ac1-record-tabs button + button {
-  border-left: 1px solid var(--border-strong);
+  border-inline-start: 1px solid var(--border-strong);
 }
 .ac1-record-tabs button[aria-selected='true'] {
   background: var(--selected-surface);
@@ -7597,9 +7601,14 @@ th {
 .ac1-track li {
   position: relative;
   padding-top: var(--space-4);
-  padding-right: var(--space-1);
+  padding-inline-end: var(--space-1);
   color: var(--text-3);
   font-size: 0.8125rem;
+  /* Five steps share one row. A long word in another language (German "Nachverfolgen") breaks inside the word
+     on a narrow screen instead of pushing the page sideways; English is unaffected because nothing overflows. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 .ac1-track li::before {
   position: absolute;
@@ -7845,7 +7854,7 @@ th {
   padding: var(--space-6) var(--space-4);
 }
 .ac1-truth li + li {
-  border-left: 1px solid var(--line);
+  border-inline-start: 1px solid var(--line);
 }
 .ac1-truth li > span:not(.guide-tag) {
   color: var(--text-2);
@@ -7868,26 +7877,17 @@ th {
   padding: var(--space-8) var(--space-8) var(--space-8) 0;
 }
 .ac1-routes > * + * {
-  padding-left: var(--space-8);
-  border-left: 1px solid var(--line);
+  padding-inline-start: var(--space-8);
+  border-inline-start: 1px solid var(--line);
 }
-.ac1-routes > article {
-  counter-increment: ac1-route;
-}
-.ac1-routes > article::before,
-.ac1-other::before {
-  margin-bottom: var(--space-3);
+/* The small label above each route is real text, so it is translated and read aloud like the rest. */
+.ac1-routes .ac1-route-tag {
+  margin: 0 0 var(--space-3);
   color: var(--text-2);
   font-size: var(--text-xs);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-.ac1-routes > article::before {
-  content: 'Route ' counter(ac1-route, decimal-leading-zero);
-}
-.ac1-other::before {
-  content: 'Other';
 }
 .ac1-routes h3 {
   display: flex;
@@ -7923,7 +7923,7 @@ th {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .ac1-truth li + li {
-    border-left: 0;
+    border-inline-start: 0;
   }
   .ac1-truth li {
     border-bottom: 1px solid var(--line);
@@ -7939,9 +7939,9 @@ th {
     padding: var(--space-6) 0;
   }
   .ac1-routes > * + * {
-    padding-left: 0;
+    padding-inline-start: 0;
     border-top: 1px solid var(--line);
-    border-left: 0;
+    border-inline-start: 0;
   }
 }
 @media (max-width: 52rem) {

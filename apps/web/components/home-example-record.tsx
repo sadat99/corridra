@@ -3,80 +3,88 @@
 import { useRef, useState, type KeyboardEvent } from 'react';
 import { CorridraIcon } from './corridra-icon';
 import { FactLabel, type factLabels } from './fact-label';
+import { useT } from './language-provider';
+import type { MessageKey } from '../lib/i18n/messages';
 
 type Fact = (typeof factLabels)[number]['label'];
 
 type Example = {
   id: string;
-  tab: string;
-  job: string;
-  from: string;
-  to: string;
-  title: string;
-  meta: string;
-  companies: readonly (readonly [string, string, Fact])[];
-  next: string;
+  tab: MessageKey;
+  job: MessageKey;
+  from: MessageKey;
+  to: MessageKey;
+  title: MessageKey;
+  meta: MessageKey;
+  companies: readonly (readonly [MessageKey, MessageKey, Fact])[];
+  next: MessageKey;
 };
 
-/** Example missions on the home page. Sample data only: no real company, no stored record. */
+/**
+ * Example missions on the home page. Sample data only: no real company, no stored record. The words are keys in the
+ * message files; the five trust names stay English in every language.
+ */
 const examples: readonly Example[] = [
   {
     id: 'sell',
-    tab: 'Selling',
-    job: 'Sell my products',
-    from: 'Bangladesh',
-    to: 'Spain',
-    title: 'Meet three knitwear buyers during a Madrid trade fair.',
-    meta: 'Request received 15 Oct 2026 · 4 of 11 companies reviewed for fit',
+    tab: 'home.ex.sell.tab',
+    job: 'home.start.sell.title',
+    from: 'home.country.bd',
+    to: 'home.country.es',
+    title: 'home.ex.sell.title',
+    meta: 'home.ex.sell.meta',
     companies: [
-      [
-        'Distributor A, Madrid',
-        'Sells knitwear to about 40 shops. Asked for a price list.',
-        'Evidence available',
-      ],
-      [
-        'Retail buyer B, Valencia',
-        'Says it buys private label. Not yet confirmed.',
-        'Self-declared',
-      ],
-      ['Importer C, Barcelona', 'Company registration checked.', 'Verified'],
-      ['Agent D, Seville', 'Not a fit: says it only works with EU makers.', 'Self-declared'],
+      ['home.buyer.a.name', 'home.buyer.a.note', 'Evidence available'],
+      ['home.buyer.b.name', 'home.ex.sell.b.note', 'Self-declared'],
+      ['home.buyer.c.name', 'home.buyer.c.note', 'Verified'],
+      ['home.buyer.d.name', 'home.buyer.d.note', 'Self-declared'],
     ],
-    next: 'Confirm two meetings in the fair week.',
+    next: 'home.ex.sell.next',
   },
   {
     id: 'buy',
-    tab: 'Sourcing',
-    job: 'Buy products or machines',
-    from: 'Bangladesh',
-    to: 'China',
-    title: 'Find two suppliers of circular knitting machines.',
-    meta: 'Request received 15 Oct 2026 · 3 of 9 companies reviewed for fit',
+    tab: 'home.ex.buy.tab',
+    job: 'home.start.buy.title',
+    from: 'home.country.bd',
+    to: 'home.country.cn',
+    title: 'home.ex.buy.title',
+    meta: 'home.ex.buy.meta',
     companies: [
-      ['Supplier A, Ningbo', 'Price quote received. Installation included.', 'Evidence available'],
-      ['Supplier B, Foshan', 'Says it exports to Dhaka. No document yet.', 'Self-declared'],
-      ['Supplier C, Dongguan', 'Factory address checked.', 'Verified'],
-      ['Supplier D, Wenzhou', 'Not a fit: no after-sales service in Bangladesh.', 'Self-declared'],
+      ['home.ex.buy.a.name', 'home.ex.buy.a.note', 'Evidence available'],
+      ['home.ex.buy.b.name', 'home.ex.buy.b.note', 'Self-declared'],
+      ['home.ex.buy.c.name', 'home.ex.buy.c.note', 'Verified'],
+      ['home.ex.buy.d.name', 'home.ex.buy.d.note', 'Self-declared'],
     ],
-    next: 'Compare what each price quote includes.',
+    next: 'home.ex.buy.next',
   },
 ];
 
-const stages = ['Request', 'Find companies', 'Review for fit', 'Meet', 'Follow up'] as const;
+const stages: readonly MessageKey[] = [
+  'home.ex.stage.request',
+  'home.ex.stage.find',
+  'home.ex.stage.review',
+  'home.ex.stage.meet',
+  'home.ex.stage.follow',
+];
 const current = 2;
 
 export function HomeExampleRecord() {
+  const t = useT();
   const [active, setActive] = useState(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     const last = examples.length - 1;
+    // Where the text reads right to left the tabs are laid out right to left, so the arrow keys swap.
+    const rtl = getComputedStyle(event.currentTarget).direction === 'rtl';
+    const next = rtl ? 'ArrowLeft' : 'ArrowRight';
+    const previous = rtl ? 'ArrowRight' : 'ArrowLeft';
     const target =
-      event.key === 'ArrowRight'
+      event.key === next
         ? active === last
           ? 0
           : active + 1
-        : event.key === 'ArrowLeft'
+        : event.key === previous
           ? active === 0
             ? last
             : active - 1
@@ -92,10 +100,10 @@ export function HomeExampleRecord() {
   }
 
   return (
-    <article className="ac1-record" aria-label="Example missions, not real companies">
+    <article className="ac1-record" aria-label={t('home.ex.aria')}>
       <div className="ac1-record-head">
-        <span className="ac1-example-tag">Example</span>
-        <div className="ac1-record-tabs" role="tablist" aria-label="Example mission">
+        <span className="ac1-example-tag">{t('home.example')}</span>
+        <div className="ac1-record-tabs" role="tablist" aria-label={t('home.ex.tabs.aria')}>
           {examples.map((example, index) => (
             <button
               key={example.id}
@@ -111,7 +119,7 @@ export function HomeExampleRecord() {
               onClick={() => setActive(index)}
               onKeyDown={onKeyDown}
             >
-              {example.tab}
+              {t(example.tab)}
             </button>
           ))}
         </div>
@@ -127,40 +135,41 @@ export function HomeExampleRecord() {
         >
           <div>
             <p className="label">
-              {example.job} ·{' '}
+              {t(example.job)} ·{' '}
               <span className="ac1-route">
-                {example.from} <CorridraIcon name="arrow" size={16} /> {example.to}
+                {t(example.from)}{' '}
+                <CorridraIcon name="arrow" size={16} className="ac1-route-arrow" /> {t(example.to)}
               </span>
             </p>
-            <h2>{example.title}</h2>
-            <p className="ac1-record-meta">{example.meta}</p>
+            <h2>{t(example.title)}</h2>
+            <p className="ac1-record-meta">{t(example.meta)}</p>
           </div>
-          <ol className="ac1-track" aria-label="Mission progress">
+          <ol className="ac1-track" aria-label={t('home.ex.progress.aria')}>
             {stages.map((stage, step) => (
               <li
                 key={stage}
                 className={step < current ? 'is-done' : step === current ? 'is-now' : undefined}
                 aria-current={step === current ? 'step' : undefined}
               >
-                {stage}
+                {t(stage)}
               </li>
             ))}
           </ol>
-          <ul className="ac1-companies" aria-label="Example companies">
+          <ul className="ac1-companies" aria-label={t('home.ex.companies.aria')}>
             {example.companies.map(([name, note, fact]) => (
               <li key={name}>
-                <strong>{name}</strong>
-                <span>{note}</span>
-                <FactLabel label={fact} />
+                <strong>{t(name)}</strong>
+                <span>{t(note)}</span>
+                <FactLabel label={fact} english />
               </li>
             ))}
           </ul>
           <div className="ac1-next">
             <div>
-              <p className="label">Next step</p>
-              <p>{example.next}</p>
+              <p className="label">{t('home.ledger.next')}</p>
+              <p>{t(example.next)}</p>
             </div>
-            <CorridraIcon name="arrow" />
+            <CorridraIcon name="arrow" className="ac1-route-arrow" />
           </div>
         </div>
       ))}

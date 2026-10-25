@@ -193,6 +193,8 @@ describe('where the words come from', () => {
       'apps/web/components/compare-lens.tsx',
       'apps/web/components/mr/first-question.tsx',
       'apps/web/app/plan/intake.tsx',
+      'apps/web/app/page.tsx',
+      'apps/web/components/home-example-record.tsx',
     ]
       .map(read)
       .join('\n');

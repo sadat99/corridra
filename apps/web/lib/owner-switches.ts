@@ -319,6 +319,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'setting',
   },
   {
+    name: 'CORRIDRA_LANGUAGES_PAGES',
+    label: 'Page words in the chosen language',
+    line: 'Shows the home page (and later the request form) in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, those pages read in English whatever language is chosen. Set it only after the owner has recorded a review of the page words of each language. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_LANGUAGES_PREVIEW',
     label: 'Show draft languages',
     line: 'Shows every draft language in the language chip, marked as a draft, so you can read them before a reviewer has. Keep it off for the public. Needs a new deploy.',

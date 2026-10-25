@@ -1,3 +1,5 @@
+'use client';
+
 import { Arrow } from '../components/arrow';
 import { CorridraIcon } from '../components/corridra-icon';
 import { FactLabel, factLabels } from '../components/fact-label';
@@ -5,222 +7,219 @@ import { HomeExampleRecord } from '../components/home-example-record';
 import Link from 'next/link';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
+import { useT } from '../components/language-provider';
+import type { MessageKey } from '../lib/i18n/messages';
 
+// The words on this page are keys in the message files (lib/i18n/home-words.ts). They show in the chosen language
+// only while `CORRIDRA_LANGUAGES_PAGES` is on; until then every key shows its English words, so the page reads as
+// it always has. The five trust names, company examples' letters, prices and delivery codes stay as written.
 const starts = [
   {
     href: '/plan?job=buyers',
-    title: 'Sell my products',
-    text: 'Find buyers and partners abroad.',
-    name: 'Find Buyers & Partners',
+    title: 'home.start.sell.title',
+    text: 'home.start.sell.text',
+    name: 'home.start.sell.name',
     icon: 'sell',
   },
   {
     href: '/plan?job=sourcing',
-    title: 'Buy products or machines',
-    text: 'Find suppliers. Compare price quotes.',
-    name: 'Find Suppliers & Products',
+    title: 'home.start.buy.title',
+    text: 'home.start.buy.text',
+    name: 'home.start.buy.name',
     icon: 'buy',
   },
   {
     href: '/plan?job=delegations',
-    title: 'Lead a group trip',
-    text: 'Plan the programme and the meetings.',
-    name: 'Organise a Delegation',
+    title: 'home.start.trip.title',
+    text: 'home.start.trip.text',
+    name: 'home.start.trip.name',
     icon: 'trip',
   },
-] as const;
+] as const satisfies readonly {
+  href: string;
+  title: MessageKey;
+  text: MessageKey;
+  name: MessageKey;
+  icon: string;
+}[];
 
 const steps = [
-  ['Say what you need', 'What you want to buy, sell or organise, and when.'],
-  ['Find the right companies', 'We look beyond one fair or one directory.'],
-  ['Review before you meet', 'See why each company fits and what is proven.'],
-  ['Meet and follow up', 'Plan meetings. Track what happens next.'],
-] as const;
+  ['home.step.say.title', 'home.step.say.text'],
+  ['home.step.find.title', 'home.step.find.text'],
+  ['home.step.review.title', 'home.step.review.text'],
+  ['home.step.meet.title', 'home.step.meet.text'],
+] as const satisfies readonly (readonly [MessageKey, MessageKey])[];
 
 const buyers = [
-  [
-    'Distributor A, Madrid',
-    'Sells knitwear to about 40 shops. Asked for a price list.',
-    'Evidence available',
-    'Introduction proposed',
-  ],
-  [
-    'Retail buyer B, Valencia',
-    'Buys private label for its own stores.',
-    'Self-declared',
-    'Meeting proposed',
-  ],
-  ['Importer C, Barcelona', 'Company registration checked.', 'Verified', 'Meeting confirmed'],
-  [
-    'Agent D, Seville',
-    'Not a fit: says it only works with EU makers.',
-    'Self-declared',
-    'Not contacted',
-  ],
+  ['home.buyer.a.name', 'home.buyer.a.note', 'Evidence available', 'home.buyer.a.state'],
+  ['home.buyer.b.name', 'home.buyer.b.note', 'Self-declared', 'home.buyer.b.state'],
+  ['home.buyer.c.name', 'home.buyer.c.note', 'Verified', 'home.buyer.c.state'],
+  ['home.buyer.d.name', 'home.buyer.d.note', 'Self-declared', 'home.buyer.d.state'],
 ] as const;
 
-const suppliers = ['Supplier A', 'Supplier B', 'Supplier C'] as const;
+const suppliers = ['home.supplier.a', 'home.supplier.b', 'home.supplier.c'] as const;
 
+/** A table cell is either a message key or text that is the same in every language (an amount or a delivery code). */
+type Cell = { key: MessageKey } | { text: string };
 const quotes: readonly {
-  term: string;
-  note?: string;
-  values: readonly (readonly [string, 'num' | 'ok' | 'miss' | 'bad'])[];
+  term: MessageKey;
+  note?: MessageKey;
+  values: readonly (readonly [Cell, 'num' | 'ok' | 'miss' | 'bad'])[];
 }[] = [
   {
-    term: 'Price quote',
+    term: 'home.term.price',
     values: [
-      ['USD 42,000', 'num'],
-      ['USD 38,500', 'num'],
-      ['USD 45,700', 'num'],
+      [{ text: 'USD 42,000' }, 'num'],
+      [{ text: 'USD 38,500' }, 'num'],
+      [{ text: 'USD 45,700' }, 'num'],
     ],
   },
   {
-    term: 'Delivery terms',
-    note: 'FOB: price at the port in China. CIF: price includes sea freight and insurance to Chattogram.',
+    term: 'home.term.delivery',
+    note: 'home.term.delivery.note',
     values: [
-      ['FOB Ningbo', 'num'],
-      ['Not stated', 'miss'],
-      ['CIF Chattogram', 'num'],
+      [{ text: 'FOB Ningbo' }, 'num'],
+      [{ key: 'home.value.notStated' }, 'miss'],
+      [{ text: 'CIF Chattogram' }, 'num'],
     ],
   },
   {
-    term: 'Installation',
+    term: 'home.term.install',
     values: [
-      ['Included', 'ok'],
-      ['Not included', 'bad'],
-      ['Not confirmed', 'miss'],
+      [{ key: 'home.value.included' }, 'ok'],
+      [{ key: 'home.value.notIncluded' }, 'bad'],
+      [{ key: 'home.value.notConfirmed' }, 'miss'],
     ],
   },
   {
-    term: 'Lead time',
+    term: 'home.term.lead',
     values: [
-      ['90 days', 'num'],
-      ['75 days', 'num'],
-      ['120 days', 'num'],
+      [{ key: 'home.value.days90' }, 'num'],
+      [{ key: 'home.value.days75' }, 'num'],
+      [{ key: 'home.value.days120' }, 'num'],
     ],
   },
 ];
 
+const factLines: Record<(typeof factLabels)[number]['label'], MessageKey> = {
+  'Self-declared': 'home.fact.selfDeclared',
+  'Evidence available': 'home.fact.evidence',
+  Verified: 'home.fact.verified',
+  Derived: 'home.fact.derived',
+  'Outcome observed': 'home.fact.outcome',
+};
+
 const routes = [
   {
     href: '/corridors/bangladesh-china',
-    from: 'Bangladesh',
-    to: 'China',
-    text: 'Go to China knowing which suppliers, factories and price terms deserve your attention.',
+    from: 'home.country.bd',
+    to: 'home.country.cn',
+    text: 'home.route.bdcn.text',
   },
   {
     href: '/corridors/bangladesh-spain',
-    from: 'Bangladesh',
-    to: 'Spain and the EU',
-    text: 'Know who is worth meeting before you travel, including companies outside the fair list.',
+    from: 'home.country.bd',
+    to: 'home.country.esEu',
+    text: 'home.route.bdes.text',
   },
-] as const;
+] as const satisfies readonly {
+  href: string;
+  from: MessageKey;
+  to: MessageKey;
+  text: MessageKey;
+}[];
 
 export default function Home() {
+  const t = useT();
   return (
-    <PublicShell className="ux-guide-home ac1-home">
+    <PublicShell className="ux-guide-home ac1-home" translated>
       <LegacyHashRedirect />
       <section className="ac1-hero" aria-labelledby="home-title">
         <div className="ac1-hero-copy">
-          <p className="label ac1-rule">Cross-border market access</p>
-          <h1 id="home-title">Make market entry deliberate.</h1>
-          <p className="ac1-lead">
-            Say what you want to buy, sell or organise. We find the companies that fit, show what is
-            proven about each one, and help you meet them.
-          </p>
-          <nav className="ac1-jobs" aria-label="Choose your commercial objective">
+          <p className="label ac1-rule">{t('home.eyebrow')}</p>
+          <h1 id="home-title">{t('home.title')}</h1>
+          <p className="ac1-lead">{t('home.lead')}</p>
+          <nav className="ac1-jobs" aria-label={t('home.jobs.aria')}>
             {starts.map((start) => (
               <Link prefetch={false} key={start.href} href={start.href}>
                 <CorridraIcon name={start.icon} className="ac1-job-icon" />
                 <span>
-                  <strong>{start.title}</strong>
-                  <span className="ac1-job-text">{start.text}</span>
-                  <span className="label ac1-job-name">{start.name}</span>
+                  <strong>{t(start.title)}</strong>
+                  <span className="ac1-job-text">{t(start.text)}</span>
+                  <span className="label ac1-job-name">{t(start.name)}</span>
                 </span>
                 <CorridraIcon name="arrow" className="ac1-job-go" />
               </Link>
             ))}
           </nav>
           <Link prefetch={false} className="ac1-quiet" href="/plan">
-            Something else? Tell us your business goal <Arrow />
+            {t('home.else')} <Arrow />
           </Link>
           <ul className="ac1-calm">
             <li>
               <CorridraIcon name="check" size={16} />
-              No account needed to begin
+              {t('home.calm.account')}
             </li>
             <li>
               <CorridraIcon name="check" size={16} />
-              Nothing is sent until you check it
+              {t('home.calm.check')}
             </li>
           </ul>
-          <p className="ac1-note">
-            Corridra does not promise orders. We do research, review, introductions and meetings.
-          </p>
+          <p className="ac1-note">{t('home.note')}</p>
         </div>
         <HomeExampleRecord />
       </section>
 
       <section className="ac1-section" aria-labelledby="steps-title">
-        <p className="label ac1-rule">How it works</p>
-        <h2 id="steps-title">One mission, four clear steps.</h2>
-        <p className="ac1-lead">
-          A mission is a planned piece of work to meet the right companies.
-        </p>
-        <ol className="ac1-steps" aria-label="How a mission works">
+        <p className="label ac1-rule">{t('home.how')}</p>
+        <h2 id="steps-title">{t('home.steps.title')}</h2>
+        <p className="ac1-lead">{t('home.steps.lead')}</p>
+        <ol className="ac1-steps" aria-label={t('home.steps.aria')}>
           {steps.map(([title, text], index) => (
             <li key={title}>
               <span className="ac1-step-number" aria-hidden="true">
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <h3>{title}</h3>
-              <p>{text}</p>
+              <h3>{t(title)}</h3>
+              <p>{t(text)}</p>
             </li>
           ))}
         </ol>
         <Link prefetch={false} className="ac1-quiet" href="/how-it-works">
-          See the full process <Arrow />
+          {t('home.steps.more')} <Arrow />
         </Link>
       </section>
 
       <section className="ac1-section" aria-labelledby="proof-title">
-        <p className="label ac1-rule">Example</p>
-        <h2 id="proof-title">What you get back, when you sell and when you buy.</h2>
-        <p className="ac1-lead">
-          Every company comes with a reason and a trust label. The companies below are examples, not
-          real companies.
-        </p>
-        <div
-          className="ac1-proofs"
-          role="region"
-          aria-label="Examples for selling and for buying"
-          tabIndex={0}
-        >
+        <p className="label ac1-rule">{t('home.example')}</p>
+        <h2 id="proof-title">{t('home.proof.title')}</h2>
+        <p className="ac1-lead">{t('home.proof.lead')}</p>
+        <div className="ac1-proofs" role="region" aria-label={t('home.proof.aria')} tabIndex={0}>
           <div className="ac1-proof">
             <div>
               <h3 className="ac1-proof-title">
-                <CorridraIcon name="sell" /> Buyers worth meeting
+                <CorridraIcon name="sell" /> {t('home.buyers.title')}
               </h3>
-              <p>A buyer list is only useful if you know why each one fits and what is proven.</p>
+              <p>{t('home.buyers.text')}</p>
             </div>
             <div className="ac1-exhibit">
               <p className="ac1-exhibit-head">
-                <span className="ac1-example-tag">Example</span>
-                <span>Not real companies</span>
+                <span className="ac1-example-tag">{t('home.example')}</span>
+                <span>{t('home.exhibit.companies')}</span>
               </p>
               <p className="ac1-ledger-head" aria-hidden="true">
-                <span>Company</span>
-                <span>Why it fits</span>
-                <span>Trust label</span>
-                <span>Next step</span>
+                <span>{t('home.ledger.company')}</span>
+                <span>{t('home.ledger.why')}</span>
+                <span>{t('home.ledger.trust')}</span>
+                <span>{t('home.ledger.next')}</span>
               </p>
-              <ul className="ac1-buyers" aria-label="Example buyer shortlist">
+              <ul className="ac1-buyers" aria-label={t('home.buyers.aria')}>
                 {buyers.map(([name, note, fact, state]) => (
                   <li key={name}>
-                    <strong>{name}</strong>
-                    <span>{note}</span>
-                    <FactLabel label={fact} />
-                    <span className="ac1-state">{state}</span>
+                    <strong>{t(name)}</strong>
+                    <span>{t(note)}</span>
+                    <FactLabel label={fact} english />
+                    <span className="ac1-state">{t(state)}</span>
                   </li>
                 ))}
               </ul>
@@ -229,38 +228,45 @@ export default function Home() {
           <div className="ac1-proof">
             <div>
               <h3 className="ac1-proof-title">
-                <CorridraIcon name="buy" /> Price quotes side by side
+                <CorridraIcon name="buy" /> {t('home.quotes.title')}
               </h3>
-              <p>A low price can hide a missing cost. We show what each price quote includes.</p>
+              <p>{t('home.quotes.text')}</p>
             </div>
             <div className="ac1-exhibit">
               <p className="ac1-exhibit-head">
-                <span className="ac1-example-tag">Example</span>
-                <span>Not real suppliers</span>
+                <span className="ac1-example-tag">{t('home.example')}</span>
+                <span>{t('home.exhibit.suppliers')}</span>
               </p>
-              <div className="ac1-compare" role="table" aria-label="Example price quote comparison">
+              <div className="ac1-compare" role="table" aria-label={t('home.quotes.aria')}>
                 <div className="ac1-compare-row ac1-compare-head" role="row">
-                  <span role="columnheader">Term</span>
+                  <span role="columnheader">{t('home.quotes.term')}</span>
                   {suppliers.map((supplier) => (
                     <span role="columnheader" key={supplier}>
-                      {supplier}
+                      {t(supplier)}
                     </span>
                   ))}
                 </div>
                 {quotes.map((quote) => (
                   <div className="ac1-compare-row" role="row" key={quote.term}>
                     <span role="rowheader">
-                      {quote.term}
-                      {quote.note ? <small>{quote.note}</small> : null}
+                      {t(quote.term)}
+                      {quote.note ? <small>{t(quote.note)}</small> : null}
                     </span>
-                    {quote.values.map(([value, tone], index) => (
+                    {quote.values.map(([cell, tone], index) => (
                       <span
                         role="cell"
                         key={suppliers[index]}
-                        data-supplier={suppliers[index]}
+                        data-supplier={t(suppliers[index])}
                         data-tone={tone}
                       >
-                        {value}
+                        {'key' in cell ? (
+                          t(cell.key)
+                        ) : (
+                          // An amount or a delivery code is written the same in every language.
+                          <span lang="en" dir="ltr">
+                            {cell.text}
+                          </span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -272,59 +278,60 @@ export default function Home() {
       </section>
 
       <section className="ac1-section" aria-labelledby="facts-title">
-        <p className="label ac1-rule">What we show you</p>
-        <h2 id="facts-title">Every fact says where it comes from.</h2>
-        <p className="ac1-lead">
-          You always see whether a statement is only claimed, or has proof behind it.
-        </p>
+        <p className="label ac1-rule">{t('home.facts.eyebrow')}</p>
+        <h2 id="facts-title">{t('home.facts.title')}</h2>
+        <p className="ac1-lead">{t('home.facts.lead')}</p>
         <ul className="ac1-truth">
           {factLabels.map((fact) => (
             <li key={fact.label}>
-              <FactLabel label={fact.label} />
-              <span>{fact.line}</span>
+              <FactLabel label={fact.label} english />
+              <span>{t(factLines[fact.label])}</span>
             </li>
           ))}
         </ul>
         <Link prefetch={false} className="ac1-quiet" href="/trust">
-          How we label facts <Arrow />
+          {t('home.facts.more')} <Arrow />
         </Link>
       </section>
 
       <section className="ac1-section" aria-labelledby="routes-title">
-        <p className="label ac1-rule">Routes</p>
-        <h2 id="routes-title">Two routes to start.</h2>
-        <p className="ac1-lead">
-          A route is a commercial direction, not a shipping lane or a promise of local service.
-        </p>
+        <p className="label ac1-rule">{t('home.routes.eyebrow')}</p>
+        <h2 id="routes-title">{t('home.routes.title')}</h2>
+        <p className="ac1-lead">{t('home.routes.lead')}</p>
         <div className="ac1-routes">
-          {routes.map((route) => (
+          {routes.map((route, index) => (
             <article key={route.href}>
+              <p className="ac1-route-tag">
+                {t('home.route.tag')} {String(index + 1).padStart(2, '0')}
+              </p>
               <h3>
-                {route.from} <CorridraIcon name="arrow" /> {route.to}
+                {t(route.from)} <CorridraIcon name="arrow" className="ac1-route-arrow" />{' '}
+                {t(route.to)}
               </h3>
-              <p>{route.text}</p>
+              <p>{t(route.text)}</p>
               <Link prefetch={false} className="ac1-quiet" href={route.href}>
-                See this route <Arrow />
+                {t('home.route.more')} <Arrow />
               </Link>
             </article>
           ))}
           <div className="ac1-other">
-            <h3>Another route?</h3>
-            <p>Ask us. We tell you plainly if we can help.</p>
+            <p className="ac1-route-tag">{t('home.other.tag')}</p>
+            <h3>{t('home.other.title')}</h3>
+            <p>{t('home.other.text')}</p>
             <Link prefetch={false} className="button-secondary" href="/corridors">
-              Explore every route
+              {t('home.other.link')}
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="guide-band ac1-band" aria-label="Start a request">
+      <section className="guide-band ac1-band" aria-label={t('home.start')}>
         <div>
-          <h2>Not sure where to start?</h2>
-          <p>Tell us your goal in your own words. You do not need an account to begin.</p>
+          <h2>{t('home.band.title')}</h2>
+          <p>{t('home.band.text')}</p>
         </div>
         <Link prefetch={false} className="primary-link" href="/plan">
-          Start a request
+          {t('home.start')}
         </Link>
       </section>
     </PublicShell>
