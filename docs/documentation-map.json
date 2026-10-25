@@ -239,6 +239,11 @@
       "use": "Lane 13: the founder and helper front doors, what each card links to, what is not built and how it is verified"
     },
     {
+      "path": "docs/product/ux-update-handoff-2026-10-25.md",
+      "classification": "Owner proposal",
+      "use": "The owner's end-of-build summary of the UX update: every lane and switch, what is not built, the decisions that are the owner's, and the install and switch order"
+    },
+    {
       "path": "docs/product/lane11-languages.md",
       "classification": "UX programme/contract/packet",
       "use": "Lane 11: French and German drafts, the pseudo-language test, the short-label rule and the owner steps to release a language"
