@@ -189,7 +189,9 @@ test('the workflow compiles and routes only to squad agents the skill documents'
   const source = read('.claude/workflows/corridra-squad.js');
   const body = source.replace(/^export const meta =/m, 'const meta =');
   assert.doesNotThrow(() => new vm.Script(`(async () => {\n${body}\n})`));
-  const used = new Set([...source.matchAll(/'(corridra-(?!squad')[a-z]+)'/g)].map((match) => match[1]));
+  const used = new Set(
+    [...source.matchAll(/'(corridra-(?!squad')[a-z]+)'/g)].map((match) => match[1]),
+  );
   for (const name of used) assert.ok(name in SQUAD, `workflow uses unknown agent ${name}`);
   for (const name of Object.keys(SQUAD)) assert.ok(used.has(name), `workflow never uses ${name}`);
   const skill = read('.claude/skills/corridra-squad/SKILL.md');
