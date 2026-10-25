@@ -22,11 +22,14 @@ const initial = (over: Record<string, unknown> = {}) => ({
   quietEnd: null,
   timeZone: 'UTC',
   language: null,
-  version: 0,
+  version: 1,
   open: true,
   synthetic: false,
   ...over,
 });
+// A person who has made no choice: email is off until they switch it on.
+const neverChose = (over: Record<string, unknown> = {}) =>
+  initial({ kinds: [], version: 0, ...over });
 
 test.beforeAll(async () => {
   const result = await build({
@@ -34,11 +37,14 @@ test.beforeAll(async () => {
       contents: `import{createRoot}from'react-dom/client';
       import{NotificationsForm}from ${JSON.stringify(resolve('apps/web/app/account/notifications/notifications-form.tsx'))};
       import{MuteForm}from ${JSON.stringify(resolve('apps/web/app/pulse/mute/[requestId]/mute-form.tsx'))};
+      import{EmailNudge}from ${JSON.stringify(resolve('apps/web/components/email-nudge.tsx'))};
       const query=new URLSearchParams(location.search);
       const props=JSON.parse(query.get('props')||'{}');
       createRoot(document.getElementById('fixture')).render(
         <main className="operator-page ux-workspace"><h1>Email choices</h1>{query.get('screen')==='mute'
           ?<MuteForm requestId=${JSON.stringify(requestId)}/>
+          :query.get('screen')==='nudge'
+          ?<EmailNudge/>
           :<NotificationsForm initial={props.initial} unavailable={!!props.unavailable}/>}</main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -144,6 +150,112 @@ test.describe('email choices', () => {
     ).toBeVisible();
   });
 
+  test('for a person who never chose, says email is off, hides the options and offers no save', async ({
+    page,
+  }) => {
+    await openChoices(page, { initial: neverChose() });
+    await expect(
+      page.getByRole('heading', { name: /Email about your requests is off\./ }),
+    ).toBeVisible();
+    await expect(page.getByText('We do not email you unless you switch this on.')).toBeVisible();
+    await expect(
+      page.getByRole('checkbox', { name: /Email me when something needs me/ }),
+    ).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: /One thing needs you/ })).toHaveCount(0);
+    await expect(page.getByRole('button')).toHaveCount(0);
+  });
+
+  test('switching on starts from all four messages, sends the choice and says email is on', async ({
+    page,
+  }) => {
+    const sent = await openChoices(page, { initial: neverChose() });
+    // A person with no saved choice starts from the time zone of their own browser.
+    const browserZone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+    await page.getByRole('checkbox', { name: /Email me when something needs me/ }).check();
+    for (const label of [
+      'One thing needs you',
+      'Your request moved forward',
+      'A date is coming up',
+      'Your mission is complete',
+    ])
+      await expect(page.getByRole('checkbox', { name: new RegExp(label) })).toBeChecked();
+    await page.getByRole('button', { name: 'Switch email on' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Email is on. These choices apply from now on.' }),
+    ).toBeVisible();
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({
+      kinds: ['your-move', 'update', 'countdown', 'complete'],
+      timeZone: browserZone,
+    });
+    await expect(
+      page.getByRole('heading', { name: /Email about your requests is on\./ }),
+    ).toBeVisible();
+  });
+
+  test('switching off sends no messages at all and says so', async ({ page }) => {
+    const sent = await openChoices(page);
+    await page.getByRole('checkbox', { name: /Email me when something needs me/ }).uncheck();
+    await expect(page.getByRole('checkbox', { name: /One thing needs you/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Switch email off' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+    ).toBeVisible();
+    expect(sent[0]).toMatchObject({ kinds: [] });
+    await expect(
+      page.getByRole('heading', { name: /Email about your requests is off\./ }),
+    ).toBeVisible();
+  });
+
+  test('switching off still works after a quiet-hours time was cleared, and sends the last saved settings', async ({
+    page,
+  }) => {
+    const sent = await openChoices(page, {
+      initial: initial({
+        quietStart: '22:00',
+        quietEnd: '07:00',
+        timeZone: 'Asia/Dhaka',
+        language: 'bn',
+      }),
+    });
+    // An invalid half-edit, then switch email off: the hidden field must not be sent.
+    await page.getByLabel('Quiet from').fill('');
+    await page.getByRole('checkbox', { name: /Email me when something needs me/ }).uncheck();
+    await page.getByRole('button', { name: 'Switch email off' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+    ).toBeVisible();
+    expect(sent).toEqual([
+      {
+        kinds: [],
+        digest: false,
+        quietStart: '22:00',
+        quietEnd: '07:00',
+        timeZone: 'Asia/Dhaka',
+        language: 'bn',
+      },
+    ]);
+  });
+
+  test('refuses to switch on with no message chosen, without asking the server', async ({
+    page,
+  }) => {
+    const sent = await openChoices(page, { initial: neverChose() });
+    await page.getByRole('checkbox', { name: /Email me when something needs me/ }).check();
+    for (const label of [
+      'One thing needs you',
+      'Your request moved forward',
+      'A date is coming up',
+      'Your mission is complete',
+    ])
+      await page.getByRole('checkbox', { name: new RegExp(label) }).uncheck();
+    await page.getByRole('button', { name: 'Switch email on' }).click();
+    await expect(page.getByRole('alert')).toHaveText(
+      'Pick at least one message, or leave email off.',
+    );
+    expect(sent).toEqual([]);
+  });
+
   test('sends exactly what was chosen and says so plainly', async ({ page }) => {
     const sent = await openChoices(page, {
       initial: initial({ timeZone: 'Asia/Dhaka', version: 1 }),
@@ -155,7 +267,7 @@ test.describe('email choices', () => {
     await page.getByLabel('Quiet until').fill('06:45');
     await page.getByRole('combobox', { name: /^Language/ }).selectOption('bn');
     await page.getByRole('button', { name: 'Save my choices' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'Email is on.' })).toBeVisible();
     expect(sent).toEqual([
       {
         kinds: ['your-move', 'update', 'complete'],
@@ -175,7 +287,7 @@ test.describe('email choices', () => {
     await expect(page.getByLabel('Quiet from')).toHaveValue('22:00');
     await page.getByRole('checkbox', { name: /Quiet hours/ }).uncheck();
     await page.getByRole('button', { name: 'Save my choices' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'Email is on.' })).toBeVisible();
     expect(sent[0]).toMatchObject({ quietStart: null, quietEnd: null });
   });
 
@@ -240,6 +352,94 @@ test.describe('email choices', () => {
       if (width === 320 || width === 1440)
         await page.screenshot({
           path: `docs/design-system/evidence/lane7b-pulse/email-choices-${width}.png`,
+          fullPage: true,
+        });
+    });
+  }
+});
+
+test.describe('the prompt that says email is off', () => {
+  const open = async (
+    page: Page,
+    answer: { status: number; body: unknown } = { status: 200, body: neverChose() },
+  ) => {
+    let asked = 0;
+    await page.route('**/api/pulse/preferences', async (route) => {
+      asked += 1;
+      await route.fulfill({
+        status: answer.status,
+        contentType: 'application/json',
+        body: JSON.stringify(answer.body),
+      });
+    });
+    await page.goto(`${origin}/?screen=nudge`);
+    await expect.poll(() => asked).toBeGreaterThan(0);
+  };
+  const prompt = (page: Page) => page.getByRole('complementary', { name: 'Email is off' });
+
+  test('shows once for a person who never chose, in English, with a way to switch on', async ({
+    page,
+  }) => {
+    await open(page);
+    await expect(prompt(page)).toBeVisible();
+    await expect(prompt(page)).toHaveAttribute('lang', 'en');
+    await expect(prompt(page)).toContainText(
+      'We only email you about your requests if you switch email on.',
+    );
+    await expect(prompt(page).getByRole('link', { name: 'Switch on email' })).toHaveAttribute(
+      'href',
+      '/account/notifications',
+    );
+  });
+
+  test('says nothing to a person who already chose, on a sample workspace, while email is closed or unavailable', async ({
+    page,
+  }) => {
+    for (const answer of [
+      { status: 200, body: initial() },
+      { status: 200, body: neverChose({ synthetic: true }) },
+      { status: 200, body: neverChose({ open: false }) },
+      { status: 503, body: { error: 'Email choices are unavailable' } },
+    ]) {
+      const fresh = await page.context().newPage();
+      await open(fresh, answer);
+      await fresh.waitForTimeout(150);
+      await expect(prompt(fresh)).toHaveCount(0);
+      await fresh.close();
+    }
+  });
+
+  test('"Not now" hides it and it stays hidden on this browser', async ({ page }) => {
+    await open(page);
+    await prompt(page).getByRole('button', { name: 'Not now' }).click();
+    await expect(prompt(page)).toHaveCount(0);
+    await page.reload();
+    await page.waitForTimeout(200);
+    await expect(prompt(page)).toHaveCount(0);
+  });
+
+  for (const width of [320, 390, 1440]) {
+    test(`at ${width}px nothing scrolls sideways, targets are 44px and there is no accessibility violation`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await open(page);
+      await expect(prompt(page)).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+      for (const control of await prompt(page).locator('a, button').all()) {
+        const box = await control.boundingBox();
+        expect(box!.height, 'target height').toBeGreaterThanOrEqual(43.5);
+        expect(box!.width, 'target width').toBeGreaterThanOrEqual(43.5);
+      }
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.html}`)).toEqual([]);
+      if (width === 390)
+        await page.screenshot({
+          path: 'docs/design-system/evidence/lane7b-pulse/email-off-prompt-390.png',
           fullPage: true,
         });
     });

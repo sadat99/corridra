@@ -3,9 +3,11 @@ import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
+import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
+import { EmailNudge } from '../../../../components/email-nudge';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
@@ -55,6 +57,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
           </a>
         </p>
       )}
+      {customerNotificationsEnabled() && <EmailNudge />}
       <CustomerRequestDetail
         requestId={parsed.data}
         subject={session.data.user.id}

@@ -7,7 +7,10 @@ import { migrateCustomerNotifications } from '../../packages/db/src/customer-not
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMoveRecords } from '../../packages/auth/src/customer-move-configuration';
-import { configureNotifications } from '../../packages/auth/src/customer-notification-configuration';
+import {
+  configureNotifications,
+  emailAddressSourceReady,
+} from '../../packages/auth/src/customer-notification-configuration';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { MissionService } from '../../packages/missions/src/index';
@@ -15,6 +18,7 @@ import { MissionMoveService } from '../../packages/missions/src/moves';
 import { signPulseMute } from '../../packages/auth/src/pulse-mute';
 import {
   PulseService,
+  databaseRecipientSource,
   pulseCapability,
   type PulseJob,
   type RecipientPort,
@@ -63,9 +67,12 @@ const staff = (who: Person, user: 'operator' | 'owner' | 'viewer' | 'other' = 'o
   tenantId: who.missionTenantId,
 });
 
+// Email is off until a person switches it on (migration 0002), so most tests start from someone who has.
+// Pass optedIn false for the person who has made no choice.
 async function person(
   email = `owner-${randomUUID()}@acme-textiles.com`,
   subject: string = randomUUID(),
+  optedIn = true,
 ): Promise<Person> {
   const service = new CustomerRequestService(
     f.runtime,
@@ -92,13 +99,16 @@ async function person(
       [requestId],
     )
   ).rows[0];
-  return {
+  const who = {
     subject,
     email,
     requestId,
     missionId: owned.mission_id as string,
     missionTenantId: owned.mission_tenant_id as string,
   };
+  // While the control is closed this saves nothing, which is what the closed-control tests expect.
+  if (optedIn && (await prefs(who)).version === 0) await savePrefs(who);
+  return who;
 }
 
 // The same shape as the application's customer session boundary: a short proof, then one transaction.
@@ -315,21 +325,25 @@ describe('installation', () => {
     expect((await snapshot()).tb.length - before.tb.length).toBeGreaterThanOrEqual(4);
   });
 
-  test('is idempotent, records one applied file with its hash and refuses a changed history', async () => {
+  test('is idempotent, records both applied files with their hashes and refuses a changed history', async () => {
     const was = (await f.owner.query('SELECT * FROM customer_notification_migrations.applied'))
       .rows;
-    expect(was).toHaveLength(1);
+    expect(was.map((r) => r.name)).toEqual([
+      '0001_notifications.sql',
+      '0002_email_off_until_chosen.sql',
+    ]);
     await migrateCustomerNotifications(f.owner);
     expect(
       (await f.owner.query('SELECT * FROM customer_notification_migrations.applied')).rows,
     ).toEqual(was);
     await f.owner.query(
-      "UPDATE customer_notification_migrations.applied SET sha256=repeat('0',64)",
+      "UPDATE customer_notification_migrations.applied SET sha256=repeat('0',64) WHERE name='0002_email_off_until_chosen.sql'",
     );
     await expect(migrateCustomerNotifications(f.owner)).rejects.toThrow('history mismatch');
-    await f.owner.query('UPDATE customer_notification_migrations.applied SET sha256=$1', [
-      was[0].sha256,
-    ]);
+    await f.owner.query(
+      "UPDATE customer_notification_migrations.applied SET sha256=$1 WHERE name='0002_email_off_until_chosen.sql'",
+      [was.find((r) => r.name === '0002_email_off_until_chosen.sql').sha256],
+    );
   });
 
   test('the control starts closed: nothing is queued, saved or claimed, and the Move is unaffected', async () => {
@@ -368,6 +382,7 @@ describe('installation', () => {
         'customer_private.notification_open()',
         'customer_private.notification_expire()',
         "customer_private.notification_due_at(now(),'UTC',NULL,NULL,false)",
+        'customer_private.notification_preference_of(gen_random_uuid())',
       ])
         await expect(pool.query(`SELECT ${fn}`)).rejects.toMatchObject({ code: '42501' });
     }
@@ -446,15 +461,15 @@ describe('when a message can first be sent', () => {
 });
 
 describe('preferences', () => {
-  test('start as the defaults, are saved as new versions, and every version stays', async () => {
-    const p = await person();
+  test('start with email off, are saved as new versions, and every version stays', async () => {
+    const p = await person(undefined, undefined, false);
     expect(await prefs(p)).toMatchObject({
       open: true,
       version: 0,
       digest: false,
       timeZone: 'UTC',
       language: null,
-      kinds: ['your-move', 'update', 'countdown', 'complete'],
+      kinds: [],
     });
     expect(
       await savePrefs(p, {
@@ -506,7 +521,7 @@ describe('preferences', () => {
       { language: 'xx' },
     ])
       await expect(savePrefs(p, bad as never)).rejects.toMatchObject({ code: '23514' });
-    expect(await prefs(p)).toMatchObject({ version: 0 });
+    expect(await prefs(p)).toMatchObject({ version: 1 });
   });
 
   test('each person reads and saves only their own, and a signed-out call is refused', async () => {
@@ -1137,6 +1152,264 @@ describe('the application service', () => {
     });
     sent.length = 0;
     expect(await service().send(job, env)).toBe('SUPPRESSED');
+    expect(sent).toHaveLength(0);
+  });
+});
+
+describe('email is off until a person switches it on, and the address is read at send time', () => {
+  const env = {
+    DATA_ENVIRONMENT: 'real',
+    CORRIDRA_REAL_USE_ENABLED: 'true',
+    CORRIDRA_PULSE_ENABLED: 'true',
+    APP_ORIGIN: 'https://corridra.test',
+    NEON_AUTH_BASE_URL: 'https://ep-flow.neonauth.eu-central-1.aws.neon.tech/neondb/auth',
+    CUSTOMER_AUTH_MAIL_KEY: 'resend-test-key-0123456789',
+    CUSTOMER_AUTH_MAIL_FROM: 'sender@mail.corridra.test',
+    CUSTOMER_AUTH_MAIL_REPLY_TO: 'reply@corridra.test',
+  } as NodeJS.ProcessEnv;
+  const sent: { to: string; text: string }[] = [];
+  const sender: MailSender = async ({ to, message }) => {
+    sent.push({ to, text: message.text });
+  };
+  const service = () =>
+    new PulseService(f.runtime, secret, databaseRecipientSource(f.runtime), sender);
+  const recipient = async (
+    id: string,
+    capability = pulseCapability(secret, id),
+    pool = f.runtime,
+  ) =>
+    (await pool.query('SELECT customer.notification_recipient($1,$2) AS r', [id, capability]))
+      .rows[0].r;
+  // The sign-in provider keeps its users in neon_auth.user in the same database; this is the shape the
+  // lookup reads (id, name, email, emailVerified).
+  const addUser = (
+    who: Person,
+    over: Partial<{ name: string | null; email: string; verified: boolean }> = {},
+  ) =>
+    f.owner.query(
+      'INSERT INTO neon_auth."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,$4)',
+      [
+        who.subject,
+        over.name === undefined ? 'Amina Rahman' : over.name,
+        over.email ?? who.email,
+        over.verified ?? true,
+      ],
+    );
+  const leased = async (who: Person) => {
+    const set = await setMoves(who, [{ object: 'your import licence number' }]);
+    expect(set.queued).toBe(1);
+    expect((await claim(set.jobs[0].queueId)).status).toBe('CLAIMED');
+    return set.jobs[0].queueId as string;
+  };
+  beforeAll(async () => {
+    await f.owner.query('CREATE SCHEMA IF NOT EXISTS neon_auth');
+    await f.owner.query(`${providerTable.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS')}`);
+  });
+  const queuedByService = async (who: Person) => {
+    const commandId = randomUUID();
+    await moves.command(staff(who), {
+      action: 'set',
+      commandId,
+      missionId: who.missionId,
+      moves: [
+        { verb: 'Add', object: 'your import licence number', holder: 'customer', dueOn: null },
+      ],
+    });
+    return service().enqueueForCommand(staff(who), commandId, env);
+  };
+
+  test('a person who has not chosen is never queued, and switching on is what starts it', async () => {
+    const p = await person(undefined, undefined, false);
+    expect(await setMoves(p, [{ object: 'your import licence number' }])).toMatchObject({
+      queued: 0,
+      reason: 'kind-off',
+    });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.notification_outbox WHERE request_id=$1',
+          [p.requestId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    expect(await savePrefs(p)).toEqual({ saved: true, version: 1 });
+    expect(await setMoves(p, [{ object: 'your bank letter' }])).toMatchObject({ queued: 1 });
+  });
+
+  test('switching email off suppresses what is waiting, and the choice is kept as a new version', async () => {
+    const p = await person();
+    const set = await setMoves(p, [{ object: 'your import licence number' }]);
+    expect(set.queued).toBe(1);
+    expect(await savePrefs(p, { kinds: [] })).toEqual({ saved: true, version: 2 });
+    expect(await prefs(p)).toMatchObject({ version: 2, kinds: [] });
+    expect((await claim(set.jobs[0].queueId)).status).toBe('SUPPRESSED');
+  });
+
+  const ready = async () =>
+    (await f.owner.query('SELECT customer.notification_recipient_ready() AS r')).rows[0].r;
+  const providerTable =
+    'CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text,email text,"emailVerified" boolean NOT NULL DEFAULT false)';
+
+  test('the sign-in table must be readable with the columns the lookup needs before email can be opened', async () => {
+    await f.owner.query('DROP TABLE IF EXISTS neon_auth."user"');
+    expect(await ready()).toBe(false);
+    expect(await emailAddressSourceReady(f.owner)).toBe(false);
+    await expect(
+      f.runtime.query('SELECT customer.notification_recipient_ready()'),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      f.auth.query('SELECT customer.notification_recipient_ready()'),
+    ).rejects.toMatchObject({ code: '42501' });
+    await f.owner.query(
+      'CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,email text,"emailVerified" boolean NOT NULL DEFAULT false)',
+    );
+    expect(await ready()).toBe(false);
+    await f.owner.query('ALTER TABLE neon_auth."user" ADD COLUMN name text');
+    expect(await ready()).toBe(true);
+    expect(await emailAddressSourceReady(f.owner)).toBe(true);
+  });
+
+  test('a database owner without access to the provider schema or table gets false, never an error, and a failure to ask counts as not ready', async () => {
+    // Run as an owner with no rights: the function is owned by an ordinary role for this one transaction.
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('CREATE ROLE pulse_probe_owner NOLOGIN');
+      await db.query('GRANT CREATE ON SCHEMA customer TO pulse_probe_owner');
+      await db.query(
+        'ALTER FUNCTION customer.notification_recipient_ready() OWNER TO pulse_probe_owner',
+      );
+      const answer = async () =>
+        (await db.query('SELECT customer.notification_recipient_ready() AS r')).rows[0].r;
+      expect(await answer()).toBe(false);
+      await db.query('GRANT USAGE ON SCHEMA neon_auth TO pulse_probe_owner');
+      expect(await answer()).toBe(false);
+      await db.query('GRANT SELECT ON neon_auth."user" TO pulse_probe_owner');
+      expect(await answer()).toBe(true);
+      await db.query('REVOKE USAGE ON SCHEMA neon_auth FROM pulse_probe_owner');
+      expect(await answer()).toBe(false);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+    const failing = {
+      query: async () => {
+        throw new Error('permission denied');
+      },
+    };
+    expect(await emailAddressSourceReady(failing)).toBe(false);
+    expect(await ready()).toBe(true);
+  });
+
+  test('the address is returned only for a message leased right now to a sender holding the capability', async () => {
+    const p = await person();
+    await addUser(p);
+    const set = await setMoves(p, [{ object: 'your import licence number' }]);
+    const id = set.jobs[0].queueId as string;
+    // Queued but not leased: refused.
+    await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+    expect((await claim(id)).status).toBe('CLAIMED');
+    expect(await recipient(id)).toEqual({ found: true, address: p.email, name: 'Amina Rahman' });
+    await expect(recipient(id, 'x'.repeat(30))).rejects.toMatchObject({ code: '42501' });
+    await expect(recipient(id, 'short')).rejects.toMatchObject({ code: '42501' });
+    await expect(recipient(randomUUID())).rejects.toMatchObject({ code: '42501' });
+    await expect(recipient(id, pulseCapability(secret, id), f.auth)).rejects.toMatchObject({
+      code: '42501',
+    });
+    // Once finished it is no longer leased, so the address cannot be read for it again.
+    await finish(id, 'SENT');
+    await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('no address is given while the control is closed or after the lease has run out', async () => {
+    const p = await person();
+    await addUser(p);
+    const id = await leased(p);
+    expect((await recipient(id)).found).toBe(true);
+    await setControl(false);
+    try {
+      await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+    } finally {
+      await setControl(true);
+    }
+    expect((await recipient(id)).found).toBe(true);
+    await f.owner.query(
+      'ALTER TABLE customer_private.notification_outbox DISABLE TRIGGER notification_outbox_guard',
+    );
+    try {
+      await f.owner.query(
+        "UPDATE customer_private.notification_outbox SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+        [id],
+      );
+    } finally {
+      await f.owner.query(
+        'ALTER TABLE customer_private.notification_outbox ENABLE TRIGGER notification_outbox_guard',
+      );
+    }
+    await expect(recipient(id)).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('an account with no verified address, a missing account, an odd address or email switched off gets no address', async () => {
+    const unverified = await person();
+    await addUser(unverified, { verified: false });
+    expect(await recipient(await leased(unverified))).toEqual({ found: false });
+
+    const missing = await person();
+    expect(await recipient(await leased(missing))).toEqual({ found: false });
+
+    const odd = await person();
+    await addUser(odd, { email: 'two words@acme-textiles.com' });
+    expect(await recipient(await leased(odd))).toEqual({ found: false });
+
+    const off = await person();
+    await addUser(off);
+    const id = await leased(off);
+    await savePrefs(off, { kinds: [] });
+    expect(await recipient(id)).toEqual({ found: false });
+
+    const noName = await person();
+    await addUser(noName, { name: null });
+    expect(await recipient(await leased(noName))).toMatchObject({ found: true, name: '' });
+  });
+
+  test('the address is never written down by the lookup', async () => {
+    const p = await person();
+    await addUser(p);
+    const id = await leased(p);
+    expect((await recipient(id)).address).toBe(p.email);
+    for (const table of ['notification_outbox', 'notification_preference', 'notification_mute'])
+      expect(
+        (
+          await f.owner.query(
+            `SELECT count(*)::int n FROM customer_private.${table} t WHERE to_jsonb(t)::text ILIKE $1`,
+            [`%${p.email}%`],
+          )
+        ).rows[0].n,
+      ).toBe(0);
+  });
+
+  test('the service sends to the verified address, and ends cleanly or holds back without one', async () => {
+    const p = await person();
+    await addUser(p);
+    const [job] = await queuedByService(p);
+    sent.length = 0;
+    expect(await service().send(job, env)).toBe('SENT');
+    expect(sent).toHaveLength(1);
+    expect(sent[0].to).toBe(p.email);
+    expect(sent[0].text).toContain('https://corridra.test/account/notifications');
+
+    const unverified = await person();
+    await addUser(unverified, { verified: false });
+    const [dead] = await queuedByService(unverified);
+    sent.length = 0;
+    expect(await service().send(dead, env)).toBe('DEAD');
+    expect(sent).toHaveLength(0);
+
+    const changedMind = await person();
+    await addUser(changedMind);
+    const [held] = await queuedByService(changedMind);
+    await savePrefs(changedMind, { kinds: [] });
+    expect(await service().send(held, env)).toBe('SUPPRESSED');
     expect(sent).toHaveLength(0);
   });
 });

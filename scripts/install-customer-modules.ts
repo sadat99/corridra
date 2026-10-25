@@ -32,7 +32,10 @@ import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
 import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
 import { migrateCustomerNotifications } from '../packages/db/src/customer-notification-migrate';
-import { configureNotifications } from '../packages/auth/src/customer-notification-configuration';
+import {
+  configureNotifications,
+  emailAddressSourceReady,
+} from '../packages/auth/src/customer-notification-configuration';
 import { migrateReplyReview } from '../packages/db/src/recipient-reply-review-migrate';
 import { configureReplyReview } from '../packages/delivery/src/reply-review-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
@@ -342,6 +345,15 @@ try {
     }
     if (v.NOTIFICATIONS_ACTION !== 'unchanged') {
       await migrateCustomerNotifications(pool);
+      // The address is read from the sign-in provider's user table at send time. Opening email without that
+      // being readable would queue messages that can never be sent, so opening stops here with a plain message.
+      // Install and pause only report it: closing email never depends on this check.
+      const addressReady = await emailAddressSourceReady(pool);
+      console.log(`Email address source readable: ${addressReady ? 'yes' : 'no'}`);
+      if (v.NOTIFICATIONS_ACTION === 'enable' && !addressReady)
+        throw new Error(
+          'Email was not opened: the database owner cannot read the sign-in provider user table (neon_auth.user). The email control was not changed, and the rest of this run was not applied.',
+        );
       if (v.NOTIFICATIONS_ACTION !== 'install') {
         const result = await configureNotifications(pool, {
           enabled: v.NOTIFICATIONS_ACTION === 'enable',

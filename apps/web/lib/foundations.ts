@@ -91,6 +91,7 @@ import { MissionMoveService } from '@corridra/missions/moves';
 import {
   CustomerNotificationService,
   PulseService,
+  databaseRecipientSource,
   customerNotificationsEnabled,
 } from '@corridra/auth/customer-notifications';
 import { MissionMailService, missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
@@ -423,10 +424,11 @@ function createServices() {
       },
       readCustomerSession,
     ),
-    // Pulse has no address source until the owner chooses one (docs/product/phase2-install.md), so it
-    // queues and seals but never claims or sends. The service is always built: mute links must keep
-    // working if the switch is turned off later.
-    pulse: new PulseService(runtimePool, config.AUTH_SECRET),
+    // Pulse reads the verified address of the account that owns the request inside the database, at send
+    // time, and only for a person who switched email on (ADR-067). It sends nothing unless the switch, real
+    // use and the database control are all on. The service is always built: mute links must keep working
+    // if the switch is turned off later.
+    pulse: new PulseService(runtimePool, config.AUTH_SECRET, databaseRecipientSource(runtimePool)),
     customerMemberRoles: new CustomerMemberRoleService(
       runtimePool,
       authPool,

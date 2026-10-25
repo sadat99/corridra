@@ -38,8 +38,8 @@ async function handle(request: Request) {
     const input = JSON.parse((await boundedBody(request, 20000)).toString('utf8'));
     const outcome = await s.moves.command(ctx, input);
     // Email about a Move is a separate step after the Move is stored: it can never fail or undo the Move.
-    // It queues nothing unless Pulse is on in the application and the database, and sends nothing until
-    // the owner has chosen where the address comes from.
+    // It queues nothing unless Pulse is on in the application and the database, and then only for a person
+    // who switched email on; the verified address is read at send time and never kept.
     if (input?.action === 'set' && !outcome.replayed && s.pulse.canSend) {
       try {
         const jobs = await s.pulse.enqueueForCommand(ctx, outcome.commandId);
