@@ -9,3 +9,5 @@ Before substantive product work, read the full V3 contract and governing product
 Record exact verification and next action in the shared ledger/work log. Do not load full archives, full PR diffs or unrelated logs merely to resume. All mandatory release checks remain required.
 
 Token discipline: classify the task, then read by `node scripts/v3-context.mjs budget|outline|section` and run long checks through `node scripts/gate.mjs`, as in the [token playbook](docs/v3/CONTEXT.md). Never load the work log, documentation map, archives or requirement register whole. Before debugging CI read [known issues](docs/v3/KNOWN_ISSUES.md).
+
+Agent squad: for build, fix, review or record work use the `corridra-squad` skill (`.claude/skills/corridra-squad/SKILL.md`). Every run starts with the `corridra-authority` agent and carries its stamped brief; no agent acts on a plan the brief does not list under FOLLOW.

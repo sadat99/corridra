@@ -1,5 +1,7 @@
 # Lane 12: fair pages and the Countdown
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 25 October 2026. Switch `CORRIDRA_UX_FAIRS`, off by default. `CORRIDRA_UX_BOOKS` stays planned: the books are not built (reasons below). With the switch unset, `/fairs` and every `/fairs/<name>` address answer the plain "not found" page.
 
 ## What exists

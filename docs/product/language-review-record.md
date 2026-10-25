@@ -1,5 +1,7 @@
 # Language review record
 
+**Document status: CURRENT.** Kept up to date; a language is public only when a review is recorded here. See the [plan status register](../PLAN_STATUS.md).
+
 One row per language. A language is offered to the public only when a native reviewer is recorded here and the owner has added its code to `CORRIDRA_LANGUAGES_REVIEWED`. Nothing in this file is a review until a name and a date are filled in. Written in Lane 2 of the UX update (24 October 2026).
 
 | Language             | Code | Reviewer (name) | Date reviewed  | What was reviewed | Offered to the public |

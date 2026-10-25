@@ -1,5 +1,7 @@
 # Lane 10: the Programme Room
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 25 October 2026. Switch `CORRIDRA_UX_PROGRAMME`, off by default. With it unset, the delegation page is exactly what it was: a list of programmes, each with its own buttons that open a panel.
 
 ## What changes when the switch is on

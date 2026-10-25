@@ -1,5 +1,7 @@
 # UX update: what was built, what is switched off, and what is yours to do
 
+**Document status: CURRENT.** The owner's install and switch steps for the UX update. See the [plan status register](../PLAN_STATUS.md).
+
 Written 25 October 2026 at the end of the build, by the session that ran the corrected plan alone under the owner's delegation ([the plan, section 0](ux-update-plan-corrected-2026-10-24.md)). Nothing here is switched on. Every change is behind its own switch, off by default, and with a switch off the page is what it was. Three optional database parts are installed only by your install job and start closed.
 
 ## The lanes
