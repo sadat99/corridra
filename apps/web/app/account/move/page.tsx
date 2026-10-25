@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { customerPageSession } from '../../../lib/customer-page-session';
@@ -6,6 +7,7 @@ import { buildMoveModel } from '../../../lib/move-cards';
 import { loadMoveInput } from '../../../lib/move-loader';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { PendingRequestNotice } from '../../../components/pending-request-notice';
+import { EmailNudge } from '../../../components/email-nudge';
 import { AccountHashRedirect } from '../hash-redirect';
 import { MoveView } from './move-view';
 
@@ -43,6 +45,7 @@ export default async function Page() {
     <CustomerShell tab="move" eyebrow="YOUR MOVE" title="Here is what is waiting for you.">
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
+      {customerNotificationsEnabled() && <EmailNudge />}
       <MoveView
         model={model}
         startHref={startHref}

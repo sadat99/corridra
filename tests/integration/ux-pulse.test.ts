@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   defaultNotificationPreferences,
+  emailIsOn,
   knownTimeZone,
   notificationKinds,
   notificationPreferencesInput,
@@ -17,6 +18,7 @@ import {
 import { signPulseMute, verifyPulseMute } from '../../packages/auth/src/pulse-mute';
 import { signMissionMailMute } from '../../packages/auth/src/mission-mail-mute';
 import {
+  databaseRecipientSource,
   noRecipientSource,
   pulseApplicationEnabled,
   pulseCapability,
@@ -290,9 +292,9 @@ describe('every switch-off path', () => {
       } as NodeJS.ProcessEnv),
     ).toBe(false);
   });
-  it('there is no address source until the owner chooses one', async () => {
+  it('a service built with no address source claims and sends nothing', async () => {
     expect(noRecipientSource.available).toBe(false);
-    expect(await noRecipientSource.resolve('anyone')).toBeNull();
+    expect(await noRecipientSource.resolve('anyone', { queueId: 'q', capability: 'c' })).toBeNull();
   });
   it('the owner registry lists the switch as a real flag', () => {
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_PULSE_ENABLED')?.kind).toBe('flag');
@@ -422,5 +424,101 @@ describe('found in review: the workflow, the caps and the claim', () => {
     const finishFn = sql.slice(sql.indexOf('CREATE FUNCTION customer.finish_notification'));
     expect(finishFn).toContain("least(expires_at-interval '1 second',");
     expect(sql).toContain('OR outcome IS NULL OR outcome NOT IN');
+  });
+});
+
+describe('email is off until a person switches it on (owner decision of 25 October 2026)', () => {
+  const second = read(
+    'packages/db/customer-notification-migrations/0002_email_off_until_chosen.sql',
+  );
+  const sql = second.replace(/--.*$/gm, '');
+  it('a person who has chosen nothing has email off, and saving a kind is the opt-in', () => {
+    expect(defaultNotificationPreferences.kinds).toEqual([]);
+    expect(emailIsOn(defaultNotificationPreferences)).toBe(false);
+    expect(emailIsOn({ kinds: ['your-move'] })).toBe(true);
+    expect(
+      notificationPreferencesInput.safeParse({ ...defaultNotificationPreferences }).success,
+    ).toBe(true);
+  });
+  it('the second migration changes no table, drops nothing and gives no application role the address', () => {
+    expect(sql).not.toMatch(/\b(CREATE|ALTER|DROP)\s+TABLE\b/i);
+    expect(sql).not.toMatch(/\bDROP\b/i);
+    expect(sql).toMatch(/p\.kinds:=ARRAY\[\]::text\[\]/);
+    expect(sql).toMatch(
+      /REVOKE ALL ON FUNCTION customer\.notification_recipient\(uuid,text\) FROM PUBLIC,corridra_auth/,
+    );
+    expect(sql).toMatch(
+      /GRANT EXECUTE ON FUNCTION customer\.notification_recipient\(uuid,text\) TO corridra_runtime/,
+    );
+    expect(sql).toMatch(
+      /REVOKE ALL ON FUNCTION customer\.notification_recipient_ready\(\) FROM PUBLIC,corridra_runtime,corridra_auth/,
+    );
+    expect(sql).not.toMatch(/GRANT[^;]*notification_recipient_ready/);
+  });
+  it('the lookup needs the capability, a message leased right now, an open control and email switched on, and reads only verified addresses', () => {
+    const fn = sql.slice(sql.indexOf('CREATE FUNCTION customer.notification_recipient('));
+    const body = fn.slice(0, fn.indexOf('$$;'));
+    expect(body).toContain(
+      "q.capability_hash<>encode(sha256(convert_to(capability,'UTF8')),'hex')",
+    );
+    expect(body).toContain("q.status<>'LEASED'");
+    expect(body).toContain('q.lease_until<=clock_timestamp()');
+    expect(body).toContain('NOT customer_private.notification_open()');
+    expect(body).toContain(
+      'cardinality((customer_private.notification_preference_of(q.principal_id)).kinds)=0',
+    );
+    expect(body).toContain('u."emailVerified" IS TRUE');
+    expect(body).toContain('p.disabled_at IS NULL');
+    expect(body).toContain('SECURITY DEFINER SET search_path=pg_catalog');
+    expect(body).not.toMatch(/\bINSERT\b|\bUPDATE\b|\bDELETE\b/);
+  });
+  it('the application reads the address through that lookup and keeps it for the one send only', () => {
+    const service = read('packages/auth/src/customer-notifications.ts');
+    expect(service).toContain("'SELECT customer.notification_recipient($1,$2) AS r'");
+    expect(service).toContain(
+      'to = await this.recipients.resolve(claim.principalId, { queueId: job.queueId, capability });',
+    );
+    expect(databaseRecipientSource({} as never).available).toBe(true);
+    expect(noRecipientSource.available).toBe(false);
+    expect(read('apps/web/lib/foundations.ts')).toContain(
+      'new PulseService(runtimePool, config.AUTH_SECRET, databaseRecipientSource(runtimePool))',
+    );
+  });
+  it('the install job will not open email while the sign-in table cannot be read', () => {
+    const script = read('scripts/install-customer-modules.ts');
+    expect(script).toContain('SELECT customer.notification_recipient_ready() AS ready');
+    expect(script).toContain("v.NOTIFICATIONS_ACTION === 'enable' && addressReady !== true");
+    expect(script).toContain('Email was not opened');
+  });
+  it('the Email choices page leads with a clear on and off switch and says email is off until it is on', () => {
+    const form = read('apps/web/app/account/notifications/notifications-form.tsx');
+    expect(form).toContain('Email me when something needs me');
+    expect(form).toContain('We do not email you unless you switch this on.');
+    expect(form).toContain('Pick at least one message, or leave email off.');
+    expect(form).toContain("'Switch email on'");
+    expect(form).toContain("'Switch email off'");
+    expect(form).not.toMatch(/[—–]/);
+  });
+  it('a person who never looked is told once, where they already are, and can say not now', () => {
+    const nudge = read('apps/web/components/email-nudge.tsx');
+    expect(nudge).toContain('lang="en" dir="ltr"');
+    expect(nudge).toContain('preferences.open === true');
+    expect(nudge).toContain('preferences.synthetic !== true');
+    expect(nudge).toContain('preferences.version === 0');
+    expect(nudge).toContain('14 * 24 * 60 * 60 * 1000');
+    expect(nudge).toContain('href="/account/notifications"');
+    expect(nudge).not.toMatch(/[—–]/);
+    expect(nudge).not.toContain('<svg');
+    expect(read('apps/web/components/email-nudge.css')).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    for (const page of [
+      'apps/web/app/account/move/page.tsx',
+      'apps/web/app/account/requests/[requestId]/page.tsx',
+    ])
+      expect(read(page)).toContain('{customerNotificationsEnabled() && <EmailNudge />}');
+  });
+  it('every email says why the person gets it', () => {
+    expect(renderPulse(move()).text).toContain(
+      'You are getting this because you switched on email about your requests in Corridra.',
+    );
   });
 });

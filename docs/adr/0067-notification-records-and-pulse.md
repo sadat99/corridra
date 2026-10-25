@@ -20,6 +20,17 @@ An optional additive module, `customer_notification_migrations`, beside mission 
 - **Control.** A control table, closed until the owner opens it, with an offline `configure` step like mission mail's. The application switch is separate. Both must be on, and `realUseEnabled` must be true.
 - **Order.** Email first. Web push comes after, and WhatsApp is not covered here.
 
+## Address source and consent (owner decision, 25 October 2026)
+
+The owner chose option A with opt-in from the three options in [phase2-install](../product/phase2-install.md): the address comes from the sign-in provider at send time, and only a person who switched email on is emailed.
+
+- **Off by default.** A person who has saved no choice has email off (an empty list of kinds). Saving at least one kind is the opt-in; each saved choice is a new version row with its time, which is the record of consent. Switching email off saves an empty list. A message already queued is suppressed when its kind is no longer chosen.
+- **Address read at send time, never stored.** The provider keeps its users in `neon_auth."user"` in the same database. `customer.notification_recipient(queue, capability)` returns the verified address of the one account that owns the request, only while that message is leased to the sender, only with the secret-derived capability, only with the control open and the person's email on, and only when the provider marks the address verified. The application holds it in memory for the one send. No table stores it and no log carries it. A person with no verified address gets nothing.
+- **Opening is checked.** The install job refuses `notifications_action=enable` unless the database owner can read that table with the columns the lookup needs, so email is never opened in a state that cannot send.
+- **People are told.** The Email choices page leads with a plain on and off switch and says email is off until it is switched on. Your Move and the request page show a short prompt, "Email is off", to a person who has never chosen, with a link to the switch. "Not now" is remembered in that browser for 14 days, and a person who switched email off on purpose is not asked again. Every email says the person switched email on.
+- **Still the owner's.** The privacy review of the email texts and of the 24 hour queue before the control is opened, and reviewed translations (email is English only).
+- **A second migration file.** The first file is installed and its hash is checked, so the change is `0002_email_off_until_chosen.sql`. Enabling runs every pending file first.
+
 ## Abuse cases
 
 A forged link to another person's request (the owner check is in the database function); replay of a send (idempotent by key); a mail scanner opening a mute link (nothing happens until the button is pressed); an attacker choosing a return path (exact allow-list, never a free value); personal data in logs (events carry ids only); a flood of messages (per request and per day caps, and quiet hours); a staff typo in a Move title sent to a customer (titles are plain text, escaped, and shown in the staff preview before saving).

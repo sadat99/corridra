@@ -342,6 +342,18 @@ try {
     }
     if (v.NOTIFICATIONS_ACTION !== 'unchanged') {
       await migrateCustomerNotifications(pool);
+      // The address is read from the sign-in provider's user table at send time. Opening email without that
+      // being readable would queue messages that can never be sent, so opening stops here with a plain message.
+      const addressReady = (
+        await pool.query<{ ready: boolean | null }>(
+          'SELECT customer.notification_recipient_ready() AS ready',
+        )
+      ).rows[0]?.ready;
+      console.log(`Email address source readable: ${addressReady === true ? 'yes' : 'no'}`);
+      if (v.NOTIFICATIONS_ACTION === 'enable' && addressReady !== true)
+        throw new Error(
+          'Email was not opened: the database owner cannot read the sign-in provider user table (neon_auth.user). The control stays closed.',
+        );
       if (v.NOTIFICATIONS_ACTION !== 'install') {
         const result = await configureNotifications(pool, {
           enabled: v.NOTIFICATIONS_ACTION === 'enable',

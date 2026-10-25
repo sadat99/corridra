@@ -110,7 +110,8 @@ export const pulseCatalog: Record<string, Catalog> = {
     },
     greeting: 'Hi {name},',
     greetingNoName: 'Hi,',
-    footerWhy: 'You are getting this because you have a request with Corridra.',
+    footerWhy:
+      'You are getting this because you switched on email about your requests in Corridra.',
     mute: 'Mute this request',
     manage: 'Manage messages',
     language: 'Language: {language_code}',

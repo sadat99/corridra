@@ -29,19 +29,44 @@ export type PulseStatus =
   'SENT' | 'DEAD' | 'SUPPRESSED' | 'CLOSED' | 'LEASED' | 'WAIT' | 'RETRY' | 'UNAVAILABLE';
 
 /**
- * Where the verified account's address comes from, read at send time and never stored. The database holds
- * no address and the Corridra team's session does not carry one, so a source has to be chosen by the owner
- * after the privacy review (see docs/product/phase2-install.md). Until then there is none, nothing is
- * claimed, and every queued message expires unsent.
+ * Where the verified account's address comes from, read at send time and never stored. The proof is the
+ * message being sent and the secret-derived capability for it: a source that reads a real address must
+ * check that the message is leased to this sender right now, so nobody can ask for an address outside a send.
+ * A source with `available` false means nothing is claimed and every queued message expires unsent.
  */
 export type RecipientPort = {
   available: boolean;
-  resolve(principalId: string): Promise<{ address: string; name?: string } | null>;
+  resolve(
+    principalId: string,
+    proof: { queueId: string; capability: string },
+  ): Promise<{ address: string; name?: string } | null>;
 };
 export const noRecipientSource: RecipientPort = {
   available: false,
   resolve: async () => null,
 };
+
+/**
+ * The owner's choice of 25 October 2026 (ADR-067): the verified address on the sign-in account, read inside
+ * the database while a message is leased to the sender (`customer.notification_recipient`), held in memory for
+ * the one send and never written anywhere. Whether the person has email switched on is checked again there.
+ * A person with no verified address gets nothing (the message ends as not sent); a database problem retries.
+ */
+export function databaseRecipientSource(pool: DatabasePool): RecipientPort {
+  return {
+    available: true,
+    resolve: async (_principalId, proof) => {
+      const answer = (
+        await pool.query('SELECT customer.notification_recipient($1,$2) AS r', [
+          proof.queueId,
+          proof.capability,
+        ])
+      ).rows[0].r as { found?: boolean; address?: string; name?: string } | null;
+      if (!answer?.found || !answer.address) return null;
+      return { address: answer.address, name: answer.name || undefined };
+    },
+  };
+}
 
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -112,7 +137,7 @@ export class PulseService {
     private sender: MailSender = sendWithResend,
   ) {}
 
-  /** False until the owner chooses where the address comes from. Nothing is started while it is false. */
+  /** False without an address source. Nothing is started while it is false. */
   get canSend() {
     return pulseApplicationEnabled() && this.recipients.available;
   }
@@ -188,7 +213,7 @@ export class PulseService {
       ).rows[0].r.status as string;
     let to: { address: string; name?: string } | null;
     try {
-      to = await this.recipients.resolve(claim.principalId);
+      to = await this.recipients.resolve(claim.principalId, { queueId: job.queueId, capability });
     } catch {
       return ((await finish('TRANSIENT')) === 'DEAD' ? 'DEAD' : 'RETRY') as PulseStatus;
     }
