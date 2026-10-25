@@ -4,6 +4,7 @@ import {
   customerProductionUnlocked,
   realUseEnabled,
 } from '@corridra/auth/customer-production';
+import { languagesWithPages } from './i18n/pages';
 
 /**
  * Plain-language registry of every CORRIDRA_* setting the application reads.
@@ -561,6 +562,14 @@ function resolve(
     return off;
   }
   if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
+  if (entry.name === 'CORRIDRA_LANGUAGES_PAGES') {
+    // `true` or a list of language codes: the row says what visitors really get.
+    const released = languagesWithPages(env);
+    if (released.length === 0) return off;
+    return env[entry.name]?.trim().toLowerCase() === 'true'
+      ? on
+      : { text: `On for ${released.join(', ')}`, tone: 'positive' as const };
+  }
   return env[entry.name] === 'true' ? on : off;
 }
 

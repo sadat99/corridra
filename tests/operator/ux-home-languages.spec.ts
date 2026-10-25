@@ -179,6 +179,19 @@ test('no word on the page is written by the stylesheet, so every word is transla
   );
 });
 
+test('with Arabic chosen but its page words not released, the English page keeps its arrows', async ({
+  page,
+}) => {
+  await page.addInitScript((v) => localStorage.setItem('corridra.language', v), 'ar');
+  await page.goto(`${origin}/?pages=0`);
+  // The chrome around the page follows Arabic and reads right to left; the page itself is English, left to right.
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('main#main')).toHaveAttribute('dir', 'ltr');
+  for (const selector of ['.ac1-route-arrow', '.ac1-job-go', '.arrow-icon'])
+    for (const arrow of await page.locator(selector).all())
+      expect(await arrow.evaluate((el) => getComputedStyle(el).transform), selector).toBe('none');
+});
+
 test('read right to left, arrows point the other way and the arrow keys swap on the example tabs', async ({
   page,
 }) => {

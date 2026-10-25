@@ -795,8 +795,9 @@ summary:hover {
   vertical-align: middle;
   margin-inline-start: 5px;
 }
-/* Arrows that point along the reading direction point the other way when the text reads right to left. */
-[dir='rtl'] :is(.arrow-icon, .ac1-job-go, .ac1-route-arrow) {
+/* Arrows that point along the reading direction point the other way when their own text reads right to left
+   (:dir uses the arrow's effective direction, so an English main region inside an Arabic chrome keeps them). */
+:is(.arrow-icon, .ac1-job-go, .ac1-route-arrow):dir(rtl) {
   transform: scaleX(-1);
 }
 .operator-page {

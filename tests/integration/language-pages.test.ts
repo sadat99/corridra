@@ -11,7 +11,7 @@ import {
 } from '../../apps/web/lib/i18n/pages';
 import { catalogs, en, translate } from '../../apps/web/lib/i18n/messages';
 import { homeEn, homeWords } from '../../apps/web/lib/i18n/home-words';
-import { switchRegistry } from '../../apps/web/lib/owner-switches';
+import { describeSwitches, switchRegistry } from '../../apps/web/lib/owner-switches';
 
 // Page words (owner decision of 25 October 2026): pages follow the chosen language behind
 // CORRIDRA_LANGUAGES_PAGES. Until the owner records a review of the words and turns the switch on, every page key
@@ -42,6 +42,20 @@ describe('the page switch', () => {
       expect(localeFor(locale, 'header.menu', true)).toBe(locale);
     }
     expect(localeFor('en', 'home.title', false)).toBe('en');
+  });
+
+  it('shows on the owner page what visitors really get, for true, for a list and for nothing', () => {
+    const row = (value?: string) =>
+      describeSwitches(
+        (value === undefined ? {} : { CORRIDRA_LANGUAGES_PAGES: value }) as NodeJS.ProcessEnv,
+      )
+        .flatMap((group) => group.rows)
+        .find((entry) => entry.name === 'CORRIDRA_LANGUAGES_PAGES')!.state;
+    expect(row()).toEqual({ text: 'Off', tone: 'neutral' });
+    expect(row('nonsense')).toEqual({ text: 'Off', tone: 'neutral' });
+    expect(row('true')).toEqual({ text: 'On', tone: 'positive' });
+    expect(row(' TRUE ')).toEqual({ text: 'On', tone: 'positive' });
+    expect(row('es,de')).toEqual({ text: 'On for es, de', tone: 'positive' });
   });
 
   it('is in the owner registry as a flag, and the provider and layout use it', () => {
