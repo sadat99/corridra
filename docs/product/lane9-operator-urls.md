@@ -1,5 +1,7 @@
 # Lane 9: team workspace addresses and view as, stage 2
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 25 October 2026. Switch `CORRIDRA_UX_OPERATOR_URLS`, off by default. With it unset, `/operator` is what it was, a section address answers "not found" and the preview shows only its three fixed cards.
 
 ## What changes when the switch is on

@@ -1,5 +1,7 @@
 # Lane 4: Your Move, the navigation names and All tools
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 24 October 2026. Switches `CORRIDRA_UX_NAV` and `CORRIDRA_UX_MOVE`, both off by default. With both unset every customer page, address and label is exactly what it was.
 
 ## What exists when the switches are on

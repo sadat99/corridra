@@ -1,5 +1,7 @@
 # Pulse email: privacy review record, 25 October 2026
 
+**Document status: CURRENT, DATED.** Engineering privacy review of Pulse as merged on 25 October 2026; re-check against the code before quoting. See the [plan status register](../PLAN_STATUS.md).
+
 Reviewer: Claude (an AI engineering assistant), on the written instruction of the owner, Nazmus Sadat, on 25 October 2026 ("U do the privacy review now"). A second, independent read-only reviewer checked the first pass. This is an engineering review of what the system does and says. It is not legal advice and it does not replace the privacy lawyer review of the notice, which stays a separate later owner step in the ledger.
 
 Scope: Pulse as merged in PR 205 (email about requests, off until a person switches it on, address read at send time), the privacy notice, the staff Move screen, the email templates and the database functions. Nothing was observed in production; everything below is from the code, the tests and rendered emails.

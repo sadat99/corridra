@@ -1,5 +1,7 @@
 # Phase 2 install steps for the owner
 
+**Document status: CURRENT.** Owner steps; nothing here is applied by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: written 24 October 2026 with Lane 7 of the UX update. Nothing here is applied by merging. Every step below is yours to run, in this order, and each can be undone.
 
 ## What exists after Lane 7 merges

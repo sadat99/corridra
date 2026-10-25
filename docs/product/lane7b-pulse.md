@@ -1,5 +1,7 @@
 # Lane 7b: Pulse notification records
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 24 October 2026. Switch `CORRIDRA_PULSE_ENABLED` (off by default) and a database control that starts closed. Decision record: [ADR-067](../adr/0067-notification-records-and-pulse.md). Owner steps and open decisions: [phase2-install.md](phase2-install.md).
 
 ## What exists

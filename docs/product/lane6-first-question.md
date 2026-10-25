@@ -1,5 +1,7 @@
 # Lane 6: the first question and the single Sample label
 
+**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+
 Status: built and dark, 24 October 2026; listed as an owner switch from 25 October. Switch `CORRIDRA_UX_FIRSTQ`, off by default. With it unset the plan page and the header are exactly what they were.
 
 ## What changes when the switch is on

@@ -1,5 +1,7 @@
 # UX update plan: verification record and addendum, 24 October 2026
 
+**Document status: HISTORICAL.** Planning record replaced by the [corrected plan](ux-update-plan-corrected-2026-10-24.md), which was executed. See the [plan status register](../PLAN_STATUS.md).
+
 Status: dated record, proposed. Phase: planning only. Nothing here is executed until the owner marks the plan final (section 11). The facts here expire; [the UX charter](ux-charter.md) does not. Where this record and the charter differ, the charter wins.
 
 Subject: the owner's "final strict plan for parallel Claude Code sessions" of 24 October 2026, supplied in a session. The plan is not stored in the repository, so this record is written to be read without it. Where it mentions the plan's own questions (Q1 to Q3) or waves, it uses the plan's names.
