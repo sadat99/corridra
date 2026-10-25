@@ -15,6 +15,7 @@ import { initialRoutes } from '../../packages/domain/src/corridors';
 import { displayMoney, displayDate, originalAmountToMinor } from '../../packages/domain/src/locale';
 import { briefSchema } from '../../packages/domain/src/missions';
 import { migrate } from '../../packages/db/src/migrate';
+import { buildReplyTerms, replyTermKeys, noCharge } from '../../apps/web/lib/reply-terms';
 const account = vi.hoisted(() => ({ session: null as unknown, services: null as unknown }));
 vi.mock('../../apps/web/lib/neon-auth', () => ({
   neonAuth: () => ({ getSession: async () => account.session }),
@@ -362,6 +363,102 @@ test('supplier disclosure and declaration reuse expiring recipient capability wi
   await f.communications.command(f.ctx, command('revoke', { linkId: intro.id, reason }));
   await expect(f.communications.buyer({ action: 'read', token: intro.token })).rejects.toThrow();
   await expect(f.communications.buyer(reply)).rejects.toThrow();
+});
+
+test('the Reply Page form sends all eighteen terms the database function accepts, leaves blanks out, and records exactly what was typed', async () => {
+  const j = await sourceJourney(),
+    intro = await f.introduction(j.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: intro.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: j.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: true,
+    approved: true,
+    reason,
+  });
+  const built = buildReplyTerms(
+    {
+      specification: 'Polyester curtain track, 4 m, white',
+      quantity: '1200',
+      moq: '200',
+      unit: 'pieces',
+      unitPriceMinor: '12.50',
+      totalPriceMinor: '15000',
+      toolingMinor: noCharge,
+      setupMinor: '300',
+      packagingMinor: '45.5',
+      leadTime: '6 weeks after the deposit',
+      validUntil: '2099-12-31',
+      incoterm: 'FOB',
+      paymentTerms: '30 percent deposit, balance before shipping',
+      shipping: 'EXCLUDED',
+      warranty: 'Two years on parts',
+      installation: 'Not included',
+      training: 'One day on site',
+      spares: 'Ten percent spare parts shipped free',
+    },
+    'USD',
+  );
+  expect(built.ok).toBe(true);
+  if (!built.ok) return;
+  expect(Object.keys(built.terms).sort()).toEqual([...replyTermKeys].sort());
+  const reply = {
+    action: 'detail-response',
+    token: intro.token,
+    responseId: randomUUID(),
+    body: '您好，附上我们的报价。',
+    meetingInterest: false,
+    quotation: { currency: 'USD', terms: built.terms, uncertainties: 'Freight is not yet known' },
+    acknowledged: true,
+  };
+  expect(await f.communications.buyer(reply)).toMatchObject({
+    recorded: true,
+    sourceKind: 'SELF_DECLARATION',
+  });
+  const stored = (
+    await f.owner.query('SELECT body FROM app.recipient_detail_response WHERE link_id=$1', [
+      intro.id,
+    ])
+  ).rows[0].body;
+  expect(stored).toEqual({
+    body: reply.body,
+    meetingInterest: false,
+    quotation: reply.quotation,
+    acknowledged: true,
+  });
+  // A blank stays out of the record: nothing is stored as zero.
+  expect(stored.quotation.terms.warrantyMinor).toBeUndefined();
+  // A term the form does not offer is still refused.
+  const other = await sourceJourney(),
+    link = await f.introduction(other.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: link.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: other.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest: true,
+    approved: true,
+    reason,
+  });
+  await expect(
+    f.communications.buyer({
+      ...reply,
+      token: link.token,
+      responseId: randomUUID(),
+      quotation: {
+        currency: 'USD',
+        terms: { discount: '5' },
+        uncertainties: 'Freight is not yet known',
+      },
+    }),
+  ).rejects.toThrow();
 });
 
 test('client publication exposes only selected records; a matching account email grants no private mission', async () => {
