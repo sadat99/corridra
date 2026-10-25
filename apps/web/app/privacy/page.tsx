@@ -13,6 +13,8 @@ export default function Page() {
   const real = realUseEnabled();
   // The first mission email says what it does only while it can actually be sent.
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
+  // Email about what needs a person (Pulse) is described only while it can actually be sent.
+  const pulseEmail = real && process.env.CORRIDRA_PULSE_ENABLED === 'true';
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
@@ -451,6 +453,19 @@ export default function Page() {
                 for at most 24 hours, only to send the email, and we do not share it with anyone
                 else. These emails are sent through Resend, like account verification emails.
                 Sign-in and password emails are separate.
+              </p>
+            )}
+            {pulseEmail && (
+              <p>
+                If you switch on email about your requests, we email the verified address on your
+                account when something needs you. Email is off until you switch it on, and you can
+                switch it off at any time on the Email choices page. We read the address from your
+                account at the moment we send and do not store it. Each email shows only a plain
+                title and a date, with a link to your request and a link to mute messages about that
+                request, and is sent through Resend, like account verification emails. We keep your
+                email choices, with the time you made them, and a record of each message (its title,
+                date and status, never your address) in the Frankfurt application database as part
+                of your request history.
               </p>
             )}
             <p>

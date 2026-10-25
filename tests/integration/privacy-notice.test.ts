@@ -45,6 +45,7 @@ const text = async (env: Record<string, string | undefined>) => {
     'DATA_ENVIRONMENT',
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
+    'CORRIDRA_PULSE_ENABLED',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
     'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
@@ -59,6 +60,8 @@ const text = async (env: Record<string, string | undefined>) => {
 };
 const real = { DATA_ENVIRONMENT: 'real', CORRIDRA_REAL_USE_ENABLED: 'true' };
 const emailSentence = 'We email the verified address on your account when we receive your request.';
+const pulseSentence =
+  'If you switch on email about your requests, we email the verified address on your account when something needs you.';
 const deviceSentence =
   'a private code for it is kept in your browser on this device so you can check its status later';
 
@@ -67,6 +70,7 @@ afterEach(() => {
     'DATA_ENVIRONMENT',
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
+    'CORRIDRA_PULSE_ENABLED',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
     'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
@@ -99,6 +103,19 @@ describe('the privacy notice', () => {
     expect(
       await text({ DATA_ENVIRONMENT: 'synthetic', CORRIDRA_MISSION_EMAIL_ENABLED: 'true' }),
     ).not.toContain(emailSentence);
+  });
+  it('email about your requests is described only while it can be sent, as off until switched on, with the address not stored', async () => {
+    expect(await text(real)).not.toContain(pulseSentence);
+    const page = await text({ ...real, CORRIDRA_PULSE_ENABLED: 'true' });
+    expect(page).toContain(pulseSentence);
+    expect(page).toContain('Email is off until you switch it on');
+    expect(page).toContain('do not store it');
+    expect(page).toContain('never your address');
+    for (const value of ['TRUE', 'yes', '1', ' true', ''])
+      expect(await text({ ...real, CORRIDRA_PULSE_ENABLED: value })).not.toContain(pulseSentence);
+    expect(
+      await text({ DATA_ENVIRONMENT: 'synthetic', CORRIDRA_PULSE_ENABLED: 'true' }),
+    ).not.toContain(pulseSentence);
   });
   it('billing records are described only while real invoices can be issued, and the practice flow only while it exists', async () => {
     const billing = 'Billing records';
@@ -173,6 +190,7 @@ describe('the privacy notice', () => {
     for (const env of [
       real,
       { ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' },
+      { ...real, CORRIDRA_PULSE_ENABLED: 'true' },
       { DATA_ENVIRONMENT: 'synthetic' },
     ])
       expect(await text(env)).not.toMatch(/—|–| - /);

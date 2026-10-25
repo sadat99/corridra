@@ -219,6 +219,11 @@
       "use": "Lane 7b: Pulse notification records, the Email choices page, the mute page, what is built, what waits and how it is verified"
     },
     {
+      "path": "docs/product/pulse-email-review-pack.md",
+      "classification": "UX programme/contract/packet",
+      "use": "Pulse email review pack for the owner: the five email texts rendered, who is emailed, what is kept, what is not built, the privacy notice wording and the steps to open and undo Pulse"
+    },
+    {
       "path": "docs/product/lane8-reply-page.md",
       "classification": "UX programme/contract/packet",
       "use": "Lane 8: the supplier Reply Page, the team's review of replies, the Chinese release gate, the in-app browser test plan and what is not built"
