@@ -1,6 +1,6 @@
 # Lane 6: the first question and the single Sample label
 
-Status: built and dark, 24 October 2026. Switch `CORRIDRA_UX_FIRSTQ`, off by default. With it unset the plan page and the header are exactly what they were.
+Status: built and dark, 24 October 2026; listed as an owner switch from 25 October. Switch `CORRIDRA_UX_FIRSTQ`, off by default. With it unset the plan page and the header are exactly what they were.
 
 ## What changes when the switch is on
 
