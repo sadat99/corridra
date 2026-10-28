@@ -934,10 +934,17 @@ function IntakeForm({
                       onChange={(e) => change('offer', e.target.value)}
                       placeholder="Example: We manufacture hotel towels in Bangladesh and want to meet Spanish hospitality distributors buying private-label products."
                       aria-invalid={!!errors.offer?.length}
-                      aria-describedby={errors.offer?.length ? 'offer-error' : undefined}
+                      aria-describedby={
+                        errors.offer?.length ? 'offer-hint offer-error' : 'offer-hint'
+                      }
                     />
                     {error('offer')}
                   </label>
+                  <p id="offer-hint">
+                    Start with what you know. You can describe a product photo, an idea, an existing
+                    supplier or a price quote. Missing specifications can be clarified later. Image
+                    interpretation is not available here.
+                  </p>
                   {draft.job === 'machinery_procurement' && (
                     <>
                       {field('technicalPurpose', 'Technical purpose (optional)')}
@@ -1050,9 +1057,15 @@ function IntakeForm({
                       maxLength={1000}
                       value={draft.notes}
                       onChange={(e) => change('notes', e.target.value)}
+                      aria-describedby="request-context-hint"
                     />
                     {error('notes')}
                   </label>
+                  <p id="request-context-hint">
+                    Tell us where things stand and what help you need next. An existing supplier,
+                    approved specification, booked trip or active negotiation can be your starting
+                    point.
+                  </p>
                 </>
               )}
               {step === 4 && (

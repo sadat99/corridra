@@ -29,6 +29,9 @@ import {
   missionDraftObjectives,
   requirementPrompts,
   sourcingContextLabels,
+  requestStartingPoints,
+  startingPointLabel,
+  startingPointValue,
 } from '../../packages/domain/src/mission-drafts';
 import { briefSchema } from '../../packages/domain/src/missions';
 import { MissionService } from '../../packages/missions/src/index';
@@ -946,5 +949,42 @@ test('the browser validator agrees with the server schema on every save rule it 
     const server = missionDraftSaveInput.safeParse(save(over)).success;
     const browser = draftProblems(d).length === 0;
     expect(browser, JSON.stringify(over).slice(0, 100)).toBe(server);
+  }
+});
+
+test('an incomplete inquiry keeps its actual starting point through saved revisions and the existing request', async () => {
+  for (const point of requestStartingPoints) {
+    const requirements = [{ label: startingPointLabel, value: startingPointValue(point) }];
+    const input = save({
+      family: 'SUPPLIERS_PRODUCTS',
+      objective: 'Source suppliers',
+      attendance: 'Not decided',
+      startDate: '',
+      endDate: '',
+      offer: 'Synthetic product photo of an umbrella; size and material are not known yet',
+      sourcingContext: null,
+      profileVersion: null,
+      requirements,
+    });
+    const saved = await drafts().save(input);
+    const recovered = await drafts().view({ workspaceId, draftId: saved.draft.id });
+    expect(recovered.draft.details.requirements).toEqual(requirements);
+    expect(recovered.draft.details.sourcingContext).toBeNull();
+    const brief = composeBrief(recovered.draft.details)!;
+    expect(brief).not.toBeNull();
+    expect(brief.offer).toBe(
+      input.details.offer +
+        '\n\nRequirements:\n' +
+        startingPointLabel +
+        ': ' +
+        startingPointValue(point),
+    );
+    const submitted = await requests().submit(
+      { commandId: randomUUID(), workspaceId, brief },
+      (context, value) => missions.prepareCustomerIntake(context, value),
+    );
+    expect(submitted.id).toEqual(expect.any(String));
+    // Sending does not invent technical parameters or turn an inquiry into a purchase decision.
+    expect(recovered.draft.details.requirements).toHaveLength(1);
   }
 });

@@ -535,9 +535,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-02-023",
@@ -671,9 +672,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-02-035",
@@ -777,9 +779,12 @@
     "heading": "Product 2 — Find Suppliers & Source Products",
     "line": 122,
     "requirement": "Original quotations, currencies, specifications, source language and evidence remain accessible. Derived comparisons must disclose assumptions.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+    ],
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-02-042",
@@ -1334,9 +1339,12 @@
     "heading": "Shared engines",
     "line": 186,
     "requirement": "Requirements, markets, organisations, qualification, introductions, meetings, visits, quotations, commitments, commercial progression and accountability.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+    ],
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-03-004",
@@ -2048,9 +2056,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-04-034",
@@ -2127,9 +2136,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-04-041",
@@ -2376,9 +2386,12 @@
     "heading": "The contextual workspace pattern",
     "line": 357,
     "requirement": "- Quotations and comparisons.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+    ],
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-04-065",
@@ -2512,9 +2525,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Guided request authoring source and local tests exist (ADR045); exact-head CI, gated release, real-user usability and the related downstream workflow remain unverified."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-04-077",
@@ -2845,9 +2859,10 @@
     "evidence": [
       "packages/missions/src/commercial.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-05-012",
@@ -2962,9 +2977,10 @@
     "evidence": [
       "packages/missions/src/commercial.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-05-020",
@@ -3158,9 +3174,10 @@
     "evidence": [
       "packages/delivery/src/index.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-05-034",
@@ -3172,9 +3189,10 @@
     "evidence": [
       "packages/delivery/src/index.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-05-035",
@@ -3284,9 +3302,10 @@
     "evidence": [
       "packages/domain/src/currencies.ts",
       "docs/implementation/implementation-matrix.json",
-      "docs/v3/phase-0/inventory.json"
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Map every original action into this V3 home; retain original URLs until all affected authorized roles and states pass."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-05-043",
@@ -3613,9 +3632,10 @@
       "packages/domain/src/mission-drafts.ts",
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
-      "tests/browser/v3-guided-request-gate.spec.ts"
+      "tests/browser/v3-guided-request-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "PR75 exact CI331PG/116public/91protected,matching merge and READY production/preview verified;35live+3preview checks. Actual provider/full customer commercial/organisation authority remain unfinished. Creator-owned guided drafts added (ADR045), source only."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-06-005",
@@ -3725,8 +3745,12 @@
     "line": 501,
     "requirement": "| Contextual paid-service requests | Hybrid revenue and local execution | P1 |",
     "status": "PARTIAL",
-    "evidence": ["docs/agents/saas-readiness-audit.md", "docs/v3/phase-0/inventory.json"],
-    "nextAction": "Optional synthetic-only contextual paid-service requests are implemented and locally verified (staff catalogue, itemised quote versus order intent, status timeline, customer and staff screens; ADR055) but remain PARTIAL until the owner-approved install, a real-user trial and a named staff team; billing (V3-06-013) stays separate and MISSING."
+    "evidence": [
+      "docs/agents/saas-readiness-audit.md",
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+    ],
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-06-013",
@@ -4500,9 +4524,12 @@
     "heading": "Financial truth",
     "line": 618,
     "requirement": "3. Corridra's actual service/platform revenue.",
-    "status": "NOT VERIFIED",
-    "evidence": ["docs/v3/phase-0/inventory.json"],
-    "nextAction": "Link applicable implementation and positive/denial role-state runtime evidence; retain original actions."
+    "status": "PARTIAL",
+    "evidence": [
+      "docs/v3/phase-0/inventory.json",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+    ],
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-08-020",
@@ -4539,9 +4566,10 @@
       "packages/auth/src/customer-programme-economics.ts",
       "tests/integration/customer-programme-economics.test.ts",
       "tests/operator/v3-programme-economics-ui.spec.ts",
-      "tests/browser/v3-programme-economics-gate.spec.ts"
+      "tests/browser/v3-programme-economics-gate.spec.ts",
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
     ],
-    "nextAction": "Organiser amounts are exact bigint minor units in the original currency, corrections are compensating entries, and totals are per currency with no conversion (ADR046). Derived conversions are not implemented."
+    "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
   {
     "id": "V3-08-023",

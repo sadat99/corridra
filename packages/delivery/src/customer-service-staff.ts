@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { DomainError } from '@corridra/domain';
+import {
+  commercialArrangement,
+  internalSupplyEconomics,
+  validateArrangementFees,
+} from '@corridra/domain/commercial-arrangements';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 
@@ -47,6 +53,8 @@ export const staffServiceCommandInput = z.discriminatedUnion('action', [
       deliveryTerms: synthetic(500),
       paymentTerms: synthetic(500),
       validUntil: z.iso.datetime({ offset: false }),
+      commercialArrangement: commercialArrangement.optional(),
+      internalEconomics: internalSupplyEconomics.optional(),
     })
     .strict()
     .refine(
@@ -112,29 +120,72 @@ export class CustomerServiceStaffService {
   }
   async view(ctx: RequestContext, requestId: string) {
     const id = z.uuid().parse(requestId);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
-        (await db.query('SELECT app.service_request_staff_view($1) result', [id])).rows[0].result,
-    );
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) => {
+      const page = (await db.query('SELECT app.service_request_staff_view($1) result', [id]))
+        .rows[0].result;
+      const installed = (
+        await db.query(
+          "SELECT to_regprocedure('app.service_quote_internal_economics(uuid)') IS NOT NULL installed",
+        )
+      ).rows[0].installed;
+      page.commercialArrangementsAvailable = installed;
+      if (installed)
+        page.internalSupplyEconomics = (
+          await db.query('SELECT app.service_quote_internal_economics($1) result', [id])
+        ).rows[0].result;
+      return page;
+    });
   }
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = staffServiceCommandInput.parse(input);
-    return withTenant(
-      this.pool,
-      ctx,
-      'delivery.share',
-      async ({ db }) =>
-        (
+    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) => {
+      if (action === 'quote') {
+        const {
+          commercialArrangement: terms,
+          internalEconomics,
+          ...quote
+        } = payload as Omit<
+          Extract<z.infer<typeof staffServiceCommandInput>, { action: 'quote' }>,
+          'action' | 'commandId'
+        >;
+        if (terms) validateArrangementFees(terms, quote.components, quote.currency);
+        if (internalEconomics && !terms)
+          throw new DomainError('Private supply costs need commercial terms');
+        const installed = (
+          await db.query(
+            "SELECT to_regprocedure('app.service_request_arrangement_quote(uuid,jsonb,jsonb,jsonb)') IS NOT NULL installed",
+          )
+        ).rows[0].installed;
+        if (installed)
+          return (
+            await db.query('SELECT app.service_request_arrangement_quote($1,$2,$3,$4) result', [
+              commandId,
+              JSON.stringify(quote),
+              terms ? JSON.stringify(terms) : null,
+              internalEconomics ? JSON.stringify(internalEconomics) : null,
+            ])
+          ).rows[0].result;
+        if (terms)
+          throw new DomainError(
+            'Commercial arrangements are unavailable until the protected module is installed',
+            503,
+          );
+        return (
           await db.query('SELECT app.service_request_staff_command($1,$2,$3) result', [
             commandId,
             action,
-            JSON.stringify(payload),
+            JSON.stringify(quote),
           ])
-        ).rows[0].result,
-    );
+        ).rows[0].result;
+      }
+      return (
+        await db.query('SELECT app.service_request_staff_command($1,$2,$3) result', [
+          commandId,
+          action,
+          JSON.stringify(payload),
+        ])
+      ).rows[0].result;
+    });
   }
   async catalogue(ctx: RequestContext) {
     return withTenant(

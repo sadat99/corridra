@@ -347,6 +347,73 @@ test('the Compare lens puts the verdict first, in cards, with the table one tap 
   await expect(page.locator('.mr-quote')).toHaveCount(2);
 });
 
+test('the table keeps every original commercial term and names missing obligations', async ({
+  page,
+}) => {
+  await open(page);
+  await lens(page, 'Compare').click();
+  await page.getByRole('button', { name: 'Table' }).click();
+  const matrix = page.locator('table.ux-comparison-matrix');
+  for (const label of [
+    'Minimum order quantity',
+    'Tooling',
+    'Setup',
+    'Packaging',
+    'Offer valid until',
+    'Delivery terms (Incoterm)',
+    'Shipping scope',
+    'Warranty',
+    'Installation',
+    'Training',
+    'Spares',
+  ])
+    await expect(matrix.getByRole('rowheader', { name: label, exact: true })).toBeVisible();
+  await expect(
+    matrix.getByRole('row', { name: 'Shipping scope EXCLUDED EXCLUDED', exact: true }),
+  ).toBeVisible();
+  await expect(
+    matrix.getByRole('row', {
+      name: 'Minimum order quantity NOT SUPPLIED NOT SUPPLIED',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    matrix.getByRole('row', { name: 'Tooling USD 0.00 USD 0.00', exact: true }),
+  ).toBeVisible();
+});
+
+for (const [name, firstTerms, secondTerms] of [
+  [
+    'different tire specifications',
+    { ...terms, specification: 'Truck tire 315/80 R22.5' },
+    { ...terms, specification: 'Truck tire 385/65 R22.5' },
+  ],
+  [
+    'different machinery installation obligations',
+    { ...terms, installation: 'On-site installation included' },
+    { ...terms, installation: 'Installation excluded' },
+  ],
+] as const) {
+  test(`both offers require review for ${name}`, async ({ page }) => {
+    await open(page);
+    await page.unroute('**/api/customer-saved-missions');
+    const report = reportBody();
+    report.report.missions[0].experience.quotations = [
+      quote('qa', 't1', firstTerms),
+      quote('qb', 't2', secondTerms),
+    ];
+    await page.route('**/api/customer-saved-missions', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(report) }),
+    );
+    await page.reload();
+    await lens(page, 'Compare').click();
+    const cards = page.locator('.mr-quote');
+    await expect(cards).toHaveCount(2);
+    for (const card of await cards.all()) await expect(card).toContainText('Not comparable yet');
+    await expect(cards.getByText('Comparable on supplied terms', { exact: true })).toHaveCount(0);
+  });
+}
+
 test('the Evidence lens explains the five labels and keeps the evidence requests', async ({
   page,
 }) => {

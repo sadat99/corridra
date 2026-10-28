@@ -12,7 +12,7 @@ const words: Record<PictureKey, { label: MessageKey; hint: MessageKey }> = {
   'buy-machine': { label: 'fq.buyMachine.label', hint: 'fq.buyMachine.hint' },
   'sell-abroad': { label: 'fq.sellAbroad.label', hint: 'fq.sellAbroad.hint' },
   'group-trip': { label: 'fq.groupTrip.label', hint: 'fq.groupTrip.hint' },
-  'something-else': { label: 'fq.somethingElse.label', hint: 'fq.somethingElse.hint' },
+  'something-else': { label: 'fq.visits.label', hint: 'fq.visits.hint' },
 };
 
 /**
@@ -43,7 +43,7 @@ export function FirstQuestion({
               onChange={() => onChoose(picture.key)}
             />
             <CorridraIcon name={picture.icon} />
-            <span>
+            <span lang={picture.key === 'something-else' ? 'en' : undefined}>
               <b>{say(words[picture.key].label)}</b>
               <small>{say(words[picture.key].hint)}</small>
             </span>

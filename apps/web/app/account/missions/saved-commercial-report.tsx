@@ -12,10 +12,12 @@ import { currency } from '@corridra/domain/opportunities';
 import { requirementFields, offerTerms } from '@corridra/domain/commercial-missions';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
+import { SpecificationConfirmation } from './specification-confirmation';
 export type ReportSection = 'all' | 'compare' | 'evidence';
 type Scope = SavedMissionScope & {
   resourceId: string;
   decisionsEnabled?: boolean;
+  specificationConfirmationsEnabled?: boolean;
   /** UX update (`CORRIDRA_UX_LENSES`, read on the server): the offers as cards. */
   lenses?: boolean;
   /** The Room shows the report in two lenses. `all` is the whole page, as it has always been. */
@@ -197,6 +199,7 @@ function PrivateReport({
   issuer,
   resourceId,
   decisionsEnabled = false,
+  specificationConfirmationsEnabled = false,
   lenses = false,
   section = 'all',
 }: Scope) {
@@ -426,6 +429,13 @@ function PrivateReport({
               )}
               {showEvidence && decisionsEnabled && (
                 <DecisionHistory subject={subject} issuer={issuer} resourceId={resourceId} />
+              )}
+              {showEvidence && specificationConfirmationsEnabled && (
+                <SpecificationConfirmation
+                  subject={subject}
+                  issuer={issuer}
+                  resourceId={resourceId}
+                />
               )}
               {showRest && (
                 <>

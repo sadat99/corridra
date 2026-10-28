@@ -87,6 +87,8 @@ export function MissionExperienceView({
         (!r.fields.quantity || r.fields.quantity === q.terms.quantity) &&
         (!r.fields.unit || r.fields.unit === q.terms.unit),
     })),
+    undefined,
+    r?.fields.machinery ? 'MACHINERY' : 'GENERAL',
   );
   const isCurrent = (q: MissionExperience['quotations'][number]) =>
     !!r?.current && !q.superseded && q.assignmentCurrent;

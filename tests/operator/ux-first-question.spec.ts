@@ -13,7 +13,8 @@ import AxeBuilder from '@axe-core/playwright';
 let server: Server, origin: string;
 let bundle = '';
 let componentCss = '';
-const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
+let css = '';
+let fontClass = '';
 
 test.beforeAll(async () => {
   const result = await build({
@@ -68,6 +69,25 @@ test.beforeAll(async () => {
   });
   bundle = result.outputFiles.find((file) => file.path.endsWith('.js'))!.text;
   componentCss = result.outputFiles.find((file) => file.path.endsWith('.css'))?.text ?? '';
+  const documentResponse = await fetch('http://127.0.0.1:3200/');
+  expect(documentResponse.status).toBe(200);
+  const document = await documentResponse.text();
+  fontClass = document.match(/<html[^>]*class="([\w -]+)"/)?.[1] ?? '';
+  expect(fontClass).toBeTruthy();
+  const cssPaths = [
+    ...new Set(
+      [...document.matchAll(/href="(\/_next\/static\/[^"?]+\.css)(?:\?[^"\s]*)?"/g)].map(
+        (m) => m[1]!,
+      ),
+    ),
+  ];
+  expect(cssPaths.length).toBeGreaterThan(0);
+  css = cssPaths
+    .map((path) =>
+      readFileSync(resolve('apps/web/.next/static', path.slice('/_next/static/'.length)), 'utf8'),
+    )
+    .join('\n')
+    .replaceAll('../media/', '/_next/static/media/');
   server = createServer((req, res) => {
     const path = new URL(req.url!, 'http://fixture.invalid').pathname;
     if (path === '/fixture.js') {
@@ -80,6 +100,11 @@ test.beforeAll(async () => {
       res.end(`${css}\n${componentCss}`);
       return;
     }
+    if (/^\/_next\/static\/media\/[\w.-]+\.woff2$/.test(path)) {
+      res.setHeader('content-type', 'font/woff2');
+      res.end(readFileSync(resolve('apps/web/.next/static', path.slice('/_next/static/'.length))));
+      return;
+    }
     if (path.startsWith('/api/')) {
       res.statusCode = 404;
       res.end('{}');
@@ -87,7 +112,7 @@ test.beforeAll(async () => {
     }
     res.setHeader('content-type', 'text/html');
     res.end(
-      '<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan fixture</title><link rel="stylesheet" href="/app.css"></head><body><div id="fixture"></div><script type="module" src="/fixture.js"></script></body></html>',
+      `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan fixture</title><link rel="stylesheet" href="/app.css"></head><body><div id="fixture"></div><script type="module" src="/fixture.js"></script></body></html>`,
     );
   });
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
@@ -129,14 +154,14 @@ test('shows five pictures that choose a start, and keeps every job type selectab
   await expect(job(page)).toHaveValue('buyers');
   await page.getByRole('radio', { name: /Lead a group trip/ }).check();
   await expect(job(page)).toHaveValue('delegations');
-  await page.getByRole('radio', { name: /Something else/ }).check();
-  await expect(page.getByRole('radio', { name: /Something else/ })).toBeChecked();
+  await page.getByRole('radio', { name: /Trips, visits or fairs/ }).check();
+  await expect(page.getByRole('radio', { name: /Trips, visits or fairs/ })).toBeChecked();
   // This picture has no default job: the person chooses one, and nothing is filled in for them.
   await expect(job(page)).toHaveValue('');
   await job(page).selectOption('factory_visits');
-  await expect(page.getByRole('radio', { name: /Something else/ })).toBeChecked();
+  await expect(page.getByRole('radio', { name: /Trips, visits or fairs/ })).toBeChecked();
   // Choosing the picture again keeps the job the person chose.
-  await page.getByRole('radio', { name: /Something else/ }).check();
+  await page.getByRole('radio', { name: /Trips, visits or fairs/ }).check();
   await expect(job(page)).toHaveValue('factory_visits');
   // Every one of the fifteen jobs, plus the prompt, is still there.
   await expect(job(page).locator('option')).toHaveCount(16);
@@ -151,7 +176,7 @@ test('choosing a job from the list moves the picture to the one that opens it', 
   await job(page).selectOption('supplier_evaluation');
   await expect(page.getByRole('radio', { name: /Buy products/ })).toBeChecked();
   await job(page).selectOption('business_trips');
-  await expect(page.getByRole('radio', { name: /Something else/ })).toBeChecked();
+  await expect(page.getByRole('radio', { name: /Trips, visits or fairs/ })).toBeChecked();
 });
 
 test('a link that names a job (the home cards) opens with its picture chosen', async ({ page }) => {
@@ -191,6 +216,14 @@ for (const width of [320, 390, 768, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, 'fq=1&mode=sample');
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+      await page.evaluate(() =>
+        Array.from(document.fonts as FontFaceSet & Iterable<FontFace>).some(
+          (f) => f.status === 'loaded',
+        ),
+      ),
+    ).toBe(true);
     const wide = await page.evaluate((limit) => {
       const out: string[] = [];
       for (const el of Array.from(document.querySelectorAll('header, main, main *, header *'))) {

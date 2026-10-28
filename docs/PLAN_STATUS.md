@@ -46,6 +46,8 @@ Rules:
 
 ## Proposals and audits
 
+The [field workflow acceptance record](implementation/field-workflow-acceptance-2026-10-28.md) is CURRENT, DATED: the owner's 28 October directive is the active engineering scope, with actual release state in the V3 ledger. ADR072 and ADR073 govern its optional confirmation and quote-arrangement modules. This does not change independent installation or activation gates.
+
 | Document                                                                                                            | Status         | State and next action                                                                                                                                                                                                   |
 | ------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Mission emails](product/phase0-mission-email-proposal.md)                                                          | PARTLY BUILT   | Approved 23 Oct. Phases A and B built and merged. The ledger of 23 Oct recorded the module installed with its database control closed; that was not re-observed on 24 Oct. The owner decides when to open it.           |

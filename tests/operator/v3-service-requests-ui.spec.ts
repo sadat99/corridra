@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
+import type { CommercialArrangement } from '../../packages/domain/src/commercial-arrangements';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
@@ -13,6 +14,50 @@ const workspaceId = '00000000-0000-4000-8000-0000000000a1';
 const requestId = '00000000-0000-4000-8000-0000000000b2';
 const programmeId = '00000000-0000-4000-8000-0000000000c3';
 const digest = 'a'.repeat(64);
+const arrangementTerms = (mode: CommercialArrangement['mode']): CommercialArrangement => ({
+  version: 1,
+  mode,
+  parties: {
+    buyer: 'Synthetic Buyer',
+    seller: 'Synthetic Actual Seller',
+    supplier: 'Synthetic Factory',
+    serviceProvider: 'Synthetic Corridra',
+    serviceFeePayer: 'Synthetic Buyer',
+    serviceInvoiceIssuer: 'Synthetic Corridra invoices',
+    servicePaymentRecipient: 'Synthetic Corridra fee account',
+    operatingPartner: null,
+    invoiceIssuer: 'Synthetic Seller invoices',
+    paymentRecipient: 'Synthetic Seller collects',
+    deliveryResponsible: 'Synthetic Seller delivers',
+    warrantyResponsible: 'Synthetic Factory warranty',
+    importerOfRecord: null,
+  },
+  supplyPrice: ['BUNDLED_SUPPLY', 'HYBRID'].includes(mode)
+    ? {
+        currency: 'USD',
+        amountMinor: '12000',
+        includedServices: 'Synthetic sourcing included',
+        exclusions: 'Synthetic freight excluded',
+      }
+    : null,
+  fixedFeePositions: ['SEPARATE_FEE', 'HYBRID'].includes(mode) ? [1] : [],
+  commission: ['SUCCESS_COMMISSION', 'HYBRID'].includes(mode)
+    ? {
+        payer: 'Synthetic Seller pays',
+        recipient: 'Synthetic Corridra earns only agreed fees',
+        trigger: 'Synthetic signed sale and confirmed collection',
+        baseDescription: 'Synthetic net product value',
+        baseMinor: '10000',
+        currency: 'USD',
+        rateBasisPoints: 2000,
+        evidenceRequired: 'Synthetic contract and collection evidence',
+        rounding: 'HALF_UP',
+        fixedFeeTreatment: mode === 'HYBRID' ? 'CREDIT_FIXED_FEE' : 'NO_FIXED_FEE',
+      }
+    : null,
+  sourceTerms: 'Synthetic original terms from seller',
+  principalStatus: 'CORRIDRA_SERVICE_PROVIDER',
+});
 let server: Server, origin: string;
 test.beforeAll(async () => {
   const result = await build({
@@ -76,7 +121,7 @@ createRoot(document.getElementById('fixture')).render(el);`,
       response.end(javascript);
     } else if (path === '/fixture.css') {
       response.setHeader('Content-Type', 'text/css');
-      response.end(css);
+      response.end(css.toString().replaceAll('../media/', '/_next/static/media/'));
     } else if (/^\/_next\/static\/media\/[\w.-]+\.woff2$/.test(path)) {
       void readFile(resolve('apps/web/.next/static', path.slice('/_next/static/'.length)))
         .then((font) => {
@@ -1139,6 +1184,177 @@ test('staff progress notes and internal notes are separate messages, and the cat
     title: 'Interpreter day with briefing',
     active: true,
     regions: ['Dhaka', 'Guangzhou'],
+  });
+});
+
+for (const width of [320, 390, 768, 1440])
+  test('commercial arrangements remain explicit and accessible at ' + width, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    let mode: CommercialArrangement['mode'] = 'BUNDLED_SUPPLY';
+    await serve(page, () => {
+      const terms = arrangementTerms(mode),
+        fixed = terms.fixedFeePositions.length ? '2500' : '0';
+      return {
+        json: detail({
+          quote: quote({
+            commercialArrangement: terms,
+            fixedTotalMinor: fixed,
+            estimatedTotalMinor: '0',
+            components: [
+              {
+                position: 1,
+                kind: 'service_fee',
+                label: 'Synthetic coordination fee',
+                treatment: 'included',
+                amountMinor: fixed,
+              },
+              {
+                position: 2,
+                kind: 'tax',
+                label: 'Synthetic tax not included',
+                treatment: 'not_included',
+                amountMinor: null,
+              },
+            ],
+          }),
+        }),
+      };
+    });
+    for (const current of [
+      'BUNDLED_SUPPLY',
+      'SEPARATE_FEE',
+      'SUCCESS_COMMISSION',
+      'HYBRID',
+    ] as const) {
+      mode = current;
+      await page.goto(origin + '/?view=detail');
+      const region = page.getByRole('region', { name: 'Commercial arrangement' });
+      await expect(region).toContainText('Synthetic Actual Seller');
+      await expect(region).toContainText('No payment is taken here');
+      await expect(region.getByText('Acquisition cost')).toHaveCount(0);
+      if (mode === 'BUNDLED_SUPPLY' || mode === 'HYBRID') {
+        await expect(region).toContainText('120.00');
+        await expect(region).toContainText('Synthetic freight excluded');
+      }
+      if (mode === 'SUCCESS_COMMISSION' || mode === 'HYBRID') {
+        await expect(region).toContainText('20.00%');
+        await expect(region).toContainText('Not earned, invoiced or collected');
+        await expect(region).toContainText('Synthetic contract and collection evidence');
+      }
+      if (mode === 'HYBRID') await expect(region).toContainText('Do not charge it twice');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      expect(await axe(page)).toEqual([]);
+    }
+    await mkdir('work/commercial-arrangements/screenshots', { recursive: true });
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+      await page.evaluate(() =>
+        Array.from(document.fonts as FontFaceSet & Iterable<FontFace>).some(
+          (f) => f.status === 'loaded',
+        ),
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `work/commercial-arrangements/screenshots/customer-${width}.png`,
+      fullPage: true,
+    });
+  });
+
+test('staff can prepare bundled supply terms without publishing acquisition costs or duplicating a service fee', async ({
+  page,
+}) => {
+  const posts: Record<string, unknown>[] = [];
+  await serveStaff(page, (url, method, body) => {
+    if (method === 'POST') {
+      posts.push(body!);
+      return { json: summary({ status: 'quoted' }) };
+    }
+    if (url.searchParams.get('scope') === 'catalogue') return { json: { services: [staffEntry] } };
+    if (url.searchParams.get('scope') === 'detail')
+      return { json: staffDetail({ commercialArrangementsAvailable: true }) };
+    return {
+      json: {
+        requests: [
+          {
+            ...summary({ status: 'requested' }),
+            workspaceName: 'Synthetic paid-service workspace',
+            claimed: false,
+          },
+        ],
+      },
+    };
+  });
+  await page.goto(origin + '/?view=staff');
+  await page
+    .getByRole('button', { name: 'Open Interpreter day for Synthetic paid-service workspace' })
+    .click();
+  const form = page.getByRole('form', { name: 'Prepare a quote' });
+  await form
+    .getByLabel('Label (start with Synthetic)')
+    .first()
+    .fill('Synthetic bundled coordination');
+  await form
+    .getByLabel(/Amount in minor units/)
+    .first()
+    .fill('0');
+  await form.getByLabel('Label (start with Synthetic)').nth(1).fill('Synthetic tax excluded');
+  await form.getByLabel(/Scope/).fill('Synthetic product sourcing support');
+  await form.getByLabel(/Left out/).fill('Synthetic shipping excluded');
+  await form.getByLabel(/Assumptions/).fill('Synthetic buyer confirms supplier terms separately');
+  await form.getByLabel(/Delivery terms/).fill('Synthetic product delivery by actual seller');
+  await form.getByLabel(/Payment terms/).fill('Synthetic no payment taken here');
+  await form.getByLabel(/Valid until/).fill('2026-12-31');
+  await form.getByText('Commercial arrangement (optional)', { exact: true }).click();
+  await form
+    .getByRole('combobox', { name: 'How is this work priced?' })
+    .selectOption('BUNDLED_SUPPLY');
+  for (const label of [
+    'Buyer',
+    'Contracting seller',
+    'Supplier or manufacturer',
+    'Service provider',
+    'Service fee payer',
+    'Service invoice issuer',
+    'Service payment recipient',
+    'Supply invoice issuer',
+    'Supply payment recipient',
+    'Delivery responsibility',
+    'Warranty and after-sales responsibility',
+  ])
+    await form.getByRole('textbox', { name: label, exact: true }).fill('Synthetic ' + label);
+  await form.getByRole('textbox', { name: 'Quoted supply total', exact: true }).fill('12000');
+  await form
+    .getByRole('textbox', { name: 'Services included in the supply price' })
+    .fill('Synthetic sourcing and coordination');
+  await form
+    .getByRole('textbox', { name: 'Supply price exclusions' })
+    .fill('Synthetic freight excluded');
+  await form
+    .getByRole('textbox', { name: 'Original stated commercial terms' })
+    .fill('Synthetic original seller terms');
+  await form.getByText('Private procurement costs and relationships', { exact: true }).click();
+  await form.getByRole('textbox', { name: 'Acquisition cost (optional)' }).fill('10000');
+  await form.getByRole('textbox', { name: 'Markup on acquisition cost (%)' }).fill('20');
+  await form
+    .getByRole('textbox', { name: 'Private relationship and cost source' })
+    .fill('Synthetic confidential source');
+  await expect(form).toContainText('12000 minor units');
+  await form.getByRole('button', { name: 'Send the quote to the customer' }).click();
+  await expect.poll(() => posts.length).toBe(1);
+  expect(posts[0]).toMatchObject({
+    commercialArrangement: {
+      mode: 'BUNDLED_SUPPLY',
+      fixedFeePositions: [],
+      supplyPrice: { amountMinor: '12000' },
+      commission: null,
+    },
+    internalEconomics: {
+      acquisitionCostMinor: '10000',
+      markupBasisPoints: 2000,
+      relationshipNote: 'Synthetic confidential source',
+    },
   });
 });
 

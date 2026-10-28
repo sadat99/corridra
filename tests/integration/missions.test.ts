@@ -159,6 +159,57 @@ test('operator commands enforce state, source provenance, idempotency and atomic
     true,
   );
 });
+test('an incomplete inquiry pauses during qualification and resumes with its original gaps and no invented quote', async () => {
+  const original = {
+    ...brief(),
+    attendance: 'Not decided',
+    startDate: '',
+    endDate: '',
+    offer: `Synthetic umbrella photo ${randomUUID()}; size and material are not known`,
+    website: '',
+    notes: 'Only a photo description is available; ask for size, material and quantity',
+  };
+  const { id } = await s.submit(randomUUID(), original);
+  await s.command(f.users.operator.ctx, command(id!));
+  const holdReason = 'Waiting for essential size, material and quantity details from the customer';
+  await s.command(f.users.operator.ctx, {
+    ...command(id!, 2, 'pause'),
+    reason: holdReason,
+    nextAction: 'Request missing umbrella details without proposing a supplier or price',
+  });
+  expect(
+    (await f.owner.query('SELECT status,held_from FROM app.mission WHERE id=$1', [id])).rows[0],
+  ).toEqual({ status: 'ON_HOLD', held_from: 'QUALIFICATION' });
+  await s.command(f.users.operator.ctx, {
+    ...command(id!, 3, 'resume'),
+    reason: 'Resume human qualification to follow up the unanswered questions',
+  });
+  expect(
+    (await f.owner.query('SELECT status,held_from FROM app.mission WHERE id=$1', [id])).rows[0],
+  ).toEqual({ status: 'QUALIFICATION', held_from: null });
+  expect(
+    (await f.owner.query('SELECT brief FROM app.mission_intake WHERE id=$1', [id])).rows[0].brief,
+  ).toEqual(original);
+  const claim = (
+    await f.owner.query(
+      'SELECT c.statement,c.status FROM app.commercial_intent i JOIN app.claim c ON c.id=i.claim_id WHERE i.mission_id=$1',
+      [id],
+    )
+  ).rows[0];
+  expect(claim).toEqual({ statement: original.offer, status: 'self_declared' });
+  const history = (await s.queue(f.users.operator.ctx)).history.filter((h) => h.mission_id === id);
+  expect(JSON.stringify(history)).toContain(holdReason);
+  for (const table of [
+    'target_account',
+    'mission_requirements',
+    'mission_rfq',
+    'mission_quotation',
+  ])
+    expect(
+      (await f.owner.query(`SELECT count(*)::int n FROM app.${table} WHERE mission_id=$1`, [id]))
+        .rows[0].n,
+    ).toBe(0);
+});
 test('tenant isolation, viewer/reviewer restrictions and SQL guards reject unauthorized edits', async () => {
   const { id } = await create();
   await expect(s.command(f.users.viewer.ctx, command(id!))).rejects.toThrow('Access denied');

@@ -34,6 +34,7 @@ export function RoomView({
   link,
   serviceRequestsEnabled = false,
   decisionsEnabled = false,
+  specificationConfirmationsEnabled = false,
   lenses = false,
 }: {
   requestId: string;
@@ -42,6 +43,7 @@ export function RoomView({
   link: RoomLink;
   serviceRequestsEnabled?: boolean;
   decisionsEnabled?: boolean;
+  specificationConfirmationsEnabled?: boolean;
   lenses?: boolean;
 }) {
   const { locale } = useLanguage();
@@ -165,6 +167,7 @@ export function RoomView({
                   subject={subject}
                   issuer={issuer}
                   decisionsEnabled={decisionsEnabled}
+                  specificationConfirmationsEnabled={specificationConfirmationsEnabled}
                   lenses
                   section={lens}
                 />

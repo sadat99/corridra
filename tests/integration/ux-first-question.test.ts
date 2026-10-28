@@ -142,7 +142,7 @@ describe('the pictures', () => {
       'Buy a machine',
       'Sell abroad',
       'Lead a group trip',
-      'Something else',
+      'Trips, visits or fairs',
     ])
       expect(html).toContain(label);
     expect(html.match(/checked=""/g)).toHaveLength(1);

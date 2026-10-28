@@ -132,6 +132,7 @@ export type ServiceQuoteComponent = {
   amountMinor: string | null;
 };
 export type ServiceQuote = {
+  commercialArrangement?: import('@corridra/domain/commercial-arrangements').CommercialArrangement;
   id: string;
   version: number;
   currency: string;

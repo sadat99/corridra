@@ -299,8 +299,26 @@ export function compareOffers(
     evidenceCurrent?: boolean;
   }[],
   calculatedAt = new Date().toISOString(),
+  context: 'GENERAL' | 'MACHINERY' = 'GENERAL',
 ) {
-  const reference = offers[0];
+  // Compare actual supplied scope in both directions. An arbitrary first offer must not escape a
+  // mismatch warning, and a superseded or out-of-scope offer must not invalidate current offers.
+  // Different wording requires human review; equal wording is never independent verification.
+  const peers = offers.filter((offer) => offer.evidenceCurrent !== false);
+  const scopeTerms = [
+    'specification',
+    'quantity',
+    'moq',
+    'unit',
+    'incoterm',
+    'shipping',
+    'leadTime',
+    'paymentTerms',
+    'warranty',
+    'installation',
+    'training',
+    'spares',
+  ] as const;
   return offers.map((offer) => {
     const terms = offerTerms.parse(offer.terms);
     const missing = [
@@ -316,6 +334,7 @@ export function compareOffers(
       'toolingMinor',
       'setupMinor',
       'packagingMinor',
+      ...(context === 'MACHINERY' ? ['installation', 'warranty', 'training', 'spares'] : []),
     ].filter(
       (k) =>
         terms[k as keyof OfferTerms] === undefined ||
@@ -327,20 +346,24 @@ export function compareOffers(
       terms.quantity !== undefined &&
       terms.totalPriceMinor !== undefined &&
       BigInt(terms.totalPriceMinor) !== BigInt(terms.unitPriceMinor) * BigInt(terms.quantity);
-    const different =
-      reference &&
-      (offer.requirementId !== reference.requirementId ||
-        offer.currency !== reference.currency ||
-        ['specification', 'quantity', 'unit', 'incoterm', 'shipping'].some(
-          (k) => terms[k as keyof OfferTerms] !== reference.terms[k as keyof OfferTerms],
-        ));
+    const supplied = (value: unknown) => value !== undefined && value !== 'NOT_SUPPLIED';
+    const differences = [
+      ...(peers.some((peer) => peer.requirementId !== offer.requirementId) ? ['requirement'] : []),
+      ...(peers.some((peer) => peer.currency !== offer.currency) ? ['currency'] : []),
+      ...scopeTerms.filter(
+        (key) =>
+          supplied(terms[key]) &&
+          peers.some((peer) => supplied(peer.terms[key]) && peer.terms[key] !== terms[key]),
+      ),
+    ];
     return {
       ...offer,
       missing,
+      differences,
       status:
         missing.length ||
         expired ||
-        different ||
+        differences.length ||
         inconsistentTotal ||
         offer.evidenceCurrent === false
           ? 'NOT COMPARABLE'

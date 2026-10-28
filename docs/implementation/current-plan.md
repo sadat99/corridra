@@ -12,6 +12,8 @@ V3 is PARTIAL. Public/product entry, retained managed engines, founder clarity a
 
 ## Work order
 
+The owner's 28 October 2026 field-workflow directive currently reprioritises independent engineering: connected adaptive intake, exact-version requirement confirmation, quotation comparison, explicit commercial arrangements, then cross-role field/network/delegation acceptance. Reuse existing drafts, requests, delivery questions, mission requirements, quotations, service quotes and scoped assignments. The active ledger records exact progress and limits; the requirement-family matrix records code and acceptance. This authorises implementation across slices, without opening independent operational or protected-installation gates.
+
 1. Finish the owner's active bounded PR/release tasks from the ledger. [CodeQL analyses](../../security/README.md#codeql-setup-and-evidence) passed for JS/TS, Python and Actions on PR114 and the receipt head (21 October). Verify each head; branch-protection enforcement is unverified. Preserve checked heads, dependent branches and actual failure evidence; verify matching release source before continuing.
 2. Complete controlled isolated auth signup/verification/sign-in/reload/sign-out/revocation acceptance. Keep identity admission and commercial/workspace authority separate. Never recover passwords, OTP stores or private sessions to bypass the tester.
 3. Complete missing canonical organisation/customer commercial authoring and independent Delegation OS: profiles, eligibility/capacity/terms, activities/agendas, meeting coordination, consented reporting/templates and separate organiser economics. Reuse original services, source boundaries and versioned records; build real backends before claiming controls shipped.
@@ -38,9 +40,4 @@ Merged as PR88 (ADR046, bounded plan under docs/v3/phase-3/customer-programme-ec
 
 ## Organisation profiles packet
 
-Original source packet: chunk115 (ADR044); see the ledger for current checked-release, installation and activation evidence. Canonical linking, verification and per-mission snapshots remain open. The original packet text follows.
-
-- Authority: customer-session.ts/customer-workspaces.ts, customer-migrations0001/0002 and ADR032/038. app.organisation is globally readable: never insert private profile input there or merge identity by name/email.
-- Write the ADR, optional additive profile migration/installer, fresh-session service, same-origin API and account UI. Reuse the existing workspace, event/audit/outbox authority. Private append-only revisions, expected-version conflicts, exact retries, owner/admin write, active-member read and explicit self-reported provenance. Global canonical linking stays partial until rights-safe implementation exists.
-- Prove populated-upgrade preservation, tenant/role/session/direct-SQL denial, revocation/expiry, concurrency/history/events, changed account/issuer, recovery, keyboard/axe/widths and private headers. Follow existing programme-context patterns. Keep all original tests and mandatory exact-head release gates; no provider/admission/live activation.
-- Continue customer commercial authoring and independent organiser coordination/reporting/economics afterward. Private tester steps must not block engineering.
+Original source packet: chunk115 and ADR044; the ledger holds release/installation evidence. Canonical linking, verification and per-mission snapshots remain open. Preserve ADR032/038 customer authority, private append-only revisions, expected versions, exact retries, owner/admin writes, active-member reads and self-reported provenance. Never insert private input in globally readable `app.organisation` or merge identities by name/email. The verification guide applies to populated upgrades, restricted SQL, revocation/expiry, concurrency/history, issuer changes, recovery, accessibility and private headers. Private tester steps do not block independent engineering.

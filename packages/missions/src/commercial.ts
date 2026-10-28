@@ -84,6 +84,8 @@ export class CommercialMissionService {
             uncertainties: o.uncertainties,
             evidenceCurrent: o.evidence_current,
           })),
+          undefined,
+          assignments[0]?.type_key === 'machinery_procurement' ? 'MACHINERY' : 'GENERAL',
         ),
       };
     });

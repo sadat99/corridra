@@ -121,6 +121,11 @@ import {
   customerDecisionsEnabled,
 } from '@corridra/auth/customer-decisions';
 import { DecisionDisclosureService } from '@corridra/delivery/decision-disclosures';
+import { SpecificationConfirmationService } from '@corridra/delivery/specification-confirmation';
+import {
+  CustomerSpecificationConfirmationService,
+  customerSpecificationConfirmationEnabled,
+} from '@corridra/auth/customer-specification-confirmation';
 import {
   CustomerAssignedMissionService,
   customerDeliveryEnabled,
@@ -253,6 +258,20 @@ function createServices() {
       readCustomerSession,
     ),
     decisionDisclosures: new DecisionDisclosureService(runtimePool),
+    specificationConfirmations: new SpecificationConfirmationService(runtimePool),
+    customerSpecificationConfirmations: new CustomerSpecificationConfirmationService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerSpecificationConfirmationEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
     customerDecisions: new CustomerDecisionService(
       runtimePool,
       authPool,

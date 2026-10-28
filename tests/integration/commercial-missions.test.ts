@@ -30,8 +30,19 @@ afterAll(async () => {
 beforeEach(async () => {
   await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
 });
-async function journey(origin: string, destination: string, typeKey: string, code: string) {
-  const t = await f.target(destination),
+async function journey(
+  origin: string,
+  destination: string,
+  typeKey: string,
+  code: string,
+  options: {
+    target?: Awaited<ReturnType<typeof f.target>>;
+    fields?: Record<string, unknown>;
+    reviewed?: boolean;
+    declaration?: string;
+  } = {},
+) {
+  const t = options.target ?? (await f.target(destination)),
     catalogue = await routes.catalogue(f.users.owner.ctx);
   let route = (
     await f.owner.query(
@@ -94,7 +105,8 @@ async function journey(origin: string, destination: string, typeKey: string, cod
     definitionId: definition.id,
     version: 1,
     schemaVersion: 1,
-    declaration: 'Original synthetic customer request retained unchanged',
+    declaration: options.declaration ?? 'Original synthetic customer request retained unchanged',
+    ...(options.reviewed ? { reviewerId: f.users.owner.id } : {}),
     fields: {
       objective: 'Assess suppliers against actual declared requirements',
       role: 'IMPORTER',
@@ -114,9 +126,13 @@ async function journey(origin: string, destination: string, typeKey: string, cod
             },
           }
         : {}),
+      ...options.fields,
     },
   });
-  const requirement = await service.command(f.ctx, requirementInput);
+  const requirement = await service.command(
+    options.reviewed ? f.users.owner.ctx : f.ctx,
+    requirementInput,
+  );
   const assess = async (targetId = t.targetId, version = 1) =>
     service.command(
       f.ctx,
@@ -161,7 +177,57 @@ async function journey(origin: string, destination: string, typeKey: string, cod
     assessmentDefinition: assessment.id,
   };
 }
-async function offers(j: Awaited<ReturnType<typeof journey>>) {
+// Reuse an already recorded counterparty on an ACTIVE mission: no new discovery,
+// outreach, RFQ or offer is needed to organise work with a known supplier.
+async function knownTargetMission(destination: string) {
+  const known = await f.target(destination);
+  const intake = await f.mission.submit(randomUUID(), {
+    objective: 'Make an upcoming business trip more productive',
+    market: destination,
+    attendance: 'Yes',
+    startDate: '2026-11-01',
+    endDate: '2026-11-07',
+    timezone: 'Etc/UTC',
+    offer: `Synthetic visit to an existing supplier ${randomUUID()}`,
+    website: '',
+    outcomes: ['Supplier visits'],
+    notes: 'Supplier is already known; no supplier discovery is requested',
+    name: 'Synthetic Buyer',
+    company: 'Synthetic Importer',
+    email: `${randomUUID()}@example.invalid`,
+    acknowledged: true,
+  });
+  for (const [index, action] of ['qualify', 'activate'].entries())
+    await f.mission.command(f.ctx, {
+      id: intake.id,
+      version: index + 1,
+      commandId: randomUUID(),
+      action,
+      marketCode: destination,
+      targetProfile: 'Previously recorded supplier selected by the customer',
+      ...f.next(),
+    });
+  const target = await f.research.command(
+    f.ctx,
+    command('target', {
+      missionId: intake.id,
+      relationshipId: known.relationshipId,
+      contactId: known.contactId,
+      claimIds: [known.claimId],
+      fit: 'POSSIBLE',
+      rationale: 'Customer already knows this supplier',
+      uncertainty: 'Recorded identity is not independent supplier approval',
+      gaps: 'Need visit evidence and customer decisions',
+      nextAction: 'Arrange the requested supplier visit',
+      dueAt: future(),
+    }),
+  );
+  return { ...known, missionId: intake.id!, targetId: String(target.id) };
+}
+async function offers(
+  j: Awaited<ReturnType<typeof journey>>,
+  specification = 'Synthetic requirement specification v1',
+) {
   const second = await f.target('CN');
   const target = (
     await f.research.command(
@@ -194,7 +260,7 @@ async function offers(j: Awaited<ReturnType<typeof journey>>) {
     }),
   );
   const terms = {
-    specification: 'Synthetic requirement specification v1',
+    specification,
     quantity: '100',
     unit: 'pieces',
     unitPriceMinor: '1000',
@@ -435,6 +501,261 @@ test('E Japan to Kenya sourcing has no country-specific code and retains origina
       ?.currency,
   ).toBe('KES');
 });
+test('a known supplier is evaluated by staff without new discovery, quotations or network contributors', async () => {
+  const target = await knownTargetMission('CN');
+  const before = (
+    await f.owner.query(
+      'SELECT (SELECT count(*)::int FROM app.organisation) organisations,(SELECT count(*)::int FROM app.relationship) relationships',
+    )
+  ).rows[0];
+  const j = await journey('BD', 'CN', 'supplier_evaluation', 'CNY', {
+    target,
+    fields: {
+      objective: 'Evaluate the supplier already selected by the customer',
+      product: 'Synthetic existing umbrella supplier',
+      requiredEvidence: ['Check current registration and production evidence'],
+    },
+  });
+  const assessment = await j.assess();
+  await service.command(
+    f.ctx,
+    command('decision', {
+      ...j.base,
+      requirementId: j.requirement.id,
+      targetId: j.targetId,
+      assessmentId: assessment.id,
+      decision: 'NEED_INFORMATION',
+      rationale: 'A prior relationship is not proof of current supplier capability',
+      ...f.next(),
+    }),
+  );
+  const w = await service.workspace(f.ctx, j.missionId);
+  expect(w.mission.status).toBe('ACTIVE');
+  expect(w.targets).toHaveLength(1);
+  expect(w.targets[0].relationship_id).toBe(target.relationshipId);
+  expect(w.assessments[0].target_id).toBe(target.targetId);
+  expect(w.rfqs).toHaveLength(0);
+  expect(w.quotations).toHaveLength(0);
+  expect(w.decisions[0].quotation_id).toBeNull();
+  expect(
+    (
+      await f.owner.query(
+        'SELECT (SELECT count(*)::int FROM app.organisation) organisations,(SELECT count(*)::int FROM app.relationship) relationships',
+      )
+    ).rows[0],
+  ).toEqual(before);
+  expect((await f.owner.query('SELECT count(*)::int n FROM app.network_task')).rows[0].n).toBe(0);
+});
+
+test('repeat sourcing reuses owner-reviewed requirement fields while a new price needs its own recorded decision', async () => {
+  const j = await journey('BD', 'CN', 'sourcing', 'CNY', {
+    reviewed: true,
+    declaration: 'Synthetic customer specification retained for a repeat enquiry',
+    fields: {
+      product: 'Synthetic umbrella',
+      specifications: 'Synthetic umbrella, 100 cm canopy, polyester, 8 ribs',
+    },
+  });
+  const q = await offers(j, 'Synthetic umbrella, 100 cm canopy, polyester, 8 ribs');
+  const original = (
+    await f.owner.query('SELECT * FROM app.mission_requirements WHERE id=$1', [j.requirement.id])
+  ).rows[0];
+  expect(original.reviewer_id).toBe(f.users.owner.id);
+  await service.command(
+    f.ctx,
+    command('decision', {
+      ...j.base,
+      requirementId: j.requirement.id,
+      targetId: j.targetId,
+      assessmentId: q.assessment.id,
+      quotationId: q.quote.id,
+      decision: 'SELECT',
+      rationale: 'First synthetic offer reviewed for its own stated price and scope',
+      ...f.next(),
+    }),
+  );
+  const rfq = await service.command(
+    f.ctx,
+    command('rfq', {
+      ...j.base,
+      requirementId: j.requirement.id,
+      targetIds: [j.targetId],
+      buyerContext: 'Repeat enquiry against the same recorded specification',
+      requestedTerms:
+        'Supply a new price and validity; prior selection does not approve this offer',
+      dueAt: future(),
+    }),
+  );
+  const quote = await service.command(
+    f.ctx,
+    command('quotation', {
+      ...j.base,
+      rfqId: rfq.id,
+      targetId: j.targetId,
+      revision: 1,
+      currency: 'CNY',
+      terms: { ...q.terms, unitPriceMinor: '1200', totalPriceMinor: '120000' },
+      uncertainties: 'New price requires a fresh human commercial decision',
+      observedAt: new Date().toISOString(),
+    }),
+  );
+  const beforeReview = await service.workspace(f.ctx, j.missionId);
+  expect(beforeReview.decisions).toHaveLength(1);
+  expect(beforeReview.decisions[0].quotation_id).toBe(q.quote.id);
+  expect(beforeReview.decisions.some((d) => d.quotation_id === quote.id)).toBe(false);
+  await service.command(
+    f.ctx,
+    command('decision', {
+      ...j.base,
+      requirementId: j.requirement.id,
+      targetId: j.targetId,
+      assessmentId: q.assessment.id,
+      quotationId: quote.id,
+      decision: 'NEED_INFORMATION',
+      rationale: 'New price is higher; request customer review before selecting it',
+      ...f.next(),
+    }),
+  );
+  const after = await service.workspace(f.ctx, j.missionId);
+  expect(after.requirements).toHaveLength(1);
+  expect(after.decisions.find((d) => d.quotation_id === quote.id)?.decision).toBe(
+    'NEED_INFORMATION',
+  );
+  expect(after.quotations.find((v) => v.id === q.quote.id)?.terms).toEqual(q.terms);
+  expect(after.quotations.find((v) => v.id === quote.id)?.terms).toMatchObject({
+    unitPriceMinor: '1200',
+    totalPriceMinor: '120000',
+  });
+  expect(
+    (await f.owner.query('SELECT * FROM app.mission_requirements WHERE id=$1', [j.requirement.id]))
+      .rows[0],
+  ).toEqual(original);
+  // Owner review is not typed customer confirmation or an engineering certificate.
+});
+
+test('a planned business trip schedules a known supplier visit without discovery, RFQ or quotation preconditions', async () => {
+  const target = await knownTargetMission('CN');
+  const j = await journey('BD', 'CN', 'business_trips', 'CNY', {
+    target,
+    fields: {
+      objective: 'Organise the already planned supplier visit',
+      role: 'BUYER',
+      travelDates: '2026-11-01 to 2026-11-07; customer already plans to travel',
+      responsiblePersons: ['Synthetic buyer travel lead'],
+    },
+  });
+  const meeting = await f.meetings.command(
+    f.ctx,
+    command('proposeActivity', {
+      targetId: j.targetId,
+      activityKind: 'FACTORY_VISIT',
+      context: {
+        purpose: 'Visit the previously known supplier during an existing trip',
+        checklist: ['Confirm the existing appointment and commercial purpose'],
+        evidenceRequests: ['Retain the agreed visit agenda and actual field observations'],
+      },
+      title: 'Synthetic planned supplier visit',
+      brief: 'Arrange local coordination for a supplier the customer already knows',
+      participants: ['Synthetic Buyer', 'Synthetic Supplier'],
+      ...f.next(),
+    }),
+  );
+  await f.meetings.command(
+    f.ctx,
+    command('transition', {
+      id: meeting.id,
+      version: 1,
+      status: 'ACCEPTED',
+      acceptance: 'Both synthetic participants expressly accepted this visit',
+      ...f.next(),
+    }),
+  );
+  const start = new Date('2026-11-02T06:00:00.000Z');
+  start.setUTCSeconds(0, 0);
+  const end = new Date(start.getTime() + 3600000);
+  await f.meetings.command(
+    f.ctx,
+    command('transition', {
+      id: meeting.id,
+      version: 2,
+      status: 'SCHEDULED',
+      schedule: {
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+        timezone: 'Etc/UTC',
+        localStart: start.toISOString().slice(0, 16),
+        localEnd: end.toISOString().slice(0, 16),
+        location: 'Synthetic known supplier factory',
+      },
+      ...f.next(),
+    }),
+  );
+  await service.command(
+    f.ctx,
+    command('schedule', {
+      missionId: j.missionId,
+      reason,
+      version: 1,
+      entries: [
+        {
+          kind: 'APPOINTMENT',
+          label: 'Previously planned supplier visit',
+          timezone: 'Etc/UTC',
+          meetingId: meeting.id,
+          note: 'Reference the actual accepted and scheduled visit',
+        },
+      ],
+    }),
+  );
+  const w = await service.workspace(f.ctx, j.missionId);
+  expect(w.mission.status).toBe('ACTIVE');
+  expect(w.assignments[0].type_key).toBe('business_trips');
+  expect(w.meetings[0]).toMatchObject({
+    status: 'SCHEDULED',
+    message_id: null,
+    target_id: target.targetId,
+  });
+  expect(w.schedules[0].entries[0].appointment?.id).toBe(meeting.id);
+  expect(w.rfqs).toHaveLength(0);
+  expect(w.quotations).toHaveLength(0);
+  expect(w.assessments).toHaveLength(0);
+});
+
+test('a China supplier seeks Bangladesh buyers through the shared reverse corridor with explicit supplier intent', async () => {
+  const declaration =
+    'Synthetic Chinese supplier asks for Bangladesh buyers for its umbrella range';
+  const j = await journey('CN', 'BD', 'buyers', 'BDT', {
+    declaration,
+    fields: {
+      objective: 'Find Bangladesh buyers for the supplier product range',
+      role: 'SUPPLIER',
+      product: 'Synthetic supplier umbrella range',
+      targetMarkets: ['BD'],
+      specifications: 'Declared supplier catalogue; buyer suitability still unknown',
+    },
+  });
+  await j.assess();
+  const w = await service.workspace(f.ctx, j.missionId);
+  expect(w.assignments[0]).toMatchObject({
+    origin_market: 'CN',
+    destination_market: 'BD',
+    type_key: 'buyers',
+  });
+  expect(w.requirements[0]).toMatchObject({
+    declaration,
+    reviewer_id: null,
+    fields: { role: 'SUPPLIER', targetMarkets: ['BD'] },
+  });
+  expect((w.assessments[0].results as { criterion: string }[]).map((r) => r.criterion)).toEqual([
+    'commercial_relevance',
+    'buyer_fit',
+    'evidence_completeness',
+  ]);
+  expect(w.rfqs).toHaveLength(0);
+  expect(w.quotations).toHaveLength(0);
+  expect(w.meetings).toHaveLength(0);
+});
+
 test('stale versions, incorrect supplier association, false verification, cross-tenant quotes and unauthorized cash fail', async () => {
   const j = await journey('BD', 'CN', 'sourcing', 'CNY'),
     q = await offers(j),
