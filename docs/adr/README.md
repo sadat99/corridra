@@ -89,3 +89,7 @@ ADR068: [Move records](0068-move-records.md), what a person must do next: a staf
 ADR069: [Reply Page](0069-reply-page.md), the supplier answer page extended: one question at a time, the quote terms the comparison engine needs, a language carried in the link, a receipt, and a staff review queue with an append-only review record; sample only until real outreach opens.
 ADR070: [Decision card and sharing](0070-decision-card-and-sharing.md), a read-only, expiring card for a co-owner or bank on the delivery-link model; design only, not built until the interviews justify it.
 ADR071: [The Road](0071-road-mapping.md), a request in six steps drawn from the mission status a customer may already read; Compare and Decide follow records; presentation only.
+
+ADR072: [Pinned customer specification confirmation](0072-pinned-customer-specification-confirmation.md), explicit customer confirmation through existing reviewed delivery questions, with immutable requirement ID/version/digest, independent protected installation and a default-off switch.
+
+ADR073: [Commercial arrangements on service quotes](0073-commercial-arrangements-on-service-quotes.md), bundled supply, fixed fees, conditional commission and hybrid terms, private procurement costs and exact public-term acceptance; no principal-sale or payment activation.

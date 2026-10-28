@@ -56,7 +56,7 @@ test.beforeAll(async () => {
       response.end(javascript);
     } else if (path === '/fixture.css') {
       response.setHeader('Content-Type', 'text/css');
-      response.end(css);
+      response.end(css.toString().replaceAll('../media/', '/_next/static/media/'));
     } else if (/^\/_next\/static\/media\/[\w.-]+\.woff2$/.test(path)) {
       void readFile(resolve('apps/web/.next/static', path.slice('/_next/static/'.length)))
         .then((font) => {
@@ -70,7 +70,7 @@ test.beforeAll(async () => {
     } else if (path === '/' || path === '/account/drafts') {
       response.setHeader('Content-Type', 'text/html');
       response.end(
-        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic component protocol fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="operator-page ux-workspace" style="max-width:960px;margin:24px auto;padding:16px"><h1>Synthetic component protocol fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
+        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic component protocol fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" tabindex="-1" class="ux-customer ux-workspace" style="max-width:960px;margin:24px auto;padding:16px"><h1>Synthetic component protocol fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
       );
     } else {
       response.statusCode = 404;
@@ -343,6 +343,42 @@ test('a draft saves as a new version with the exact command, headers and typed d
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect.poll(() => server.log.saves.length).toBe(2);
   expect(server.log.saves[1]).toMatchObject({ expectedVersion: 1, draftId: expect.any(String) });
+});
+
+test('current position is optional, saved with the original description and recovered after reload', async ({
+  page,
+}) => {
+  const server = fake();
+  await server.install(page);
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Find suppliers and source products' }).click();
+  await next(page);
+  await page
+    .getByRole('combobox', { name: 'Where are you starting? (optional)' })
+    .selectOption({ label: 'An existing supplier' });
+  await page
+    .getByRole('textbox', { name: 'What do you need to buy? (start with Synthetic)' })
+    .fill('Synthetic umbrella photo; size and material are not known yet');
+  await expect(page.getByText(/Image interpretation is not available/)).toBeVisible();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Draft saved');
+  expect(server.log.saves[0].details).toMatchObject({
+    sourcingContext: null,
+    requirements: [{ label: 'Current position', value: 'Synthetic An existing supplier' }],
+  });
+  await page.reload();
+  await page.getByRole('button', { name: /Continue Synthetic supplier search request/ }).click();
+  await next(page);
+  await expect(
+    page.getByRole('combobox', { name: 'Where are you starting? (optional)' }),
+  ).toHaveValue('Synthetic An existing supplier');
+  await expect(
+    page.getByRole('textbox', { name: 'What do you need to buy? (start with Synthetic)' }),
+  ).toHaveValue('Synthetic umbrella photo; size and material are not known yet');
+  await page.getByRole('combobox', { name: 'Where are you starting? (optional)' }).selectOption('');
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect.poll(() => server.log.saves.length).toBe(2);
+  expect(server.log.saves[1].details).toMatchObject({ requirements: [] });
 });
 
 test('an unconfirmed save keeps the text and retries with the same command id', async ({
@@ -633,6 +669,21 @@ for (const width of [320, 390, 768, 1440])
       await page.getByRole('button', { name }).click();
       await expect(page.getByRole('heading', { name: name.slice(3) })).toBeFocused();
       await scan();
+      if (name === '3. What you offer or need' && process.env.GUIDED_SHOTS_DIR) {
+        await page.evaluate(() => document.fonts.ready);
+        expect(
+          await page.evaluate(() =>
+            Array.from(document.fonts as FontFaceSet & Iterable<FontFace>).some(
+              (f) => f.status === 'loaded',
+            ),
+          ),
+        ).toBe(true);
+        await mkdir(process.env.GUIDED_SHOTS_DIR, { recursive: true });
+        await page.screenshot({
+          path: `${process.env.GUIDED_SHOTS_DIR}/request-${width}.png`,
+          fullPage: true,
+        });
+      }
     }
     await page.keyboard.press('Tab');
     expect(await page.evaluate(() => document.activeElement?.tagName)).toBeTruthy();

@@ -9,6 +9,9 @@ import {
   missionDraftFamilyLabels,
   missionDraftObjectives,
   requirementPrompts,
+  requestStartingPoints,
+  startingPointLabel,
+  startingPointValue,
   sourcingContextLabels,
   type DraftFormValues,
   type MissionDraftFamily,
@@ -647,6 +650,12 @@ function Guided(scope: Scope) {
   const prompts = requirementPrompts(form.family, form.sourcingContext).filter(
     (p) => !form.requirements.some((r) => r.label.toLowerCase() === p.toLowerCase()),
   );
+  const startingPoint = form.requirements.find(
+    (r) => r.label.toLowerCase() === startingPointLabel.toLowerCase(),
+  );
+  const knownStartingPoint = requestStartingPoints.some(
+    (p) => startingPointValue(p) === startingPoint?.value,
+  );
   const field = (name: string, label: string, control: React.ReactNode, hint?: string) => (
     <div style={{ marginBlock: '0.75rem' }}>
       <label htmlFor={id + name}>{label}</label>
@@ -857,6 +866,42 @@ function Guided(scope: Scope) {
         <fieldset disabled={busy || locked}>
           <legend>What you offer or need</legend>
           {field(
+            'startingPoint',
+            'Where are you starting? (optional)',
+            <select
+              {...common('startingPoint')}
+              value={startingPoint?.value ?? ''}
+              disabled={busy || locked || (!startingPoint && form.requirements.length >= 20)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const existing = form.requirements.findIndex(
+                  (r) => r.label.toLowerCase() === startingPointLabel.toLowerCase(),
+                );
+                set(
+                  'requirements',
+                  existing < 0
+                    ? [...form.requirements, { label: startingPointLabel, value }]
+                    : form.requirements.flatMap((r, i) =>
+                        i !== existing ? [r] : value ? [{ ...r, value }] : [],
+                      ),
+                );
+              }}
+            >
+              <option value="">Not sure yet</option>
+              {startingPoint && !knownStartingPoint && (
+                <option value={startingPoint.value}>{startingPoint.value}</option>
+              )}
+              {requestStartingPoints.map((p) => (
+                <option key={p} value={startingPointValue(p)}>
+                  {p}
+                </option>
+              ))}
+            </select>,
+            !startingPoint && form.requirements.length >= 20
+              ? 'All 20 requirement lines are in use. Edit a line below to describe your current position.'
+              : 'Start with what you already have. No supplier search, visit or purchase is assumed.',
+          )}
+          {field(
             'offer',
             form.family === 'SUPPLIERS_PRODUCTS'
               ? realCustomerInput()
@@ -872,6 +917,7 @@ function Guided(scope: Scope) {
               value={form.offer}
               onChange={(e) => set('offer', e.target.value)}
             />,
+            'Describe what you know, even if details are missing. For a photo, type what it shows. Image interpretation is not available here.',
           )}
           {form.family === 'SUPPLIERS_PRODUCTS' &&
             field(
@@ -897,6 +943,10 @@ function Guided(scope: Scope) {
             )}
           <section aria-label="Requirements">
             <h3>Requirements (optional)</h3>
+            <p>
+              Add only what you know. You can describe available documents, missing details and the
+              help you need next. The Corridra team can ask questions after you send the request.
+            </p>
             {form.requirements.map((r, i) => (
               <div key={i} style={{ marginBlock: '0.5rem' }}>
                 <label htmlFor={id + 'rl' + i}>Requirement {i + 1} label</label>
@@ -1142,7 +1192,7 @@ function Guided(scope: Scope) {
           )}
           <h3>What happens next</h3>
           <p>
-            Sending creates a private request in this test workspace. A request is not an accepted
+            Sending creates a private request in this workspace. A request is not an accepted
             engagement, and nothing is confirmed, scheduled or promised by sending. Corridra staff
             may reply with questions. Everything you entered is self-declared and unverified.
           </p>

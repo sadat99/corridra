@@ -57,8 +57,9 @@ export const pictures: readonly Picture[] = [
     defaultJob: 'delegations',
   },
   {
+    // Preserve the historical key and objective/deep links. The visible entry now names visits.
     key: 'something-else',
-    icon: 'help',
+    icon: 'trip',
     family: 'OTHER',
     jobs: ['meetings', 'factory_visits', 'trade_fairs', 'business_trips'],
     defaultJob: null,

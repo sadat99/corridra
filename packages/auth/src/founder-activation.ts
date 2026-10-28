@@ -17,6 +17,7 @@ import { customerProgrammesEnabled } from './customer-programmes';
 import { customerRequestDetailsEnabled } from './customer-request-details';
 import { customerRequestsEnabled } from './customer-requests';
 import { customerSavedMissionsEnabled } from './customer-saved-missions';
+import { customerSpecificationConfirmationEnabled } from './customer-specification-confirmation';
 import { customerServiceRequestsEnabled } from './customer-service-requests';
 import { customerBillingEnabled, customerRealBillingEnabled } from './customer-billing';
 import { customerInvoicingEnabled } from './customer-invoicing';
@@ -81,6 +82,12 @@ const modules: {
     label: 'Saved commercial reports',
     flag: 'CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED',
     enabled: customerSavedMissionsEnabled,
+  },
+  {
+    key: 'specification-confirmation',
+    label: 'Specification confirmation',
+    flag: 'CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED',
+    enabled: customerSpecificationConfirmationEnabled,
   },
   {
     key: 'decisions',

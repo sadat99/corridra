@@ -152,14 +152,17 @@ export const en = {
   'fq.sellAbroad.hint': 'Find buyers, distributors or partners.',
   'fq.groupTrip.label': 'Lead a group trip',
   'fq.groupTrip.hint': 'Plan the programme and the meetings.',
-  'fq.somethingElse.label': 'Something else',
-  'fq.somethingElse.hint': 'Trips, visits, meetings or anything else.',
+  // New entry wording uses the existing English fallback until each translation is reviewed.
+  'fq.visits.label': 'Trips, visits or fairs',
+  'fq.visits.hint': 'Or another international business goal.',
 } as const;
 
 export type MessageKey = keyof typeof en;
 type Catalog = Record<MessageKey, string>;
 
 const bn: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.bn,
   skip: 'মূল বিষয়বস্তুতে যান',
   'header.home': 'Corridra হোম',
@@ -307,11 +310,11 @@ const bn: Catalog = {
   'fq.sellAbroad.hint': 'ক্রেতা, পরিবেশক বা অংশীদার খুঁজুন।',
   'fq.groupTrip.label': 'দলগত সফর পরিচালনা করুন',
   'fq.groupTrip.hint': 'কর্মসূচি ও বৈঠকের পরিকল্পনা করুন।',
-  'fq.somethingElse.label': 'অন্য কিছু',
-  'fq.somethingElse.hint': 'সফর, পরিদর্শন, বৈঠক বা অন্য যেকোনো কিছু।',
 };
 
 const zh: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.zh,
   skip: '跳到主要内容',
   'header.home': 'Corridra 首页',
@@ -450,11 +453,11 @@ const zh: Catalog = {
   'fq.sellAbroad.hint': '寻找买家、分销商或合作伙伴。',
   'fq.groupTrip.label': '带领团组出访',
   'fq.groupTrip.hint': '规划行程安排与会面。',
-  'fq.somethingElse.label': '其他',
-  'fq.somethingElse.hint': '出访、考察、会面或其他任何事项。',
 };
 
 const es: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.es,
   skip: 'Ir al contenido',
   'header.home': 'Corridra, inicio',
@@ -603,11 +606,11 @@ const es: Catalog = {
   'fq.sellAbroad.hint': 'Encuentre compradores, distribuidores o socios.',
   'fq.groupTrip.label': 'Dirigir un viaje en grupo',
   'fq.groupTrip.hint': 'Planifique el programa y las reuniones.',
-  'fq.somethingElse.label': 'Otra cosa',
-  'fq.somethingElse.hint': 'Viajes, visitas, reuniones o cualquier otra cosa.',
 };
 
 const ar: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.ar,
   skip: 'انتقل إلى المحتوى',
   'header.home': 'Corridra، الصفحة الرئيسية',
@@ -749,11 +752,11 @@ const ar: Catalog = {
   'fq.sellAbroad.hint': 'ابحث عن مشترين أو موزعين أو شركاء.',
   'fq.groupTrip.label': 'قيادة رحلة جماعية',
   'fq.groupTrip.hint': 'خطط للبرنامج واللقاءات.',
-  'fq.somethingElse.label': 'شيء آخر',
-  'fq.somethingElse.hint': 'رحلات أو زيارات أو اجتماعات أو أي شيء آخر.',
 };
 
 const fr: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.fr,
   skip: 'Aller au contenu',
   'header.home': 'Accueil Corridra',
@@ -903,11 +906,11 @@ const fr: Catalog = {
   'fq.sellAbroad.hint': 'Trouver des acheteurs, des distributeurs ou des partenaires.',
   'fq.groupTrip.label': 'Conduire un voyage de groupe',
   'fq.groupTrip.hint': 'Planifier le programme et les rencontres.',
-  'fq.somethingElse.label': 'Autre chose',
-  'fq.somethingElse.hint': 'Voyages, visites, rendez-vous ou tout le reste.',
 };
 
 const de: Catalog = {
+  'fq.visits.label': en['fq.visits.label'],
+  'fq.visits.hint': en['fq.visits.hint'],
   ...homeWords.de,
   skip: 'Zum Inhalt springen',
   'header.home': 'Corridra Startseite',
@@ -1058,8 +1061,6 @@ const de: Catalog = {
   'fq.sellAbroad.hint': 'Käufer, Vertriebspartner oder Partner finden.',
   'fq.groupTrip.label': 'Eine Gruppenreise leiten',
   'fq.groupTrip.hint': 'Das Programm und die Treffen planen.',
-  'fq.somethingElse.label': 'Etwas anderes',
-  'fq.somethingElse.hint': 'Reisen, Besuche, Treffen oder alles andere.',
 };
 
 export const catalogs: Record<Locale, Catalog> = { en, bn, zh, es, ar, fr, de };

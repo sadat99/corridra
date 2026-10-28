@@ -114,6 +114,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED',
+    label: 'Specification confirmation',
+    line: 'Lets a customer explicitly confirm the reviewed requirements. Needs its optional database module; this never authorises a purchase.',
+    group: 'Accounts and requests',
+    kind: 'module',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_COMPANIES_ENABLED',
     label: 'Company continuity',
     line: 'Keeps approved companies across saved reports.',

@@ -110,6 +110,8 @@ Stored values are data, not UI copy. Mission objectives such as "Sell in a new m
 
 ## Intent
 
+Owner field-workflow direction, 28 October 2026: the fifth request choice explicitly names trips, visits and fairs while preserving its historical key, all jobs and the secondary other goal. Guided drafts offer an optional current position using existing versioned requirement lines, with an honest typed alternative to image interpretation. New specification confirmation and arrangement fields extend authorised existing delivery/service actions under ADR072/073; this is explicit functional scope beyond the earlier presentation-only pass. The AC/1 theme, navigation sets, trust labels and accessibility rules remain binding. New trips wording uses marked English fallback until translated copy is reviewed.
+
 Quiet Intelligence (V10) is the grammar: calm, legible, mission first. SourceLab (V07) sets technical rigour for quotations and evidence. Heritage Atlas (V01) sets public editorial authority. Precision Ledger (V02) sets operator density. The result must read as one company: confident, precise, unhurried, never decorative for its own sake.
 
 A person should always know what they may do next, why, what evidence supports it, what is uncertain and who owns it. Complexity recedes; it is never hidden or invented.

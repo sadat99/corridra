@@ -1,4 +1,5 @@
 'use client';
+import { CommercialArrangementSummary } from '../../../components/commercial-arrangement';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
@@ -385,6 +386,9 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 <time dateTime={quote.validUntil}>{dateTimeText(quote.validUntil)}</time>.
               </p>
               <p>{quote.scope}</p>
+              {quote.commercialArrangement && (
+                <CommercialArrangementSummary terms={quote.commercialArrangement} />
+              )}
               <div
                 role="region"
                 aria-label="Quote costs, one row for every cost"

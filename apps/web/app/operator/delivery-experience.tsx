@@ -1,6 +1,7 @@
 'use client';
 import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
+import { SpecificationRequests } from './specification-requests';
 import { CustomerServiceRequests } from './customer-service-requests';
 import { CustomerBilling } from './customer-billing';
 import { CustomerInvoicing } from './customer-invoicing';
@@ -530,6 +531,9 @@ export function DeliveryExperience(props: Props) {
       </details>
       {['owner', 'admin'].includes(props.role) && (
         <DecisionDisclosures tenant={tenant} publications={publications} />
+      )}
+      {['owner', 'admin'].includes(props.role) && (
+        <SpecificationRequests tenant={tenant} publications={publications} owners={owners} />
       )}
       {['owner', 'admin'].includes(props.role) && mission && (
         <CustomerMissionDelivery tenant={tenant} mission={mission} />

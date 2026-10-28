@@ -425,7 +425,7 @@
       ],
       "decisions": ["docs/implementation/v2-part-05-readiness.md"],
       "pullRequests": [36],
-      "limits": "Readiness observations/config validation do not admit real data. D01\u2013D06/D08 remain open and real resources/pilots require separate approval."
+      "limits": "Readiness observations/config validation do not admit real data. D01–D06/D08 remain open and real resources/pilots require separate approval."
     },
     {
       "id": "V2-OBSERVED-COST",
@@ -582,7 +582,7 @@
       "tests": ["tests/integration/environment-separation.test.ts"],
       "decisions": ["docs/implementation/deferred-controls.md"],
       "pullRequests": [36],
-      "limits": "D01\u2013D06/D08 remain open; D07/D09 closed within recorded scope. CodeQL skipped is not passed; full independent assurance, approved capacity/SLO and real pilots are not collectively accepted."
+      "limits": "D01–D06/D08 remain open; D07/D09 closed within recorded scope. CodeQL skipped is not passed; full independent assurance, approved capacity/SLO and real pilots are not collectively accepted."
     },
     {
       "id": "ORIGINALS",
@@ -598,6 +598,82 @@
       "decisions": ["docs/START_HERE.md"],
       "pullRequests": [46],
       "limits": "Do not edit source packets, historic evidence or deployed migration hashes; use explicit amendments and additive changes."
+    },
+    {
+      "id": "V3-04-033",
+      "programme": "V3",
+      "requirement": "Connected adaptive intake",
+      "requirementIds": ["V3-04-033", "V3-04-040", "V3-06-004"],
+      "status": "PARTIAL",
+      "code": [
+        "apps/web/app/account/drafts/guided-request.tsx",
+        "apps/web/app/plan/intake.tsx",
+        "packages/domain/src/mission-drafts.ts"
+      ],
+      "tests": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/operator/ux-first-question.spec.ts"
+      ],
+      "decisions": ["docs/adr/0045-private-customer-mission-drafts.md"],
+      "pullRequests": [210],
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
+    },
+    {
+      "id": "V3-05-011",
+      "programme": "V3",
+      "requirement": "Explicit current specification confirmation",
+      "requirementIds": ["V3-02-022", "V3-03-003", "V3-05-011", "V3-05-033", "V3-05-034"],
+      "status": "PARTIAL",
+      "code": [
+        "packages/db/customer-specification-confirmation-migrations/0001_pinned_specification_confirmation.sql",
+        "apps/web/app/account/missions/specification-confirmation.tsx"
+      ],
+      "tests": [
+        "tests/integration/specification-confirmation.test.ts",
+        "tests/operator/specification-confirmation.spec.ts"
+      ],
+      "decisions": ["docs/adr/0072-pinned-customer-specification-confirmation.md"],
+      "pullRequests": [210],
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
+    },
+    {
+      "id": "V3-05-019",
+      "programme": "V3",
+      "requirement": "Original offers and symmetric scope comparison",
+      "requirementIds": ["V3-02-034", "V3-02-041", "V3-04-064", "V3-04-076", "V3-05-019"],
+      "status": "PARTIAL",
+      "code": [
+        "packages/domain/src/commercial-missions.ts",
+        "apps/web/components/comparison-matrix.tsx"
+      ],
+      "tests": [
+        "tests/integration/commercial-comparison.test.ts",
+        "tests/integration/commercial-missions.test.ts",
+        "tests/operator/ux-room.spec.ts"
+      ],
+      "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
+      "pullRequests": [210],
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
+    },
+    {
+      "id": "V3-06-012",
+      "programme": "V3",
+      "requirement": "Flexible arrangement terms on service quotations",
+      "requirementIds": ["V3-06-012", "V3-05-042", "V3-08-019", "V3-08-022"],
+      "status": "PARTIAL",
+      "code": [
+        "packages/domain/src/commercial-arrangements.ts",
+        "packages/db/customer-commercial-arrangement-migrations/0001_quote_arrangements.sql",
+        "packages/delivery/src/customer-service-staff.ts"
+      ],
+      "tests": [
+        "tests/integration/commercial-arrangements.test.ts",
+        "tests/operator/v3-service-requests-ui.spec.ts"
+      ],
+      "decisions": ["docs/adr/0073-commercial-arrangements-on-service-quotes.md"],
+      "pullRequests": [210],
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
     }
   ]
 }

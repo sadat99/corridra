@@ -182,6 +182,20 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/workspace/specification-confirmations',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/customer-specification-confirmations',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/workspace/customer-service-requests',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

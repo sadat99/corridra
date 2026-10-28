@@ -63,6 +63,16 @@ on:
         description: 'Required reason for enabling or pausing reply review.'
         required: false
         default: ''
+      specification_confirmation_action:
+        description: 'Optional ADR-072 metadata for customer confirmation of a pinned specification. Install does not enable the application switch.'
+        type: choice
+        options: [unchanged, install]
+        default: unchanged
+      commercial_arrangements_action:
+        description: 'Optional ADR-073 quote arrangements. Installation never activates principal sales, billing or payments.'
+        type: choice
+        options: [unchanged, install]
+        default: unchanged
       notifications_action:
         description: 'Optional ADR-067 operation for Pulse notification records. Install changes nothing anyone can see; enable opens the database side only. The application switch is separate.'
         type: choice
@@ -143,7 +153,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify exact revision before optional real-use installation
-        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.move_records_action != 'unchanged' || inputs.notifications_action != 'unchanged' || inputs.reply_review_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.real_invoicing_action != 'unchanged' || inputs.simulated_payments_action != 'unchanged' || inputs.view_as_action != 'unchanged'
+        if: inputs.real_use_action != 'unchanged' || inputs.network_use_action != 'unchanged' || inputs.mission_mail_action != 'unchanged' || inputs.move_records_action != 'unchanged' || inputs.notifications_action != 'unchanged' || inputs.reply_review_action != 'unchanged' || inputs.specification_confirmation_action != 'unchanged' || inputs.commercial_arrangements_action != 'unchanged' || inputs.real_billing_action != 'unchanged' || inputs.real_invoicing_action != 'unchanged' || inputs.simulated_payments_action != 'unchanged' || inputs.view_as_action != 'unchanged'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-real-use-install-head.mjs
@@ -167,6 +177,8 @@ jobs:
           MOVE_RECORDS_ACTION: ${{ inputs.move_records_action }}
           MOVE_RECORDS_REASON: ${{ inputs.move_records_reason }}
           REPLY_REVIEW_ACTION: ${{ inputs.reply_review_action }}
+          SPECIFICATION_CONFIRMATION_ACTION: ${{ inputs.specification_confirmation_action }}
+          COMMERCIAL_ARRANGEMENTS_ACTION: ${{ inputs.commercial_arrangements_action }}
           REPLY_REVIEW_REASON: ${{ inputs.reply_review_reason }}
           NOTIFICATIONS_ACTION: ${{ inputs.notifications_action }}
           NOTIFICATIONS_REASON: ${{ inputs.notifications_reason }}

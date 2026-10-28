@@ -36,6 +36,23 @@ export const sourcingContextLabels = {
 } as const;
 export type SourcingContext = keyof typeof sourcingContextLabels;
 
+// Customer-selected context, not a completed stage or a readiness decision. Store it as an
+// ordinary versioned requirement so the unchanged request carries it to the operator.
+export const requestStartingPoints = [
+  'A product photo, description or idea',
+  'An existing supplier',
+  'An existing price quote or request for quotation',
+  'An approved specification or repeat order',
+  'A planned trip, factory visit or trade fair',
+  'A negotiation or commercial follow-up',
+  'A search for buyers, distributors or partners',
+] as const;
+export const startingPointLabel = 'Current position';
+
+export function startingPointValue(point: (typeof requestStartingPoints)[number]) {
+  return `${realCustomerInput() ? '' : 'Synthetic '}${point}`;
+}
+
 const sourcingCommon = [
   'Technical requirements',
   'Commercial requirements',

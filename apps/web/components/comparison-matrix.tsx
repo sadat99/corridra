@@ -3,10 +3,17 @@ import { displayMoney } from '@corridra/domain/locale';
 const fields = [
   'specification',
   'quantity',
+  'moq',
   'unit',
   'unitPriceMinor',
   'totalPriceMinor',
+  'toolingMinor',
+  'setupMinor',
+  'packagingMinor',
   'leadTime',
+  'validUntil',
+  'incoterm',
+  'shipping',
   'paymentTerms',
   'warranty',
   'installation',
@@ -16,10 +23,17 @@ const fields = [
 const labels: Record<string, string> = {
   specification: 'Specification',
   quantity: 'Quantity',
+  moq: 'Minimum order quantity',
   unit: 'Quantity unit',
   unitPriceMinor: 'Original unit price',
   totalPriceMinor: 'Original total',
+  toolingMinor: 'Tooling',
+  setupMinor: 'Setup',
+  packagingMinor: 'Packaging',
   leadTime: 'Lead time',
+  validUntil: 'Offer valid until',
+  incoterm: 'Delivery terms (Incoterm)',
+  shipping: 'Shipping scope',
   paymentTerms: 'Payment terms',
   warranty: 'Warranty',
   installation: 'Installation',
@@ -63,8 +77,9 @@ export function ComparisonMatrix({
               <th scope="row">{labels[field]}</th>
               {offers.map((q) => {
                 const value = q.terms[field];
+                const missing = value === undefined || value === 'NOT_SUPPLIED';
                 return (
-                  <td key={q.id} className={value === undefined ? 'ux-cell-missing' : undefined}>
+                  <td key={q.id} className={missing ? 'ux-cell-missing' : undefined}>
                     <span
                       lang={
                         typeof value === 'string' && /\p{Script=Han}/u.test(value)
@@ -72,7 +87,7 @@ export function ComparisonMatrix({
                           : undefined
                       }
                     >
-                      {value === undefined
+                      {missing
                         ? 'NOT SUPPLIED'
                         : field.endsWith('Minor')
                           ? displayMoney(String(value), q.currency, language)

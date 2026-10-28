@@ -3,6 +3,8 @@ import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
 import { migrateCustomerSavedMissions } from '../packages/db/src/customer-commercial-migrate';
 import { migrateCustomerCompanies } from '../packages/db/src/customer-company-migrate';
 import { migrateCustomerDecisions } from '../packages/db/src/customer-decision-migrate';
+import { migrateCustomerSpecificationConfirmation } from '../packages/db/src/customer-specification-confirmation-migrate';
+import { migrateCustomerCommercialArrangements } from '../packages/db/src/customer-commercial-arrangement-migrate';
 import { migrateCustomerDelivery } from '../packages/db/src/customer-delivery-migrate';
 import { migrateCustomerRequestDetails } from '../packages/db/src/customer-detail-migrate';
 import { migrateCustomerOrganisationProfiles } from '../packages/db/src/customer-organisation-profile-migrate';
@@ -66,6 +68,8 @@ const v = z
     ),
     NOTIFICATIONS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     REPLY_REVIEW_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    SPECIFICATION_CONFIRMATION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    COMMERCIAL_ARRANGEMENTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     REPLY_REVIEW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -138,6 +142,10 @@ if (
 )
   throw new Error('Install target does not match the approved Frankfurt database');
 const apply = v.INSTALL_APPLY === 'yes';
+if (v.SPECIFICATION_CONFIRMATION_ACTION !== 'unchanged' && !apply)
+  throw new Error('Specification confirmation installation requires INSTALL_APPLY=yes');
+if (v.COMMERCIAL_ARRANGEMENTS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Commercial arrangement installation requires INSTALL_APPLY=yes');
 if (v.REAL_USE_ACTION !== 'unchanged' && !apply)
   throw new Error('Real-use changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.REAL_USE_ACTION) && !v.REAL_USE_REASON)
@@ -186,6 +194,8 @@ const registries = [
   'customer_commercial_migrations',
   'customer_company_migrations',
   'customer_decision_migrations',
+  'customer_specification_confirmation_migrations',
+  'customer_commercial_arrangement_migrations',
   'customer_delivery_migrations',
   'customer_detail_migrations',
   'customer_organisation_profile_migrations',
@@ -294,6 +304,18 @@ try {
           `Real-use admission ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    if (v.SPECIFICATION_CONFIRMATION_ACTION === 'install') {
+      await migrateCustomerSpecificationConfirmation(pool);
+      console.log(
+        'installed or already current: specification confirmation; application switch unchanged',
+      );
+    }
+    if (v.COMMERCIAL_ARRANGEMENTS_ACTION === 'install') {
+      await migrateCustomerCommercialArrangements(pool);
+      console.log(
+        'installed or already current: commercial arrangement metadata; no money activation',
+      );
     }
     if (v.NETWORK_USE_ACTION !== 'unchanged') {
       await migrateNetworkRealUse(pool);

@@ -3,6 +3,16 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 import { CustomerServiceCatalogue } from './customer-service-catalogue';
+import {
+  CommercialArrangementFields,
+  arrangementPayload,
+  emptyArrangementForm,
+} from '../../components/commercial-arrangement-fields';
+import { CommercialArrangementSummary } from '../../components/commercial-arrangement';
+import type {
+  CommercialArrangement,
+  InternalSupplyEconomics,
+} from '@corridra/domain/commercial-arrangements';
 
 type Summary = {
   id: string;
@@ -23,6 +33,7 @@ type Component = {
   amountMinor: string | null;
 };
 type Quote = {
+  commercialArrangement?: CommercialArrangement;
   version: number;
   currency: string;
   components: Component[];
@@ -35,6 +46,8 @@ type Quote = {
   expired: boolean;
 };
 type Detail = {
+  commercialArrangementsAvailable?: boolean;
+  internalSupplyEconomics?: Record<string, InternalSupplyEconomics | null>;
   request: Summary & { claimedByThisTeam: boolean };
   service: { title: string };
   need: { text: string; preferredFrom: string | null; preferredTo: string | null; region: string };
@@ -144,6 +157,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [delivery, setDelivery] = useState(starter),
     [payment, setPayment] = useState(starter),
     [valid, setValid] = useState('');
+  const [arrangement, setArrangement] = useState(emptyArrangementForm);
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-service-requests?tenant=' + encodeURIComponent(tenant);
   const call = useCallback(
@@ -211,6 +225,7 @@ function Scoped({ tenant }: { tenant: string }) {
         task.current?.abort();
         setDetail(null);
         setRows(null);
+        setArrangement(emptyArrangementForm());
         setMessage('Customer details were cleared while you were away. Reload to continue.');
       }
     };
@@ -258,6 +273,15 @@ function Scoped({ tenant }: { tenant: string }) {
     e.preventDefault();
     const b = base();
     if (!b || !valid) return;
+    let commercialTerms: ReturnType<typeof arrangementPayload>;
+    try {
+      commercialTerms = arrangementPayload(arrangement, currency, parts);
+    } catch {
+      setMessage(
+        'Check the commercial terms, parties, exact amounts and commission percentage. Your text is kept.',
+      );
+      return;
+    }
     void send(
       pending ?? {
         action: 'quote',
@@ -275,6 +299,7 @@ function Scoped({ tenant }: { tenant: string }) {
         deliveryTerms: delivery.trim(),
         paymentTerms: payment.trim(),
         validUntil: valid + 'T23:59:59.000Z',
+        ...commercialTerms,
       },
     );
   }
@@ -320,6 +345,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 onClick={() => {
                   setPending(null);
                   setMessage('');
+                  setArrangement(emptyArrangementForm());
                   void open(r.id);
                 }}
               >
@@ -366,6 +392,30 @@ function Scoped({ tenant }: { tenant: string }) {
                 {latest.expired ? ' (expired)' : ''}
               </h5>
               <p>{latest.scope}</p>
+              {latest.commercialArrangement && (
+                <CommercialArrangementSummary terms={latest.commercialArrangement} />
+              )}
+              {detail.internalSupplyEconomics?.[latest.version] && (
+                <details>
+                  <summary>Private supply economics</summary>
+                  <p>
+                    Acquisition cost:{' '}
+                    {money(
+                      detail.internalSupplyEconomics[latest.version]!.acquisitionCostMinor,
+                      detail.internalSupplyEconomics[latest.version]!.currency,
+                    )}
+                    .
+                  </p>
+                  <p>
+                    Markup on acquisition cost:{' '}
+                    {(
+                      detail.internalSupplyEconomics[latest.version]!.markupBasisPoints / 100
+                    ).toFixed(2)}
+                    %.
+                  </p>
+                  <p>{detail.internalSupplyEconomics[latest.version]!.relationshipNote}</p>
+                </details>
+              )}
               <ul>
                 {latest.components.map((c) => (
                   <li key={c.position}>
@@ -580,6 +630,18 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
               </fieldset>
+              {detail.commercialArrangementsAvailable ? (
+                <CommercialArrangementFields
+                  value={arrangement}
+                  currency={currency}
+                  onChange={(v) => edit(() => setArrangement(v))}
+                />
+              ) : (
+                <p>
+                  Commercial arrangement terms are unavailable until the protected module is
+                  installed. You can still prepare an itemised service quote.
+                </p>
+              )}
               <button type="submit" className="button" disabled={busy || !valid}>
                 {pending ? 'Send the same quote again' : 'Send the quote to the customer'}
               </button>
