@@ -616,7 +616,7 @@
         "tests/operator/ux-first-question.spec.ts"
       ],
       "decisions": ["docs/adr/0045-private-customer-mission-drafts.md"],
-      "pullRequests": [],
+      "pullRequests": [210],
       "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
     },
     {
@@ -634,7 +634,7 @@
         "tests/operator/specification-confirmation.spec.ts"
       ],
       "decisions": ["docs/adr/0072-pinned-customer-specification-confirmation.md"],
-      "pullRequests": [],
+      "pullRequests": [210],
       "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
     },
     {
@@ -653,7 +653,7 @@
         "tests/operator/ux-room.spec.ts"
       ],
       "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
-      "pullRequests": [],
+      "pullRequests": [210],
       "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
     },
     {
@@ -672,7 +672,7 @@
         "tests/operator/v3-service-requests-ui.spec.ts"
       ],
       "decisions": ["docs/adr/0073-commercial-arrangements-on-service-quotes.md"],
-      "pullRequests": [],
+      "pullRequests": [210],
       "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
     }
   ]

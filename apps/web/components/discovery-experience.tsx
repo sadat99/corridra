@@ -157,6 +157,7 @@ export function DiscoveryExperience() {
             <label htmlFor="atlas-any-company">My company is in</label>
             <select
               id="atlas-any-company"
+              disabled={!mounted}
               value={fromValue}
               onChange={(e) => setOther({ company: e.target.value, market: toValue })}
             >
@@ -171,6 +172,7 @@ export function DiscoveryExperience() {
             <label htmlFor="atlas-any-market">I want to reach</label>
             <select
               id="atlas-any-market"
+              disabled={!mounted}
               value={toValue}
               onChange={(e) => setOther({ company: fromValue, market: e.target.value })}
             >
