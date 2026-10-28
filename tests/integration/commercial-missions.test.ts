@@ -715,7 +715,8 @@ test('a planned business trip schedules a known supplier visit without discovery
     message_id: null,
     target_id: target.targetId,
   });
-  expect(w.schedules[0].entries[0].appointment?.id).toBe(meeting.id);
+  const scheduledVisit = w.schedules[0].entries[0];
+  expect('appointment' in scheduledVisit && scheduledVisit.appointment?.id).toBe(meeting.id);
   expect(w.rfqs).toHaveLength(0);
   expect(w.quotations).toHaveLength(0);
   expect(w.assessments).toHaveLength(0);
