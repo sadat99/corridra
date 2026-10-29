@@ -90,3 +90,17 @@ The initial dependency diagnostic compared package declarations directly and inc
 The stricter complete-frame audit additionally measured document overflow and loaded fonts. `b-complete-frame-audit-2026-10-29T16-53-10-262Z.log` exited1, 15 passed/1 failed: the staff reviewed-publication selector widened the 320px document to348px. The permanent four-width staff test reproduced that exact failure: `b-staff-width-red-2026-10-29T17-03-04-723Z.log`, exit1/1 failed/3 passed. Only source styles were restored for `b-staff-width-green-2026-10-29T17-08-44-296Z.log`, exit0/4 passed. The original exact-command, security and accessibility assertions remain. The checkbox keeps its existing choice style; only Reviewed publication, Request owner and Response deadline reuse the field class.
 
 Complete audit after all corrections: `b-complete-frame-green-2026-10-29T17-09-06-565Z.log`, exit0/16 passed, 28 measured states with loaded production fonts, no horizontal overflow and all measured targets at least44px. The dated evidence folder retains the complete red and green geometry JSON and hashes.
+
+## Frozen source 26439f4
+
+All five required commands ran sequentially with normal pinned dependency verification. These are local synthetic checks, not production acceptance. The follow-up commit updates records; application, package and test source remain unchanged.
+
+| Command                 | Exit | Actual result                          | Full log                                                        |
+| ----------------------- | ---- | -------------------------------------- | --------------------------------------------------------------- |
+| `pnpm test:docs`        | 0    | 63 passed                              | `work/b-pinned-frozen-docs-2026-10-29T17-10-18-030Z.log`        |
+| `pnpm test:integration` | 1    | 1687 passed, 4 failed, 1 existing skip | `work/b-pinned-frozen-integration-2026-10-29T17-10-23-971Z.log` |
+| `pnpm test:ux`          | 0    | 56 passed                              | `work/b-pinned-frozen-ux-2026-10-29T17-22-12-863Z.log`          |
+| `pnpm test:operator`    | 0    | 709 passed                             | `work/b-pinned-frozen-operator-2026-10-29T17-30-22-622Z.log`    |
+| `pnpm build`            | 0    | Production build completed             | `work/b-pinned-frozen-build-2026-10-29T18-04-06-966Z.log`       |
+
+Integration failed on the same four real-service cases: Docker backup/restore, ClamAV adapter, Blob clean scan and restored scan after bypass. This container has no Docker daemon or ClamAV service. These are failures, not waivers. No new skip, assertion relaxation or fake service was introduced. Every operator case, including the owner page at 320px and the new staff/customer real-frame regressions, passed. Full receipts retain exact command, source head, elapsed time, output hash and totals in the dated evidence folder. The owner screenshots now show the repaired install note at all four widths. Old unrelated generated screenshots were restored.

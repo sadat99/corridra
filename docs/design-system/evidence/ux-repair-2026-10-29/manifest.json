@@ -1,7 +1,7 @@
 {
   "date": "2026-10-29",
   "scope": "Synthetic local browser evidence; not production acceptance",
-  "source": "PR B over main c76e155; exact source receipt in work logs",
+  "source": "Frozen runtime source 26439f4e50bc7ece301a64ec54e76d4770742b59; final follow-up records verification only",
   "widths": [320, 390, 768, 1440],
   "firstQuestion": "Six language drafts; explicit first-question lang/dir; the remaining form is English",
   "realFrame": "KI16 customer direct-child and actual staff workspace-body/panel ancestors; four widths, loaded fonts, overflow and 44px targets",
@@ -148,6 +148,26 @@
       "bytes": 143377
     },
     {
+      "path": "after/owner-1440.png",
+      "sha256": "d1b6509df9534f72f23b9e88a9aeb262e55782fe8424c7ac5e212b0fb5772c8a",
+      "bytes": 1359735
+    },
+    {
+      "path": "after/owner-320.png",
+      "sha256": "ed8a8e3d99419e3dd3fd3606c263b095dbe4df8b27819eb65e323bf9fbec56a9",
+      "bytes": 1457743
+    },
+    {
+      "path": "after/owner-390.png",
+      "sha256": "7af11a837c6aa8b82252cd4be416e38262eb8ec1095819f77ee0469db6f521ce",
+      "bytes": 1378672
+    },
+    {
+      "path": "after/owner-768.png",
+      "sha256": "be7e37488093b8d6f221f3091fc2695a10b6c9a39a237bed21793afa4aeb7f9f",
+      "bytes": 1355032
+    },
+    {
       "path": "after/plan-step-1-1440.png",
       "sha256": "223ef61cb8ff586e65189aedf29805204e0476c7b79af14b533567b00f9037d0",
       "bytes": 197753
@@ -219,8 +239,8 @@
     },
     {
       "path": "after/specification-390.png",
-      "sha256": "95b0574c8da2ff50e50fa3cdeb0288aa877168149343f318ffe05f5cc7424def",
-      "bytes": 116205
+      "sha256": "bc0cdd15e9d6860c95b5beb91b3e80d1619050b67ccd98e0d583578ddf18d8a5",
+      "bytes": 116201
     },
     {
       "path": "after/specification-768.png",
@@ -329,13 +349,13 @@
     },
     {
       "path": "complete-frame-green.json",
-      "sha256": "f5f9032025ce139abcf9259143157f8b0c829fcb2f73b90552d6c81d9793959c",
-      "bytes": 48241
+      "sha256": "838c82d39a91019cedc801111361526720b875356d129a3ef85d9aa79a80058c",
+      "bytes": 47641
     },
     {
       "path": "complete-frame-red.json",
-      "sha256": "faf4a0af89477dc3524fc0aa44925cc207d48d3fcc3ecc2bbe6b99fd9fdc4f03",
-      "bytes": 48332
+      "sha256": "b1b541f2e8bb388b33c79810a8afc39e1d50afce7ba2126212efe4621b2f93c8",
+      "bytes": 47732
     },
     {
       "path": "target-audit-green.json",
@@ -346,6 +366,11 @@
       "path": "target-audit-red.json",
       "sha256": "dd88c7ffefb9773e2154a57958924b37d544894418c442768b024af835359923",
       "bytes": 39128
+    },
+    {
+      "path": "verification.json",
+      "sha256": "f653bfb5de771f45b0920906d0c35aaedcb29c4a4b16cfc9c6ccf232b0c3a69d",
+      "bytes": 3066
     }
   ],
   "measurements": [
