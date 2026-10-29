@@ -1252,6 +1252,12 @@ for (const width of [320, 390, 768, 1440])
         await expect(region).toContainText('Synthetic contract and collection evidence');
       }
       if (mode === 'HYBRID') await expect(region).toContainText('Do not charge it twice');
+      const termsTarget = await region
+        .getByText('Original stated terms', { exact: true })
+        .boundingBox();
+      expect(termsTarget?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect(termsTarget?.width ?? 0).toBeGreaterThanOrEqual(44);
+
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );

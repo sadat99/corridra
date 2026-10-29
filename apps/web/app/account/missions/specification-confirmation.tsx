@@ -180,7 +180,7 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
                 If anything needs changing, reply to the requirement question below. Corridra can
                 issue a revised request.
               </p>
-              <label>
+              <label className="choice">
                 <input
                   type="checkbox"
                   checked={checked[review.requestId] ?? false}

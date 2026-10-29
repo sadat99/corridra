@@ -89,7 +89,7 @@ export function CommercialArrangementSummary({ terms }: { terms: CommercialArran
           </p>
         </>
       )}
-      <details>
+      <details className="guide-fine">
         <summary>Original stated terms</summary>
         <p>{terms.sourceTerms}</p>
       </details>

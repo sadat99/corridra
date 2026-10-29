@@ -206,52 +206,85 @@ test('uninstalled module has an honest unavailable state', async ({ page }) => {
   await expect(page.getByRole('status')).toContainText('not available yet');
   await expect(page.getByRole('checkbox')).toHaveCount(0);
 });
-test('staff issues an exact reviewed requirement question through the protected route', async ({
-  page,
-}) => {
-  let command: Record<string, unknown> | null = null;
-  await page.route('**/api/workspace/specification-confirmations**', async (route) => {
-    if (route.request().method() === 'POST') {
-      command = route.request().postDataJSON();
-      await route.fulfill({
-        status: 200,
-        body: JSON.stringify({ id: command!.commandId, replayed: false }),
-      });
-    } else
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          publicationId,
-          requirement: {
-            requirementId,
-            requirementVersion: 1,
-            requirementDigest: 'a'.repeat(64),
-            declaration: 'Original synthetic machinery requirement',
-            fields,
-          },
-          requests: [],
-        }),
-      });
+for (const staffWidth of [320, 390, 768, 1440])
+  test(`staff issues an exact reviewed requirement question at ${staffWidth}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: staffWidth, height: 900 });
+    let command: Record<string, unknown> | null = null;
+    await page.route('**/api/workspace/specification-confirmations**', async (route) => {
+      if (route.request().method() === 'POST') {
+        command = route.request().postDataJSON();
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({ id: command!.commandId, replayed: false }),
+        });
+      } else
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            publicationId,
+            requirement: {
+              requirementId,
+              requirementVersion: 1,
+              requirementDigest: 'a'.repeat(64),
+              declaration: 'Original synthetic machinery requirement',
+              fields,
+            },
+            requests: [],
+          }),
+        });
+    });
+    await page.goto(origin + '?staff');
+    // KI16: the same workspace body and panel ancestors as the actual staff screen.
+    await page.evaluate(() => {
+      const main = document.querySelector('main')!;
+      main.classList.remove('ux-customer');
+      main.removeAttribute('style');
+      const fixture = document.getElementById('fixture')!;
+      const body = document.createElement('div');
+      body.className = 'ux-workspace-body';
+      const panel = document.createElement('section');
+      panel.className = 'workspace-panel ux-panel';
+      fixture.replaceWith(body);
+      body.append(panel);
+      panel.append(fixture);
+    });
+
+    await page.getByText('Request customer specification confirmation', { exact: true }).click();
+    await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
+    await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
+    await page.getByRole('textbox', { name: 'Response deadline (UTC)' }).fill('2026-12-01T10:00');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      staffWidth,
+    );
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+          .analyze()
+      ).violations,
+    ).toEqual([]);
+    await mkdir('docs/design-system/evidence/ux-repair-2026-10-29/after', { recursive: true });
+    await page.screenshot({
+      path: `docs/design-system/evidence/ux-repair-2026-10-29/after/staff-specification-${staffWidth}.png`,
+      fullPage: true,
+    });
+
+    await page.getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Request confirmation', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Confirmation requested');
+    expect(command).toMatchObject({
+      publicationId,
+      requirementId,
+      requirementVersion: 1,
+      requirementDigest: 'a'.repeat(64),
+      ownerId,
+      approved: true,
+      dueAt: '2026-12-01T10:00:00.000Z',
+    });
   });
-  await page.goto(origin + '?staff');
-  await page.getByText('Request customer specification confirmation', { exact: true }).click();
-  await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
-  await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
-  await page.getByRole('textbox', { name: 'Response deadline (UTC)' }).fill('2026-12-01T10:00');
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Request confirmation', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Confirmation requested');
-  expect(command).toMatchObject({
-    publicationId,
-    requirementId,
-    requirementVersion: 1,
-    requirementDigest: 'a'.repeat(64),
-    ownerId,
-    approved: true,
-    dueAt: '2026-12-01T10:00:00.000Z',
-  });
-});
 for (const width of [320, 390, 768, 1440])
   test(`customer review fits at ${width}px and passes axe`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -281,6 +314,9 @@ for (const width of [320, 390, 768, 1440])
       const fixture = document.getElementById('fixture')!;
       fixture.replaceWith(...Array.from(fixture.childNodes));
     });
+    const consentTarget = await page.getByRole('checkbox').locator('..').boundingBox();
+    expect(consentTarget?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(consentTarget?.width ?? 0).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,
     );

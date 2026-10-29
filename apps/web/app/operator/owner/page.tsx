@@ -143,8 +143,9 @@ export default async function Page({
               <StatusBadge tone="neutral">{module.state}</StatusBadge>
             </p>
             <p>
-              Owner install choice: <code>{module.action}</code>. Preview with apply=no first.
+              Owner install choice: <code className="owner-name">{module.action}</code>
             </p>
+            <p>Preview with apply=no first.</p>
           </article>
         ))}
       </section>

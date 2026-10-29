@@ -4,28 +4,28 @@
   "source": "PR B over main c76e155; exact source receipt in work logs",
   "widths": [320, 390, 768, 1440],
   "firstQuestion": "Six language drafts; explicit first-question lang/dir; the remaining form is English",
-  "realFrame": "KI16 direct customer frame for specification and commercial arrangement",
+  "realFrame": "KI16 customer direct-child and actual staff workspace-body/panel ancestors; four widths, loaded fonts, overflow and 44px targets",
   "baseline": "3580f42 separately frozen installed and built; actual /plan steps 1,2,3 compared",
   "files": [
     {
       "path": "after/arrangement-1440.png",
-      "sha256": "9bf50baeb2156c62e755cb999efe866fa17ee8a8638ee9f14c2b0050793b98d8",
-      "bytes": 369328
+      "sha256": "18b0941bfe1a3b4d0f53c5fee74dd9a9e773178286cc7c6d5d546b3b775b8712",
+      "bytes": 369735
     },
     {
       "path": "after/arrangement-320.png",
-      "sha256": "aff00bfc1522166e4bd649778c59eb5e3858117d8aa4e537e91ce5981c84b394",
-      "bytes": 339927
+      "sha256": "691cbfeb706905851b7437ed5a6df8d5f8680e79f755541da331de6d67152333",
+      "bytes": 340189
     },
     {
       "path": "after/arrangement-390.png",
-      "sha256": "b2c53574b19d0f1e7ca60a0bb622bfa94ca7711b62a1695d3e45915af4dd0957",
-      "bytes": 337642
+      "sha256": "0bfe6c45806f42d6ac48e6818bc74bed9ff28c8a750413248fdb403ee38b8d29",
+      "bytes": 337960
     },
     {
       "path": "after/arrangement-768.png",
-      "sha256": "3b7ab9c1ae2f71c38e1bce2669904cc5d8607e9d9328173a4f6916a2a000a799",
-      "bytes": 352648
+      "sha256": "157a26cbc789045b2af3baaec003043aa6e28e76f029aa6e793545f4c5ee0006",
+      "bytes": 353019
     },
     {
       "path": "after/first-question-ar-1440.png",
@@ -209,23 +209,63 @@
     },
     {
       "path": "after/specification-1440.png",
-      "sha256": "ec97c79ceaaa63ad833500d4583de438b44be2efc7c5eb9af4964631e0fdf1a2",
-      "bytes": 125192
+      "sha256": "7693437c8b25e6cc5e887559a2f044e1104b0c317ff76efc311754ae8faa7d8d",
+      "bytes": 126142
     },
     {
       "path": "after/specification-320.png",
-      "sha256": "f86f752332517c6865b74f0adf17265969a9e8e8a0cfad6fed9cb823cb5dae72",
-      "bytes": 116056
+      "sha256": "3e51526007bef4d7a7081250155bf3fae22f7dbfc376a9283def44c91d6387c2",
+      "bytes": 117318
     },
     {
       "path": "after/specification-390.png",
-      "sha256": "0f17078bdc5e0579f747ccbacb9727dd476f7bc4e9fd0cff9e1c0f01876ee7d4",
-      "bytes": 115222
+      "sha256": "95b0574c8da2ff50e50fa3cdeb0288aa877168149343f318ffe05f5cc7424def",
+      "bytes": 116205
     },
     {
       "path": "after/specification-768.png",
-      "sha256": "8b5f274123ce0930e150eb499f2adf32e7282838e3bdf2e6b630f2255a00fb34",
-      "bytes": 119081
+      "sha256": "9d3666fa777126f345f40707cd50602e5fcbaf10e698fec47f63519d44462297",
+      "bytes": 119985
+    },
+    {
+      "path": "after/staff-arrangement-1440.png",
+      "sha256": "048484e38ad18a4b28e8472f3021c1ffabf79eaddb3e678d182d71e314624822",
+      "bytes": 472992
+    },
+    {
+      "path": "after/staff-arrangement-320.png",
+      "sha256": "5c8ab4f4d8c613b2f33ef32c0a361ed8ede8a57a7942676a71f58f2e670f195b",
+      "bytes": 434586
+    },
+    {
+      "path": "after/staff-arrangement-390.png",
+      "sha256": "f073f7aeb41a459754f4b36a5d5afb52cf5cdd5130621a3db3e184253ab9be25",
+      "bytes": 435280
+    },
+    {
+      "path": "after/staff-arrangement-768.png",
+      "sha256": "65189239efad055bbd1f077fb855db1709002846994f1a5156d209f05be43e94",
+      "bytes": 455195
+    },
+    {
+      "path": "after/staff-specification-1440.png",
+      "sha256": "4c597be6b8897c3796b1f07ae3e77728f867410318d98a81f764a89f80b5822b",
+      "bytes": 171251
+    },
+    {
+      "path": "after/staff-specification-320.png",
+      "sha256": "60cddb0672ce912467cbf68d45193580d87cd38ca3a9497981fd344bb861ccfc",
+      "bytes": 117747
+    },
+    {
+      "path": "after/staff-specification-390.png",
+      "sha256": "580182db59f291d36dc67064d2243f2f172da6c42f85d3e1dd7305b4580aaa51",
+      "bytes": 117320
+    },
+    {
+      "path": "after/staff-specification-768.png",
+      "sha256": "9b09af28db5c27bdc42454e455aec23f8c88e644d4767fda2a1029e58891dad0",
+      "bytes": 150349
     },
     {
       "path": "before/plan-step-1-1440.png",
@@ -286,6 +326,36 @@
       "path": "before/plan-step-3-768.png",
       "sha256": "88f15de2982e48e36c2fbb4d150ba4cca6d63933fe24c6aed2c510c0b5b7dc53",
       "bytes": 198068
+    },
+    {
+      "path": "complete-frame-green.json",
+      "sha256": "f5f9032025ce139abcf9259143157f8b0c829fcb2f73b90552d6c81d9793959c",
+      "bytes": 48241
+    },
+    {
+      "path": "complete-frame-red.json",
+      "sha256": "faf4a0af89477dc3524fc0aa44925cc207d48d3fcc3ecc2bbe6b99fd9fdc4f03",
+      "bytes": 48332
+    },
+    {
+      "path": "target-audit-green.json",
+      "sha256": "ebce2b66b987cfa6f3f4b7b07fe370474d9772a942daf59509c5f9c4d21828c7",
+      "bytes": 50180
+    },
+    {
+      "path": "target-audit-red.json",
+      "sha256": "dd88c7ffefb9773e2154a57958924b37d544894418c442768b024af835359923",
+      "bytes": 39128
+    }
+  ],
+  "measurements": [
+    {
+      "path": "target-audit-red.json",
+      "sha256": "dd88c7ffefb9773e2154a57958924b37d544894418c442768b024af835359923"
+    },
+    {
+      "path": "target-audit-green.json",
+      "sha256": "ebce2b66b987cfa6f3f4b7b07fe370474d9772a942daf59509c5f9c4d21828c7"
     }
   ]
 }
