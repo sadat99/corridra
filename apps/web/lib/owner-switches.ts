@@ -41,6 +41,16 @@ export type SwitchEntry = {
   kind: SwitchKind;
 };
 
+export const installOnlyModules = [
+  {
+    name: 'customer-commercial-arrangement',
+    label: 'Quote arrangement records',
+    line: 'No separate application switch. Where installed, follows service-request access. Principal sales, billing and payments stay separate.',
+    state: 'Installation not checked here',
+    action: 'field_modules_action=commercial_arrangements (or both)',
+  },
+] as const;
+
 export const switchRegistry: SwitchEntry[] = [
   // Accounts and requests
   {

@@ -7,7 +7,11 @@ import { CorridraIcon } from './corridra-icon';
 /** What Listen reads: the main region and its language. A change in either means support must be asked again. */
 function contentSignature() {
   const main = document.getElementById('main');
-  return { main, language: main?.lang || document.documentElement.lang || 'en' };
+  return {
+    main,
+    language: main?.lang || document.documentElement.lang || 'en',
+    choice: document.documentElement.lang || 'en',
+  };
 }
 
 /**
@@ -21,7 +25,8 @@ function watchContent(changed: () => void) {
   const recheck = () => {
     frame = 0;
     const now = contentSignature();
-    if (now.main === seen.main && now.language === seen.language) return;
+    if (now.main === seen.main && now.language === seen.language && now.choice === seen.choice)
+      return;
     seen = now;
     changed();
   };

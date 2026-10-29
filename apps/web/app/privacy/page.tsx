@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { customerRealInvoicingEnabled } from '@corridra/auth/customer-invoicing-real';
 import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-payments-simulated';
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { PublicShell } from '../../components/public-shell';
 
 export const metadata = {
@@ -18,6 +20,8 @@ export default function Page() {
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
+  const specificationConfirmation = real && customerSpecificationConfirmationEnabled();
+  const arrangements = real && customerServiceRequestsEnabled();
   return (
     <PublicShell>
       <section className="guide-page-hero">
@@ -37,8 +41,8 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated 25 October 2026. Request notice version:{' '}
-            {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
+            Updated {specificationConfirmation || arrangements ? '29' : '25'} October 2026. Request
+            notice version: {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
           </p>
         </div>
       </section>
@@ -148,6 +152,25 @@ export default function Page() {
                 business, market, requirements and contacts). To review your request, do the work
                 and keep a record of it. Basis: providing the service you asked for.
               </li>
+              {specificationConfirmation && (
+                <li>
+                  <strong>Requirement confirmations</strong> (the exact requirements you review,
+                  your confirmation, its time and a private account identifier). To record what you
+                  asked for and support the work. This is your statement of requirements, not
+                  approval of a purchase or payment. Basis: providing the service you asked for.
+                </li>
+              )}
+              {arrangements && (
+                <li>
+                  <strong>Quote arrangements, where installed</strong> (the parties and
+                  responsibilities stated in the quote, its original terms, any supply price and
+                  conditional commission). To explain the agreement you review and keep its history.
+                  The current handling team can also keep restricted acquisition costs, markup and
+                  relationship notes. Customers see only the terms disclosed to them. Basis:
+                  providing the service you asked for. These records do not confirm a sale or
+                  payment.
+                </li>
+              )}
               <li>
                 <strong>Workspace and team information</strong> (workspace names, members, roles,
                 invitations). To let the right people in your organisation work together. Basis:

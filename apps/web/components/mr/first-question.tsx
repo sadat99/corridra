@@ -5,6 +5,7 @@ import './scripts.css';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
 import { translate, type MessageKey } from '../../lib/i18n/messages';
+import { localeMeta } from '../../lib/i18n/locales';
 import { pictures, type PictureKey } from '../../lib/first-question';
 
 const words: Record<PictureKey, { label: MessageKey; hint: MessageKey }> = {
@@ -28,9 +29,10 @@ export function FirstQuestion({
   onChoose: (key: PictureKey) => void;
 }) {
   const { locale } = useLanguage();
+  const { html, dir } = localeMeta[locale];
   const say = (key: MessageKey) => translate(locale, key);
   return (
-    <div role="radiogroup" aria-label={say('fq.legend')} className="mr-fq">
+    <div role="radiogroup" aria-label={say('fq.legend')} className="mr-fq" lang={html} dir={dir}>
       <p className="mr-fq-legend">{say('fq.legend')}</p>
       <div className="mr-fq-grid">
         {pictures.map((picture) => (
@@ -43,7 +45,7 @@ export function FirstQuestion({
               onChange={() => onChoose(picture.key)}
             />
             <CorridraIcon name={picture.icon} />
-            <span lang={picture.key === 'something-else' ? 'en' : undefined}>
+            <span>
               <b>{say(words[picture.key].label)}</b>
               <small>{say(words[picture.key].hint)}</small>
             </span>

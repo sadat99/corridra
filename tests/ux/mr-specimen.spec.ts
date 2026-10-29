@@ -131,7 +131,8 @@ async function mount(page: Page, width: number) {
     if (message.type() === 'error') console.log('CONSOLE ERROR', message.text());
   });
   await page.setViewportSize({ width, height: 900 });
-  await page.goto('/how-it-works');
+  await page.goto('/plan');
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
   await page.evaluate(
     ({ css }) => {
       document.body.innerHTML = '<div id="mount"></div>';

@@ -236,3 +236,19 @@ describe('main content keeps its own language', () => {
     expect(text).not.toMatch(/utterance\.lang = document\.documentElement\.lang/);
   });
 });
+
+describe('the trips choice keeps its own drafted words', () => {
+  it.each([
+    ['bn', 'ব্যবসায়িক সফর, পরিদর্শন বা মেলা', 'অথবা অন্য কোনো আন্তর্জাতিক ব্যবসার লক্ষ্য।'],
+    ['zh', '商务旅行、参观或展会', '或其他国际业务目标。'],
+    ['es', 'Viajes, visitas o ferias', 'U otro objetivo de negocio internacional.'],
+    ['ar', 'رحلات أو زيارات أو معارض', 'أو هدف آخر للأعمال الدولية.'],
+    ['fr', 'Voyages, visites ou salons', 'Ou un autre objectif commercial international.'],
+    ['de', 'Reisen, Besuche oder Messen', 'Oder ein anderes internationales Geschäftsziel.'],
+  ] as const)('%s shows the new label and hint in that language', (code, label, hint) => {
+    expect(catalogs[code]['fq.visits.label']).toBe(label);
+    expect(catalogs[code]['fq.visits.hint']).toBe(hint);
+    expect(catalogs[code]['fq.visits.label']).not.toBe(en['fq.visits.label']);
+    expect(catalogs[code]['fq.visits.hint']).not.toBe(en['fq.visits.hint']);
+  });
+});

@@ -2057,7 +2057,8 @@
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
       "tests/browser/v3-guided-request-gate.spec.ts",
-      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md",
+      "docs/implementation/ux-repair-acceptance-2026-10-29.md"
     ],
     "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
@@ -2137,7 +2138,8 @@
       "tests/integration/customer-mission-drafts.test.ts",
       "tests/operator/v3-guided-request-ui.spec.ts",
       "tests/browser/v3-guided-request-gate.spec.ts",
-      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md",
+      "docs/implementation/ux-repair-acceptance-2026-10-29.md"
     ],
     "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
@@ -2389,7 +2391,8 @@
     "status": "PARTIAL",
     "evidence": [
       "docs/v3/phase-0/inventory.json",
-      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md",
+      "docs/implementation/ux-repair-acceptance-2026-10-29.md"
     ],
     "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },
@@ -2860,7 +2863,8 @@
       "packages/missions/src/commercial.ts",
       "docs/implementation/implementation-matrix.json",
       "docs/v3/phase-0/inventory.json",
-      "docs/implementation/field-workflow-acceptance-2026-10-28.md"
+      "docs/implementation/field-workflow-acceptance-2026-10-28.md",
+      "docs/implementation/ux-repair-acceptance-2026-10-29.md"
     ],
     "nextAction": "Retain original behavior and scoped local acceptance; finish exact-head release gates and separately verify protected installation, enabled configuration and genuine customer journeys. Whole requirement family remains PARTIAL."
   },

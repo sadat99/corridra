@@ -219,7 +219,9 @@ afterAll(async () => {
 
 test('optional populated install changes no previous function, policy, source, request or event and is repeatable', async () => {
   const before = await preserved();
+  expect(await staff.installed()).toBe(false);
   await migrateCustomerSpecificationConfirmation(f.owner);
+  expect(await staff.installed()).toBe(true);
   const after = await preserved();
   expect(
     after.functions.filter((v: { oid: number }) =>

@@ -50,3 +50,11 @@ Formal register for Spanish, French (vous) and German (Sie); modern corporate Ch
 | Supplier Reply Page, its own words only | `apps/web/lib/reply-words.ts`     | `zh`     | Reviewed by Nazmus Sadat, 25 October 2026        | Released with `zh` by the row above. A link naming Chinese now opens the Chinese page once `CORRIDRA_LANGUAGES_REVIEWED` lists `zh` and the Reply Page switch is on (Lane 8).     |
 
 The reviewer should also read the supplier-facing wording in the page for exact meaning: "Self-declared", "Not stated", "No charge", the price and validity steps and the receipt. Requirement text, names and quotations are never translated.
+
+## Draft additions, 29 October 2026
+
+| Surface                                | File                                                                    | Languages              | Review state                     | Release boundary                                                                                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------- | ---------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First question trips, visits and fairs | `apps/web/lib/i18n/messages.ts`, `fq.visits.label` and `fq.visits.hint` | bn, zh, es, ar, fr, de | Drafted; review NOT yet recorded | Existing first-question language release, including the reviewed-language filter. The owner requests these drafts restored. Native review remains an owner step. |
+
+The 25 October review covers the 138 keys present that day, including the retired `fq.somethingElse` words. It does not review the replacement `fq.visits` words introduced on 28 October. Earlier review rows remain dated records. The owner clarified on 29 October that the first question keeps its existing language behaviour when the new request-form switch is off.

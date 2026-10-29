@@ -73,7 +73,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
       if (!task.signal.aborted)
         setMessage(
           error instanceof Error && error.message === 'unavailable'
-            ? 'Specification confirmation is not available yet. The optional module and application switch are required.'
+            ? 'Specification confirmation is not available yet. Ask the workspace owner to check access.'
             : 'Current publication access could not be checked. Reload and verify your authenticator.',
         );
     } finally {

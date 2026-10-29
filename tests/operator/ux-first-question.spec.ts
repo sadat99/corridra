@@ -4,6 +4,9 @@ import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
+import { localeMeta } from '../../apps/web/lib/i18n/locales';
+import { translate } from '../../apps/web/lib/i18n/messages';
+import { mkdirSync } from 'node:fs';
 
 // The first question and the single Sample label (Lane 6 of the UX update), mounted the way the other
 // operator specs mount their screens: the real intake, the real header and the real stylesheets in a
@@ -22,14 +25,16 @@ test.beforeAll(async () => {
       contents: `import{createRoot}from'react-dom/client';
       import{LanguageProvider}from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
       import{SiteHeader}from ${JSON.stringify(resolve('apps/web/components/site-header.tsx'))};
+      import{offeredLanguages}from ${JSON.stringify(resolve('apps/web/lib/i18n/locales.ts'))};
+      import{languagesWithPages}from ${JSON.stringify(resolve('apps/web/lib/i18n/pages.ts'))};
       import{Intake}from ${JSON.stringify(resolve('apps/web/app/plan/intake.tsx'))};
       const q=new URLSearchParams(location.search);
       const mode=q.get('mode')||undefined;
       createRoot(document.getElementById('fixture')).render(
-        <LanguageProvider offered={[{code:'en',draft:false}]}>
+        <LanguageProvider offered={offeredLanguages({CORRIDRA_LANGUAGES_REVIEWED:q.get('reviewed')||''})} pageLocales={languagesWithPages({CORRIDRA_LANGUAGES_PAGES:q.get('pages')||''})}>
           <div className="site-shell">
             <SiteHeader accounts={false} mode={mode}/>
-            <main id="main" className="ux-intake-page"><section className="guide-plan">
+            <main id="main" lang="en" dir="ltr" className="ux-intake-page"><section className="guide-plan">
               <header className="guide-plan-head"><p className="label">PLAN A MISSION</p><h1>What do you want to do?</h1></header>
               <Intake firstQuestion={q.get('fq')==='1'}/>
             </section></main>
@@ -256,3 +261,53 @@ for (const width of [320, 390, 768, 1440]) {
       });
   });
 }
+
+for (const code of ['bn', 'zh', 'es', 'ar', 'fr', 'de'] as const) {
+  for (const width of [320, 390, 768, 1440]) {
+    test(`${code}: translated trips entry at ${width}, with its original value and no page overflow`, async ({
+      page,
+    }) => {
+      await page.addInitScript((value) => localStorage.setItem('corridra.language', value), code);
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(`${origin}/?fq=1&reviewed=bn,zh,es,ar,fr,de`);
+      const group = page.locator('.mr-fq');
+      await expect(group).toHaveAttribute('lang', localeMeta[code].html);
+      await expect(group).toHaveAttribute('dir', localeMeta[code].dir);
+      const card = group
+        .locator('label')
+        .filter({ has: page.locator('input[value="something-else"]') });
+      await expect(card.locator('b')).toHaveText(translate(code, 'fq.visits.label'));
+      await expect(card.locator('small')).toHaveText(translate(code, 'fq.visits.hint'));
+      expect(await card.locator('span[lang="en"]').count()).toBe(0);
+      await card.locator('input').check();
+      await expect(card.locator('input')).toBeChecked();
+      await expect(card.locator('input')).toHaveValue('something-else');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      const directory = 'docs/design-system/evidence/ux-repair-2026-10-29/after';
+      mkdirSync(directory, { recursive: true });
+      await page.screenshot({
+        path: `${directory}/first-question-${code}-${width}.png`,
+        fullPage: true,
+      });
+    });
+  }
+}
+for (const pages of ['', 'true', 'es,de']) {
+  test(`the first-question words keep their existing release rule with pages=${pages || 'unset'}`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => localStorage.setItem('corridra.language', 'de'));
+    await page.goto(`${origin}/?fq=1&reviewed=de&pages=${pages}`);
+    await expect(page.locator('.mr-fq b').last()).toHaveText('Reisen, Besuche oder Messen');
+  });
+}
+test('a language not offered as reviewed is not selected by stored choice', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('corridra.language', 'fr'));
+  await page.goto(`${origin}/?fq=1&reviewed=de`);
+  await expect(page.locator('.mr-fq')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('.mr-fq b').last()).toHaveText('Trips, visits or fairs');
+});

@@ -1228,6 +1228,14 @@ for (const width of [320, 390, 768, 1440])
     ] as const) {
       mode = current;
       await page.goto(origin + '/?view=detail');
+      // KI16: use the actual customer frame for this four-width acceptance check.
+      await page.evaluate(() => {
+        const main = document.querySelector('main')!;
+        main.classList.add('ux-customer');
+        main.removeAttribute('style');
+        const fixture = document.getElementById('fixture')!;
+        fixture.replaceWith(...Array.from(fixture.childNodes));
+      });
       const region = page.getByRole('region', { name: 'Commercial arrangement' });
       await expect(region).toContainText('Synthetic Actual Seller');
       await expect(region).toContainText('No payment is taken here');
@@ -1247,7 +1255,7 @@ for (const width of [320, 390, 768, 1440])
       );
       expect(await axe(page)).toEqual([]);
     }
-    await mkdir('work/commercial-arrangements/screenshots', { recursive: true });
+    await mkdir('docs/design-system/evidence/ux-repair-2026-10-29/after', { recursive: true });
     await page.evaluate(() => document.fonts.ready);
     expect(
       await page.evaluate(() =>
@@ -1257,7 +1265,7 @@ for (const width of [320, 390, 768, 1440])
       ),
     ).toBe(true);
     await page.screenshot({
-      path: `work/commercial-arrangements/screenshots/customer-${width}.png`,
+      path: `docs/design-system/evidence/ux-repair-2026-10-29/after/arrangement-${width}.png`,
       fullPage: true,
     });
   });

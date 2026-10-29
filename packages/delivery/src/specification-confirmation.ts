@@ -8,6 +8,12 @@ import {
 // The existing owner/admin publication and MFA authority applies in SQL, including after waits.
 export class SpecificationConfirmationService {
   constructor(private pool: DatabasePool) {}
+  async installed(): Promise<boolean> {
+    const result = await this.pool.query(
+      "SELECT to_regprocedure('customer.specification_confirmation_requests(uuid)') IS NOT NULL AND to_regprocedure('app.specification_confirmation_options(uuid)') IS NOT NULL AS installed",
+    );
+    return result.rows[0]?.installed === true;
+  }
   options(ctx: RequestContext, publicationId: unknown) {
     const id = z.uuid().parse(publicationId);
     return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) =>

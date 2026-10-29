@@ -11,6 +11,7 @@ import {
 } from '../../apps/web/lib/owner-access';
 import {
   describeSwitches,
+  installOnlyModules,
   isSecretName,
   switchGroups,
   switchRegistry,
@@ -291,5 +292,20 @@ describe('waiting on the team', () => {
     );
     expect(items.find((i) => i.key === 'overdue')!.count).toBeNull();
     expect(items.find((i) => i.key === 'open')!.count).toBe(2);
+  });
+});
+
+describe('installation-only records are distinct from application switches', () => {
+  it('does not invent an arrangement flag or infer a database installation from settings', () => {
+    expect(installOnlyModules).toContainEqual({
+      name: 'customer-commercial-arrangement',
+      label: 'Quote arrangement records',
+      line: 'No separate application switch. Where installed, follows service-request access. Principal sales, billing and payments stay separate.',
+      state: 'Installation not checked here',
+      action: 'field_modules_action=commercial_arrangements (or both)',
+    });
+    expect(switchRegistry.some((entry) => entry.name.includes('COMMERCIAL_ARRANGEMENT'))).toBe(
+      false,
+    );
   });
 });

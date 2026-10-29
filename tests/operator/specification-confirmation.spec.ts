@@ -265,6 +265,13 @@ for (const width of [320, 390, 768, 1440])
       loadedFonts.length,
       'Production self-hosted fonts must load before visual acceptance',
     ).toBeGreaterThan(0);
+    // KI16: measure the direct customer frame, rather than a nested fixture card.
+    await page.evaluate(() => {
+      const main = document.querySelector('main')!;
+      main.removeAttribute('style');
+      const fixture = document.getElementById('fixture')!;
+      fixture.replaceWith(...Array.from(fixture.childNodes));
+    });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,
     );
@@ -275,9 +282,9 @@ for (const width of [320, 390, 768, 1440])
           .analyze()
       ).violations,
     ).toEqual([]);
-    await mkdir('work/specification-confirmation/screenshots', { recursive: true });
+    await mkdir('docs/design-system/evidence/ux-repair-2026-10-29/after', { recursive: true });
     await page.screenshot({
-      path: `work/specification-confirmation/screenshots/customer-${width}.png`,
+      path: `docs/design-system/evidence/ux-repair-2026-10-29/after/specification-${width}.png`,
       fullPage: true,
     });
   });
