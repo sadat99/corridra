@@ -17,6 +17,9 @@ const fields = {
   specifications: '2.5 metre cutting bed, 380V three-phase',
   quantity: '2',
   unit: 'machines',
+  budgetMinor: '1234',
+  currency: 'USD',
+  budgetBasis: 'Synthetic total machine budget',
   machinery: {
     application: 'Synthetic textile cutting',
     installationReferences: 'Qualified engineer to review installation',
@@ -255,6 +258,12 @@ for (const width of [320, 390, 768, 1440])
     await open(page);
     await page.getByRole('button', { name: 'Review current requirements' }).click();
     await expect(page.getByRole('heading', { name: 'Synthetic cutting machine' })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Confirm the commercial requirements' }),
+    ).toHaveAttribute('lang', 'en');
+    await expect(page.locator('.ux-fact-row dt').first()).toHaveAttribute('lang', 'en');
+    await expect(page.getByText('USD 12.34', { exact: true })).toHaveAttribute('lang', 'en');
+    await expect(page.getByText('USD 12.34', { exact: true })).toHaveAttribute('dir', 'ltr');
     const loadedFonts = await page.evaluate(async () => {
       await document.fonts.ready;
       return Array.from(document.fonts as FontFaceSet & Iterable<FontFace>)

@@ -1237,6 +1237,8 @@ for (const width of [320, 390, 768, 1440])
         fixture.replaceWith(...Array.from(fixture.childNodes));
       });
       const region = page.getByRole('region', { name: 'Commercial arrangement' });
+      await expect(region).toHaveAttribute('lang', 'en');
+      await expect(region).toHaveAttribute('dir', 'ltr');
       await expect(region).toContainText('Synthetic Actual Seller');
       await expect(region).toContainText('No payment is taken here');
       await expect(region.getByText('Acquisition cost')).toHaveCount(0);
@@ -1379,4 +1381,37 @@ test('the staff panel explains a missing right or an off module and shows no cus
     await expect(page.getByRole('alert').first()).toContainText(text);
     await expect(page.getByText('Synthetic paid-service workspace')).toHaveCount(0);
   }
+});
+
+test('uninstalled quote arrangements leave the existing itemised quote form unchanged', async ({
+  page,
+}) => {
+  await serveStaff(page, (url) => {
+    const scope = url.searchParams.get('scope');
+    if (scope === 'catalogue') return { json: { services: [staffEntry] } };
+    if (scope === 'detail')
+      return { json: staffDetail({ commercialArrangementsAvailable: false }) };
+    return {
+      json: {
+        requests: [
+          {
+            ...summary({ status: 'requested' }),
+            workspaceName: 'Synthetic paid-service workspace',
+            claimed: false,
+          },
+        ],
+      },
+    };
+  });
+  await page.goto(origin + '/?view=staff');
+  await page
+    .getByRole('button', { name: 'Open Interpreter day for Synthetic paid-service workspace' })
+    .click();
+  const form = page.getByRole('form', { name: 'Prepare a quote' });
+  await expect(form).toBeVisible();
+  await expect(form.getByText('Commercial arrangement (optional)', { exact: true })).toHaveCount(0);
+  await expect(form.getByText(/Commercial arrangement terms are unavailable until/)).toHaveCount(0);
+  await expect(
+    form.getByRole('button', { name: 'Send the quote to the customer', exact: true }),
+  ).toBeVisible();
 });

@@ -311,3 +311,33 @@ test('a language not offered as reviewed is not selected by stored choice', asyn
   await expect(page.locator('.mr-fq')).toHaveAttribute('lang', 'en');
   await expect(page.locator('.mr-fq b').last()).toHaveText('Trips, visits or fairs');
 });
+
+test('notes validation keeps its context hint and exposes the error on the textarea', async ({
+  page,
+}) => {
+  await open(page);
+  await job(page).selectOption('sourcing');
+  const next = page.getByRole('button', { name: 'Continue', exact: true });
+  await expect(next).toBeEnabled();
+  await next.click();
+  await page
+    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
+    .selectOption('BD');
+  await page
+    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
+    .selectOption('CN');
+  await next.click();
+  await page
+    .getByLabel('Your offer or requirement', { exact: true })
+    .fill('Synthetic cotton fabric requirement');
+  await next.click();
+  const notes = page.locator('.intake-form textarea');
+  await expect(notes).toHaveAttribute('aria-describedby', 'request-context-hint');
+  await notes.evaluate((el) => ((el as HTMLTextAreaElement).maxLength = 2000));
+  await notes.fill('x'.repeat(1001));
+  await page.getByRole('checkbox').first().check();
+  await next.click();
+  await expect(page.locator('#notes-error')).toBeVisible();
+  await expect(notes).toHaveAttribute('aria-invalid', 'true');
+  await expect(notes).toHaveAttribute('aria-describedby', 'request-context-hint notes-error');
+});
