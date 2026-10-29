@@ -149,6 +149,12 @@ Where each thing is done: **GitHub** > repository > Actions > "Install customer 
 
 The real report switches are Vercel settings only and are described in the next section. Check "what is installed" any time by running the workflow with `apply` = `no`.
 
+### Field modules (owner only, corrected 29 October 2026)
+
+After the workflow repair is merged, check that its next push run has no workflow-validation failure. On `main`, choose `field_modules_action=specification_confirmation`, `commercial_arrangements` or `both`. Keep every unrelated action `unchanged`. Run with `apply=no` first and read the report. Then repeat with `apply=yes` and approve the protected run. Installation alone does not open specification confirmation, principal sales, billing or payments. The owner decides when to set `CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED=true`; its saved-report and customer access prerequisites still apply. Commercial arrangements have no independent environment switch: installed metadata follows existing service-request authority.
+
+The workflow has exactly 25 inputs and no remaining headroom. A later optional module requires restructuring. Combining the repeated reasons into one shared reason is a proposal for the owner, not an implemented change.
+
 ### Real report access switches (optional, ADR063, real-use migration 0010)
 
 Two independent owner switches for shared reports of real workspaces. Both are read on each request, so the owner changes a Vercel Production setting and redeploys; the install job is not needed after step 1 above.

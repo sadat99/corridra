@@ -90,6 +90,10 @@ All other ADRs in the [index](adr/README.md) are in force as written, with later
 | `v3/history/*`                                                                                                                                     | FROZEN         | Hash-checked by [the manifest](v3/history/manifest.json). Never edit.                       |
 | `source/*`                                                                                                                                         | FROZEN         | Owner originals. Working copies keep every supplied word.                                   |
 
+## Owner repair scope, 29 October 2026
+
+The current request takes precedence over the older queue below. First repair the 26-input installer using `field_modules_action` with 25 inputs (KI-25). Then audit PR210 against the UX contracts, restore the six first-question drafts, and build request-form drafts behind a separate switch. Reassess the remaining trip and Programme Room work against existing records. Pulse messages 2, 3 and complete, supplier-reply provenance, helper task data and decision sharing retain their specific owner prerequisites. Draft PRs only; no merge, workflow dispatch, production settings, provider calls or redeploy. The last PR alone updates the ledger.
+
 ## Open work, in order
 
 1. Owner steps, none of them mine to run: install the optional database modules from the "Install customer modules" workflow, set the switches in Vercel, redeploy, then run `enable` for each module. Order and exact inputs are in the [runbook](runbooks/neon-auth-accounts.md).
