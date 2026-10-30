@@ -780,6 +780,62 @@ test.describe('with the form released', () => {
       for (const value of spacing) expect(['normal', '0px']).toContain(value);
     });
 
+  test('de: translated text may break and hyphenate, and English parts inside it wrap as in the English form', async ({
+    browser,
+  }) => {
+    /** Step 3 with a sourcing budget, so the summary shows an amount. */
+    const toBudget = async (page: Page) => {
+      const form = page.locator('form.intake-form');
+      const next = form.locator('.guide-actions .primary-link');
+      await form.locator('select').first().selectOption('sourcing');
+      await next.click();
+      await form.locator('select').nth(0).selectOption('BD');
+      await form.locator('select').nth(1).selectOption('CN');
+      await next.click();
+      await form.locator('details summary').click();
+      await form.locator('#brief-budgetAmount').fill('12.30');
+      await form.locator('details select').selectOption('CNY');
+    };
+    const wrapping = (page: Page, selector: string) =>
+      page.locator('#main').evaluate(
+        (main, selector) =>
+          Array.from(main.querySelectorAll(selector)).map((el) => ({
+            text: el.textContent?.slice(0, 40),
+            summary: el.closest('.ux-brief-summary dd') !== null,
+            wrap: getComputedStyle(el).overflowWrap,
+            hyphens: getComputedStyle(el).hyphens,
+          })),
+        selector,
+      );
+    const englishContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const english = await englishContext.newPage();
+    await open(english, 'en', 'form=true');
+    await toBudget(english);
+    await expect(english.locator('.ux-brief-summary dd').last()).toHaveText('12.30 CNY');
+    // In the English form only the summary values break inside a word, and nothing hyphenates.
+    for (const style of await wrapping(english, '*')) {
+      expect(style.wrap, style.text).toBe(style.summary ? 'anywhere' : 'normal');
+      expect(style.hyphens, style.text).toBe('manual');
+    }
+    await englishContext.close();
+    const germanContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const german = await germanContext.newPage();
+    await openTranslated(german, 'de', 'form=true');
+    expect(await wrapping(german, '.intake-notice > p:first-of-type')).toEqual([
+      expect.objectContaining({ wrap: 'anywhere', hyphens: 'auto' }),
+    ]);
+    await toBudget(german);
+    await expect(german.locator('.ux-brief-summary dd [lang="en"]')).toHaveText('12.30 CNY');
+    const parts = await wrapping(german, '[lang="en"], [lang="en"] *');
+    expect(parts.filter((part) => part.summary)).toHaveLength(1);
+    expect(parts.length).toBeGreaterThan(4);
+    for (const part of parts) {
+      expect(part.wrap, part.text).toBe(part.summary ? 'anywhere' : 'normal');
+      expect(part.hyphens, part.text).toBe('manual');
+    }
+    await germanContext.close();
+  });
+
   test('ar: right to left, the journey connectors clear the step dots and the main button sits at the inline end', async ({
     page,
   }) => {
