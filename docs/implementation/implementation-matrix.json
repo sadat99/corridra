@@ -425,7 +425,7 @@
       ],
       "decisions": ["docs/implementation/v2-part-05-readiness.md"],
       "pullRequests": [36],
-      "limits": "Readiness observations/config validation do not admit real data. D01\u2013D06/D08 remain open and real resources/pilots require separate approval."
+      "limits": "Readiness observations/config validation do not admit real data. D01–D06/D08 remain open and real resources/pilots require separate approval."
     },
     {
       "id": "V2-OBSERVED-COST",
@@ -582,7 +582,7 @@
       "tests": ["tests/integration/environment-separation.test.ts"],
       "decisions": ["docs/implementation/deferred-controls.md"],
       "pullRequests": [36],
-      "limits": "D01\u2013D06/D08 remain open; D07/D09 closed within recorded scope. CodeQL skipped is not passed; full independent assurance, approved capacity/SLO and real pilots are not collectively accepted."
+      "limits": "D01–D06/D08 remain open; D07/D09 closed within recorded scope. CodeQL skipped is not passed; full independent assurance, approved capacity/SLO and real pilots are not collectively accepted."
     },
     {
       "id": "ORIGINALS",

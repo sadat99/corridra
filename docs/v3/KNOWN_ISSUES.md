@@ -161,7 +161,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 ### KI-26 Specimen replacement must wait for hydration
 
-- Seen 29 October: the full UX suite lost both 1440px specimen nodes after its driver replaced the document while React was still hydrating `/plan`. The same selectors passed at the narrower widths. Both specimen drivers now wait for the existing enabled Continue control before inserting their document. Measurements, routes, widths and assertions are unchanged. Do not treat a pre-hydration document replacement as a product layout result.
+- Seen 29 October: the full UX suite lost both 1440px specimen nodes after its driver replaced the document while React was still hydrating `/how-it-works`. The same selectors passed at the narrower widths. Commit 8bb194f moved both specimen drivers (`tests/ux/specimen.spec.ts:89`, `tests/ux/mr-specimen.spec.ts:134`) from `/how-it-works` to `/plan` to get a hydration marker, and they now wait for its enabled Continue control before inserting their document. Widths, measurements and assertions are unchanged. Do not treat a pre-hydration document replacement as a product layout result. (Corrected 30 October: the first version of this entry said routes were unchanged and that the page was `/plan`.)
 
 ### KI-27 A mocked OTP response is not a server session
 
