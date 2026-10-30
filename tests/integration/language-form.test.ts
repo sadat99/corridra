@@ -14,6 +14,12 @@ import {
   issueSeparator,
   readFormMessage,
 } from '../../apps/web/lib/i18n/form-words/messages';
+import { words as ar } from '../../apps/web/lib/i18n/form-words/ar';
+import { words as bn } from '../../apps/web/lib/i18n/form-words/bn';
+import { words as de } from '../../apps/web/lib/i18n/form-words/de';
+import { words as es } from '../../apps/web/lib/i18n/form-words/es';
+import { words as fr } from '../../apps/web/lib/i18n/form-words/fr';
+import { words as zh } from '../../apps/web/lib/i18n/form-words/zh';
 import { missionCatalogue } from '../../packages/domain/src/commercial-missions';
 import { objectiveOptions, outcomeOptions } from '../../packages/domain/src/missions';
 
@@ -270,7 +276,8 @@ describe('the English form words', () => {
   });
 
   it('use no dash as punctuation', () => {
-    for (const [key, words] of Object.entries(formEn)) expect(words, key).not.toMatch(/[–—]| - /);
+    for (const [key, words] of Object.entries(formEn))
+      expect(words, key).not.toMatch(/[\u2013\u2014]| - /);
   });
 
   it('cannot be reached through the shared translate function', () => {
@@ -383,5 +390,211 @@ describe('the message reader', () => {
           text.startsWith('Read and acknowledge'),
         text,
       ).toBe(true);
+  });
+});
+
+const drafts = { bn, zh, es, ar, fr, de };
+const draftCodes = Object.keys(drafts) as (keyof typeof drafts)[];
+const placeholders = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort();
+// The glossary words reviewed on 25 October 2026 (language review record).
+const requestWord = {
+  bn: 'অনুরোধ',
+  zh: '需求',
+  es: 'solicitud',
+  ar: 'طلب',
+  fr: 'demande',
+  de: 'anfrage',
+};
+const teamWord = {
+  bn: 'Corridra টিম',
+  zh: 'Corridra 团队',
+  es: 'Equipo de Corridra',
+  ar: 'فريق Corridra',
+  fr: 'Équipe Corridra',
+  de: 'Corridra-Team',
+};
+const optionalWord = {
+  bn: '(ঐচ্ছিক)',
+  zh: '（选填）',
+  es: '(opcional)',
+  ar: '(اختياري)',
+  fr: '(facultatif)',
+  de: '(optional)',
+};
+
+describe('the drafted form words', () => {
+  it('have exactly the English keys in all six languages, with every placeholder kept and none empty', () => {
+    expect(draftCodes.sort()).toEqual(others.filter((code) => code !== 'en').sort());
+    for (const code of draftCodes) {
+      expect(Object.keys(drafts[code]).sort(), code).toEqual([...formKeys].sort());
+      for (const key of formKeys) {
+        expect(drafts[code][key].trim().length, `${code} ${key}`).toBeGreaterThan(0);
+        expect(placeholders(drafts[code][key]), `${code} ${key}`).toEqual(
+          placeholders(formEn[key]),
+        );
+      }
+    }
+  });
+
+  it('use no dash as punctuation, and leave every stays-English sentence out', () => {
+    for (const code of draftCodes)
+      for (const key of formKeys) {
+        expect(drafts[code][key], `${code} ${key}`).not.toMatch(/[\u2013\u2014]| - /);
+        for (const sentence of staysEnglish)
+          expect(drafts[code][key], `${code} ${key}`).not.toContain(sentence);
+      }
+  });
+
+  it('keep the name Corridra, and use the glossary words for request and for the Corridra team', () => {
+    for (const code of draftCodes)
+      for (const key of formKeys) {
+        const english = formEn[key];
+        const words = drafts[code][key];
+        if (english.includes('Corridra')) expect(words, `${code} ${key}`).toContain('Corridra');
+        if (/\brequests?\b|\bintake\b/i.test(english))
+          expect(words.toLowerCase(), `${code} ${key}`).toContain(requestWord[code]);
+        if (/\boperator\b/i.test(english))
+          expect(words, `${code} ${key}`).toContain(teamWord[code]);
+        if (english.includes('(optional)'))
+          expect(words, `${code} ${key}`).toContain(optionalWord[code]);
+      }
+  });
+
+  it('keep the five step words distinct in each language, because they are the journey bar keys', () => {
+    const steps = ['goal', 'where', 'details', 'results', 'contact'] as const;
+    for (const code of draftCodes) {
+      const words = steps.map((step) => drafts[code][`form.step.${step}`]);
+      expect(new Set(words).size, code).toBe(5);
+      if (['de', 'fr', 'es'].includes(code))
+        for (const word of words) {
+          expect(word.length, `${code} ${word}`).toBeLessThanOrEqual(12);
+          expect(word.split(' ').length, `${code} ${word}`).toBeLessThanOrEqual(2);
+        }
+    }
+  });
+
+  it('keep buttons short: Back and Continue at most 14 characters, others at most 1.7 times English or 30', () => {
+    const buttons: FormKey[] = [
+      'form.action.createAccount',
+      'form.action.submit',
+      'form.action.clearDraft',
+      'form.action.saving',
+      'form.pending.open',
+      'form.pending.activate',
+      'form.pending.signIn',
+      'form.pending.create',
+      'form.pending.codeSignIn',
+      'form.pending.return',
+      'form.receipt.forget',
+      'form.receipt.copy',
+      'form.check.submit',
+      'form.contact.signInReturn',
+    ];
+    for (const code of draftCodes) {
+      for (const key of ['form.action.back', 'form.action.continue'] as const)
+        expect(drafts[code][key].length, `${code} ${key}`).toBeLessThanOrEqual(14);
+      for (const key of buttons)
+        expect(drafts[code][key].length, `${code} ${key}`).toBeLessThanOrEqual(
+          Math.max(30, 1.7 * formEn[key].length),
+        );
+      expect(drafts[code]['form.receipt.another'].length, code).toBeLessThanOrEqual(55);
+      for (const key of ['form.notice.realPill', 'form.notice.samplePill'] as const)
+        expect(drafts[code][key].length, `${code} ${key}`).toBeLessThanOrEqual(20);
+    }
+  });
+
+  it('address the reader formally in German, French and Spanish', () => {
+    const informal = {
+      de: /\b(du|dich|dir|dein\w*)\b/i,
+      fr: /\b(tu|toi|ton|ta|tes)\b/i,
+      es: /(?<![\p{L}])(tú|tu|tus|puedes|quieres|tienes)(?![\p{L}])/iu,
+    };
+    for (const [code, pattern] of Object.entries(informal))
+      for (const key of formKeys)
+        expect(drafts[code as keyof typeof informal][key], `${code} ${key}`).not.toMatch(pattern);
+  });
+
+  it('say how to write an amount: digits 0 to 9 in Bangla and Arabic, a point as the decimal mark in German, French and Spanish', () => {
+    expect(bn['form.budget.hint']).toContain('0 থেকে 9 অঙ্ক ব্যবহার করুন।');
+    expect(ar['form.budget.hint']).toContain('استخدم الأرقام من 0 إلى 9.');
+    expect(de['form.budget.hint']).toContain('Punkt als Dezimalzeichen');
+    expect(fr['form.budget.hint']).toContain('point comme séparateur décimal');
+    expect(es['form.budget.hint']).toContain('punto como separador decimal');
+    // The money examples are slots, so their digits and periods are never translated.
+    for (const code of draftCodes) {
+      expect(drafts[code]['form.budget.hint'], code).toContain('{cny}');
+      expect(drafts[code]['form.budget.hint'], code).toContain('{bhd}');
+    }
+  });
+
+  it('copy no English into another language, except words that are spelled the same', () => {
+    const same: Record<string, FormKey[]> = {
+      de: ['form.step.details', 'form.contact.name', 'form.check.status'],
+      fr: ['form.step.contact'],
+      es: ['form.where.no'],
+    };
+    for (const code of draftCodes)
+      for (const key of formKeys)
+        if (!(same[code] ?? []).includes(key))
+          expect(drafts[code][key], `${code} ${key}`).not.toBe(formEn[key]);
+  });
+
+  it('put a narrow no-break space before French question marks, exclamation marks, colons and semicolons', () => {
+    for (const key of formKeys) expect(fr[key], key).not.toMatch(/(?<! )[?!:;]/);
+  });
+
+  it('write counts inside Bangla sentences in Bengali digits, and only the amount hint names 0 and 9', () => {
+    for (const key of formKeys)
+      if (key !== 'form.budget.hint') expect(bn[key], key).not.toMatch(/[0-9]/);
+    expect(bn['form.contact.passwordHint']).toContain('১৪');
+  });
+});
+
+describe('the drafted form words load on demand', () => {
+  it('each language is a literal import of its own file, and only the request page region loads them', () => {
+    const loader = read('apps/web/lib/i18n/form-words/load.ts');
+    for (const code of draftCodes) expect(loader).toContain(`${code}: () => import('./${code}')`);
+    const walk = (dir: string): string[] =>
+      readdirSync(resolve(dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.name === 'node_modules' || entry.name === '.next'
+          ? []
+          : entry.isDirectory()
+            ? walk(`${dir}/${entry.name}`)
+            : /\.(ts|tsx)$/.test(entry.name)
+              ? [`${dir}/${entry.name}`]
+              : [],
+      );
+    const files = ['apps/web/app', 'apps/web/components', 'apps/web/lib'].flatMap(walk);
+    const using = (pattern: RegExp) => files.filter((file) => pattern.test(read(file))).sort();
+    expect(using(/form-words\/load'/)).toEqual(['apps/web/app/plan/form-main.tsx']);
+    expect(using(/form-words\/(bn|zh|es|ar|fr|de)'/)).toEqual([]);
+    // The page reads the release; the owner page only describes it.
+    expect(using(/import \{[^}]*\blanguagesWithForm\b/)).toEqual([
+      'apps/web/app/plan/page.tsx',
+      'apps/web/lib/owner-switches.ts',
+    ]);
+    expect(using(/<FormMain\b/)).toEqual(['apps/web/app/plan/page.tsx']);
+    expect(read('apps/web/app/plan/page.tsx')).toContain('released={languagesWithForm()}');
+  });
+
+  it('the built page is English even with every language released, because the language applies after load', async () => {
+    const { LanguageProvider } = await load('components/language-provider');
+    const { FormMain } = await load('app/plan/form-main');
+    const { PlanHead } = await load('app/plan/plan-head');
+    const html = renderToStaticMarkup(
+      createElement(
+        LanguageProvider,
+        { offered: localeCodes.map((code) => ({ code, draft: false })), pageLocales: others },
+        createElement(
+          FormMain,
+          { released: others, className: 'ux-intake-page' },
+          createElement(PlanHead, { realMode: false }),
+        ),
+      ),
+    );
+    expect(html).toContain(
+      '<main id="main" lang="en" dir="ltr" tabindex="-1" class="ux-public ux-intake-page">',
+    );
+    expect(html).toContain(`<h1>${formEn['form.head.title']}</h1>`);
   });
 });

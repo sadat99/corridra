@@ -68,7 +68,6 @@ export function useFormWords() {
       );
     };
     return {
-      locale: translated ? locale : defaultLocale,
       translated,
       /** The shown language's tag and direction, for country names, times and a right to left form. */
       tag: meta.html,

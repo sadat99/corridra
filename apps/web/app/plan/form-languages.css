@@ -1,0 +1,59 @@
+/* The request form in a translated language (Lane 11). Every rule starts from the form's main region with a
+   language other than English, which happens only when the owner has released that language for the form. With
+   the form in English nothing here matches, so the English page is unchanged. English parts inside a translated
+   form carry lang="en" and are left as they are. The first question and the Bangla guide keep their own styles. */
+
+/* An English sentence inside a translated paragraph starts on its own line, after the translated sentences. */
+.ux-intake-page:not(:lang(en)) .lang-island {
+  display: block;
+  margin-block-start: var(--space-1);
+}
+
+/* Long words in labels, legends, hints, notices, error text and summary values may break rather than push the page
+   wider. Hyphenation follows the main language, so it applies only where the browser knows the language's rules.
+   Buttons and step words are short by rule and keep whole words. */
+.ux-intake-page:not(:lang(en))
+  :is(
+    label,
+    legend,
+    summary,
+    dt,
+    dd,
+    .label,
+    .guide-hint,
+    .guide-status,
+    .intake-notice p,
+    .ux-draft-notice,
+    .ux-error-summary,
+    .field-error,
+    #offer-hint,
+    #request-context-hint
+  ):not(:lang(en)):not(.mr-fq *, .guide-bn *) {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.ux-intake-page:not(:lang(en)) :is(button, .primary-link, .guide-journey-bar b) {
+  overflow-wrap: normal;
+  hyphens: manual;
+}
+
+/* On a phone only the current step word shows. It stays on one line, and for the last two steps it lines up with
+   the end of the bar so it never runs past the card. */
+@media (max-width: 700px) {
+  .ux-intake-page:not(:lang(en)) .guide-journey-bar li[aria-current='step'] b {
+    white-space: nowrap;
+  }
+  .ux-intake-page:not(:lang(en)) .guide-journey-bar li:nth-child(n + 4)[aria-current='step'] b {
+    justify-self: end;
+    text-align: end;
+  }
+}
+
+/* Bengali, Chinese and Arabic letters need more room between lines than Latin ones. */
+.ux-intake-page:is(:lang(bn), :lang(zh), :lang(ar))
+  :is(.choice, .field > label, label.field, .guide-journey-bar b):not(:lang(en)):not(
+    .mr-fq *,
+    .guide-bn *
+  ) {
+  line-height: 1.55;
+}
