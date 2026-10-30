@@ -587,8 +587,10 @@ describe('the drafted form words', () => {
         const english = formEn[key];
         const words = drafts[code][key];
         if (english.includes('Corridra')) expect(words, `${code} ${key}`).toContain('Corridra');
-        // "Too many requests" means attempts, and says so (UI spec, 429 row). "Intake unavailable" is sent only by the
-        // receipt check, so it says that receipts cannot be checked (design audit ruling 3, 30 October 2026).
+        // "Too many requests" means attempts, and says so (UI spec, 429 row). "Intake unavailable" never reaches the
+        // browser today: the receipt check throws it, but its catch answers every error with "Receipt unavailable or
+        // expired", and the request routes answer the database's own "Intake unavailable" with other words. It is
+        // worded for the one place it is thrown: receipts cannot be checked (design audit ruling 3, 30 October 2026).
         if (
           /\brequests?\b|\bintake\b/i.test(english) &&
           key !== 'form.message.tooMany' &&
@@ -704,12 +706,16 @@ describe('the drafted form words', () => {
   it('never say the saved request is sent only after activation, because it is stored before it', () => {
     const only = {
       de: /(?<![\p{L}])(nur|erst)(?![\p{L}])/iu,
-      fr: /seulement|qu[’']après/iu,
-      es: /(?<![\p{L}])(solo|sólo|solamente)(?![\p{L}])/iu,
+      // "ne ... que" and "n'... qu'" in one sentence say "only" too.
+      fr: /seulement|qu[’']après|(?<![\p{L}])n(?:e(?![\p{L}])|[’'])[^.]*?(?<![\p{L}])qu(?:e(?![\p{L}])|[’'])/iu,
+      es: /(?<![\p{L}])(solo|sólo|solamente|únicamente)(?![\p{L}])/iu,
       ar: /إلا|فقط/u,
       bn: /শুধু|কেবল/u,
       zh: /只|仅/u,
     };
+    expect("Votre demande n'est soumise qu'après l'activation.").toMatch(only.fr);
+    expect('Votre demande ne sera soumise que lorsque votre compte est actif.').toMatch(only.fr);
+    expect('Su solicitud se presenta únicamente tras la activación.').toMatch(only.es);
     for (const code of draftCodes)
       expect(drafts[code]['form.pending.sameDevice'], code).not.toMatch(only[code]);
   });
@@ -723,8 +729,29 @@ describe('the drafted form words', () => {
       bn: /সঠিক নয়|অবৈধ/,
       zh: /无效/,
     };
-    const time =
-      /\b(now|later)\b|gerade|später|pour le moment|plus tard|ahora|más tarde|الآن|لاحق|এখন|পরে|目前|暂|稍后/i;
+    const time = new RegExp(
+      [
+        '\\b(now|later)\\b',
+        'gerade|jetzt|später',
+        'pour le moment|actuellement|plus tard',
+        'ahora|en este momento|más tarde',
+        'الآن|حالي\u064B?ا|لاحق',
+        'এখন|বর্তমানে|পরে',
+        '目前|现在|暂|稍后',
+      ].join('|'),
+      'i',
+    );
+    for (const word of [
+      'jetzt',
+      'actuellement',
+      'en este momento',
+      'حاليا',
+      'حاليًا',
+      'حالياً',
+      '现在',
+      'বর্তমানে',
+    ])
+      expect(word).toMatch(time);
     const invalid = formKeys.filter((key) => /invalid/i.test(formEn[key]));
     const unavailable = formKeys.filter(
       (key) => /unavailable$/i.test(formEn[key]) && key !== 'form.message.identityUnavailable',
