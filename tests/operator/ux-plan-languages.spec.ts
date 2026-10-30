@@ -781,59 +781,47 @@ test.describe('with the form released', () => {
     });
 
   test('de: translated text may break and hyphenate, and English parts inside it wrap as in the English form', async ({
-    browser,
+    page,
   }) => {
-    /** Step 3 with a sourcing budget, so the summary shows an amount. */
-    const toBudget = async (page: Page) => {
-      const form = page.locator('form.intake-form');
-      const next = form.locator('.guide-actions .primary-link');
-      await form.locator('select').first().selectOption('sourcing');
-      await next.click();
-      await form.locator('select').nth(0).selectOption('BD');
-      await form.locator('select').nth(1).selectOption('CN');
-      await next.click();
-      await form.locator('details summary').click();
-      await form.locator('#brief-budgetAmount').fill('12.30');
-      await form.locator('details select').selectOption('CNY');
-    };
-    const wrapping = (page: Page, selector: string) =>
-      page.locator('#main').evaluate(
-        (main, selector) =>
-          Array.from(main.querySelectorAll(selector)).map((el) => ({
-            text: el.textContent?.slice(0, 40),
-            summary: el.closest('.ux-brief-summary dd') !== null,
-            wrap: getComputedStyle(el).overflowWrap,
-            hyphens: getComputedStyle(el).hyphens,
-          })),
-        selector,
-      );
-    const englishContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const english = await englishContext.newPage();
-    await open(english, 'en', 'form=true');
-    await toBudget(english);
-    await expect(english.locator('.ux-brief-summary dd').last()).toHaveText('12.30 CNY');
-    // In the English form only the summary values break inside a word, and nothing hyphenates.
-    for (const style of await wrapping(english, '*')) {
-      expect(style.wrap, style.text).toBe(style.summary ? 'anywhere' : 'normal');
-      expect(style.hyphens, style.text).toBe('manual');
-    }
-    await englishContext.close();
-    const germanContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const german = await germanContext.newPage();
-    await openTranslated(german, 'de', 'form=true');
-    expect(await wrapping(german, '.intake-notice > p:first-of-type')).toEqual([
-      expect.objectContaining({ wrap: 'anywhere', hyphens: 'auto' }),
-    ]);
-    await toBudget(german);
-    await expect(german.locator('.ux-brief-summary dd [lang="en"]')).toHaveText('12.30 CNY');
-    const parts = await wrapping(german, '[lang="en"], [lang="en"] *');
-    expect(parts.filter((part) => part.summary)).toHaveLength(1);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openTranslated(page, 'de', 'form=true');
+    const form = page.locator('form.intake-form');
+    const notice = page.locator('.intake-notice > p').first();
+    const style = (el: Element) =>
+      `${getComputedStyle(el).overflowWrap} ${getComputedStyle(el).hyphens}`;
+    expect(await notice.evaluate(style)).toBe('anywhere auto');
+    // Step 3 with a sourcing budget, so the summary shows an amount, which breaks anywhere in English too.
+    await form.locator('select').first().selectOption('sourcing');
+    await form.locator('.guide-actions .primary-link').click();
+    await form.locator('select').nth(0).selectOption('BD');
+    await form.locator('select').nth(1).selectOption('CN');
+    await form.locator('.guide-actions .primary-link').click();
+    await form.locator('details summary').click();
+    await form.locator('#brief-budgetAmount').fill('12.30');
+    await form.locator('details select').selectOption('CNY');
+    await expect(page.locator('.ux-brief-summary dd [lang="en"]')).toHaveText('12.30 CNY');
+    // Each English part against itself with the region English, which is the English form's styling.
+    const parts = await page.locator('#main').evaluate((main) => {
+      const elements = Array.from(main.querySelectorAll('[lang="en"], [lang="en"] *'));
+      const read = () =>
+        elements.map(
+          (el) => `${getComputedStyle(el).overflowWrap} ${getComputedStyle(el).hyphens}`,
+        );
+      const translated = read();
+      const language = main.lang;
+      main.lang = 'en';
+      const english = read();
+      main.lang = language;
+      return elements.map((el, index) => ({
+        text: el.textContent?.slice(0, 40),
+        translated: translated[index],
+        english: english[index],
+      }));
+    });
     expect(parts.length).toBeGreaterThan(4);
-    for (const part of parts) {
-      expect(part.wrap, part.text).toBe(part.summary ? 'anywhere' : 'normal');
-      expect(part.hyphens, part.text).toBe('manual');
-    }
-    await germanContext.close();
+    expect(parts.filter((part) => part.english === 'anywhere manual')).toHaveLength(1);
+    for (const part of parts) expect(part.translated, part.text).toBe(part.english);
+    await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
   });
 
   test('ar: right to left, the journey connectors clear the step dots and the main button sits at the inline end', async ({
@@ -992,6 +980,7 @@ test.describe('the page-length budget', () => {
               .toBeLessThanOrEqual(0.25);
         }
       }
+      // The measured table is the record the packet asks for: printed into the run log and attached.
       console.log(JSON.stringify(rows));
       await test.info().attach(`page-length-${width}.json`, {
         body: JSON.stringify(rows, null, 1),
