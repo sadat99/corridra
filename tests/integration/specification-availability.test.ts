@@ -42,6 +42,39 @@ describe('confirmation visibility uses the application gate and installation tog
       }, enabled),
     ).toBe(false);
   });
+  it('logs one line per failed check with the error code only, and nothing otherwise', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(await specificationConfirmationAvailable(async () => true, enabled)).toBe(true);
+      expect(
+        await specificationConfirmationAvailable(async () => true, {
+          ...enabled,
+          CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED: 'false',
+        }),
+      ).toBe(false);
+      expect(log).not.toHaveBeenCalled();
+      const missing = Object.assign(
+        new Error('relation "customer.sample" does not exist for alice@example.invalid'),
+        { code: '42P01' },
+      );
+      expect(
+        await specificationConfirmationAvailable(async () => {
+          throw missing;
+        }, enabled),
+      ).toBe(false);
+      expect(
+        await specificationConfirmationAvailable(async () => {
+          throw new Error('SELECT secret FROM sample');
+        }, enabled),
+      ).toBe(false);
+      expect(log.mock.calls).toEqual([
+        ['{"event":"specification_availability_check_failed","code":"42P01"}'],
+        ['{"event":"specification_availability_check_failed"}'],
+      ]);
+    } finally {
+      log.mockRestore();
+    }
+  });
 });
 
 describe('the pages and the staff route decide visibility through the installation check', () => {

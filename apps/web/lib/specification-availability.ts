@@ -9,7 +9,16 @@ export async function specificationConfirmationAvailable(
   if (!customerSpecificationConfirmationEnabled(env)) return false;
   try {
     return await readInstalled();
-  } catch {
+  } catch (error) {
+    // Fail closed, and log only the error code: never the message, which can hold SQL text.
+    const code =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof error.code === 'string'
+        ? error.code
+        : undefined;
+    console.error(JSON.stringify({ event: 'specification_availability_check_failed', code }));
     return false;
   }
 }
