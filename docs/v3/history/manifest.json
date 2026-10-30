@@ -190,6 +190,14 @@
       "bytes": 12072,
       "sha256": "6ff283d2571747a68954a07eba91ed6fec9b689c7f3d27c11d01b1631986dfa4",
       "meaning": "Exact active-index snapshot before the 30 October 2026 PR216 records refresh, which recorded PR216 merged as b12e244, Install customer modules run 45 opening Pulse, the owner-only list and the next action, and shortened the merged, install runs, PR215, shipped and Vercel lines; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "031029e",
+      "archive": "docs/v3/history/ledger-before-form-release-check-2026-10-30.md",
+      "bytes": 12226,
+      "sha256": "ab1b4052ce11ccc5f6908540c95a637c6c06fda79c49caaeacf6a36a39bbf4a9",
+      "meaning": "Exact active-index snapshot before the 30 October 2026 form-release check refresh, which recorded PR217 merged and deployed, the live six-language request form check and the owner-only list and next action; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
