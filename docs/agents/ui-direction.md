@@ -155,6 +155,8 @@ Buttons (primary, secondary, quiet), fields (label above, helper below, error in
 
 Staff billing classes (24 October 2026): `billing-hub` (full-width column with a jump bar, `billing-jump`, for the five billing panels), `billing-notice` (the result of a save, shown beside the form that was used; `data-tone` ok or error), `billing-plans` and `billing-plan` (plan rows, `data-saved` marks the plan just saved), `billing-requests` and `billing-request`, `billing-badge`, `billing-form` with `billing-group`, `billing-pair`, `billing-hint` and `billing-actions` (a plan form grouped into Plan, Price, What customers read and Limits). Rule behind them: a result is always said next to the control that caused it, never only at the top of a long panel.
 
+Request form language class (30 October 2026): `lang-island` is an English sentence on its own line inside a translated paragraph, after the translated sentences. It is used in translated forms only (the English form adds no element) and is defined in `apps/web/app/plan/form-languages.css`, whose rules match only when the form's main region is in a language other than English.
+
 ## Maps and the atlas
 
 The platform serves any country to any country. Two routes are spotlighted (Bangladesh to China, Bangladesh to Spain or the EU) and any other pair can be chosen.

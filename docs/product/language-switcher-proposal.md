@@ -1,6 +1,6 @@
 # Languages and the language switcher: proposal
 
-**Document status: PARTLY BUILT.** Foundation merged (PR171, PR174). Moving the home page and request flow onto message files is open. See the [plan status register](../PLAN_STATUS.md).
+**Document status: PARTLY BUILT.** Foundation merged (PR171, PR174). Home page words are built behind `CORRIDRA_LANGUAGES_PAGES`. Request-form words, including its messages, are built behind `CORRIDRA_LANGUAGES_FORM`, which is unset (off); their review is not recorded. Open: moving how it works onto message files. Signed-in screens are a later phase. See the [plan status register](../PLAN_STATUS.md).
 
 Status: decided and partly built. The owner chose option A (remembered choice applied in the browser) and English, Bangla, Chinese and Spanish first, then Arabic. The foundation is merged (PR 171 and PR 174, 24 October 2026). What remains is translating the home page, how it works and the request flow, and recording a native reviewer per language. Written on 24 October 2026 after the owner asked where the language switcher is; the sections below keep the original reasoning, and the next section says what exists now.
 
