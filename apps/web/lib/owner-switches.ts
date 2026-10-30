@@ -346,7 +346,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_LANGUAGES_FORM',
     label: 'Request form in the chosen language',
-    line: 'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+    line: 'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text. Before setting it, decide whether the hosting service may see which language’s words file a browser loads, and check the privacy notice sentence that the language choice “is not sent to us”. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
     group: 'Accounts and requests',
     kind: 'flag',
   },
@@ -593,7 +593,9 @@ function resolve(
   if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
   const languages = languageReleases[entry.name];
   if (languages) {
-    // `true` or a list of language codes: the row says what visitors really get.
+    // `true` or a list of language codes: the row names the languages the setting releases. It does not read
+    // Languages with reviewed text, so a released language reaches visitors only if the language chip also offers
+    // it; the form row's line tells the owner so.
     const released = languages(env);
     if (released.length === 0) return off;
     return env[entry.name]?.trim().toLowerCase() === 'true'

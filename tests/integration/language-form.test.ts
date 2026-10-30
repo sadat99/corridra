@@ -228,7 +228,11 @@ describe('the owner page', () => {
       kind: 'flag',
     });
     expect(form.line).toBe(
-      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text. Before setting it, decide whether the hosting service may see which language’s words file a browser loads, and check the privacy notice sentence that the language choice “is not sent to us”. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+    );
+    // The privacy notice sentence the line asks the owner to check is the one the notice really has.
+    expect(read('apps/web/app/privacy/page.tsx')).toMatch(
+      /If you choose a language, your browser remembers the choice in local storage\.\s+It is\s+not sent to us/,
     );
     // The form line names the reviewed-languages row by the label the owner sees.
     expect(
