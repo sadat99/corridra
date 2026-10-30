@@ -1889,3 +1889,113 @@ Receipts in `work/` (local), all exit 0 on `9c45f04` with 0 changed paths: `r4f-
 Records changed in this part: this part; `docs/product/language-review-record.md` (the round 3 bn line shows the current `delegations` text, and a list of the four CI fix labels for the native review, with the bn `form.goal.mission` note). No ledger, register, ADR or code change. Owner items: as in round 3, with the four CI fix labels in the form-words review.
 
 Next: CI on the pushed head, then the owner's merge decision. Merging ships with the switch off (`CORRIDRA_LANGUAGES_FORM` unset, `/plan` as at `c29f2cc`). No merge without the owner's command.
+
+## 30 October 2026: form language release and final records after PR 215
+
+Request: the release PR for the request form languages, which also carries the closing records for the owner's 29 October stack ("The last PR alone updates the ledger."). Branch `claude/vigilant-goldberg-p3uruh`, cut at `9e77170` (`main`, PR 215 merged). Owner directions of 30 October in this session, in order (relayed by the conductor): "merge" for PR 215, merged as `9e77170` and deployed; "deploy what is merged", which needed no step because a merge deploys itself (ADR-050) and it was already live; "accept signal, bn & others", which accepts ADR-074's static-host signal and asks for all six form languages; "approve all", given after the side-by-side review page (each line of the six languages beside its English, plus the decisions), which approves the form words of bn, zh, es, ar, fr and de, the proposed privacy sentence, and the consent lead instruction shown translated (the page's default choice). Authority: brief stamp `auth-09bf80d9828a`; `auth-d19fd5a4362a` at the start of the records pass, moved only by this PR's ADR edits; `auth-ca52f7caedd1` after the records pass.
+
+This PR's parts. Architect (ADR files): ADR-074's Status is accepted on 30 October, its step 1 is marked done and step 2 under way; ADR-066's closing line says ADR-074 amends it for the request form's words, otherwise as written; the ADR index line for ADR-074 says accepted. Builder, commit `31701d7` (local), "Privacy notice names the words file the host sees while the form release is on", 4 files, +73 / -12:
+
+- `apps/web/app/privacy/page.tsx` reads `languagesWithForm()` at build time. When it releases any language, the language bullet becomes the approved sentence and the date shows 30 October. With nothing released the bullet is unchanged. The text rendered with a release: "If you choose a language, your browser remembers the choice in local storage. You can clear it in your browser settings at any time. The choice itself is not sent to us. When the request form is shown in your language, your browser downloads that language’s words from our site, so our hosting provider’s records show which language’s words were loaded, as they show any file a browser loads."
+- The Owner page line for `CORRIDRA_LANGUAGES_FORM` (`apps/web/lib/owner-switches.ts`) now says "The privacy notice says the hosting service can see which language’s words file a browser loads while this is set." It replaces the instruction to decide the hosting service question and check the "is not sent to us" sentence first.
+- Tests: `tests/integration/privacy-notice.test.ts` gains a release on and off describe block; the tie test in `tests/integration/language-form.test.ts` is updated and its import allow-list adds the privacy page.
+
+RECEIPTS: builder. All in `work/`, exit 0 unless noted, receipt head `31701d7` unless noted:
+
+- `format-changed-2026-10-30T13-27-29-007Z.log` (prettier on the 4 changed files; receipt head `9e77170`, run before the commit);
+- `format-apps-tests-2026-10-30T13-31-50-734Z.log` (prettier on apps, packages, scripts and tests);
+- `lint-full-2026-10-30T13-31-00-673Z.log` (`pnpm lint`);
+- `typecheck-31701d7-2026-10-30T13-32-17-289Z.log` (`pnpm typecheck`);
+- `language-unit-set-31701d7-2026-10-30T13-32-42-229Z.log`: 6 files, 177/177;
+- `privacy-mutation-off-2026-10-30T13-27-18-459Z.log`: exit 1 as intended, the mutation is caught; receipt head `9e77170`;
+- builds: `build-base-9e77170-2026-10-30T13-24-41-299Z.log` and `build-form-bn-2026-10-30T13-29-45-131Z.log` (both receipt head `9e77170`; the second ran before the commit), and `build-switch-off-31701d7-2026-10-30T13-30-38-382Z.log`.
+
+Switch-off zero diff, which the scribe checked again: the `.next` build written at 13:30:58Z (the switch-off build at `31701d7`) against the builder's base copies of `9e77170` (session scratchpad `privacy-base/`). The `<main>` of `privacy.html` (12,640 bytes, sha256 prefix `f55cf604f43400a1`), `plan.html` (5,594 bytes, `a70001363e5bbadd`) and `index.html` (21,921 bytes, `fa0a2885789966e9`) is identical. With the build id masked, `cmp` of each whole file exits 0.
+
+The approval was checked against the files. The review page's data file is byte-identical to a fresh dump of `apps/web/lib/i18n/form-words/` (`cmp` exit 0; session scratchpad `review/words.json`, sha256 `7cf85fa4e3eab27d6a359ca89fc2704862f24c606701472cafd5270513e12fc0`). `git diff --quiet 9e77170 -- apps/web/lib/i18n/form-words/` exits 0, so the owner approved the 241 keys per language exactly as merged. The page's "Proposed" privacy sentence matches the builder's sentence word for word. The page offered "Show it translated, as drafted" as the default for the consent lead line. Not seen by the scribe: the owner's replies themselves, which were relayed.
+
+Records changed:
+
+- `docs/V3_LEDGER.md` (12,072 bytes, older lines shortened) records:
+  - PR210, PR212, PR214 and PR215 as merged;
+  - the 30 October install runs 41 to 44, and the owner's `CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED=true` with his redeploy;
+  - the owner directions through 30 October, including the four above;
+  - ADR-074 accepted, the approvals, this release PR and the ADR-074 step state;
+  - the owner-only list and the next action.
+- `docs/v3/history/ledger-before-final-records-2026-10-30.md` keeps the exact 12,207-byte ledger it replaces (sha256 `6020e0493d828b3e65414c6f3e342b828a00dd9f789a4582f936f6c7331d5f71`), with its entries in the manifest and the documentation map.
+- `docs/PLAN_STATUS.md` changes:
+  - the header;
+  - the field workflow paragraph;
+  - the language switcher and Lane 11 rows (form words approved 30 October);
+  - the ADR-074 row, now CURRENT and accepted;
+  - a "Done" paragraph under the owner repair scope;
+  - open work item 1 (the ADR-074 step state) and item 2;
+  - a UI direction row.
+- `docs/implementation/current-plan.md`: the work order paragraph.
+- `docs/product/lane11-languages.md`: status line only, word unchanged (PARTLY BUILT).
+- `docs/product/language-review-record.md`:
+  - the form row is now "Reviewed by Nazmus Sadat (owner), 30 October 2026; approved as drafted; no native-speaker check recorded";
+  - a "Recorded on the owner's instruction" paragraph;
+  - the consent lead decision;
+  - the owner steps marked done or still to do;
+  - step 2 now points to the conditional sentence (about lines 372 to 385) instead of "about line 368".
+- `docs/v3/KNOWN_ISSUES.md`: KI-28.
+- This entry.
+
+Evidence read by the scribe (GitHub REST API, 30 October):
+
+- Merges:
+  - PR 210 merged on 28 October as `c76e155`.
+  - PR 212 merged at 02:27:42Z as `5f4ba1c`, by `sadat99`.
+  - PR 213 closed unmerged at 05:06:56Z.
+  - PR 214 merged at 05:06:41Z as `c29f2cc`, by `sadat99`.
+  - PR 215 merged at 13:15:27Z as `9e77170`, by `sadat99`. Its tree equals `cf6338e`, where CI 697 (41058504369) and CodeQL 450 passed.
+  - PR 211 is open.
+- Main checks:
+  - `5f4ba1c`: CI 687 and CodeQL 440 succeeded.
+  - `c29f2cc`: CI 691 and CodeQL 444 succeeded.
+  - Neither push started an Install customer modules run.
+  - `9e77170`: CodeQL 451 succeeded. CI 698 (41061730232) was in progress when read, with operator 1, operator 3 and browser running and the other six jobs passed.
+- Install runs on `c29f2cc`, all dispatched by `sadat99`:
+  - 41 (41014415804) failed in "Report or install the customer modules";
+  - 42 (41014536944) was cancelled;
+  - 43 (41014602657) succeeded, with the exact-revision step skipped;
+  - 44 (41014991720) succeeded, its job done at 06:46:21Z.
+- Production deployments:
+  - `c29f2cc` succeeded at 05:09:30Z and again at 07:05:09Z.
+  - `9e77170` (deployment 7439221430) succeeded at 13:16:54Z.
+- The CI 695 and 696 annotations back KI-28.
+
+Not readable here (the proxy answered 403): the run logs and the live site. As the conductor read them: the inputs of runs 41 to 44, the run 43 report, the redeploy, the live `/privacy` paragraphs at 07:05Z, and live `/plan` `<main>` unchanged after the PR 215 deploy.
+
+Verification of the records pass, on the working tree over `31701d7`: `node scripts/authority.mjs check` exit 0 (76 governed documents); `node scripts/v3-context.mjs verify` exit 0 (21 exact additional archives); `node scripts/v3-context.mjs status | wc -c` 12,095 (ledger 12,072 bytes; `docs/implementation/current-plan.md` 5,937); `pnpm test:docs` through `node scripts/gate.mjs docs` 63/63 exit 0 (`work/docs-2026-10-30T13-35-18-908Z.log`); `pnpm exec prettier --check` on the 10 records files exit 0; no em dash in any added line; `node scripts/authority.mjs doc docs/adr/0074-per-page-language-release.md` FOLLOW.
+
+Not run by the scribe: no application test, build or production check beyond the zero-diff comparison above.
+
+Preserved:
+
+- The scribe changed no application code, tests or ADRs.
+- ADR-066 holds as written except the one accepted exception: the static host seeing which form words file loads.
+- `CORRIDRA_LANGUAGES_FORM` stays unset until the owner sets it.
+- Consent wording and the privacy and notice sentences stay English on the form. The one exception is the consent lead instruction, shown translated by the owner's 30 October decision, which is later than Lane 11's "consent statements remain explicitly English".
+- Pulse stays closed, and gates D01 to D06 and D08 stay closed.
+
+Decisions and risks:
+
+- ADR-074 steps 3 and 4. The conductor described both as done by the approval. In ADR-074 the consent lead decision is part of step 3, which is recorded as done. Step 4 is to name only languages that are in `CORRIDRA_LANGUAGES_REVIEWED`, with `CORRIDRA_LANGUAGES_PREVIEW` unset, so it can only be met when the value is set. The records keep step 4 with step 5 as the owner's. The ledger records `CORRIDRA_LANGUAGES_REVIEWED` as all six since 25 October; `CORRIDRA_LANGUAGES_PREVIEW` is encrypted and unread.
+- ADR-074 step 3 asks for "a qualified reviewer for each language". The owner is the recorded reviewer, as on 25 October, and no native-speaker check is recorded. A later native check can correct a word without holding back the release.
+- The ADR-074 file still says "Still to do" for steps 3 and 4. That is the architect's file.
+
+Owner items recorded:
+
+- "Draft PRs only" and "The last PR alone updates the ledger" after the 29 October scope: UNRESOLVED. He still gives a merge command per PR.
+- Merge this release PR.
+- Then `CORRIDRA_LANGUAGES_FORM=true` with `CORRIDRA_LANGUAGES_PREVIEW` unset, and a redeploy.
+- The home page words review, and any native check of the form words.
+- Opening Pulse.
+- PR 211.
+- Reconnecting the Vercel connector.
+- The lawyer review of the privacy notice.
+- The live value of `CORRIDRA_LANGUAGES_PAGES`: UNKNOWN (the owner reports true).
+
+Next: the owner merges this release PR on his command; then he sets `CORRIDRA_LANGUAGES_FORM=true` with `CORRIDRA_LANGUAGES_PREVIEW` unset and redeploys; then an agent verifies the live form in all six languages. Meanwhile, main CI 698 on `9e77170`. PR: not opened when this entry was written. Tested head: `31701d7` plus the uncommitted records.
