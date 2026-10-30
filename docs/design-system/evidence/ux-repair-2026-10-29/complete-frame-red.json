@@ -1,0 +1,2246 @@
+[
+  {
+    "url": "http://127.0.0.1:37683/?staff",
+    "width": 320,
+    "overflow": 28,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "Request customer specification confirmation",
+        "width": 330.78125,
+        "height": 52.78125
+      },
+      {
+        "tag": "SELECT",
+        "text": "Choose a publicationSynthetic reviewed machinery request",
+        "width": 330.78125,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Load reviewed requirements",
+        "width": 206.5,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Synthetic Corridra operator",
+        "width": 248.78125,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "datetime-local",
+        "width": 256.78125,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 296.78125,
+        "height": 50.390625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Request confirmation",
+        "width": 296.78125,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/?staff",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "Request customer specification confirmation",
+        "width": 356,
+        "height": 52.78125
+      },
+      {
+        "tag": "SELECT",
+        "text": "Choose a publicationSynthetic reviewed machinery request",
+        "width": 330.78125,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Load reviewed requirements",
+        "width": 206.5,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Synthetic Corridra operator",
+        "width": 248.78125,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "datetime-local",
+        "width": 256.78125,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 322,
+        "height": 50.390625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Request confirmation",
+        "width": 322,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/?staff",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "Request customer specification confirmation",
+        "width": 718,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Choose a publicationSynthetic reviewed machinery request",
+        "width": 330.78125,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Load reviewed requirements",
+        "width": 206.5,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Synthetic Corridra operator",
+        "width": 248.78125,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "datetime-local",
+        "width": 256.78125,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 676,
+        "height": 50.390625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Request confirmation",
+        "width": 676,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/?staff",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "Request customer specification confirmation",
+        "width": 1390,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Choose a publicationSynthetic reviewed machinery request",
+        "width": 330.78125,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Load reviewed requirements",
+        "width": 206.5,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Synthetic Corridra operator",
+        "width": 248.78125,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "datetime-local",
+        "width": 256.78125,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 1348,
+        "height": 50.390625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Request confirmation",
+        "width": 1348,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Review current requirements",
+        "width": 254.828125,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 278,
+        "height": 98
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Confirm these requirements",
+        "width": 248.1875,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Review current requirements",
+        "width": 254.828125,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 348,
+        "height": 74
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Confirm these requirements",
+        "width": 248.1875,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Review current requirements",
+        "width": 254.828125,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 640,
+        "height": 56
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Confirm these requirements",
+        "width": 248.1875,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:44813/",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Review current requirements",
+        "width": 254.828125,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "checkbox",
+        "width": 640,
+        "height": 56
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Confirm these requirements",
+        "width": 248.1875,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 268,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 228,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 270,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 268,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 228,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 270,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 268,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 228,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 270,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 268,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 228,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 270,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 270,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 338,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 298,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 340,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 338,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 298,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 340,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 338,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 298,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 340,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 338,
+        "height": 68.78125
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 298,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 340,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 340,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 716,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 668,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 716,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 668,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 716,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 668,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 716,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 668,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 1388,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 1340,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 1388,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 1340,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 1388,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 1340,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=detail",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist", "geistMono"],
+    "targets": [
+      {
+        "tag": "SUMMARY",
+        "text": "What this service includes and leaves out",
+        "width": 1388,
+        "height": 48
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Original stated terms",
+        "width": 1340,
+        "height": 48
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accept this quote",
+        "width": 184.28125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Decline this quote",
+        "width": 182.59375,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Ask a question",
+        "width": 156.578125,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload this request",
+        "width": 183.234375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=staff",
+    "width": 320,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Open Interpreter day for Synthetic paid-service workspace",
+        "width": 252,
+        "height": 76.390625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload the list",
+        "width": 252,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "USDEURGBPBDTJPY",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add another cost",
+        "width": 252,
+        "height": 44
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic product sourcing support",
+        "width": 252,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic shipping excluded",
+        "width": 252,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic buyer confirms supplier terms separately",
+        "width": 252,
+        "height": 98.765625
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "date",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Commercial arrangement (optional)",
+        "width": 252,
+        "height": 52.78125
+      },
+      {
+        "tag": "SELECT",
+        "text": "Use the existing itemised service quoteBundled product or supply priceSeparate sourcing or facilitat",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Private procurement costs and relationships",
+        "width": 252,
+        "height": 52.78125
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 252,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send the quote to the customer",
+        "width": 252,
+        "height": 64.375
+      },
+      {
+        "tag": "SELECT",
+        "text": "ChooseAnswer a question",
+        "width": 252,
+        "height": 48
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 252,
+        "height": 98.765625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send to the customer",
+        "width": 252,
+        "height": 45.1875
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 252,
+        "height": 73.96875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Save internal note",
+        "width": 252,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Edit Interpreter day",
+        "width": 252,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add a service",
+        "width": 252,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=staff",
+    "width": 390,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Open Interpreter day for Synthetic paid-service workspace",
+        "width": 322,
+        "height": 51.59375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload the list",
+        "width": 322,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "USDEURGBPBDTJPY",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add another cost",
+        "width": 322,
+        "height": 44
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic product sourcing support",
+        "width": 322,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic shipping excluded",
+        "width": 322,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic buyer confirms supplier terms separately",
+        "width": 322,
+        "height": 98.765625
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "date",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Commercial arrangement (optional)",
+        "width": 322,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Use the existing itemised service quoteBundled product or supply priceSeparate sourcing or facilitat",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Private procurement costs and relationships",
+        "width": 322,
+        "height": 52.78125
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 322,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send the quote to the customer",
+        "width": 322,
+        "height": 45.1875
+      },
+      {
+        "tag": "SELECT",
+        "text": "ChooseAnswer a question",
+        "width": 322,
+        "height": 48
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 322,
+        "height": 98.765625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send to the customer",
+        "width": 322,
+        "height": 45.1875
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 322,
+        "height": 73.96875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Save internal note",
+        "width": 322,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Edit Interpreter day",
+        "width": 322,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add a service",
+        "width": 322,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=staff",
+    "width": 768,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Open Interpreter day for Synthetic paid-service workspace",
+        "width": 483.46875,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload the list",
+        "width": 144.53125,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "USDEURGBPBDTJPY",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add another cost",
+        "width": 165.84375,
+        "height": 44
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic product sourcing support",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic shipping excluded",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic buyer confirms supplier terms separately",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "date",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Commercial arrangement (optional)",
+        "width": 668,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Use the existing itemised service quoteBundled product or supply priceSeparate sourcing or facilitat",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Private procurement costs and relationships",
+        "width": 668,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send the quote to the customer",
+        "width": 292.296875,
+        "height": 45.1875
+      },
+      {
+        "tag": "SELECT",
+        "text": "ChooseAnswer a question",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send to the customer",
+        "width": 213.859375,
+        "height": 45.1875
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 640,
+        "height": 73.96875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Save internal note",
+        "width": 182.25,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Edit Interpreter day",
+        "width": 181.9375,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add a service",
+        "width": 137.59375,
+        "height": 44
+      }
+    ],
+    "small": []
+  },
+  {
+    "url": "http://127.0.0.1:37783/?view=staff",
+    "width": 1440,
+    "overflow": 0,
+    "loadedFonts": ["newsreader", "geist"],
+    "targets": [
+      {
+        "tag": "BUTTON",
+        "text": "Open Interpreter day for Synthetic paid-service workspace",
+        "width": 483.46875,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reload the list",
+        "width": 144.53125,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "USDEURGBPBDTJPY",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Service feeLocal costPass-through costTax",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SELECT",
+        "text": "Included in the priceEstimate on topNot included",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add another cost",
+        "width": 165.84375,
+        "height": 44
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic product sourcing support",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic shipping excluded",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic buyer confirms supplier terms separately",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "date",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Commercial arrangement (optional)",
+        "width": 1340,
+        "height": 44
+      },
+      {
+        "tag": "SELECT",
+        "text": "Use the existing itemised service quoteBundled product or supply priceSeparate sourcing or facilitat",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "SUMMARY",
+        "text": "Private procurement costs and relationships",
+        "width": 1340,
+        "height": 44
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "width": 640,
+        "height": 49.171875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send the quote to the customer",
+        "width": 292.296875,
+        "height": 45.1875
+      },
+      {
+        "tag": "SELECT",
+        "text": "ChooseAnswer a question",
+        "width": 640,
+        "height": 48
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 640,
+        "height": 98.765625
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Send to the customer",
+        "width": 213.859375,
+        "height": 45.1875
+      },
+      {
+        "tag": "TEXTAREA",
+        "text": "Synthetic",
+        "width": 640,
+        "height": 73.96875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Save internal note",
+        "width": 182.25,
+        "height": 45.1875
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Edit Interpreter day",
+        "width": 181.9375,
+        "height": 44
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Add a service",
+        "width": 137.59375,
+        "height": 44
+      }
+    ],
+    "small": []
+  }
+]

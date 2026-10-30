@@ -51,3 +51,5 @@ Delete `language-scripts.css` and its import, restore the chip rules into the gl
 ## Required acceptance
 
 With both language settings unset the rendered page is as it was (English only, no chip). `tests/integration/language-phase2.test.ts` and `tests/integration/language-catalog.test.ts` pass; the specimen passes at 320, 390, 768 and 1440 pixels, including the letter-spacing check for Bengali and Arabic.
+
+Amended by [ADR-074](0074-per-page-language-release.md) (accepted 30 October 2026) for the request form's words; otherwise this ADR applies as written.

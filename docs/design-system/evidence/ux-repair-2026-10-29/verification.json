@@ -1,0 +1,82 @@
+{
+  "scope": "Local synthetic frozen checks; not production acceptance",
+  "sourceHead": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+  "order": ["docs", "integration", "ux", "operator", "build"],
+  "receipts": [
+    {
+      "name": "b-pinned-frozen-docs",
+      "command": "node work/local-run.mjs pnpm test:docs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 5.9,
+      "logBytes": 5880,
+      "logSha256": "f2752588303a76d7e65bd47b85c1367ef5a85d80ff270b9983b54d769f288019",
+      "head": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+      "changedPaths": 0,
+      "log": "work/b-pinned-frozen-docs-2026-10-29T17-10-18-030Z.log",
+      "totals": ["\u2139 tests 63", "\u2139 pass 63", "\u2139 fail 0", "\u2139 skipped 0"]
+    },
+    {
+      "name": "b-pinned-frozen-integration",
+      "command": "node work/local-run.mjs pnpm test:integration",
+      "exit": 1,
+      "signal": null,
+      "seconds": 708.8,
+      "logBytes": 4285,
+      "logSha256": "a1872858b945a7a53b586e41cb3a7c754a8285d0fa1bbe1080066f1e310f26d4",
+      "head": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+      "changedPaths": 0,
+      "log": "work/b-pinned-frozen-integration-2026-10-29T17-10-23-971Z.log",
+      "totals": [
+        "Test Files  4 failed | 119 passed (123)",
+        "Tests  4 failed | 1687 passed | 1 skipped (1692)"
+      ]
+    },
+    {
+      "name": "b-pinned-frozen-ux",
+      "command": "node work/local-run.mjs pnpm test:ux",
+      "exit": 0,
+      "signal": null,
+      "seconds": 489.7,
+      "logBytes": 5784,
+      "logSha256": "b6250cd814b55bbb2d6d8eef96701a57f81f3fb2cc6de00e4c7b2e085729c851",
+      "head": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+      "changedPaths": 0,
+      "log": "work/b-pinned-frozen-ux-2026-10-29T17-22-12-863Z.log",
+      "totals": ["56 passed (8.1m)"]
+    },
+    {
+      "name": "b-pinned-frozen-operator",
+      "command": "node work/local-run.mjs pnpm test:operator",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2024.2,
+      "logBytes": 107054,
+      "logSha256": "7697ee9b52169e3e733d9ce1fd18b962d5d70d2f4d1759fa8d6b8bb82c2bfd0a",
+      "head": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+      "changedPaths": 35,
+      "log": "work/b-pinned-frozen-operator-2026-10-29T17-30-22-622Z.log",
+      "totals": ["709 passed (33.7m)"]
+    },
+    {
+      "name": "b-pinned-frozen-build",
+      "command": "node work/local-run.mjs pnpm build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 23.4,
+      "logBytes": 4766,
+      "logSha256": "fb06bbb444abdc8a5eec37e79b81b110c9dce85a24f9f47c9dd8ab909b24d38b",
+      "head": "26439f4e50bc7ece301a64ec54e76d4770742b59",
+      "changedPaths": 35,
+      "log": "work/b-pinned-frozen-build-2026-10-29T18-04-06-966Z.log",
+      "totals": []
+    }
+  ],
+  "localInfrastructureFailures": [
+    "Docker backup and restore requires a Docker daemon",
+    "ClamAV adapter real scan",
+    "Blob evidence real clean scan",
+    "Scan-bypass test restored real scan"
+  ],
+  "existingSkip": "One pre-existing integration skip; no test was skipped or weakened by this work"
+}

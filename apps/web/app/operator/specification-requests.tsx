@@ -73,7 +73,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
       if (!task.signal.aborted)
         setMessage(
           error instanceof Error && error.message === 'unavailable'
-            ? 'Specification confirmation is not available yet. The optional module and application switch are required.'
+            ? 'Specification confirmation is not available right now. Reload the page. If it is still not available, it is switched off or not installed. The platform owner can check this on the owner page.'
             : 'Current publication access could not be checked. Reload and verify your authenticator.',
         );
     } finally {
@@ -131,7 +131,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
         Use the current requirements already approved for this client report. A customer
         confirmation never authorises a purchase, contract or payment.
       </p>
-      <label>
+      <label className="field">
         Reviewed publication
         <select
           value={publication}
@@ -173,7 +173,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
         >
           <p>{data.requirement.declaration}</p>
           <SpecificationFields fields={data.requirement.fields} />
-          <label>
+          <label className="field">
             Request owner
             <select name="ownerId" required disabled={busy || !!pending}>
               {owners.map((o) => (
@@ -183,7 +183,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
               ))}
             </select>
           </label>
-          <label>
+          <label className="field">
             Response deadline (UTC)
             <input name="dueAt" type="datetime-local" required disabled={busy || !!pending} />
           </label>

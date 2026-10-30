@@ -13,6 +13,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
 import { displayMoney } from '@corridra/domain/locale';
 type Experience = {
+  specificationConfirmationsAvailable?: boolean;
   organisations: { id: string; name: string; source_id: string; claim_id: string }[];
   contexts: { version: number; details: { organiser: string; purpose: string } }[];
   agenda: {
@@ -532,9 +533,10 @@ export function DeliveryExperience(props: Props) {
       {['owner', 'admin'].includes(props.role) && (
         <DecisionDisclosures tenant={tenant} publications={publications} />
       )}
-      {['owner', 'admin'].includes(props.role) && (
-        <SpecificationRequests tenant={tenant} publications={publications} owners={owners} />
-      )}
+      {['owner', 'admin'].includes(props.role) &&
+        data?.specificationConfirmationsAvailable === true && (
+          <SpecificationRequests tenant={tenant} publications={publications} owners={owners} />
+        )}
       {['owner', 'admin'].includes(props.role) && mission && (
         <CustomerMissionDelivery tenant={tenant} mission={mission} />
       )}

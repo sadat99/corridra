@@ -31,11 +31,11 @@ export function CommercialArrangementSummary({ terms }: { terms: CommercialArran
       ]
     : [];
   return (
-    <section aria-label="Commercial arrangement">
+    <section aria-label="Commercial arrangement" lang="en" dir="ltr">
       <h4>{arrangementModeLabels[terms.mode]}</h4>
       <p>
-        Self-declared commercial terms. A service acceptance does not authorise a product purchase
-        or confirm a sale.
+        <span lang="en">Self-declared</span> commercial terms. A service acceptance does not
+        authorise a product purchase or confirm a sale.
       </p>
       <dl>
         {Object.entries(arrangementPartyLabels).map(([key, label]) => (
@@ -89,7 +89,7 @@ export function CommercialArrangementSummary({ terms }: { terms: CommercialArran
           </p>
         </>
       )}
-      <details>
+      <details className="guide-fine">
         <summary>Original stated terms</summary>
         <p>{terms.sourceTerms}</p>
       </details>

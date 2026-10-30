@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { customerRealInvoicingEnabled } from '@corridra/auth/customer-invoicing-real';
 import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-payments-simulated';
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
+import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { PublicShell } from '../../components/public-shell';
+import { languagesWithForm } from '../../lib/i18n/pages';
 
 export const metadata = {
   title: 'Privacy notice | Corridra',
@@ -18,6 +21,13 @@ export default function Page() {
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
+  const specificationConfirmation = real && customerSpecificationConfirmationEnabled();
+  const arrangements = real && customerServiceRequestsEnabled();
+  // While the request form can show another language, the browser loads that language's words from our site, and
+  // the hosting provider's records show which file was loaded. The language sentence says so only while that is true.
+  const translatedForm = languagesWithForm().length > 0;
+  const updatedDay = specificationConfirmation || arrangements || translatedForm ? '30' : '25';
+  const noticeVersion = real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1';
   return (
     <PublicShell>
       <section className="guide-page-hero">
@@ -37,8 +47,7 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated 25 October 2026. Request notice version:{' '}
-            {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
+            Updated {updatedDay} October 2026. Request notice version: {noticeVersion}.
           </p>
         </div>
       </section>
@@ -148,6 +157,28 @@ export default function Page() {
                 business, market, requirements and contacts). To review your request, do the work
                 and keep a record of it. Basis: providing the service you asked for.
               </li>
+              {specificationConfirmation && (
+                <li>
+                  <strong>Requirement confirmations</strong> (the exact requirements you review,
+                  your confirmation, its time and a private account identifier). To record what you
+                  asked for and support the work. This is your statement of requirements, not
+                  approval of a purchase or payment. Basis: providing the service you asked for.
+                  Requirement confirmations cannot be changed or deleted once saved and are kept as
+                  part of the request’s history.
+                </li>
+              )}
+              {arrangements && (
+                <li>
+                  <strong>Quote arrangements, for quotes that include them</strong> (the parties and
+                  responsibilities stated in the quote, its original terms, any supply price and
+                  conditional commission). To explain the agreement you review and keep its history.
+                  The current handling team can also keep restricted acquisition costs, markup and
+                  relationship notes. Customers see only the terms disclosed to them. Basis:
+                  providing the service you asked for. These records do not confirm a sale or
+                  payment. Quote arrangements cannot be changed or deleted once saved and are kept
+                  as part of the request’s history.
+                </li>
+              )}
               <li>
                 <strong>Workspace and team information</strong> (workspace names, members, roles,
                 invitations). To let the right people in your organisation work together. Basis:
@@ -338,10 +369,20 @@ export default function Page() {
                 Your browser tab keeps form drafts and short-lived working state in session storage.
                 It is removed when you close the tab.
               </li>
-              <li>
-                If you choose a language, your browser remembers the choice in local storage. It is
-                not sent to us and you can clear it in your browser settings at any time.
-              </li>
+              {translatedForm ? (
+                <li>
+                  If you choose a language, your browser remembers the choice in local storage. You
+                  can clear it in your browser settings at any time. The choice itself is not sent
+                  to us. When the request form is shown in your language, your browser downloads
+                  that language’s words from our site, so our hosting provider’s records show which
+                  language’s words were loaded, as they show any file a browser loads.
+                </li>
+              ) : (
+                <li>
+                  If you choose a language, your browser remembers the choice in local storage. It
+                  is not sent to us and you can clear it in your browser settings at any time.
+                </li>
+              )}
               {pulseEmail && (
                 <li>
                   If you close the email prompt with Not now, your browser remembers that in local

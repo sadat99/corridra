@@ -1,6 +1,6 @@
 # Lane 11: French and German drafts, and the pseudo-language test
 
-**Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
+**Document status: PARTLY BUILT.** Shared words and home-page drafts are built. Request-form words for `/plan`, including its messages, are merged (PR 215) behind `CORRIDRA_LANGUAGES_FORM`, which is unset (off); the owner approved them in all six languages on 30 October 2026 (review record). That build is the 29 October "Open now" item below, so no phase here is open now. Signed-in screens are a later phase. See the [plan status register](../PLAN_STATUS.md).
 
 Status: built and dark, 25 October 2026. Nothing is offered to the public: French (`fr`) and German (`de`) join Bangla, Chinese, Spanish and Arabic as labelled drafts that show only where the owner turns on `CORRIDRA_LANGUAGES_PREVIEW`. A language is offered for real only after a native reviewer is recorded in [language-review-record.md](language-review-record.md) and the owner adds its code to `CORRIDRA_LANGUAGES_REVIEWED`. No switch is added, because the existing release rule already holds every draft back.
 
@@ -37,3 +37,11 @@ Status: built and dark, 25 October 2026. Nothing is offered to the public: Frenc
 ## Page words and the page switch (25 October 2026)
 
 Pages follow the chosen language only where their words are message keys and the language's page words are released. The home page is the first (`apps/web/lib/i18n/home-words.ts`). `CORRIDRA_LANGUAGES_PAGES` is unset by default, which shows English everywhere; `true` releases every language and a list such as `es,de` releases only those. The owner records a review of the page words per language in [the review record](language-review-record.md) before setting it. The request form is the next page and stays English until then; legal and consent text is never part of a translation until a qualified reviewer per language has read it.
+
+## Current scope, 29 October 2026
+
+The opening 25 October account above is historical. The review record now records the owner's shared-word review on that date; home-page words still have no separate native review recorded. The owner reports the page switch is already true in production. No production state was inspected here.
+
+Open now: translate `/plan` behind an independent, off-by-default `CORRIDRA_LANGUAGES_FORM`. It must not inherit the home-page release. Legal, consent and privacy statements remain explicitly English. The first question retains its existing language behaviour independently of this new switch, as the owner clarified on 29 October.
+
+The signed-in guided draft and the new customer and staff field-workflow screens remain English by this explicit rule until the next translation phase has reviewed word files and its own release decision. Original customer and supplier text, company names, quotations, original-currency money and formal commercial declarations remain in their original language, explicitly marked where English. This rule does not permit English fallback text in another language's catalog slot. The new trips/visits/fairs drafts have their own unreviewed row in the review record.

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerDecisionsEnabled } from '@corridra/auth/customer-decisions';
-import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
+import { specificationConfirmationForPage } from '../../../../lib/specification-availability';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { CustomerShell } from '../../../../components/customer-shell';
@@ -55,7 +55,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         link={link}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
         decisionsEnabled={customerDecisionsEnabled()}
-        specificationConfirmationsEnabled={customerSpecificationConfirmationEnabled()}
+        specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
       />
     </CustomerShell>

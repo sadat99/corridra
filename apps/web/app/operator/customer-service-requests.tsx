@@ -630,17 +630,12 @@ function Scoped({ tenant }: { tenant: string }) {
                   />
                 </label>
               </fieldset>
-              {detail.commercialArrangementsAvailable ? (
+              {detail.commercialArrangementsAvailable && (
                 <CommercialArrangementFields
                   value={arrangement}
                   currency={currency}
                   onChange={(v) => edit(() => setArrangement(v))}
                 />
-              ) : (
-                <p>
-                  Commercial arrangement terms are unavailable until the protected module is
-                  installed. You can still prepare an itemised service quote.
-                </p>
               )}
               <button type="submit" className="button" disabled={busy || !valid}>
                 {pending ? 'Send the same quote again' : 'Send the quote to the customer'}

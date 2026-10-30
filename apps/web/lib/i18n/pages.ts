@@ -10,11 +10,11 @@ export const pageKeyPrefixes = ['home.'] as const;
 export const isPageKey = (key: string) => pageKeyPrefixes.some((prefix) => key.startsWith(prefix));
 
 /**
- * The languages whose page words are released: `true` releases every language, a list such as `es,de` only
- * those, and anything else (empty, unset, a misspelling) releases none. English is always English.
+ * The languages a release setting names: `true` releases every language, a list such as `es,de` only those, and
+ * anything else (empty, unset, a misspelling) releases none. English is always English.
  */
-export function languagesWithPages(env: NodeJS.ProcessEnv = process.env): readonly Locale[] {
-  const value = (env.CORRIDRA_LANGUAGES_PAGES ?? '').trim().toLowerCase();
+function releasedLanguages(setting: string | undefined): readonly Locale[] {
+  const value = (setting ?? '').trim().toLowerCase();
   if (value === 'true') return localeCodes.filter((code) => code !== defaultLocale);
   return [
     ...new Set(
@@ -25,6 +25,20 @@ export function languagesWithPages(env: NodeJS.ProcessEnv = process.env): readon
         .filter((code) => code !== defaultLocale),
     ),
   ];
+}
+
+/** The languages whose home page words are released (`CORRIDRA_LANGUAGES_PAGES`). */
+export function languagesWithPages(env: NodeJS.ProcessEnv = process.env): readonly Locale[] {
+  return releasedLanguages(env.CORRIDRA_LANGUAGES_PAGES);
+}
+
+/**
+ * The languages whose request form words are released (`CORRIDRA_LANGUAGES_FORM`). Read the same way as the page
+ * words and independent of them: setting one never releases the other. `/plan` reads it to show the form in those
+ * languages, and the privacy notice (`/privacy`) reads it to say which words file the host sees while one is released.
+ */
+export function languagesWithForm(env: NodeJS.ProcessEnv = process.env): readonly Locale[] {
+  return releasedLanguages(env.CORRIDRA_LANGUAGES_FORM);
 }
 
 export const languagePagesEnabled = (env: NodeJS.ProcessEnv = process.env) =>

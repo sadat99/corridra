@@ -161,8 +161,8 @@ export type MessageKey = keyof typeof en;
 type Catalog = Record<MessageKey, string>;
 
 const bn: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': 'ব্যবসায়িক সফর, পরিদর্শন বা মেলা',
+  'fq.visits.hint': 'অথবা অন্য কোনো আন্তর্জাতিক ব্যবসার লক্ষ্য।',
   ...homeWords.bn,
   skip: 'মূল বিষয়বস্তুতে যান',
   'header.home': 'Corridra হোম',
@@ -313,8 +313,8 @@ const bn: Catalog = {
 };
 
 const zh: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': '商务旅行、参观或展会',
+  'fq.visits.hint': '或其他国际业务目标。',
   ...homeWords.zh,
   skip: '跳到主要内容',
   'header.home': 'Corridra 首页',
@@ -456,8 +456,8 @@ const zh: Catalog = {
 };
 
 const es: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': 'Viajes, visitas o ferias',
+  'fq.visits.hint': 'U otro objetivo de negocio internacional.',
   ...homeWords.es,
   skip: 'Ir al contenido',
   'header.home': 'Corridra, inicio',
@@ -609,8 +609,8 @@ const es: Catalog = {
 };
 
 const ar: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': 'رحلات أو زيارات أو معارض',
+  'fq.visits.hint': 'أو هدف آخر للأعمال الدولية.',
   ...homeWords.ar,
   skip: 'انتقل إلى المحتوى',
   'header.home': 'Corridra، الصفحة الرئيسية',
@@ -755,8 +755,8 @@ const ar: Catalog = {
 };
 
 const fr: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': 'Voyages, visites ou salons',
+  'fq.visits.hint': 'Ou un autre objectif commercial international.',
   ...homeWords.fr,
   skip: 'Aller au contenu',
   'header.home': 'Accueil Corridra',
@@ -909,8 +909,8 @@ const fr: Catalog = {
 };
 
 const de: Catalog = {
-  'fq.visits.label': en['fq.visits.label'],
-  'fq.visits.hint': en['fq.visits.hint'],
+  'fq.visits.label': 'Reisen, Besuche oder Messen',
+  'fq.visits.hint': 'Oder ein anderes internationales Geschäftsziel.',
   ...homeWords.de,
   skip: 'Zum Inhalt springen',
   'header.home': 'Corridra Startseite',

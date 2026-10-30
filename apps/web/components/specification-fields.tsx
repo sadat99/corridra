@@ -17,7 +17,7 @@ export function SpecificationFields({ fields }: { fields: Record<string, unknown
         .filter(([key]) => key !== 'currency' || fields.budgetMinor === undefined)
         .map(([key, value]) => (
           <div key={key} className="ux-fact-row">
-            <dt>
+            <dt lang="en">
               {labels[key] ??
                 key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())}
             </dt>
@@ -25,7 +25,9 @@ export function SpecificationFields({ fields }: { fields: Record<string, unknown
               {value && typeof value === 'object' && !Array.isArray(value) ? (
                 <SpecificationFields fields={value as Record<string, unknown>} />
               ) : key === 'budgetMinor' && typeof fields.currency === 'string' ? (
-                displayMoney(String(value), fields.currency)
+                <span lang="en" dir="ltr">
+                  {displayMoney(String(value), fields.currency)}
+                </span>
               ) : Array.isArray(value) ? (
                 value.join('; ')
               ) : (

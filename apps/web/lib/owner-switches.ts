@@ -4,7 +4,7 @@ import {
   customerProductionUnlocked,
   realUseEnabled,
 } from '@corridra/auth/customer-production';
-import { languagesWithPages } from './i18n/pages';
+import { languagesWithForm, languagesWithPages } from './i18n/pages';
 
 /**
  * Plain-language registry of every CORRIDRA_* setting the application reads.
@@ -40,6 +40,16 @@ export type SwitchEntry = {
   group: SwitchGroup;
   kind: SwitchKind;
 };
+
+export const installOnlyModules = [
+  {
+    name: 'customer-commercial-arrangement',
+    label: 'Quote arrangement records',
+    line: 'No separate application switch. Where installed, follows service-request access. Principal sales, billing and payments stay separate.',
+    state: 'Installation not checked here',
+    action: 'field_modules_action=commercial_arrangements (or both)',
+  },
+] as const;
 
 export const switchRegistry: SwitchEntry[] = [
   // Accounts and requests
@@ -329,7 +339,14 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_LANGUAGES_PAGES',
     label: 'Page words in the chosen language',
-    line: 'Shows the home page (and later the request form) in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, those pages read in English whatever language is chosen. Set it only after the owner has recorded a review of the page words of each language. Needs a new deploy.',
+    line: 'Shows the home page in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the home page reads in English whatever language is chosen. The request form has its own switch, Request form in the chosen language. Set it only after the owner has recorded a review of the page words of each language. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_LANGUAGES_FORM',
+    label: 'Request form in the chosen language',
+    line: 'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text, and that rule holds only while Show draft languages (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
     group: 'Accounts and requests',
     kind: 'flag',
   },
@@ -548,6 +565,11 @@ const moduleStates: Record<ActivationState, SwitchState> = {
 };
 const on: SwitchState = { text: 'On', tone: 'positive' };
 const off: SwitchState = { text: 'Off', tone: 'neutral' };
+/** Settings that release languages one page at a time. Each is read by its own parser, the same way. */
+const languageReleases: Partial<Record<string, (env: NodeJS.ProcessEnv) => readonly string[]>> = {
+  CORRIDRA_LANGUAGES_PAGES: languagesWithPages,
+  CORRIDRA_LANGUAGES_FORM: languagesWithForm,
+};
 
 function resolve(
   entry: SwitchEntry,
@@ -569,9 +591,12 @@ function resolve(
     return off;
   }
   if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;
-  if (entry.name === 'CORRIDRA_LANGUAGES_PAGES') {
-    // `true` or a list of language codes: the row says what visitors really get.
-    const released = languagesWithPages(env);
+  const languages = languageReleases[entry.name];
+  if (languages) {
+    // `true` or a list of language codes: the row names the languages the setting releases. It does not read
+    // Languages with reviewed text, so a released language reaches visitors only if the language chip also offers
+    // it; the form row's line tells the owner so.
+    const released = languages(env);
     if (released.length === 0) return off;
     return env[entry.name]?.trim().toLowerCase() === 'true'
       ? on
