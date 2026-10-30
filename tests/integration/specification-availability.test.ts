@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: vi.fn() }));
 import { specificationConfirmationAvailable } from '../../apps/web/lib/specification-availability';
+
+const read = (path: string) => readFileSync(resolve(path), 'utf8');
 
 const enabled = {
   DATA_ENVIRONMENT: 'synthetic',
@@ -37,5 +41,38 @@ describe('confirmation visibility uses the application gate and installation tog
         throw new Error('unavailable');
       }, enabled),
     ).toBe(false);
+  });
+});
+
+describe('the pages and the staff route decide visibility through the installation check', () => {
+  for (const path of [
+    'apps/web/app/account/missions/[resourceId]/page.tsx',
+    'apps/web/app/account/rooms/[requestId]/page.tsx',
+  ])
+    it(`${path} shows the confirmation only after the installation check`, () => {
+      const page = read(path);
+      expect(page).toContain(
+        "import { specificationConfirmationForPage } from '../../../../lib/specification-availability';",
+      );
+      expect(page.match(/specificationConfirmationsEnabled=/g) ?? []).toHaveLength(1);
+      expect(page).toContain(
+        'specificationConfirmationsEnabled={await specificationConfirmationForPage()}',
+      );
+      // The switch alone says nothing about the optional database module.
+      expect(page).not.toContain('customerSpecificationConfirmationEnabled');
+    });
+  it('the staff delivery view learns availability from the same check', () => {
+    const route = read('apps/web/app/api/workspace/delivery/route.ts');
+    expect(route).toContain(
+      "import { specificationConfirmationAvailable } from '../../../../lib/specification-availability';",
+    );
+    const start = route.indexOf("query.get('action') === 'experience'");
+    const end = route.indexOf("query.get('action') === 'options'");
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(route.slice(start, end)).toMatch(
+      /specificationConfirmationsAvailable: await specificationConfirmationAvailable\(\(\) =>\s*s\.specificationConfirmations\.installed\(\),?\s*\)/,
+    );
+    expect(route.match(/specificationConfirmationsAvailable/g) ?? []).toHaveLength(1);
   });
 });
