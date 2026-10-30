@@ -11,8 +11,7 @@
 }
 
 /* Long words in labels, legends, hints, notices, error text and summary values may break rather than push the page
-   wider. Hyphenation follows the main language, so it applies only where the browser knows the language's rules.
-   Buttons and step words are short by rule and keep whole words. */
+   wider. Buttons and step words are short by rule and keep whole words. */
 .ux-intake-page:not(:lang(en))
   :is(
     label,
@@ -31,6 +30,26 @@
     #request-context-hint
   ):not(:lang(en)):not(.mr-fq *, .guide-bn *) {
   overflow-wrap: anywhere;
+}
+/* Hyphens only in German, French and Spanish, whose long words break well at a hyphen. Bengali, Arabic and Chinese
+   are never hyphenated. */
+.ux-intake-page:is(:lang(de), :lang(fr), :lang(es))
+  :is(
+    label,
+    legend,
+    summary,
+    dt,
+    dd,
+    .label,
+    .guide-hint,
+    .guide-status,
+    .intake-notice p,
+    .ux-draft-notice,
+    .ux-error-summary,
+    .field-error,
+    #offer-hint,
+    #request-context-hint
+  ):not(:lang(en)):not(.mr-fq *, .guide-bn *) {
   hyphens: auto;
 }
 .ux-intake-page:not(:lang(en)) :is(button, .primary-link, .guide-journey-bar b) {
@@ -48,15 +67,36 @@
 }
 
 /* On a phone only the current step word shows. It stays on one line, and for the last two steps it lines up with
-   the end of the bar so it never runs past the card. */
+   the end of the bar so it never runs past the card. Its column may be narrower than the word, and the word still
+   ends at the column's end, so it spills back over the bar rather than past the card. */
 @media (max-width: 700px) {
+  .ux-intake-page:not(:lang(en)) .guide-journey-bar li[aria-current='step'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .ux-intake-page:not(:lang(en)) .guide-journey-bar li[aria-current='step'] b {
     white-space: nowrap;
   }
   .ux-intake-page:not(:lang(en)) .guide-journey-bar li:nth-child(n + 4)[aria-current='step'] b {
-    justify-self: end;
+    justify-self: unsafe end;
     text-align: end;
   }
+}
+
+/* Above phone width the notice is one row. The notice keeps two thirds of it so its English sentences do not wrap
+   early. */
+@media (min-width: 701px) {
+  .ux-intake-page:not(:lang(en)) .intake-notice > p {
+    flex: 2 1 0;
+    min-width: 0;
+  }
+  .ux-intake-page:not(:lang(en)) .intake-notice > p + p {
+    flex: 1 1 0;
+  }
+}
+
+/* A translated pill may wrap, so it still fits with text at twice its size. */
+.ux-intake-page:not(:lang(en)) .guide-pill {
+  white-space: normal;
 }
 
 /* Bengali, Chinese and Arabic letters need more room between lines than Latin ones. */

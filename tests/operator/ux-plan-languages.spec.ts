@@ -824,6 +824,122 @@ test.describe('with the form released', () => {
     await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
   });
 
+  test('only German, French and Spanish are hyphenated; Bengali, Arabic and Chinese break without hyphens, and English parts never hyphenate', async ({
+    browser,
+  }) => {
+    for (const code of draftCodes) {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      await openTranslated(page, code, 'form=true');
+      const notice = await page
+        .locator('.intake-notice > p')
+        .evaluateAll((paragraphs) =>
+          paragraphs.map(
+            (p) => `${getComputedStyle(p).overflowWrap} ${getComputedStyle(p).hyphens}`,
+          ),
+        );
+      const hyphens = ['de', 'fr', 'es'].includes(code) ? 'auto' : 'manual';
+      expect(notice, code).toEqual([`anywhere ${hyphens}`, `anywhere ${hyphens}`]);
+      const english = await page
+        .locator('#main [lang="en"]')
+        .evaluateAll((parts) => parts.map((part) => getComputedStyle(part).hyphens));
+      expect(english.length, code).toBeGreaterThan(1);
+      for (const value of english) expect(value, code).toBe('manual');
+      await context.close();
+    }
+  });
+
+  for (const width of [320, 390])
+    test(`at ${width}: the current step word stays inside the form's padding on every step in every language`, async ({
+      browser,
+    }) => {
+      for (const code of draftCodes) {
+        const context = await browser.newContext({
+          viewport: { width, height: 844 },
+          reducedMotion: 'reduce',
+        });
+        const page = await context.newPage();
+        await openTranslated(page, code, 'form=true');
+        await page.evaluate(() => document.fonts.ready);
+        const form = page.locator('form.intake-form');
+        const answers = [
+          () => form.locator('select').first().selectOption('sourcing'),
+          async () => {
+            await form.locator('select').nth(0).selectOption('BD');
+            await form.locator('select').nth(1).selectOption('CN');
+          },
+          () => form.locator('textarea').first().fill('Cotton fabric for shirts.'),
+          () => form.locator('input[type="checkbox"]').first().check(),
+        ];
+        for (const [step, answer] of [...answers, null].entries()) {
+          await expect(form.locator('.guide-journey-bar li[aria-current="step"] b')).toHaveText(
+            drafts[code][stepWords[step]!],
+          );
+          // How far the word reaches past the form's content box (inside its border and padding) on either side.
+          const past = await page.evaluate(() => {
+            const word = document
+              .querySelector('.guide-journey-bar li[aria-current="step"] b')!
+              .getBoundingClientRect();
+            const card = document.querySelector('form.intake-form')!;
+            const box = card.getBoundingClientRect();
+            const style = getComputedStyle(card);
+            const start =
+              box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+            const end =
+              box.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
+            return Math.max(0, start - word.left, word.right - end);
+          });
+          expect(past, `${code} ${width} step ${step + 1}`).toBeLessThanOrEqual(0.5);
+          if (!answer) break;
+          await answer();
+          await form.locator('.guide-actions .primary-link').click();
+        }
+        await context.close();
+      }
+    });
+
+  for (const code of draftCodes)
+    test(`${code} at 390 with text at 200 percent: every step and the receipt fit with no sideways scroll`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await openTranslated(page, code, 'form=true');
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      await walk(page, 'sample', async (state) => {
+        expect(await layoutProblems(page, 390), `${code} 200% ${state}`).toEqual([]);
+      });
+    });
+
+  test('at 390 every job fits the closed job select in every language', async ({ browser }) => {
+    for (const code of localeCodes) {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      if (code === 'en') await open(page, 'en', 'form=true');
+      else await openTranslated(page, code, 'form=true');
+      await page.evaluate(() => document.fonts.ready);
+      const jobs = page.locator('form.intake-form select').first();
+      await expect(jobs.locator('option[value="sourcing"]')).toHaveCount(1);
+      const cut = await jobs.evaluate((select: HTMLSelectElement) => {
+        const style = getComputedStyle(select);
+        const room =
+          select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const text = document.createElement('canvas').getContext('2d')!;
+        text.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        return Array.from(select.options)
+          .filter((option) => option.value)
+          .map((option) => ({
+            job: option.text,
+            over: Math.ceil(text.measureText(option.text).width - room),
+          }))
+          .filter((option) => option.over > 0);
+      });
+      expect(cut, code).toEqual([]);
+      await context.close();
+    }
+  });
+
   test('ar: right to left, the journey connectors clear the step dots and the main button sits at the inline end', async ({
     page,
   }) => {
@@ -894,17 +1010,23 @@ test.describe('with the form released', () => {
 // flow-step limit on every step; that is the English debt, left as it is. On every step a translation stays within
 // its pass mark of English, its form card grows by at most a quarter of a phone screen, and a step within the limit
 // in English stays within it translated. The first question has its own release and follows the chosen language
-// whatever the form switch says, so it is counted at its English height, as the spec measured it. The last step of
-// the real form is measured too: it is held to the limit and the card rule, and its ratio is recorded.
+// whatever the form switch says, so it is counted at its English height, as the spec measured it. The real form's
+// last step at 1440 is the one exception: its English sentences on lines of their own (UI spec L5) and the line saying
+// they are English (D4) add about 127 px in every language, so it is held to 1.08 (design audit, 30 Oct 2026).
 const flowStepLimit = { 390: 1.5, 1440: 1 } as const;
-const passMark = { de: { 390: 1.15, 1440: 1.05 }, ar: { 390: 1.1, 1440: 1.05 } } as const;
+const passMark = {
+  de: { 390: 1.15, 1440: 1.05 },
+  fr: { 390: 1.15, 1440: 1.05 },
+  ar: { 390: 1.1, 1440: 1.05 },
+} as const;
+const realLastStepAt1440 = 1.08;
 test.describe('the page-length budget', () => {
   for (const width of [390, 1440] as const)
-    test(`at ${width}: German and Arabic stay within their pass marks of English on every step`, async ({
+    test(`at ${width}: German, French and Arabic stay within their pass marks of English on every step, the real last step at 1440 within 1.08`, async ({
       browser,
     }) => {
       /** Screens taken by the main region, the first question and the form card on each step. */
-      const measure = async (code: 'en' | 'de' | 'ar', mode: 'sample' | 'real') => {
+      const measure = async (code: 'en' | 'de' | 'fr' | 'ar', mode: 'sample' | 'real') => {
         const context = await browser.newContext({
           viewport: { width, height: width === 390 ? 844 : 900 },
           reducedMotion: 'reduce',
@@ -948,13 +1070,13 @@ test.describe('the page-length budget', () => {
         return mode === 'real' ? screens.slice(4) : screens;
       };
       const steps = ['1', '2', '3', '4', '5', '5 real'];
-      const both = async (code: 'en' | 'de' | 'ar') => [
+      const both = async (code: 'en' | 'de' | 'fr' | 'ar') => [
         ...(await measure(code, 'sample')),
         ...(await measure(code, 'real')),
       ];
       const english = await both('en');
       const rows: Record<string, string | number>[] = [];
-      for (const code of ['de', 'ar'] as const) {
+      for (const code of ['de', 'fr', 'ar'] as const) {
         const translated = await both(code);
         for (const [index, step] of steps.entries()) {
           const [base, now] = [english[index]!, translated[index]!];
@@ -968,8 +1090,11 @@ test.describe('the page-length budget', () => {
             ratio: +ratio.toFixed(3),
             card: +(now.card - base.card).toFixed(2),
           });
-          if (step !== '5 real')
-            expect.soft(ratio, `${code} step ${step}`).toBeLessThanOrEqual(passMark[code][width]);
+          expect
+            .soft(ratio, `${code} step ${step}`)
+            .toBeLessThanOrEqual(
+              step === '5 real' && width === 1440 ? realLastStepAt1440 : passMark[code][width],
+            );
           if (base.main <= flowStepLimit[width])
             expect
               .soft(main, `${code} step ${step} goes over the limit only when translated`)
