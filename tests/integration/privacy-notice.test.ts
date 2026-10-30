@@ -55,6 +55,8 @@ const text = async (env: Record<string, string | undefined>) => {
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
     'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
+    'CORRIDRA_LANGUAGES_FORM',
+    'CORRIDRA_LANGUAGES_PAGES',
     'VERCEL_ENV',
   ])
     delete process.env[key];
@@ -84,6 +86,8 @@ afterEach(() => {
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
     'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
+    'CORRIDRA_LANGUAGES_FORM',
+    'CORRIDRA_LANGUAGES_PAGES',
   ])
     delete process.env[key];
 });
@@ -211,6 +215,7 @@ describe('the privacy notice', () => {
       { ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' },
       { ...real, CORRIDRA_PULSE_ENABLED: 'true' },
       { DATA_ENVIRONMENT: 'synthetic' },
+      { ...real, CORRIDRA_LANGUAGES_FORM: 'true' },
     ])
       expect(await text(env)).not.toMatch(/—|–| - /);
   });
@@ -288,5 +293,43 @@ describe('notice for the optional confirmation and quote records', () => {
       expect(page).not.toContain(arrangementsKept);
       expect(page).toContain('Updated 25 October 2026.');
     }
+  });
+});
+
+describe('the language sentence follows the request form release', () => {
+  const synthetic = { DATA_ENVIRONMENT: 'synthetic' };
+  const englishForm =
+    'If you choose a language, your browser remembers the choice in local storage. It is not sent to us and you can clear it in your browser settings at any time.';
+  const translatedForm =
+    'If you choose a language, your browser remembers the choice in local storage. You can clear it in your browser settings at any time. The choice itself is not sent to us. When the request form is shown in your language, your browser downloads that language’s words from our site, so our hosting provider’s records show which language’s words were loaded, as they show any file a browser loads.';
+  it('keeps the earlier sentence and date while the request form shows no other language', async () => {
+    for (const mode of [real, synthetic])
+      for (const release of [
+        {},
+        ...['', 'false', 'en', 'nonsense'].map((value) => ({ CORRIDRA_LANGUAGES_FORM: value })),
+      ]) {
+        const page = await text({ ...mode, ...release });
+        expect(page).toContain(englishForm);
+        expect(page).not.toContain('hosting provider');
+        expect(page).toContain('Updated 25 October 2026.');
+      }
+  });
+  it('says the hosting provider sees which language’s words were loaded while any language is released, with the new date', async () => {
+    for (const mode of [real, synthetic])
+      for (const value of ['bn', 'true', 'es,de']) {
+        const page = await text({ ...mode, CORRIDRA_LANGUAGES_FORM: value });
+        expect(page).toContain(translatedForm);
+        expect(page).not.toContain('It is not sent to us and you can clear it');
+        expect(page).toContain('Updated 30 October 2026.');
+      }
+    expect(await text({ ...real, CORRIDRA_LANGUAGES_FORM: 'bn' })).toContain(
+      'Updated 30 October 2026. Request notice version: real-intake-2026-10-21-v1.',
+    );
+  });
+  it('reads only the request form release: releasing the home page words leaves the sentence as it was', async () => {
+    const page = await text({ ...real, CORRIDRA_LANGUAGES_PAGES: 'true' });
+    expect(page).toContain(englishForm);
+    expect(page).not.toContain('hosting provider');
+    expect(page).toContain('Updated 25 October 2026.');
   });
 });
