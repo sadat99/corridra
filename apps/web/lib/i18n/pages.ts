@@ -34,7 +34,8 @@ export function languagesWithPages(env: NodeJS.ProcessEnv = process.env): readon
 
 /**
  * The languages whose request form words are released (`CORRIDRA_LANGUAGES_FORM`). Read the same way as the page
- * words and independent of them: setting one never releases the other. Only `/plan` reads it.
+ * words and independent of them: setting one never releases the other. `/plan` reads it to show the form in those
+ * languages, and the privacy notice (`/privacy`) reads it to say which words file the host sees while one is released.
  */
 export function languagesWithForm(env: NodeJS.ProcessEnv = process.env): readonly Locale[] {
   return releasedLanguages(env.CORRIDRA_LANGUAGES_FORM);
