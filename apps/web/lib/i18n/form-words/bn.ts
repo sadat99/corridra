@@ -23,7 +23,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'আপনার অনুরোধ সম্পূর্ণ করুন।',
   'form.pending.sameDevice':
-    'অ্যাকাউন্ট চালু করতে এবং সাইন ইন করতে একই ডিভাইস ও একই ব্রাউজার ব্যবহার করুন। শুধু তার পরেই অনুরোধটি Corridra-তে পাঠানো হবে।',
+    'অ্যাকাউন্ট চালু করতে এবং সাইন ইন করতে একই ডিভাইস ও একই ব্রাউজার ব্যবহার করুন। এরপর আপনার অনুরোধটি Corridra-তে জমা হবে।',
   'form.pending.open': 'আপনার অনুরোধ খুলুন',
   'form.pending.activate': 'অ্যাকাউন্ট চালু করুন',
   'form.pending.signIn': 'সাইন ইন করে এগিয়ে যান',
@@ -232,23 +232,19 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'আপনার অনুরোধ খোলা যায়নি।',
   'form.message.untranslated': 'এই বার্তাটি ইংরেজিতে দেখানো হচ্ছে।',
   'form.message.consentLead': 'নোটিশটি পড়ুন এবং এগোতে বাক্সে টিক দিন।',
-  'form.message.intakeUnavailable':
-    'এখন অনুরোধ পাঠানো যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.intakeUnavailable': 'অনুরোধ পাঠানো যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে।',
   'form.message.activationNeeded': 'অনুরোধ পাঠাতে আপনার অ্যাকাউন্ট চালু করা শেষ করুন।',
   'form.message.checkFields': 'চিহ্নিত ঘরগুলো দেখে নিন।',
   'form.message.changed': 'পাঠানোর পরে এই অনুরোধটি বদলে গেছে। নতুন একটি অনুরোধ শুরু করুন।',
   'form.message.intakeNotSaved': 'অনুরোধটি সংরক্ষণ করা যায়নি। আপনার দেওয়া তথ্য এখানেই আছে।',
   'form.message.receiptExpired':
     'এই রসিদটি পাওয়া যাচ্ছে না বা মেয়াদ শেষ হয়েছে। কোডটি যাচাই করে আবার চেষ্টা করুন।',
-  'form.message.receiptUnavailable': 'এখন অনুরোধ সেবা পাওয়া যাচ্ছে না। পরে আবার চেষ্টা করুন।',
+  'form.message.receiptUnavailable': 'রসিদ যাচাই করা যাচ্ছে না।',
   'form.message.savedExpired':
     'আপনার সংরক্ষিত অনুরোধের মেয়াদ শেষ হয়েছে। নতুন একটি অনুরোধ শুরু করুন।',
-  'form.message.realUnavailable':
-    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
-  'form.message.requestUnavailable':
-    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
-  'form.message.realIntakeUnavailable':
-    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.realUnavailable': 'অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে।',
+  'form.message.requestUnavailable': 'অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে।',
+  'form.message.realIntakeUnavailable': 'অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে।',
   'form.message.accessDenied':
     'প্রবেশের অনুমতি নেই, অথবা লিংকটি পাওয়া যাচ্ছে না। সঠিক অ্যাকাউন্ট দিয়ে সাইন ইন করুন।',
   'form.message.checkValues': 'পাঠানো তথ্যগুলো যাচাই করুন।',
@@ -264,13 +260,12 @@ export const words: FormCatalog = {
   'form.message.identityUnavailable': 'এখন আপনার অ্যাকাউন্ট যাচাই করা যাচ্ছে না। আবার চেষ্টা করুন।',
   'form.message.signInNeeded': 'এগিয়ে যেতে সাইন ইন করুন।',
   'form.message.verifyNeeded': 'এগিয়ে যেতে আপনার ইমেইল যাচাই করুন।',
-  'form.message.sessionInvalid': 'আপনার সাইন ইন সেশনটি সঠিক নয়। আবার সাইন ইন করুন।',
-  'form.message.accountsUnavailable':
-    'গ্রাহক অ্যাকাউন্ট এখন পাওয়া যাচ্ছে না। পরে আবার চেষ্টা করুন।',
+  'form.message.sessionInvalid': 'আপনার সাইন ইন নিশ্চিত করা যায়নি। আবার সাইন ইন করুন।',
+  'form.message.accountsUnavailable': 'গ্রাহক অ্যাকাউন্ট পাওয়া যাচ্ছে না।',
   'form.message.verifiedEmailMissing':
     'আপনার অ্যাকাউন্টের যাচাই করা ইমেইল পাওয়া যাচ্ছে না। আবার সাইন ইন করুন।',
   'form.message.accountContextInvalid':
-    'অ্যাকাউন্টের তথ্য সঠিক নয়। পাতাটি নতুন করে লোড করে আবার চেষ্টা করুন।',
+    'এই পাতার অ্যাকাউন্টের তথ্য পড়া যায়নি। পাতাটি নতুন করে লোড করে আবার চেষ্টা করুন।',
   'form.message.accountChanged':
     'আপনার অ্যাকাউন্ট বদলে গেছে। এগিয়ে যাওয়ার আগে পাতাটি নতুন করে লোড করুন।',
   'form.message.chooseObjective': 'আপনি কী করতে চান, তা বেছে নিন।',

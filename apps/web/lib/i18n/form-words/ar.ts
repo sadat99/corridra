@@ -21,7 +21,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'أكمل طلبك.',
   'form.pending.sameDevice':
-    'استخدم الجهاز نفسه والمتصفح نفسه لتفعيل حسابك وتسجيل الدخول. لا يُرسل الطلب إلى Corridra إلا بعد ذلك.',
+    'استخدم الجهاز نفسه والمتصفح نفسه لتفعيل حسابك وتسجيل الدخول. بعد ذلك يُقدَّم طلبك إلى Corridra.',
   'form.pending.open': 'فتح طلبك',
   'form.pending.activate': 'تفعيل حسابك',
   'form.pending.signIn': 'تسجيل الدخول والمتابعة',
@@ -223,22 +223,18 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'تعذر فتح طلبك.',
   'form.message.untranslated': 'تظهر هذه الرسالة بالإنجليزية.',
   'form.message.consentLead': 'اقرأ الإشعار وضع علامة في المربع للمتابعة.',
-  'form.message.intakeUnavailable':
-    'لا يمكن إرسال الطلبات الآن. ما أدخلته لا يزال هنا. حاول لاحقًا.',
+  'form.message.intakeUnavailable': 'لا يمكن إرسال الطلبات. ما أدخلته لا يزال هنا.',
   'form.message.activationNeeded': 'أكمل تفعيل حسابك لإرسال طلبك.',
   'form.message.checkFields': 'راجع الحقول المحددة.',
   'form.message.changed': 'تغير هذا الطلب بعد إرساله. ابدأ طلبًا جديدًا.',
   'form.message.intakeNotSaved': 'تعذر حفظ الطلب. ما أدخلته لا يزال هنا.',
   'form.message.receiptExpired':
     'هذا الإيصال غير متاح أو منتهي الصلاحية. تحقق من الرمز وحاول مرة أخرى.',
-  'form.message.receiptUnavailable': 'الطلبات غير متاحة الآن. حاول لاحقًا.',
+  'form.message.receiptUnavailable': 'لا يمكن التحقق من الإيصالات.',
   'form.message.savedExpired': 'انتهت صلاحية طلبك المحفوظ. ابدأ طلبًا جديدًا.',
-  'form.message.realUnavailable':
-    'لا يمكن استلام الطلبات الآن. ما أدخلته لا يزال هنا. حاول لاحقًا.',
-  'form.message.requestUnavailable':
-    'لا يمكن استلام الطلبات الآن. ما أدخلته لا يزال هنا. حاول لاحقًا.',
-  'form.message.realIntakeUnavailable':
-    'لا يمكن استلام الطلبات الآن. ما أدخلته لا يزال هنا. حاول لاحقًا.',
+  'form.message.realUnavailable': 'لا يمكن استلام الطلبات. ما أدخلته لا يزال هنا.',
+  'form.message.requestUnavailable': 'لا يمكن استلام الطلبات. ما أدخلته لا يزال هنا.',
+  'form.message.realIntakeUnavailable': 'لا يمكن استلام الطلبات. ما أدخلته لا يزال هنا.',
   'form.message.accessDenied': 'لا يمكن الوصول، أو الرابط غير متاح. سجّل الدخول بالحساب الصحيح.',
   'form.message.checkValues': 'راجع البيانات المرسلة.',
   'form.message.conflict': 'لا يتوافق الطلب مع الحالة الحالية. حدّث الصفحة وراجعه مرة أخرى.',
@@ -250,11 +246,12 @@ export const words: FormCatalog = {
   'form.message.identityUnavailable': 'لا يمكن التحقق من حسابك الآن. حاول مرة أخرى.',
   'form.message.signInNeeded': 'سجّل الدخول للمتابعة.',
   'form.message.verifyNeeded': 'أكّد بريدك الإلكتروني للمتابعة.',
-  'form.message.sessionInvalid': 'جلسة تسجيل الدخول غير صالحة. سجّل الدخول مرة أخرى.',
-  'form.message.accountsUnavailable': 'حسابات العملاء غير متاحة الآن. حاول لاحقًا.',
+  'form.message.sessionInvalid': 'تعذّر تأكيد تسجيل دخولك. سجّل الدخول مرة أخرى.',
+  'form.message.accountsUnavailable': 'حسابات العملاء غير متاحة.',
   'form.message.verifiedEmailMissing':
     'البريد الإلكتروني المؤكد لحسابك غير متاح. سجّل الدخول مرة أخرى.',
-  'form.message.accountContextInvalid': 'بيانات الحساب غير صالحة. حدّث الصفحة وحاول مرة أخرى.',
+  'form.message.accountContextInvalid':
+    'تعذّرت قراءة بيانات الحساب في هذه الصفحة. حدّث الصفحة وحاول مرة أخرى.',
   'form.message.accountChanged': 'تغيّر حسابك. حدّث الصفحة قبل المتابعة.',
   'form.message.chooseObjective': 'اختر ما تريد فعله.',
   'form.message.enterMarket': 'أدخل بلدك أو سوقك المستهدفة.',

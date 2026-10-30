@@ -21,7 +21,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'Complete su solicitud.',
   'form.pending.sameDevice':
-    'Use el mismo dispositivo y el mismo navegador para activar su cuenta e iniciar sesión. La solicitud se envía a Corridra solo después de eso.',
+    'Use el mismo dispositivo y el mismo navegador para activar su cuenta e iniciar sesión. Después, su solicitud se presenta a Corridra.',
   'form.pending.open': 'Abrir su solicitud',
   'form.pending.activate': 'Activar su cuenta',
   'form.pending.signIn': 'Iniciar sesión y continuar',
@@ -232,23 +232,18 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'No se pudo abrir su solicitud.',
   'form.message.untranslated': 'Este mensaje se muestra en inglés.',
   'form.message.consentLead': 'Lea el aviso y marque la casilla para continuar.',
-  'form.message.intakeUnavailable':
-    'Ahora no se pueden enviar solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.intakeUnavailable': 'No se pueden enviar solicitudes. Sus datos siguen aquí.',
   'form.message.activationNeeded': 'Termine de activar su cuenta para enviar su solicitud.',
   'form.message.checkFields': 'Revise los campos marcados.',
   'form.message.changed': 'Esta solicitud cambió después del envío. Empiece una solicitud nueva.',
   'form.message.intakeNotSaved': 'No se pudo guardar la solicitud. Sus datos siguen aquí.',
   'form.message.receiptExpired':
     'Este recibo no está disponible o ha caducado. Revise el código e inténtelo de nuevo.',
-  'form.message.receiptUnavailable':
-    'Las solicitudes no están disponibles ahora. Inténtelo más tarde.',
+  'form.message.receiptUnavailable': 'No se pueden consultar los recibos.',
   'form.message.savedExpired': 'Su solicitud guardada ha caducado. Empiece una solicitud nueva.',
-  'form.message.realUnavailable':
-    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
-  'form.message.requestUnavailable':
-    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
-  'form.message.realIntakeUnavailable':
-    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.realUnavailable': 'No se pueden recibir solicitudes. Sus datos siguen aquí.',
+  'form.message.requestUnavailable': 'No se pueden recibir solicitudes. Sus datos siguen aquí.',
+  'form.message.realIntakeUnavailable': 'No se pueden recibir solicitudes. Sus datos siguen aquí.',
   'form.message.accessDenied':
     'Acceso denegado, o el enlace no está disponible. Inicie sesión con la cuenta correcta.',
   'form.message.checkValues': 'Revise los datos enviados.',
@@ -264,13 +259,13 @@ export const words: FormCatalog = {
   'form.message.identityUnavailable': 'Ahora no se puede comprobar su cuenta. Inténtelo de nuevo.',
   'form.message.signInNeeded': 'Inicie sesión para continuar.',
   'form.message.verifyNeeded': 'Confirme su dirección de correo para continuar.',
-  'form.message.sessionInvalid': 'Su sesión no es válida. Inicie sesión de nuevo.',
-  'form.message.accountsUnavailable':
-    'Las cuentas de cliente no están disponibles ahora. Inténtelo más tarde.',
+  'form.message.sessionInvalid':
+    'No se pudo confirmar su inicio de sesión. Inicie sesión de nuevo.',
+  'form.message.accountsUnavailable': 'Las cuentas de cliente no están disponibles.',
   'form.message.verifiedEmailMissing':
     'El correo confirmado de su cuenta no está disponible. Inicie sesión de nuevo.',
   'form.message.accountContextInvalid':
-    'Los datos de la cuenta no son válidos. Actualice la página e inténtelo de nuevo.',
+    'No se pudieron leer los datos de la cuenta en esta página. Actualice la página e inténtelo de nuevo.',
   'form.message.accountChanged': 'Su cuenta cambió. Actualice la página antes de continuar.',
   'form.message.chooseObjective': 'Elija qué desea hacer.',
   'form.message.enterMarket': 'Indique su país o mercado de destino.',

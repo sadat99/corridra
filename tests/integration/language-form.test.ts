@@ -584,8 +584,13 @@ describe('the drafted form words', () => {
         const english = formEn[key];
         const words = drafts[code][key];
         if (english.includes('Corridra')) expect(words, `${code} ${key}`).toContain('Corridra');
-        // "Too many requests" means attempts, and says so (UI spec, 429 row).
-        if (/\brequests?\b|\bintake\b/i.test(english) && key !== 'form.message.tooMany')
+        // "Too many requests" means attempts, and says so (UI spec, 429 row). "Intake unavailable" is sent only by the
+        // receipt check, so it says that receipts cannot be checked (design audit ruling 3, 30 October 2026).
+        if (
+          /\brequests?\b|\bintake\b/i.test(english) &&
+          key !== 'form.message.tooMany' &&
+          key !== 'form.message.receiptUnavailable'
+        )
           expect(words.toLowerCase(), `${code} ${key}`).toContain(requestWord[code]);
         if (/\boperator\b/i.test(english))
           expect(words, `${code} ${key}`).toContain(teamWord[code]);
@@ -691,6 +696,54 @@ describe('the drafted form words', () => {
     expect(bn['form.message.amountFormat']).toContain('0 থেকে 9 অঙ্ক ব্যবহার করুন।');
     expect(ar['form.message.amountFormat']).toContain('استخدم الأرقام من 0 إلى 9.');
     expect(bn['form.contact.passwordHint']).toContain('১৪');
+  });
+
+  it('never say the saved request is sent only after activation, because it is stored before it', () => {
+    const only = {
+      de: /(?<![\p{L}])(nur|erst)(?![\p{L}])/iu,
+      fr: /seulement|qu[’']après/iu,
+      es: /(?<![\p{L}])(solo|sólo|solamente)(?![\p{L}])/iu,
+      ar: /إلا|فقط/u,
+      bn: /শুধু|কেবল/u,
+      zh: /只|仅/u,
+    };
+    for (const code of draftCodes)
+      expect(drafts[code]['form.pending.sameDevice'], code).not.toMatch(only[code]);
+  });
+
+  it('say what the server could not do, with no verdict on the person and no promise of when it works again', () => {
+    const verdict = {
+      de: /ungültig/i,
+      fr: /valide/i,
+      es: /válid/i,
+      ar: /صالح/,
+      bn: /সঠিক নয়|অবৈধ/,
+      zh: /无效/,
+    };
+    const time =
+      /\b(now|later)\b|gerade|später|pour le moment|plus tard|ahora|más tarde|الآن|لاحق|এখন|পরে|目前|暂|稍后/i;
+    const invalid = formKeys.filter((key) => /invalid/i.test(formEn[key]));
+    const unavailable = formKeys.filter(
+      (key) => /unavailable$/i.test(formEn[key]) && key !== 'form.message.identityUnavailable',
+    );
+    expect(invalid).toEqual(
+      expect.arrayContaining(['form.message.sessionInvalid', 'form.message.accountContextInvalid']),
+    );
+    expect(unavailable).toEqual(
+      expect.arrayContaining([
+        'form.message.accountsUnavailable',
+        'form.message.intakeUnavailable',
+        'form.message.realUnavailable',
+        'form.message.requestUnavailable',
+        'form.message.realIntakeUnavailable',
+        'form.message.receiptUnavailable',
+      ]),
+    );
+    for (const code of draftCodes) {
+      for (const key of invalid)
+        expect(drafts[code][key], `${code} ${key}`).not.toMatch(verdict[code]);
+      for (const key of unavailable) expect(drafts[code][key], `${code} ${key}`).not.toMatch(time);
+    }
   });
 });
 

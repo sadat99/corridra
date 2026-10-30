@@ -22,7 +22,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'Schließen Sie Ihre Anfrage ab.',
   'form.pending.sameDevice':
-    'Verwenden Sie dasselbe Gerät und denselben Browser, um Ihr Konto zu aktivieren und sich anzumelden. Erst danach wird die Anfrage an Corridra gesendet.',
+    'Verwenden Sie dasselbe Gerät und denselben Browser, um Ihr Konto zu aktivieren und sich anzumelden. Danach wird Ihre Anfrage bei Corridra eingereicht.',
   'form.pending.open': 'Anfrage öffnen',
   'form.pending.activate': 'Konto aktivieren',
   'form.pending.signIn': 'Anmelden und weiter',
@@ -236,7 +236,7 @@ export const words: FormCatalog = {
   'form.message.untranslated': 'Diese Meldung wird auf Englisch angezeigt.',
   'form.message.consentLead': 'Lesen Sie den Hinweis und setzen Sie das Häkchen, um fortzufahren.',
   'form.message.intakeUnavailable':
-    'Anfragen können gerade nicht gesendet werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+    'Anfragen können nicht gesendet werden. Ihre Angaben bleiben erhalten.',
   'form.message.activationNeeded':
     'Schließen Sie die Aktivierung Ihres Kontos ab, um Ihre Anfrage zu senden.',
   'form.message.checkFields': 'Prüfen Sie die markierten Felder.',
@@ -246,16 +246,15 @@ export const words: FormCatalog = {
     'Die Anfrage konnte nicht gespeichert werden. Ihre Angaben bleiben erhalten.',
   'form.message.receiptExpired':
     'Dieser Beleg ist nicht verfügbar oder abgelaufen. Prüfen Sie den Code und versuchen Sie es erneut.',
-  'form.message.receiptUnavailable':
-    'Anfragen sind gerade nicht erreichbar. Versuchen Sie es später erneut.',
+  'form.message.receiptUnavailable': 'Belege können nicht geprüft werden.',
   'form.message.savedExpired':
     'Ihre gespeicherte Anfrage ist abgelaufen. Beginnen Sie eine neue Anfrage.',
   'form.message.realUnavailable':
-    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+    'Anfragen können nicht angenommen werden. Ihre Angaben bleiben erhalten.',
   'form.message.requestUnavailable':
-    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+    'Anfragen können nicht angenommen werden. Ihre Angaben bleiben erhalten.',
   'form.message.realIntakeUnavailable':
-    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+    'Anfragen können nicht angenommen werden. Ihre Angaben bleiben erhalten.',
   'form.message.accessDenied':
     'Kein Zugriff, oder der Link ist nicht verfügbar. Melden Sie sich mit dem richtigen Konto an.',
   'form.message.checkValues': 'Prüfen Sie die gesendeten Angaben.',
@@ -273,13 +272,13 @@ export const words: FormCatalog = {
     'Ihr Konto kann gerade nicht geprüft werden. Versuchen Sie es erneut.',
   'form.message.signInNeeded': 'Melden Sie sich an, um fortzufahren.',
   'form.message.verifyNeeded': 'Bestätigen Sie Ihre E-Mail-Adresse, um fortzufahren.',
-  'form.message.sessionInvalid': 'Ihre Anmeldung ist ungültig. Melden Sie sich erneut an.',
-  'form.message.accountsUnavailable':
-    'Kundenkonten sind gerade nicht verfügbar. Versuchen Sie es später erneut.',
+  'form.message.sessionInvalid':
+    'Ihre Anmeldung konnte nicht bestätigt werden. Melden Sie sich erneut an.',
+  'form.message.accountsUnavailable': 'Kundenkonten sind nicht verfügbar.',
   'form.message.verifiedEmailMissing':
     'Die bestätigte E-Mail-Adresse Ihres Kontos ist nicht verfügbar. Melden Sie sich erneut an.',
   'form.message.accountContextInvalid':
-    'Die Kontoangaben sind ungültig. Laden Sie die Seite neu und versuchen Sie es erneut.',
+    'Die Kontoangaben auf dieser Seite konnten nicht gelesen werden. Laden Sie die Seite neu und versuchen Sie es erneut.',
   'form.message.accountChanged':
     'Ihr Konto hat sich geändert. Laden Sie die Seite neu, bevor Sie fortfahren.',
   'form.message.chooseObjective': 'Wählen Sie, was Sie tun möchten.',

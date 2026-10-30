@@ -23,7 +23,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'Finalisez votre demande.',
   'form.pending.sameDevice':
-    'Utilisez le même appareil et le même navigateur pour activer votre compte et vous connecter. La demande n’est envoyée à Corridra qu’après cela.',
+    'Utilisez le même appareil et le même navigateur pour activer votre compte et vous connecter. Ensuite, votre demande est soumise à Corridra.',
   'form.pending.open': 'Ouvrir votre demande',
   'form.pending.activate': 'Activer votre compte',
   'form.pending.signIn': 'Se connecter et continuer',
@@ -238,7 +238,7 @@ export const words: FormCatalog = {
   'form.message.untranslated': 'Ce message s’affiche en anglais.',
   'form.message.consentLead': 'Lisez l’avis et cochez la case pour continuer.',
   'form.message.intakeUnavailable':
-    'Les demandes ne peuvent pas être envoyées pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+    'Les demandes ne peuvent pas être envoyées. Vos saisies sont conservées.',
   'form.message.activationNeeded':
     'Terminez l’activation de votre compte pour envoyer votre demande.',
   'form.message.checkFields': 'Vérifiez les champs signalés.',
@@ -247,16 +247,15 @@ export const words: FormCatalog = {
     'La demande n’a pas pu être enregistrée. Vos saisies sont conservées.',
   'form.message.receiptExpired':
     'Ce reçu est indisponible ou expiré. Vérifiez le code et réessayez.',
-  'form.message.receiptUnavailable':
-    'Les demandes ne sont pas disponibles pour le moment. Réessayez plus tard.',
+  'form.message.receiptUnavailable': 'Les reçus ne peuvent pas être vérifiés.',
   'form.message.savedExpired':
     'Votre demande enregistrée a expiré. Commencez une nouvelle demande.',
   'form.message.realUnavailable':
-    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+    'Les demandes ne peuvent pas être reçues. Vos saisies sont conservées.',
   'form.message.requestUnavailable':
-    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+    'Les demandes ne peuvent pas être reçues. Vos saisies sont conservées.',
   'form.message.realIntakeUnavailable':
-    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+    'Les demandes ne peuvent pas être reçues. Vos saisies sont conservées.',
   'form.message.accessDenied':
     'Accès refusé, ou le lien n’est pas disponible. Connectez-vous avec le bon compte.',
   'form.message.checkValues': 'Vérifiez les informations envoyées.',
@@ -273,13 +272,12 @@ export const words: FormCatalog = {
     'Votre compte ne peut pas être vérifié pour le moment. Réessayez.',
   'form.message.signInNeeded': 'Connectez-vous pour continuer.',
   'form.message.verifyNeeded': 'Confirmez votre adresse e-mail pour continuer.',
-  'form.message.sessionInvalid': 'Votre connexion n’est pas valide. Reconnectez-vous.',
-  'form.message.accountsUnavailable':
-    'Les comptes clients ne sont pas disponibles pour le moment. Réessayez plus tard.',
+  'form.message.sessionInvalid': 'Votre connexion n’a pas pu être confirmée. Reconnectez-vous.',
+  'form.message.accountsUnavailable': 'Les comptes clients ne sont pas disponibles.',
   'form.message.verifiedEmailMissing':
     'L’adresse e-mail confirmée de votre compte n’est pas disponible. Reconnectez-vous.',
   'form.message.accountContextInvalid':
-    'Les informations du compte ne sont pas valides. Rechargez la page et réessayez.',
+    'Les informations du compte sur cette page n’ont pas pu être lues. Rechargez la page et réessayez.',
   'form.message.accountChanged': 'Votre compte a changé. Rechargez la page avant de continuer.',
   'form.message.chooseObjective': 'Choisissez ce que vous souhaitez faire.',
   'form.message.enterMarket': 'Indiquez votre pays ou marché cible.',
