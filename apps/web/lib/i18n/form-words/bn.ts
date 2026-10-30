@@ -69,11 +69,11 @@ export const words: FormCatalog = {
   'form.job.meetings': 'ব্যবসায়িক বৈঠকের ব্যবস্থা',
   'form.job.factory_visits': 'সাইট পরিদর্শন',
   'form.job.trade_fairs': 'বাণিজ্য মেলা থেকে আরও ফল পাওয়া',
-  'form.job.business_trips': 'ব্যবসায়িক সফরের পরিকল্পনা ও বাস্তবায়ন',
+  'form.job.business_trips': 'ব্যবসায়িক সফরের আয়োজন',
   'form.job.market_validation': 'বাজার যাচাই',
   'form.job.market_entry': 'বাজারে প্রবেশ',
   'form.job.export_market_access': 'রপ্তানির সুযোগ তৈরি',
-  'form.job.delegations': 'একাধিক প্রতিষ্ঠানের মিশন পরিচালনা করা',
+  'form.job.delegations': 'একাধিক প্রতিষ্ঠানের মিশন পরিচালনা',
 
   'form.where.company': 'প্রতিষ্ঠানটি কোন দেশে অবস্থিত?',
   'form.where.chooseCountry': 'একটি দেশ বেছে নিন',

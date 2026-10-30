@@ -922,18 +922,31 @@ test.describe('with the form released', () => {
       const jobs = page.locator('form.intake-form select').first();
       await expect(jobs.locator('option[value="sourcing"]')).toHaveCount(1);
       const cut = await jobs.evaluate((select: HTMLSelectElement) => {
-        const style = getComputedStyle(select);
-        const room =
-          select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        const text = document.createElement('canvas').getContext('2d')!;
-        text.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-        return Array.from(select.options)
+        // The closed select keeps room for its arrow beside the text, so its text box is narrower than its content
+        // box. A copy holding one job at its natural width is as wide as the select must be to show that job whole;
+        // it sits beside the select, so the same rules, fonts and direction apply.
+        const width = select.getBoundingClientRect().width;
+        const copy = select.cloneNode(false) as HTMLSelectElement;
+        Object.assign(copy.style, {
+          position: 'absolute',
+          visibility: 'hidden',
+          width: 'auto',
+          minWidth: '0',
+          maxWidth: 'none',
+        });
+        const shown = copy.appendChild(document.createElement('option'));
+        select.after(copy);
+        const measured = Array.from(select.options)
           .filter((option) => option.value)
-          .map((option) => ({
-            job: option.text,
-            over: Math.ceil(text.measureText(option.text).width - room),
-          }))
-          .filter((option) => option.over > 0);
+          .map((option) => {
+            shown.text = option.text;
+            return {
+              job: option.text,
+              over: Math.ceil(copy.getBoundingClientRect().width - width),
+            };
+          });
+        copy.remove();
+        return measured.filter((job) => job.over > 0);
       });
       expect(cut, code).toEqual([]);
       await context.close();

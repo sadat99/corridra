@@ -64,7 +64,7 @@ export const words: FormCatalog = {
   'form.job.customers': 'Trouver des clients',
   'form.job.distributors': 'Trouver des distributeurs',
   'form.job.partners': 'Trouver des partenaires',
-  'form.job.sourcing': 'Acheter produits ou composants',
+  'form.job.sourcing': 'Acheter des produits ou pièces',
   'form.job.machinery_procurement': 'Acheter des machines',
   'form.job.supplier_evaluation': 'Évaluer des fournisseurs',
   'form.job.meetings': 'Organiser des rendez-vous',
