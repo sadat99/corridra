@@ -306,16 +306,23 @@ test('the sample form completes in German and Arabic against the real intake and
       expect(response.status()).toBe(201);
       const result = await response.json();
       await expect(page.locator('.receipt-panel input[readonly]')).toHaveValue(result.receipt);
-      if (code !== 'en') {
+      if (code !== 'en')
         await expect(page.locator('.guide-status')).toHaveText(
           words[code as 'de' | 'ar']['form.message.duplicate'],
         );
-        await page.locator('#receipt-check button.primary-link').click();
-        await expect(page.locator('#receipt-check strong[lang="en"]')).toHaveText('DRAFT');
-      }
+      // The receipt check sends the same body in every language too.
+      const checked = page.waitForRequest(
+        (request) =>
+          request.url() === `${origin}/api/intake/receipt` && request.method() === 'POST',
+      );
+      await page.locator('#receipt-check button.primary-link').click();
+      const receiptBody = (await checked).postData() ?? '';
+      await expect(
+        page.locator(code === 'en' ? '#receipt-check strong' : '#receipt-check strong[lang="en"]'),
+      ).toHaveText('DRAFT');
       const body = response.request().postData() ?? '';
       await context.close();
-      return { body, result };
+      return { body, result, receiptBody };
     };
     const english = await run('en', 'form=true');
     expect(english.result.duplicate).toBe(false);
@@ -323,6 +330,9 @@ test('the sample form completes in German and Arabic against the real intake and
     const arabic = await run('ar', 'form=true&fq=1');
     expect(german.body).toBe(english.body);
     expect(arabic.body).toBe(english.body);
+    expect(JSON.parse(english.receiptBody)).toEqual({ receipt: english.result.receipt });
+    expect(german.receiptBody).toBe(english.receiptBody);
+    expect(arabic.receiptBody).toBe(english.receiptBody);
     for (const reply of [german.result, arabic.result])
       expect(reply).toMatchObject({
         id: english.result.id,

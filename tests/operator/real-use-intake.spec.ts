@@ -477,8 +477,9 @@ async function chooseLanguage(page: Page, code: Locale) {
   await page.context().addCookies([{ name: 'fixture_language', value: code, url: origin }]);
   await page.addInitScript((value) => localStorage.setItem('corridra.language', value), code);
 }
-/** Fills the real request with structural selectors only, so it works in every language. */
-async function fillRequestInAnyLanguage(page: Page, email: string, password: string) {
+/** Fills the real request with structural selectors only, so it works in every language. A signed-in person has no
+ * password to set. */
+async function fillRequestInAnyLanguage(page: Page, email: string, password?: string) {
   const form = page.locator('form.intake-form');
   const next = form.locator('.guide-actions .primary-link');
   const step = async () => {
@@ -502,7 +503,7 @@ async function fillRequestInAnyLanguage(page: Page, email: string, password: str
   await form.locator('#brief-company').fill('Dhaka Manufacturing');
   await form.locator('#brief-email').fill(email);
   await form.locator('label.choice input[type="checkbox"]').check();
-  await form.locator('input[type="password"]').fill(password);
+  if (password) await form.locator('input[type="password"]').fill(password);
   return next;
 }
 for (const code of ['de', 'ar'] as const)
@@ -536,7 +537,9 @@ for (const code of ['de', 'ar'] as const)
     expect(rows[0].brief).toMatchObject({ objective: 'Source suppliers', market: 'China' });
   });
 
-test('the saved request is byte for byte the same in en, de and ar', async ({ browser }) => {
+test('the saved request and the sign-up call are byte for byte the same in en, de and ar', async ({
+  browser,
+}) => {
   const email = 'language-same@business.test',
     password = 'Browser fixture account password';
   const sent = async (code: Locale) => {
@@ -546,6 +549,11 @@ test('the saved request is byte for byte the same in en, de and ar', async ({ br
       crypto.randomUUID = () => '00000000-0000-4000-8000-000000000003';
     });
     const bodies: string[] = [];
+    const signUps: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/fixture/auth/signup'))
+        signUps.push(request.postData() ?? '');
+    });
     if (code === 'en')
       page.on('request', (request) => {
         if (request.method() === 'POST' && request.url().endsWith('/api/intake/pending'))
@@ -570,15 +578,20 @@ test('the saved request is byte for byte the same in en, de and ar', async ({ br
     await expect(page).toHaveURL(/\/verify-email\?returnTo=%2Fplan/);
     await context.close();
     expect(bodies).toHaveLength(1);
-    return bodies[0];
+    expect(signUps).toHaveLength(1);
+    return { saved: bodies[0], signUp: signUps[0] };
   };
   const english = await sent('en');
-  expect(JSON.parse(english).brief).toMatchObject({
+  expect(JSON.parse(english.saved!).brief).toMatchObject({
     market: 'China',
     objective: 'Source suppliers',
   });
-  expect(await sent('de')).toBe(english);
-  expect(await sent('ar')).toBe(english);
+  expect(JSON.parse(english.signUp!)).toEqual({ name: 'Request owner', email, password });
+  for (const code of ['de', 'ar'] as const) {
+    const translated = await sent(code);
+    expect(translated.saved, code).toBe(english.saved);
+    expect(translated.signUp, code).toBe(english.signUp);
+  }
   const rows = (
     await owner.query(
       "SELECT notice_version FROM customer_private.pending_request WHERE brief->>'email'=$1",
@@ -586,4 +599,36 @@ test('the saved request is byte for byte the same in en, de and ar', async ({ br
     )
   ).rows;
   expect(rows).toEqual([{ notice_version: realNoticeVersion }]);
+});
+
+test('de: signed in, an email other than the account is blocked and the form says so in German', async ({
+  page,
+}) => {
+  const email = 'language-signed-in@business.test',
+    other = 'language-someone-else@business.test',
+    password = 'Browser fixture standalone password';
+  await page.goto(origin + '/signup?returnTo=%2Fplan');
+  await page.getByLabel('Name', { exact: true }).fill('Signed in owner');
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  await page.getByLabel('Password', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await activate(page, email, password);
+  await expect(page).toHaveURL(origin + '/plan');
+  await chooseLanguage(page, 'de');
+  await page.goto(origin + '/plan');
+  await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
+  const send = await fillRequestInAnyLanguage(page, other);
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  await expect(send).toHaveText(de['form.action.submit']);
+  await send.click();
+  await expect(page.locator('.guide-status')).toHaveText(de['form.message.emailMismatch']);
+  await expect(page.locator('#brief-email')).toHaveValue(other);
+  // Nothing was saved for either address.
+  const rows = (
+    await owner.query(
+      "SELECT 1 FROM customer_private.pending_request WHERE brief->>'email' = ANY($1::text[])",
+      [[email, other]],
+    )
+  ).rows;
+  expect(rows).toEqual([]);
 });
