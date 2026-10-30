@@ -66,11 +66,11 @@ export const words: FormCatalog = {
   'form.job.supplier_evaluation': 'تقييم الموردين',
   'form.job.meetings': 'ترتيب اجتماعات تجارية',
   'form.job.factory_visits': 'زيارة مواقع',
-  'form.job.trade_fairs': 'الاستفادة أكثر من المعارض التجارية',
+  'form.job.trade_fairs': 'تحسين نتائج المعارض التجارية',
   'form.job.business_trips': 'تنظيم رحلة عمل',
   'form.job.market_validation': 'تقييم سوق',
   'form.job.market_entry': 'دخول سوق',
-  'form.job.export_market_access': 'تطوير الوصول إلى أسواق التصدير',
+  'form.job.export_market_access': 'تطوير أسواق التصدير',
   'form.job.delegations': 'تنفيذ مهمة تضم عدة شركات',
 
   'form.where.company': 'أين يقع مقر الشركة؟',
