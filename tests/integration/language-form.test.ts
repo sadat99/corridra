@@ -915,7 +915,8 @@ const serverSources = [
   ['apps/web/lib/pending-request.ts'],
   ['apps/web/lib/delivery-http.ts'],
   ['packages/missions/src/index.ts', '/** Server-only capability', '\n  queue('],
-  ['packages/auth/src/customer-requests.ts', 'async claimPending('],
+  // The claim, and the submission it runs inside its transaction.
+  ['packages/auth/src/customer-requests.ts', 'private async submitInTransaction('],
   // The claim runs its account check twice; every refusal of that check reaches the form.
   ['packages/auth/src/customer-session.ts', 'protected async transaction<T>('],
 ] as const;
@@ -1100,5 +1101,18 @@ describe('the messages the form shows', () => {
     expect(readFormMessage('Read and acknowledge the test intake notice')).toEqual([
       { english: 'Read and acknowledge the test intake notice', lead: 'form.message.consentLead' },
     ]);
+  });
+
+  it('never let a variable part at the end of a message take in its full stop or the next problem', () => {
+    const testEmail = 'Use a test address ending in @example.invalid';
+    const address = { key: 'form.message.testEmail', values: { domain: '@example.invalid' } };
+    expect(readFormMessage(testEmail)).toEqual([address]);
+    expect(readFormMessage(`${testEmail}.`)).toEqual([address]);
+    expect(
+      readFormMessage([testEmail, formEn['form.message.chooseCountry']].join(issueSeparator)),
+    ).toEqual([address, { key: 'form.message.chooseCountry', values: {} }]);
+    expect(readFormMessage([testEmail, formEn['form.message.email']].join(issueSeparator))).toEqual(
+      [address, { key: 'form.message.email', values: {} }],
+    );
   });
 });

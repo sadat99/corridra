@@ -30,12 +30,17 @@ const exact = new Map<string, FormKey>(
   messageKeys.filter((key) => !/\{\w+\}/.test(formEn[key])).map((key) => [formEn[key], key]),
 );
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/**
+ * A variable part is one word: a code, a count or an address. It holds no space and does not end in a full stop, so
+ * a part at the end of a message never takes in the full stop or the next sentence.
+ */
+const slot = '(\\S*[^\\s.])';
 const patterns = messageKeys
   .filter((key) => /\{\w+\}/.test(formEn[key]))
   .map((key) => ({
     key,
     names: [...formEn[key].matchAll(/\{(\w+)\}/g)].map((match) => match[1]),
-    pattern: new RegExp(`^${escape(formEn[key]).replace(/\\\{\w+\\\}/g, '(.+?)')}$`),
+    pattern: new RegExp(`^${escape(formEn[key]).replace(/\\\{\w+\\\}/g, slot)}$`),
   }));
 
 function readOne(text: string): MessagePart | null {
