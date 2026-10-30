@@ -1133,6 +1133,92 @@ test.describe('messages in the chosen language', () => {
       );
     });
 
+  for (const code of ['bn', 'ar'] as const)
+    test(`${code}: in the amount error the currency code is an English part and the count of decimal places is part of the sentence`, async ({
+      page,
+    }) => {
+      await openTranslated(page, code, 'form=true');
+      const form = page.locator('form.intake-form');
+      const next = form.locator('.guide-actions .primary-link');
+      await form.locator('select').first().selectOption('sourcing');
+      await next.click();
+      await expect(form.locator('h2')).toHaveText(drafts[code]['form.step.titleWhere']);
+      await form.locator('select').nth(0).selectOption('BD');
+      await form.locator('select').nth(1).selectOption('CN');
+      await next.click();
+      await expect(form.locator('h2')).toHaveText(drafts[code]['form.step.titleDetails']);
+      await form.locator('textarea').first().fill('Cotton fabric for shirts, 2000 metres.');
+      await form.locator('details summary').click();
+      await form.locator('#brief-budgetAmount').fill('12.345');
+      await form.locator('details select').selectOption('CNY');
+      await next.click();
+      const error = page.locator('#requirements-error');
+      await expect(error).toHaveText(
+        fill(drafts[code]['form.message.decimals'], { code: 'CNY', places: '2' }),
+      );
+      await expect(error.locator('[lang="en"]')).toHaveText(['CNY']);
+      const outsideEnglish = await error.evaluate((element) => {
+        const copy = element.cloneNode(true) as HTMLElement;
+        copy.querySelectorAll('[lang="en"]').forEach((part) => part.remove());
+        return copy.textContent ?? '';
+      });
+      expect(outsideEnglish).toContain('2');
+      expect(outsideEnglish).not.toContain('CNY');
+    });
+
+  test('ar at 390: the English consent wording starts on its own line below the Arabic instruction, at the left edge of the error', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openTranslated(page, 'ar', 'form=true');
+    const form = page.locator('form.intake-form');
+    const next = form.locator('.guide-actions .primary-link');
+    for (const [key, answer] of [
+      ['form.step.titleGoal', () => form.locator('select').first().selectOption('sourcing')],
+      [
+        'form.step.titleWhere',
+        async () => {
+          await form.locator('select').nth(0).selectOption('BD');
+          await form.locator('select').nth(1).selectOption('CN');
+        },
+      ],
+      [
+        'form.step.titleDetails',
+        () => form.locator('textarea').first().fill('Cotton fabric for shirts, 2000 metres.'),
+      ],
+      ['form.step.titleResults', () => form.locator('input[type="checkbox"]').first().check()],
+    ] as const) {
+      await expect(form.locator('h2')).toHaveText(ar[key]);
+      await answer();
+      await next.click();
+    }
+    await expect(form.locator('h2')).toHaveText(ar['form.step.titleContact']);
+    await next.click();
+    const error = page.locator('#acknowledged-error');
+    await expect(error).toContainText(ar['form.message.consentLead']);
+    const english = error.locator('.lang-island[lang="en"][dir="ltr"]');
+    await expect(english).toHaveText('Read and acknowledge the test intake notice');
+    const place = await error.evaluate((element) => {
+      const island = element.querySelector('.lang-island')!;
+      const lead = document.createRange();
+      lead.setStartBefore(element.firstChild!);
+      lead.setEndBefore(island);
+      const first = document.createRange();
+      first.setStart(island.firstChild!, 0);
+      first.setEnd(island.firstChild!, 1);
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        leadBottom: Math.max(...Array.from(lead.getClientRects()).map((rect) => rect.bottom)),
+        englishTop: first.getBoundingClientRect().top,
+        englishLeft: first.getBoundingClientRect().left,
+        contentLeft: box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft),
+      };
+    });
+    expect(place.englishTop).toBeGreaterThanOrEqual(place.leadBottom - 0.5);
+    expect(Math.abs(place.englishLeft - place.contentLeft)).toBeLessThanOrEqual(1);
+  });
+
   test('de: a failed submit says so in German, and the retry with the same key succeeds', async ({
     page,
   }) => {

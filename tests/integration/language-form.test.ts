@@ -1059,7 +1059,7 @@ describe('the messages the form shows', () => {
     }
   });
 
-  it('show the variable parts of a translated message as English parts: an address keeps its order in Arabic', async () => {
+  it('show codes and addresses in a translated message as English parts, and counts as part of the sentence', async () => {
     const { FormWordsProvider, useFormWords } = await load('app/plan/form-words');
     const testEmail = 'Use a test address ending in @example.invalid';
     function Shown({ text }: { text: string }) {
@@ -1073,19 +1073,62 @@ describe('the messages the form shows', () => {
           createElement(Shown, { text }),
         ),
       );
+    // An address keeps its order in right to left text.
     expect(shown(ar, 'ar', testEmail)).toBe(
       fill(ar['form.message.testEmail'], {
         domain: '<span lang="en" dir="ltr">@example.invalid</span>',
       }),
     );
-    expect(shown(de, 'de', 'CNY permits at most 2 decimal places. No rounding is performed.')).toBe(
-      fill(de['form.message.decimals'], {
-        code: '<span lang="en" dir="ltr">CNY</span>',
-        places: '<span lang="en" dir="ltr">2</span>',
-      }),
-    );
+    const decimals = 'CNY permits at most 2 decimal places. No rounding is performed.';
+    for (const [code, words] of [
+      ['de', de],
+      ['bn', bn],
+      ['ar', ar],
+    ] as const)
+      expect(shown(words, code, decimals), code).toBe(
+        fill(words['form.message.decimals'], {
+          code: '<span lang="en" dir="ltr">CNY</span>',
+          places: '2',
+        }),
+      );
     // In English the message is the text as written, with no element added.
     expect(shown(null, 'en', testEmail)).toBe(testEmail);
+    expect(shown(null, 'en', decimals)).toBe(decimals);
+  });
+
+  it('put an English sentence after a translated one on its own line, and keep one that opens a message inline', async () => {
+    const { FormWordsProvider, useFormWords } = await load('app/plan/form-words');
+    function Shown({ text }: { text: string }) {
+      return useFormWords().showMessage(text);
+    }
+    const shown = (text: string) =>
+      renderToStaticMarkup(
+        createElement(
+          FormWordsProvider,
+          { value: { locale: 'de', words: de } },
+          createElement(Shown, { text }),
+        ),
+      );
+    const island = (text: string) => `<span lang="en" dir="ltr" class="lang-island">${text}</span>`;
+    const inline = (text: string) => `<span lang="en" dir="ltr">${text}</span>`;
+    // After a translated lead.
+    expect(shown('Read and acknowledge the test intake notice')).toBe(
+      de['form.message.consentLead'] + island('Read and acknowledge the test intake notice'),
+    );
+    // After a translated part.
+    expect(shown(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`)).toBe(
+      de['form.message.draftNotResumed'] + island('Drafts expire after 24 hours.'),
+    );
+    // Opening a message, before a translated part.
+    expect(
+      shown(`Your request is saved for 24 hours. ${formEn['form.message.accountNotCreated']}`),
+    ).toBe(
+      `${inline('Your request is saved for 24 hours.')} ${de['form.message.accountNotCreated']}`,
+    );
+    // A message it does not know, after the translated line that says so.
+    expect(shown('Synthetic transport interruption')).toBe(
+      de['form.message.untranslated'] + island('Synthetic transport interruption'),
+    );
   });
 
   it('read a variable message with its parts, and joined problems part by part', () => {

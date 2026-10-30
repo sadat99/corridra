@@ -44,35 +44,41 @@ export function useFormWords() {
       translated
         ? createElement(Fragment, null, say(key), englishIsland(sentence))
         : `${say(key)} ${sentence}`;
-    /** A message the form shows. English is shown as written; a translated form shows known messages translated,
-     * English-only sentences marked English, and anything unknown word for word after a translated line. The
-     * variable parts of a known message (a code, a count, an address) are data and are shown as written, marked
-     * English, so an address keeps its order inside right to left text. */
+    /** A message the form shows. English is shown as written. A translated form shows known messages translated,
+     * English-only sentences marked English, and anything unknown word for word after a translated line; an English
+     * sentence after a translated one starts on its own line. A count is part of the sentence; codes and addresses
+     * are data, marked English. */
     const showMessage = (text: string): ReactNode => {
       if (!translated || !text) return text;
       const parts = readFormMessage(text);
       if (!parts)
-        return createElement(Fragment, null, say('form.message.untranslated'), ' ', english(text));
-      return parts.map((part, index) =>
-        createElement(
+        return createElement(Fragment, null, say('form.message.untranslated'), englishIsland(text));
+      return parts.map((part, index) => {
+        if ('key' in part)
+          return createElement(
+            Fragment,
+            { key: index },
+            index > 0 ? ' ' : null,
+            fillNodes(
+              say(part.key),
+              Object.fromEntries(
+                Object.entries(part.values).map(([name, value]) => [
+                  name,
+                  /^\d+$/.test(value) ? value : english(value),
+                ]),
+              ),
+            ),
+          );
+        // An English sentence that opens the message stays inline; after a translated lead or part it is a line.
+        if (!part.lead && index === 0)
+          return createElement(Fragment, { key: index }, english(part.english));
+        return createElement(
           Fragment,
           { key: index },
-          index > 0 ? ' ' : null,
-          'key' in part
-            ? fillNodes(
-                say(part.key),
-                Object.fromEntries(
-                  Object.entries(part.values).map(([name, value]) => [name, english(value)]),
-                ),
-              )
-            : createElement(
-                Fragment,
-                null,
-                part.lead ? `${say(part.lead)} ` : null,
-                english(part.english),
-              ),
-        ),
-      );
+          part.lead ? say(part.lead) : null,
+          englishIsland(part.english),
+        );
+      });
     };
     return {
       translated,
