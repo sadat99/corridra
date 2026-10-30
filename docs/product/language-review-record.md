@@ -82,7 +82,14 @@ Words changed in review fix round 3 (30 October 2026, commit `e6bc1d7`), seven j
 1. de `form.job.sourcing` "Produkte oder Teile beschaffen" (English "Source products or components") and `form.job.trade_fairs` "Messen besser nutzen" (English "Improve trade-fair yield").
 2. es `form.job.sourcing` "Comprar productos o piezas" and `form.job.meetings` "Organizar reuniones" (English "Arrange commercial meetings"; the draft no longer says "comerciales").
 3. fr `form.job.sourcing` "Acheter des produits ou pièces", which replaces the round 2 "Acheter produits ou composants".
-4. bn `form.job.business_trips` "ব্যবসায়িক সফরের আয়োজন" (English "Plan commercial trip execution") and `form.job.delegations` "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা" (English "Run a multi-company mission"). bn `form.goal.mission`, with the same English, keeps "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা করা".
+4. bn `form.job.business_trips` "ব্যবসায়িক সফরের আয়োজন" (English "Plan commercial trip execution") and `form.job.delegations`, now "বহু প্রতিষ্ঠানের মিশন চালানো" (English "Run a multi-company mission"; the round 3 "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা" was replaced in the CI fix below). bn `form.goal.mission`, with the same English, keeps "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা করা".
+
+Words changed in the CI fix after round 3 (30 October 2026, commit `9c45f04`), four job labels, each part of this review. CI on `7f124b1` cut two Arabic labels in the closed job select at 390 px (21 and 9 px over) though they fit locally: CI renders Arabic in a different system font, about 19 percent wider. Each Arabic and Bangla label now takes at most 76.8 percent of the select's text box locally. The key counts are unchanged.
+
+1. ar `form.job.trade_fairs` "تحسين نتائج المعارض التجارية" (English "Improve trade-fair yield"), which replaces "الاستفادة أكثر من المعارض التجارية".
+2. ar `form.job.export_market_access` "تطوير أسواق التصدير" (English "Develop export access"), which replaces "تطوير الوصول إلى أسواق التصدير".
+3. bn `form.job.trade_fairs` "বাণিজ্য মেলার ফল বাড়ানো" (English "Improve trade-fair yield"), which replaces "বাণিজ্য মেলা থেকে আরও ফল পাওয়া".
+4. bn `form.job.delegations` "বহু প্রতিষ্ঠানের মিশন চালানো" (English "Run a multi-company mission"), which replaces "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা". bn `form.goal.mission`, with the same English, still says "একাধিক প্রতিষ্ঠানের মিশন পরিচালনা করা"; the reviewer decides whether the two should match.
 
 One key sits next to the consent wording. Each file holds `form.message.consentLead` (English "Read the notice and tick the box to continue."). When a consent error is shown in a translated form, this instruction is shown translated first, and the consent error itself follows in English as written, for example "Read and acknowledge the request privacy notice". The owner decides at this review, with a qualified reviewer per language, whether that instruction counts as consent text ([ADR-074](../adr/0074-per-page-language-release.md), Required acceptance).
 
