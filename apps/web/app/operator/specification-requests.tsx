@@ -73,7 +73,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
       if (!task.signal.aborted)
         setMessage(
           error instanceof Error && error.message === 'unavailable'
-            ? 'Specification confirmation is not available yet. Ask the workspace owner to check access.'
+            ? 'Specification confirmation is not available right now. Reload the page. If it is still not available, it is switched off or not installed. The platform owner can check this on the owner page.'
             : 'Current publication access could not be checked. Reload and verify your authenticator.',
         );
     } finally {

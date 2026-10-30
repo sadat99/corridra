@@ -206,6 +206,28 @@ test('uninstalled module has an honest unavailable state', async ({ page }) => {
   await expect(page.getByRole('status')).toContainText('not available yet');
   await expect(page.getByRole('checkbox')).toHaveCount(0);
 });
+for (const [status, words] of [
+  [
+    503,
+    'Specification confirmation is not available right now. Reload the page. If it is still not available, it is switched off or not installed. The platform owner can check this on the owner page.',
+  ],
+  [403, 'Current publication access could not be checked. Reload and verify your authenticator.'],
+] as const)
+  test(`staff see why requirements cannot load after a ${status}`, async ({ page }) => {
+    await page.route('**/api/workspace/specification-confirmations**', (route) =>
+      route.fulfill({ status, contentType: 'application/json', body: '{}' }),
+    );
+    await page.goto(origin + '?staff');
+    await page.getByText('Request customer specification confirmation', { exact: true }).click();
+    await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
+    await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
+    await expect(page.getByRole('status')).toHaveText(words);
+    await expect(
+      page.getByRole('button', { name: 'Request confirmation', exact: true }),
+    ).toHaveCount(0);
+    // Loading again stays possible, so a reload or a later try recovers without starting over.
+    await expect(page.getByRole('button', { name: 'Load reviewed requirements' })).toBeEnabled();
+  });
 for (const staffWidth of [320, 390, 768, 1440])
   test(`staff issues an exact reviewed requirement question at ${staffWidth}px`, async ({
     page,
