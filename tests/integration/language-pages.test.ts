@@ -155,7 +155,9 @@ describe('the home page words', () => {
     // Every other public page is still written in English and says so.
     expect(shell).toContain('lang="en" dir="ltr"');
     const main = read('apps/web/components/translated-main.tsx');
-    expect(main).toContain('const meta = pages ? localeMeta[locale] : localeMeta.en;');
+    expect(main).toContain(
+      'const meta = localeMeta[language ?? (pages ? locale : defaultLocale)];',
+    );
   });
 
   it('are listed in the language review record as drafted, with the review not yet recorded', () => {
