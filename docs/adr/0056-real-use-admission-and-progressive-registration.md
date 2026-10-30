@@ -1,6 +1,6 @@
 # ADR-056: Real-use admission and progressive registration
 
-Status: owner direction recorded; implementation in progress, not installed or enabled. The account return-path preparation does not admit real requests.
+Status: implemented, installed and enabled in production on 22 October 2026 by approved run 39645923089 ([receipt](../v3/cleanup/2026-10-22-real-admission-enabled.json)). Scanning is bypassed and remains owner-deferred. Genuine production account, email activation and private-journey acceptance are not verified. The sections below are the historical decision record.
 
 ## Owner decision
 
