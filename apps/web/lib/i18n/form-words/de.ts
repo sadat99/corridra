@@ -269,6 +269,19 @@ export const words: FormCatalog = {
     'Die gespeicherte Anfrage kann nicht übergeben werden. Öffnen Sie sie auf demselben Gerät und im selben Browser.',
   'form.message.workspaceUnavailable':
     'Der Bereich für Ihre Anfrage ist nicht verfügbar. Öffnen Sie Ihr Konto und versuchen Sie es erneut.',
+  'form.message.identityUnavailable':
+    'Ihr Konto kann gerade nicht geprüft werden. Versuchen Sie es erneut.',
+  'form.message.signInNeeded': 'Melden Sie sich an, um fortzufahren.',
+  'form.message.verifyNeeded': 'Bestätigen Sie Ihre E-Mail-Adresse, um fortzufahren.',
+  'form.message.sessionInvalid': 'Ihre Anmeldung ist ungültig. Melden Sie sich erneut an.',
+  'form.message.accountsUnavailable':
+    'Kundenkonten sind gerade nicht verfügbar. Versuchen Sie es später erneut.',
+  'form.message.verifiedEmailMissing':
+    'Die bestätigte E-Mail-Adresse Ihres Kontos ist nicht verfügbar. Melden Sie sich erneut an.',
+  'form.message.accountContextInvalid':
+    'Die Kontoangaben sind ungültig. Laden Sie die Seite neu und versuchen Sie es erneut.',
+  'form.message.accountChanged':
+    'Ihr Konto hat sich geändert. Laden Sie die Seite neu, bevor Sie fortfahren.',
   'form.message.chooseObjective': 'Wählen Sie, was Sie tun möchten.',
   'form.message.enterMarket': 'Geben Sie Ihr Zielland oder Ihren Zielmarkt an.',
   'form.message.max120': 'Verwenden Sie höchstens 120 Zeichen.',
@@ -288,7 +301,7 @@ export const words: FormCatalog = {
   'form.message.name': 'Geben Sie Ihren Namen ein.',
   'form.message.company': 'Geben Sie Ihr Unternehmen an.',
   'form.message.email': 'Prüfen Sie die E-Mail-Adresse.',
-  'form.message.testEmail': 'Verwenden Sie eine Beispieladresse, die auf @example.invalid endet.',
+  'form.message.testEmail': 'Verwenden Sie eine Beispieladresse, die auf {domain} endet.',
   'form.message.quantity': 'Geben Sie die Menge als ganze Zahl ab 1 mit höchstens 12 Ziffern ein.',
   'form.message.unit': 'Geben Sie zur Menge eine Einheit an.',
   'form.message.budget':

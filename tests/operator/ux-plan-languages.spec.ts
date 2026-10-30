@@ -948,6 +948,25 @@ test.describe('messages in the chosen language', () => {
       await form.locator('#brief-email').fill('nope');
       await next.click();
       await expect(page.locator('#email-error')).toHaveText(words['form.message.email']);
+      // An address read from a message is an English part, so it keeps its order in right to left text: the @ is
+      // drawn left of "example" and "example" left of "invalid" in both directions.
+      await form.locator('#brief-email').fill('person@company.test');
+      await next.click();
+      await expect(page.locator('#email-error')).toHaveText(
+        fill(words['form.message.testEmail'], { domain: '@example.invalid' }),
+      );
+      const domain = page.locator('#email-error span[lang="en"][dir="ltr"]');
+      await expect(domain).toHaveText('@example.invalid');
+      const [at, example, invalid] = await domain.evaluate((span) =>
+        [0, 1, span.textContent!.length - 1].map((offset) => {
+          const range = document.createRange();
+          range.setStart(span.firstChild!, offset);
+          range.setEnd(span.firstChild!, offset + 1);
+          return range.getBoundingClientRect().left;
+        }),
+      );
+      expect(at).toBeLessThan(example!);
+      expect(example).toBeLessThan(invalid!);
       const consent = page.locator('#acknowledged-error');
       await expect(consent).toContainText(words['form.message.consentLead']);
       await expect(consent.locator('span[lang="en"][dir="ltr"]')).toHaveText(

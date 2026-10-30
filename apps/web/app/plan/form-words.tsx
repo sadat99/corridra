@@ -45,7 +45,9 @@ export function useFormWords() {
         ? createElement(Fragment, null, say(key), englishIsland(sentence))
         : `${say(key)} ${sentence}`;
     /** A message the form shows. English is shown as written; a translated form shows known messages translated,
-     * English-only sentences marked English, and anything unknown word for word after a translated line. */
+     * English-only sentences marked English, and anything unknown word for word after a translated line. The
+     * variable parts of a known message (a code, a count, an address) are data and are shown as written, marked
+     * English, so an address keeps its order inside right to left text. */
     const showMessage = (text: string): ReactNode => {
       if (!translated || !text) return text;
       const parts = readFormMessage(text);
@@ -57,7 +59,12 @@ export function useFormWords() {
           { key: index },
           index > 0 ? ' ' : null,
           'key' in part
-            ? fillNodes(say(part.key), part.values)
+            ? fillNodes(
+                say(part.key),
+                Object.fromEntries(
+                  Object.entries(part.values).map(([name, value]) => [name, english(value)]),
+                ),
+              )
             : createElement(
                 Fragment,
                 null,

@@ -269,6 +269,18 @@ export const words: FormCatalog = {
     'La demande enregistrée ne peut pas être transmise. Ouvrez-la sur le même appareil et le même navigateur.',
   'form.message.workspaceUnavailable':
     'L’espace de votre demande n’est pas disponible. Ouvrez votre compte et réessayez.',
+  'form.message.identityUnavailable':
+    'Votre compte ne peut pas être vérifié pour le moment. Réessayez.',
+  'form.message.signInNeeded': 'Connectez-vous pour continuer.',
+  'form.message.verifyNeeded': 'Confirmez votre adresse e-mail pour continuer.',
+  'form.message.sessionInvalid': 'Votre connexion n’est pas valide. Reconnectez-vous.',
+  'form.message.accountsUnavailable':
+    'Les comptes clients ne sont pas disponibles pour le moment. Réessayez plus tard.',
+  'form.message.verifiedEmailMissing':
+    'L’adresse e-mail confirmée de votre compte n’est pas disponible. Reconnectez-vous.',
+  'form.message.accountContextInvalid':
+    'Les informations du compte ne sont pas valides. Rechargez la page et réessayez.',
+  'form.message.accountChanged': 'Votre compte a changé. Rechargez la page avant de continuer.',
   'form.message.chooseObjective': 'Choisissez ce que vous souhaitez faire.',
   'form.message.enterMarket': 'Indiquez votre pays ou marché cible.',
   'form.message.max120': 'Utilisez au plus 120 caractères.',
@@ -288,7 +300,7 @@ export const words: FormCatalog = {
   'form.message.name': 'Saisissez votre nom.',
   'form.message.company': 'Indiquez votre entreprise.',
   'form.message.email': 'Vérifiez l’adresse e-mail.',
-  'form.message.testEmail': 'Utilisez une adresse d’exemple se terminant par @example.invalid.',
+  'form.message.testEmail': 'Utilisez une adresse d’exemple se terminant par {domain}.',
   'form.message.quantity':
     'Saisissez la quantité en nombre entier à partir de 1, de 12 chiffres au plus.',
   'form.message.unit': 'Indiquez une unité pour la quantité.',

@@ -58,6 +58,7 @@ const intakeRoute = { file: 'apps/web/app/api/intake/route.ts' };
 const deliveryHttp = { file: 'apps/web/lib/delivery-http.ts' };
 const pendingLib = { file: 'apps/web/lib/pending-request.ts' };
 const missionsService = { file: 'packages/missions/src/index.ts' };
+const customerSession = { file: 'packages/auth/src/customer-session.ts' };
 const messageSources: Partial<Record<FormKey, MessageSource>> = {
   ...Object.fromEntries(
     [
@@ -115,6 +116,18 @@ const messageSources: Partial<Record<FormKey, MessageSource>> = {
   'form.message.tooMany': missionsService,
   'form.message.handoffUnavailable': missionsService,
   'form.message.workspaceUnavailable': { file: 'packages/auth/src/customer-requests.ts' },
+  ...Object.fromEntries(
+    [
+      'identityUnavailable',
+      'signInNeeded',
+      'verifyNeeded',
+      'sessionInvalid',
+      'accountsUnavailable',
+      'verifiedEmailMissing',
+      'accountContextInvalid',
+      'accountChanged',
+    ].map((name) => [`form.message.${name}`, customerSession]),
+  ),
   ...Object.fromEntries(
     [
       'chooseObjective',
@@ -660,6 +673,13 @@ describe('the drafted form words', () => {
     for (const key of formKeys) expect(fr[key], key).not.toMatch(/(?<! )[?!:;]/);
   });
 
+  it('hold every address, domain and link as a slot, so it is shown as an English part and keeps its order right to left', () => {
+    const address = /@|:\/\/|\bwww\.|\b[\w-]+\.(?:invalid|test|example|com|org|net)\b/;
+    for (const [code, words] of Object.entries({ en: formEn, ...drafts }))
+      for (const key of formKeys)
+        expect(words[key as FormKey], `${code} ${key}`).not.toMatch(address);
+  });
+
   it('write counts inside Bangla sentences in Bengali digits, and only the amount hint and error name 0 and 9', () => {
     for (const key of formKeys)
       if (key !== 'form.budget.hint' && key !== 'form.message.amountFormat')
@@ -826,37 +846,88 @@ function amountMessages() {
     }
   return [...messages];
 }
-/** The literal messages of the server code on the request path only (not the mission lifecycle). */
+/** A template literal's text with each `${...}` part replaced by `part(expression)`. */
+const fromTemplate = (body: string, part: (expression: string) => string) =>
+  body.replace(/\$\{([^}]*)\}/g, (_, expression: string) => part(expression));
+/** The server files on the request path, each with the part of it the request path runs. */
+const serverSources = [
+  ['apps/web/app/api/intake/route.ts'],
+  ['apps/web/app/api/intake/receipt/route.ts'],
+  ['apps/web/app/api/intake/pending/route.ts'],
+  ['apps/web/app/api/intake/pending/claim/route.ts'],
+  ['apps/web/lib/pending-request.ts'],
+  ['apps/web/lib/delivery-http.ts'],
+  ['packages/missions/src/index.ts', '/** Server-only capability', '\n  queue('],
+  ['packages/auth/src/customer-requests.ts', 'async claimPending('],
+  // The claim runs its account check twice; every refusal of that check reaches the form.
+  ['packages/auth/src/customer-session.ts', 'protected async transaction<T>('],
+] as const;
+/**
+ * The literal messages of the server code on the request path only (not the mission lifecycle): quoted or written
+ * as a template literal, whose variable parts stand for any text.
+ */
 function serverMessages() {
-  const region = (path: string, from: string, to?: string) => {
-    const text = read(path);
+  const region = ([path, from, to]: readonly string[]) => {
+    const text = read(path!);
+    if (!from) return text;
     const start = text.indexOf(from);
     expect(start, `${path} ${from}`).toBeGreaterThanOrEqual(0);
     return text.slice(start, to ? text.indexOf(to, start + 1) : text.length);
   };
-  const sources = [
-    'apps/web/app/api/intake/route.ts',
-    'apps/web/app/api/intake/receipt/route.ts',
-    'apps/web/app/api/intake/pending/route.ts',
-    'apps/web/app/api/intake/pending/claim/route.ts',
-    'apps/web/lib/pending-request.ts',
-    'apps/web/lib/delivery-http.ts',
-  ].map(read);
-  sources.push(
-    region('packages/missions/src/index.ts', '/** Server-only capability', '\n  queue('),
-  );
-  sources.push(region('packages/auth/src/customer-requests.ts', 'async claimPending('));
   return [
     ...new Set(
-      sources.flatMap((text) =>
-        [
-          ...text.matchAll(
-            /DomainError\(\s*'([^']+)'|error:\s*'([^']+)'|[?:]\s*'([A-Z][a-z][^']+)'/g,
+      serverSources
+        .map(region)
+        .flatMap((text) =>
+          [
+            ...text.matchAll(
+              /(?:DomainError\(|error:)\s*(?:'([^']+)'|`([^`]+)`)|[?:]\s*(?:'([A-Z][a-z][^']+)'|`((?:[A-Z][a-z]|\$\{)[^`]*)`)/g,
+            ),
+          ].map(
+            ([, quoted, template, branch, branchTemplate]) =>
+              quoted ?? branch ?? fromTemplate(template ?? branchTemplate!, () => 'x'),
           ),
-        ].map((match) => match[1] ?? match[2] ?? match[3]),
-      ),
+        ),
     ),
   ];
+}
+/**
+ * Every message the request form writes itself: what it passes to `new Error`, `setMessage` or `setDraftNotice`,
+ * and what it puts in a field's problems (`next.field = [...]`). The whole bracketed argument is read, so a ternary
+ * branch counts. For each literal written there (a key inside `formEn[...]` is not one): its text outside any
+ * `${...}`, and the message it makes, with each `formEn['...']` part filled in with its English.
+ */
+function formMessages() {
+  const source = read('apps/web/app/plan/intake.tsx');
+  const written: { literal: string[]; message: string }[] = [];
+  const openers = /\b(?:new Error|setMessage|setDraftNotice)\(|\bnext(?:\.\w+|\[\w+\])\s*=\s*\[/g;
+  for (const opener of source.matchAll(openers)) {
+    let depth = 1;
+    for (let at = opener.index + opener[0].length; depth > 0; at += 1) {
+      const char = source[at]!;
+      if ('([{'.includes(char)) depth += 1;
+      else if (')]}'.includes(char)) depth -= 1;
+      else if (`'"\``.includes(char)) {
+        let end = at + 1;
+        while (source[end] !== char) end += source[end] === '\\' ? 2 : 1;
+        const body = source.slice(at + 1, end);
+        if (!source.slice(0, at).endsWith('formEn['))
+          written.push(
+            char === '`'
+              ? {
+                  literal: body.split(/\$\{[^}]*\}/),
+                  message: fromTemplate(body, (expression) => {
+                    const key = /^formEn\['([\w.]+)'\]$/.exec(expression)?.[1];
+                    return key && key in formEn ? formEn[key as FormKey] : `\${${expression}}`;
+                  }),
+                }
+              : { literal: [body], message: body },
+          );
+        at = end;
+      }
+    }
+  }
+  return written;
 }
 // Server messages that only answer requests the form never makes. A new server message must be mapped or listed.
 const notShownByTheForm: Record<string, string> = {
@@ -903,10 +974,60 @@ describe('the messages the form shows', () => {
     expect(unmapped).toEqual([]);
     for (const message of Object.keys(notShownByTheForm))
       expect(server, `${message} is listed but no longer sent`).toContain(message);
-    // The form's own messages come from the words, never from a literal written in the form.
-    expect(read('apps/web/app/plan/intake.tsx')).not.toMatch(
-      /(?:new Error|setMessage|setDraftNotice)\(\s*['"][^'"]/,
+    // Every refusal of the account check the claim runs is among them.
+    for (const message of [
+      'Customer identity is unavailable',
+      'Your account changed. Reload before continuing.',
+    ])
+      expect(server).toContain(message);
+  });
+
+  it('every message the form writes itself comes from its words, and any text written in the form stays English on purpose', () => {
+    const written = formMessages();
+    // The messages that add an English sentence to a translated one are found, in a ternary branch too.
+    expect(written.map(({ message }) => message)).toEqual(
+      expect.arrayContaining([
+        `${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`,
+        `Your request is saved for 24 hours. ${formEn['form.message.accountNotCreated']}`,
+        `${formEn['form.message.recorded']} No real customer mission has been accepted.`,
+      ]),
     );
+    for (const { literal, message } of written) {
+      for (const text of literal.map((part) => part.trim()).filter(Boolean))
+        expect(Object.keys(englishOnlyMessages), `"${text}" is written in the form`).toContain(
+          text,
+        );
+      if (message) expect(readFormMessage(message), message).not.toBeNull();
+    }
+  });
+
+  it('show the variable parts of a translated message as English parts: an address keeps its order in Arabic', async () => {
+    const { FormWordsProvider, useFormWords } = await load('app/plan/form-words');
+    const testEmail = 'Use a test address ending in @example.invalid';
+    function Shown({ text }: { text: string }) {
+      return useFormWords().showMessage(text);
+    }
+    const shown = (words: object | null, locale: string, text: string) =>
+      renderToStaticMarkup(
+        createElement(
+          FormWordsProvider,
+          { value: { locale, words } },
+          createElement(Shown, { text }),
+        ),
+      );
+    expect(shown(ar, 'ar', testEmail)).toBe(
+      fill(ar['form.message.testEmail'], {
+        domain: '<span lang="en" dir="ltr">@example.invalid</span>',
+      }),
+    );
+    expect(shown(de, 'de', 'CNY permits at most 2 decimal places. No rounding is performed.')).toBe(
+      fill(de['form.message.decimals'], {
+        code: '<span lang="en" dir="ltr">CNY</span>',
+        places: '<span lang="en" dir="ltr">2</span>',
+      }),
+    );
+    // In English the message is the text as written, with no element added.
+    expect(shown(null, 'en', testEmail)).toBe(testEmail);
   });
 
   it('read a variable message with its parts, and joined problems part by part', () => {

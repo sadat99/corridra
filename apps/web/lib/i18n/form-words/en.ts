@@ -261,6 +261,16 @@ export const formEn = {
   'form.message.handoffUnavailable': 'Request handoff is unavailable',
   'form.message.workspaceUnavailable': 'Request workspace is unavailable',
 
+  // Messages from the account check on the saved request claim (packages/auth/src/customer-session.ts).
+  'form.message.identityUnavailable': 'Customer identity is unavailable',
+  'form.message.signInNeeded': 'Sign in to continue',
+  'form.message.verifyNeeded': 'Verify your email to continue',
+  'form.message.sessionInvalid': 'Customer session is invalid',
+  'form.message.accountsUnavailable': 'Customer workspaces are unavailable',
+  'form.message.verifiedEmailMissing': 'Verified account email is unavailable',
+  'form.message.accountContextInvalid': 'Customer account context is invalid',
+  'form.message.accountChanged': 'Your account changed. Reload before continuing.',
+
   // Messages from the request schemas, including the schema library's own wording.
   'form.message.chooseObjective': 'Choose what you want to do',
   'form.message.enterMarket': 'Enter your target country or market',
@@ -280,7 +290,7 @@ export const formEn = {
   'form.message.name': 'Enter your name',
   'form.message.company': 'Enter your company',
   'form.message.email': 'Invalid email address',
-  'form.message.testEmail': 'Use a test address ending in @example.invalid',
+  'form.message.testEmail': 'Use a test address ending in {domain}',
   'form.message.quantity': 'Invalid string: must match pattern /^[1-9][0-9]{0,11}$/',
   'form.message.unit': 'Quantity needs a unit',
   'form.message.budget': 'Budget needs amount, original currency and quantity basis',

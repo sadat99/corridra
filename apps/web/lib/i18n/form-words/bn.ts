@@ -261,6 +261,18 @@ export const words: FormCatalog = {
     'সংরক্ষিত অনুরোধটি হস্তান্তর করা যাচ্ছে না। একই ডিভাইস ও একই ব্রাউজারে এটি খুলুন।',
   'form.message.workspaceUnavailable':
     'আপনার অনুরোধের জায়গাটি পাওয়া যাচ্ছে না। আপনার অ্যাকাউন্ট খুলে আবার চেষ্টা করুন।',
+  'form.message.identityUnavailable': 'এখন আপনার অ্যাকাউন্ট যাচাই করা যাচ্ছে না। আবার চেষ্টা করুন।',
+  'form.message.signInNeeded': 'এগিয়ে যেতে সাইন ইন করুন।',
+  'form.message.verifyNeeded': 'এগিয়ে যেতে আপনার ইমেইল যাচাই করুন।',
+  'form.message.sessionInvalid': 'আপনার সাইন ইন সেশনটি সঠিক নয়। আবার সাইন ইন করুন।',
+  'form.message.accountsUnavailable':
+    'গ্রাহক অ্যাকাউন্ট এখন পাওয়া যাচ্ছে না। পরে আবার চেষ্টা করুন।',
+  'form.message.verifiedEmailMissing':
+    'আপনার অ্যাকাউন্টের যাচাই করা ইমেইল পাওয়া যাচ্ছে না। আবার সাইন ইন করুন।',
+  'form.message.accountContextInvalid':
+    'অ্যাকাউন্টের তথ্য সঠিক নয়। পাতাটি নতুন করে লোড করে আবার চেষ্টা করুন।',
+  'form.message.accountChanged':
+    'আপনার অ্যাকাউন্ট বদলে গেছে। এগিয়ে যাওয়ার আগে পাতাটি নতুন করে লোড করুন।',
   'form.message.chooseObjective': 'আপনি কী করতে চান, তা বেছে নিন।',
   'form.message.enterMarket': 'আপনার লক্ষ্য দেশ বা বাজার লিখুন।',
   'form.message.max120': 'সর্বোচ্চ ১২০টি অক্ষর ব্যবহার করুন।',
@@ -279,7 +291,7 @@ export const words: FormCatalog = {
   'form.message.name': 'আপনার নাম লিখুন।',
   'form.message.company': 'আপনার প্রতিষ্ঠানের নাম লিখুন।',
   'form.message.email': 'ইমেইল ঠিকানাটি যাচাই করুন।',
-  'form.message.testEmail': '@example.invalid দিয়ে শেষ হওয়া একটি নমুনা ঠিকানা ব্যবহার করুন।',
+  'form.message.testEmail': '{domain} দিয়ে শেষ হওয়া একটি নমুনা ঠিকানা ব্যবহার করুন।',
   'form.message.quantity': 'পরিমাণ ১ বা তার বেশি একটি পূর্ণ সংখ্যায় লিখুন, সর্বোচ্চ ১২ অঙ্কে।',
   'form.message.unit': 'পরিমাণের সঙ্গে একটি একক দিন।',
   'form.message.budget': 'বাজেটের জন্য পরিমাণ, মূল মুদ্রা ও ভিত্তি দিন।',
