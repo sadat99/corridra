@@ -19,6 +19,6 @@
   "devDependencies": {
     "@types/yauzl": "3.4.0",
     "@types/fontkit": "2.0.9",
-    "@types/pdfkit": "0.17.6"
+    "@types/pdfkit": "0.17.7"
   }
 }
