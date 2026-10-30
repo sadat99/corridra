@@ -41,7 +41,7 @@ export default function Page() {
               : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
           </p>
           <p className="guide-hint">
-            Updated {specificationConfirmation || arrangements ? '29' : '25'} October 2026. Request
+            Updated {specificationConfirmation || arrangements ? '30' : '25'} October 2026. Request
             notice version: {real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1'}.
           </p>
         </div>
@@ -158,17 +158,20 @@ export default function Page() {
                   your confirmation, its time and a private account identifier). To record what you
                   asked for and support the work. This is your statement of requirements, not
                   approval of a purchase or payment. Basis: providing the service you asked for.
+                  Requirement confirmations cannot be changed or deleted once saved and are kept as
+                  part of the request’s history.
                 </li>
               )}
               {arrangements && (
                 <li>
-                  <strong>Quote arrangements, where installed</strong> (the parties and
+                  <strong>Quote arrangements, for quotes that include them</strong> (the parties and
                   responsibilities stated in the quote, its original terms, any supply price and
                   conditional commission). To explain the agreement you review and keep its history.
                   The current handling team can also keep restricted acquisition costs, markup and
                   relationship notes. Customers see only the terms disclosed to them. Basis:
                   providing the service you asked for. These records do not confirm a sale or
-                  payment.
+                  payment. Quote arrangements cannot be changed or deleted once saved and are kept
+                  as part of the request’s history.
                 </li>
               )}
               <li>
