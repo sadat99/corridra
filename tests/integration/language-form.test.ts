@@ -228,11 +228,13 @@ describe('the owner page', () => {
       kind: 'flag',
     });
     expect(form.line).toBe(
-      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text, and that rule holds only while Show draft languages (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. Before setting it, decide whether the hosting service may see which language’s words file a browser loads, and check the privacy notice sentence that the language choice “is not sent to us”. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text, and that rule holds only while Show draft languages (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
     );
-    // The privacy notice sentence the line asks the owner to check is the one the notice really has.
-    expect(read('apps/web/app/privacy/page.tsx')).toMatch(
-      /If you choose a language, your browser remembers the choice in local storage\.\s+It is\s+not sent to us/,
+    // What the line says the privacy notice says is what the notice shows while the same release is on.
+    const notice = read('apps/web/app/privacy/page.tsx');
+    expect(notice).toContain('const translatedForm = languagesWithForm().length > 0;');
+    expect(notice).toMatch(
+      /\{translatedForm \? \(\s+<li>\s+If you choose a language,[^<]+so our hosting provider’s\s+records\s+show\s+which\s+language’s\s+words\s+were\s+loaded/,
     );
     // The form line names the reviewed-languages row and the draft-languages row by the labels the owner sees.
     expect(
@@ -795,9 +797,10 @@ describe('the drafted form words load on demand', () => {
     const using = (pattern: RegExp) => files.filter((file) => pattern.test(read(file))).sort();
     expect(using(/form-words\/load'/)).toEqual(['apps/web/app/plan/form-main.tsx']);
     expect(using(/form-words\/(bn|zh|es|ar|fr|de)'/)).toEqual([]);
-    // The page reads the release; the owner page only describes it.
+    // The request page reads the release, the privacy notice says what it means, and the owner page describes it.
     expect(using(/import \{[^}]*\blanguagesWithForm\b/)).toEqual([
       'apps/web/app/plan/page.tsx',
+      'apps/web/app/privacy/page.tsx',
       'apps/web/lib/owner-switches.ts',
     ]);
     expect(using(/<FormMain\b/)).toEqual(['apps/web/app/plan/page.tsx']);
