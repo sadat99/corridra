@@ -21,7 +21,7 @@ export const words: FormCatalog = {
 
   'form.pending.title': 'Complete su solicitud.',
   'form.pending.sameDevice':
-    'Use el mismo dispositivo y el mismo navegador. La solicitud se envía a Corridra después de ese paso.',
+    'Use el mismo dispositivo y el mismo navegador para activar su cuenta e iniciar sesión. La solicitud se envía a Corridra solo después de eso.',
   'form.pending.open': 'Abrir su solicitud',
   'form.pending.activate': 'Activar su cuenta',
   'form.pending.signIn': 'Iniciar sesión y continuar',
@@ -81,7 +81,7 @@ export const words: FormCatalog = {
   'form.where.hint':
     'El país de la empresa y el mercado de destino no fijan el lugar de envío ni el de las reuniones.',
   'form.where.realOther':
-    'Díganos qué necesita. La disponibilidad y el alcance para esta dirección se acordarán tras la revisión.',
+    'Díganos qué necesita. La disponibilidad y el alcance para esta dirección deben acordarse tras la revisión.',
   'form.where.sampleOther':
     'No hay ninguna oferta activa anunciada para esta dirección. Aun así, puede describir una misión de ejemplo inventada.',
   'form.where.when': '¿Cuándo se necesita la actividad? (opcional)',

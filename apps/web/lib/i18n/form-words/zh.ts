@@ -19,7 +19,8 @@ export const words: FormCatalog = {
   'form.notice.englishParts': '有关隐私、同意和信息保存期限的语句保留英文。',
 
   'form.pending.title': '请完成您的需求。',
-  'form.pending.sameDevice': '请使用同一设备和同一浏览器。完成这一步后，需求会提交给 Corridra。',
+  'form.pending.sameDevice':
+    '请使用同一设备和同一浏览器激活账户并登录。只有在此之后，需求才会提交给 Corridra。',
   'form.pending.open': '打开您的需求',
   'form.pending.activate': '激活您的账户',
   'form.pending.signIn': '登录并继续',
