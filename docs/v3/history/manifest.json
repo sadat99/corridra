@@ -182,6 +182,14 @@
       "bytes": 12207,
       "sha256": "6020e0493d828b3e65414c6f3e342b828a00dd9f789a4582f936f6c7331d5f71",
       "meaning": "Exact active-index snapshot before the 30 October 2026 final records refresh, which recorded PR212, PR214 and PR215, the 30 October install runs and switch, and shortened the PR210 packet, 24 October settings and owner steps, UX update and squad lines; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "b12e244",
+      "archive": "docs/v3/history/ledger-before-pr216-records-2026-10-30.md",
+      "bytes": 12072,
+      "sha256": "6ff283d2571747a68954a07eba91ed6fec9b689c7f3d27c11d01b1631986dfa4",
+      "meaning": "Exact active-index snapshot before the 30 October 2026 PR216 records refresh, which recorded PR216 merged as b12e244, Install customer modules run 45 opening Pulse, the owner-only list and the next action, and shortened the merged, install runs, PR215, shipped and Vercel lines; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

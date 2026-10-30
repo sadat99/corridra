@@ -2,7 +2,7 @@
 
 **Document status: DONE.** Built and merged behind its switch, off by default; nothing installed or enabled by merging. See the [plan status register](../PLAN_STATUS.md).
 
-Status: built and dark, 24 October 2026. Switch `CORRIDRA_PULSE_ENABLED` (off by default) and a database control that starts closed. Decision record: [ADR-067](../adr/0067-notification-records-and-pulse.md). Owner steps and open decisions: [phase2-install.md](phase2-install.md).
+Status: built and dark, 24 October 2026. Switch `CORRIDRA_PULSE_ENABLED` (off by default) and a database control that starts closed. Decision record: [ADR-067](../adr/0067-notification-records-and-pulse.md). Owner steps and open decisions: [phase2-install.md](phase2-install.md). On 30 October 2026 the owner opened the database control (install run 45, `notifications_action=enable`); live state is in the [ledger](../V3_LEDGER.md).
 
 ## What exists
 

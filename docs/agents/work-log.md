@@ -1999,3 +1999,69 @@ Owner items recorded:
 - The live value of `CORRIDRA_LANGUAGES_PAGES`: UNKNOWN (the owner reports true).
 
 Next: the owner merges this release PR on his command; then he sets `CORRIDRA_LANGUAGES_FORM=true` with `CORRIDRA_LANGUAGES_PREVIEW` unset and redeploys; then an agent verifies the live form in all six languages. Meanwhile, main CI 698 on `9e77170`. PR: not opened when this entry was written. Tested head: `31701d7` plus the uncommitted records.
+
+## 30 October 2026: records after PR 216 and install run 45, and the product brief
+
+Request (owner, chat, 30 October 2026, relayed by the conductor): "Update the 100% correct documentations, then share 2 pagers product brief for our potential users to understand what is corridra, why how what where when etc, use cases". Why: PR 216 merged and the owner's install run 45 made several ledger, register and handoff sentences false. Branch `claude/vibrant-ramanujan-77xezv` at `b12e244`, equal to `origin/main`. Authority: brief stamp `auth-ca52f7caedd1`, unchanged at the start of the records pass; the new stamp below comes from this run's register and status edits.
+
+Evidence read by the scribe (GitHub REST API, 30 October):
+
+- PR 216 merged at 14:01:31Z as `b12e244` by `sadat99` (squash; `31701d7` is inside it). On `b12e244`: CI 700 (41068190640) and CodeQL 453 (41068190592) succeeded; Production deployment 7440198420 succeeded at 14:02:55Z.
+- On `9e77170`: CI 698 (41061730232) and CodeQL 451 succeeded (the earlier entry saw CI 698 running).
+- Install customer modules run 45 (41072883981): `workflow_dispatch` on `b12e244`, created 14:35:11Z, job `install` succeeded at 14:45:34Z; deployment 7440912831 to `customer-modules-install` at 14:35:13Z.
+- Open PRs: PR 211 only.
+
+Not readable here (the run log download answered 403). As the conductor read the run 45 log: `INSTALL_APPLY=yes`; `NOTIFICATIONS_ACTION=enable`; every other action unchanged; the reason says the owner set `CORRIDRA_PULSE_ENABLED=true`; the exact-revision step passed; `customer_notification_migrations` 1 applied before, 3 after; "Email address source readable: yes"; "Notifications enabled; changed=true"; other module counts unchanged. The Pulse switch is an owner report, not observed. Whether the live deployment carries it is UNKNOWN. The live value of `CORRIDRA_LANGUAGES_FORM` is UNKNOWN.
+
+Records changed:
+
+- `docs/V3_LEDGER.md` (12,189 bytes): state seen on `b12e244`, the PR 216 line, run 45, the Pulse sentence, the owner-reported Pulse switch, the owner-only list (opening Pulse removed as done; the unrecorded Pulse checks kept), the next action and the archive link. Shortened: the merged, install runs, PR 215, shipped and Vercel lines.
+- `docs/v3/history/ledger-before-pr216-records-2026-10-30.md`: the exact 12,072-byte ledger at `b12e244`, sha256 `6ff283d2571747a68954a07eba91ed6fec9b689c7f3d27c11d01b1631986dfa4`. It has entries in `docs/v3/history/manifest.json` and in `docs/documentation-map.json`.
+- `docs/product/corridra-product-brief.md` (new, CURRENT, DATED): the conductor's two-page brief, written out as markdown from its HTML with no added claims. It has a documentation-map entry and a register row.
+- `docs/PLAN_STATUS.md`:
+  - the header;
+  - the language switcher and Lane 11 rows (`CORRIDRA_LANGUAGES_FORM` off by default, live value UNKNOWN);
+  - the UX handoff row (Pulse opened by run 45);
+  - the Pulse review pack row (UNRESOLVED, both positions recorded);
+  - the product brief row;
+  - the "Done" paragraph (PR 216, run 45);
+  - open work item 1 (step 2 done by the PR 216 merge).
+- `docs/implementation/current-plan.md`: PR216 added to the work order.
+- `docs/product/language-review-record.md`: step 2 now says it was merged as PR 216 and is in effect.
+- Pulse live state, one dated sentence each: `docs/product/lane7b-pulse.md`, `docs/product/pulse-email-review-pack.md`, `docs/product/ux-update-handoff-2026-10-25.md` (also "Nothing here was switched on when it was written") and `docs/product/phase2-install.md` step 5.
+- `README.md` line 7: real admission (ADR-056, 22 October) and the real data and Network switch seen on 24 October replace "remain synthetic" and "network activation ... closed". Line 61 is untouched.
+- `docs/v3/phase-0/requirements.json` V3-06-013 `nextAction` only. It now gives the 24 October ledger record and the switch seen `true` in place of "not installed". Identity and text are unchanged (`verify` PASS).
+- This entry.
+
+Verification (working tree over `b12e244`):
+
+- `node scripts/v3-context.mjs verify` exit 0 (22 exact additional archives, 507 identities, ledger within 12 KiB).
+- `node scripts/authority.mjs check` exit 0 (77 governed documents).
+- `pnpm test:docs` through `node scripts/gate.mjs docs` 63/63, exit 0 (`work/docs-2026-10-30T16-01-42-057Z.log`).
+- `pnpm exec prettier --check` on the changed files exit 0.
+- No U+2014 in any changed file.
+
+Not run: no application test, build or live check.
+
+Preserved:
+
+- The scribe changed no application code, tests, ADRs or AGENTS.md.
+- Gates D01 to D06 and D08 stay closed.
+
+Decisions and risks:
+
+- ADR-074 line 56 still says step 2 "takes effect when that pull request is merged". ADR files belong to the architect, so the scribe left it: UNRESOLVED.
+- The Pulse review pack stays WAITING OWNER. The owner opened Pulse himself, but no answer to item 3, the replies mailbox or Resend retention is recorded.
+- The brief says "The site is in English", while the ledger records six languages reviewed for the shared words since 25 October and home page words behind a switch whose live value is UNKNOWN. That is the conductor's copy, transcribed as written.
+
+Owner items recorded:
+
+- `CORRIDRA_LANGUAGES_FORM` (ADR-074 step 4) and a redeploy (step 5).
+- The unrecorded Pulse checks.
+- The Pulse review pack status.
+- "Draft PRs only" after the 29 October scope: UNRESOLVED.
+- PR 211.
+- The Vercel connector.
+- The lawyer review.
+
+Next: the owner sets `CORRIDRA_LANGUAGES_FORM` and redeploys; then an agent verifies the live form in all six languages. This run's PR is a draft documentation PR and the owner gives merge commands. PR: not opened when this entry was written. Tested head: `b12e244` plus the uncommitted records.

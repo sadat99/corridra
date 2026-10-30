@@ -4,7 +4,7 @@ Cross-border market access with configurable commercial corridors, evidence-back
 
 **Start with the [developer handoff](docs/START_HERE.md) and [current plan](docs/implementation/current-plan.md).** Original V1 Parts 1–8 are the retained foundation. The revised five-part V2 programme was implemented and merged, followed by UX-01 through UX-05 and bounded UX-06/access repairs. Original V1 Parts 9–12 are historical requirements, not the next implementation sequence. Full UX10X functional coverage and real customer readiness are not established.
 
-Mission intake and operational records remain synthetic. Customer signup, verification and recovery are live; customer identity grants no workspace role. Production AI inference, network activation, outreach, payments and payouts remain closed. Preserve the [deferred controls](docs/implementation/deferred-controls.md), original records, MFA, RLS and exact monetary/evidence semantics.
+Real customer admission is enabled under ADR-056 (22 October 2026, scanning deferred), and Production runs with real data and the Network switch on (seen 24 October 2026); live state is in the [ledger](docs/V3_LEDGER.md). Customer signup, verification and recovery are live; customer identity grants no workspace role. Production AI inference, outreach, payments and payouts remain closed. Preserve the [deferred controls](docs/implementation/deferred-controls.md), original records, MFA, RLS and exact monetary/evidence semantics.
 
 ## Access
 

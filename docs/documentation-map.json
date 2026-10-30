@@ -224,6 +224,11 @@
       "use": "Pulse email review pack for the owner (after the privacy review fixes): the five email texts rendered, who is emailed, what is kept, what is not built, the privacy notice wording and the steps to open and undo Pulse"
     },
     {
+      "path": "docs/product/corridra-product-brief.md",
+      "classification": "Product brief (customer-facing, dated)",
+      "use": "Two-page product brief for potential users written at the owner's request of 30 October 2026: what Corridra is, why, who it is for, how it works, what you get back, six use cases, trust labels, where and when, pricing and commitments; customer copy grounded in the vision and positioning, not a claim of complete implementation; examples are not real companies"
+    },
+    {
       "path": "docs/product/pulse-privacy-review-2026-10-25.md",
       "classification": "UX programme/contract/packet",
       "use": "Pulse privacy review record of 25 October 2026 (engineering review by Claude on the owner's instruction, not legal advice): findings and decisions, conditions before opening, residual risks and the owner query for a data request"
@@ -1182,6 +1187,11 @@
       "path": "docs/v3/history/ledger-before-final-records-2026-10-30.md",
       "classification": "Immutable historical execution snapshot",
       "use": "Exact c76e155 active-ledger bytes before the 30 October 2026 final records refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-pr216-records-2026-10-30.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact b12e244 active-ledger bytes before the 30 October 2026 PR216 records refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
     },
     {
       "path": "docs/adr/0072-pinned-customer-specification-confirmation.md",
