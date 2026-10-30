@@ -913,6 +913,10 @@ test.describe('with the form released', () => {
     });
 
   test('at 390 every job fits the closed job select in every language', async ({ browser }) => {
+    // Every language is measured before the one check, so a run reports every cut label at once. The fonts differ
+    // between machines (CI's Arabic font is about a fifth wider than a typical local one), so each language's
+    // widths are printed into the run log as well.
+    const cutsByLanguage: Partial<Record<Locale, { job: string; over: number }[]>> = {};
     for (const code of localeCodes) {
       const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
       const page = await context.newPage();
@@ -921,10 +925,11 @@ test.describe('with the form released', () => {
       await page.evaluate(() => document.fonts.ready);
       const jobs = page.locator('form.intake-form select').first();
       await expect(jobs.locator('option[value="sourcing"]')).toHaveCount(1);
-      const cut = await jobs.evaluate((select: HTMLSelectElement) => {
+      const { box, labels } = await jobs.evaluate((select: HTMLSelectElement) => {
         // The closed select keeps room for its arrow beside the text, so its text box is narrower than its content
-        // box. A copy holding one job at its natural width is as wide as the select must be to show that job whole;
-        // it sits beside the select, so the same rules, fonts and direction apply.
+        // box. A copy holding one label at its natural width is as wide as the select must be to show that label
+        // whole; it sits beside the select, so the same rules, fonts and direction apply. Holding no words, the copy
+        // is only that room, its padding and its border, so the rest of the select is the text box.
         const width = select.getBoundingClientRect().width;
         const copy = select.cloneNode(false) as HTMLSelectElement;
         Object.assign(copy.style, {
@@ -936,21 +941,31 @@ test.describe('with the form released', () => {
         });
         const shown = copy.appendChild(document.createElement('option'));
         select.after(copy);
-        const measured = Array.from(select.options)
-          .filter((option) => option.value)
-          .map((option) => {
-            shown.text = option.text;
-            return {
-              job: option.text,
-              over: Math.ceil(copy.getBoundingClientRect().width - width),
-            };
-          });
+        const frame = copy.getBoundingClientRect().width;
+        const labels = Array.from(select.options).map((option) => {
+          shown.text = option.text;
+          const whole = copy.getBoundingClientRect().width;
+          return { job: option.text, text: whole - frame, over: Math.ceil(whole - width) };
+        });
         copy.remove();
-        return measured.filter((job) => job.over > 0);
+        return { box: width - frame, labels };
       });
-      expect(cut, code).toEqual([]);
+      console.log(
+        JSON.stringify({
+          language: code,
+          box: +box.toFixed(1),
+          labels: labels.map(({ job, text }) => ({
+            job,
+            text: +text.toFixed(1),
+            share: +(text / box).toFixed(3),
+          })),
+        }),
+      );
+      const cut = labels.filter((label) => label.over > 0).map(({ job, over }) => ({ job, over }));
+      if (cut.length) cutsByLanguage[code] = cut;
       await context.close();
     }
+    expect(cutsByLanguage).toEqual({});
   });
 
   test('ar: right to left, the journey connectors clear the step dots and the main button sits at the inline end', async ({
