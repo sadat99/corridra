@@ -1,6 +1,6 @@
 # Lane 11: French and German drafts, and the pseudo-language test
 
-**Document status: PARTLY BUILT.** Shared words and home-page drafts are built. Request-form drafts are the open phase authorised on 29 October 2026. See the [plan status register](../PLAN_STATUS.md).
+**Document status: PARTLY BUILT.** Shared words and home-page drafts are built. Request-form words for `/plan`, including its messages, are built behind `CORRIDRA_LANGUAGES_FORM`, which is unset (off); their review is not recorded. Signed-in screens are a later phase. See the [plan status register](../PLAN_STATUS.md).
 
 Status: built and dark, 25 October 2026. Nothing is offered to the public: French (`fr`) and German (`de`) join Bangla, Chinese, Spanish and Arabic as labelled drafts that show only where the owner turns on `CORRIDRA_LANGUAGES_PREVIEW`. A language is offered for real only after a native reviewer is recorded in [language-review-record.md](language-review-record.md) and the owner adds its code to `CORRIDRA_LANGUAGES_REVIEWED`. No switch is added, because the existing release rule already holds every draft back.
 

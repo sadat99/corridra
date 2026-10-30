@@ -1189,6 +1189,11 @@
       "use": "Four commercial arrangement modes on service quotes; private cost boundaries and no financial activation."
     },
     {
+      "path": "docs/adr/0074-per-page-language-release.md",
+      "classification": "Architecture decision",
+      "use": "Proposed amendment of ADR-066: each translated page has its own release; /plan uses CORRIDRA_LANGUAGES_FORM, off by default; owner steps before the switch is set"
+    },
+    {
       "path": "docs/implementation/field-workflow-acceptance-2026-10-28.md",
       "classification": "Current dated acceptance record",
       "use": "Field directive audit matrix, bounded verification and remaining limits; live release state belongs to V3_LEDGER.md."

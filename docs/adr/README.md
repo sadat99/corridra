@@ -93,3 +93,5 @@ ADR071: [The Road](0071-road-mapping.md), a request in six steps drawn from the 
 ADR072: [Pinned customer specification confirmation](0072-pinned-customer-specification-confirmation.md), explicit customer confirmation through existing reviewed delivery questions, with immutable requirement ID/version/digest, independent protected installation and a default-off switch.
 
 ADR073: [Commercial arrangements on service quotes](0073-commercial-arrangements-on-service-quotes.md), bundled supply, fixed fees, conditional commission and hybrid terms, private procurement costs and exact public-term acceptance; no principal-sale or payment activation.
+
+ADR074: [Each translated page has its own release](0074-per-page-language-release.md), proposed only, amends ADR-066 and is accepted when the owner accepts the request-form PR. `/plan` gets its own release, `CORRIDRA_LANGUAGES_FORM`, unset (off) by default and independent of the home-page `CORRIDRA_LANGUAGES_PAGES`; each language's form words are fetched after load. Before the switch is set the owner decides the new static-host signal and has the privacy notice reviewed against it.
