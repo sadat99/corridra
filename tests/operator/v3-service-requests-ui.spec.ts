@@ -1228,7 +1228,17 @@ for (const width of [320, 390, 768, 1440])
     ] as const) {
       mode = current;
       await page.goto(origin + '/?view=detail');
+      // KI16: use the actual customer frame for this four-width acceptance check.
+      await page.evaluate(() => {
+        const main = document.querySelector('main')!;
+        main.classList.add('ux-customer');
+        main.removeAttribute('style');
+        const fixture = document.getElementById('fixture')!;
+        fixture.replaceWith(...Array.from(fixture.childNodes));
+      });
       const region = page.getByRole('region', { name: 'Commercial arrangement' });
+      await expect(region).toHaveAttribute('lang', 'en');
+      await expect(region).toHaveAttribute('dir', 'ltr');
       await expect(region).toContainText('Synthetic Actual Seller');
       await expect(region).toContainText('No payment is taken here');
       await expect(region.getByText('Acquisition cost')).toHaveCount(0);
@@ -1242,12 +1252,18 @@ for (const width of [320, 390, 768, 1440])
         await expect(region).toContainText('Synthetic contract and collection evidence');
       }
       if (mode === 'HYBRID') await expect(region).toContainText('Do not charge it twice');
+      const termsTarget = await region
+        .getByText('Original stated terms', { exact: true })
+        .boundingBox();
+      expect(termsTarget?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect(termsTarget?.width ?? 0).toBeGreaterThanOrEqual(44);
+
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
       expect(await axe(page)).toEqual([]);
     }
-    await mkdir('work/commercial-arrangements/screenshots', { recursive: true });
+    await mkdir('docs/design-system/evidence/ux-repair-2026-10-29/after', { recursive: true });
     await page.evaluate(() => document.fonts.ready);
     expect(
       await page.evaluate(() =>
@@ -1257,7 +1273,7 @@ for (const width of [320, 390, 768, 1440])
       ),
     ).toBe(true);
     await page.screenshot({
-      path: `work/commercial-arrangements/screenshots/customer-${width}.png`,
+      path: `docs/design-system/evidence/ux-repair-2026-10-29/after/arrangement-${width}.png`,
       fullPage: true,
     });
   });
@@ -1371,4 +1387,37 @@ test('the staff panel explains a missing right or an off module and shows no cus
     await expect(page.getByRole('alert').first()).toContainText(text);
     await expect(page.getByText('Synthetic paid-service workspace')).toHaveCount(0);
   }
+});
+
+test('uninstalled quote arrangements leave the existing itemised quote form unchanged', async ({
+  page,
+}) => {
+  await serveStaff(page, (url) => {
+    const scope = url.searchParams.get('scope');
+    if (scope === 'catalogue') return { json: { services: [staffEntry] } };
+    if (scope === 'detail')
+      return { json: staffDetail({ commercialArrangementsAvailable: false }) };
+    return {
+      json: {
+        requests: [
+          {
+            ...summary({ status: 'requested' }),
+            workspaceName: 'Synthetic paid-service workspace',
+            claimed: false,
+          },
+        ],
+      },
+    };
+  });
+  await page.goto(origin + '/?view=staff');
+  await page
+    .getByRole('button', { name: 'Open Interpreter day for Synthetic paid-service workspace' })
+    .click();
+  const form = page.getByRole('form', { name: 'Prepare a quote' });
+  await expect(form).toBeVisible();
+  await expect(form.getByText('Commercial arrangement (optional)', { exact: true })).toHaveCount(0);
+  await expect(form.getByText(/Commercial arrangement terms are unavailable until/)).toHaveCount(0);
+  await expect(
+    form.getByRole('button', { name: 'Send the quote to the customer', exact: true }),
+  ).toBeVisible();
 });

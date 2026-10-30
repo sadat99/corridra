@@ -617,7 +617,7 @@
       ],
       "decisions": ["docs/adr/0045-private-customer-mission-drafts.md"],
       "pullRequests": [210],
-      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct. The 29 October repair acceptance records optional-module closure, language boundaries and remaining owner decisions; no production acceptance is claimed."
     },
     {
       "id": "V3-05-011",
@@ -654,7 +654,7 @@
       ],
       "decisions": ["docs/adr/0026-commercial-mission-execution.md"],
       "pullRequests": [210],
-      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct."
+      "limits": "Controlled local acceptance only. Full frozen checks and release are recorded in V3_LEDGER.md and the field-workflow acceptance record; provider and commercial readiness remain distinct. The 29 October repair acceptance records optional-module closure, language boundaries and remaining owner decisions; no production acceptance is claimed."
     },
     {
       "id": "V3-06-012",

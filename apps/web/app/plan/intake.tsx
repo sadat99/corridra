@@ -1057,7 +1057,12 @@ function IntakeForm({
                       maxLength={1000}
                       value={draft.notes}
                       onChange={(e) => change('notes', e.target.value)}
-                      aria-describedby="request-context-hint"
+                      aria-invalid={!!errors.notes?.length}
+                      aria-describedby={
+                        errors.notes?.length
+                          ? 'request-context-hint notes-error'
+                          : 'request-context-hint'
+                      }
                     />
                     {error('notes')}
                   </label>

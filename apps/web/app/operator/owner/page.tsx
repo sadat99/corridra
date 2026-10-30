@@ -16,7 +16,7 @@ import {
   ownerPageEnabled,
 } from '../../../lib/owner-access';
 import { gapSignal, ownerGaps } from '../../../lib/owner-gaps';
-import { describeSwitches } from '../../../lib/owner-switches';
+import { describeSwitches, installOnlyModules } from '../../../lib/owner-switches';
 import { waitingOnTeam } from '../../../lib/owner-waiting';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 
@@ -131,6 +131,22 @@ export default async function Page({
               </table>
             </div>
           </section>
+        ))}
+      </section>
+      <section aria-labelledby="owner-installed-records" className="owner-section">
+        <h2 id="owner-installed-records">Optional installed records</h2>
+        {installOnlyModules.map((module) => (
+          <article key={module.name}>
+            <h3>{module.label}</h3>
+            <p>{module.line}</p>
+            <p>
+              <StatusBadge tone="neutral">{module.state}</StatusBadge>
+            </p>
+            <p>
+              Owner install choice: <code className="owner-name">{module.action}</code>
+            </p>
+            <p>Preview with apply=no first.</p>
+          </article>
         ))}
       </section>
       <section aria-labelledby="owner-waiting" className="owner-section">

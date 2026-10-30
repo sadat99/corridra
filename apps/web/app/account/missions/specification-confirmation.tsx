@@ -140,7 +140,12 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
     }
   }
   return (
-    <section aria-label="Confirm the commercial requirements" className="detail-card">
+    <section
+      aria-label="Confirm the commercial requirements"
+      className="detail-card"
+      lang="en"
+      dir="ltr"
+    >
       <h2>Confirm the commercial requirements</h2>
       <p>
         Check the product, specification and obligations. Confirmation records the requirements for
@@ -175,7 +180,7 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
                 If anything needs changing, reply to the requirement question below. Corridra can
                 issue a revised request.
               </p>
-              <label>
+              <label className="choice">
                 <input
                   type="checkbox"
                   checked={checked[review.requestId] ?? false}

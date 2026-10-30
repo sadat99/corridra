@@ -47,6 +47,10 @@ const text = async (env: Record<string, string | undefined>) => {
     'CORRIDRA_MISSION_EMAIL_ENABLED',
     'CORRIDRA_PULSE_ENABLED',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
+    'CORRIDRA_DELIVERY_ENABLED',
+    'CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED',
+    'CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED',
+    'CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED',
     'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
@@ -72,6 +76,10 @@ afterEach(() => {
     'CORRIDRA_MISSION_EMAIL_ENABLED',
     'CORRIDRA_PULSE_ENABLED',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
+    'CORRIDRA_DELIVERY_ENABLED',
+    'CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED',
+    'CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED',
+    'CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED',
     'CORRIDRA_CUSTOMER_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED',
     'CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED',
@@ -205,5 +213,80 @@ describe('the privacy notice', () => {
       { DATA_ENVIRONMENT: 'synthetic' },
     ])
       expect(await text(env)).not.toMatch(/—|–| - /);
+  });
+});
+
+describe('notice for the optional confirmation and quote records', () => {
+  const enabled = {
+    ...real,
+    CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+    CORRIDRA_DELIVERY_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED: 'true',
+  };
+  const arrangements = 'Quote arrangements, for quotes that include them';
+  const confirmationsKept =
+    'Requirement confirmations cannot be changed or deleted once saved and are kept as part of the request’s history.';
+  const arrangementsKept =
+    'Quote arrangements cannot be changed or deleted once saved and are kept as part of the request’s history.';
+  const updated = 'Updated 30 October 2026. Request notice version: real-intake-2026-10-21-v1.';
+  it('names the stored confirmations, parties, terms and private staff costs when available', async () => {
+    const page = await text(enabled);
+    expect(page).toContain('Requirement confirmations');
+    expect(page).toContain('private account identifier');
+    expect(page).toContain(arrangements);
+    expect(page).toContain('restricted acquisition costs, markup and relationship notes');
+    expect(page).toContain('Customers see only the terms disclosed to them.');
+    // Both record types reject any change or deletion in the database, and the notice says so.
+    expect(page).toContain(confirmationsKept);
+    expect(page).toContain(arrangementsKept);
+    // Customer words only: nothing a customer cannot check, such as whether a module is installed.
+    expect(page).not.toContain('where installed');
+    expect(page).toContain(updated);
+    expect(page).not.toMatch(/\u2014|\u2013| - /);
+  });
+  it('leaves each new paragraph out independently while its application gate is closed', async () => {
+    const noConfirmation = await text({
+      ...enabled,
+      CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED: 'false',
+    });
+    expect(noConfirmation).not.toContain('Requirement confirmations');
+    expect(noConfirmation).toContain(arrangements);
+    expect(noConfirmation).not.toContain(confirmationsKept);
+    expect(noConfirmation).toContain(arrangementsKept);
+    expect(noConfirmation).toContain(updated);
+    const noArrangements = await text({
+      ...enabled,
+      CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED: 'false',
+    });
+    expect(noArrangements).toContain('Requirement confirmations');
+    expect(noArrangements).not.toContain(arrangements);
+    expect(noArrangements).toContain(confirmationsKept);
+    expect(noArrangements).not.toContain(arrangementsKept);
+    expect(noArrangements).toContain(updated);
+    const neither = await text({
+      ...enabled,
+      CORRIDRA_CUSTOMER_SPECIFICATION_CONFIRMATION_ENABLED: 'false',
+      CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED: 'false',
+    });
+    expect(neither).not.toContain(confirmationsKept);
+    expect(neither).not.toContain(arrangementsKept);
+    expect(neither).toContain(
+      'Updated 25 October 2026. Request notice version: real-intake-2026-10-21-v1.',
+    );
+  });
+  it('does not announce these real record types in sample mode or without workspace access', async () => {
+    for (const env of [
+      { ...enabled, DATA_ENVIRONMENT: 'synthetic' },
+      { ...enabled, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'false' },
+    ]) {
+      const page = await text(env);
+      expect(page).not.toContain('Requirement confirmations');
+      expect(page).not.toContain(arrangements);
+      expect(page).not.toContain(confirmationsKept);
+      expect(page).not.toContain(arrangementsKept);
+      expect(page).toContain('Updated 25 October 2026.');
+    }
   });
 });

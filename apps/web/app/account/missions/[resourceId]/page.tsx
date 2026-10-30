@@ -1,5 +1,5 @@
 import { customerDecisionsEnabled } from '@corridra/auth/customer-decisions';
-import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
+import { specificationConfirmationForPage } from '../../../../lib/specification-availability';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
         subject={session.data.user.id}
         issuer={issuer}
         decisionsEnabled={customerDecisionsEnabled()}
-        specificationConfirmationsEnabled={customerSpecificationConfirmationEnabled()}
+        specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
       />
     </CustomerShell>

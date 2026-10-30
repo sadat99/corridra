@@ -87,7 +87,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
         });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
     });
-    await page.goto(origin + '/signin');
+    await page.goto(origin + '/signin?returnTo=/plan');
     const form = page.getByRole('form', { name: 'Account access' });
     const email = form.getByLabel('Email', { exact: true });
 
@@ -167,7 +167,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     );
     await form.getByRole('button', { name: 'Sign in', exact: true }).click();
     await done;
-    await expect(page).not.toHaveURL(origin + '/signin');
+    await expect(page).toHaveURL(origin + '/plan');
 
     // The password route is still there.
     await page.goto(origin + '/signin');

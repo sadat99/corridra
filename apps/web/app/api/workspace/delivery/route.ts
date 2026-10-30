@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { intakeTemplate } from '@corridra/delivery/import';
 import { foundations } from '../../../../lib/foundations';
+import { specificationConfirmationAvailable } from '../../../../lib/specification-availability';
 import {
   boundedBody,
   deliveryEnabled,
@@ -27,21 +28,28 @@ async function handle(request: Request) {
       purpose: 'synthetic_validation',
     };
     if (request.method === 'GET') {
-      if (query.get('action') === 'experience')
+      if (query.get('action') === 'experience') {
+        const experience = await s.deliveryExperience.workspace(
+          ctx,
+          z
+            .uuid()
+            .optional()
+            .parse(query.get('programme') ?? undefined),
+          z
+            .uuid()
+            .optional()
+            .parse(query.get('mission') ?? undefined),
+        );
         return Response.json(
-          await s.deliveryExperience.workspace(
-            ctx,
-            z
-              .uuid()
-              .optional()
-              .parse(query.get('programme') ?? undefined),
-            z
-              .uuid()
-              .optional()
-              .parse(query.get('mission') ?? undefined),
-          ),
+          {
+            ...experience,
+            specificationConfirmationsAvailable: await specificationConfirmationAvailable(() =>
+              s.specificationConfirmations.installed(),
+            ),
+          },
           { headers: deliveryHeaders },
         );
+      }
       if (query.get('action') === 'options')
         return Response.json(await s.delivery.options(ctx, z.uuid().parse(query.get('mission'))), {
           headers: deliveryHeaders,
