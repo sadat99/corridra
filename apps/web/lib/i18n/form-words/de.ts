@@ -235,4 +235,74 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'Ihre Anfrage konnte nicht geöffnet werden.',
   'form.message.untranslated': 'Diese Meldung wird auf Englisch angezeigt.',
   'form.message.consentLead': 'Lesen Sie den Hinweis und setzen Sie das Häkchen, um fortzufahren.',
+  'form.message.intakeUnavailable':
+    'Anfragen können gerade nicht gesendet werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+  'form.message.activationNeeded':
+    'Schließen Sie die Aktivierung Ihres Kontos ab, um Ihre Anfrage zu senden.',
+  'form.message.checkFields': 'Prüfen Sie die markierten Felder.',
+  'form.message.changed':
+    'Diese Anfrage wurde nach dem Senden geändert. Beginnen Sie eine neue Anfrage.',
+  'form.message.intakeNotSaved':
+    'Die Anfrage konnte nicht gespeichert werden. Ihre Angaben bleiben erhalten.',
+  'form.message.receiptExpired':
+    'Dieser Beleg ist nicht verfügbar oder abgelaufen. Prüfen Sie den Code und versuchen Sie es erneut.',
+  'form.message.receiptUnavailable':
+    'Anfragen sind gerade nicht erreichbar. Versuchen Sie es später erneut.',
+  'form.message.savedExpired':
+    'Ihre gespeicherte Anfrage ist abgelaufen. Beginnen Sie eine neue Anfrage.',
+  'form.message.realUnavailable':
+    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+  'form.message.requestUnavailable':
+    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+  'form.message.realIntakeUnavailable':
+    'Anfragen können gerade nicht angenommen werden. Ihre Angaben bleiben erhalten. Versuchen Sie es später erneut.',
+  'form.message.accessDenied':
+    'Kein Zugriff, oder der Link ist nicht verfügbar. Melden Sie sich mit dem richtigen Konto an.',
+  'form.message.checkValues': 'Prüfen Sie die gesendeten Angaben.',
+  'form.message.conflict':
+    'Die Anfrage passt nicht zum aktuellen Stand. Laden Sie die Seite neu und prüfen Sie sie erneut.',
+  'form.message.notCompleted':
+    'Die Anfrage konnte nicht abgeschlossen werden. Versuchen Sie es erneut.',
+  'form.message.tooMany':
+    'Zu viele Versuche. Versuchen Sie es in einer Stunde erneut. Ihre Angaben bleiben erhalten.',
+  'form.message.handoffUnavailable':
+    'Die gespeicherte Anfrage kann nicht übergeben werden. Öffnen Sie sie auf demselben Gerät und im selben Browser.',
+  'form.message.workspaceUnavailable':
+    'Der Bereich für Ihre Anfrage ist nicht verfügbar. Öffnen Sie Ihr Konto und versuchen Sie es erneut.',
+  'form.message.chooseObjective': 'Wählen Sie, was Sie tun möchten.',
+  'form.message.enterMarket': 'Geben Sie Ihr Zielland oder Ihren Zielmarkt an.',
+  'form.message.max120': 'Verwenden Sie höchstens 120 Zeichen.',
+  'form.message.max160': 'Verwenden Sie höchstens 160 Zeichen.',
+  'form.message.startDate': 'Geben Sie das Anfangsdatum Ihres Besuchs ein.',
+  'form.message.endDate': 'Geben Sie das Enddatum Ihres Besuchs ein.',
+  'form.message.endAfterStart': 'Das Enddatum darf nicht vor dem Anfangsdatum liegen.',
+  'form.message.datesInPerson': 'Geben Sie Besuchsdaten nur an, wenn Sie persönlich vor Ort sind.',
+  'form.message.tooShort': 'Geben Sie mindestens {minimum} Zeichen ein.',
+  'form.message.tooLong': 'Verwenden Sie höchstens {maximum} Zeichen.',
+  'form.message.timezone': 'Geben Sie eine gültige Zeitzone an.',
+  'form.message.offerShort':
+    'Beschreiben Sie Ihr Angebot oder Ihren Bedarf mit mindestens 10 Zeichen.',
+  'form.message.website': 'Geben Sie eine gültige Webadresse mit http oder https ein.',
+  'form.message.websiteLong': 'Verwenden Sie eine kürzere Webadresse.',
+  'form.message.outcome': 'Wählen Sie mindestens ein Ergebnis.',
+  'form.message.name': 'Geben Sie Ihren Namen ein.',
+  'form.message.company': 'Geben Sie Ihr Unternehmen an.',
+  'form.message.email': 'Prüfen Sie die E-Mail-Adresse.',
+  'form.message.testEmail': 'Verwenden Sie eine Beispieladresse, die auf @example.invalid endet.',
+  'form.message.quantity': 'Geben Sie die Menge als ganze Zahl ab 1 mit höchstens 12 Ziffern ein.',
+  'form.message.unit': 'Geben Sie zur Menge eine Einheit an.',
+  'form.message.budget':
+    'Geben Sie zum Budget den Betrag, die Originalwährung und die Grundlage an.',
+  'form.message.currency': 'Wählen Sie die Originalwährung.',
+  'form.message.amountFormat':
+    'Geben Sie den Originalbetrag ohne Minuszeichen ein, mit einem Punkt als Dezimalzeichen.',
+  'form.message.decimals':
+    '{code} erlaubt höchstens {places} Nachkommastellen. Es wird nicht gerundet.',
+  'form.message.amountRange': 'Der Betrag ist größer als der unterstützte Bereich.',
+  'form.message.offline':
+    'Keine Verbindung. Ihre Angaben bleiben erhalten. Versuchen Sie es erneut, sobald Sie online sind.',
+  'form.message.offlineFirefox':
+    'Keine Verbindung. Ihre Angaben bleiben erhalten. Versuchen Sie es erneut, sobald Sie online sind.',
+  'form.message.offlineSafari':
+    'Keine Verbindung. Ihre Angaben bleiben erhalten. Versuchen Sie es erneut, sobald Sie online sind.',
 };

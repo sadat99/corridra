@@ -232,4 +232,67 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'No se pudo abrir su solicitud.',
   'form.message.untranslated': 'Este mensaje se muestra en inglés.',
   'form.message.consentLead': 'Lea el aviso y marque la casilla para continuar.',
+  'form.message.intakeUnavailable':
+    'Ahora no se pueden enviar solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.activationNeeded': 'Termine de activar su cuenta para enviar su solicitud.',
+  'form.message.checkFields': 'Revise los campos marcados.',
+  'form.message.changed': 'Esta solicitud cambió después del envío. Empiece una solicitud nueva.',
+  'form.message.intakeNotSaved': 'No se pudo guardar la solicitud. Sus datos siguen aquí.',
+  'form.message.receiptExpired':
+    'Este recibo no está disponible o ha caducado. Revise el código e inténtelo de nuevo.',
+  'form.message.receiptUnavailable':
+    'Las solicitudes no están disponibles ahora. Inténtelo más tarde.',
+  'form.message.savedExpired': 'Su solicitud guardada ha caducado. Empiece una solicitud nueva.',
+  'form.message.realUnavailable':
+    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.requestUnavailable':
+    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.realIntakeUnavailable':
+    'Ahora no se pueden recibir solicitudes. Sus datos siguen aquí. Inténtelo más tarde.',
+  'form.message.accessDenied':
+    'Acceso denegado, o el enlace no está disponible. Inicie sesión con la cuenta correcta.',
+  'form.message.checkValues': 'Revise los datos enviados.',
+  'form.message.conflict':
+    'La solicitud no coincide con el estado actual. Actualice la página y revísela de nuevo.',
+  'form.message.notCompleted': 'No se pudo completar la solicitud. Inténtelo de nuevo.',
+  'form.message.tooMany':
+    'Demasiados intentos. Inténtelo de nuevo dentro de una hora. Sus datos siguen aquí.',
+  'form.message.handoffUnavailable':
+    'No se puede entregar la solicitud guardada. Ábrala en el mismo dispositivo y el mismo navegador.',
+  'form.message.workspaceUnavailable':
+    'El espacio de su solicitud no está disponible. Abra su cuenta e inténtelo de nuevo.',
+  'form.message.chooseObjective': 'Elija qué desea hacer.',
+  'form.message.enterMarket': 'Indique su país o mercado de destino.',
+  'form.message.max120': 'Use como máximo 120 caracteres.',
+  'form.message.max160': 'Use como máximo 160 caracteres.',
+  'form.message.startDate': 'Indique la fecha de inicio de su visita.',
+  'form.message.endDate': 'Indique la fecha de fin de su visita.',
+  'form.message.endAfterStart': 'La fecha de fin no puede ser anterior a la de inicio.',
+  'form.message.datesInPerson': 'Indique fechas de visita solo si estará presente en persona.',
+  'form.message.tooShort': 'Escriba al menos {minimum} caracteres.',
+  'form.message.tooLong': 'Use como máximo {maximum} caracteres.',
+  'form.message.timezone': 'Indique una zona horaria válida.',
+  'form.message.offerShort': 'Describa su oferta o necesidad con al menos 10 caracteres.',
+  'form.message.website': 'Escriba una dirección web válida con http o https.',
+  'form.message.websiteLong': 'Use una dirección web más corta.',
+  'form.message.outcome': 'Elija al menos un resultado.',
+  'form.message.name': 'Escriba su nombre.',
+  'form.message.company': 'Indique su empresa.',
+  'form.message.email': 'Revise la dirección de correo.',
+  'form.message.testEmail': 'Use una dirección de ejemplo que termine en @example.invalid.',
+  'form.message.quantity':
+    'Escriba la cantidad como un número entero desde 1, con 12 cifras como máximo.',
+  'form.message.unit': 'Indique una unidad para la cantidad.',
+  'form.message.budget': 'Para el presupuesto, indique el importe, la moneda original y la base.',
+  'form.message.currency': 'Elija la moneda original.',
+  'form.message.amountFormat':
+    'Escriba el importe original, positivo o cero, con un punto como separador decimal.',
+  'form.message.decimals': '{code} admite como máximo {places} decimales. No se redondea.',
+  'form.message.amountRange': 'El importe supera el rango admitido.',
+  'form.message.offline':
+    'No hay conexión. Sus datos siguen aquí. Inténtelo de nuevo cuando tenga conexión.',
+  'form.message.offlineFirefox':
+    'No hay conexión. Sus datos siguen aquí. Inténtelo de nuevo cuando tenga conexión.',
+  'form.message.offlineSafari':
+    'No hay conexión. Sus datos siguen aquí. Inténtelo de nuevo cuando tenga conexión.',
 };

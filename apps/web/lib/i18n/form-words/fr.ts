@@ -237,4 +237,72 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'Votre demande n’a pas pu être ouverte.',
   'form.message.untranslated': 'Ce message s’affiche en anglais.',
   'form.message.consentLead': 'Lisez l’avis et cochez la case pour continuer.',
+  'form.message.intakeUnavailable':
+    'Les demandes ne peuvent pas être envoyées pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+  'form.message.activationNeeded':
+    'Terminez l’activation de votre compte pour envoyer votre demande.',
+  'form.message.checkFields': 'Vérifiez les champs signalés.',
+  'form.message.changed': 'Cette demande a changé après l’envoi. Commencez une nouvelle demande.',
+  'form.message.intakeNotSaved':
+    'La demande n’a pas pu être enregistrée. Vos saisies sont conservées.',
+  'form.message.receiptExpired':
+    'Ce reçu est indisponible ou expiré. Vérifiez le code et réessayez.',
+  'form.message.receiptUnavailable':
+    'Les demandes ne sont pas disponibles pour le moment. Réessayez plus tard.',
+  'form.message.savedExpired':
+    'Votre demande enregistrée a expiré. Commencez une nouvelle demande.',
+  'form.message.realUnavailable':
+    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+  'form.message.requestUnavailable':
+    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+  'form.message.realIntakeUnavailable':
+    'Les demandes ne peuvent pas être reçues pour le moment. Vos saisies sont conservées. Réessayez plus tard.',
+  'form.message.accessDenied':
+    'Accès refusé, ou le lien n’est pas disponible. Connectez-vous avec le bon compte.',
+  'form.message.checkValues': 'Vérifiez les informations envoyées.',
+  'form.message.conflict':
+    'La demande ne correspond pas à l’état actuel. Rechargez la page et vérifiez-la à nouveau.',
+  'form.message.notCompleted': 'La demande n’a pas pu aboutir. Réessayez.',
+  'form.message.tooMany':
+    'Trop de tentatives. Réessayez dans une heure. Vos saisies sont conservées.',
+  'form.message.handoffUnavailable':
+    'La demande enregistrée ne peut pas être transmise. Ouvrez-la sur le même appareil et le même navigateur.',
+  'form.message.workspaceUnavailable':
+    'L’espace de votre demande n’est pas disponible. Ouvrez votre compte et réessayez.',
+  'form.message.chooseObjective': 'Choisissez ce que vous souhaitez faire.',
+  'form.message.enterMarket': 'Indiquez votre pays ou marché cible.',
+  'form.message.max120': 'Utilisez au plus 120 caractères.',
+  'form.message.max160': 'Utilisez au plus 160 caractères.',
+  'form.message.startDate': 'Saisissez la date de début de votre visite.',
+  'form.message.endDate': 'Saisissez la date de fin de votre visite.',
+  'form.message.endAfterStart': 'La date de fin ne peut pas précéder la date de début.',
+  'form.message.datesInPerson':
+    'Indiquez des dates de visite seulement si vous êtes présent en personne.',
+  'form.message.tooShort': 'Saisissez au moins {minimum} caractères.',
+  'form.message.tooLong': 'Utilisez au plus {maximum} caractères.',
+  'form.message.timezone': 'Indiquez un fuseau horaire valide.',
+  'form.message.offerShort': 'Décrivez votre offre ou votre besoin en au moins 10 caractères.',
+  'form.message.website': 'Saisissez une adresse web valide en http ou https.',
+  'form.message.websiteLong': 'Utilisez une adresse web plus courte.',
+  'form.message.outcome': 'Choisissez au moins un résultat.',
+  'form.message.name': 'Saisissez votre nom.',
+  'form.message.company': 'Indiquez votre entreprise.',
+  'form.message.email': 'Vérifiez l’adresse e-mail.',
+  'form.message.testEmail': 'Utilisez une adresse d’exemple se terminant par @example.invalid.',
+  'form.message.quantity':
+    'Saisissez la quantité en nombre entier à partir de 1, de 12 chiffres au plus.',
+  'form.message.unit': 'Indiquez une unité pour la quantité.',
+  'form.message.budget': 'Pour le budget, indiquez le montant, la devise d’origine et la base.',
+  'form.message.currency': 'Choisissez la devise d’origine.',
+  'form.message.amountFormat':
+    'Saisissez le montant d’origine, positif ou nul, avec un point comme séparateur décimal.',
+  'form.message.decimals':
+    '{code} accepte au plus {places} décimales. Aucun arrondi n’est effectué.',
+  'form.message.amountRange': 'Le montant dépasse la plage prise en charge.',
+  'form.message.offline':
+    'Pas de connexion. Vos saisies sont conservées. Réessayez une fois connecté.',
+  'form.message.offlineFirefox':
+    'Pas de connexion. Vos saisies sont conservées. Réessayez une fois connecté.',
+  'form.message.offlineSafari':
+    'Pas de connexion. Vos saisies sont conservées. Réessayez une fois connecté.',
 };

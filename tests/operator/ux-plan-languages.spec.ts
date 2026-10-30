@@ -73,7 +73,7 @@ test.beforeAll(async () => {
         }
       }
       const Page=base?BasePage:NowPage,Intake=base?BaseIntake:NowIntake;
-      const submit=async()=>{window.privateSubmitted=(window.privateSubmitted||0)+1};
+      const submit=async(id,brief)=>{window.privateSubmitted=(window.privateSubmitted||0)+1;window.privateBody=JSON.stringify({id,brief})};
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={offered} pageLocales={languagesWithPages({CORRIDRA_LANGUAGES_PAGES:q.get('pages')||''})}>
           <div className="site-shell">
@@ -842,5 +842,211 @@ test.describe('with the form released', () => {
       .poll(() => german.evaluate(() => (window as unknown as { spoken?: string }).spoken))
       .toBe('de');
     for (const context of contexts) await context.close();
+  });
+});
+
+/** Fills every step with valid answers (a buyer search, Bangladesh to China) up to the send button. */
+async function complete(page: Page, mode: 'sample' | 'real' = 'sample') {
+  const form = page.locator('form.intake-form');
+  const next = form.locator('.guide-actions .primary-link');
+  const step = async () => {
+    const before = await form.locator('h2').textContent();
+    await next.click();
+    await expect(form.locator('h2')).not.toHaveText(before ?? '');
+  };
+  await form.locator('select').first().selectOption('buyers');
+  await step();
+  await form.locator('select').nth(0).selectOption('BD');
+  await form.locator('select').nth(1).selectOption('CN');
+  await step();
+  await form.locator('textarea').first().fill('Hotel towels for hospitality distributors.');
+  await step();
+  await form.locator('input[type="checkbox"]').first().check();
+  await step();
+  await form.locator('#brief-name').fill('Sample Person');
+  await form.locator('#brief-company').fill('Sample Company');
+  await form
+    .locator('#brief-email')
+    .fill(mode === 'real' ? 'person@company.test' : 'person@example.invalid');
+  await form.locator('label.choice input[type="checkbox"]').check();
+  if (mode === 'real') await form.locator('input[type="password"]').fill('a long sample password');
+  return next;
+}
+
+/** Answers POST /api/intake with each reply in turn, keeping every body sent. */
+async function replyInTurn(page: Page, replies: { status: number; json: object }[]) {
+  const bodies: string[] = [];
+  await page.route('**/api/intake', (route) => {
+    bodies.push(route.request().postData() ?? '');
+    return route.fulfill(replies[Math.min(bodies.length, replies.length) - 1]);
+  });
+  return bodies;
+}
+
+const fixedKey = () => {
+  crypto.randomUUID = () => '00000000-0000-4000-8000-000000000002';
+};
+
+test.describe('messages in the chosen language', () => {
+  for (const code of ['de', 'ar'] as const)
+    test(`${code}: field errors, the focused summary and server replies are translated; unknown and consent messages stay English and say so`, async ({
+      page,
+    }) => {
+      const words = drafts[code];
+      await openTranslated(page, code, 'form=true');
+      const form = page.locator('form.intake-form');
+      const next = form.locator('.guide-actions .primary-link');
+      const heading = form.locator('h2');
+      const step = async () => {
+        const before = await heading.textContent();
+        await next.click();
+        await expect(heading).not.toHaveText(before ?? '');
+      };
+      await next.click();
+      await expect(page.locator('.ux-error-summary')).toBeFocused();
+      await expect(page.locator('#objective-error')).toHaveText(
+        words['form.message.chooseObjective'],
+      );
+      await expect(page.locator('#job-error')).toHaveText(words['form.message.chooseJob']);
+      await form.locator('select').first().selectOption('machinery_procurement');
+      await step();
+      await next.click();
+      await expect(page.locator('#companyCountry-error')).toHaveText(
+        words['form.message.chooseCountry'],
+      );
+      await form.locator('select').nth(0).selectOption('DE');
+      await form.locator('select').nth(1).selectOption('US');
+      await form.locator('input[name="attendance"]').first().check();
+      await form.locator('#brief-startDate').fill('2026-12-03');
+      await form.locator('#brief-endDate').fill('2026-12-01');
+      await form.locator('#brief-timezone').fill('Mars/Base');
+      await next.click();
+      await expect(page.locator('#endDate-error')).toHaveText(words['form.message.endAfterStart']);
+      await expect(page.locator('#timezone-error')).toHaveText(words['form.message.timezone']);
+      await form.locator('#brief-endDate').fill('2026-12-05');
+      await form.locator('#brief-timezone').fill('UTC');
+      await step();
+      // A schema message, and the amount reader's message with its code and places.
+      await form.locator('textarea').first().fill('short');
+      await form.locator('details summary').click();
+      await form.locator('#brief-budgetAmount').fill('12.345');
+      await form.locator('details select').selectOption('CNY');
+      await form.locator('#brief-budgetBasis').fill('Total equipment budget');
+      await next.click();
+      await expect(page.locator('#offer-error')).toHaveText(words['form.message.offerShort']);
+      await expect(page.locator('#requirements-error')).toHaveText(
+        fill(words['form.message.decimals'], { code: 'CNY', places: '2' }),
+      );
+      await form.locator('textarea').first().fill('Packaging machines for a towel factory line.');
+      await form.locator('#brief-budgetAmount').fill('12.30');
+      await step();
+      await form.locator('input[type="checkbox"]').first().check();
+      await step();
+      // The schema library's own words, and the consent error led by the translated instruction.
+      await form.locator('#brief-name').fill('Sample Person');
+      await form.locator('#brief-company').fill('Sample Company');
+      await form.locator('#brief-email').fill('nope');
+      await next.click();
+      await expect(page.locator('#email-error')).toHaveText(words['form.message.email']);
+      const consent = page.locator('#acknowledged-error');
+      await expect(consent).toContainText(words['form.message.consentLead']);
+      await expect(consent.locator('span[lang="en"][dir="ltr"]')).toHaveText(
+        'Read and acknowledge the test intake notice',
+      );
+      await form.locator('#brief-email').fill('person@example.invalid');
+      await form.locator('label.choice input[type="checkbox"]').check();
+      // Server replies: one it knows, then one it does not.
+      await replyInTurn(page, [
+        { status: 429, json: { error: 'Too many requests. Try again in an hour.' } },
+        { status: 500, json: { error: 'Synthetic transport interruption' } },
+      ]);
+      const status = page.locator('.guide-status');
+      await next.click();
+      await expect(status).toHaveText(words['form.message.tooMany']);
+      await next.click();
+      await expect(status).toContainText(words['form.message.untranslated']);
+      await expect(status.locator('span[lang="en"][dir="ltr"]')).toHaveText(
+        'Synthetic transport interruption',
+      );
+    });
+
+  test('de: a failed submit says so in German, and the retry with the same key succeeds', async ({
+    page,
+  }) => {
+    await page.addInitScript(fixedKey);
+    await openTranslated(page, 'de', 'form=true');
+    const bodies = await replyInTurn(page, [
+      { status: 500, json: { error: 'Intake could not be saved. Your input is still here.' } },
+      { status: 201, json: { receipt: 'CRDR-FIXTURE-RECEIPT-0001' } },
+    ]);
+    const send = await complete(page);
+    await send.click();
+    await expect(page.locator('.guide-status')).toHaveText(de['form.message.intakeNotSaved']);
+    await expect(page.locator('#brief-name')).toHaveValue('Sample Person');
+    await send.click();
+    await expect(page.locator('#plan-receipt-title')).toHaveText(de['form.receipt.title']);
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]).toBe(bodies[0]);
+    expect(JSON.parse(bodies[0]).key).toBe('00000000-0000-4000-8000-000000000002');
+  });
+
+  test('with no connection the form says so in the chosen language, and English keeps the browser words', async ({
+    browser,
+  }) => {
+    for (const code of ['en', 'de'] as const) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      if (code === 'en') await open(page, 'en', 'form=true');
+      else await openTranslated(page, code, 'form=true');
+      await page.route('**/api/intake', (route) => route.abort('internetdisconnected'));
+      await (await complete(page)).click();
+      await expect(page.locator('.guide-status')).toHaveText(
+        code === 'en' ? formEn['form.message.offline'] : de['form.message.offline'],
+      );
+      await context.close();
+    }
+  });
+});
+
+test.describe('the request sent is the same in every language', () => {
+  for (const code of ['de', 'ar'] as const)
+    test(`${code}: the request body equals the PR 214 form's for the same answers`, async ({
+      browser,
+    }) => {
+      const sent = async (query: string, translated: boolean) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await page.addInitScript(fixedKey);
+        if (translated) await openTranslated(page, code, query);
+        else await open(page, code, query);
+        const bodies = await replyInTurn(page, [
+          { status: 201, json: { receipt: 'CRDR-FIXTURE-RECEIPT-0001' } },
+        ]);
+        await walk(page, 'sample');
+        await context.close();
+        expect(bodies).toHaveLength(1);
+        return bodies[0];
+      };
+      const before = await sent('view=base', false);
+      expect(await sent('form=true', true)).toBe(before);
+    });
+
+  test('the signed-in form sends the same request with German or Arabic chosen and every language released', async ({
+    browser,
+  }) => {
+    const sent = async (code: Locale) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.addInitScript(fixedKey);
+      await open(page, code, 'mode=private&form=true');
+      await walk(page, 'private');
+      const body = await page.evaluate(() => (window as { privateBody?: string }).privateBody);
+      await context.close();
+      return body;
+    };
+    const english = await sent('en');
+    expect(english).toContain('"market":"United States"');
+    expect(await sent('de')).toBe(english);
+    expect(await sent('ar')).toBe(english);
   });
 });

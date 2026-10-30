@@ -21,7 +21,16 @@ import { words as es } from '../../apps/web/lib/i18n/form-words/es';
 import { words as fr } from '../../apps/web/lib/i18n/form-words/fr';
 import { words as zh } from '../../apps/web/lib/i18n/form-words/zh';
 import { missionCatalogue } from '../../packages/domain/src/commercial-missions';
-import { objectiveOptions, outcomeOptions } from '../../packages/domain/src/missions';
+import { intakeExperience } from '../../packages/domain/src/experience';
+import { originalAmountToMinor } from '../../packages/domain/src/locale';
+import {
+  briefSchema,
+  intakeSteps,
+  objectiveOptions,
+  outcomeOptions,
+  realBriefSchema,
+  realIntakeSteps,
+} from '../../packages/domain/src/missions';
 
 // The request form in the chosen language (Lane 11): /plan follows the chosen language only for the languages the
 // owner names in CORRIDRA_LANGUAGES_FORM, after the form words of each language are reviewed and recorded. It is
@@ -40,6 +49,111 @@ const others = localeCodes.filter((code) => code !== defaultLocale);
 const env = (values: Record<string, string>) => values as NodeJS.ProcessEnv;
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
 const formKeys = Object.keys(formEn) as FormKey[];
+
+// Where each message the form can show comes from. 'form': the form sets it by key. A file: the server handler that
+// sends it. 'schema' and 'amount': produced by parsing crafted input below. 'browser': the browser's own words when
+// there is no connection (Chromium's are proved in ux-plan-languages.spec.ts).
+type MessageSource = 'form' | 'schema' | 'amount' | 'browser' | { file: string };
+const intakeRoute = { file: 'apps/web/app/api/intake/route.ts' };
+const deliveryHttp = { file: 'apps/web/lib/delivery-http.ts' };
+const pendingLib = { file: 'apps/web/lib/pending-request.ts' };
+const missionsService = { file: 'packages/missions/src/index.ts' };
+const messageSources: Partial<Record<FormKey, MessageSource>> = {
+  ...Object.fromEntries(
+    [
+      'claimFailed',
+      'claimUnreadable',
+      'navigationMissing',
+      'draftLostReal',
+      'draftLostSample',
+      'draftResumed',
+      'draftNotResumed',
+      'accountUnchecked',
+      'pendingUnchecked',
+      'paused',
+      'opening',
+      'accountFailed',
+      'draftUnsavedReal',
+      'draftUnsavedSample',
+      'chooseJob',
+      'chooseCountry',
+      'chooseMarket',
+      'checkAmount',
+      'pausedSubmit',
+      'accountLoading',
+      'emailMismatch',
+      'passwordShort',
+      'notSaved',
+      'accountNotCreated',
+      'duplicate',
+      'recorded',
+      'receiptUnsaved',
+      'unableToSave',
+      'copied',
+      'copyFailed',
+      'unableToCheck',
+      'openFailed',
+      'untranslated',
+      'consentLead',
+    ].map((name) => [`form.message.${name}`, 'form']),
+  ),
+  'form.message.intakeUnavailable': intakeRoute,
+  'form.message.activationNeeded': intakeRoute,
+  'form.message.checkFields': intakeRoute,
+  'form.message.changed': intakeRoute,
+  'form.message.intakeNotSaved': intakeRoute,
+  'form.message.receiptExpired': { file: 'apps/web/app/api/intake/receipt/route.ts' },
+  'form.message.receiptUnavailable': { file: 'apps/web/app/api/intake/receipt/route.ts' },
+  'form.message.savedExpired': { file: 'apps/web/app/api/intake/pending/claim/route.ts' },
+  'form.message.realUnavailable': pendingLib,
+  'form.message.requestUnavailable': pendingLib,
+  'form.message.realIntakeUnavailable': missionsService,
+  'form.message.accessDenied': deliveryHttp,
+  'form.message.checkValues': deliveryHttp,
+  'form.message.conflict': deliveryHttp,
+  'form.message.notCompleted': deliveryHttp,
+  'form.message.tooMany': missionsService,
+  'form.message.handoffUnavailable': missionsService,
+  'form.message.workspaceUnavailable': { file: 'packages/auth/src/customer-requests.ts' },
+  ...Object.fromEntries(
+    [
+      'chooseObjective',
+      'enterMarket',
+      'max120',
+      'max160',
+      'startDate',
+      'endDate',
+      'endAfterStart',
+      'datesInPerson',
+      'tooShort',
+      'tooLong',
+      'timezone',
+      'offerShort',
+      'website',
+      'websiteLong',
+      'outcome',
+      'name',
+      'company',
+      'email',
+      'testEmail',
+      'quantity',
+      'unit',
+      'budget',
+    ].map((name) => [`form.message.${name}`, 'schema']),
+  ),
+  ...Object.fromEntries(
+    ['currency', 'amountFormat', 'decimals', 'amountRange'].map((name) => [
+      `form.message.${name}`,
+      'amount',
+    ]),
+  ),
+  ...Object.fromEntries(
+    ['offline', 'offlineFirefox', 'offlineSafari'].map((name) => [
+      `form.message.${name}`,
+      'browser',
+    ]),
+  ),
+};
 const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
 
 describe('the form switch', () => {
@@ -231,7 +345,9 @@ describe('the English form words', () => {
       .map(read)
       .join('\n');
     for (const key of formKeys) {
-      if (key.startsWith('form.job.')) continue;
+      // Messages from the schemas, the amount reader, the server and the browser are found by their English text,
+      // not by key; the message source table accounts for each of them.
+      if (key.startsWith('form.job.') || (messageSources[key] ?? 'form') !== 'form') continue;
       expect(sources, key).toContain(`'${key}'`);
     }
     // Job words are reached through the job key, so every catalogue job has words and no other job does.
@@ -451,7 +567,8 @@ describe('the drafted form words', () => {
         const english = formEn[key];
         const words = drafts[code][key];
         if (english.includes('Corridra')) expect(words, `${code} ${key}`).toContain('Corridra');
-        if (/\brequests?\b|\bintake\b/i.test(english))
+        // "Too many requests" means attempts, and says so (UI spec, 429 row).
+        if (/\brequests?\b|\bintake\b/i.test(english) && key !== 'form.message.tooMany')
           expect(words.toLowerCase(), `${code} ${key}`).toContain(requestWord[code]);
         if (/\boperator\b/i.test(english))
           expect(words, `${code} ${key}`).toContain(teamWord[code]);
@@ -505,8 +622,8 @@ describe('the drafted form words', () => {
 
   it('address the reader formally in German, French and Spanish', () => {
     const informal = {
-      de: /\b(du|dich|dir|dein\w*)\b/i,
-      fr: /\b(tu|toi|ton|ta|tes)\b/i,
+      de: /(?<![\p{L}])(du|dich|dir|dein\p{L}*)(?![\p{L}])/iu,
+      fr: /(?<![\p{L}])(tu|toi|ton|ta|tes)(?![\p{L}])/iu,
       es: /(?<![\p{L}])(tú|tu|tus|puedes|quieres|tienes)(?![\p{L}])/iu,
     };
     for (const [code, pattern] of Object.entries(informal))
@@ -543,9 +660,12 @@ describe('the drafted form words', () => {
     for (const key of formKeys) expect(fr[key], key).not.toMatch(/(?<! )[?!:;]/);
   });
 
-  it('write counts inside Bangla sentences in Bengali digits, and only the amount hint names 0 and 9', () => {
+  it('write counts inside Bangla sentences in Bengali digits, and only the amount hint and error name 0 and 9', () => {
     for (const key of formKeys)
-      if (key !== 'form.budget.hint') expect(bn[key], key).not.toMatch(/[0-9]/);
+      if (key !== 'form.budget.hint' && key !== 'form.message.amountFormat')
+        expect(bn[key], key).not.toMatch(/[0-9]/);
+    expect(bn['form.message.amountFormat']).toContain('0 থেকে 9 অঙ্ক ব্যবহার করুন।');
+    expect(ar['form.message.amountFormat']).toContain('استخدم الأرقام من 0 إلى 9.');
     expect(bn['form.contact.passwordHint']).toContain('১৪');
   });
 });
@@ -596,5 +716,211 @@ describe('the drafted form words load on demand', () => {
       '<main id="main" lang="en" dir="ltr" tabindex="-1" class="ux-public ux-intake-page">',
     );
     expect(html).toContain(`<h1>${formEn['form.head.title']}</h1>`);
+  });
+});
+
+// Every message that can reach the form, gathered from where it is written or produced.
+const exactly = (pattern: string) =>
+  new RegExp(`^${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\{\w+\\\}/g, '.+?')}$`);
+function schemaMessages() {
+  const good = {
+    objective: 'Source suppliers',
+    market: 'Germany',
+    attendance: 'No',
+    startDate: '',
+    endDate: '',
+    timezone: 'UTC',
+    offer: 'Packaging machines',
+    website: '',
+    outcomes: ['Supplier visits'],
+    notes: '',
+    name: 'Sample',
+    company: 'Sample Co',
+    email: 'a@example.invalid',
+    acknowledged: true,
+  };
+  const bad: Record<string, unknown>[] = [
+    { objective: '' },
+    { market: '' },
+    { market: 'x'.repeat(121) },
+    { attendance: 'Yes' },
+    { attendance: 'Yes', startDate: '2026-12-03', endDate: '2026-12-01' },
+    { startDate: '2026-12-01' },
+    { timezone: '' },
+    { timezone: 'Mars/Base' },
+    { timezone: 'x'.repeat(81) },
+    { offer: 'short' },
+    { offer: 'x'.repeat(2001) },
+    { website: 'notaurl' },
+    { website: 'ftp://x.example' },
+    { website: `https://${'x'.repeat(2000)}.example` },
+    { outcomes: [] },
+    { notes: 'x'.repeat(1001) },
+    { name: 'a' },
+    { name: 'x'.repeat(121) },
+    { company: 'a' },
+    { company: 'x'.repeat(161) },
+    { email: 'nope' },
+    { email: 'a@company.test' },
+    { acknowledged: false },
+  ];
+  const messages = new Set<string>();
+  for (const change of bad)
+    for (const schema of [briefSchema, realBriefSchema, ...intakeSteps, ...realIntakeSteps]) {
+      const result = schema.safeParse({ ...good, ...change });
+      if (!result.success) for (const issue of result.error.issues) messages.add(issue.message);
+    }
+  // The experience the form builds in step 3, with each requirement it can send set wrong.
+  const experience = {
+    schemaVersion: 1,
+    companyCountry: 'BD',
+    marketCode: 'CN',
+    job: 'sourcing',
+    requirements: {
+      objective: 'Source products or components',
+      role: 'IMPORTER',
+      product: 'Packaging',
+    },
+  };
+  const requirements: Record<string, unknown>[] = [
+    { product: 'ab' },
+    { product: 'x'.repeat(1001) },
+    { specifications: 'ab' },
+    { quantity: '0' },
+    { quantity: '12' },
+    { technicalConstraints: 'ab' },
+    { budgetBasis: 'ab' },
+    { budgetMinor: '100' },
+    { currency: 'CNY' },
+    { travelDates: 'ab' },
+    { decisionCriteria: ['ab'] },
+    { machinery: { application: 'ab' } },
+  ];
+  for (const change of requirements) {
+    const result = intakeExperience.safeParse({
+      ...experience,
+      requirements: { ...experience.requirements, ...change },
+    });
+    if (!result.success) for (const issue of result.error.issues) messages.add(issue.message);
+  }
+  for (const change of [{ organiser: 'ab' }, { participants: 'ab' }]) {
+    const result = intakeExperience.safeParse({ ...experience, job: 'delegations', ...change });
+    if (!result.success) for (const issue of result.error.issues) messages.add(issue.message);
+  }
+  return [...messages];
+}
+function amountMessages() {
+  const messages = new Set<string>();
+  for (const [amount, code] of [
+    ['1', ''],
+    ['1,5', 'CNY'],
+    ['-1', 'CNY'],
+    ['12.345', 'CNY'],
+    ['1.2', 'JPY'],
+    ['1'.repeat(19), 'CNY'],
+  ])
+    try {
+      originalAmountToMinor(amount, code);
+    } catch (error) {
+      messages.add((error as Error).message);
+    }
+  return [...messages];
+}
+/** The literal messages of the server code on the request path only (not the mission lifecycle). */
+function serverMessages() {
+  const region = (path: string, from: string, to?: string) => {
+    const text = read(path);
+    const start = text.indexOf(from);
+    expect(start, `${path} ${from}`).toBeGreaterThanOrEqual(0);
+    return text.slice(start, to ? text.indexOf(to, start + 1) : text.length);
+  };
+  const sources = [
+    'apps/web/app/api/intake/route.ts',
+    'apps/web/app/api/intake/receipt/route.ts',
+    'apps/web/app/api/intake/pending/route.ts',
+    'apps/web/app/api/intake/pending/claim/route.ts',
+    'apps/web/lib/pending-request.ts',
+    'apps/web/lib/delivery-http.ts',
+  ].map(read);
+  sources.push(
+    region('packages/missions/src/index.ts', '/** Server-only capability', '\n  queue('),
+  );
+  sources.push(region('packages/auth/src/customer-requests.ts', 'async claimPending('));
+  return [
+    ...new Set(
+      sources.flatMap((text) =>
+        [
+          ...text.matchAll(
+            /DomainError\(\s*'([^']+)'|error:\s*'([^']+)'|[?:]\s*'([A-Z][a-z][^']+)'/g,
+          ),
+        ].map((match) => match[1] ?? match[2] ?? match[3]),
+      ),
+    ),
+  ];
+}
+// Server messages that only answer requests the form never makes. A new server message must be mapped or listed.
+const notShownByTheForm: Record<string, string> = {
+  'Request origin is not allowed': 'answers only a request sent from another site',
+  'JSON required': 'the form always sends JSON',
+  'Brief required': 'the form always sends a request',
+  'Brief is too large': 'every field of the form is far below the size limit',
+  'Request too large': 'the receipt code field holds at most 64 characters',
+  'Receipt required': 'the browser requires the receipt code before the check is sent',
+  'Request body required': 'the form always sends a body',
+  'Request is too large': 'the saved request is far below the size limit',
+  'Client and programme delivery is unavailable': 'a delivery service, not on the request path',
+};
+
+describe('the messages the form shows', () => {
+  it('each mapped message still comes from its source, and every message key has a source', () => {
+    const messageKeys = formKeys.filter((key) => key.startsWith('form.message.'));
+    expect(Object.keys(messageSources).sort()).toEqual([...messageKeys].sort());
+    const formSource = [
+      'apps/web/app/plan/intake.tsx',
+      'apps/web/app/plan/form-words.tsx',
+      'apps/web/lib/i18n/form-words/messages.ts',
+    ]
+      .map(read)
+      .join('\n');
+    const produced = { schema: schemaMessages(), amount: amountMessages() };
+    for (const key of messageKeys) {
+      const source = messageSources[key]!;
+      if (source === 'form') expect(formSource, key).toContain(`'${key}'`);
+      else if (source === 'schema' || source === 'amount')
+        expect(
+          produced[source].some((message) => exactly(formEn[key]).test(message)),
+          `${key} is no longer produced by the ${source}`,
+        ).toBe(true);
+      else if (source !== 'browser') expect(read(source.file), key).toContain(formEn[key]);
+    }
+  });
+
+  it('every message the schemas, the amount reader and the server can send is mapped, stays English on purpose, or is listed as never shown', () => {
+    const server = serverMessages();
+    const unmapped = [...schemaMessages(), ...amountMessages(), ...server].filter(
+      (message) => readFormMessage(message) === null && !Object.hasOwn(notShownByTheForm, message),
+    );
+    expect(unmapped).toEqual([]);
+    for (const message of Object.keys(notShownByTheForm))
+      expect(server, `${message} is listed but no longer sent`).toContain(message);
+    // The form's own messages come from the words, never from a literal written in the form.
+    expect(read('apps/web/app/plan/intake.tsx')).not.toMatch(
+      /(?:new Error|setMessage|setDraftNotice)\(\s*['"][^'"]/,
+    );
+  });
+
+  it('read a variable message with its parts, and joined problems part by part', () => {
+    expect(
+      readFormMessage('CNY permits at most 2 decimal places. No rounding is performed.'),
+    ).toEqual([{ key: 'form.message.decimals', values: { code: 'CNY', places: '2' } }]);
+    expect(
+      readFormMessage('Too small: expected string to have >=3 characters. Quantity needs a unit'),
+    ).toEqual([
+      { key: 'form.message.tooShort', values: { minimum: '3' } },
+      { key: 'form.message.unit', values: {} },
+    ]);
+    expect(readFormMessage('Read and acknowledge the test intake notice')).toEqual([
+      { english: 'Read and acknowledge the test intake notice', lead: 'form.message.consentLead' },
+    ]);
   });
 });

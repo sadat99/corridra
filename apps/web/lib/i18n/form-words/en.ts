@@ -239,6 +239,64 @@ export const formEn = {
   'form.message.openFailed': 'Your request could not be opened.',
   'form.message.untranslated': 'This message is shown in English.',
   'form.message.consentLead': 'Read the notice and tick the box to continue.',
+
+  // Messages from the server handlers on the request path, word for word.
+  'form.message.intakeUnavailable': 'Intake is unavailable',
+  'form.message.activationNeeded': 'Finish account activation to submit your request',
+  'form.message.checkFields': 'Check the highlighted fields',
+  'form.message.changed': 'This brief changed after submission. Start a new brief.',
+  'form.message.intakeNotSaved': 'Intake could not be saved. Your input is still here.',
+  'form.message.receiptExpired': 'Receipt unavailable or expired',
+  'form.message.receiptUnavailable': 'Intake unavailable',
+  'form.message.savedExpired': 'Your saved request expired. Start a new request.',
+  'form.message.realUnavailable': 'Real request intake is unavailable',
+  'form.message.requestUnavailable': 'Request intake is unavailable',
+  'form.message.realIntakeUnavailable': 'Real intake is unavailable',
+  'form.message.accessDenied': 'Access denied or link unavailable',
+  'form.message.checkValues': 'Check the submitted values',
+  'form.message.conflict':
+    'The request conflicts with the current scope or state. Refresh and review it again.',
+  'form.message.notCompleted': 'The request could not be completed. Please try again.',
+  'form.message.tooMany': 'Too many requests. Try again in an hour.',
+  'form.message.handoffUnavailable': 'Request handoff is unavailable',
+  'form.message.workspaceUnavailable': 'Request workspace is unavailable',
+
+  // Messages from the request schemas, including the schema library's own wording.
+  'form.message.chooseObjective': 'Choose what you want to do',
+  'form.message.enterMarket': 'Enter your target country or market',
+  'form.message.max120': 'Use at most 120 characters',
+  'form.message.max160': 'Use at most 160 characters',
+  'form.message.startDate': 'Enter your visit start date',
+  'form.message.endDate': 'Enter your visit end date',
+  'form.message.endAfterStart': 'End date must follow the start date',
+  'form.message.datesInPerson': 'Only provide visit dates when attending in person',
+  'form.message.tooShort': 'Too small: expected string to have >={minimum} characters',
+  'form.message.tooLong': 'Too big: expected string to have <={maximum} characters',
+  'form.message.timezone': 'Choose a valid timezone',
+  'form.message.offerShort': 'Describe your offer or requirement in at least 10 characters',
+  'form.message.website': 'Enter a valid http or https website address',
+  'form.message.websiteLong': 'Use a shorter website address',
+  'form.message.outcome': 'Choose at least one outcome',
+  'form.message.name': 'Enter your name',
+  'form.message.company': 'Enter your company',
+  'form.message.email': 'Invalid email address',
+  'form.message.testEmail': 'Use a test address ending in @example.invalid',
+  'form.message.quantity': 'Invalid string: must match pattern /^[1-9][0-9]{0,11}$/',
+  'form.message.unit': 'Quantity needs a unit',
+  'form.message.budget': 'Budget needs amount, original currency and quantity basis',
+
+  // Messages from the amount reader.
+  'form.message.currency': 'Choose the original currency.',
+  'form.message.amountFormat':
+    'Enter an original nonnegative amount using a period for the decimal separator.',
+  'form.message.decimals':
+    '{code} permits at most {places} decimal places. No rounding is performed.',
+  'form.message.amountRange': 'The amount exceeds the supported range.',
+
+  // The browser's own words when there is no connection (Chromium, Firefox, Safari).
+  'form.message.offline': 'Failed to fetch',
+  'form.message.offlineFirefox': 'NetworkError when attempting to fetch resource.',
+  'form.message.offlineSafari': 'Load failed',
 } as const;
 
 export type FormKey = keyof typeof formEn;

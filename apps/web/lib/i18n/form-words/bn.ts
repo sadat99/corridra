@@ -232,4 +232,66 @@ export const words: FormCatalog = {
   'form.message.openFailed': 'আপনার অনুরোধ খোলা যায়নি।',
   'form.message.untranslated': 'এই বার্তাটি ইংরেজিতে দেখানো হচ্ছে।',
   'form.message.consentLead': 'নোটিশটি পড়ুন এবং এগোতে বাক্সে টিক দিন।',
+  'form.message.intakeUnavailable':
+    'এখন অনুরোধ পাঠানো যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.activationNeeded': 'অনুরোধ পাঠাতে আপনার অ্যাকাউন্ট চালু করা শেষ করুন।',
+  'form.message.checkFields': 'চিহ্নিত ঘরগুলো দেখে নিন।',
+  'form.message.changed': 'পাঠানোর পরে এই অনুরোধটি বদলে গেছে। নতুন একটি অনুরোধ শুরু করুন।',
+  'form.message.intakeNotSaved': 'অনুরোধটি সংরক্ষণ করা যায়নি। আপনার দেওয়া তথ্য এখানেই আছে।',
+  'form.message.receiptExpired':
+    'এই রসিদটি পাওয়া যাচ্ছে না বা মেয়াদ শেষ হয়েছে। কোডটি যাচাই করে আবার চেষ্টা করুন।',
+  'form.message.receiptUnavailable': 'এখন অনুরোধ সেবা পাওয়া যাচ্ছে না। পরে আবার চেষ্টা করুন।',
+  'form.message.savedExpired':
+    'আপনার সংরক্ষিত অনুরোধের মেয়াদ শেষ হয়েছে। নতুন একটি অনুরোধ শুরু করুন।',
+  'form.message.realUnavailable':
+    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.requestUnavailable':
+    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.realIntakeUnavailable':
+    'এখন অনুরোধ গ্রহণ করা যাচ্ছে না। আপনার দেওয়া তথ্য এখানেই আছে। পরে আবার চেষ্টা করুন।',
+  'form.message.accessDenied':
+    'প্রবেশের অনুমতি নেই, অথবা লিংকটি পাওয়া যাচ্ছে না। সঠিক অ্যাকাউন্ট দিয়ে সাইন ইন করুন।',
+  'form.message.checkValues': 'পাঠানো তথ্যগুলো যাচাই করুন।',
+  'form.message.conflict':
+    'অনুরোধটি বর্তমান অবস্থার সঙ্গে মিলছে না। পাতাটি নতুন করে লোড করে আবার দেখুন।',
+  'form.message.notCompleted': 'অনুরোধটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।',
+  'form.message.tooMany':
+    'অনেক বেশি চেষ্টা হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন। আপনার দেওয়া তথ্য এখানেই আছে।',
+  'form.message.handoffUnavailable':
+    'সংরক্ষিত অনুরোধটি হস্তান্তর করা যাচ্ছে না। একই ডিভাইস ও একই ব্রাউজারে এটি খুলুন।',
+  'form.message.workspaceUnavailable':
+    'আপনার অনুরোধের জায়গাটি পাওয়া যাচ্ছে না। আপনার অ্যাকাউন্ট খুলে আবার চেষ্টা করুন।',
+  'form.message.chooseObjective': 'আপনি কী করতে চান, তা বেছে নিন।',
+  'form.message.enterMarket': 'আপনার লক্ষ্য দেশ বা বাজার লিখুন।',
+  'form.message.max120': 'সর্বোচ্চ ১২০টি অক্ষর ব্যবহার করুন।',
+  'form.message.max160': 'সর্বোচ্চ ১৬০টি অক্ষর ব্যবহার করুন।',
+  'form.message.startDate': 'আপনার পরিদর্শনের শুরুর তারিখ দিন।',
+  'form.message.endDate': 'আপনার পরিদর্শনের শেষ তারিখ দিন।',
+  'form.message.endAfterStart': 'শেষের তারিখ শুরুর তারিখের আগে হতে পারে না।',
+  'form.message.datesInPerson': 'সশরীরে উপস্থিত থাকলে তবেই পরিদর্শনের তারিখ দিন।',
+  'form.message.tooShort': 'কমপক্ষে {minimum}টি অক্ষর লিখুন।',
+  'form.message.tooLong': 'সর্বোচ্চ {maximum}টি অক্ষর ব্যবহার করুন।',
+  'form.message.timezone': 'একটি সঠিক সময় অঞ্চল দিন।',
+  'form.message.offerShort': 'কমপক্ষে ১০টি অক্ষরে আপনার প্রস্তাব বা প্রয়োজন লিখুন।',
+  'form.message.website': 'http বা https দিয়ে একটি সঠিক ওয়েবসাইট ঠিকানা লিখুন।',
+  'form.message.websiteLong': 'আরও ছোট একটি ওয়েবসাইট ঠিকানা ব্যবহার করুন।',
+  'form.message.outcome': 'অন্তত একটি ফলাফল বেছে নিন।',
+  'form.message.name': 'আপনার নাম লিখুন।',
+  'form.message.company': 'আপনার প্রতিষ্ঠানের নাম লিখুন।',
+  'form.message.email': 'ইমেইল ঠিকানাটি যাচাই করুন।',
+  'form.message.testEmail': '@example.invalid দিয়ে শেষ হওয়া একটি নমুনা ঠিকানা ব্যবহার করুন।',
+  'form.message.quantity': 'পরিমাণ ১ বা তার বেশি একটি পূর্ণ সংখ্যায় লিখুন, সর্বোচ্চ ১২ অঙ্কে।',
+  'form.message.unit': 'পরিমাণের সঙ্গে একটি একক দিন।',
+  'form.message.budget': 'বাজেটের জন্য পরিমাণ, মূল মুদ্রা ও ভিত্তি দিন।',
+  'form.message.currency': 'মূল মুদ্রা বেছে নিন।',
+  'form.message.amountFormat':
+    'মূল পরিমাণ শূন্য বা তার বেশি লিখুন, দশমিকের জন্য বিন্দু ব্যবহার করুন। 0 থেকে 9 অঙ্ক ব্যবহার করুন।',
+  'form.message.decimals':
+    '{code} সর্বোচ্চ {places} দশমিক ঘর অনুমোদন করে। কোনো রাউন্ডিং করা হয় না।',
+  'form.message.amountRange': 'পরিমাণটি সমর্থিত সীমার চেয়ে বেশি।',
+  'form.message.offline': 'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
+  'form.message.offlineFirefox':
+    'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
+  'form.message.offlineSafari':
+    'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
 };
