@@ -4,7 +4,7 @@
 
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
-Use the existing operator workspace and tenant permissions. All mission operations remain synthetic. Customer identity signup is independently live; it does not activate customer mission processing.
+Use the existing operator workspace and tenant permissions. Real admission was enabled on 22 Oct 2026 under [ADR056](../adr/0056-real-use-admission-and-progressive-registration.md), with scanning bypassed and deferred, so real customer mission data is allowed (see the [ledger](../V3_LEDGER.md)). Before that date all mission operations were synthetic. Outreach, AI inference, payments and payouts stay closed, as do gates D01 to D06 and D08.
 
 1. Review a short brief from `/plan`. Company country and target market are explicit; unsupported directions remain unconfigured. Assign a reviewed route through existing configuration, then collect requirements and evidence through Part 2 services.
 2. Prepare a delivery programme and import participant briefs through the existing bounded CSV/XLSX workflow. New optional columns `companyCountry`, `marketCode`, `missionJob` must be supplied together. Each accepted participant remains an independent mission. Confirm the visible import counts.

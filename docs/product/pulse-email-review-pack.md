@@ -2,7 +2,7 @@
 
 **Document status: WAITING OWNER.** Decisions only the owner can take before Pulse is opened; nothing is sent until then. See the [plan status register](../PLAN_STATUS.md).
 
-Written 25 October 2026. Pulse is built and closed. Nothing is sent to anyone until it is opened (steps at the end). The engineering privacy review you asked me to do is recorded in [pulse-privacy-review-2026-10-25.md](pulse-privacy-review-2026-10-25.md): it found three blockers, two are fixed and one is a check only you can do (the replies mailbox). This pack is a plain description of what the system does after those fixes. It is not legal advice; the privacy lawyer review of the notice is still a separate later step.
+Written 25 October 2026. Pulse is built and closed. Nothing is sent to anyone until it is opened (steps at the end). On 30 October 2026 the owner opened the database control himself (install run 45, step 1 below) and reported `CORRIDRA_PULSE_ENABLED=true`; his answers to the items below are not recorded. The engineering privacy review you asked me to do is recorded in [pulse-privacy-review-2026-10-25.md](pulse-privacy-review-2026-10-25.md): it found three blockers, two are fixed and one is a check only you can do (the replies mailbox). This pack is a plain description of what the system does after those fixes. It is not legal advice; the privacy lawyer review of the notice is still a separate later step.
 
 ## What you are deciding
 

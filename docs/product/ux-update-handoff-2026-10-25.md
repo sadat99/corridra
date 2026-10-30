@@ -2,7 +2,7 @@
 
 **Document status: CURRENT.** The owner's install and switch steps for the UX update. See the [plan status register](../PLAN_STATUS.md).
 
-Written 25 October 2026 at the end of the build, by the session that ran the corrected plan alone under the owner's delegation ([the plan, section 0](ux-update-plan-corrected-2026-10-24.md)). Nothing here is switched on. Every change is behind its own switch, off by default, and with a switch off the page is what it was. Three optional database parts are installed only by your install job and start closed.
+Written 25 October 2026 at the end of the build, by the session that ran the corrected plan alone under the owner's delegation ([the plan, section 0](ux-update-plan-corrected-2026-10-24.md)). Nothing here was switched on when it was written; what is on today is in the [ledger](../V3_LEDGER.md). Every change is behind its own switch, off by default, and with a switch off the page is what it was. Three optional database parts are installed only by your install job and start closed.
 
 ## The lanes
 
@@ -54,7 +54,7 @@ Today, with every switch off, no person sees any difference.
 
 ## Your decisions
 
-1. **Pulse.** The address source is settled (25 October 2026: read from the sign-in provider at send time, email off until each person switches it on, and a prompt tells people it is off). Still yours: the privacy review of the email texts and the queue's retention, then opening it with `notifications_action = enable`, `CORRIDRA_PULSE_ENABLED=true` and a redeploy.
+1. **Pulse.** The address source is settled (25 October 2026: read from the sign-in provider at send time, email off until each person switches it on, and a prompt tells people it is off). Still yours: the privacy review of the email texts and the queue's retention, then opening it with `notifications_action = enable`, `CORRIDRA_PULSE_ENABLED=true` and a redeploy. Opened by the owner on 30 October 2026 (install run 45; he reports `CORRIDRA_PULSE_ENABLED=true`); a recorded answer on the review and retention is still missing.
 2. **A reviewer for each language** (Bangla, Chinese, Spanish, Arabic, French, German). Settled on 25 October 2026: the owner is recorded as the reviewer for all six in the language review record, and the six codes are listed in `CORRIDRA_LANGUAGES_REVIEWED`. Still open: the Noto Sans Bengali font file, and legal and privacy text, which needs a qualified reviewer per language.
 3. **Gate 3** (before you switch Wave 4 on for real use): the 10 to 15 interviews on co-owner or bank involvement, the supplier test with about ten real suppliers, and service promises per route.
 4. **Whether fair pages may be found by search**, and who adds and re-checks fairs. The list ships empty on purpose.

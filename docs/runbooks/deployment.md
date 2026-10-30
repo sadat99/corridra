@@ -2,7 +2,7 @@
 
 **Document status: CURRENT.** Commands apply today. See the [plan status register](../PLAN_STATUS.md).
 
-Use the [current plan](../implementation/current-plan.md) for release scope and [verification guide](../verification-guide.md) for evidence. Standing owner authorization permits correctly tested merges and immediate deployment without another approval. It does not waive checks, readiness gates or the prohibition on real operations/providers.
+Use the [current plan](../implementation/current-plan.md) for release scope and [verification guide](../verification-guide.md) for evidence. The owner gives a merge command for each PR (25 Oct 2026, narrowed 29 Oct; this replaced the 22 Oct standing authorization for agents to merge and deploy their own PRs). Agents open draft PRs and do not merge, dispatch workflows, change production settings or redeploy without his command. A merge to `main` deploys itself ([ADR050](../adr/0050-main-deploys-itself.md)), so a merge command is also the deploy decision. None of this waives checks, readiness gates or the prohibition on real operations/providers.
 
 ## Exact project and configuration
 

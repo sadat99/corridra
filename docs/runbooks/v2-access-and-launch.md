@@ -21,7 +21,7 @@ After staff sign-in and MFA, open `/operator` and **People and workspace control
 
 In the operator workspace, the V2 shortcuts lead to missions/requirements, research, introductions/meetings, commercial progress, client/institution delivery, source/evidence, AI/network tools, route policies and Global Operations. Owner/admin controls are role-dependent; operational overview is owner/admin/operator. Financial observations retain narrower permission checks. Root controls remain owner-only.
 
-The live mission environment is synthetic. Use invented records. Customer signup is separately enabled and does not permit real mission activation. AI/network execution remains off in production until accepted credentials/policies and pilots exist. An empty dashboard is not an invented zero and is not permission to populate real data.
+Real admission was enabled on 22 Oct 2026 under [ADR056](../adr/0056-real-use-admission-and-progressive-registration.md), with scanning bypassed and deferred, so real customer mission data is allowed (see the [ledger](../V3_LEDGER.md)). Before that date the live mission environment was synthetic. Use invented records for tests and acceptance. AI inference remains off in production until accepted credentials/policies and pilots exist. `CORRIDRA_NETWORK_ENABLED` was seen `true` in production on 24 Oct 2026 (ledger). An empty dashboard is not an invented zero and is not permission to populate real data.
 
 ## GitHub owner setup
 

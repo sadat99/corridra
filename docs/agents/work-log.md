@@ -1999,3 +1999,92 @@ Owner items recorded:
 - The live value of `CORRIDRA_LANGUAGES_PAGES`: UNKNOWN (the owner reports true).
 
 Next: the owner merges this release PR on his command; then he sets `CORRIDRA_LANGUAGES_FORM=true` with `CORRIDRA_LANGUAGES_PREVIEW` unset and redeploys; then an agent verifies the live form in all six languages. Meanwhile, main CI 698 on `9e77170`. PR: not opened when this entry was written. Tested head: `31701d7` plus the uncommitted records.
+
+## 30 October 2026: records after PR 216 and install run 45, and the product brief
+
+Request (owner, chat, 30 October 2026, relayed by the conductor): "Update the 100% correct documentations, then share 2 pagers product brief for our potential users to understand what is corridra, why how what where when etc, use cases". Why: PR 216 merged and the owner's install run 45 made several ledger, register and handoff sentences false. Branch `claude/vibrant-ramanujan-77xezv` at `b12e244`, equal to `origin/main`. Authority: brief stamp `auth-ca52f7caedd1`, unchanged at the start of the records pass; the new stamp below comes from this run's register and status edits.
+
+Evidence read by the scribe (GitHub REST API, 30 October):
+
+- PR 216 merged at 14:01:31Z as `b12e244` by `sadat99` (squash; `31701d7` is inside it). On `b12e244`: CI 700 (41068190640) and CodeQL 453 (41068190592) succeeded; Production deployment 7440198420 succeeded at 14:02:55Z.
+- On `9e77170`: CI 698 (41061730232) and CodeQL 451 succeeded (the earlier entry saw CI 698 running).
+- Install customer modules run 45 (41072883981): `workflow_dispatch` on `b12e244`, created 14:35:11Z, job `install` succeeded at 14:45:34Z; deployment 7440912831 to `customer-modules-install` at 14:35:13Z.
+- Open PRs: PR 211 only.
+
+Not readable here (the run log download answered 403). As the conductor read the run 45 log: `INSTALL_APPLY=yes`; `NOTIFICATIONS_ACTION=enable`; every other action unchanged; the reason says the owner set `CORRIDRA_PULSE_ENABLED=true`; the exact-revision step passed; `customer_notification_migrations` 1 applied before, 3 after; "Email address source readable: yes"; "Notifications enabled; changed=true"; other module counts unchanged. The Pulse switch is an owner report, not observed. Whether the live deployment carries it is UNKNOWN. The live value of `CORRIDRA_LANGUAGES_FORM` is UNKNOWN.
+
+Records changed:
+
+- `docs/V3_LEDGER.md` (12,189 bytes): state seen on `b12e244`, the PR 216 line, run 45, the Pulse sentence, the owner-reported Pulse switch, the owner-only list (opening Pulse removed as done; the unrecorded Pulse checks kept), the next action and the archive link. Shortened: the merged, install runs, PR 215, shipped and Vercel lines.
+- `docs/v3/history/ledger-before-pr216-records-2026-10-30.md`: the exact 12,072-byte ledger at `b12e244`, sha256 `6ff283d2571747a68954a07eba91ed6fec9b689c7f3d27c11d01b1631986dfa4`. It has entries in `docs/v3/history/manifest.json` and in `docs/documentation-map.json`.
+- `docs/product/corridra-product-brief.md` (new, CURRENT, DATED): the conductor's two-page brief, written out as markdown from its HTML with no added claims. It has a documentation-map entry and a register row.
+- `docs/PLAN_STATUS.md`:
+  - the header;
+  - the language switcher and Lane 11 rows (`CORRIDRA_LANGUAGES_FORM` off by default, live value UNKNOWN);
+  - the UX handoff row (Pulse opened by run 45);
+  - the Pulse review pack row (UNRESOLVED, both positions recorded);
+  - the product brief row;
+  - the "Done" paragraph (PR 216, run 45);
+  - open work item 1 (step 2 done by the PR 216 merge).
+- `docs/implementation/current-plan.md`: PR216 added to the work order.
+- `docs/product/language-review-record.md`: step 2 now says it was merged as PR 216 and is in effect.
+- Pulse live state, one dated sentence each: `docs/product/lane7b-pulse.md`, `docs/product/pulse-email-review-pack.md`, `docs/product/ux-update-handoff-2026-10-25.md` (also "Nothing here was switched on when it was written") and `docs/product/phase2-install.md` step 5.
+- `README.md` line 7: real admission (ADR-056, 22 October) and the real data and Network switch seen on 24 October replace "remain synthetic" and "network activation ... closed". Line 61 is untouched.
+- `docs/v3/phase-0/requirements.json` V3-06-013 `nextAction` only. It now gives the 24 October ledger record and the switch seen `true` in place of "not installed". Identity and text are unchanged (`verify` PASS).
+- This entry.
+
+Verification (working tree over `b12e244`):
+
+- `node scripts/v3-context.mjs verify` exit 0 (22 exact additional archives, 507 identities, ledger within 12 KiB).
+- `node scripts/authority.mjs check` exit 0 (77 governed documents).
+- `pnpm test:docs` through `node scripts/gate.mjs docs` 63/63, exit 0 (`work/docs-2026-10-30T16-01-42-057Z.log`).
+- `pnpm exec prettier --check` on the changed files exit 0.
+- No U+2014 in any changed file.
+
+Not run: no application test, build or live check.
+
+Preserved:
+
+- The scribe changed no application code, tests, ADRs or AGENTS.md.
+- Gates D01 to D06 and D08 stay closed.
+
+Decisions and risks:
+
+- ADR-074 line 56 still says step 2 "takes effect when that pull request is merged". ADR files belong to the architect, so the scribe left it: UNRESOLVED.
+- The Pulse review pack stays WAITING OWNER. The owner opened Pulse himself, but no answer to item 3, the replies mailbox or Resend retention is recorded.
+- The brief says "The site is in English", while the ledger records six languages reviewed for the shared words since 25 October and home page words behind a switch whose live value is UNKNOWN. That is the conductor's copy, transcribed as written.
+
+Owner items recorded:
+
+- `CORRIDRA_LANGUAGES_FORM` (ADR-074 step 4) and a redeploy (step 5).
+- The unrecorded Pulse checks.
+- The Pulse review pack status.
+- "Draft PRs only" after the 29 October scope: UNRESOLVED.
+- PR 211.
+- The Vercel connector.
+- The lawyer review.
+
+Next: the owner sets `CORRIDRA_LANGUAGES_FORM` and redeploys; then an agent verifies the live form in all six languages. This run's PR is a draft documentation PR and the owner gives merge commands. PR: not opened when this entry was written. Tested head: `b12e244` plus the uncommitted records.
+
+Addendum, 30 October 2026 (documentation repair on draft PR 217, head `5df9b27`; owner question: "is your documentation based on 100% reality and latest plans over old ones where conflict arise"). Brief stamp `auth-a70b4af4cfaa`. Superseded live-state sentences fixed, history kept as dated history:
+
+- `README.md` line 61, `docs/runbooks/deployment.md` line 5 and `docs/verification-guide.md` line 49: the 22 Oct standing authorization to merge and deploy is replaced by the 25 Oct direction, narrowed 29 Oct. The owner gives a merge command for each PR. Agents open draft PRs and do not merge, dispatch workflows, change production settings or redeploy without his command. A merge to `main` deploys itself (ADR050).
+- `docs/runbooks/v2-product-experience.md` line 7 and `docs/runbooks/v2-access-and-launch.md` line 24: real admission enabled 22 Oct under ADR056 (scanning bypassed and deferred), with a ledger link; synthetic is dated as before that date. Outreach, AI inference, payments, payouts and gates D01 to D06 and D08 stay closed. Line 24 also records `CORRIDRA_NETWORK_ENABLED` seen `true` on 24 Oct in place of "AI/network execution remains off".
+- `docs/v3/KNOWN_ISSUES.md` KI-08: the 22 Oct decision is marked replaced on 25 Oct and narrowed on 29 Oct; no agent acts on it.
+- `docs/implementation/ux-repair-acceptance-2026-10-29.md`: a dated update that the owner opened Pulse on the database side with install run 45; `CORRIDRA_PULSE_ENABLED=true` is his report, not observed; the replies mailbox, Resend retention and review pack item 3 stay unrecorded.
+
+Left, with reason:
+
+- `AGENTS.md` line 15 and `docs/START_HERE.md` line 27 carry the same standing-authorization wording. Both are authority files that set agent rules; the conductor is asking the owner. UNRESOLVED.
+- `docs/adr/0056-real-use-admission-and-progressive-registration.md` status line ("not installed or enabled") conflicts with the 22 Oct admission receipt in the ledger; ADR files belong to the architect. UNRESOLVED.
+- `docs/runbooks/part-04-missions.md` line 27 ("enforces synthetic-only data") describes the original intake guard; whether that guard still applies beside the separate real intake tenant was not checked in code this run.
+- `docs/product/lane7a-move-records.md` line 25 (Pulse "stays off"): a DONE packet dated 24 Oct, not classified current.
+- Historical or frozen hits: ADR-0018, ADR-0021, `docs/V3_CONTRACT.md`, the vision, `docs/implementation/part-04-release.md`, `docs/implementation/v2-part-01-*`. Ledger mentions of CI 698 and `9e77170` are correct history. No current doc says PR 216 is unmerged or main is at `9e77170`.
+
+Verification (working tree over `5df9b27`): `node scripts/gate.mjs docs -- pnpm test:docs` 63/63, exit 0 (`work/docs-2026-10-30T18-56-48-726Z.log`); `node scripts/v3-context.mjs verify` exit 0; `node scripts/authority.mjs check` exit 0 (77 governed documents); stamp unchanged at `auth-a70b4af4cfaa`; `pnpm exec prettier --check` on the changed files exit 0; no U+2014 in added lines. Ledger unchanged. Next: unchanged from the entry above.
+
+Follow-up repair, same PR, working tree over `3f81399` (the architect's ADR-056 commit on `984e5a9`), stamp `auth-a70b4af4cfaa`: `docs/runbooks/part-04-missions.md` "Opening to customers" now states the checked code. `POST /api/intake` (`apps/web/app/api/intake/route.ts`) refuses every brief with 409 while `realUseEnabled()` (`packages/auth/src/customer-production.ts`) is true; the `@example.invalid` guard in `briefSchema` (`packages/domain/src/missions.ts`) still applies wherever the mission engine runs in synthetic mode; real requests use `/api/intake/pending` and its claim route through `apps/web/lib/pending-request.ts` and `realBriefSchema`, plus the database `customer.intake_available()` check. The old release conditions are kept as history; the unverified acceptance, owner items and closed gates (outreach, AI inference, payments, payouts, D01 to D06 and D08) are listed as open. The ADR-056 status line was corrected by the architect (it now reads installed and enabled on 22 Oct by run 39645923089); the two UNRESOLVED items above for ADR-056 and part-04 line 27 are closed by these fixes. Still stale and left: the same runbook's "Live activation and operations" step ("At /plan, submit invented details and an @example.invalid email"), which no longer works in production because of the 409. Verification: `node scripts/gate.mjs docs -- pnpm test:docs` 63/63, exit 0 (`work/docs-2026-10-30T18-59-33-373Z.log`); `node scripts/v3-context.mjs verify` exit 0; `node scripts/authority.mjs check` exit 0 (77 governed documents); stamp unchanged; prettier check on both files exit 0; no U+2014 in added lines.
+
+Owner answer, 30 Oct (chat, "auto", read as "use your judgement" under the rule that the latest decision wins): `AGENTS.md` line 15 and `docs/START_HERE.md` line 27 no longer state the replaced standing merge-and-deploy authority. They now say draft PRs only, a merge command from the owner for each PR (owner decisions 25 and 29 Oct), and no merge, workflow dispatch, production setting, provider call or redeploy without his command; a merge to `main` still deploys itself. The `part-04-missions.md` /plan step is scoped to synthetic environments. Checks over `4ab8ebc`: docs tests 63/63, `v3-context verify` PASS, `authority.mjs check` PASS (77), prettier clean, no U+2014 in added lines; new stamp `auth-db1e61497083` (standing rules changed).
+
+Before merge, 30 Oct: the owner merged PR211 (Dependabot dependency group) at 18:51:38Z as `fcaa6bf` (GitHub API: merged_by sadat99). The ledger no longer lists PR211 as open; its CI and deployment on `fcaa6bf` were not read here.

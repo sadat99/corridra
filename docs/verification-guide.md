@@ -46,7 +46,7 @@ Select a bounded requirement and write its current behavior/gap before editing. 
 
 Additive migrations require fresh install and populated upgrade tests using the restricted application roles. Check prior migration hashes and original data; never rewrite a deployed migration. Builds do not apply migrations. Use the branch budget and preserve open dependency PRs and unrelated work. No worktree is required or authorized by this guide.
 
-After relevant local checks and full required CI, prepare a reviewable PR with evidence and explicit remaining limits. Standing owner authorization permits merging correct work and deploying the exact merged revision immediately. Verify production before reporting it. See [deployment](runbooks/deployment.md); this release authority does not activate real operations or providers.
+After relevant local checks and full required CI, prepare a reviewable PR with evidence and explicit remaining limits. The owner gives a merge command for each PR (25 Oct 2026, narrowed 29 Oct; this replaced the 22 Oct standing authorization for agents to merge and deploy their own PRs). Agents open draft PRs and do not merge, dispatch workflows, change production settings or redeploy without his command. A merge to `main` deploys itself ([ADR050](adr/0050-main-deploys-itself.md)). Verify production before reporting it. See [deployment](runbooks/deployment.md); this release authority does not activate real operations or providers.
 
 ## Reusable developer task
 

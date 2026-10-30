@@ -54,6 +54,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - An agent merged its own PR without a human review and the auto-mode classifier then blocked the next command.
 - **Owner decision, 22 Oct 2026 (chat):** agents commit, merge and deploy their own PRs without asking once required checks are green on the exact head. This never covers real operations, provider activation, or bypassing a check or gate.
+- **Replaced, 25 Oct 2026 (chat, relayed):** no merge, Pulse opening, production setting or redeploy without his command. **Narrowed again, 29 Oct:** draft PRs only, and the owner gives a merge command for each PR. No agent acts on the 22 Oct decision. See the [ledger](../V3_LEDGER.md).
 
 ### KI-09 Always-read cap
 
