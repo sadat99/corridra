@@ -808,10 +808,10 @@ test.describe('with the form released', () => {
           (el) => `${getComputedStyle(el).overflowWrap} ${getComputedStyle(el).hyphens}`,
         );
       const translated = read();
-      const language = main.lang;
-      main.lang = 'en';
+      const language = main.getAttribute('lang') ?? '';
+      main.setAttribute('lang', 'en');
       const english = read();
-      main.lang = language;
+      main.setAttribute('lang', language);
       return elements.map((el, index) => ({
         text: el.textContent?.slice(0, 40),
         translated: translated[index],
