@@ -901,6 +901,105 @@ test.describe('with the form released', () => {
   });
 });
 
+// The page-length budget (UI spec section 7): the main region's height in screens at 390 x 844 and 1440 x 900, in
+// the spec's state (sample form, disclosures closed, first question on, a sourcing job). English is already over the
+// flow-step limit on every step; that is the English debt, left as it is. On every step a translation stays within
+// its pass mark of English, its form card grows by at most a quarter of a phone screen, and a step within the limit
+// in English stays within it translated. The first question has its own release and follows the chosen language
+// whatever the form switch says, so it is counted at its English height, as the spec measured it. The last step of
+// the real form is measured too: it is held to the limit and the card rule, and its ratio is recorded.
+const flowStepLimit = { 390: 1.5, 1440: 1 } as const;
+const passMark = { de: { 390: 1.15, 1440: 1.05 }, ar: { 390: 1.1, 1440: 1.05 } } as const;
+test.describe('the page-length budget', () => {
+  for (const width of [390, 1440] as const)
+    test(`at ${width}: German and Arabic stay within their pass marks of English on every step`, async ({
+      browser,
+    }) => {
+      /** Screens taken by the main region, the first question and the form card on each step. */
+      const measure = async (code: 'en' | 'de' | 'ar', mode: 'sample' | 'real') => {
+        const context = await browser.newContext({
+          viewport: { width, height: width === 390 ? 844 : 900 },
+          reducedMotion: 'reduce',
+        });
+        const page = await context.newPage();
+        const query = `form=true&fq=1${mode === 'real' ? '&mode=real' : ''}`;
+        if (code === 'en') await open(page, 'en', query);
+        else await openTranslated(page, code, query);
+        await page.evaluate(() => document.fonts.ready);
+        const form = page.locator('form.intake-form');
+        const answers = [
+          () => form.locator('select').first().selectOption('sourcing'),
+          async () => {
+            await form.locator('select').nth(0).selectOption('BD');
+            await form.locator('select').nth(1).selectOption('CN');
+          },
+          () => form.locator('textarea').first().fill('Cotton fabric for shirts, 2000 metres.'),
+          () => form.locator('input[type="checkbox"]').first().check(),
+        ];
+        const screens: { main: number; question: number; card: number }[] = [];
+        for (const [step, answer] of [...answers, null].entries()) {
+          await expect(form.locator('> p.label')).toHaveText(
+            fill(code === 'en' ? formEn['form.step.counter'] : drafts[code]['form.step.counter'], {
+              step: step + 1,
+              total: '5',
+            }),
+          );
+          screens.push(
+            await page.evaluate(() => {
+              const tall = (selector: string) =>
+                (document.querySelector(selector)?.getBoundingClientRect().height ?? 0) /
+                innerHeight;
+              return { main: tall('#main'), question: tall('.mr-fq'), card: tall('.intake-form') };
+            }),
+          );
+          if (!answer) break;
+          await answer();
+          await form.locator('.guide-actions .primary-link').click();
+        }
+        await context.close();
+        return mode === 'real' ? screens.slice(4) : screens;
+      };
+      const steps = ['1', '2', '3', '4', '5', '5 real'];
+      const both = async (code: 'en' | 'de' | 'ar') => [
+        ...(await measure(code, 'sample')),
+        ...(await measure(code, 'real')),
+      ];
+      const english = await both('en');
+      const rows: Record<string, string | number>[] = [];
+      for (const code of ['de', 'ar'] as const) {
+        const translated = await both(code);
+        for (const [index, step] of steps.entries()) {
+          const [base, now] = [english[index]!, translated[index]!];
+          const main = now.main - now.question + base.question;
+          const ratio = main / base.main;
+          rows.push({
+            width,
+            step,
+            en: +base.main.toFixed(2),
+            [code]: +main.toFixed(2),
+            ratio: +ratio.toFixed(3),
+            card: +(now.card - base.card).toFixed(2),
+          });
+          if (step !== '5 real')
+            expect.soft(ratio, `${code} step ${step}`).toBeLessThanOrEqual(passMark[code][width]);
+          if (base.main <= flowStepLimit[width])
+            expect
+              .soft(main, `${code} step ${step} goes over the limit only when translated`)
+              .toBeLessThanOrEqual(flowStepLimit[width]);
+          if (width === 390)
+            expect
+              .soft(now.card - base.card, `${code} step ${step} card`)
+              .toBeLessThanOrEqual(0.25);
+        }
+      }
+      console.log(JSON.stringify(rows));
+      await test.info().attach(`page-length-${width}.json`, {
+        body: JSON.stringify(rows, null, 1),
+        contentType: 'application/json',
+      });
+    });
+});
+
 /** Fills every step with valid answers (a buyer search, Bangladesh to China) up to the send button. */
 async function complete(page: Page, mode: 'sample' | 'real' = 'sample') {
   const form = page.locator('form.intake-form');
