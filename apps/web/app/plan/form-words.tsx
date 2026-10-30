@@ -54,11 +54,13 @@ export function useFormWords() {
       if (!parts)
         return createElement(Fragment, null, say('form.message.untranslated'), englishIsland(text));
       return parts.map((part, index) => {
+        // The part before ends its own sentence or line, so a space is enough; `issueSeparator` would add a full stop.
+        const gap = index > 0 ? ' ' : null;
         if ('key' in part)
           return createElement(
             Fragment,
             { key: index },
-            index > 0 ? ' ' : null,
+            gap,
             fillNodes(
               say(part.key),
               Object.fromEntries(
@@ -75,6 +77,7 @@ export function useFormWords() {
         return createElement(
           Fragment,
           { key: index },
+          part.lead ? gap : null,
           part.lead ? say(part.lead) : null,
           englishIsland(part.english),
         );

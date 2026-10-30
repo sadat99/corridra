@@ -1134,6 +1134,29 @@ describe('the messages the form shows', () => {
     );
   });
 
+  it('keep a space between a translated line and the translated lead of a consent message joined after it', async () => {
+    const { FormWordsProvider, useFormWords } = await load('app/plan/form-words');
+    function Shown({ text }: { text: string }) {
+      return useFormWords().showMessage(text);
+    }
+    const shown = (words: object | null, locale: string, text: string) =>
+      renderToStaticMarkup(
+        createElement(
+          FormWordsProvider,
+          { value: { locale, words } },
+          createElement(Shown, { text }),
+        ),
+      );
+    const consent = 'Read and acknowledge the test intake notice';
+    const joined = [formEn['form.message.checkFields'], consent].join(issueSeparator);
+    expect(shown(de, 'de', joined)).toBe(
+      `${de['form.message.checkFields']} ${de['form.message.consentLead']}` +
+        `<span lang="en" dir="ltr" class="lang-island">${consent}</span>`,
+    );
+    // In English the message is the text as written.
+    expect(shown(null, 'en', joined)).toBe(joined);
+  });
+
   it('read a variable message with its parts, and joined problems part by part', () => {
     expect(
       readFormMessage('CNY permits at most 2 decimal places. No rounding is performed.'),
