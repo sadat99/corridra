@@ -2065,3 +2065,20 @@ Owner items recorded:
 - The lawyer review.
 
 Next: the owner sets `CORRIDRA_LANGUAGES_FORM` and redeploys; then an agent verifies the live form in all six languages. This run's PR is a draft documentation PR and the owner gives merge commands. PR: not opened when this entry was written. Tested head: `b12e244` plus the uncommitted records.
+
+Addendum, 30 October 2026 (documentation repair on draft PR 217, head `5df9b27`; owner question: "is your documentation based on 100% reality and latest plans over old ones where conflict arise"). Brief stamp `auth-a70b4af4cfaa`. Superseded live-state sentences fixed, history kept as dated history:
+
+- `README.md` line 61, `docs/runbooks/deployment.md` line 5 and `docs/verification-guide.md` line 49: the 22 Oct standing authorization to merge and deploy is replaced by the 25 Oct direction, narrowed 29 Oct. The owner gives a merge command for each PR. Agents open draft PRs and do not merge, dispatch workflows, change production settings or redeploy without his command. A merge to `main` deploys itself (ADR050).
+- `docs/runbooks/v2-product-experience.md` line 7 and `docs/runbooks/v2-access-and-launch.md` line 24: real admission enabled 22 Oct under ADR056 (scanning bypassed and deferred), with a ledger link; synthetic is dated as before that date. Outreach, AI inference, payments, payouts and gates D01 to D06 and D08 stay closed. Line 24 also records `CORRIDRA_NETWORK_ENABLED` seen `true` on 24 Oct in place of "AI/network execution remains off".
+- `docs/v3/KNOWN_ISSUES.md` KI-08: the 22 Oct decision is marked replaced on 25 Oct and narrowed on 29 Oct; no agent acts on it.
+- `docs/implementation/ux-repair-acceptance-2026-10-29.md`: a dated update that the owner opened Pulse on the database side with install run 45; `CORRIDRA_PULSE_ENABLED=true` is his report, not observed; the replies mailbox, Resend retention and review pack item 3 stay unrecorded.
+
+Left, with reason:
+
+- `AGENTS.md` line 15 and `docs/START_HERE.md` line 27 carry the same standing-authorization wording. Both are authority files that set agent rules; the conductor is asking the owner. UNRESOLVED.
+- `docs/adr/0056-real-use-admission-and-progressive-registration.md` status line ("not installed or enabled") conflicts with the 22 Oct admission receipt in the ledger; ADR files belong to the architect. UNRESOLVED.
+- `docs/runbooks/part-04-missions.md` line 27 ("enforces synthetic-only data") describes the original intake guard; whether that guard still applies beside the separate real intake tenant was not checked in code this run.
+- `docs/product/lane7a-move-records.md` line 25 (Pulse "stays off"): a DONE packet dated 24 Oct, not classified current.
+- Historical or frozen hits: ADR-0018, ADR-0021, `docs/V3_CONTRACT.md`, the vision, `docs/implementation/part-04-release.md`, `docs/implementation/v2-part-01-*`. Ledger mentions of CI 698 and `9e77170` are correct history. No current doc says PR 216 is unmerged or main is at `9e77170`.
+
+Verification (working tree over `5df9b27`): `node scripts/gate.mjs docs -- pnpm test:docs` 63/63, exit 0 (`work/docs-2026-10-30T18-56-48-726Z.log`); `node scripts/v3-context.mjs verify` exit 0; `node scripts/authority.mjs check` exit 0 (77 governed documents); stamp unchanged at `auth-a70b4af4cfaa`; `pnpm exec prettier --check` on the changed files exit 0; no U+2014 in added lines. Ledger unchanged. Next: unchanged from the entry above.
