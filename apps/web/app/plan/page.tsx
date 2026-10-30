@@ -1,30 +1,23 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import { PublicShell } from '../../components/public-shell';
 import { uxSwitchOn } from '../../lib/ux-switches';
+import { FormMain } from './form-main';
 import { Intake } from './intake';
+import { PlanHead } from './plan-head';
 export const metadata = {
   title: 'Plan a mission | Corridra',
   robots: { index: false, follow: true },
 };
 export default function Page() {
   return (
-    <PublicShell className="ux-intake-page">
+    <FormMain className="ux-intake-page">
       <section className="guide-plan">
-        <header className="guide-plan-head">
-          <p className="label">PLAN A MISSION</p>
-          <h1>What do you want to do?</h1>
-          <p className="guide-lead">
-            {realUseEnabled()
-              ? 'Start with your objective. Create an account at the final step to keep your request and replies private.'
-              : 'A short request is enough. No account needed.'}
-          </p>
-        </header>
+        <PlanHead realMode={realUseEnabled()} />
         <Intake
           realMode={realUseEnabled()}
           codeSignIn={process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
           firstQuestion={uxSwitchOn('CORRIDRA_UX_FIRSTQ')}
         />
       </section>
-    </PublicShell>
+    </FormMain>
   );
 }

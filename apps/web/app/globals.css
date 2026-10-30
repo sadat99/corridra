@@ -1528,7 +1528,7 @@ summary:hover {
 .ux-draft-notice {
   padding: 16px;
   margin: 18px 0;
-  border-left: 3px solid var(--action);
+  border-inline-start: 3px solid var(--action);
   background: var(--surface-subtle);
 }
 .ux-error-summary {
@@ -4417,8 +4417,8 @@ th {
   content: '';
   position: absolute;
   top: 1rem;
-  left: 2.5rem;
-  right: 0.5rem;
+  inset-inline-start: 2.5rem;
+  inset-inline-end: 0.5rem;
   height: 2px;
   background: var(--line);
 }
@@ -4515,7 +4515,7 @@ th {
   margin-top: var(--space-2);
 }
 .guide-actions .primary-link {
-  margin-left: auto;
+  margin-inline-start: auto;
   min-width: 10rem;
   min-height: var(--guided-touch-large);
 }
@@ -4685,7 +4685,7 @@ th {
     white-space: nowrap;
   }
   .guide-journey-bar li::after {
-    left: 2.5rem;
+    inset-inline-start: 2.5rem;
   }
   .guide-options,
   .guide-options-row {
@@ -4698,7 +4698,7 @@ th {
   .guide-actions .primary-link,
   .guide-actions .button-secondary {
     width: 100%;
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

@@ -8,6 +8,10 @@ import { JourneyBar } from '../../components/journey-bar';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
 import { rememberVerifyEmail } from '../../components/verify-email-handoff';
+import { fill } from '../../lib/i18n/fill';
+import { formEn, type FormKey } from '../../lib/i18n/form-words/en';
+import { issueSeparator } from '../../lib/i18n/form-words/messages';
+import { useFormWords } from './form-words';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -91,13 +95,59 @@ const groups = [
   ['outcomes', 'notes'],
   ['name', 'company', 'email', 'acknowledged'],
 ];
-const titles = [
-  'What are you trying to achieve?',
-  'Where?',
-  'What are you offering or looking for?',
-  'What would make this worthwhile?',
-  'Where should we respond?',
+const titles: readonly FormKey[] = [
+  'form.step.titleGoal',
+  'form.step.titleWhere',
+  'form.step.titleDetails',
+  'form.step.titleResults',
+  'form.step.titleContact',
 ];
+const stepWords: readonly FormKey[] = [
+  'form.step.goal',
+  'form.step.where',
+  'form.step.details',
+  'form.step.results',
+  'form.step.contact',
+];
+// The words shown for stored values. The values themselves, and so the request, are the same in every language;
+// a new domain option fails the type check here until it has words.
+const objectiveWords = {
+  'Sell in a new market': 'form.goal.sell',
+  'Find customers or distributors': 'form.goal.customers',
+  'Source suppliers': 'form.goal.source',
+  'Make an upcoming business trip more productive': 'form.goal.trip',
+  'Run a multi-company mission': 'form.goal.mission',
+  'Something else': 'form.goal.other',
+} satisfies Record<(typeof objectiveOptions)[number], FormKey>;
+const outcomeWords = {
+  'Relevant meetings': 'form.results.meetings',
+  'Buyers / customers': 'form.results.buyers',
+  'Distributor conversations': 'form.results.distributors',
+  'Supplier visits': 'form.results.supplierVisits',
+  'Market validation': 'form.results.validation',
+  'Local commercial intelligence': 'form.results.intelligence',
+  'Something else': 'form.results.other',
+} satisfies Record<(typeof outcomeOptions)[number], FormKey>;
+const attendanceOptions = ['Yes', 'No', 'Not decided'] as const;
+const attendanceWords = {
+  Yes: 'form.where.yes',
+  No: 'form.where.no',
+  'Not decided': 'form.where.undecided',
+} satisfies Record<(typeof attendanceOptions)[number], FormKey>;
+const jobWord = (key: (typeof missionCatalogue)[number]['key']): FormKey => `form.job.${key}`;
+// The receipt's sentences on who can read it and how long it lasts stay English (Lane 11).
+const receiptReaders = 'Anyone with this code can read the mission status and replies.';
+const receiptExpiry = 'It expires after 30 days.';
+/**
+ * The direction of a field's text when the form is translated: addresses, the timezone and amounts read left to
+ * right, typed text keeps the direction it is written in, and dates keep the browser's own.
+ */
+function inputDirection(name: string, type: string) {
+  if (type === 'date') return undefined;
+  if (type === 'email' || type === 'url' || name === 'timezone' || name === 'budgetAmount')
+    return 'ltr';
+  return 'auto';
+}
 function saveDraft(draft: Draft, step: number, key: string, storageKey: string) {
   sessionStorage.setItem(
     storageKey,
@@ -115,10 +165,9 @@ async function claimSavedRequest(storageKey: string, navigate: (path: string) =>
     body: '{}',
   });
   const body = await response.json();
-  if (!response.ok)
-    throw new Error(body.error ?? 'Your request could not be submitted. Try again.');
+  if (!response.ok) throw new Error(body.error ?? formEn['form.message.claimFailed']);
   if (typeof body.id !== 'string' || !/^[a-f0-9-]{36}$/.test(body.id))
-    throw new Error('The request response could not be read. Open your account to check it.');
+    throw new Error(formEn['form.message.claimUnreadable']);
   try {
     sessionStorage.removeItem(storageKey);
   } catch {
@@ -146,7 +195,7 @@ function RegisteredIntake(props: IntakeProps) {
   return <IntakeForm {...props} navigate={router.replace} />;
 }
 function missingNavigation() {
-  throw new Error('Request navigation is unavailable. Open your account to continue.');
+  throw new Error(formEn['form.message.navigationMissing']);
 }
 function IntakeForm({
   privateSubmission,
@@ -156,6 +205,18 @@ function IntakeForm({
   navigate = missingNavigation,
 }: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
+  const {
+    translated,
+    tag,
+    dir,
+    say,
+    sayWith,
+    english,
+    englishIsland,
+    withEnglish,
+    showMessage,
+    englishProps,
+  } = useFormWords();
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
     (realMode ? 'corridra-real-mission-draft' : 'corridra-mission-draft');
@@ -194,8 +255,8 @@ function IntakeForm({
         } catch {
           setDraftNotice(
             realMode
-              ? 'A saved draft could not be restored. Keep a copy of your request before leaving this tab.'
-              : 'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
+              ? formEn['form.message.draftLostReal']
+              : formEn['form.message.draftLostSample'],
           );
         }
         if (
@@ -206,15 +267,13 @@ function IntakeForm({
           Array.isArray(saved.draft.outcomes)
         ) {
           restored = true;
-          setDraftNotice(
-            'A draft from this tab was resumed. Your saved choices take precedence over link suggestions.',
-          );
+          setDraftNotice(formEn['form.message.draftResumed']);
           key.current = saved.key;
           setDraft({ ...empty, ...saved.draft });
           setStep(saved.version === 2 ? Math.max(0, Math.min(4, Number(saved.step) || 0)) : 0);
         }
         if (saved && !restored)
-          setDraftNotice('The earlier draft could not be resumed. Drafts expire after 24 hours.');
+          setDraftNotice(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`);
         const query = new URLSearchParams(window.location.search);
         const suggestedJob = query.get('job');
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
@@ -253,9 +312,7 @@ function IntakeForm({
         }
       } catch {
         setDraftNotice(
-          realMode
-            ? 'A saved draft could not be restored. Keep a copy of your request before leaving this tab.'
-            : 'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
+          realMode ? formEn['form.message.draftLostReal'] : formEn['form.message.draftLostSample'],
         );
       } finally {
         setReady(true);
@@ -272,9 +329,8 @@ function IntakeForm({
     ])
       .then(async ([identity, response]) => {
         if (!active) return;
-        if (identity.error)
-          throw new Error('Account status could not be checked. Sign in or try again.');
-        if (!response.ok) throw new Error('Saved request status could not be checked. Try again.');
+        if (identity.error) throw new Error(formEn['form.message.accountUnchecked']);
+        if (!response.ok) throw new Error(formEn['form.message.pendingUnchecked']);
         const user = identity.data?.user;
         setAccount(user ? { email: user.email, emailVerified: user.emailVerified } : null);
         if (user)
@@ -287,18 +343,15 @@ function IntakeForm({
         if (!active) return;
         setPendingReady(pending.pending === true);
         setIntakeAvailable(pending.available !== false);
-        if (pending.available === false)
-          setMessage(
-            'New requests are paused. Existing requests remain available in your account.',
-          );
+        if (pending.available === false) setMessage(formEn['form.message.paused']);
         if (pending.pending === true && user?.emailVerified) {
-          setMessage('Opening your private request…');
+          setMessage(formEn['form.message.opening']);
           await claimSavedRequest(draftStorageKey, navigate);
         }
       })
       .catch((error) => {
         if (active)
-          setMessage(error instanceof Error ? error.message : 'Your account could not be checked.');
+          setMessage(error instanceof Error ? error.message : formEn['form.message.accountFailed']);
       })
       .finally(() => {
         if (active) setAccountChecked(true);
@@ -318,8 +371,8 @@ function IntakeForm({
     } catch {
       setDraftNotice(
         realMode
-          ? 'This browser could not save the draft. Keep this tab open and copy your request before leaving.'
-          : 'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
+          ? formEn['form.message.draftUnsavedReal']
+          : formEn['form.message.draftUnsavedSample'],
       );
     }
   }
@@ -417,16 +470,16 @@ function IntakeForm({
         if (fields.includes(f)) next[f] = [e.message];
       }
     if (step === 0 || fields.length === groups.flat().length) {
-      if (!draft.job) next.job = ['Choose the commercial job'];
+      if (!draft.job) next.job = [formEn['form.message.chooseJob']];
     }
     if (step === 1 || fields.length === groups.flat().length) {
       if (!countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number]))
-        next.companyCountry = ['Choose the company country'];
+        next.companyCountry = [formEn['form.message.chooseCountry']];
       if (
         draft.marketCode !== 'EU' &&
         !countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
       )
-        next.marketCode = ['Choose the target market'];
+        next.marketCode = [formEn['form.message.chooseMarket']];
     }
     if (step === 2 || fields.length === groups.flat().length) {
       let structured;
@@ -434,11 +487,11 @@ function IntakeForm({
         structured = intakeExperience.safeParse(experience());
       } catch (err) {
         next.requirements = [
-          err instanceof Error ? err.message : 'Check the original amount and currency.',
+          err instanceof Error ? err.message : formEn['form.message.checkAmount'],
         ];
       }
       if (structured && !structured.success)
-        next.requirements = [structured.error.issues.map((e) => e.message).join('. ')];
+        next.requirements = [structured.error.issues.map((e) => e.message).join(issueSeparator)];
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -502,15 +555,11 @@ function IntakeForm({
     persist(draft, step);
     try {
       if (realMode && !privateSubmission) {
-        if (!intakeAvailable)
-          throw new Error('New requests are paused. Open your account for existing work.');
-        if (!accountChecked) throw new Error('Wait for your account status to finish loading.');
+        if (!intakeAvailable) throw new Error(formEn['form.message.pausedSubmit']);
+        if (!accountChecked) throw new Error(formEn['form.message.accountLoading']);
         if (account && draft.email.trim().toLowerCase() !== account.email.trim().toLowerCase())
-          throw new Error(
-            'Use the email address on your signed-in account, or sign out to use a different account.',
-          );
-        if (!account && password.length < 14)
-          throw new Error('Choose an account password with at least 14 characters.');
+          throw new Error(formEn['form.message.emailMismatch']);
+        if (!account && password.length < 14) throw new Error(formEn['form.message.passwordShort']);
         const response = await fetch('/api/intake/pending', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -520,10 +569,7 @@ function IntakeForm({
           }),
         });
         const saved = await response.json();
-        if (!response.ok)
-          throw new Error(
-            saved.error ?? 'Your request could not be saved. Your input is still here.',
-          );
+        if (!response.ok) throw new Error(saved.error ?? formEn['form.message.notSaved']);
         setPendingReady(true);
         submitted.current = true;
         if (account?.emailVerified) {
@@ -539,7 +585,7 @@ function IntakeForm({
             });
             if (result.error)
               throw new Error(
-                'Your request is saved for 24 hours. Your account could not be created. Try signing in or creating your account below.',
+                `Your request is saved for 24 hours. ${formEn['form.message.accountNotCreated']}`,
               );
             rememberVerifyEmail(draft.email);
           } finally {
@@ -577,8 +623,8 @@ function IntakeForm({
       setFinished(true);
       setMessage(
         data.duplicate
-          ? 'This invented example request has already been recorded.'
-          : 'Your invented example request has been recorded. No real customer mission has been accepted.',
+          ? formEn['form.message.duplicate']
+          : `${formEn['form.message.recorded']} No real customer mission has been accepted.`,
       );
       if (data.receipt) {
         setReceipt(data.receipt);
@@ -590,13 +636,10 @@ function IntakeForm({
         } catch {
           /* The draft only expires sooner when tab storage is blocked. */
         }
-        if (place === 'none')
-          setDraftNotice(
-            'The request was recorded, but this browser could not save its receipt. Copy the private code before leaving.',
-          );
+        if (place === 'none') setDraftNotice(formEn['form.message.receiptUnsaved']);
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Unable to save. Your input is still here.');
+      setMessage(e instanceof Error ? e.message : formEn['form.message.unableToSave']);
     } finally {
       setBusy(false);
     }
@@ -604,9 +647,9 @@ function IntakeForm({
   async function copyReceipt() {
     try {
       await navigator.clipboard.writeText(receipt);
-      setMessage('Private receipt code copied.');
+      setMessage(formEn['form.message.copied']);
     } catch {
-      setMessage('Could not copy the code. Select it and copy it before leaving this page.');
+      setMessage(formEn['form.message.copyFailed']);
     }
   }
   async function check(e: FormEvent) {
@@ -625,7 +668,7 @@ function IntakeForm({
       if (!r.ok) throw new Error(data.error);
       setResult(data);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Unable to check receipt');
+      setMessage(e instanceof Error ? e.message : formEn['form.message.unableToCheck']);
     } finally {
       setBusy(false);
     }
@@ -636,6 +679,7 @@ function IntakeForm({
       <input
         id={`brief-${name}`}
         type={type}
+        dir={translated ? inputDirection(name, type) : undefined}
         value={String(draft[name])}
         onChange={(e) => change(name, e.target.value)}
         aria-invalid={!!errors[name]?.length}
@@ -643,7 +687,7 @@ function IntakeForm({
       />
       {!!errors[name]?.length && (
         <span id={`${name}-error`} className="field-error">
-          {errors[name][0]}
+          {showMessage(errors[name][0])}
         </span>
       )}
     </div>
@@ -651,36 +695,50 @@ function IntakeForm({
   const error = (name: string) =>
     errors[name]?.length ? (
       <p role="alert" className="field-error" id={`${name}-error`}>
-        {errors[name][0]}
+        {showMessage(errors[name][0])}
       </p>
     ) : null;
+  const regionNames = new Intl.DisplayNames([tag], { type: 'region' });
+  const chosenJob = missionCatalogue.find((item) => item.key === draft.job);
   return (
     <div className="ux-intake-layout">
       <div className="guide-plan-top">
         {realMode ? (
           <aside className="intake-notice">
-            <span className="guide-pill">YOUR REQUEST</span>
+            <span className="guide-pill">{say('form.notice.realPill')}</span>
             <p>
-              <strong>Start with the work you need.</strong> At the final step, create an account or
-              sign in to keep your request and replies private.{' '}
-              <Link href="/privacy">Read the privacy and request notice</Link>.
+              <strong>{say('form.notice.realLead')}</strong>
+              {englishIsland(
+                ' At the final step, create an account or sign in to keep your request and replies private.',
+              )}{' '}
+              {englishIsland(
+                <>
+                  <Link href="/privacy">Read the privacy and request notice</Link>.
+                </>,
+              )}
             </p>
+            {translated && <p>{say('form.notice.englishParts')}</p>}
           </aside>
         ) : (
           <aside className="intake-notice">
-            <span className="guide-pill">Test mode</span>
+            <span className="guide-pill">{say('form.notice.samplePill')}</span>
             <p>
-              <strong>Test intake is open. Real customer mission admission is unavailable.</strong>{' '}
-              Use invented details and an email ending in @example.invalid.{' '}
+              <strong>{say('form.notice.sampleLead')}</strong>{' '}
+              {sayWith('form.notice.sampleUse', { domain: english('@example.invalid') })}{' '}
               {privateMode
                 ? 'Sample requests stay private to this account. '
-                : 'Keep your receipt to read replies. '}
-              Email delivery is not enabled.{' '}
-              <Link href="/privacy">Read the test intake notice</Link>.
+                : `${say('form.notice.sampleReceipt')} `}
+              {say('form.notice.sampleEmail')}{' '}
+              {englishIsland(
+                <>
+                  <Link href="/privacy">Read the test intake notice</Link>.
+                </>,
+              )}
             </p>
+            {translated && <p>{say('form.notice.englishParts')}</p>}
           </aside>
         )}
-        <details lang="bn" className="guide-bn">
+        <details lang="bn" className="guide-bn" dir={dir === 'rtl' ? 'ltr' : undefined}>
           <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
           <p>
             আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
@@ -694,11 +752,11 @@ function IntakeForm({
           </p>
         </details>
         <p role="status" aria-live="polite" className="guide-status" hidden={!message}>
-          {message}
+          {showMessage(message)}
         </p>
         {draftNotice && (
           <p className="ux-draft-notice" aria-live="polite">
-            {draftNotice}
+            {showMessage(draftNotice)}
           </p>
         )}
       </div>
@@ -706,12 +764,21 @@ function IntakeForm({
         <div className="guide-plan-main">
           {realMode && pendingReady && (
             <section className="receipt-saved" aria-labelledby="pending-request-title">
-              <h2 id="pending-request-title">Finish your request.</h2>
-              <p>
-                Your request is saved privately for 24 hours while you activate your account and
-                sign in. Use this same device and browser. It is submitted to Corridra after that
-                step.
-              </p>
+              <h2 id="pending-request-title">{say('form.pending.title')}</h2>
+              {translated ? (
+                <p>
+                  {say('form.pending.sameDevice')}
+                  {englishIsland(
+                    'Your request is saved privately for 24 hours while you activate your account and sign in.',
+                  )}
+                </p>
+              ) : (
+                <p>
+                  Your request is saved privately for 24 hours while you activate your account and
+                  sign in. Use this same device and browser. It is submitted to Corridra after that
+                  step.
+                </p>
+              )}
               <div className="guide-actions">
                 {account?.emailVerified ? (
                   <button
@@ -725,31 +792,31 @@ function IntakeForm({
                         setMessage(
                           error instanceof Error
                             ? error.message
-                            : 'Your request could not be opened.',
+                            : formEn['form.message.openFailed'],
                         );
                       } finally {
                         setBusy(false);
                       }
                     }}
                   >
-                    Open your request
+                    {say('form.pending.open')}
                   </button>
                 ) : (
                   <Link
                     className="primary-link"
                     href={accountAccessPath(account ? '/verify-email' : '/signin', '/plan')}
                   >
-                    {account ? 'Activate your account' : 'Sign in and continue'}
+                    {account ? say('form.pending.activate') : say('form.pending.signIn')}
                   </Link>
                 )}
                 {!account && (
                   <Link className="text-link" href={accountAccessPath('/signup', '/plan')}>
-                    Create your account
+                    {say('form.pending.create')}
                   </Link>
                 )}
                 {!account && codeSignIn && (
                   <Link className="text-link" href={accountAccessPath('/signin', '/plan', 'code')}>
-                    Sign in with a code to see your request
+                    {say('form.pending.codeSignIn')}
                   </Link>
                 )}
                 <button
@@ -763,39 +830,39 @@ function IntakeForm({
                     persist(draft, step);
                   }}
                 >
-                  Return to the form
+                  {say('form.pending.return')}
                 </button>
               </div>
             </section>
           )}
           {!finished && !pendingReady && (
             <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
-              <p className="label">STEP {step + 1} OF 5</p>
+              <p className="label">
+                {sayWith('form.step.counter', { step: step + 1, total: String(groups.length) })}
+              </p>
               <JourneyBar
-                steps={['Goal', 'Where', 'Details', 'Results', 'Contact']}
+                steps={stepWords.map((word) => say(word))}
                 current={step}
-                label="Request steps"
+                label={say('form.step.journey')}
               />
               <progress
                 className="sr-only"
                 value={step + 1}
                 max={5}
-                aria-label="Request progress"
+                aria-label={say('form.step.progress')}
               />
               <h2 ref={heading} tabIndex={-1}>
-                {titles[step]}
+                {say(titles[step])}
               </h2>
               {Object.values(errors).some((messages) => messages.length) && (
                 <div ref={errorSummary} className="ux-error-summary" tabIndex={-1} role="alert">
-                  <strong>Check this step.</strong>
-                  <p>
-                    Review the highlighted fields before continuing. Your entries are still here.
-                  </p>
+                  <strong>{say('form.summary.title')}</strong>
+                  <p>{say('form.summary.body')}</p>
                 </div>
               )}
               {step === 0 && (
                 <fieldset>
-                  <legend className="sr-only">Mission objective</legend>
+                  <legend className="sr-only">{say('form.goal.legend')}</legend>
                   {firstQuestion ? (
                     <FirstQuestion
                       value={selectedPicture(draft.objective, draft.job)}
@@ -819,30 +886,30 @@ function IntakeForm({
                             checked={draft.objective === v}
                             onChange={() => change('objective', v)}
                           />
-                          {v}
+                          {say(objectiveWords[v])}
                         </label>
                       ))}
                     </div>
                   )}
                   {error('objective')}
                   <label className="field guide-more">
-                    Commercial job
+                    {say('form.goal.job')}
                     <select
                       value={draft.job}
                       onChange={(e) => change('job', e.target.value)}
                       required
                       aria-describedby="job-hint"
                     >
-                      <option value="">Choose the job</option>
+                      <option value="">{say('form.goal.choose')}</option>
                       {missionCatalogue.map((job) => (
                         <option key={job.key} value={job.key}>
-                          {job.label}
+                          {say(jobWord(job.key))}
                         </option>
                       ))}
                     </select>
                   </label>
                   <p id="job-hint" className="guide-hint">
-                    Choose a more exact job if you know it.
+                    {say('form.goal.hint')}
                   </p>
                   {error('job')}
                 </fieldset>
@@ -850,55 +917,53 @@ function IntakeForm({
               {step === 1 && (
                 <>
                   <label className="field">
-                    Where is the company based?
+                    {say('form.where.company')}
                     <select
                       value={draft.companyCountry}
                       onChange={(e) => change('companyCountry', e.target.value)}
                       required
                     >
-                      <option value="">Choose a country</option>
+                      <option value="">{say('form.where.chooseCountry')}</option>
                       {countryCodes.map((code) => (
                         <option key={code} value={code}>
-                          {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                          {regionNames.of(code)} ({code})
                         </option>
                       ))}
                     </select>
                   </label>
                   {error('companyCountry')}
                   <label className="field">
-                    Which market is involved?
+                    {say('form.where.market')}
                     <select
                       value={draft.marketCode}
                       onChange={(e) => change('marketCode', e.target.value)}
                       required
                     >
-                      <option value="">Choose a market</option>
-                      <option value="EU">European Union (trade bloc)</option>
+                      <option value="">{say('form.where.chooseMarket')}</option>
+                      <option value="EU">{say('form.where.eu')}</option>
                       {countryCodes.map((code) => (
                         <option key={code} value={code}>
-                          {new Intl.DisplayNames(['en'], { type: 'region' }).of(code)} ({code})
+                          {regionNames.of(code)} ({code})
                         </option>
                       ))}
                     </select>
                   </label>
                   {error('marketCode')}
                   <p className="guide-hint">
-                    Company country and target market do not define shipment or meeting location.{' '}
+                    {say('form.where.hint')}{' '}
                     {draft.companyCountry &&
                       draft.marketCode &&
                       !(
                         draft.companyCountry === 'BD' &&
                         ['CN', 'ES', 'EU'].includes(draft.marketCode)
                       ) &&
-                      (realMode
-                        ? 'Tell us what you need. Availability and scope for this direction must be agreed after review.'
-                        : 'No operating offer is announced for this direction. You can still describe an invented test mission.')}
+                      (realMode ? say('form.where.realOther') : say('form.where.sampleOther'))}
                   </p>
-                  {field('whenNeeded', 'When is the activity needed? (optional)', 'date')}
+                  {field('whenNeeded', say('form.where.when'), 'date')}
                   <fieldset>
-                    <legend>Will you be there in person?</legend>
+                    <legend>{say('form.where.attendance')}</legend>
                     <div className="guide-options guide-options-row">
-                      {['Yes', 'No', 'Not decided'].map((v) => (
+                      {attendanceOptions.map((v) => (
                         <label className="choice" key={v}>
                           <input
                             type="radio"
@@ -906,7 +971,7 @@ function IntakeForm({
                             checked={draft.attendance === v}
                             onChange={() => change('attendance', v)}
                           />
-                          {v}
+                          {say(attendanceWords[v])}
                         </label>
                       ))}
                     </div>
@@ -915,10 +980,10 @@ function IntakeForm({
                   {draft.attendance === 'Yes' && (
                     <>
                       <div className="guide-pair">
-                        {field('startDate', 'From', 'date')}
-                        {field('endDate', 'To', 'date')}
+                        {field('startDate', say('form.where.from'), 'date')}
+                        {field('endDate', say('form.where.to'), 'date')}
                       </div>
-                      {field('timezone', 'Visit timezone')}
+                      {field('timezone', say('form.where.timezone'))}
                     </>
                   )}
                 </>
@@ -926,13 +991,14 @@ function IntakeForm({
               {step === 2 && (
                 <>
                   <label className="field">
-                    Your offer or requirement
+                    {say('form.details.offer')}
                     <textarea
                       rows={6}
+                      dir={translated ? 'auto' : undefined}
                       maxLength={1000}
                       value={draft.offer}
                       onChange={(e) => change('offer', e.target.value)}
-                      placeholder="Example: We manufacture hotel towels in Bangladesh and want to meet Spanish hospitality distributors buying private-label products."
+                      placeholder={say('form.details.offerExample')}
                       aria-invalid={!!errors.offer?.length}
                       aria-describedby={
                         errors.offer?.length ? 'offer-hint offer-error' : 'offer-hint'
@@ -940,27 +1006,20 @@ function IntakeForm({
                     />
                     {error('offer')}
                   </label>
-                  <p id="offer-hint">
-                    Start with what you know. You can describe a product photo, an idea, an existing
-                    supplier or a price quote. Missing specifications can be clarified later. Image
-                    interpretation is not available here.
-                  </p>
+                  <p id="offer-hint">{say('form.details.offerHint')}</p>
                   {draft.job === 'machinery_procurement' && (
                     <>
-                      {field('technicalPurpose', 'Technical purpose (optional)')}
-                      {field('parameters', 'Key technical parameters (optional)')}
-                      {field(
-                        'preferences',
-                        'Site, integration or after-sales constraints (optional)',
-                      )}
+                      {field('technicalPurpose', say('form.details.technicalPurpose'))}
+                      {field('parameters', say('form.details.technicalParameters'))}
+                      {field('preferences', say('form.details.siteConstraints'))}
                     </>
                   )}
                   {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) && (
                     <>
-                      {field('parameters', 'Product specifications (optional)')}
-                      {field('quantity', 'Required quantity (optional)')}
-                      {field('unit', 'Quantity unit (required with quantity)')}
-                      {field('preferences', 'Supplier preferences and constraints (optional)')}
+                      {field('parameters', say('form.details.specifications'))}
+                      {field('quantity', say('form.details.quantity'))}
+                      {field('unit', say('form.details.unit'))}
+                      {field('preferences', say('form.details.supplierPreferences'))}
                     </>
                   )}
                   {[
@@ -971,64 +1030,59 @@ function IntakeForm({
                     'export_market_access',
                   ].includes(draft.job) && (
                     <>
-                      {field('parameters', 'Target buyer or distributor (optional)')}
-                      {field('preferences', 'Commercial readiness and constraints (optional)')}
+                      {field('parameters', say('form.details.targetBuyer'))}
+                      {field('preferences', say('form.details.readiness'))}
                     </>
                   )}
                   {draft.job === 'delegations' && (
                     <>
-                      {field('organiser', 'Delegation organiser (optional)')}
-                      {field(
-                        'participants',
-                        'Participating organisations and individual needs (optional)',
-                      )}
+                      {field('organiser', say('form.details.organiser'))}
+                      {field('participants', say('form.details.participants'))}
                       <p className="guide-hint">
-                        Each participant receives an independent mission. Private offers and
-                        contacts are not shared with the organiser automatically.
+                        {withEnglish(
+                          'form.details.delegationHint',
+                          'Private offers and contacts are not shared with the organiser automatically.',
+                        )}
                       </p>
                     </>
                   )}
                   {['sourcing', 'machinery_procurement'].includes(draft.job) && (
                     <details>
-                      <summary>Budget context (optional)</summary>
-                      {field('budgetAmount', 'Budget in original currency (optional)')}
+                      <summary>{say('form.budget.summary')}</summary>
+                      {field('budgetAmount', say('form.budget.amount'))}
                       <label className="field">
-                        Original currency
+                        {say('form.budget.currency')}
                         <select
                           value={draft.currency}
                           onChange={(e) => change('currency', e.target.value)}
                         >
-                          <option value="">No budget supplied</option>
+                          <option value="">{say('form.budget.none')}</option>
                           {Object.entries(currencies).map(([code, places]) => (
                             <option value={code} key={code}>
-                              {code} ({places} decimal places)
+                              {fill(say('form.budget.option'), { code, places })}
                             </option>
                           ))}
                         </select>
                       </label>
-                      {field('budgetBasis', 'Budget basis, such as total equipment budget')}
+                      {field('budgetBasis', say('form.budget.basis'))}
                       <p className="guide-hint">
-                        Enter the amount as quoted, such as CNY 12.00 or BHD 1.234. Use the selected
-                        currency’s decimal places. No currency conversion is performed.
+                        {sayWith('form.budget.hint', {
+                          cny: english('CNY 12.00'),
+                          bhd: english('BHD 1.234'),
+                        })}
                       </p>
                     </details>
                   )}
                   {error('requirements')}
-                  {field('website', 'Website or catalogue URL (optional)', 'url')}
-                  <p className="guide-hint">
-                    A public link helps. We do not open it automatically. Documents can be requested
-                    after review.
-                  </p>
+                  {field('website', say('form.details.website'), 'url')}
+                  <p className="guide-hint">{say('form.details.websiteHint')}</p>
                 </>
               )}
               {step === 3 && (
                 <>
-                  {field(
-                    'worthwhile',
-                    'What outcome would make the engagement worthwhile? (optional)',
-                  )}
+                  {field('worthwhile', say('form.results.worthwhile'))}
                   <fieldset>
-                    <legend>Desired outcomes</legend>
+                    <legend>{say('form.results.legend')}</legend>
                     <div className="guide-options">
                       {outcomeOptions.map((v) => (
                         <label className="choice" key={v}>
@@ -1044,16 +1098,17 @@ function IntakeForm({
                               )
                             }
                           />
-                          {v}
+                          {say(outcomeWords[v])}
                         </label>
                       ))}
                     </div>
                     {error('outcomes')}
                   </fieldset>
                   <label className="field">
-                    Anything specific we should know? (optional)
+                    {say('form.results.notes')}
                     <textarea
                       rows={3}
+                      dir={translated ? 'auto' : undefined}
                       maxLength={1000}
                       value={draft.notes}
                       onChange={(e) => change('notes', e.target.value)}
@@ -1066,19 +1121,15 @@ function IntakeForm({
                     />
                     {error('notes')}
                   </label>
-                  <p id="request-context-hint">
-                    Tell us where things stand and what help you need next. An existing supplier,
-                    approved specification, booked trip or active negotiation can be your starting
-                    point.
-                  </p>
+                  <p id="request-context-hint">{say('form.results.contextHint')}</p>
                 </>
               )}
               {step === 4 && (
                 <>
-                  {field('name', 'Name')}
-                  {field('company', 'Company')}
-                  {field('email', 'Work email', 'email')}
-                  <label className="choice">
+                  {field('name', say('form.contact.name'))}
+                  {field('company', say('form.contact.company'))}
+                  {field('email', say('form.contact.email'), 'email')}
+                  <label className="choice" {...englishProps}>
                     <input
                       type="checkbox"
                       checked={draft.acknowledged}
@@ -1091,9 +1142,10 @@ function IntakeForm({
                   {error('acknowledged')}
                   {realMode && !privateMode && !account && (
                     <label className="field">
-                      Create an account password
+                      {say('form.contact.password')}
                       <input
                         type="password"
+                        dir={translated ? 'ltr' : undefined}
                         autoComplete="new-password"
                         minLength={14}
                         maxLength={128}
@@ -1102,24 +1154,32 @@ function IntakeForm({
                         aria-describedby="intake-password-help"
                       />
                       <span id="intake-password-help" className="guide-hint">
-                        Use at least 14 characters. Your password goes only to the account provider.
+                        {withEnglish(
+                          'form.contact.passwordHint',
+                          'Your password goes only to the account provider.',
+                        )}
                       </span>
                     </label>
                   )}
                   {realMode && !privateMode && (
                     <p className="guide-hint">
-                      {account ? `Signed in as ${account.email}.` : 'Already have an account? '}{' '}
+                      {account
+                        ? sayWith('form.contact.signedInAs', { email: english(account.email) })
+                        : `${say('form.contact.haveAccount')} `}{' '}
                       {!account && (
                         <Link className="text-link" href={accountAccessPath('/signin', '/plan')}>
-                          Sign in and return to this request
+                          {say('form.contact.signInReturn')}
                         </Link>
                       )}
                     </p>
                   )}
                   <p className="guide-hint">
                     {realMode
-                      ? 'We review your request and propose next steps. Activate your account to submit it and read replies privately.'
-                      : 'No account needed. We review your request first, then propose next steps. Use your receipt to read replies.'}
+                      ? withEnglish(
+                          'form.contact.realHint',
+                          'Activate your account to submit it and read replies privately.',
+                        )
+                      : say('form.contact.sampleHint')}
                   </p>
                 </>
               )}
@@ -1131,7 +1191,7 @@ function IntakeForm({
                     onClick={() => move(step - 1)}
                     disabled={busy}
                   >
-                    Back
+                    {say('form.action.back')}
                   </button>
                 )}
                 <button
@@ -1146,16 +1206,16 @@ function IntakeForm({
                   }
                 >
                   {busy
-                    ? 'Saving…'
+                    ? say('form.action.saving')
                     : step === 4
                       ? realMode && !privateMode && !account
-                        ? 'Create account and continue'
-                        : 'Submit mission request'
-                      : 'Continue'}
+                        ? say('form.action.createAccount')
+                        : say('form.action.submit')
+                      : say('form.action.continue')}
                 </button>
               </div>
               <p className="guide-hint guide-draft-line">
-                Drafts stay in this tab for 24 hours.{' '}
+                {english('Drafts stay in this tab for 24 hours.')}{' '}
                 <button
                   className="text-link"
                   type="button"
@@ -1168,24 +1228,32 @@ function IntakeForm({
                     persist(empty, 0);
                   }}
                 >
-                  Clear draft
+                  {say('form.action.clearDraft')}
                 </button>
               </p>
             </form>
           )}
           {receipt && (
             <section className="receipt-panel" aria-labelledby="plan-receipt-title">
-              <p className="label">REQUEST SAVED</p>
-              <h2 id="plan-receipt-title">Keep your private receipt.</h2>
+              <p className="label">{say('form.receipt.label')}</p>
+              <h2 id="plan-receipt-title">{say('form.receipt.title')}</h2>
               <p>
-                {deviceSaved
-                  ? 'Anyone with this code can read the mission status and replies. It expires after 30 days.'
-                  : 'Anyone with this code can read the mission status and replies. Save it before closing this tab. It expires after 30 days.'}
+                {translated ? (
+                  <>
+                    {!deviceSaved && say('form.receipt.saveBeforeClosing')}
+                    {englishIsland(`${receiptReaders} ${receiptExpiry}`)}
+                  </>
+                ) : deviceSaved ? (
+                  `${receiptReaders} ${receiptExpiry}`
+                ) : (
+                  `${receiptReaders} ${say('form.receipt.saveBeforeClosing')} ${receiptExpiry}`
+                )}
               </p>
               {deviceSaved ? (
                 <p className="guide-hint">
-                  Your request is saved on this device. You do not need to copy a code. Use another
-                  device? Copy the code first.{' '}
+                  {english(
+                    'Your request is saved on this device. You do not need to copy a code. Use another device? Copy the code first.',
+                  )}{' '}
                   <button
                     type="button"
                     className="text-link"
@@ -1195,21 +1263,22 @@ function IntakeForm({
                       setForgotten(true);
                     }}
                   >
-                    Forget this request on this device
+                    {say('form.receipt.forget')}
                   </button>
                 </p>
               ) : (
                 forgotten && (
-                  <p className="guide-hint">
+                  <p className="guide-hint" {...englishProps}>
                     This device no longer remembers your request. Copy the code now if you still
                     need it.
                   </p>
                 )
               )}
               <label className="field">
-                Private receipt code
+                {say('form.receipt.code')}
                 <input
                   readOnly
+                  dir={translated ? 'ltr' : undefined}
                   value={receipt}
                   autoComplete="off"
                   spellCheck={false}
@@ -1217,7 +1286,7 @@ function IntakeForm({
                 />
               </label>
               <button type="button" className="button-secondary" onClick={copyReceipt}>
-                Copy receipt code
+                {say('form.receipt.copy')}
               </button>
             </section>
           )}
@@ -1241,16 +1310,17 @@ function IntakeForm({
                 persist(empty, 0);
               }}
             >
-              Start another request (save your receipt first)
+              {say('form.receipt.another')}
             </button>
           )}
           <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
-            <h2>{realMode ? 'Check an earlier receipt.' : 'Check a mission request.'}</h2>
+            <h2>{realMode ? say('form.check.realTitle') : say('form.check.sampleTitle')}</h2>
             <form className="operator-form" onSubmit={check}>
               <label className="field">
-                Receipt code
+                {say('form.check.code')}
                 <input
                   required
+                  dir={translated ? 'ltr' : undefined}
                   value={checkCode}
                   onChange={(e) => setCheckCode(e.target.value)}
                   autoComplete="off"
@@ -1258,30 +1328,36 @@ function IntakeForm({
                 />
               </label>
               <button className="primary-link" disabled={!ready || busy}>
-                Check status and replies
+                {say('form.check.submit')}
               </button>
             </form>
             {realMode && !privateMode && !account && codeSignIn && (
               <p className="guide-hint">
                 <Link className="text-link" href={accountAccessPath('/signin', '/account', 'code')}>
-                  Sign in with a code to see your request
+                  {say('form.pending.codeSignIn')}
                 </Link>
               </p>
             )}
             {result && (
               <div>
                 <p>
-                  Status: <strong>{result.status.replaceAll('_', ' ')}</strong>
+                  {sayWith('form.check.status', {
+                    status: <strong {...englishProps}>{result.status.replaceAll('_', ' ')}</strong>,
+                  })}
                 </p>
                 {result.replies.length ? (
                   result.replies.map((r, i) => (
                     <article className="detail-card" key={i}>
-                      <p>{r.body}</p>
-                      <time dateTime={r.createdAt}>{new Date(r.createdAt).toLocaleString()}</time>
+                      <p dir={translated ? 'auto' : undefined}>{r.body}</p>
+                      <time dateTime={r.createdAt}>
+                        {translated
+                          ? new Date(r.createdAt).toLocaleString(tag)
+                          : new Date(r.createdAt).toLocaleString()}
+                      </time>
                     </article>
                   ))
                 ) : (
-                  <p>No operator reply yet.</p>
+                  <p>{say('form.check.noReply')}</p>
                 )}
               </div>
             )}
@@ -1290,44 +1366,57 @@ function IntakeForm({
         {!finished && (
           <aside
             className="ux-brief-summary"
-            aria-label={realMode ? 'Your request' : 'Your example request'}
+            aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}
           >
-            <p className="label">{realMode ? 'YOUR REQUEST' : 'YOUR EXAMPLE REQUEST'}</p>
+            <p className="label">
+              {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
+            </p>
             <dl>
               <div>
-                <dt>Objective</dt>
-                <dd>
-                  {missionCatalogue.find((item) => item.key === draft.job)?.label ?? 'Not chosen'}
-                </dd>
+                <dt>{say('form.side.objective')}</dt>
+                <dd>{chosenJob ? say(jobWord(chosenJob.key)) : say('form.side.notChosen')}</dd>
               </div>
               <div>
-                <dt>Company country</dt>
+                <dt>{say('form.side.country')}</dt>
                 <dd>
                   {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
-                    ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.companyCountry)
-                    : 'Not chosen'}
+                    ? regionNames.of(draft.companyCountry)
+                    : say('form.side.notChosen')}
                 </dd>
               </div>
               <div>
-                <dt>Target market</dt>
+                <dt>{say('form.side.market')}</dt>
                 <dd>
                   {draft.marketCode === 'EU'
-                    ? 'European Union (trade bloc)'
+                    ? say('form.where.eu')
                     : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-                      ? new Intl.DisplayNames(['en'], { type: 'region' }).of(draft.marketCode)
-                      : 'Not chosen'}
+                      ? regionNames.of(draft.marketCode)
+                      : say('form.side.notChosen')}
                 </dd>
               </div>
               <div>
-                <dt>Original budget</dt>
+                <dt>{say('form.side.budget')}</dt>
                 <dd>
-                  {draft.budgetAmount
-                    ? `${draft.budgetAmount} ${draft.currency || '(currency not chosen)'}`
-                    : 'Not supplied'}
+                  {!draft.budgetAmount ? (
+                    say('form.side.notSupplied')
+                  ) : !translated ? (
+                    `${draft.budgetAmount} ${draft.currency || say('form.side.noCurrency')}`
+                  ) : draft.currency ? (
+                    english(`${draft.budgetAmount} ${draft.currency}`)
+                  ) : (
+                    <>
+                      {english(draft.budgetAmount)} {say('form.side.noCurrency')}
+                    </>
+                  )}
                 </dd>
               </div>
             </dl>
-            <p>Draft only. Nothing here is an offer, a quote or a promise.</p>
+            <p>
+              {withEnglish(
+                'form.side.draftOnly',
+                'Nothing here is an offer, a quote or a promise.',
+              )}
+            </p>
           </aside>
         )}
       </div>
