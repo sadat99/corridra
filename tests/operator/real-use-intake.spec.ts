@@ -18,6 +18,10 @@ import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-
 import { MissionService } from '../../packages/missions/src/index';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { CustomerRequestDetailService } from '../../packages/auth/src/customer-request-details';
+import { realNoticeVersion } from '../../packages/domain/src/missions';
+import { localeMeta, type Locale } from '../../apps/web/lib/i18n/locales';
+import { words as ar } from '../../apps/web/lib/i18n/form-words/ar';
+import { words as de } from '../../apps/web/lib/i18n/form-words/de';
 
 // The browser uses actual intake/account components, HTTP adapters, domain services
 // and restricted PostgreSQL roles. Only identity-provider transport is invented.
@@ -201,11 +205,13 @@ test.beforeAll(async () => {
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
       import{Intake}from ${JSON.stringify(resolve('apps/web/app/plan/intake.tsx'))};
+      import{LanguageProvider}from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
+      import{FormMain}from ${JSON.stringify(resolve('apps/web/app/plan/form-main.tsx'))};
       import{AccountForm}from ${JSON.stringify(resolve('apps/web/components/account-form.tsx'))};
       import{CustomerRequestDetail}from ${JSON.stringify(resolve('apps/web/app/account/requests/request-detail.tsx'))};
       const path=location.pathname;const mode=path==='/signup'?'signup':path==='/verify-email'?'verify':'signin';
       const root=createRoot(document.getElementById('fixture'));
-      if(path.startsWith('/account/requests/')){const {data}=await(await fetch('/fixture/auth/session')).json();root.render(<CustomerRequestDetail requestId={path.split('/').at(-1)} subject={data.user.id} issuer={"https://ep-real-browser-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth"}/>)}else root.render(path==='/plan'?<Intake realMode/>:<AccountForm mode={mode}/>);`,
+      if(path.startsWith('/account/requests/')){const {data}=await(await fetch('/fixture/auth/session')).json();root.render(<CustomerRequestDetail requestId={path.split('/').at(-1)} subject={data.user.id} issuer={"https://ep-real-browser-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth"}/>)}else if(path==='/plan'&&document.body.dataset.language){const all=['bn','zh','es','ar','fr','de'];root.render(<LanguageProvider offered={['en',...all].map((code)=>({code,draft:false}))}><FormMain released={all} className="ux-intake-page"><section className="guide-plan"><Intake realMode/></section></FormMain></LanguageProvider>)}else root.render(path==='/plan'?<Intake realMode/>:<AccountForm mode={mode}/>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -309,6 +315,18 @@ test.beforeAll(async () => {
         }
       }
       res.setHeader('content-type', 'text/html');
+      // A language variant of the request page, chosen by a cookie: the request page's own main region with the
+      // form released in every language, so the form can follow the chosen language. Without the cookie the
+      // document is the one every other case uses.
+      const language = req.headers.cookie?.match(
+        /(?:^|;\s*)fixture_language=([a-z]{2})(?:;|$)/,
+      )?.[1];
+      if (path === '/plan' && language) {
+        res.end(
+          `<!doctype html><html lang="en" class="${fontClass}"><head><title>Real-use local fixture</title><link rel="stylesheet" href="/fixture.css"/></head><body data-language="${language}"><div class="site-shell" id="fixture"></div><script type="module" src="/fixture.js"></script></body></html>`,
+        );
+        return;
+      }
       res.end(
         `<!doctype html><html lang="en" class="${fontClass}"><head><title>Real-use local fixture</title><link rel="stylesheet" href="/fixture.css"/></head><body><main class="ux-intake-page"><h1>${path.startsWith('/account/requests/') ? 'Your private request' : 'Plan your request'}</h1><div class="guide-plan" id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
       );
@@ -450,4 +468,122 @@ test('fixture exceptions are returned as text and cannot be interpreted as HTML'
   });
   expect(response.status()).toBe(500);
   expect(response.headers()['content-type']).toBe('text/plain; charset=utf-8');
+});
+
+// The request form in a released language (Lane 11): the same real handlers, database and account steps, with the
+// form's words in German or Arabic. The request saved and claimed is the English one.
+const formWords = { de, ar };
+async function chooseLanguage(page: Page, code: Locale) {
+  await page.context().addCookies([{ name: 'fixture_language', value: code, url: origin }]);
+  await page.addInitScript((value) => localStorage.setItem('corridra.language', value), code);
+}
+/** Fills the real request with structural selectors only, so it works in every language. */
+async function fillRequestInAnyLanguage(page: Page, email: string, password: string) {
+  const form = page.locator('form.intake-form');
+  const next = form.locator('.guide-actions .primary-link');
+  const step = async () => {
+    const before = await form.locator('h2').textContent();
+    await next.click();
+    await expect(form.locator('h2')).not.toHaveText(before ?? '');
+  };
+  await form.locator('select').first().selectOption('sourcing');
+  await step();
+  await form.locator('select').nth(0).selectOption('BD');
+  await form.locator('select').nth(1).selectOption('CN');
+  await step();
+  await form
+    .locator('textarea')
+    .first()
+    .fill('Prepare machinery supplier meetings for our factory');
+  await step();
+  await form.locator('input[type="checkbox"]').first().check();
+  await step();
+  await form.locator('#brief-name').fill('Request owner');
+  await form.locator('#brief-company').fill('Dhaka Manufacturing');
+  await form.locator('#brief-email').fill(email);
+  await form.locator('label.choice input[type="checkbox"]').check();
+  await form.locator('input[type="password"]').fill(password);
+  return next;
+}
+for (const code of ['de', 'ar'] as const)
+  test(`a real request completes in ${code}: saved for 24 hours, the account activated, and the request claimed`, async ({
+    page,
+  }) => {
+    const email = `language-${code}@business.test`,
+      password = 'Browser fixture account password';
+    await chooseLanguage(page, code);
+    await page.goto(origin + '/plan');
+    await expect(page.locator('#main')).toHaveAttribute('lang', localeMeta[code].html);
+    await expect(page.locator('#main')).toHaveAttribute('dir', localeMeta[code].dir);
+    const send = await fillRequestInAnyLanguage(page, email, password);
+    await expect(send).toHaveText(formWords[code]['form.action.createAccount']);
+    await expect(page.locator('label.choice').last()).toHaveAttribute('lang', 'en');
+    await send.click();
+    await activate(page, email, password);
+    await expect(page).toHaveURL(/\/account\/requests\/[a-f0-9-]{36}$/);
+    // The request in the account is the English one: the stored objective and market are the English values.
+    await expect(
+      page.getByRole('heading', { name: 'Source suppliers', exact: true }),
+    ).toBeVisible();
+    const rows = (
+      await owner.query(
+        "SELECT brief, notice_version FROM customer_private.pending_request WHERE brief->>'email'=$1",
+        [email],
+      )
+    ).rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].notice_version).toBe(realNoticeVersion);
+    expect(rows[0].brief).toMatchObject({ objective: 'Source suppliers', market: 'China' });
+  });
+
+test('the saved request is byte for byte the same in en, de and ar', async ({ browser }) => {
+  const email = 'language-same@business.test',
+    password = 'Browser fixture account password';
+  const sent = async (code: Locale) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      crypto.randomUUID = () => '00000000-0000-4000-8000-000000000003';
+    });
+    const bodies: string[] = [];
+    if (code === 'en')
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().endsWith('/api/intake/pending'))
+          bodies.push(request.postData() ?? '');
+      });
+    else {
+      // The English run saved the request; these runs only capture what would be sent.
+      await chooseLanguage(page, code);
+      await page.route('**/api/intake/pending', (route) => {
+        if (route.request().method() !== 'POST') return route.continue();
+        bodies.push(route.request().postData() ?? '');
+        return route.fulfill({ status: 201, json: { ok: true } });
+      });
+      await page.route('**/fixture/auth/signup', (route) =>
+        route.fulfill({ json: { data: {}, error: null } }),
+      );
+    }
+    await page.goto(origin + '/plan');
+    if (code !== 'en')
+      await expect(page.locator('#main')).toHaveAttribute('lang', localeMeta[code].html);
+    await (await fillRequestInAnyLanguage(page, email, password)).click();
+    await expect(page).toHaveURL(/\/verify-email\?returnTo=%2Fplan/);
+    await context.close();
+    expect(bodies).toHaveLength(1);
+    return bodies[0];
+  };
+  const english = await sent('en');
+  expect(JSON.parse(english).brief).toMatchObject({
+    market: 'China',
+    objective: 'Source suppliers',
+  });
+  expect(await sent('de')).toBe(english);
+  expect(await sent('ar')).toBe(english);
+  const rows = (
+    await owner.query(
+      "SELECT notice_version FROM customer_private.pending_request WHERE brief->>'email'=$1",
+      [email],
+    )
+  ).rows;
+  expect(rows).toEqual([{ notice_version: realNoticeVersion }]);
 });
