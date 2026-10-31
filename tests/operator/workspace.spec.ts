@@ -5,6 +5,7 @@ import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { clearSignInLimits } from './operator-signin';
 import { createHmac, randomUUID } from 'node:crypto';
 import { intakeTemplate } from '../../packages/delivery/src/import';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
@@ -1702,7 +1703,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   const verified = await verification;
-  const verificationResult = await verified.json();
+  // Sign-in leaves with a full page load once the code is accepted (KI-30), which takes the response
+  // body with it, so the body is read only for the failure message, when the form stays.
+  const verificationResult = verified.ok() ? {} : await verified.json();
   expect(
     verified.ok(),
     JSON.stringify({
@@ -2406,7 +2409,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
   page,
   browser,
 }) => {
-  test.setTimeout(300000);
+  test.setTimeout(420000);
   page.setDefaultTimeout(10000);
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
@@ -2855,14 +2858,16 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       const secret = await p.getByLabel('Authenticator setup key').inputValue();
       await p.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
       await p.getByRole('button', { name: 'Verify and open workspace' }).click();
+      return secret;
     }
     const contributorPage = await contributorContext.newPage();
-    await enrolled(
+    const contributorSecret = await enrolled(
       contributorPage,
       'contributor@example.invalid',
       contributorPassword,
       `/contributor?workspace=${seed.tenantId}`,
     );
+    let contributorCounter = Math.floor(Date.now() / 30000);
     await expect(
       contributorPage.getByRole('heading', { name: 'Your assigned tasks.' }),
     ).toBeVisible();
@@ -3085,6 +3090,125 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
     await expect(
       contributorPage.getByText('No current reviewed assignment is available.'),
+    ).toBeVisible();
+
+    // A refused sign-out says so in place and can be tried again.
+    const assignedTasks = contributorPage.getByRole('region', { name: 'Assigned tasks' });
+    const signOutButton = contributorPage.getByRole('button', {
+      name: 'Sign out of assigned work',
+    });
+    const signOutRoute = '**/api/operator-auth/sign-out';
+    await expect(assignedTasks).toBeVisible();
+    await contributorPage.route(signOutRoute, (route) =>
+      route.fulfill({ status: 500, json: { message: 'Synthetic sign-out refusal' } }),
+    );
+    await signOutButton.click();
+    await expect(
+      contributorPage
+        .getByRole('alert')
+        .filter({ hasText: 'Sign-out could not be completed. Try again.' }),
+    ).toBeVisible();
+    await expect(contributorPage).toHaveURL(
+      `http://127.0.0.1:3200/contributor?workspace=${seed.tenantId}`,
+    );
+    await expect(signOutButton).toBeEnabled();
+    await contributorPage.unroute(signOutRoute);
+
+    // A confirmed sign-out is a full page load to the contributor page (KI-30). The new document
+    // is held for 2 s so the button can be seen to stay disabled after the sign-out succeeded.
+    await contributorPage.route('**/contributor', async (route) => {
+      if (route.request().resourceType() === 'document')
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      await route.continue();
+    });
+    await contributorPage.evaluate(() => {
+      Object.assign(window, { beforeSignOut: true });
+      // The button as the page is replaced, kept in this tab's session storage.
+      window.addEventListener('pagehide', () => {
+        const button = Array.from(document.querySelectorAll('button')).find(
+          (candidate) => candidate.textContent === 'Sign out of assigned work',
+        );
+        sessionStorage.setItem(
+          'signOutButtonWhenLeaving',
+          button ? (button.disabled ? 'disabled' : 'enabled') : '',
+        );
+      });
+    });
+    const signedOut = contributorPage.waitForResponse(signOutRoute);
+    await signOutButton.click();
+    expect((await signedOut).ok()).toBe(true);
+    await expect(contributorPage).toHaveURL('http://127.0.0.1:3200/contributor');
+    expect(
+      await contributorPage.evaluate(() => sessionStorage.getItem('signOutButtonWhenLeaving')),
+      'still disabled when the next page replaced it',
+    ).toBe('disabled');
+    await expect(
+      contributorPage.getByRole('heading', { name: 'Your assigned tasks.' }),
+    ).toBeVisible();
+    expect(
+      await contributorPage.evaluate(() => 'beforeSignOut' in window),
+      'signed out with a new page',
+    ).toBe(false);
+    await expect(assignedTasks).toHaveCount(0);
+    await contributorPage.unroute('**/contributor');
+    expect(
+      (await contributorPage.request.get(`/api/network/tasks?workspace=${seed.tenantId}`)).status(),
+    ).toBe(401);
+    await contributorPage.goBack();
+    await expect(assignedTasks).toHaveCount(0);
+
+    // Signing in again opens the task board with nothing left from the earlier session.
+    await clearSignInLimits(local.ownerPassword);
+    await contributorPage.goto(
+      '/operator/signin?next=' + encodeURIComponent(`/contributor?workspace=${seed.tenantId}`),
+    );
+    await expect(
+      contributorPage.getByRole('heading', { name: 'Use your contributor work account' }),
+    ).toBeVisible();
+    await contributorPage.getByLabel('Email', { exact: true }).fill('contributor@example.invalid');
+    await contributorPage.getByLabel('Password', { exact: true }).fill(contributorPassword);
+    await contributorPage.getByRole('button', { name: 'Continue', exact: true }).click();
+    // A code is used once per window: wait past the window used to sign in.
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
+      .toBeGreaterThan(contributorCounter);
+    await contributorPage
+      .getByLabel('Six-digit code', { exact: true })
+      .fill(totp(contributorSecret));
+    contributorCounter = Math.floor(Date.now() / 30000);
+    await contributorPage.evaluate(() => Object.assign(window, { beforeSignIn: true }));
+    await contributorPage.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect(contributorPage).toHaveURL(
+      `http://127.0.0.1:3200/contributor?workspace=${seed.tenantId}`,
+    );
+    // Sign-in returns with a full page load (KI-30), so the task board is a new document.
+    await expect(assignedTasks).toBeVisible();
+    expect(
+      await contributorPage.evaluate(() => 'beforeSignIn' in window),
+      'returned with a new page',
+    ).toBe(false);
+    await expect(
+      contributorPage.getByText('No current reviewed assignment is available.'),
+    ).toBeVisible();
+    await expect(contributorPage.getByText('Received and saved', { exact: false })).toHaveCount(0);
+
+    // A principal with no workspace membership who returns to a workspace sees the existing denial.
+    await clearSignInLimits(local.ownerPassword);
+    await contributorPage.goto(
+      '/operator/signin?next=' + encodeURIComponent(`/operator?workspace=${seed.tenantId}`),
+    );
+    await contributorPage.getByLabel('Email', { exact: true }).fill('contributor@example.invalid');
+    await contributorPage.getByLabel('Password', { exact: true }).fill(contributorPassword);
+    await contributorPage.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
+      .toBeGreaterThan(contributorCounter);
+    await contributorPage
+      .getByLabel('Six-digit code', { exact: true })
+      .fill(totp(contributorSecret));
+    await contributorPage.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect(
+      contributorPage.getByRole('heading', { name: 'Workspace access is unavailable.' }),
     ).toBeVisible();
   } finally {
     await operatorContext.close();

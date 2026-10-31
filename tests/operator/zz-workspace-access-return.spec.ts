@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -23,14 +23,18 @@ async function returnOf(page: Page) {
   return next;
 }
 
-// Sign-in opens as a new document, so nothing from the workspace page survives into it.
+// Sign-in opens as a new document, so nothing from the workspace page survives into it. The same
+// holds for the page sign-in returns to: `ready` is what that page shows once it is open.
 async function markPage(page: Page) {
   await page.evaluate(() => Object.assign(window, { beforeSignIn: true }));
 }
-async function expectNewDocument(page: Page) {
-  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+async function expectNewDocument(
+  page: Page,
+  ready: Locator = page.getByLabel('Email', { exact: true }),
+) {
+  await expect(ready).toBeVisible();
   expect
-    .soft(await page.evaluate(() => 'beforeSignIn' in window), 'sign-in opened as a new page')
+    .soft(await page.evaluate(() => 'beforeSignIn' in window), 'opened as a new page')
     .toBe(false);
 }
 
@@ -217,8 +221,10 @@ test('Verify workspace access returns to the same workspace and section', async 
         .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
         .toBeGreaterThan(signInCounter);
       await code.fill(totp(secret));
+      await markPage(page);
       await page.getByRole('button', { name: 'Verify and open workspace' }).click();
       await expect(page).toHaveURL(origin + workspaceUrl + '#workspace-sources');
+      await expectNewDocument(page, select);
       expect(new URL(page.url()).hash).toBe('#workspace-sources');
       await expect(select).toHaveValue(tenant);
       await expect(page.locator('#workspace-sources')).toBeVisible();
@@ -347,6 +353,257 @@ test('every way into operator sign-in from the access pages is a full page load'
     await page.getByRole('link', { name, exact: true }).click();
     await expect(page).toHaveURL(origin + '/operator/signin');
     await expectNewDocument(page);
+  }
+});
+
+test('a soft entry into sign-in returns once, with a new document, to the address asked for', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(420000);
+  page.setDefaultTimeout(15000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const tenant = seed.tenantId as string;
+  const viewer = await viewerWorkspace(local.ownerPassword, seed.principalId);
+  const select = page.locator('#operator-workspace-select');
+  const code = page.getByLabel('Six-digit code', { exact: true });
+  const verify = page.getByRole('button', { name: 'Verify and open workspace' });
+  const verifyRoute = '**/api/operator-auth/two-factor/verify-totp';
+  const wrongCode = 'That code could not be verified. Try a current code.';
+  let usedCounter = 0;
+  async function open(path: string) {
+    await page.goto('about:blank');
+    await page.goto(path);
+  }
+  async function enterPassword() {
+    await clearSignInLimits(local.ownerPassword);
+    await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(seed.password);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(code).toBeVisible();
+  }
+  // A code is used once per window: wait past the window used last, then fill a current code.
+  async function fillCurrentCode() {
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [500] })
+      .toBeGreaterThan(usedCounter);
+    await code.fill(totp(secret));
+    usedCounter = Math.floor(Date.now() / 30000);
+  }
+  // Clears the session cookies and switches to `next` with the workspace select: an in-app
+  // router.replace, so the server redirect into sign-in is reached by a soft navigation.
+  async function softEntry(next: string) {
+    await context.clearCookies();
+    await markPage(page);
+    await select.selectOption(next);
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => 'beforeSignIn' in window), 'sign-in reached softly').toBe(
+      true,
+    );
+    expect(new URL(page.url()).pathname).toBe('/operator/signin');
+    expect(new URL(page.url()).searchParams.get('next')).toBe('/operator?workspace=' + next);
+  }
+  // Every request from Verify on: verify calls, document loads and soft (RSC) requests.
+  const seen: { url: URL; document: boolean; soft: boolean }[] = [];
+  let watching = false;
+  page.on('request', (request) => {
+    if (!watching) return;
+    const url = new URL(request.url());
+    seen.push({
+      url,
+      document: request.resourceType() === 'document',
+      soft: request.headers()['rsc'] === '1' || url.searchParams.has('_rsc'),
+    });
+  });
+  function watch() {
+    seen.length = 0;
+    watching = true;
+  }
+  function expectOneLoad(destination: string) {
+    watching = false;
+    const verifies = seen.filter((r) => r.url.pathname.endsWith('/two-factor/verify-totp'));
+    const documents = seen.filter(
+      (r) => r.document && r.url.pathname + r.url.search === destination,
+    );
+    const firstDocument = seen.findIndex((r) => r.document);
+    const softBefore = seen
+      .slice(0, firstDocument < 0 ? seen.length : firstDocument)
+      .filter((r) => r.soft && r.url.pathname.startsWith('/operator'));
+    expect.soft(verifies, 'one verify request').toHaveLength(1);
+    expect.soft(documents, 'one document request to the destination').toHaveLength(1);
+    expect.soft(softBefore, 'no soft navigation into the destination').toHaveLength(0);
+  }
+  async function expectSignInLeftHistory() {
+    await page.goBack().catch(() => null);
+    await expect(page.getByLabel('Email', { exact: true })).toHaveCount(0);
+    await expect(code).toHaveCount(0);
+  }
+
+  await clearSignInLimits(local.ownerPassword);
+  try {
+    await test.step('a tampered return address and an unknown # part land on the overview', async () => {
+      await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
+      await open('/operator/signin?next=' + encodeURIComponent('//evil.test') + '#unknown');
+      await enterPassword();
+      await fillCurrentCode();
+      await verify.click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe('/operator');
+      expect(new URL(page.url()).origin).toBe(origin);
+      expect(new URL(page.url()).search).toBe('');
+      expect(new URL(page.url()).hash).toBe('');
+      await expect(
+        page.getByRole('heading', { name: 'Your workspace.', exact: true }),
+      ).toBeVisible();
+    });
+
+    await test.step('a soft entry from a section returns once to that workspace, never to the old section', async () => {
+      await open('/operator?workspace=' + tenant + '#workspace-sources');
+      await expect(page.locator('#workspace-sources')).toBeVisible();
+      await select.selectOption(viewer);
+      await expect(page).toHaveURL(new RegExp('workspace=' + viewer));
+      await softEntry(tenant);
+      // The server redirect builds its return from the request, which has no # part, and the
+      // soft redirect drops the one the page had (seen at d073641). The route cached for this
+      // workspace still holds #workspace-sources, which a soft return used to bring back.
+      expect(new URL(page.url()).hash).toBe('');
+      const destination = '/operator?workspace=' + tenant;
+      await enterPassword();
+
+      // A wrong code: the exact message, focus on it, the same page and the button back.
+      await code.fill(String((Number(totp(secret)) + 500000) % 1000000).padStart(6, '0'));
+      await verify.click();
+      const alert = page.getByRole('alert').filter({ hasText: wrongCode });
+      await expect(alert).toBeVisible();
+      await expect(alert).toBeFocused();
+      await expect(verify).toBeEnabled();
+      expect(new URL(page.url()).pathname).toBe('/operator/signin');
+      expect(await page.evaluate(() => 'beforeSignIn' in window)).toBe(true);
+
+      // A verify request that fails on the network says so and can be sent again.
+      await page.route(verifyRoute, (route) => route.abort('failed'));
+      await code.fill('000000');
+      await verify.click();
+      await expect(page.getByRole('alert').filter({ hasText: 'Failed to fetch' })).toBeVisible();
+      await expect(verify).toBeEnabled();
+      expect(new URL(page.url()).pathname).toBe('/operator/signin');
+      await page.unroute(verifyRoute);
+      // A refused (rate limited) verify gives the wrong-code message.
+      await page.route(verifyRoute, (route) =>
+        route.fulfill({ status: 429, json: { message: 'Too many requests' } }),
+      );
+      await verify.click();
+      await expect(page.getByRole('alert').filter({ hasText: wrongCode })).toBeVisible();
+      await expect(verify).toBeEnabled();
+      await page.unroute(verifyRoute);
+
+      // A double click sends one request and loads the page once; the button stays busy until the
+      // new document (held for 2 s) replaces the form.
+      await page.route(
+        (url) => url.pathname === '/operator' && url.searchParams.get('workspace') === tenant,
+        async (route) => {
+          if (route.request().resourceType() === 'document')
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          await route.continue();
+        },
+      );
+      await fillCurrentCode();
+      // The button as the sign-in page is replaced, kept in this tab's session storage.
+      await page.evaluate(() =>
+        window.addEventListener('pagehide', () => {
+          const button = document.querySelector<HTMLButtonElement>('form.operator-form button');
+          sessionStorage.setItem(
+            'signInButtonWhenLeaving',
+            button ? `${button.textContent} ${button.disabled ? 'disabled' : 'enabled'}` : '',
+          );
+        }),
+      );
+      watch();
+      const verified = page.waitForResponse(verifyRoute);
+      await verify.dblclick();
+      expect((await verified).ok()).toBe(true);
+      await expect(page).toHaveURL(origin + destination);
+      expect(
+        await page.evaluate(() => sessionStorage.getItem('signInButtonWhenLeaving')),
+        'still busy when the destination replaced the form',
+      ).toBe('Checking… disabled');
+      await expectNewDocument(page, select);
+      expectOneLoad(destination);
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+      expect(new URL(page.url()).hash).toBe('');
+      await expect(select).toHaveValue(tenant);
+      // The old section is not brought back: it is neither in the address nor holding focus.
+      await expect(page.locator('#workspace-sources:focus')).toHaveCount(0);
+      await expectSignInLeftHistory();
+    });
+
+    await test.step('a soft entry with no section returns to the workspace with no # part', async () => {
+      await open('/operator?workspace=' + viewer);
+      await expect(select).toHaveValue(viewer);
+      await softEntry(tenant);
+      expect(new URL(page.url()).hash).toBe('');
+      await enterPassword();
+      await fillCurrentCode();
+      watch();
+      await markPage(page);
+      // Enter twice on the code sends one request.
+      await code.focus();
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('Enter');
+      await expect(page).toHaveURL(origin + '/operator?workspace=' + tenant);
+      await expectNewDocument(page, select);
+      expectOneLoad('/operator?workspace=' + tenant);
+      expect(new URL(page.url()).hash).toBe('');
+      await expect(select).toHaveValue(tenant);
+    });
+
+    await test.step('a soft entry from the owner page link returns to the overview', async () => {
+      // Loaded with a section first, so the route the router keeps for this page holds the # part;
+      // the owner page link is on the overview, so the # part is then cleared in place.
+      await open('/operator?workspace=' + tenant + '#workspace-sources');
+      await expect(page.locator('#workspace-sources')).toBeVisible();
+      await page.evaluate(() => {
+        window.location.hash = '';
+      });
+      await expect(page.getByText('Manage this workspace', { exact: true })).toBeVisible();
+      await context.clearCookies();
+      await markPage(page);
+      await page.getByText('Manage this workspace', { exact: true }).click();
+      await page.getByRole('link', { name: 'What is on and off', exact: true }).click();
+      await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => 'beforeSignIn' in window), 'sign-in reached softly').toBe(
+        true,
+      );
+      expect(new URL(page.url()).searchParams.get('next')).toBe('/operator');
+      await enterPassword();
+      await fillCurrentCode();
+      await verify.click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe('/operator');
+      await expectNewDocument(page, page.getByRole('heading', { name: 'Start with a mission.' }));
+      expect(new URL(page.url()).hash).toBe('');
+    });
+
+    await test.step('a viewer returning to a section their role does not allow sees the existing denial', async () => {
+      // The return address a Verify link builds for that workspace and section.
+      await context.clearCookies();
+      await open(signIn('/operator?workspace=' + viewer + '#workspace-settings'));
+      await enterPassword();
+      await fillCurrentCode();
+      await markPage(page);
+      await verify.click();
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+      ).toBeVisible();
+      expect(await page.evaluate(() => 'beforeSignIn' in window), 'opened as a new page').toBe(
+        false,
+      );
+      expect(new URL(page.url()).searchParams.get('workspace')).toBe(viewer);
+      await expect(page.locator('#workspace-settings')).not.toBeVisible();
+    });
+  } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await clearSignInLimits(local.ownerPassword);
   }
 });
 

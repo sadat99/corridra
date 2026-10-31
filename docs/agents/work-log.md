@@ -2167,3 +2167,44 @@ Records (this scribe pass, over `a498343`): this entry; `docs/V3_LEDGER.md` (sta
 Follow-ups, not started and not asked: server redirects into sign-in reached during a soft navigation (`operator-entry.tsx:43`, `owner/page.tsx:60`, `signin/page.tsx:14`, `contributor/page.tsx:72-74`; server code, needs the owner's review first); contributor sign-out (`contributor/signout.tsx:19-20`); a return address on error.tsx's "Verify operator access"; the staff billing panel on phones (words break mid-word at 320 and 390, older than this change); the `<Link>` scan's remaining blind spots (an href in a variable, spread props, an aliased import, a self-closing prop before href).
 
 Next: PR220 awaits the owner's merge command after CI and the verifier pass on the exact head. Otherwise unchanged: the owner's Pulse checks and the home page words review.
+
+## 31 October 2026: PR221, the five KI-30 follow-ups, and the PR220 merge
+
+Request (owner, chat, relayed by the conductor): "squash merge" for PR220, then "fix the follow-ups too" (the five follow-ups at the end of the PR220 entry), and "approve item 1" after he was shown the blast radius of the sign-in form change. Authority: brief stamp `auth-e3d1a5c020e0`; agent squad run (authority, product, architect, owner blast-radius review, designer, builder, verifier, two independent reviewers, refute, scribe).
+
+PR220: merged by the conductor through the GitHub API at the verified head `fd27500` as `d073641` on the owner's "squash merge". Vercel status for `d073641`: success (conductor observation; the live CSS no longer carries the `.billing-notice strong` rule).
+
+Changed (PR https://github.com/sadat99/corridra/pull/221, draft, unmerged; head `5a50fd9` on `855d350`, plus this records commit):
+
+- Item 2 (`0b0fb5d`): contributor sign-out (`apps/web/app/contributor/signout.tsx`) ends with `window.location.replace('/contributor')`, a full page load. Destination and replace history unchanged.
+- Item 3 (`ed6009f`): "Verify operator access" on the operator error page (`apps/web/app/operator/error.tsx`) carries the workspace and section shown, read after hydration through `apps/web/lib/address-store.ts` and `operatorPlaceFor` in `apps/web/lib/operator-urls.ts`. It stays a plain `<a>` built with `operatorSignInPath`; with no workspace and no section the href is the bare sign-in page.
+- Item 4 (`a0ff509`): the staff billing panel is one frame on phones (`apps/web/app/operator/operator-overview.css`, presentation only; no billing data or meaning changed). Measured heights at 320 px: card 54 to 206 px, notice text 53 to 167 px; at 390 px: 124 to 276 px and 85 to 237 px; 768, 1024 and 1440 unchanged. Evidence and measurements: `docs/design-system/evidence/billing-phone-and-error-return-2026-10-31/` (before and after).
+- Item 5 (`5ae3006`): a syntax-tree guard (`tests/integration/sign-in-navigation-guard.ts`, its test, and `tests/integration/ux-operator-urls.test.ts`). It sees a sign-in path held in a variable in the same file, `operatorSignIn*` helpers, spread props, an aliased `next/link` import, and `push` or `replace` on a router from `useRouter()`. It does not follow imported or renamed constants or helpers, paths built in pieces, wrapper components that pass `href` to `Link`, or server `redirect()`. No existing assertion was weakened.
+- Item 1 (`855d350`, owner: "approve item 1"): the sign-in form (`apps/web/app/operator/signin/signin-form.tsx`, shared by operator and contributor sign-in) leaves with `window.location.replace(destination)` once the authenticator code is accepted, instead of `router.replace` plus `router.refresh`. The form stays busy after success; the unused `useRouter` was removed. MFA order, return-address validation (server and client), error strings, rate limits, recovery codes, the contributor return and the four server redirects are byte-identical. Rollback: revert the one commit.
+- `5a50fd9`: comment corrections only, in the guard and the phone frame CSS.
+- Tests: `tests/operator/workspace.spec.ts`, `z-startup-recovery.spec.ts`, `zz-billing-phone.spec.ts` (new), `zz-workspace-access-return.spec.ts` (including "a soft entry into sign-in returns once, with a new document, to the address asked for").
+
+Old code shown failing (local receipts under `work/`, not committed; named for `d073641`, receipt head field `68984d1`): `work/op-before-d073641-2026-10-31T13-51-00-745Z.log` exit 1, 6 failed, 3 passed; `work/op-before2-d073641-2026-10-31T13-58-28-815Z.log` exit 1, 3 failed (workspace.spec.ts:101 sign-out, the billing phone test, the soft-entry round trip).
+
+Verification (builder, focused only, by the run's efficiency rule):
+
+- Focused operator run of the four specs above: 17 passed, exit 0 (`work/op-focus-final-2026-10-31T14-42-42-668Z.log`; receipt head field `ed6009f` with 10 changed paths in the tree).
+- Unit: vitest on `ux-operator-urls.test.ts` and `sign-in-navigation-guard.test.ts`, 45 passed, exit 0 (`work/vitest-final-2026-10-31T14-44-16-208Z.log`).
+- Typecheck exit 0 (`work/typecheck-final2-2026-10-31T14-43-43-820Z.log`), lint exit 0 (`work/lint-final-2026-10-31T14-11-59-799Z.log`), build exit 0 (`work/build-final-2026-10-31T14-10-19-386Z.log`). A format check at 14:42 exited 1 (`work/format-check-2026-10-31T14-42-47-749Z.log`); the final format result belongs to the pending preflight.
+- Two independent reviews: no blocking findings.
+- Pending when this entry was written, not claimed: the verifier's local `pnpm preflight` on the final head and CI on the final head.
+
+Not done or limited:
+
+- OWNER DECISION: an authenticator code that was just accepted is accepted again for a second sign-in in the same 30-second window. This is existing server behaviour; changing it is an auth change and needs the owner's approval.
+- Follow-up: the billing plan form selects are cut off at 320 px inside the bordered "Plans on offer and plan versions" details.
+- Follow-up: the Delivery jump bar breaks words at 320 px (older than this PR).
+- If the person stops the navigation after a successful sign-in (Stop button), the form stays busy until reload. The owner approved this behaviour with item 1.
+- The plan's "focus moves to the billing notice" check did not apply: the code only scrolls the notice into view.
+- Some entries into sign-in can still be soft (the server redirects in `operator-entry.tsx`, `owner/page.tsx`, `signin/page.tsx` and `contributor/page.tsx`, and the `accountAccessPath('/signin', ...)` Links in `app/plan/intake.tsx`). They are safe because the form now always leaves with a full page load (KI-30).
+
+Preserved: the `operatorReturnTo` body (open-redirect guard); MFA order; sign-out destinations (`/operator/signin`, `/contributor`) and replace history; labels and classes; every KI-30 rule assertion. No server, API, RLS or migration change.
+
+Records (this scribe pass, over `5a50fd9`): this entry; `docs/V3_LEDGER.md` (state, the owner's 31 Oct words, the PR219/PR220 line, the PR221 line, next action; older archive links folded into a pointer to the manifest); `docs/v3/history/ledger-before-pr221-records-2026-10-31.md` (the exact 12,214-byte ledger at `d073641`, unchanged to `5a50fd9`, sha256 `fe2b0cdef98e248c86b1f9db6d34a4f1f12c932002bb960aa806ab6b50cf3728`, in the manifest and the documentation map); KI-30 in `docs/v3/KNOWN_ISSUES.md` (root fix recorded, the guard's reach stated plainly, remaining soft entries, the Stop button gap); `docs/PLAN_STATUS.md` (CURRENT rows for the squad skill, quality bar and agent briefs; a CURRENT, DATED row for this work log).
+
+Next: PR221 needs the verifier's preflight and CI on its final head, then the owner's merge command. The owner decision above stays open. Otherwise unchanged: the owner's Pulse checks and the home page words review.

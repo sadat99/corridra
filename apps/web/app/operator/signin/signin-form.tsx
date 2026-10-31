@@ -1,10 +1,8 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
 export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }) {
-  const router = useRouter();
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
   const heading = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
@@ -25,6 +23,7 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
     event.preventDefault();
     if (inFlight.current) return;
     inFlight.current = true;
+    let leaving = false;
     setBusy(true);
     setMessage('');
     try {
@@ -56,14 +55,18 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
           returnTo.startsWith('/operator') && !returnTo.includes('#')
             ? operatorReturnTo(returnTo + window.location.hash)
             : operatorReturnTo(returnTo);
-        router.replace(destination);
-        router.refresh();
+        // A full page load, so no route cached before sign-in brings back an old or doubled `#`
+        // (KI-30). The form stays busy until the page is replaced.
+        leaving = true;
+        window.location.replace(destination);
       }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Sign-in failed');
     } finally {
-      inFlight.current = false;
-      setBusy(false);
+      if (!leaving) {
+        inFlight.current = false;
+        setBusy(false);
+      }
     }
   }
   const contributor = returnTo.startsWith('/contributor?');
