@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect, type Locator, type Page, type Route } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile } from 'node:fs/promises';
 import { createHmac } from 'node:crypto';
@@ -37,6 +37,18 @@ async function clearLimits(ownerPassword: string) {
   } finally {
     await limits.end();
   }
+}
+
+// The bold lead of a result is followed by one ordinary word space and carries no margin of its own.
+async function expectLeadSpacing(notice: Locator) {
+  await expect(notice.locator('strong')).toHaveCSS('margin-right', '0px');
+  const { text, lead } = await notice.evaluate((element) => ({
+    text: element.textContent ?? '',
+    lead: element.querySelector('strong')?.textContent ?? '',
+  }));
+  expect(lead).not.toBe('');
+  expect(text).not.toMatch(/\s{2}/);
+  expect(text.slice(text.indexOf(lead) + lead.length)).toMatch(/^ \S/);
 }
 
 function panelParts(page: Page) {
@@ -120,6 +132,7 @@ test('the authenticator panel says each check result beside the field and keeps 
         await expect(panel.getByRole('alert')).toHaveText(
           'Code not accepted. Type the code your app shows now. Codes change every 30 seconds. If it still fails, check that the clock on your phone or computer is correct.',
         );
+        await expectLeadSpacing(notice);
         await expect(field).toHaveAttribute('aria-invalid', 'true');
         await expect(field).toHaveAttribute(
           'aria-describedby',
@@ -148,6 +161,7 @@ test('the authenticator panel says each check result beside the field and keeps 
         'Most protected actions accept a check from the last five minutes, so try the action again now.',
       );
       await expect(accepted.locator('time')).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T/);
+      await expectLeadSpacing(notice);
       await expect(notice).toHaveAttribute('data-tone', 'ok');
       await expect(notice).toBeFocused();
       await expect(notice).toBeInViewport();
@@ -227,6 +241,7 @@ test('the authenticator panel says each check result beside the field and keeps 
       await expect(alert).toHaveText(
         'Too many tries. This code was not checked. Wait a minute, then try again with the code your app shows then.',
       );
+      await expectLeadSpacing(notice);
       await expect(panel).not.toContainText('Code not accepted');
       await expect(panel).not.toContainText('Code accepted');
       await expect(field).not.toHaveAttribute('aria-invalid');
@@ -245,6 +260,7 @@ test('the authenticator panel says each check result beside the field and keeps 
       await expect(alert).toContainText(
         'You are signed out. The code was not checked because your sign-in has ended. Copy any unsaved entries before you leave this page.',
       );
+      await expectLeadSpacing(notice);
       await expect(panel.getByRole('link', { name: 'Sign in again' })).toHaveAttribute(
         'href',
         '/operator/signin?next=' +
@@ -260,12 +276,14 @@ test('the authenticator panel says each check result beside the field and keeps 
         'The check could not be confirmed from this page. The code was not checked. Copy any unsaved entries, then reload the page and try again with a new code.',
       );
       await expect(page.getByText('Request origin is not allowed')).toHaveCount(0);
+      await expectLeadSpacing(notice);
 
       await answerVerify((route) => route.abort('failed'));
       await submit('123456');
       await expect(panel.getByRole('status')).toHaveText(
         'The check did not finish. There was no clear answer, so the code may not have been checked. Try again with the code your app shows now.',
       );
+      await expectLeadSpacing(notice);
       await expect(notice).not.toHaveAttribute('data-tone');
       await expect(panel).not.toContainText('Code accepted');
       await expect(panel).not.toContainText('Code not accepted');
@@ -312,6 +330,7 @@ test('the authenticator panel says each check result beside the field and keeps 
         'The records on this page did not refresh, so some details may be out of date. Try the action again now.',
       );
       await expect(accepted).toContainText(/^Code accepted at /);
+      await expectLeadSpacing(notice);
       await expect(panel).not.toContainText('not accepted');
       await expect(status).not.toHaveText('Saved.');
       await page.unroute('**/api/workspace/workspace?*');

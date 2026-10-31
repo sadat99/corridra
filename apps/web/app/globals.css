@@ -9080,9 +9080,6 @@ samp {
   border-color: var(--critical);
   background: var(--critical-surface);
 }
-.billing-notice strong {
-  margin-right: var(--space-2);
-}
 .billing-plans {
   display: grid;
   gap: var(--space-3);
