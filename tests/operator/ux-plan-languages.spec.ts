@@ -23,9 +23,9 @@ import { customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
 // proved against the code as it was, not against a copy of it.
 // The baseline was PR 214 (c29f2cc) until the commercial readiness program changed the English form on purpose
 // (WS-A: plain errors on their field, required groups, country names, autocomplete, receipt hint and status
-// label; the request bodies are unchanged). It now names the WS-A commit with that form. After the program
+// label; the request bodies are unchanged). It now names the commit with that form (WS-A, then the folded receipt check for V-57). After the program
 // merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
-const baseline = '93cc41a6c3fa692e0dcd463ec780663fcce45860';
+const baseline = 'fedce51bf6ec3335c8160af8f0d691bb96144bcf';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();

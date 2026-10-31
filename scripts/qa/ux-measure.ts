@@ -95,6 +95,11 @@ export async function measurePage(page: Page, path: string, status: number): Pro
       .querySelectorAll('[data-madeup-panel], [data-deferred-register], script, style, noscript')
       .forEach((node) => node.remove());
     const visible = (el: Element) => {
+      // Content of a closed <details> keeps its layout box in Chromium (content-visibility: hidden),
+      // so the size alone would count a folded form as open; checkVisibility sees it as hidden.
+      const check = (el as Element & { checkVisibility?: (o?: object) => boolean }).checkVisibility;
+      if (check && !check.call(el, { contentVisibilityAuto: true, visibilityProperty: true }))
+        return false;
       const box = (el as HTMLElement).getBoundingClientRect();
       const style = getComputedStyle(el);
       return box.width > 0 && box.height > 0 && style.visibility !== 'hidden';
@@ -210,8 +215,16 @@ async function main() {
   try {
     for (const width of measuredWidths) {
       const page = await browser.newPage({ viewport: { width, height: width < 700 ? 844 : 900 } });
+      // tsx keeps function names with a __name helper; functions sent to the page need it defined.
+      await page.addInitScript('globalThis.__name = (fn) => fn;');
       for (const path of measuredPages) {
-        const response = await page.goto(base + path, { waitUntil: 'networkidle' });
+        // 'load', not 'networkidle': signed-out pages keep a session check polling.
+        const response = await page.goto(base + path, { waitUntil: 'load' });
+        await page
+          .locator('h1')
+          .first()
+          .waitFor({ state: 'attached', timeout: 10000 })
+          .catch(() => undefined);
         const measure = await measurePage(page, path, response?.status() ?? 0);
         results.push({ ...measure, broken: targetsBroken(measure) });
       }

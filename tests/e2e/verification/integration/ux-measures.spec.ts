@@ -9,7 +9,10 @@ import { measuredPages, measurePage, targetsBroken } from '../../../../scripts/q
 
 for (const path of measuredPages)
   test(`V-52, V-56 to V-59: ${path} meets the UX targets`, async ({ page }, info) => {
-    const response = await page.goto(path, { waitUntil: 'networkidle' });
+    // 'load', not 'networkidle': signed-out pages keep a session check polling, so the network
+    // never idles. The measure reads the rendered page once the main heading is present.
+    const response = await page.goto(path, { waitUntil: 'load' });
+    await page.locator('h1').first().waitFor({ state: 'attached', timeout: 10000 });
     const measure = await measurePage(page, path, response?.status() ?? 0);
     test.info().annotations.push({ type: 'measure', description: JSON.stringify(measure) });
     expect(targetsBroken(measure), `${path} at ${info.project.name}`).toEqual([]);
@@ -48,18 +51,33 @@ test('CQ-01: on /plan, typing in a field with errors keeps the focus in that fie
   page,
 }, info) => {
   await page.goto('/plan');
-  // Move forward without answering until the form shows its error summary (at most five steps).
-  for (let step = 0; step < 5; step++) {
-    if ((await page.locator('[role="alert"]').filter({ hasText: /\S/ }).count()) > 0) break;
-    const next = page.getByRole('button', { name: /^(Continue|Next)/ }).first();
-    if (!(await next.isVisible())) break;
-    await next.click();
-  }
-  const field = page
+  const textField = page
     .locator(
       'main input[type="text"]:visible, main input[type="email"]:visible, main textarea:visible',
     )
     .first();
+  // The first steps are choices. Answer each choice step (first option) until a step with a text
+  // field appears, then move on without filling it so that step shows its errors.
+  for (let step = 0; step < 6 && !(await textField.isVisible()); step++) {
+    for (const group of await page.locator('main [role="radiogroup"], main fieldset').all()) {
+      const radio = group.locator('input[type="radio"]:visible').first();
+      if ((await radio.count()) && !(await group.locator('input:checked').count()))
+        await radio.check();
+    }
+    for (const select of await page.locator('main select:visible').all())
+      if (!(await select.inputValue()))
+        await select.selectOption({ index: 1 }).catch(() => undefined);
+    await page
+      .getByRole('button', { name: /^(Continue|Next)/ })
+      .first()
+      .click();
+  }
+  await page
+    .getByRole('button', { name: /^(Continue|Next)/ })
+    .first()
+    .click();
+  await expect(page.locator('[role="alert"]').filter({ hasText: /\S/ }).first()).toBeVisible();
+  const field = textField;
   await expect(field).toBeVisible();
   await field.click();
   for (const key of ['a', 'b', 'c', 'd']) {

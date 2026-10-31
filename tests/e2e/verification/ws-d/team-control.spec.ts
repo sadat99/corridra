@@ -1,29 +1,13 @@
-import { createHmac } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { Pool } from '../../../../packages/db/src/index';
-import { evidence, expect, forbiddenCopy, qaSeed, test } from '../fixtures';
+import { evidence, expect, forbiddenCopy, qaSeed, signInOwner, test } from '../fixtures';
 
 // WS-D verification cases (program section 8): V-01 to V-04, V-07, V-18 to V-22 (UI part), V-45
 // (TEAM_INVITE), V-51 (runbook), D-1 (Today counts) and D-2 (owner status board). The heavy action
 // case runs once, at 1280 px, so the shared sign-in rate limit is never reached; the layout case runs
 // at every width with the saved session.
 const statePath = '.cache/qa-wsd-state.json';
-const secretPath = '.cache/qa-wsd-secret.json';
-
-function totp(secret: string, at = Date.now()) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const c of secret.replace(/=+$/, ''))
-    bits += alphabet.indexOf(c).toString(2).padStart(5, '0');
-  const key = Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(at / 30000)));
-  const mac = createHmac('sha1', key).update(counter).digest();
-  return ((mac.readUInt32BE(mac[mac.length - 1] & 15) & 0x7fffffff) % 1000000)
-    .toString()
-    .padStart(6, '0');
-}
 
 function database() {
   const local = JSON.parse(readFileSync('.cache/part03-local.json', 'utf8'));
@@ -38,25 +22,15 @@ function database() {
 }
 
 async function signIn(page: Page) {
-  const seed = qaSeed();
-  await page.goto('/operator/signin');
-  await page.getByLabel('Email', { exact: true }).fill(seed.owner.email);
-  await page.getByLabel('Password', { exact: true }).fill(seed.owner.password);
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  const enrol = page.getByRole('button', { name: 'Set up authenticator', exact: true });
-  const verify = page.getByLabel('Six-digit code', { exact: true });
-  await expect(enrol.or(verify)).toBeVisible();
-  let secret: string;
-  if (await enrol.isVisible()) {
-    await enrol.click();
-    secret = await page.getByLabel('Authenticator setup key', { exact: true }).inputValue();
-    writeFileSync(secretPath, JSON.stringify({ tenantId: seed.tenantId, secret }), { mode: 0o600 });
-  } else {
-    secret = JSON.parse(readFileSync(secretPath, 'utf8')).secret;
-  }
-  await verify.fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
-  await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+  // One owner authenticator for the whole run: the shared fixture enrols it once and keeps its key,
+  // so this spec and the WS-E shell spec never enrol it twice (the second could not sign in).
+  await signInOwner(page);
+  // With the Team shell (CORRIDRA_UX_SHELLS_V2) the sidebar replaces the old workspace heading.
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Team sections', exact: true })
+      .or(page.getByRole('heading', { name: 'Your workspace.', exact: true })),
+  ).toBeVisible();
   await page.context().storageState({ path: statePath });
 }
 

@@ -369,6 +369,9 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # /fairs is pre-rendered at build time; it is live in production (ledger, 25 Oct), so the
+          # measured public pages are built with it on.
+          CORRIDRA_UX_FAIRS: 'true'
       - name: Resilient apt settings
         run: |
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience

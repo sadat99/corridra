@@ -342,7 +342,7 @@ test('speaks the chosen language, says which language the region is in and mirro
   const region = page.locator('.move-view');
   await expect(region).toHaveAttribute('lang', 'bn');
   await expect(page.getByRole('heading', { name: 'আপনার জন্য অপেক্ষায়' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'খসড়া খুলুন' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'শেষ করে পাঠান' })).toBeVisible();
   await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
   await page.reload();
   await expect(region).toHaveAttribute('lang', 'ar');

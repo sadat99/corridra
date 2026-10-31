@@ -146,7 +146,9 @@ test('V-10 a sent request gets a receipt and reads as received, never as a draft
 test('V-49 the receipt check explains an empty code and a wrong code, with a hint', async ({
   page,
 }, info) => {
-  await page.goto('/plan');
+  // The account page and the tools list open the check at #receipt-check; on a plain /plan visit it
+  // stays folded so the page has one open form (V-57).
+  await page.goto('/plan#receipt-check');
   const code = page.getByLabel('Receipt code', { exact: true });
   await expect(page.locator('#check-hint')).toHaveText(
     'The code shown after you sent the request.',
