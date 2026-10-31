@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import {
+  madeupSupplierFields,
+  madeupSupplierGuardOn,
+  madeupSupplierMessage,
+  type SupplierDetails,
+} from '@corridra/delivery/customer-invoicing-real-staff';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerInvoicingEnabled } from '@corridra/auth/customer-invoicing';
 import {
@@ -42,7 +48,7 @@ async function handle(request: Request) {
       if (real) {
         const body =
           scope === 'pending'
-            ? await s.customerRealInvoicingStaff.pending(ctx)
+            ? withIssueRule(await s.customerRealInvoicingStaff.pending(ctx))
             : scope === 'invoices'
               ? await s.customerRealInvoicingStaff.list(ctx, {
                   ...(query.get('after') ? { after: query.get('after') } : {}),
@@ -115,3 +121,13 @@ async function handle(request: Request) {
 }
 export const GET = handle;
 export const POST = handle;
+// D3: tells the panel when issuing is refused because supplier details are made up, so it can say so up front.
+function withIssueRule(body: unknown) {
+  const supplier = (body as { supplier?: SupplierDetails } | null)?.supplier;
+  const madeup = madeupSupplierFields(supplier);
+  return {
+    ...(body as Record<string, unknown>),
+    issueBlocked: madeupSupplierGuardOn() && madeup.length > 0,
+    issueBlockedReason: madeupSupplierGuardOn() && madeup.length > 0 ? madeupSupplierMessage : null,
+  };
+}

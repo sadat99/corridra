@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { intakeTemplate } from '@corridra/delivery/import';
+import { realUseEnabled } from '@corridra/auth/customer-production';
+import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
 import { foundations } from '../../../../lib/foundations';
 import { specificationConfirmationAvailable } from '../../../../lib/specification-availability';
 import {
@@ -120,10 +122,21 @@ async function handle(request: Request) {
       return Response.json(await extended[action as keyof typeof extended](), {
         headers: deliveryHeaders,
       });
-    return Response.json(
-      await s.delivery[action as Exclude<typeof action, keyof typeof extended>](ctx, input),
-      { headers: deliveryHeaders },
+    const result = await s.delivery[action as Exclude<typeof action, keyof typeof extended>](
+      ctx,
+      input,
     );
+    // CQ-78: a live workspace's link opens without sign-in only when the owner turned public report links on.
+    // Say so with the new link instead of letting the recipient meet a refusal.
+    if (action === 'share')
+      return Response.json(
+        {
+          ...(result as Record<string, unknown>),
+          signInNeededForLiveWorkspaces: realUseEnabled() && !realReportPublicLinkEnabled(),
+        },
+        { headers: deliveryHeaders },
+      );
+    return Response.json(result, { headers: deliveryHeaders });
   } catch (error) {
     return deliveryError(error);
   }

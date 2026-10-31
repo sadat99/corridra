@@ -9,6 +9,22 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { ImportRow } from '@corridra/delivery/import';
 import { DeliveryExperience } from './delivery-experience';
+import { DateTimeInput } from '../../components/ux/date-time-input';
+import { formatDateTime } from '../../lib/ux/format';
+import { readJson, withStepUp } from '../../lib/ux/step-up';
+import { useFormDraft } from '../../lib/ux/use-form-draft';
+type MissionChoice = {
+  id: string;
+  company: string;
+  objective?: string;
+  offer?: string;
+  nextAction?: string;
+  dueAt?: string;
+};
+// The delivery API answers several shapes; each caller reads the fields it needs, as before.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Json = any;
+const weekAhead = () => new Date(Date.now() + 7 * 86400000).toISOString();
 type Publication = {
   id: string;
   mission_id: string;
@@ -77,13 +93,18 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     [result, setResult] = useState<
       { row: number; reference: string; result: string; missionId?: string }[] | null
     >(null),
-    [privateLink, setPrivateLink] = useState('');
-  const [missions, setMissions] = useState<{ id: string; company: string }[]>([]),
+    [privateLink, setPrivateLink] = useState(''),
+    [signInNeeded, setSignInNeeded] = useState(false);
+  const [missions, setMissions] = useState<MissionChoice[]>([]),
     [missionId, setMissionId] = useState(''),
     [missionOffset, setMissionOffset] = useState(0),
     [missionTotal, setMissionTotal] = useState(0),
     [meetings, setMeetings] = useState<Meeting[]>([]),
     [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const publicationDraft = useFormDraft<Record<string, string>>(
+    `delivery-publication:${tenant}:${missionId}`,
+  );
+  const chosen = missions.find((m) => m.id === missionId);
   const [selected, setSelected] = useState<string[]>([]),
     [audience, setAudience] = useState('CLIENT_PROGRESS');
   const [optionsMission, setOptionsMission] = useState('');
@@ -97,11 +118,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   useLayoutEffect(() => {
     currentScope.current = scope;
   }, [scope]);
+  // readJson throws ActionError, so a refused fresh-authenticator check can be re-verified in place (CQ-75).
   async function request(url: string, options?: RequestInit) {
-    const r = await fetch(url, options),
-      value = await r.json();
-    if (!r.ok) throw new Error(value.error ?? 'Request failed');
-    return value;
+    return readJson<Json>(await fetch(url, options));
   }
   async function load() {
     if (currentScope.current !== scope) return;
@@ -141,10 +160,21 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       .then((value) => {
         if (active) {
           setMissions(
-            value.missions.map((m: { id: string; brief: { company: string } }) => ({
-              id: m.id,
-              company: m.brief.company,
-            })),
+            value.missions.map(
+              (m: {
+                id: string;
+                next_action?: string;
+                due_at?: string;
+                brief: { company: string; objective?: string; offer?: string };
+              }) => ({
+                id: m.id,
+                company: m.brief.company,
+                objective: m.brief.objective,
+                offer: m.brief.offer,
+                nextAction: m.next_action,
+                dueAt: m.due_at,
+              }),
+            ),
           );
           setMissionTotal(value.total);
         }
@@ -181,11 +211,14 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       commandId = crypto.randomUUID();
       pending.current.set(key, commandId);
     }
-    const value = await request(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, input: { ...input, commandId } }),
-    });
+    // The same command id is reused on the retry after a re-verify, so a repeat never duplicates the record.
+    const value = await withStepUp(() =>
+      request(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, input: { ...input, commandId } }),
+      }),
+    );
     pending.current.delete(key);
     return value;
   }
@@ -280,6 +313,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         includeFinancials: input.includeFinancials === 'on',
         approved: input.approved === 'on',
       });
+      publicationDraft.clear();
     }, form);
   }
   function share(e: FormEvent<HTMLFormElement>) {
@@ -298,6 +332,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         approved: f.approved === 'on',
       });
       setPrivateLink(`${window.location.origin}${link.path}#${link.token}`);
+      setSignInNeeded(link.signInNeededForLiveWorkspaces === true);
     }, form);
   }
   function evidenceRequest(e: FormEvent<HTMLFormElement>) {
@@ -502,7 +537,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
               {preview && (
                 <>
                   <p>
-                    Preview expires {new Date(preview.expiresAt).toLocaleString()}. Ready{' '}
+                    Preview expires {formatDateTime(preview.expiresAt)}. Ready{' '}
                     {preview.counts.ready}, duplicates {preview.counts.duplicates}, empty{' '}
                     {preview.counts.empty}, errors {preview.counts.errors}. All{' '}
                     {preview.counts.total} rows are shown below.
@@ -604,39 +639,92 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
             </button>
           </p>
           {missionId && (
-            <form key={missionId} className="operator-form" onSubmit={publish}>
+            <form
+              key={`${missionId}:${publicationDraft.restored}`}
+              className="operator-form"
+              onSubmit={publish}
+              onChange={(e) => {
+                const values = Object.fromEntries(
+                  [...new FormData(e.currentTarget)].filter(
+                    ([k, v]) =>
+                      typeof v === 'string' && !['approved', 'meeting', 'opportunity'].includes(k),
+                  ),
+                ) as Record<string, string>;
+                publicationDraft.save(values);
+              }}
+            >
+              {publicationDraft.draft && (
+                <p role="note">Your unsent draft for this mission was restored.</p>
+              )}
+              <p>Filled in from the mission. Check every line before you approve it.</p>
               <label>
                 Client title
-                <input name="title" minLength={3} maxLength={160} required />
+                <input
+                  name="title"
+                  minLength={3}
+                  maxLength={160}
+                  required
+                  defaultValue={
+                    publicationDraft.draft?.title ??
+                    (chosen ? `${chosen.company}: progress update` : '')
+                  }
+                />
               </label>
               <label>
                 Approved company name
-                <input name="company" minLength={2} maxLength={160} required />
+                <input
+                  name="company"
+                  minLength={2}
+                  maxLength={160}
+                  required
+                  defaultValue={publicationDraft.draft?.company ?? chosen?.company ?? ''}
+                />
               </label>
               <label>
                 Approved objective
-                <textarea name="objective" minLength={3} maxLength={500} required />
+                <textarea
+                  name="objective"
+                  minLength={3}
+                  maxLength={500}
+                  required
+                  defaultValue={publicationDraft.draft?.objective ?? chosen?.objective ?? ''}
+                />
               </label>
               <label>
                 Approved request
-                <textarea name="brief" minLength={10} maxLength={2000} required />
+                <textarea
+                  name="brief"
+                  minLength={10}
+                  maxLength={2000}
+                  required
+                  defaultValue={publicationDraft.draft?.brief ?? chosen?.offer ?? ''}
+                />
               </label>
               <label>
                 Client next action
-                <textarea name="nextAction" minLength={3} maxLength={300} required />
+                <textarea
+                  name="nextAction"
+                  minLength={3}
+                  maxLength={300}
+                  required
+                  defaultValue={publicationDraft.draft?.nextAction ?? chosen?.nextAction ?? ''}
+                />
               </label>
-              <label>
-                Next action deadline
-                <input name="dueAt" type="datetime-local" required />
-              </label>
+              <DueField
+                label="Next action deadline"
+                name="dueAt"
+                initial={publicationDraft.draft?.dueAt || chosen?.dueAt || weekAhead()}
+              />
               <fieldset>
                 <legend>Approve itinerary meetings</legend>
                 {meetings.length === 0 && <p>No available meetings for this mission.</p>}
                 {meetings.map((m) => (
                   <div key={m.id}>
                     <label>
-                      <input type="checkbox" name="meeting" value={m.id} /> {m.title} · {m.status} ·{' '}
-                      {m.starts_at ?? 'Unscheduled'} · {m.location ?? 'Location not set'}
+                      <input type="checkbox" name="meeting" value={m.id} /> {m.title} ·{' '}
+                      {plainStatus(m.status)} ·{' '}
+                      {m.starts_at ? formatDateTime(m.starts_at) : 'Unscheduled'} ·{' '}
+                      {m.location ?? 'Location not set'}
                     </label>
                     <label>
                       Client meeting label
@@ -654,7 +742,8 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                 <legend>Approve outcome scope</legend>
                 {opportunities.map((o) => (
                   <label key={o.id}>
-                    <input type="checkbox" name="opportunity" value={o.id} /> {o.title} · {o.status}
+                    <input type="checkbox" name="opportunity" value={o.id} /> {o.title} ·{' '}
+                    {plainStatus(o.status)}
                   </label>
                 ))}
                 <label>
@@ -662,7 +751,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                   invoices and confirmed cash in the selected scope, by currency
                 </label>
               </fieldset>
-              <label>
+              <label className="check-field">
                 <input name="approved" type="checkbox" required /> I reviewed this copy and scope
                 for external delivery. It excludes private contacts, notes, margins and
                 negotiations.
@@ -715,10 +804,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                 required
               />
             </label>
-            <label>
-              Link expiry (within 30 days)
-              <input name="expiresAt" type="datetime-local" required />
-            </label>
+            <DueField label="Link expiry (within 30 days)" name="expiresAt" initial={weekAhead()} />
             {audience === 'INSTITUTION_REPORT' && (
               <label>
                 <input name="allowExport" type="checkbox" /> Allow CSV and PDF reports for this
@@ -732,7 +818,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                 already be explicitly approved in the selected participant publications.
               </label>
             )}
-            <label>
+            <label className="check-field">
               <input name="approved" type="checkbox" required /> I approve this audience, purpose
               and exact publication scope.
             </label>
@@ -750,6 +836,15 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
               <a href={privateLink} target="_blank" rel="noopener noreferrer">
                 Open approved view
               </a>
+              {signInNeeded && (
+                <span role="note">
+                  {' '}
+                  Public report links for live workspaces are switched off on the owner page, so for
+                  a live workspace the customer opens this link after signing in to their Corridra
+                  account and saving it under Saved missions. Sample workspace links open without
+                  signing in.
+                </span>
+              )}
               <label>
                 Private link
                 <input readOnly value={privateLink} onFocus={(e) => e.currentTarget.select()} />
@@ -763,7 +858,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         {data.links.map((l) => (
           <li key={l.id}>
             {l.audience.toLowerCase().replaceAll('_', ' ')} · {l.reporting_purpose} · Expires{' '}
-            {new Date(l.expires_at).toLocaleString()} · {l.revoked ? 'Revoked' : 'Issued'}
+            {formatDateTime(l.expires_at)} · {l.revoked ? 'Revoked' : 'Issued'}
             {manages && !l.revoked && (
               <button
                 data-intent="destructive"
@@ -840,10 +935,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
               Approved instructions
               <textarea name="instructions" minLength={10} maxLength={1000} required />
             </label>
-            <label>
-              Response deadline
-              <input name="dueAt" type="datetime-local" required />
-            </label>
+            <DueField label="Response deadline" name="dueAt" initial={weekAhead()} />
             <button disabled={busy}>Create request</button>
           </form>
         </details>
@@ -903,4 +995,13 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       </PhoneFold>
     </section>
   );
+}
+/** A required date and time field that shows its time zone and submits an exact instant (CQ-76, UX-04). */
+function DueField({ label, name, initial }: { label: string; name: string; initial: string }) {
+  const [value, setValue] = useState<string | null>(initial);
+  return <DateTimeInput label={label} name={name} value={value} onChange={setValue} required />;
+}
+function plainStatus(code: string) {
+  const words = code.replaceAll('_', ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

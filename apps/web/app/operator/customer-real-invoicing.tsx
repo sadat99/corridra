@@ -55,6 +55,9 @@ type Pending = {
   proposals: Proposal[];
   secondApproverRequired: boolean;
   supplier: Supplier;
+  /** D3: true while supplier details are made up in the live environment. */
+  issueBlocked?: boolean;
+  issueBlockedReason?: string | null;
 };
 type Row = {
   id: string;
@@ -298,7 +301,9 @@ function Scoped({ tenant }: { tenant: string }) {
         billToName: billName.trim(),
         billToAddress: billAddress.trim(),
       },
-      'Prepared. A second person now needs to approve it.',
+      data?.secondApproverRequired
+        ? 'Prepared. A second person now needs to approve it.'
+        : 'Prepared. Approve it to give it a number.',
     );
   }
   function approve(p: Proposal) {
@@ -358,7 +363,9 @@ function Scoped({ tenant }: { tenant: string }) {
         amountMinor: creditAmount.trim(),
         reason: reason.trim(),
       },
-      'Prepared. A second person now needs to approve the credit note.',
+      data?.secondApproverRequired
+        ? 'Prepared. A second person now needs to approve the credit note.'
+        : 'Prepared. Approve the credit note to give it a number.',
     );
   }
   if (off) return null;
@@ -369,10 +376,15 @@ function Scoped({ tenant }: { tenant: string }) {
     <section aria-label="Customer invoices" className="detail-card">
       <h3>Customer invoices</h3>
       <p>
-        Real invoices and credit notes for plan periods you activated. You prepare one; a second
-        person approves it, and only then does it get its number. Payments are records of money the
-        team received. Nothing is collected and no money moves.
+        Real invoices and credit notes for plan periods you activated. You prepare one, it is
+        approved under the rule below, and only then does it get its number. Payments are records of
+        money the team received. Nothing is collected and no money moves.
       </p>
+      {data?.issueBlocked && (
+        <p role="alert" className="ux-error-summary">
+          {data.issueBlockedReason}
+        </p>
+      )}
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={ok ? 'status' : 'alert'}>{message}</p>}
       {data === null && !fault && <p role="status">Loading invoices…</p>}

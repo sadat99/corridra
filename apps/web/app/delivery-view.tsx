@@ -207,8 +207,8 @@ function ScopedDeliveryView({
         {error && (
           <>
             <p>
-              If the report was shared with your company account, sign in and open it from your
-              account instead.
+              Have a Corridra account? Sign in, then paste this link under Saved missions to open
+              the report there.
             </p>
             {
               <button
