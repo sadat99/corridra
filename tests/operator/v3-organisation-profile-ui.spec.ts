@@ -165,7 +165,9 @@ async function mock(
 }
 async function fillRequired(page: Page, reason = 'Synthetic revised profile') {
   await page.getByLabel('Reason for this change', { exact: true }).fill(reason);
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
 }
 const saveButton = (page: Page) =>
   page.getByRole('button', { name: 'Save company profile', exact: true });
@@ -234,7 +236,9 @@ test('owner saves the exact typed profile with the expected version and account 
     .fill('Synthetic exporter of knit and denim garments');
   // CQ-28: the first save asks for no reason; the history records a fixed first-version reason.
   await expect(page.getByLabel('Reason for this change', { exact: true })).toHaveCount(0);
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
   await saveButton(page).click();
   await expect(page.getByRole('status')).toHaveText('Company profile saved.');
   expect(command).toMatchObject({
@@ -272,7 +276,9 @@ test('a short reason stays editable without sending a rejected save', async ({ p
   await page.goto(origin);
   const reason = page.getByLabel('Reason for this change', { exact: true });
   await reason.pressSequentially('ab');
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
   await saveButton(page).click();
   expect(await reason.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true);
   expect(commands).toHaveLength(0);
