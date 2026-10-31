@@ -91,15 +91,33 @@ export function madeupSupplierFields(supplier: SupplierDetails | null | undefine
     .map(([key]) => key);
   return [...new Set([...listed, ...marked])];
 }
-/** On in the live environment. Tests and sample environments keep issuing (madeup) documents as before. */
+/**
+ * On in the live production deployment with real data. Tests, previews and sample environments keep issuing
+ * (madeup) documents exactly as before, so the payment simulation and its proofs stay available.
+ */
 export function madeupSupplierGuardOn(env: NodeJS.ProcessEnv = process.env) {
-  return env.DATA_ENVIRONMENT === 'real';
+  return env.VERCEL_ENV === 'production' && env.DATA_ENVIRONMENT === 'real';
 }
 // Commands that put a new real document (invoice or credit note) in front of a customer.
 const issuing = (action: string, payload: Record<string, unknown>) =>
   action === 'prepare_invoice' ||
   action === 'prepare_credit' ||
   (action === 'decide' && payload.decision === 'approve');
+/**
+ * Throws (409, MADEUP_SUPPLIER_DETAILS) when the command would issue a real document while any supplier detail
+ * is made up. Runs in the command's own staff transaction, so the details cannot change in between.
+ */
+export async function refuseMadeupIssue(
+  db: Pick<DatabaseClient, 'query'>,
+  action: string,
+  payload: Record<string, unknown>,
+) {
+  if (!issuing(action, payload)) return;
+  const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
+    ?.result as { supplier?: SupplierDetails } | null;
+  if (madeupSupplierFields(pending?.supplier).length)
+    throw new DomainError(madeupSupplierMessage, 409, 'MADEUP_SUPPLIER_DETAILS');
+}
 
 // Staff side of real invoicing. Authority is the existing protected staff authority (owner or admin with a fresh
 // authenticator check in a real operator workspace); the database repeats the check on the live session and also
@@ -149,13 +167,7 @@ export class CustomerRealInvoicingStaffService {
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = realInvoicingStaffCommandInput.parse(input);
     return this.read(ctx, async (db) => {
-      if (this.guardMadeupSupplier() && issuing(action, payload)) {
-        // Same transaction and staff check as the command itself, so the details cannot change in between.
-        const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
-          .result as { supplier?: SupplierDetails } | null;
-        if (madeupSupplierFields(pending?.supplier).length)
-          throw new DomainError(madeupSupplierMessage, 409, 'MADEUP_SUPPLIER_DETAILS');
-      }
+      if (this.guardMadeupSupplier()) await refuseMadeupIssue(db, action, payload);
       return (
         await db.query('SELECT app.real_invoicing_staff_command($1,$2,$3) result', [
           commandId,
