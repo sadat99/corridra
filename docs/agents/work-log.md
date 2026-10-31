@@ -2096,3 +2096,34 @@ Before merge, 30 Oct: the owner merged PR211 (Dependabot dependency group) at 18
 - Live check (cloud container; `corridra.vercel.app` is blocked by the egress proxy, the canonical `c.obsidianglobal.studio` is reachable), Playwright, 19:55Z, language set through the `corridra.language` local storage key, 390 and 1440 wide: `/plan` returned 200 in en, bn, zh, es, ar, fr and de; the form label and the first question appear in each language's own words (for example "আপনি কী করতে চান?", "您想做什么？", "¿Qué desea hacer?", "ماذا تريد أن تفعل؟" with `dir=rtl`, "Que souhaitez-vous faire ?", "Was möchten Sie tun?"); the page `lang` follows the choice; no horizontal overflow; no page or console errors. Privacy and consent lines stay English by rule, and the form says so. `/privacy` shows "Updated 30 October 2026" and the words-file sentence.
 - Not checked: a complete submission in each language, and a native-speaker read.
 - Records: ledger (previous bytes archived as `docs/v3/history/ledger-before-form-release-check-2026-10-30.md`, manifest and documentation map), ADR-074 steps 4 and 5, the language review record and the register now say the form is released and live. Next: the owner's Pulse checks and the home page words review.
+
+## 31 October 2026: PR219, the operator authenticator shows its result
+
+Request (owner, chat, relayed by the conductor): "fix it". Why: on `/operator/authenticator` (workspace panel `#workspace-authenticator`) the `verifyTotp` result was written only to the off-screen shared status line, so submitting a code looked like nothing happened. Authority: brief stamp `auth-dfa0f3996570`; agent squad run (authority, architect, designer, builder, two reviewers, refute, designer audit, verifier, scribe).
+
+Changed (PR https://github.com/sadat99/corridra/pull/219, tested head `76df4b4`, squash-merged by the owner as `0221edc`; the two trees are identical, `fa9a7af`):
+
+- `apps/web/lib/authenticator-check.ts` (new): `classifyVerifyResult` returns accepted only for a session-shaped body (`token` and `user.id`, mirroring the assurance hook in `packages/auth/src/index.ts`); otherwise invalid-code, signed-out, rate-limited, origin-rejected or unknown. `authenticatorReturnTarget` offers a link back only to a section the role may open. Neither helper receives the code.
+- `apps/web/app/operator/authenticator-check.tsx` (new): the inline result notice under "Verify again", aria states, a single-request guard, the field cleared after each finished attempt, and a "Sign in again" link that returns to this workspace's authenticator section.
+- `apps/web/app/operator/workspace.tsx`: `act()` returns a boolean (other callers ignore it); the navigation state remembers the previous section; the panel body is replaced by the component.
+- Tests (new; no existing test edited): `tests/integration/authenticator-check.test.ts` (6) and `tests/operator/zz-authenticator-result.spec.ts`. Evidence: `docs/design-system/evidence/authenticator-result-2026-10-31/` (before and after, idle, accepted and wrong code at 1440, 768 and 390).
+- No server, auth, RLS, migration, API or CSS change.
+
+Reviews: two independent reviewers and a refute pass. Refute findings C1 (accept only with a session) and C2 (sign-in return keeps the workspace) were fixed in `76df4b4` and re-reviewed clean. The designer audit passed.
+
+Verification on `76df4b4` (local receipts under `work/`, not committed):
+
+- `pnpm preflight` exit 1 (`work/preflight-2026-10-31T04-58-40-343Z.log.receipt.json`). Its steps: format 0, lint 0, typecheck 0, test 0 (63 node + 7 python), ledger verify 0, gitleaks 0, changed integration 6/6 exit 0, build 0, `test:e2e` 196 passed exit 0 (`work/pf-e2e-2026-10-31T05-01-02-382Z.log.receipt.json`), `test:ux` 56 passed exit 0 on a production build (`work/pf-ux-gate-2026-10-31T05-05-47-909Z.log.receipt.json`). The only failure: affected operator tests, 739 passed and 1 failed, `tests/operator/v3-member-roles-ui.spec.ts:120` (`work/pf-operator-affected-2026-10-31T05-01-02-382Z.log.receipt.json`). Its bundle imports none of the changed files; it passed in the full operator run and in 4 of 5 isolated repeats (`work/operator-member-roles-repeat-2026-10-31T05-52-05-579Z.log.receipt.json`). Recorded as KI-29.
+- `pnpm test:operator` (full, native PostgreSQL, KI-15) 825 passed, exit 0 (`work/operator-2026-10-31T06-10-20-190Z.log.receipt.json`).
+- `pnpm test:integration` exit 1 (`work/integration-2026-10-31T05-53-58-379Z.log.receipt.json`; 1749 passed, 1 skipped): the only failures are the 4 container-only KI-15 tests (ClamAV scanner `adapters.test.ts:43`, `blob.test.ts:319`, `scan-bypass.test.ts:78`; Docker backup `foundations.test.ts:378`). CI runs them.
+- CI on `76df4b4`: green, 15 check runs, before the merge.
+
+Deployment: `main` deploys itself (ADR-050). The owner confirmed in production on 31 October that a wrong code now shows "Code not accepted." under the button. The Vercel deployment record was not visible to this session's Vercel account, so this is owner-observed, not observed here.
+
+Preserved: the section id, label "Current authenticator code", input `name="code"`, button "Verify again", the payload `{ code, trustDevice: false }`, the shared "Workspace status" line reading "Saved." after a successful check, every inbound `#workspace-authenticator` link, and the rate limits and auth server code. Decided with the defaults the conductor applied: the shared status line stays empty after a failed check (it used to say "Authenticator code was not accepted"); there is no return link from the overview or directory.
+
+Not done: no browser test as a viewer (the unit test covers every role). Candidate follow-ups, not started and not asked for by the owner: the shared `.billing-notice strong` margin gap (`apps/web/app/globals.css` about 9083-9085); the unused `operatorEntry` export (`apps/web/lib/workspace-navigation.ts` about 110); the "Verify workspace access" link (`workspace.tsx` about 352) drops the workspace on return.
+
+Records (this scribe pass, over `0221edc`): this entry; `docs/V3_LEDGER.md` (state seen, owner direction, the PR219 line, KI-29, archive link; shortened the install runs, PR215 and PR216 lines); `docs/v3/history/ledger-before-pr219-records-2026-10-31.md` (the exact 12,125-byte ledger at `0221edc`, sha256 `e125d386b0dba28f0dbe0dc3024ca2768ab19797318c33543efaa0452c11ede9`, in the manifest and the documentation map); KI-29 in `docs/v3/KNOWN_ISSUES.md`; `docs/PLAN_STATUS.md` ADR-074 row (brief drift item 2, corrected from the ledger and the register's own open work item 1: steps 1 to 5 done and the setting on). Left UNRESOLVED: the brief's tool drift item 1 (root guides and ADRs with no status line and no register row).
+
+Next: unchanged, the owner's Pulse checks and the home page words review. This run adds no new owner direction.
