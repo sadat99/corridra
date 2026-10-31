@@ -18,6 +18,10 @@ export default function Page() {
         invited. Then set your separate contributor password and enroll your authenticator. A
         customer account alone does not grant task access.
       </p>
+      <p id="contributor-password-rule">
+        <strong>Password rule:</strong> at least 14 characters and at most 128. Use a password you
+        do not use anywhere else, including your customer account.
+      </p>
       <SetupForm kind="contributor" />
       <nav className="access-options" aria-label="Contributor setup help">
         <Link className="text-link" href="/account">

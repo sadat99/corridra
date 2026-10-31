@@ -1,6 +1,16 @@
 'use client';
 import { ContributorSignout } from './signout';
-import { displayMoney, displayDate } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { formatDateTime } from '../../lib/ux/format';
+import { countryName } from '../../lib/ux/options';
+
+// D11: one date and time style. CQ-61: plain words for the task state and places, never raw codes.
+const displayDate = (value: string) => formatDateTime(value);
+const words = (code: string) => {
+  const text = code.replaceAll('_', ' ').toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+const place = (value: string) => (/^[A-Z]{2}$/.test(value) ? countryName(value) : value);
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 type Task = {
   id: string;
@@ -217,14 +227,19 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
           Existing form entries remain here.
         </p>
       )}
-      {loaded && !tasks.length && <p>No current reviewed assignment is available.</p>}
+      {loaded && !tasks.length && (
+        <p role="status">
+          <strong>You’re set up. No tasks assigned yet.</strong> When the Corridra team assigns you
+          a task, it appears here.
+        </p>
+      )}
       {tasks.map((task) => (
         <article className="detail-card ux-task-card" key={task.id}>
           <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
-          <h2>{task.disclosure.kind.replaceAll('_', ' ')}</h2>
+          <h2>{words(task.disclosure.kind)}</h2>
           <p>
-            {task.status.replaceAll('_', ' ')} · {task.disclosure.market} · work country{' '}
-            {task.disclosure.workCountry}
+            {words(task.status)} · {place(task.disclosure.market)} · work country{' '}
+            {place(task.disclosure.workCountry)}
           </p>
           <p>{task.disclosure.instructions}</p>
           <dl>

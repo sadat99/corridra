@@ -14,6 +14,15 @@ export const metadata = {
   title: 'Your assigned tasks | Corridra',
   robots: { index: false, follow: false },
 };
+/** True when a contributor identity session exists. Any failure reads as signed out (fail closed). */
+async function signedIn(s: NonNullable<ReturnType<typeof foundations>>) {
+  try {
+    await s.ready;
+    return !!(await s.provider.getSession(await headers()));
+  } catch {
+    return false;
+  }
+}
 export default async function Page({
   searchParams,
 }: {
@@ -39,6 +48,24 @@ export default async function Page({
       </WorkspaceShell>
     );
   const workspace = z.uuid().safeParse((await searchParams).workspace);
+  // CQ-60: a person who finished setup and is signed in is told where they stand, instead of being
+  // sent back to the invitation steps they already completed.
+  if (!workspace.success && (await signedIn(s)))
+    return (
+      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
+        <p role="status">
+          <strong>You’re set up. No tasks assigned yet.</strong>
+        </p>
+        <p>
+          When the Corridra team assigns you a task, you get a link that opens it here with its
+          instructions, deadline and the evidence it needs.
+        </p>
+        <Link className="text-link" href="/network">
+          How assigned work works
+        </Link>
+        <ContributorSignout />
+      </WorkspaceShell>
+    );
   if (!workspace.success)
     return (
       <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
