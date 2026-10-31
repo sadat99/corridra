@@ -1302,6 +1302,16 @@
       "path": "docs/runbooks/owner-technical-setup.md",
       "classification": "Operational runbook",
       "use": "Owner install and configuration steps moved off the owner page"
+    },
+    {
+      "path": "docs/qa/2026-10-31/RESULTS.md",
+      "classification": "Dated implementation evidence",
+      "use": "Commercial readiness program results, owner checklist and deferred register on 31 Oct 2026"
+    },
+    {
+      "path": "docs/v3/history/ledger-before-commercial-readiness-records-2026-10-31.md",
+      "classification": "Historical ledger snapshot",
+      "use": "Exact ledger before the commercial readiness records refresh; history only"
     }
   ]
 }

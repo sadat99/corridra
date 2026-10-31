@@ -125,6 +125,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/team-control/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/picker/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -181,23 +181,19 @@ describe('where the words come from', () => {
   });
 
   it('every message key is used somewhere', () => {
-    const sources = [
-      'apps/web/components/site-header.tsx',
-      'apps/web/components/site-footer-view.tsx',
-      'apps/web/components/skip-link.tsx',
-      'apps/web/components/language-switcher.tsx',
-      'apps/web/components/ways-to-work.ts',
-      'apps/web/components/mr/labels.ts',
-      'apps/web/app/account/move/move-view.tsx',
-      'apps/web/app/account/rooms/[requestId]/room-view.tsx',
-      'apps/web/components/compare-lens.tsx',
-      'apps/web/components/mr/first-question.tsx',
-      'apps/web/app/plan/intake.tsx',
-      'apps/web/app/page.tsx',
-      'apps/web/components/home-example-record.tsx',
-    ]
-      .map(read)
-      .join('\n');
+    // Every source file of the web app except the message catalogues themselves (the commercial
+    // readiness streams added keys across many components, so a fixed list would miss real uses).
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(resolve(dir), { withFileTypes: true })) {
+        const path = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) {
+          if (!['node_modules', '.next', 'i18n'].includes(entry.name)) walk(path);
+        } else if (/\.(ts|tsx)$/.test(entry.name)) files.push(path);
+      }
+    };
+    for (const dir of ['apps/web/app', 'apps/web/components', 'apps/web/lib']) walk(dir);
+    const sources = files.map(read).join('\n');
     for (const key of keys) expect(sources, key).toContain(`'${key}'`);
   });
 

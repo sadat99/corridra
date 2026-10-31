@@ -4,10 +4,10 @@ Document status: CURRENT. Every new message key added by the program is listed h
 
 | Stream | File                           | Keys | State                      |
 | ------ | ------------------------------ | ---- | -------------------------- |
-| WS-A   | `apps/web/lib/i18n/ws/ws-a.ts` | 0    | draft, needs native review |
-| WS-B   | `apps/web/lib/i18n/ws/ws-b.ts` | 0    | draft, needs native review |
+| WS-A   | `apps/web/lib/i18n/ws/ws-a.ts` | 14   | draft, needs native review |
+| WS-B   | `apps/web/lib/i18n/ws/ws-b.ts` | 5    | draft, needs native review |
 | WS-C   | `apps/web/lib/i18n/ws/ws-c.ts` | 0    | draft, needs native review |
 | WS-D   | `apps/web/lib/i18n/ws/ws-d.ts` | 0    | draft, needs native review |
-| WS-E   | `apps/web/lib/i18n/ws/ws-e.ts` | 0    | draft, needs native review |
+| WS-E   | `apps/web/lib/i18n/ws/ws-e.ts` | 31   | draft, needs native review |
 
-The lead updates the key counts in Wave 2 from the merged files.
+Counts are from the merged files (31 Oct 2026). WS-A also changed `home.*` and `form.*` words in `home-words.ts` and `form-words/`; those drafts need the same review. Team pages (WS-C, WS-D) stay English.

@@ -615,7 +615,16 @@ function TenantWorkspace({
             </>
           )}
           {shown('workspace-sources') && (
-            <SourcesPanel data={data} view={view} busy={busy} source={source} claim={claim} />
+            <SourcesPanel
+              data={data}
+              view={view}
+              busy={busy}
+              source={source}
+              claim={claim}
+              tenant={tenant}
+              act={act}
+              request={request}
+            />
           )}
           {shown('workspace-evidence') && (
             <EvidencePanel
@@ -683,6 +692,7 @@ function TenantWorkspace({
               hidden={view !== 'workspace-controls'}
             >
               <WorkspaceControls
+                tenant={tenant}
                 workspaceName={tenants.find((item) => item.id === tenant)?.name ?? 'this workspace'}
                 members={members}
                 membersLoaded={membersLoaded}
