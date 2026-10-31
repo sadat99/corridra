@@ -8,7 +8,6 @@ import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { CanonicalLink } from '../components/ux/canonical-link';
-import { languageBootScript } from '../lib/ux/language-boot';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
 import { uxSwitchOn } from '../lib/ux-switches';
@@ -97,11 +96,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     // The boot script may set lang and dir before React loads; the provider keeps them after.
     <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: languageBootScript(offered.map((item) => item.code)),
-          }}
-        />
+        {/* Blocking on purpose: it sets lang and dir before the first paint (CQ-10). Same origin, no inline HTML. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/language-boot.js" />
       </head>
       <body>
         <LanguageProvider offered={offered} pageLocales={languagesWithPages()}>
