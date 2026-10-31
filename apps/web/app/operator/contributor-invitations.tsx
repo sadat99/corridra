@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { PhoneFold } from '../../components/phone-fold';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { displayDate } from '@corridra/domain/locale';
 import {
   SubmissionFailure,
@@ -17,6 +18,16 @@ type Invitation = {
   expiresAt: string;
   state: string;
 };
+// Plain states for the person who sent the invitation (CQ-65): sent, opened, accepted.
+const stateLabels: Record<string, string> = {
+  AWAITING_SETUP: 'Sent, waiting for setup',
+  AUTHENTICATOR_REQUIRED: 'Opened, authenticator not set up yet',
+  READY_FOR_PROFILE: 'Accepted',
+  EXPIRED: 'Expired',
+  REVOKED: 'Cancelled',
+  UNAVAILABLE: 'Unavailable',
+};
+type Notification = { inbox: string; email: string };
 type Snapshot = {
   installed: boolean;
   enabled: boolean;
@@ -31,6 +42,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
   const [previous, setPrevious] = useState<(Cursor | null)[]>([]);
   const [revision, setRevision] = useState(0);
   const [message, setMessage] = useState('');
+  const sent = useActionFeedback();
   const [readError, setReadError] = useState('');
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
@@ -94,6 +106,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
     inFlight.current = true;
     setBusy(true);
     setMessage('');
+    sent.clear();
     const form = event.currentTarget,
       fields = new FormData(form);
     const input = invitationId
@@ -112,12 +125,15 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         };
     try {
       const receipt = await submit(form, 'network-invitation', input, request);
-      setMessage(
+      const notification = receipt.notification as Notification | undefined;
+      sent.success(
         invitationId
-          ? 'Pending invitation cancelled. Its history is retained.'
-          : receipt.setupRequired
-            ? 'Invitation prepared. Share the contributor setup link with the invited person. Review eligibility before assigning a task.'
-            : 'Existing work identity confirmed. Its credentials and memberships were preserved. Review eligibility before assigning a task.',
+          ? 'Pending invitation cancelled. Its history is kept.'
+          : !receipt.setupRequired
+            ? 'Existing work identity confirmed. Its password and memberships were kept. Review eligibility before assigning a task.'
+            : notification?.email === 'sent'
+              ? 'Invitation sent. The person gets an email with the setup link.'
+              : 'Invitation sent to their Corridra inbox. Email is not sent from this deployment yet, so copy the setup link below and send it to them.',
       );
       form.reset();
       setData(null);
@@ -125,7 +141,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       setPrevious([]);
       setRevision((n) => n + 1);
     } catch (error) {
-      setMessage(submissionMessage(error, 'Invitation could not be confirmed'));
+      sent.error(submissionMessage(error, 'Invitation could not be confirmed'));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -173,7 +189,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         summary={
           data && !data.installed
             ? 'Prepare an invitation draft (setup is not installed here)'
-            : 'Prepare an invitation draft (sending is paused here)'
+            : 'Prepare an invitation draft (the network is off in this workspace)'
         }
         className="ux-invitation-body"
       >
@@ -181,9 +197,9 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           <p>Contributor invitation setup awaits the protected Network installation.</p>
         )}
         <p>
-          Prepare their separate work sign-in. They verify their account email, set a contributor
-          password and enroll an authenticator. An invitation grants no team membership or task
-          assignment.
+          We send the invitation to their Corridra inbox and by email when email is switched on.
+          They verify their email, set a contributor password and set up an authenticator. An
+          invitation gives no team membership and no task.
         </p>
         <div className="ux-invitation-flow">
           <form className="operator-form" method="post" onSubmit={(event) => void save(event)}>
@@ -229,8 +245,13 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                 className="primary-link"
                 disabled={busy || !data?.enabled || !data.countries.length}
               >
-                {busy ? 'Saving…' : 'Prepare contributor invitation'}
+                {busy ? 'Sending…' : 'Send contributor invitation'}
               </button>
+              <ActionFeedback
+                scope="contributor-invite"
+                feedback={sent.feedback}
+                onClear={sent.clear}
+              />
             </fieldset>
           </form>
           <PhoneFold
@@ -247,10 +268,10 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                   </span>
                 </li>
                 <li>
-                  <strong>Share the setup link.</strong>
+                  <strong>They set up their sign-in.</strong>
                   <span>
-                    They verify that email, set a separate work password and enroll an
-                    authenticator. Corridra does not send an invitation email.
+                    The invitation reaches their inbox, and their email when email is on. If it does
+                    not arrive, copy the setup link and send it yourself.
                   </span>
                 </li>
                 <li>
@@ -325,7 +346,8 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                     <h4>{item.name}</h4>
                     <p>{item.email}</p>
                     <p>
-                      {item.state.replaceAll('_', ' ')} · Setup cutoff {displayDate(item.expiresAt)}
+                      {stateLabels[item.state] ?? item.state.replaceAll('_', ' ').toLowerCase()} ·
+                      Setup closes {displayDate(item.expiresAt)}
                     </p>
                     <button
                       className="text-link"

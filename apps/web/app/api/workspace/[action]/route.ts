@@ -5,6 +5,7 @@ import { founderActivation } from '@corridra/auth/founder-activation';
 import { queueFilters } from '@corridra/missions';
 import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
+import { notify } from '../../../../lib/notify';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
@@ -220,7 +221,28 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       'ai-run': () => s.intelligence.run(ctx, input),
       'ai-review': () => s.intelligence.review(ctx, input),
       'network-profile': () => s.network.profile(ctx, input),
-      'network-invitation': () => s.networkInvitations.command(ctx, input),
+      'network-invitation': async () => {
+        const result = await s.networkInvitations.command(ctx, input);
+        const invite = input as { action?: string; email?: string; name?: string };
+        const created = result as { principalId?: string; duplicate?: boolean };
+        // CQ-65: the invited person gets an inbox item and, when email is on, an email. A failed
+        // notification never undoes the invitation; the result says what happened.
+        if (invite.action !== 'invite' || !created.principalId || created.duplicate) return result;
+        const notification = await notify({
+          recipientAccountId: created.principalId,
+          recipientKind: 'staff',
+          recipientEmail: invite.email,
+          type: 'CONTRIBUTOR_INVITE',
+          payload: { name: invite.name ?? null, setupPath: '/contributor/setup' },
+          locale: 'en',
+          tenantId,
+          writer: { kind: 'staff', ctx },
+        });
+        return {
+          ...result,
+          notification: { inbox: notification.inbox, email: notification.email },
+        };
+      },
       'network-task': () => s.network.task(ctx, input),
       'network-event': () => s.network.event(ctx, input),
       'network-review': () => s.network.reviewSubmission(ctx, input),

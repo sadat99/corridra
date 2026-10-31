@@ -81,30 +81,46 @@ export class NetworkService {
   task(ctx: RequestContext, raw: unknown) {
     this.assertEnabled();
     const v = taskInput.parse(raw);
-    return withTenant(
-      this.pool,
-      ctx,
-      'missions.manage',
-      async (t) =>
+    return withTenant(this.pool, ctx, 'missions.manage', async (t) => {
+      // Verification needs a different human reviewer: the creator never reviews their own task.
+      if (v.reviewerId === t.actorId)
+        throw new DomainError(
+          'Choose a reviewer other than yourself. The person who creates a task cannot review it.',
+          409,
+        );
+      const routeAssignmentId =
+        v.routeAssignmentId ??
         (
           await t.db.query(
-            'INSERT INTO app.network_task(id,tenant_id,mission_id,route_assignment_id,configuration,reviewer_id,reward_rule_id,deadline,expires_at,created_by,reason) VALUES($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11) RETURNING id',
-            [
-              v.id,
-              t.tenantId,
-              v.missionId,
-              v.routeAssignmentId,
-              JSON.stringify(v),
-              v.reviewerId,
-              v.rewardRuleId,
-              v.deadline,
-              v.expiresAt,
-              t.actorId,
-              v.reason,
-            ],
+            'SELECT id FROM app.mission_route_assignment WHERE tenant_id=$1 AND mission_id=$2 ORDER BY version DESC LIMIT 1',
+            [t.tenantId, v.missionId],
           )
-        ).rows[0],
-    );
+        ).rows[0]?.id;
+      if (!routeAssignmentId)
+        throw new DomainError(
+          'This mission has no route yet. Assign a route to the mission before creating a task.',
+          409,
+        );
+      const task = { ...v, routeAssignmentId };
+      return (
+        await t.db.query(
+          'INSERT INTO app.network_task(id,tenant_id,mission_id,route_assignment_id,configuration,reviewer_id,reward_rule_id,deadline,expires_at,created_by,reason) VALUES($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11) RETURNING id',
+          [
+            task.id,
+            t.tenantId,
+            task.missionId,
+            routeAssignmentId,
+            JSON.stringify(task),
+            task.reviewerId,
+            task.rewardRuleId,
+            task.deadline,
+            task.expiresAt,
+            t.actorId,
+            task.reason,
+          ],
+        )
+      ).rows[0];
+    });
   }
   event(ctx: RequestContext, raw: unknown) {
     this.assertEnabled();
