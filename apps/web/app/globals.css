@@ -3717,7 +3717,7 @@ th {
 /* Corner dock: Listen and Help, small icon buttons in the bottom-right corner of every page */
 .corner-dock {
   position: fixed;
-  right: var(--space-5);
+  inset-inline-end: var(--space-5);
   bottom: var(--space-5);
   z-index: 50;
   display: flex;
@@ -3757,7 +3757,7 @@ th {
 .dock-button::after {
   content: attr(data-tip);
   position: absolute;
-  right: calc(100% + 0.625rem);
+  inset-inline-end: calc(100% + 0.625rem);
   padding: 0.5rem 0.875rem;
   font-size: var(--text-md);
   font-weight: 600;
@@ -9292,5 +9292,65 @@ samp {
 @media (min-width: 900px) {
   .billing-pair[data-aligned] .field > label {
     min-height: 2.8em;
+  }
+}
+
+/* Commercial readiness (WS-E, 31 Oct 2026). Skip link above every header, also on phones (CQ-20). */
+.skip-link {
+  z-index: 1000;
+}
+[dir='rtl'] .skip-link {
+  left: auto;
+  right: 16px;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Floating Help and Listen (UX-15): out of the way while reading, and in the header on phones. */
+.corner-dock {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+.corner-dock[data-hidden='true']:not(:focus-within) {
+  opacity: 0;
+  transform: translateY(1rem);
+  pointer-events: none;
+}
+.header-help {
+  display: none;
+}
+@media (max-width: 700px) {
+  .corner-dock:not(.header-help) {
+    display: none;
+  }
+  .header-help {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-inline-start: auto;
+  }
+  .header-help .dock-button {
+    box-shadow: none;
+  }
+  .header-help .dock-button::after {
+    content: none;
+  }
+  .header-help .dock-sheet {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + var(--space-2));
+    z-index: 60;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .corner-dock {
+    transition: none;
   }
 }
