@@ -206,3 +206,69 @@
 .ux-kit-inbox li[data-unread='true'] {
   font-weight: 600;
 }
+.ux-kit-summary:focus-visible,
+.ux-kit-summary a:focus-visible,
+.ux-kit-inbox a:focus-visible,
+.ux-kit-inbox button:focus-visible,
+.ux-kit-help-toggle:focus-visible,
+.ux-kit-crumbs a:focus-visible {
+  outline: 3px solid var(--ac-cobalt);
+  outline-offset: 2px;
+}
+.ux-kit-summary li a,
+.ux-kit-inbox li > a,
+.ux-kit-inbox li > button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.ux-kit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.ux-kit-help {
+  min-width: 0;
+}
+.ux-kit-help .ux-kit-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.ux-kit-help-toggle {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ac-cobalt);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ux-kit-help-toggle::before {
+  content: '';
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+.ux-kit-help-panel {
+  margin-top: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ac-border-strong);
+  border-radius: 8px;
+  background: var(--ac-paper);
+  color: var(--ac-ink);
+  font-size: 0.875rem;
+  max-width: 36rem;
+}
+@media (max-width: 480px) {
+  .ux-kit-row > .ux-kit-button {
+    flex: 1 1 100%;
+  }
+}

@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import { readNeonAuthConfig } from '@corridra/config';
-import { SiteHeader } from '../components/site-header';
+import { ShellHeader } from '../components/ux/shell-header';
 import { SiteFooter } from '../components/site-footer';
 import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
+import { CanonicalLink } from '../components/ux/canonical-link';
+import { languageBootScript } from '../lib/ux/language-boot';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
 import { uxSwitchOn } from '../lib/ux-switches';
@@ -90,13 +92,26 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const offered = offeredLanguages();
   return (
-    <html lang="en" className={fontVariables}>
+    // The boot script may set lang and dir before React loads; the provider keeps them after.
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: languageBootScript(offered.map((item) => item.code)),
+          }}
+        />
+      </head>
       <body>
-        <LanguageProvider offered={offeredLanguages()} pageLocales={languagesWithPages()}>
+        <LanguageProvider offered={offered} pageLocales={languagesWithPages()}>
+          <CanonicalLink />
           <SkipLink />
           <div className="site-shell">
-            <SiteHeader
+            <ShellHeader
+              shells={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')}
+              notifications={uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')}
+              live={process.env.VERCEL_ENV === 'production'}
               accounts={readNeonAuthConfig() !== null}
               mode={
                 uxSwitchOn('CORRIDRA_UX_FIRSTQ')

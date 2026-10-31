@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from './corridra-icon';
 
 /** What Listen reads: the main region and its language. A change in either means support must be asked again. */
@@ -73,15 +73,47 @@ function canSpeak() {
 }
 
 /**
- * Two small icon buttons in the bottom-right corner of every page: Listen reads the page aloud,
- * Help opens a short sheet. Listen is hidden, never broken, where the browser has no voice.
+ * Hides the corner buttons while the page scrolls down on a wide screen, so they never sit on top of
+ * what is being read, and brings them back on the way up or once scrolling stops (UX-15).
  */
-export function CornerDock() {
+function useScrollHide(enabled: boolean) {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    let last = window.scrollY;
+    let timer = 0;
+    function onScroll() {
+      const now = window.scrollY;
+      if (now > last + 4 && now > 80) setHidden(true);
+      else if (now < last - 4) setHidden(false);
+      last = now;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setHidden(false), 1200);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.clearTimeout(timer);
+    };
+  }, [enabled]);
+  return hidden;
+}
+
+/**
+ * Two small icon buttons in the end corner of every page: Listen reads the page aloud, Help opens a
+ * short sheet. Listen is hidden, never broken, where the browser has no voice. On phones the corner
+ * buttons give way to one Help button in the header (`variant="header"`), whose sheet also offers
+ * Listen, so nothing covers the page or right-to-left text (UX-15).
+ */
+export function CornerDock({ variant = 'corner' }: { variant?: 'corner' | 'header' }) {
   const supported = useSyncExternalStore(subscribe, canSpeak, () => false);
   const [speaking, setSpeaking] = useState(false);
   const [open, setOpen] = useState(false);
   const helpButton = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  const sheetId = `help-sheet-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const header = variant === 'header';
+  const scrolledAway = useScrollHide(!header);
 
   // A reading belongs to the page and language it started on. When either changes it stops, so it is never left
   // running with no way to stop it (Listen may not be offered for the new page's language).
@@ -129,7 +161,8 @@ export function CornerDock() {
 
   return (
     <div
-      className="corner-dock"
+      className={header ? 'corner-dock header-help' : 'corner-dock'}
+      data-hidden={!header && scrolledAway && !open ? 'true' : undefined}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {
           event.stopPropagation();
@@ -140,7 +173,7 @@ export function CornerDock() {
       {open && (
         <div
           ref={sheet}
-          id="help-sheet"
+          id={sheetId}
           className="dock-sheet"
           role="dialog"
           aria-label="Need a hand?"
@@ -172,12 +205,12 @@ export function CornerDock() {
         data-tip="Help"
         aria-label="Help"
         aria-expanded={open}
-        aria-controls={open ? 'help-sheet' : undefined}
+        aria-controls={open ? sheetId : undefined}
         onClick={() => setOpen(!open)}
       >
         <CorridraIcon name="help" />
       </button>
-      {supported && (
+      {supported && !header && (
         <button
           type="button"
           className="dock-button"

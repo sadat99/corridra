@@ -1,12 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-
 import { useEffect, useRef, useState } from 'react';
+import { CornerDock } from './corner-dock';
 import { LanguageSwitcher } from './language-switcher';
-import { ModeLabel } from './mr/mode-label';
-import { mrLabelsFor } from './mr/labels';
-import { useLanguage, useT } from './language-provider';
+import { useT } from './language-provider';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
@@ -68,19 +66,82 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
   return who;
 }
 
+/** The wordmark, drawn here only (the design system allows this one inline drawing). */
+export function BrandMark() {
+  return (
+    <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path
+        d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+    </svg>
+  );
+}
+
+/**
+ * The words of the signed-in shell headers and navigation (D14, CQ-10), kept next to the public
+ * header's own words so every header message is listed in one place. The signed-in header reads
+ * its words from here; the team sidebar (lib/ux/shells.ts) and the customer tabs (customer-nav.tsx)
+ * use the `team` and `nav` keys.
+ */
+export const shellWords = {
+  names: {
+    team: 'wse.shell.team',
+    customer: 'wse.shell.customer',
+    contributor: 'wse.shell.contributor',
+  },
+  live: 'wse.shell.live',
+  preview: 'wse.shell.preview',
+  statusLabel: 'wse.shell.statusLabel',
+  inbox: 'wse.shell.inbox',
+  menu: 'wse.shell.menu',
+  website: 'wse.shell.website',
+  help: 'wse.shell.help',
+  trustNote: 'wse.trust.note',
+  team: [
+    'wse.team.nav',
+    'wse.team.today',
+    'wse.team.missions',
+    'wse.team.companies',
+    'wse.team.meetings',
+    'wse.team.quotes',
+    'wse.team.reports',
+    'wse.team.network',
+    'wse.team.evidence',
+    'wse.team.settings',
+    'wse.team.owner',
+  ],
+  nav: [
+    'wse.nav.customer',
+    'wse.nav.home',
+    'wse.nav.move',
+    'wse.nav.missions',
+    'wse.nav.work',
+    'wse.nav.companies',
+    'wse.nav.library',
+    'wse.nav.results',
+    'wse.nav.more',
+  ],
+} as const satisfies Record<string, unknown>;
+
+/**
+ * The public header. On signed-in pages with `CORRIDRA_UX_SHELLS_V2` on, the root layout shows the
+ * shell's own header instead (components/ux/shell-header.tsx).
+ */
 export function SiteHeader({
   accounts = false,
   mode,
 }: {
   accounts?: boolean;
   /**
-   * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): one Sample or Real label for the whole site
-   * replaces the "(sample request)" screen-reader text on the start button. Absent is the header as it was.
+   * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): the start button keeps its plain name. The
+   * site-wide Sample or Real badge is no longer shown in the public header (CQ-47); the team shell
+   * shows "Live" or "Preview" instead. Absent keeps the "(sample request)" screen-reader text.
    */
   mode?: 'sample' | 'real';
 }) {
   const t = useT();
-  const { locale } = useLanguage();
   const who = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
@@ -104,16 +165,10 @@ export function SiteHeader({
       }}
     >
       <Link prefetch={false} className="brand" href="/" aria-label={t('header.home')}>
-        <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path
-            d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
-            stroke="currentColor"
-            strokeWidth="3"
-          />
-        </svg>
+        <BrandMark />
         <span>Corridra</span>
       </Link>
-      {mode && <ModeLabel real={mode === 'real'} labels={mrLabelsFor(locale).mode} />}
+      <CornerDock variant="header" />
       <button
         ref={toggle}
         className="menu-toggle"

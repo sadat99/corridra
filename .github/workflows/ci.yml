@@ -288,6 +288,84 @@ jobs:
             !test-results/workspace-*/**
           retention-days: 7
 
+  # Commercial readiness verification suite (program section 8): a production build on the isolated
+  # local database, served by scripts/qa/verification-server.ts with the program flags on.
+  verification:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Isolated PostgreSQL
+        run: pnpm db:local
+      - name: Reviewed database migrations and roles
+        run: pnpm db:prepare-local
+      - name: Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.ts', 'apps/web/**/*.tsx', 'apps/web/**/*.css', 'packages/**/*.ts') }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Resilient apt settings
+        run: |
+          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+      - name: Playwright browser cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Browser runtime
+        id: browser-runtime
+        timeout-minutes: 4
+        continue-on-error: true
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime (retry)
+        if: steps.browser-runtime.outcome != 'success'
+        timeout-minutes: 12
+        run: |
+          sudo pkill -KILL -x apt-get || true
+          sudo pkill -KILL -x dpkg || true
+          sleep 2
+          sudo dpkg --configure -a
+          pnpm exec playwright install --with-deps chromium
+      - name: Verification suite (390, 768 and 1280 px)
+        run: pnpm test:verification
+      - name: UX measures (V-56 to V-60)
+        if: always()
+        run: pnpm exec tsx scripts/qa/ux-measure.ts --report test-results/verification/ux-measure.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: verification-evidence
+          path: |
+            test-results/verification/
+            test-results/verification-output/
+          if-no-files-found: ignore
+          retention-days: 7
+
   # The UX gate is split three ways so it runs beside the other jobs. --fully-parallel makes every
   # route its own unit, which is what lets Playwright share them out (otherwise one shard would get
   # all 48). Together the three shards run exactly the tests `pnpm test:ux` runs.
@@ -382,7 +460,7 @@ jobs:
   # superseded head never reports a false failure; a failed or timed-out job still fails it.
   validate:
     if: ${{ !cancelled() }}
-    needs: [changes, checks, browser, operator, ux]
+    needs: [changes, checks, browser, operator, ux, verification]
     runs-on: ubuntu-latest
     steps:
       - name: Every job must have succeeded
@@ -392,13 +470,14 @@ jobs:
           BROWSER: ${{ needs.browser.result }}
           OPERATOR: ${{ needs.operator.result }}
           UX: ${{ needs.ux.result }}
+          VERIFICATION: ${{ needs.verification.result }}
           DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
         run: |
-          echo "changes=$CHANGES checks=$CHECKS browser=$BROWSER operator=$OPERATOR ux=$UX docs_only=$DOCS_ONLY"
+          echo "changes=$CHANGES checks=$CHECKS browser=$BROWSER operator=$OPERATOR ux=$UX verification=$VERIFICATION docs_only=$DOCS_ONLY"
           [ "$CHANGES" = "success" ] || exit 1
           [ "$CHECKS" = "success" ] || exit 1
           # The app jobs may be skipped only when the change is documentation only.
-          for r in "$BROWSER" "$OPERATOR" "$UX"; do
+          for r in "$BROWSER" "$OPERATOR" "$UX" "$VERIFICATION"; do
             [ "$r" = "success" ] && continue
             [ "$r" = "skipped" ] && [ "$DOCS_ONLY" = "true" ] && continue
             exit 1

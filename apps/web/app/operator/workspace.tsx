@@ -31,6 +31,7 @@ import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { EvidencePanel } from './evidence-panel';
+import { publishTeamContext } from '../../lib/ux/team-context';
 import type { OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
@@ -41,6 +42,7 @@ export function Workspace({
   ownerPage = false,
   moveRecords = false,
   initialSection = '',
+  shellsV2 = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -48,6 +50,11 @@ export function Workspace({
   moveRecords?: boolean;
   /** The section named by the address (Lane 9), used when the address has no `#` part. */
   initialSection?: string;
+  /**
+   * `CORRIDRA_UX_SHELLS_V2` (D14): the team sidebar replaces the area bar and the section directory,
+   * and only the section in view is rendered. Off, every panel stays mounted as before.
+   */
+  shellsV2?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -68,6 +75,7 @@ export function Workspace({
       ownerPage={ownerPage}
       moveRecords={moveRecords}
       initialSection={initialSection}
+      shellsV2={shellsV2}
     />
   );
 }
@@ -78,6 +86,7 @@ function TenantWorkspace({
   ownerPage,
   moveRecords,
   initialSection,
+  shellsV2,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -85,6 +94,7 @@ function TenantWorkspace({
   ownerPage: boolean;
   moveRecords: boolean;
   initialSection: string;
+  shellsV2: boolean;
 }) {
   const edited = useRef(false);
   const hash = useSyncExternalStore(
@@ -168,6 +178,10 @@ function TenantWorkspace({
   }, [tenant]);
   const loaded = !!data;
   const currentRole = data?.role;
+  // The team shell (sidebar and header) follows the loaded workspace and role. Convenience only.
+  useEffect(() => {
+    publishTeamContext({ tenant, role: currentRole ?? null });
+  }, [tenant, currentRole]);
   const realWorkspace = data?.purpose === 'commercial_qualification';
   // The section before the current one is kept so the authenticator panel can offer a way back.
   const [nav, setNav] = useState({ fragment: '', previous: '' });
@@ -190,6 +204,9 @@ function TenantWorkspace({
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
   const view = sectionAllowed ? panelFor(fragment) : 'overview';
+  // With the shells switch on only the section in view is rendered (D14); open forms keep their
+  // drafts through useFormDraft. Off, every panel stays mounted and is only hidden.
+  const shown = (panel: string) => !shellsV2 || view === panel;
   const unavailableSection =
     !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
   useEffect(() => {
@@ -315,7 +332,7 @@ function TenantWorkspace({
           </p>
         ) : (
           <p className="ux-testmode" role="note">
-            Test mode: use invented records only while customer data controls are completed.
+            Preview workspace: use made-up records here, never real customer details.
           </p>
         ))}
       <p role="status" aria-live="polite" aria-label="Workspace status">
@@ -342,190 +359,211 @@ function TenantWorkspace({
         </AccessState>
       ) : (
         <>
-          <div hidden={view === 'overview'}>
-            <WorkspaceAreaBar role={data.role} fragment={fragment} />
-          </div>
-          <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
-            <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
-            <section className="workspace-panel workspace-start" aria-label="Workspace overview">
-              <div className="operator-start-heading">
-                <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
-                  {realWorkspace ? 'Operational workspace' : 'Synthetic workspace'}
-                </StatusBadge>
-                <span className="operator-access">
-                  <OperatorIcon name="shield" /> Your access: <strong>{data.role}</strong>
-                </span>
-              </div>
-              <h2>Start with a mission.</h2>
-              <p>
-                Open a mission, find the right companies, arrange the next conversation, then record
-                progress and share an approved view. Actions depend on your role, a current
-                authenticator check and approved scope.
-              </p>
-              <RoleNavigation role={data.role} shortcuts />
-              {unavailableSection && (
-                <p role="alert">
-                  This section is unavailable for your current workspace role or the link is
-                  outdated. Choose an available tool above, or ask your workspace owner to review
-                  your membership.
+          {!shellsV2 && (
+            <div hidden={view === 'overview'}>
+              <WorkspaceAreaBar role={data.role} fragment={fragment} />
+            </div>
+          )}
+          {shown('overview') && (
+            <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
+              <TodayPanel key={`today-${tenant}`} tenant={tenant} revision={missionRevision} />
+              <section className="workspace-panel workspace-start" aria-label="Workspace overview">
+                <div className="operator-start-heading">
+                  <StatusBadge tone={realWorkspace ? 'positive' : 'caution'}>
+                    {realWorkspace ? 'Operational workspace' : 'Preview workspace'}
+                  </StatusBadge>
+                  <span className="operator-access">
+                    <OperatorIcon name="shield" /> Your access: <strong>{data.role}</strong>
+                  </span>
+                </div>
+                <h2>Start with a mission.</h2>
+                <p>
+                  Open a mission, find the right companies, arrange the next conversation, then
+                  record progress and share an approved view. Actions depend on your role, a current
+                  authenticator check and approved scope.
                 </p>
-              )}
-            </section>
-            {['owner', 'admin'].includes(data.role) && (
-              <details className="ux-journey-disclosure operator-management">
-                <summary>
-                  <OperatorIcon name="settings" />
-                  <span>Manage this workspace</span>
-                  <OperatorIcon name="chevron" className="operator-disclosure-arrow" />
-                </summary>
-                <nav className="workspace-navigation" aria-label="Administration">
-                  <a href="#ops-center" aria-describedby="operator-admin-hint-ops-center">
+                <RoleNavigation role={data.role} shortcuts />
+                {unavailableSection && (
+                  <p role="alert">
+                    This section is unavailable for your current workspace role or the link is
+                    outdated. Choose an available tool above, or ask your workspace owner to review
+                    your membership.
+                  </p>
+                )}
+              </section>
+              {['owner', 'admin'].includes(data.role) && (
+                <details className="ux-journey-disclosure operator-management">
+                  <summary>
                     <OperatorIcon name="settings" />
-                    <span>
-                      <span>Control Center</span>
-                      <small id="operator-admin-hint-ops-center" aria-hidden="true">
-                        Operational configuration.
-                      </small>
-                    </span>
-                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
-                  </a>
-                  <a
-                    href="#workspace-settings"
-                    aria-describedby="operator-admin-hint-workspace-settings"
-                  >
-                    <OperatorIcon name="shield" />
-                    <span>
-                      <span>Corridors and policies</span>
-                      <small id="operator-admin-hint-workspace-settings" aria-hidden="true">
-                        Scope, rules and guardrails.
-                      </small>
-                    </span>
-                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
-                  </a>
-                  <a href="#workspace-audit" aria-describedby="operator-admin-hint-workspace-audit">
-                    <OperatorIcon name="people" />
-                    <span>
-                      <span>Access and audit</span>
-                      <small id="operator-admin-hint-workspace-audit" aria-hidden="true">
-                        Access, permissions and activity.
-                      </small>
-                    </span>
-                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
-                  </a>
-                  {data.role === 'owner' && (
-                    <a
-                      href="#workspace-controls"
-                      aria-describedby="operator-admin-hint-workspace-controls"
-                    >
-                      <OperatorIcon name="people" />
+                    <span>Manage this workspace</span>
+                    <OperatorIcon name="chevron" className="operator-disclosure-arrow" />
+                  </summary>
+                  <nav className="workspace-navigation" aria-label="Administration">
+                    <a href="#ops-center" aria-describedby="operator-admin-hint-ops-center">
+                      <OperatorIcon name="settings" />
                       <span>
-                        <span>People and workspace controls</span>
-                        <small id="operator-admin-hint-workspace-controls" aria-hidden="true">
-                          Manage members and settings.
+                        <span>Control Center</span>
+                        <small id="operator-admin-hint-ops-center" aria-hidden="true">
+                          Operational configuration.
                         </small>
                       </span>
                       <OperatorIcon name="chevron" className="operator-nav-arrow" />
                     </a>
+                    <a
+                      href="#workspace-settings"
+                      aria-describedby="operator-admin-hint-workspace-settings"
+                    >
+                      <OperatorIcon name="shield" />
+                      <span>
+                        <span>Corridors and policies</span>
+                        <small id="operator-admin-hint-workspace-settings" aria-hidden="true">
+                          Scope, rules and guardrails.
+                        </small>
+                      </span>
+                      <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                    </a>
+                    <a
+                      href="#workspace-audit"
+                      aria-describedby="operator-admin-hint-workspace-audit"
+                    >
+                      <OperatorIcon name="people" />
+                      <span>
+                        <span>Access and audit</span>
+                        <small id="operator-admin-hint-workspace-audit" aria-hidden="true">
+                          Access, permissions and activity.
+                        </small>
+                      </span>
+                      <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                    </a>
+                    {data.role === 'owner' && (
+                      <a
+                        href="#workspace-controls"
+                        aria-describedby="operator-admin-hint-workspace-controls"
+                      >
+                        <OperatorIcon name="people" />
+                        <span>
+                          <span>People and workspace controls</span>
+                          <small id="operator-admin-hint-workspace-controls" aria-hidden="true">
+                            Manage members and settings.
+                          </small>
+                        </span>
+                        <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                      </a>
+                    )}
+                    <a href="#ops-gates" aria-describedby="operator-admin-hint-ops-gates">
+                      <OperatorIcon name="shield" />
+                      <span>
+                        <span>Production readiness</span>
+                        <small id="operator-admin-hint-ops-gates" aria-hidden="true">
+                          Review configuration, membership records and launch requirements.
+                        </small>
+                      </span>
+                      <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                    </a>
+                  </nav>
+                  {ownerPage && (
+                    <Link className="text-link" href="/operator/owner">
+                      What is on and off
+                    </Link>
                   )}
-                  <a href="#ops-gates" aria-describedby="operator-admin-hint-ops-gates">
-                    <OperatorIcon name="shield" />
-                    <span>
-                      <span>Production readiness</span>
-                      <small id="operator-admin-hint-ops-gates" aria-hidden="true">
-                        Review configuration, membership records and launch requirements.
-                      </small>
-                    </span>
-                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
-                  </a>
-                </nav>
-                {ownerPage && (
-                  <Link className="text-link" href="/operator/owner">
-                    What is on and off
-                  </Link>
-                )}
-                <p>
-                  Review operational configuration, membership records and launch requirements.
-                  Sensitive changes still require the existing approvals and fresh authenticator
-                  verification.
-                </p>
-              </details>
-            )}
+                  <p>
+                    Review operational configuration, membership records and launch requirements.
+                    Sensitive changes still require the existing approvals and fresh authenticator
+                    verification.
+                  </p>
+                </details>
+              )}
 
-            <RoleNavigation role={data.role} />
-          </div>
-          <div
-            id="workspace-missions"
-            tabIndex={-1}
-            className="workspace-panel ux-panel"
-            hidden={view !== 'workspace-missions'}
-          >
-            <Missions
-              key={tenant}
-              tenant={tenant}
-              onChanged={() => setMissionRevision((v) => v + 1)}
-              moveRecords={moveRecords}
-            />
-            <a className="text-link" href="#workspace-navigation">
-              Back to workspace sections
-            </a>
-          </div>
-          <div
-            id="workspace-research"
-            tabIndex={-1}
-            className="workspace-panel ux-panel"
-            hidden={view !== 'workspace-research'}
-          >
-            <Counterparties
-              purpose={data.purpose ?? 'synthetic_validation'}
-              key={`research-${tenant}`}
-              tenant={tenant}
-              missionRevision={missionRevision}
-            />
-            {['owner', 'admin', 'reviewer'].includes(data.role) && (
-              <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
-            )}
-            <a className="text-link" href="#workspace-navigation">
-              Back to workspace sections
-            </a>
-          </div>
-          <div
-            id="workspace-meetings"
-            tabIndex={-1}
-            className="workspace-panel ux-panel"
-            hidden={view !== 'workspace-meetings'}
-          >
-            <ControlledAccess key={`access-${tenant}`} tenant={tenant} revision={missionRevision} />
-            <a className="text-link" href="#workspace-navigation">
-              Back to workspace sections
-            </a>
-          </div>
-          <div
-            id="workspace-commercial"
-            tabIndex={-1}
-            className="workspace-panel ux-panel"
-            hidden={view !== 'workspace-commercial'}
-          >
-            <CommercialProgress
-              key={`commercial-${tenant}`}
-              tenant={tenant}
-              revision={missionRevision}
-            />
-            <a className="text-link" href="#workspace-navigation">
-              Back to workspace sections
-            </a>
-          </div>
-          <div
-            id="workspace-delivery"
-            tabIndex={-1}
-            className="workspace-panel ux-panel"
-            hidden={view !== 'workspace-delivery'}
-          >
-            <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
-            <a className="text-link" href="#workspace-navigation">
-              Back to workspace sections
-            </a>
-          </div>
-          {['owner', 'admin', 'operator'].includes(data.role) && (
+              {!shellsV2 && <RoleNavigation role={data.role} />}
+            </div>
+          )}
+          {shown('workspace-missions') && (
+            <div
+              id="workspace-missions"
+              tabIndex={-1}
+              className="workspace-panel ux-panel"
+              hidden={view !== 'workspace-missions'}
+            >
+              <Missions
+                key={tenant}
+                tenant={tenant}
+                onChanged={() => setMissionRevision((v) => v + 1)}
+                moveRecords={moveRecords}
+              />
+              <a className="text-link" href="#workspace-navigation">
+                Back to workspace sections
+              </a>
+            </div>
+          )}
+          {shown('workspace-research') && (
+            <div
+              id="workspace-research"
+              tabIndex={-1}
+              className="workspace-panel ux-panel"
+              hidden={view !== 'workspace-research'}
+            >
+              <Counterparties
+                purpose={data.purpose ?? 'synthetic_validation'}
+                key={`research-${tenant}`}
+                tenant={tenant}
+                missionRevision={missionRevision}
+              />
+              {['owner', 'admin', 'reviewer'].includes(data.role) && (
+                <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
+              )}
+              <a className="text-link" href="#workspace-navigation">
+                Back to workspace sections
+              </a>
+            </div>
+          )}
+          {shown('workspace-meetings') && (
+            <div
+              id="workspace-meetings"
+              tabIndex={-1}
+              className="workspace-panel ux-panel"
+              hidden={view !== 'workspace-meetings'}
+            >
+              <ControlledAccess
+                key={`access-${tenant}`}
+                tenant={tenant}
+                revision={missionRevision}
+              />
+              <a className="text-link" href="#workspace-navigation">
+                Back to workspace sections
+              </a>
+            </div>
+          )}
+          {shown('workspace-commercial') && (
+            <div
+              id="workspace-commercial"
+              tabIndex={-1}
+              className="workspace-panel ux-panel"
+              hidden={view !== 'workspace-commercial'}
+            >
+              <CommercialProgress
+                key={`commercial-${tenant}`}
+                tenant={tenant}
+                revision={missionRevision}
+              />
+              <a className="text-link" href="#workspace-navigation">
+                Back to workspace sections
+              </a>
+            </div>
+          )}
+          {shown('workspace-delivery') && (
+            <div
+              id="workspace-delivery"
+              tabIndex={-1}
+              className="workspace-panel ux-panel"
+              hidden={view !== 'workspace-delivery'}
+            >
+              <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
+              <a className="text-link" href="#workspace-navigation">
+                Back to workspace sections
+              </a>
+            </div>
+          )}
+          {shown('workspace-operations') && ['owner', 'admin', 'operator'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-operations'}>
               <Operations
                 key={`operations-${tenant}`}
@@ -538,69 +576,79 @@ function TenantWorkspace({
           )}
           {data.role !== 'viewer' && (
             <>
-              <div
-                id="workspace-ai"
-                tabIndex={-1}
-                className="workspace-panel ux-panel"
-                hidden={view !== 'workspace-ai'}
-              >
-                <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
-                <a className="text-link" href="#workspace-navigation">
-                  Back to workspace sections
-                </a>
-              </div>
-              <div
-                id="workspace-network"
-                tabIndex={-1}
-                className="workspace-panel ux-panel"
-                hidden={view !== 'workspace-network'}
-              >
-                <ExecutionNetwork
-                  key={`network-${tenant}`}
-                  tenant={tenant}
-                  role={data.role}
-                  workspaceName={tenants.find((item) => item.id === tenant)?.name}
-                  onChooseWorkspace={() => {
-                    const selector = document.getElementById('operator-workspace-select');
-                    selector?.scrollIntoView({ block: 'center', behavior: 'instant' });
-                    selector?.focus();
-                  }}
-                />
-                <a className="text-link" href="#workspace-navigation">
-                  Back to workspace sections
-                </a>
-              </div>
+              {shown('workspace-ai') && (
+                <div
+                  id="workspace-ai"
+                  tabIndex={-1}
+                  className="workspace-panel ux-panel"
+                  hidden={view !== 'workspace-ai'}
+                >
+                  <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
+                  <a className="text-link" href="#workspace-navigation">
+                    Back to workspace sections
+                  </a>
+                </div>
+              )}
+              {shown('workspace-network') && (
+                <div
+                  id="workspace-network"
+                  tabIndex={-1}
+                  className="workspace-panel ux-panel"
+                  hidden={view !== 'workspace-network'}
+                >
+                  <ExecutionNetwork
+                    key={`network-${tenant}`}
+                    tenant={tenant}
+                    role={data.role}
+                    workspaceName={tenants.find((item) => item.id === tenant)?.name}
+                    onChooseWorkspace={() => {
+                      const selector = document.getElementById('operator-workspace-select');
+                      selector?.scrollIntoView({ block: 'center', behavior: 'instant' });
+                      selector?.focus();
+                    }}
+                  />
+                  <a className="text-link" href="#workspace-navigation">
+                    Back to workspace sections
+                  </a>
+                </div>
+              )}
             </>
           )}
-          <SourcesPanel data={data} view={view} busy={busy} source={source} claim={claim} />
-          <EvidencePanel
-            data={data}
-            view={view}
-            busy={busy}
-            tenant={tenant}
-            flags={flags}
-            act={act}
-            request={request}
-          />
-          <section
-            id="workspace-authenticator"
-            tabIndex={-1}
-            className="operator-section workspace-panel ux-panel"
-            hidden={view !== 'workspace-authenticator'}
-          >
-            <AuthenticatorCheck
+          {shown('workspace-sources') && (
+            <SourcesPanel data={data} view={view} busy={busy} source={source} claim={claim} />
+          )}
+          {shown('workspace-evidence') && (
+            <EvidencePanel
+              data={data}
+              view={view}
               busy={busy}
-              act={act}
-              returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
               tenant={tenant}
+              flags={flags}
+              act={act}
+              request={request}
             />
-          </section>
-          {['owner', 'admin'].includes(data.role) && (
+          )}
+          {shown('workspace-authenticator') && (
+            <section
+              id="workspace-authenticator"
+              tabIndex={-1}
+              className="operator-section workspace-panel ux-panel"
+              hidden={view !== 'workspace-authenticator'}
+            >
+              <AuthenticatorCheck
+                busy={busy}
+                act={act}
+                returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
+                tenant={tenant}
+              />
+            </section>
+          )}
+          {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
             </div>
           )}
-          {['owner', 'admin'].includes(data.role) && (
+          {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (
             <section
               id="workspace-audit"
               tabIndex={-1}
@@ -627,7 +675,7 @@ function TenantWorkspace({
               />
             </section>
           )}
-          {data.role === 'owner' && (
+          {shown('workspace-controls') && data.role === 'owner' && (
             <section
               id="workspace-controls"
               tabIndex={-1}

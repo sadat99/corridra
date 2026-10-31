@@ -14,6 +14,9 @@ export function StepUpDialog() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // The form exists only while the dialog is open, so a closed dialog never adds a second
+  // "Six-digit code" field to the page (the sign-in and authenticator forms have their own).
+  const [open, setOpen] = useState(false);
   const id = useId();
 
   useEffect(() => {
@@ -24,6 +27,7 @@ export function StepUpDialog() {
       pending.current = request;
       setCode('');
       setError('');
+      setOpen(true);
       if (!dialog.current?.open) dialog.current?.showModal();
     }
     window.addEventListener(stepUpEvent, onRequest);
@@ -34,6 +38,7 @@ export function StepUpDialog() {
     pending.current?.resolve(verified);
     pending.current = null;
     dialog.current?.close();
+    setOpen(false);
   }
 
   async function verify() {
@@ -64,50 +69,53 @@ export function StepUpDialog() {
         finish(false);
       }}
     >
-      <form
-        method="dialog"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void verify();
-        }}
-      >
-        <h2 id={`${id}-title`}>Confirm it is you</h2>
-        <p>For this step we need a fresh authenticator code. Your work on the page is kept.</p>
-        <div className="ux-kit-field">
-          <label className="ux-kit-label" htmlFor={`${id}-code`}>
-            Six-digit code
-          </label>
-          <input
-            id={`${id}-code`}
-            className="ux-kit-input"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            value={code}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? `${id}-error` : undefined}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-          />
-          {error ? (
-            <p className="ux-kit-error" id={`${id}-error`} role="alert">
-              {error}
-            </p>
-          ) : null}
-        </div>
-        <div className="ux-kit-row" style={{ marginTop: '1rem' }}>
-          <button className="ux-kit-button" type="submit" disabled={busy}>
-            {busy ? 'Checking…' : 'Confirm and continue'}
-          </button>
-          <button
-            className="ux-kit-button"
-            data-variant="secondary"
-            type="button"
-            onClick={() => finish(false)}
-          >
-            Not now
-          </button>
-        </div>
-      </form>
+      {open ? (
+        <form
+          method="dialog"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void verify();
+          }}
+        >
+          <h2 id={`${id}-title`}>Confirm it is you</h2>
+          <p>For this step we need a fresh authenticator code. Your work on the page is kept.</p>
+          <div className="ux-kit-field">
+            <label className="ux-kit-label" htmlFor={`${id}-code`}>
+              Six-digit code
+            </label>
+            <input
+              id={`${id}-code`}
+              autoFocus
+              className="ux-kit-input"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? `${id}-error` : undefined}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+            />
+            {error ? (
+              <p className="ux-kit-error" id={`${id}-error`} role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
+          <div className="ux-kit-row" style={{ marginTop: '1rem' }}>
+            <button className="ux-kit-button" type="submit" disabled={busy}>
+              {busy ? 'Checking…' : 'Confirm and continue'}
+            </button>
+            <button
+              className="ux-kit-button"
+              data-variant="secondary"
+              type="button"
+              onClick={() => finish(false)}
+            >
+              Not now
+            </button>
+          </div>
+        </form>
+      ) : null}
     </dialog>
   );
 }
