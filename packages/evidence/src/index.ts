@@ -7,6 +7,18 @@ import {
   type EvidenceStatus,
 } from '@corridra/domain';
 import { withTenant, type Pool, type RequestContext } from '@corridra/db';
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Optional mission and company links on a new source (CQ-80). Both are checked before saving. */
+function sourceLinks(input: unknown) {
+  const raw = (input ?? {}) as { missionId?: unknown; organisationId?: unknown };
+  const one = (value: unknown) => {
+    if (value === undefined || value === null || value === '') return null;
+    if (typeof value !== 'string' || !uuidPattern.test(value))
+      throw new DomainError('Choose the mission or company from the list', 400);
+    return value.toLowerCase();
+  };
+  return { missionId: one(raw.missionId), organisationId: one(raw.organisationId) };
+}
 export interface ObjectStorage {
   objectKey?(path: string): string;
   put(key: string, body: Uint8Array, mime: string): Promise<void>;
@@ -43,7 +55,18 @@ export class EvidenceService {
       freshMfa: t.freshMfa,
       sources: (
         await t.db.query(
-          'SELECT id,kind,locator,classification,observed_at FROM app.source_record WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 50',
+          (
+            await t.db.query(
+              "SELECT EXISTS(SELECT FROM information_schema.columns WHERE table_schema='app' AND table_name='source_record' AND column_name='mission_id') AS linked",
+            )
+          ).rows[0]?.linked
+            ? // CQ-80: show the linked mission and company by name. The mission name is read only
+              // from this workspace's own intake.
+              `SELECT s.id,s.kind,s.locator,s.classification,s.observed_at,s.mission_id,s.organisation_id,
+                 (SELECT i.brief->>'company' FROM app.mission_intake i WHERE i.tenant_id=s.tenant_id AND i.id=s.mission_id) AS mission_name,
+                 (SELECT o.name FROM app.organisation o WHERE o.id=s.organisation_id) AS organisation_name
+               FROM app.source_record s WHERE s.tenant_id=$1 ORDER BY s.created_at DESC LIMIT 50`
+            : 'SELECT id,kind,locator,classification,observed_at FROM app.source_record WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 50',
           [t.tenantId],
         )
       ).rows,
@@ -69,7 +92,21 @@ export class EvidenceService {
   }
   createSource(ctx: RequestContext, input: unknown) {
     const v = sourceInput.parse(input);
+    const links = sourceLinks(input);
     return withTenant(this.pool, ctx, 'trust.write', async (t) => {
+      if (links.missionId) {
+        const m = await t.db.query('SELECT 1 FROM app.mission WHERE tenant_id=$1 AND id=$2', [
+          t.tenantId,
+          links.missionId,
+        ]);
+        if (!m.rowCount) throw new DomainError('Mission unavailable', 404);
+      }
+      if (links.organisationId) {
+        const o = await t.db.query('SELECT 1 FROM app.organisation WHERE id=$1', [
+          links.organisationId,
+        ]);
+        if (!o.rowCount) throw new DomainError('Company unavailable', 404);
+      }
       if (
         v.purpose !== t.purpose ||
         new Date(v.retentionUntil) <= new Date() ||
@@ -77,8 +114,10 @@ export class EvidenceService {
           new Date(v.retentionUntil).getTime() > Date.now() + 30 * 86400000)
       )
         throw new DomainError('Invalid purpose or retention', 400);
+      const linked = !!(links.missionId || links.organisationId);
+      // The link columns come from the commercial readiness module; they are only named when used.
       const r = await t.db.query(
-        `INSERT INTO app.source_record(tenant_id,kind,locator,observed_at,classification,purpose,retention_until,ai_policy,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+        `INSERT INTO app.source_record(tenant_id,kind,locator,observed_at,classification,purpose,retention_until,ai_policy,created_by${linked ? ',mission_id,organisation_id' : ''}) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9${linked ? ',$10,$11' : ''}) RETURNING id`,
         [
           t.tenantId,
           v.kind,
@@ -89,6 +128,7 @@ export class EvidenceService {
           v.retentionUntil,
           v.aiPolicy,
           t.actorId,
+          ...(linked ? [links.missionId ?? null, links.organisationId ?? null] : []),
         ],
       );
       return r.rows[0];
