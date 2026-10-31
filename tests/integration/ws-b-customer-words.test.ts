@@ -5,7 +5,7 @@ import { customerRoad, customerStatusLabel } from '../../apps/web/lib/ux/custome
 import { mrLabelsFor } from '../../apps/web/components/mr/labels';
 import { cleanReports } from '../../packages/auth/src/customer-delivered-reports';
 import { translate } from '../../apps/web/lib/i18n/messages';
-import { localeCodes } from '../../apps/web/lib/i18n/locales';
+import { localeCodes, localeMeta } from '../../apps/web/lib/i18n/locales';
 import { wsB, wsBEn } from '../../apps/web/lib/i18n/ws/ws-b';
 
 // WS-B (commercial readiness program, 6.B): the customer words and the Your Move rules, without a
@@ -176,5 +176,13 @@ describe('D16: every WS-B message exists in all seven languages', () => {
       for (const key of keys) expect(wsB[locale][key as keyof typeof wsBEn].trim()).not.toBe('');
     }
     for (const value of Object.values(wsBEn)) expect(value).not.toMatch(/—/);
+  });
+});
+
+describe('B-4: Arabic customer words read right to left', () => {
+  it('marks Arabic right to left and draws the WS-B words in Arabic', () => {
+    expect(localeMeta.ar.dir).toBe('rtl');
+    expect(translate('ar', 'wsb.status.received')).toBe(wsB.ar['wsb.status.received']);
+    expect(mrLabelsFor('ar').road.sublines.DRAFT).toBe(wsB.ar['wsb.status.received']);
   });
 });
