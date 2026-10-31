@@ -2,7 +2,8 @@
 // Scoped action feedback and the form error summary (commercial readiness program, 5.2, CQ-01).
 // Owner after Wave 0: WS-E (internals only; props are fixed).
 import './ux-kit.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { fieldAnchor, summaryFocusDue } from '../../lib/ux/focus';
 
 export type Feedback = { kind: 'success' | 'error'; text: string } | null;
 
@@ -68,8 +69,9 @@ export function ErrorSummary({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const focusedFor = useRef(0);
+  const titleId = `${useId()}-summary-title`;
   useEffect(() => {
-    if (attempt > 0 && attempt !== focusedFor.current && errors.length > 0) {
+    if (summaryFocusDue(attempt, focusedFor.current, errors.length)) {
       focusedFor.current = attempt;
       box.current?.focus();
     }
@@ -81,16 +83,16 @@ export function ErrorSummary({
       ref={box}
       tabIndex={-1}
       role="alert"
-      aria-labelledby="ux-kit-summary-title"
+      aria-labelledby={titleId}
     >
-      <h2 id="ux-kit-summary-title">{title}</h2>
+      <h2 id={titleId}>{title}</h2>
       <ul>
         {errors.map((e) => (
           <li key={e.field + e.message}>
             <a
-              href={`#${e.field}`}
+              href={`#${fieldAnchor(e.field)}`}
               onClick={(event) => {
-                const target = document.getElementById(e.field);
+                const target = document.getElementById(fieldAnchor(e.field));
                 if (target) {
                   event.preventDefault();
                   target.focus();
