@@ -1678,9 +1678,10 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await revocation).ok()).toBe(true);
   await expect(institutionalAccess).toContainText('Revoked');
   await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
-  await expect(client.getByRole('alert').filter({ hasText: 'Access denied' })).toContainText(
-    'unavailable',
-  );
+  // CQ-42: a revoked link says plainly that it has expired or was replaced.
+  await expect(
+    client.getByRole('alert').filter({ hasText: 'This private link has expired or was replaced' }),
+  ).toBeVisible();
   await clientContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
@@ -3002,9 +3003,13 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       } else await route.continue();
     });
     await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    // CQ-59: the message now appears next to the form that caused it (scoped feedback).
     await expect(
-      reviewerPage.getByRole('region', { name: 'Execution network' }).getByRole('status'),
-    ).toContainText('Receipt not confirmed.');
+      reviewerPage
+        .getByRole('region', { name: 'Execution network' })
+        .getByText(/Receipt not confirmed\./)
+        .first(),
+    ).toBeVisible();
     await networkPanel
       .getByLabel('Review reason', { exact: true })
       .first()
@@ -3254,8 +3259,10 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     .first();
   await expect(card).toContainText(mission.brief.offer);
   await operatorEvidence(page, card, 'mission-control');
-  await expect(card).toContainText(mission.claim_status);
-  await expect(card).toContainText(`VERSION ${mission.version}`);
+  // CQ-32: plain labels instead of raw codes.
+  const claimLabels: Record<string, string> = { self_declared: 'Self-declared' };
+  await expect(card).toContainText(claimLabels[mission.claim_status] ?? mission.claim_status);
+  await expect(card).toContainText(new RegExp(`version ${mission.version}\\b`, 'i'));
   await expect(card.locator('.ux-mission-passport')).toContainText(
     'No independent verification implied',
   );

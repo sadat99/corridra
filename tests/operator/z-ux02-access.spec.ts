@@ -102,7 +102,9 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
       await expect(page.getByRole('main')).toContainText(
         path === 'forgot-password'
           ? 'It does not change a team password.'
-          : 'missions shared with you.',
+          : path === 'signup'
+            ? 'Create your account to send and follow requests.'
+            : 'missions shared with you.',
       );
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     }
