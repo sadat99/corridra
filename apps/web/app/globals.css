@@ -9354,3 +9354,20 @@ samp {
     transition: none;
   }
 }
+
+/* V-57: the receipt check on /plan is folded until needed; its heading is the toggle. */
+.receipt-disclosure > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.receipt-disclosure > summary h2 {
+  display: inline;
+  margin: 0;
+}
+.receipt-disclosure > summary:focus-visible {
+  outline: 3px solid var(--ac-cobalt);
+  outline-offset: 2px;
+}

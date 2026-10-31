@@ -21,7 +21,8 @@ import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
 import { intakeExperience } from '@corridra/domain/experience';
 import { originalAmountToMinor } from '@corridra/domain/locale';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { subscribeToHash } from '../../lib/address-store';
 import {
   briefSchema,
   realBriefSchema,
@@ -322,6 +323,7 @@ function IntakeForm({
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [receipt, setReceipt] = useState(''),
+    [receiptChoice, setReceiptChoice] = useState<boolean | null>(null),
     [checkCode, setCheckCode] = useState(''),
     [result, setResult] = useState<{
       status: string;
@@ -674,6 +676,15 @@ function IntakeForm({
       participants: draft.job === 'delegations' ? optional(draft.participants) : undefined,
     };
   }
+  // The receipt check opens by itself when it is needed (see the panel below); the person's own
+  // open or close choice wins after that.
+  const hash = useSyncExternalStore(
+    subscribeToHash,
+    () => window.location.hash,
+    () => '',
+  );
+  const receiptOpen =
+    receiptChoice ?? (!!receipt || !!result || hash === '#receipt-check' || checkEmpty);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (busy || submitted.current) return;
@@ -1526,69 +1537,83 @@ function IntakeForm({
             </button>
           )}
           <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
-            <h2>{realMode ? say('form.check.realTitle') : say('form.check.sampleTitle')}</h2>
-            <form className="operator-form" onSubmit={check} noValidate>
-              <label className="field">
-                {say('form.check.code')}
-                <input
-                  required
-                  dir={translated ? 'ltr' : undefined}
-                  value={checkCode}
-                  onChange={(e) => {
-                    setCheckCode(e.target.value);
-                    setCheckEmpty(false);
-                  }}
-                  autoComplete="off"
-                  maxLength={64}
-                  aria-invalid={checkEmpty}
-                  aria-describedby={checkEmpty ? 'check-hint check-error' : 'check-hint'}
-                />
-              </label>
-              <p id="check-hint" className="guide-hint">
-                {realMode ? wsa('wsa.plan.check.hintReal') : wsa('wsa.plan.check.hintSample')}
-              </p>
-              {checkEmpty && (
-                <p id="check-error" role="alert" className="field-error">
-                  {wsa('wsa.plan.check.empty')}
+            {/* V-57: one open form per page. The receipt check stays folded until it is needed: it
+                opens by itself when a receipt exists, a check has an answer, or the page was opened
+                at #receipt-check (the account page and the tools list link there). */}
+            <details
+              className="receipt-disclosure"
+              open={receiptOpen}
+              onToggle={(event) => setReceiptChoice(event.currentTarget.open)}
+            >
+              <summary>
+                <h2>{realMode ? say('form.check.realTitle') : say('form.check.sampleTitle')}</h2>
+              </summary>
+              <form className="operator-form" onSubmit={check} noValidate>
+                <label className="field">
+                  {say('form.check.code')}
+                  <input
+                    required
+                    dir={translated ? 'ltr' : undefined}
+                    value={checkCode}
+                    onChange={(e) => {
+                      setCheckCode(e.target.value);
+                      setCheckEmpty(false);
+                    }}
+                    autoComplete="off"
+                    maxLength={64}
+                    aria-invalid={checkEmpty}
+                    aria-describedby={checkEmpty ? 'check-hint check-error' : 'check-hint'}
+                  />
+                </label>
+                <p id="check-hint" className="guide-hint">
+                  {realMode ? wsa('wsa.plan.check.hintReal') : wsa('wsa.plan.check.hintSample')}
+                </p>
+                {checkEmpty && (
+                  <p id="check-error" role="alert" className="field-error">
+                    {wsa('wsa.plan.check.empty')}
+                  </p>
+                )}
+                <button className="primary-link" disabled={!ready || busy}>
+                  {say('form.check.submit')}
+                </button>
+              </form>
+              {realMode && !privateMode && !account && codeSignIn && (
+                <p className="guide-hint">
+                  <Link
+                    className="text-link"
+                    href={accountAccessPath('/signin', '/account', 'code')}
+                  >
+                    {say('form.pending.codeSignIn')}
+                  </Link>
                 </p>
               )}
-              <button className="primary-link" disabled={!ready || busy}>
-                {say('form.check.submit')}
-              </button>
-            </form>
-            {realMode && !privateMode && !account && codeSignIn && (
-              <p className="guide-hint">
-                <Link className="text-link" href={accountAccessPath('/signin', '/account', 'code')}>
-                  {say('form.pending.codeSignIn')}
-                </Link>
-              </p>
-            )}
-            {result && (
-              <div>
-                <p>
-                  {sayWith('form.check.status', {
-                    // A request with a receipt was sent, so it is never shown as a draft (D6).
-                    status: (
-                      <strong {...englishProps}>
-                        {customerStatusLabel(result.status, true).label}
-                      </strong>
-                    ),
-                  })}
-                </p>
-                {result.replies.length ? (
-                  result.replies.map((r, i) => (
-                    <article className="detail-card" key={i}>
-                      <p dir={translated ? 'auto' : undefined}>{r.body}</p>
-                      <time dateTime={r.createdAt}>
-                        {formatDateTime(r.createdAt, translated ? { locale: tag } : {})}
-                      </time>
-                    </article>
-                  ))
-                ) : (
-                  <p>{say('form.check.noReply')}</p>
-                )}
-              </div>
-            )}
+              {result && (
+                <div>
+                  <p>
+                    {sayWith('form.check.status', {
+                      // A request with a receipt was sent, so it is never shown as a draft (D6).
+                      status: (
+                        <strong {...englishProps}>
+                          {customerStatusLabel(result.status, true).label}
+                        </strong>
+                      ),
+                    })}
+                  </p>
+                  {result.replies.length ? (
+                    result.replies.map((r, i) => (
+                      <article className="detail-card" key={i}>
+                        <p dir={translated ? 'auto' : undefined}>{r.body}</p>
+                        <time dateTime={r.createdAt}>
+                          {formatDateTime(r.createdAt, translated ? { locale: tag } : {})}
+                        </time>
+                      </article>
+                    ))
+                  ) : (
+                    <p>{say('form.check.noReply')}</p>
+                  )}
+                </div>
+              )}
+            </details>
           </section>
         </div>
         {!finished && (
