@@ -397,7 +397,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       <p>
         {realCustomerInput()
           ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
-          : 'Create a synthetic programme, review every intake row, then share only approved mission information. Use invented participant addresses ending in example.invalid.'}
+          : 'Create a programme, review every intake row, then share only approved mission information. This is a sample workspace, so participant addresses must be made up and end in .invalid.'}
       </p>
       <p role="status" aria-label="Delivery status">
         {message}
@@ -547,7 +547,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                       <label>
                         <input name="acknowledged" type="checkbox" required /> I reviewed every row
                         and the exact ready, duplicate and empty counts. The accepted requests are
-                        synthetic self-declarations.
+                        self-declarations.
                       </label>
                       <button disabled={busy || !!preview.counts.errors}>Confirm intake</button>
                     </form>

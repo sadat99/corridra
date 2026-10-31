@@ -172,12 +172,12 @@ function PrivateDisclosures({ tenant, publications }: Props) {
     }
   }
   return (
-    <details className="ux-mission-detail" style={{ overflowWrap: 'anywhere' }}>
+    <details className="ux-mission-detail" style={{ overflowWrap: 'anywhere' }} data-madeup-panel>
       <summary>Approve commercial decision disclosure</summary>
       <p>
-        Explicitly share original V2 decisions in your reviewed client report. Selection is separate
-        from an order, contract or payment. Owner/admin access and fresh MFA are required. Synthetic
-        capability; real operation remains closed.
+        Share the original decisions in your reviewed client report. Choosing a supplier is not an
+        order, a contract or a payment. Owner or admin access and a fresh authenticator check are
+        required. Sample workspaces only (madeup records); real use stays closed.
       </p>
       <label>
         Reviewed publication

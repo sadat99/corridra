@@ -340,7 +340,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByLabel('Company name', { exact: true })
     .fill('Synthetic Browser Distributor A');
   await research.getByLabel('Company country').selectOption('ES');
-  await research.getByLabel('Invented company domain').fill('browser.example.invalid');
+  await research.getByLabel('Company domain (madeup)').fill('browser.example.invalid');
   await research.getByLabel('Public business address').fill('Synthetic Browser Business Park');
   await research.getByLabel('Country-scoped identifier').fill('BROWSER-A');
   await research.getByRole('button', { name: 'Add company record', exact: true }).click();
@@ -377,7 +377,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .selectOption({ label: 'https://example.invalid/browser-registry' });
   await research.getByLabel('Contact name', { exact: true }).fill('Synthetic Buyer');
   await research.getByLabel('Contact job title').fill('Synthetic procurement manager');
-  await research.getByLabel('Invented contact email').fill('buyer@example.invalid');
+  await research.getByLabel('Contact email (madeup)').fill('buyer@example.invalid');
   await research.getByRole('button', { name: 'Add private contact', exact: true }).click();
   await expect(research.getByText(/Synthetic Buyer.*buyer@example.invalid/)).toBeVisible();
   await research
@@ -1056,7 +1056,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Meeting command reason')
     .fill('Attribute acceptance to the recorded buyer response');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: ACCEPTED/)).toBeVisible();
+  await expect(card.getByText(/State: Accepted/)).toBeVisible();
   const start = new Date(Date.now() - 3600000);
   start.setUTCSeconds(0, 0);
   const end = new Date(start.getTime() + 1800000);
@@ -1071,7 +1071,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await card.getByLabel('Meeting location').fill('Synthetic meeting room');
   await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: SCHEDULED/)).toBeVisible();
+  await expect(card.getByText(/State: Scheduled/)).toBeVisible();
   await card.getByLabel('Next meeting state').selectOption('HELD');
   await card
     .getByLabel('Observed meeting outcome')
@@ -1083,12 +1083,12 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Meeting command reason')
     .fill('Record observed attendance and owned follow-up');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  await expect(card.getByText(/State: Held/)).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Send the agreed requirement summary', exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  await expect(card.getByText(/State: Held/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const heldSnapshot = await (
     await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)
@@ -2365,7 +2365,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await expect(
     expiredPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toHaveCount(0);
-  await expiredPage.getByRole('button', { name: 'Retry approved view' }).click();
+  await expiredPage.getByRole('button', { name: 'Try again' }).click();
   await expect(expiredPage.locator('.ux-workspace').getByRole('alert')).toBeVisible();
   await expiredPage.close();
   const wrongAudience = await guestContext.newPage();
@@ -2381,7 +2381,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toHaveCount(0);
   await expect(
-    clientPage.getByRole('alert').filter({ hasText: 'Access denied or link unavailable' }),
+    clientPage
+      .getByRole('alert')
+      .filter({ hasText: 'This private link has expired or was replaced' }),
   ).toBeVisible();
   await post('communication', {
     action: 'revoke',

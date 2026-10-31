@@ -1,6 +1,7 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { formatDateTime } from '../../lib/ux/format';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 import { CustomerServiceCatalogue } from './customer-service-catalogue';
 import {
@@ -22,6 +23,7 @@ type Summary = {
   contextLabel: string;
   status: string;
   region: string;
+  createdAt?: string;
   updatedAt: string;
   claimed?: boolean;
 };
@@ -322,10 +324,14 @@ function Scoped({ tenant }: { tenant: string }) {
     setPending(null);
   };
   return (
-    <section aria-label="Customer paid-service requests" className="detail-card">
+    <section
+      aria-label="Customer paid-service requests"
+      className="detail-card"
+      data-madeup-panel={realCustomerInput() ? undefined : ''}
+    >
       <h3>Customer paid-service requests</h3>
       <p>
-        Sample requests from customers. A quote lists every cost, what is left out and what it
+        Help requests from customers. A quote lists every cost, what is left out and what it
         assumes. Accepting a quote records an order intent only: no payment, no invoice, no billing.
       </p>
       {fault && <p role="alert">{fault}</p>}
@@ -337,7 +343,8 @@ function Scoped({ tenant }: { tenant: string }) {
           {rows.map((r) => (
             <li key={r.id}>
               <strong>{r.serviceTitle}</strong> · {r.workspaceName} · {r.contextLabel} · {r.region}{' '}
-              · <span>{r.status.replace('_', ' ')}</span>{' '}
+              · <span>{r.status.replaceAll('_', ' ')}</span>
+              {r.createdAt ? ` · sent ${formatDateTime(r.createdAt)}` : ''}{' '}
               {r.claimed ? '· handled by your team' : '· not yet taken'}{' '}
               <button
                 type="button"
@@ -365,7 +372,7 @@ function Scoped({ tenant }: { tenant: string }) {
             {detail.service.title} for {detail.request.workspaceName}
           </h4>
           <p>
-            Status: <strong>{status.replace('_', ' ')}</strong> · {detail.request.contextLabel} ·{' '}
+            Status: <strong>{status.replaceAll('_', ' ')}</strong> · {detail.request.contextLabel} ·{' '}
             {detail.need.region}
           </p>
           <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detail.need.text}</p>

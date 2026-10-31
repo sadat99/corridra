@@ -163,7 +163,7 @@ function Scoped({ tenant }: { tenant: string }) {
   }
   if (off) return null;
   return (
-    <section aria-label="Simulated payments" className="detail-card">
+    <section aria-label="Simulated payments" className="detail-card" data-madeup-panel>
       <h3>Simulated payments (madeup)</h3>
       <p>
         Attempts customers made in the made-up payment flow. No money moves and no invoice changes.
