@@ -192,6 +192,12 @@ describe('signing in again from the workspace comes back to the same workspace a
       "operatorSignInPath(tenant, 'workspace-authenticator')",
     );
   });
+  it('contributor sign-out is a full page load to the contributor page, never a router call', () => {
+    const signOut = read('apps/web/app/contributor/signout.tsx');
+    expect(signOut).toContain("window.location.replace('/contributor');");
+    expect(signOut).not.toMatch(/\brouter\./);
+    expect(signOut).not.toContain('useRouter');
+  });
   it('the page for someone with no membership keeps the workspace and section address asked for', () => {
     const entry = read('apps/web/app/operator/operator-entry.tsx');
     expect(entry).toContain('href={operatorSignInPath(requested, section)}');

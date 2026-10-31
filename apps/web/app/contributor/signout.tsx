@@ -1,9 +1,7 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { identityClient } from '@corridra/auth/client';
 export function ContributorSignout({ disabled = false }: { disabled?: boolean }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
   return (
@@ -13,15 +11,17 @@ export function ContributorSignout({ disabled = false }: { disabled?: boolean })
         disabled={disabled || busy}
         onClick={async () => {
           setBusy(true);
+          let leaving = false;
           try {
             const result = await identityClient.signOut();
             if (result.error) throw new Error('Sign-out could not be completed. Try again.');
-            router.replace('/contributor');
-            router.refresh();
+            // A full page load, so no route the signed-in session cached survives (KI-30).
+            leaving = true;
+            window.location.replace('/contributor');
           } catch (e) {
             setMessage(e instanceof Error ? e.message : 'Sign-out failed');
           } finally {
-            setBusy(false);
+            if (!leaving) setBusy(false);
           }
         }}
       >
