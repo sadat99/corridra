@@ -190,4 +190,17 @@ describe('signing in again from the workspace comes back to the same workspace a
       "operatorSignInPath(tenant, 'workspace-authenticator')",
     );
   });
+  it('the page for someone with no membership keeps the workspace and section address asked for', () => {
+    const entry = read('apps/web/app/operator/operator-entry.tsx');
+    expect(entry).toContain('href={operatorSignInPath(requested, section)}');
+    expect(entry).not.toContain('href="/operator/signin"');
+    // The same address the signed-out redirect above it builds from the request.
+    expect(operatorSignInPath(workspace, 'workspace-sources')).toBe(
+      '/operator/signin?next=' +
+        encodeURIComponent('/operator?workspace=' + workspace + '#workspace-sources'),
+    );
+    expect(decodeURIComponent(operatorSignInPath(undefined, undefined).split('?next=')[1]!)).toBe(
+      '/operator',
+    );
+  });
 });
