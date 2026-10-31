@@ -19,6 +19,7 @@ import {
 import { countryOptions, timeZoneOptions } from '../../apps/web/lib/ux/options';
 import { customerRoad, customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
 import { pageMetadata } from '../../apps/web/lib/ux/page-metadata';
+import { safeInternalPath } from '../../apps/web/lib/ux/safe-path';
 import { ActionError, readJson, withStepUp } from '../../apps/web/lib/ux/step-up';
 import {
   guidedRoutePack,
@@ -153,6 +154,21 @@ describe('step-up (D12)', () => {
         throw new ActionError('Other failure', 409);
       }),
     ).rejects.toMatchObject({ status: 409, message: 'Other failure' });
+  });
+});
+
+describe('stored links', () => {
+  test('only same-site paths are followed', () => {
+    expect(safeInternalPath('/account/requests/1?x=1#y')).toBe('/account/requests/1?x=1#y');
+    for (const bad of [
+      '//evil.example',
+      '/\\evil.example',
+      'https://evil.example',
+      'javascript:alert(1)',
+      '',
+      42,
+    ])
+      expect(safeInternalPath(bad)).toBeNull();
   });
 });
 

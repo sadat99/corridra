@@ -5,6 +5,7 @@ import './ux-kit.css';
 import { useCallback, useEffect, useState } from 'react';
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson } from '../../lib/ux/step-up';
+import { safeInternalPath } from '../../lib/ux/safe-path';
 
 type Item = {
   id: string;
@@ -43,15 +44,16 @@ export function NotificationInbox({ tenant }: { tenant: string }) {
   useEffect(() => {
     load();
   }, [load]);
-  async function open(item: Item) {
-    if (!item.readAt)
-      await fetch(`/api/notifications?tenant=${encodeURIComponent(tenant)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: item.id }),
-      }).catch(() => undefined);
-    if (item.payload.href?.startsWith('/')) window.location.assign(item.payload.href);
-    else load();
+  function markRead(item: Item) {
+    if (item.readAt) return;
+    void fetch(`/api/notifications?tenant=${encodeURIComponent(tenant)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id }),
+      keepalive: true,
+    })
+      .then(() => load())
+      .catch(() => undefined);
   }
   return (
     <section className="ux-kit-inbox" aria-labelledby="ux-inbox-title">
@@ -67,9 +69,19 @@ export function NotificationInbox({ tenant }: { tenant: string }) {
         <ul>
           {items.map((item) => (
             <li key={item.id} data-unread={!item.readAt}>
-              <button type="button" className="text-link" onClick={() => void open(item)}>
-                {item.payload.title ?? typeTitle[item.type] ?? 'Update'}
-              </button>
+              {(() => {
+                const title = item.payload.title ?? typeTitle[item.type] ?? 'Update';
+                const target = safeInternalPath(item.payload.href);
+                return target ? (
+                  <a className="text-link" href={target} onClick={() => markRead(item)}>
+                    {title}
+                  </a>
+                ) : (
+                  <button type="button" className="text-link" onClick={() => markRead(item)}>
+                    {title}
+                  </button>
+                );
+              })()}
               <span className="ux-kit-hint"> {formatDateTime(item.createdAt)}</span>
             </li>
           ))}
