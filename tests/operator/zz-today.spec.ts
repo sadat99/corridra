@@ -165,7 +165,8 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
     }),
   );
   await page.reload();
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(3);
+  // Without the meetings read two counts drop (five of seven remain, CQ-34 and CQ-73 add two).
+  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(5);
   await expect(today.getByText('Invented Towels Ltd')).toBeVisible();
   // A failed read says so and leaves the mission list working.
   await page.unroute('**/api/workspace/missions?*view=today*');
