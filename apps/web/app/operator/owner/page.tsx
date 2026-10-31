@@ -160,42 +160,49 @@ export default async function Page({
               </li>
             ))}
           </ul>
-        </section>
-        <section
-          aria-labelledby="owner-gaps"
-          className="owner-section owner-section-tight"
-          data-deferred-register
-        >
-          <h2 id="owner-gaps">Open gaps</h2>
-          <p>
-            These {deferredControls.length} controls are open. Each one is deferred by your decision
-            to launch at small scale. None of them is passed or approved.
+          <p className="owner-line">
+            {deferredControls.length} controls are open. Status: {DEFERRED_LABEL}. Each one is
+            listed under <a href="#owner-gaps">Open gaps</a> with its risk.
           </p>
-          <ul className="owner-gaps owner-gap-cards">
-            {deferredControls.map((control) => {
-              const gap = ownerGaps.find((g) => g.id === control.id);
-              const signal = gap ? gapSignal(gap.id) : null;
-              return (
-                <li key={control.id}>
-                  <span className="owner-label">
-                    <code className="owner-code">{control.id}</code> {control.name}
-                  </span>
-                  <span className="owner-state">
-                    <StatusBadge tone="caution">Open</StatusBadge>
-                    <span>{DEFERRED_LABEL}</span>
-                  </span>
-                  <span className="owner-line">Risk: {control.risk}</span>
+        </section>
+      </section>
+      <section
+        aria-labelledby="owner-gaps"
+        className="owner-section owner-section-tight"
+        data-deferred-register
+      >
+        <h2 id="owner-gaps">Open gaps</h2>
+        <p>
+          These {deferredControls.length} controls are open. Each one is deferred by your decision
+          to launch at small scale. None of them is passed or approved.
+        </p>
+        <ul className="owner-gaps owner-gap-cards">
+          {deferredControls.map((control) => {
+            const gap = ownerGaps.find((g) => g.id === control.id);
+            const signal = gap ? gapSignal(gap.id) : null;
+            return (
+              <li key={control.id}>
+                <span className="owner-label">
+                  <code className="owner-code">{control.id}</code> {control.name}
+                </span>
+                <span className="owner-state">
+                  <StatusBadge tone="caution">Open</StatusBadge>
+                  <span>{DEFERRED_LABEL}</span>
+                </span>
+                <span className="owner-line">Risk: {control.risk}</span>
+                <details className="owner-more">
+                  <summary>Who acts and register entry</summary>
                   <span className="owner-line">Who acts: {control.whoActs}</span>
                   {gap && (
                     <span className="owner-line">
                       Register: {gap.status}.{signal ? ` ${signal}` : ''}
                     </span>
                   )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
       </section>
       <details className="owner-technical">
         <summary>Technical details</summary>

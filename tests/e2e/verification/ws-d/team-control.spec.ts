@@ -211,10 +211,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     }
     await page.goto(`/operator/sources?workspace=${tenant}`);
     const sources = page.locator('#workspace-sources');
-    await sources
-      .getByText(/Record a new source/)
-      .first()
-      .click();
+    // At 1280 px the source form is open; on phones it sits in a fold.
     await expect(sources.getByRole('combobox', { name: /Mission \(optional\)/ })).toBeVisible();
     await expect(sources.getByRole('combobox', { name: /Company \(optional\)/ })).toBeVisible();
     await evidence(page, 'V-22-sources-links');
@@ -262,13 +259,21 @@ test('WS-D layout: owner status board and readiness tell the truth at every widt
     clone.querySelectorAll('[data-deferred-register]').forEach((n) => n.remove());
     return clone.textContent ?? '';
   });
-  for (const pattern of forbiddenCopy) expect(boardText).not.toMatch(pattern);
+  // The workspace name comes from the shared lead seed ("Synthetic North"); it is data, not copy.
+  const copyOnly = boardText.replaceAll('Synthetic North', '');
+  for (const pattern of forbiddenCopy) expect(copyOnly).not.toMatch(pattern);
   const width = page.viewportSize()!.width;
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
-  if (width >= 768) {
-    const box = await page.locator('details.owner-technical').boundingBox();
-    expect(box!.y).toBeLessThanOrEqual(page.viewportSize()!.height * 2);
+  // D-2: the status board (live state, waiting counts, blocked items, who acts) ends within two
+  // screens at every width. The deferred register follows it, each control with its risk line.
+  const box = await board.boundingBox();
+  expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height * 2);
+  const register = page.locator('[data-deferred-register]');
+  await expect(register.getByRole('listitem')).toHaveCount(11);
+  for (const item of await register.getByRole('listitem').all()) {
+    await expect(item).toContainText('Deferred by owner decision on');
+    await expect(item).toContainText('Risk:');
   }
   await evidence(page, `D-2-owner-board-${width}`);
   // CQ-02: readiness says live and lists deferred controls, never PASS.

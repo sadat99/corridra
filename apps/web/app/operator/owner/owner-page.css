@@ -160,10 +160,31 @@
 .ux-owner .owner-gap-cards li {
   display: grid;
   gap: var(--space-1);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+}
+.ux-owner .owner-gap-cards .owner-state {
+  margin-block-start: 0;
+}
+.ux-owner .owner-more > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.ux-owner .owner-section-tight > h2 {
+  margin-block-end: var(--space-2);
 }
 @media (min-width: 48rem) {
   .ux-owner .owner-gap-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .ux-owner .owner-gap-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .ux-owner .owner-technical {
