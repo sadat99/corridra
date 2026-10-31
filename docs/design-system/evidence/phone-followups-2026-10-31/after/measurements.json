@@ -1,0 +1,354 @@
+{
+  "320 delivery jump": {
+    "row": 174,
+    "chips": [
+      {
+        "label": "Programmes",
+        "width": 111,
+        "height": 44,
+        "top": 237.90625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Participants",
+        "width": 108,
+        "height": 44,
+        "top": 289.90625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Publication",
+        "width": 101,
+        "height": 44,
+        "top": 341.90625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Private scope",
+        "width": 118,
+        "height": 44,
+        "top": 393.90625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Access and requests",
+        "width": 166,
+        "height": 44,
+        "top": 445.90625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      }
+    ],
+    "sideways": false
+  },
+  "320 programme select": {
+    "name": "Programme",
+    "width": 206,
+    "room": 151,
+    "widest": 335
+  },
+  "320 plan form": {
+    "card": 206,
+    "selects": [
+      {
+        "name": "plan-interval",
+        "width": 206,
+        "room": 156,
+        "widest": 92
+      },
+      {
+        "name": "plan-currency",
+        "width": 206,
+        "room": 156,
+        "widest": 33
+      },
+      {
+        "name": "plan-tax",
+        "width": 206,
+        "room": 156,
+        "widest": 145
+      },
+      {
+        "name": "grant-workspace_members",
+        "width": 206,
+        "room": 156,
+        "widest": 89
+      },
+      {
+        "name": "grant-report_exports",
+        "width": 206,
+        "room": 156,
+        "widest": 94
+      }
+    ]
+  },
+  "320 research jump": {
+    "row": 174,
+    "chips": [
+      {
+        "label": "Search and sources",
+        "width": 158,
+        "height": 44,
+        "top": 144.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Public identities",
+        "width": 133,
+        "height": 44,
+        "top": 196.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Evidence and claims",
+        "width": 163,
+        "height": 44,
+        "top": 248.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Private relationships",
+        "width": 164,
+        "height": 44,
+        "top": 300.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Matching",
+        "width": 89,
+        "height": 44,
+        "top": 352.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Mission shortlist",
+        "width": 137,
+        "height": 44,
+        "top": 404.515625,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      }
+    ],
+    "sideways": false
+  },
+  "390 delivery jump": {
+    "row": 244,
+    "chips": [
+      {
+        "label": "Programmes",
+        "width": 111,
+        "height": 44,
+        "top": 211.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Participants",
+        "width": 108,
+        "height": 44,
+        "top": 211.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Publication",
+        "width": 101,
+        "height": 44,
+        "top": 263.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Private scope",
+        "width": 118,
+        "height": 44,
+        "top": 263.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Access and requests",
+        "width": 166,
+        "height": 44,
+        "top": 315.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      }
+    ],
+    "sideways": false
+  },
+  "390 programme select": {
+    "name": "Programme",
+    "width": 276,
+    "room": 221,
+    "widest": 335
+  },
+  "390 plan form": {
+    "card": 276,
+    "selects": [
+      {
+        "name": "plan-interval",
+        "width": 276,
+        "room": 226,
+        "widest": 92
+      },
+      {
+        "name": "plan-currency",
+        "width": 276,
+        "room": 226,
+        "widest": 33
+      },
+      {
+        "name": "plan-tax",
+        "width": 276,
+        "room": 226,
+        "widest": 145
+      },
+      {
+        "name": "grant-workspace_members",
+        "width": 276,
+        "room": 226,
+        "widest": 89
+      },
+      {
+        "name": "grant-report_exports",
+        "width": 276,
+        "room": 226,
+        "widest": 94
+      }
+    ]
+  },
+  "390 research jump": {
+    "row": 244,
+    "chips": [
+      {
+        "label": "Search and sources",
+        "width": 158,
+        "height": 44,
+        "top": 144.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Public identities",
+        "width": 133,
+        "height": 44,
+        "top": 196.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Evidence and claims",
+        "width": 163,
+        "height": 44,
+        "top": 248.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Private relationships",
+        "width": 164,
+        "height": 44,
+        "top": 300.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Matching",
+        "width": 89,
+        "height": 44,
+        "top": 352.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      },
+      {
+        "label": "Mission shortlist",
+        "width": 137,
+        "height": 44,
+        "top": 352.359375,
+        "spilled": false,
+        "outside": false,
+        "split": []
+      }
+    ],
+    "sideways": false
+  },
+  "768 styles": {
+    "detailsBorder": "1px",
+    "detailsRadius": "12px",
+    "formParent": "details",
+    "formPadding": "24px",
+    "formBorder": "1px 1px",
+    "formBackground": "rgb(239, 243, 248)",
+    "formRadius": "12px",
+    "formMargin": "16px",
+    "selectPadding": "14.4px",
+    "rowDisplay": "flex",
+    "rowGap": "4px 12px",
+    "chipHeight": "44px",
+    "chipPadding": "8px",
+    "chipWidth": "103.125px"
+  },
+  "1024 styles": {
+    "detailsBorder": "1px",
+    "detailsRadius": "12px",
+    "formParent": "details",
+    "formPadding": "24px",
+    "formBorder": "1px 1px",
+    "formBackground": "rgb(239, 243, 248)",
+    "formRadius": "12px",
+    "formMargin": "16px",
+    "selectPadding": "14.4px",
+    "rowDisplay": "flex",
+    "rowGap": "4px 12px",
+    "chipHeight": "44px",
+    "chipPadding": "8px",
+    "chipWidth": "103.125px"
+  },
+  "1440 styles": {
+    "detailsBorder": "1px",
+    "detailsRadius": "12px",
+    "formParent": "details",
+    "formPadding": "24px",
+    "formBorder": "1px 1px",
+    "formBackground": "rgb(239, 243, 248)",
+    "formRadius": "12px",
+    "formMargin": "16px",
+    "selectPadding": "14.4px",
+    "rowDisplay": "flex",
+    "rowGap": "4px 12px",
+    "chipHeight": "44px",
+    "chipPadding": "8px",
+    "chipWidth": "103.125px"
+  }
+}
