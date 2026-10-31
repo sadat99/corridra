@@ -1,7 +1,307 @@
 'use client';
 
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorIcon } from '../../components/operator-icon';
+import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
+import { formatDateTime } from '../../lib/ux/format';
+import { readJson, withStepUp } from '../../lib/ux/step-up';
+
+const roleNames: Record<string, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  operator: 'Operator',
+  reviewer: 'Reviewer',
+  viewer: 'Viewer',
+};
+
+/**
+ * The workspace this page shows. The workspace passes it once the lead wires the prop; until then it
+ * is read the same way the page chose it: the `workspace` address parameter, else the first
+ * workspace the person belongs to.
+ */
+export function useCurrentTenant(tenant?: string) {
+  const [found, setFound] = useState('');
+  useEffect(() => {
+    if (tenant) return;
+    const fromAddress = new URLSearchParams(window.location.search).get('workspace');
+    let live = true;
+    (fromAddress
+      ? Promise.resolve([{ id: fromAddress }])
+      : fetch('/api/workspace/tenants', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : []))
+    )
+      .then((list: { id: string }[]) => {
+        if (live && list[0]) setFound(list[0].id);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [tenant]);
+  return tenant ?? found;
+}
+
+async function teamControl(tenant: string, action: string, body?: unknown) {
+  return readJson<Record<string, unknown>>(
+    await fetch(`/api/team-control/${action}?${new URLSearchParams({ tenant })}`, {
+      method: body === undefined ? 'GET' : 'POST',
+      cache: 'no-store',
+      ...(body === undefined
+        ? {}
+        : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+    }),
+  );
+}
+
+type Invitation = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  state: 'PENDING' | 'EXPIRED';
+};
+
+/** Team invitations (CQ-74, D8). Shown only when CORRIDRA_TEAM_INVITES is on for this deployment. */
+function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName: string }) {
+  const [invitations, setInvitations] = useState<Invitation[] | null>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const feedback = useActionFeedback();
+  const listFeedback = useActionFeedback();
+  const showListError = listFeedback.error;
+  const load = useCallback(async () => {
+    try {
+      const body = await teamControl(tenant, 'invites');
+      setInvitations(body.invitations as Invitation[]);
+      setAvailable(true);
+    } catch (error) {
+      if ((error as { status?: number }).status === 404) setAvailable(false);
+      else {
+        setAvailable(true);
+        setInvitations([]);
+        showListError(error instanceof Error ? error.message : 'Invitations could not load.');
+      }
+    }
+  }, [tenant, showListError]);
+  useEffect(() => {
+    if (!tenant) return;
+    let live = true;
+    teamControl(tenant, 'invites')
+      .then((body) => {
+        if (!live) return;
+        setInvitations(body.invitations as Invitation[]);
+        setAvailable(true);
+      })
+      .catch((error: unknown) => {
+        if (!live) return;
+        setAvailable((error as { status?: number }).status === 404 ? false : true);
+        setInvitations([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [tenant]);
+  if (!tenant || available === false) return null;
+  async function send(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const f = new FormData(form);
+    const invite = {
+      commandId: crypto.randomUUID(),
+      name: String(f.get('name') ?? ''),
+      email: String(f.get('email') ?? ''),
+      role: String(f.get('role') ?? ''),
+    };
+    setBusy(true);
+    feedback.clear();
+    try {
+      const result = await withStepUp(() =>
+        teamControl(tenant, 'invites', { action: 'invite', invite }),
+      );
+      const email = (result.notification as { email?: string } | undefined)?.email;
+      feedback.success(
+        email === 'sent'
+          ? `Invitation sent to ${invite.email}. It works for 7 days.`
+          : `Invitation sent to their Corridra inbox. Email is not sent from this deployment yet, so tell ${invite.email} to open ${window.location.origin}/operator/setup within 7 days.`,
+      );
+      form.reset();
+      await load();
+    } catch (error) {
+      feedback.error(error instanceof Error ? error.message : 'The invitation was not sent.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function change(action: 'resend' | 'cancel', item: Invitation) {
+    if (action === 'cancel' && !window.confirm(`Cancel the invitation for ${item.email}?`)) return;
+    setBusy(true);
+    listFeedback.clear();
+    try {
+      await withStepUp(() => teamControl(tenant, 'invites', { action, invitationId: item.id }));
+      listFeedback.success(
+        action === 'resend'
+          ? `Invitation for ${item.email} sent again. It works for 7 more days.`
+          : `Invitation for ${item.email} cancelled.`,
+      );
+      await load();
+    } catch (error) {
+      listFeedback.error(error instanceof Error ? error.message : 'The change was not saved.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="ux-controls-invites" aria-labelledby="team-invites-heading">
+      <div className="ux-controls-section-heading">
+        <div>
+          <h3 id="team-invites-heading">Invite a team member</h3>
+          <p>
+            Add someone to <strong>{workspaceName}</strong>. They set a password and an
+            authenticator when they accept. The invitation works for 7 days.
+          </p>
+        </div>
+      </div>
+      <form className="operator-form" onSubmit={(event) => void send(event)}>
+        <fieldset disabled={busy}>
+          <legend>New team invitation</legend>
+          <label className="field">
+            Name
+            <input name="name" required maxLength={80} autoComplete="off" />
+          </label>
+          <label className="field">
+            Email
+            <input name="email" type="email" required maxLength={254} autoComplete="off" />
+          </label>
+          <label className="field">
+            Role for the new member
+            <select name="role" required defaultValue="">
+              <option value="" disabled>
+                Choose a role
+              </option>
+              {Object.entries(roleNames).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="primary-link">{busy ? 'Sending…' : 'Send invitation'}</button>
+          <ActionFeedback
+            scope="team-invite"
+            feedback={feedback.feedback}
+            onClear={feedback.clear}
+          />
+        </fieldset>
+      </form>
+      <h4>Pending invitations</h4>
+      <ActionFeedback
+        scope="team-invite-list"
+        feedback={listFeedback.feedback}
+        onClear={listFeedback.clear}
+      />
+      {invitations === null ? (
+        <p>Loading invitations.</p>
+      ) : invitations.length === 0 ? (
+        <p>No pending invitations.</p>
+      ) : (
+        <ul className="ux-controls-invite-list">
+          {invitations.map((item) => (
+            <li key={item.id}>
+              <strong>{item.name}</strong> · {item.email} · {roleNames[item.role] ?? item.role}
+              <span>
+                {item.state === 'PENDING'
+                  ? ` · Works until ${formatDateTime(item.expiresAt)}`
+                  : ' · Expired'}
+              </span>
+              <span className="ux-controls-invite-actions">
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={busy}
+                  onClick={() => void change('resend', item)}
+                >
+                  Resend
+                </button>
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={busy}
+                  onClick={() => void change('cancel', item)}
+                >
+                  Cancel invitation
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** Lost authenticator (V-03): the owner resets another member's authenticator. */
+function AuthenticatorReset({ tenant, members }: { tenant: string; members: Member[] }) {
+  const [busy, setBusy] = useState(false);
+  const feedback = useActionFeedback();
+  const active = members.filter((m) => m.user_id && !m.revoked_at);
+  async function reset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const userId = String(new FormData(form).get('member') ?? '');
+    const member = active.find((m) => m.user_id === userId);
+    if (!member) return;
+    if (
+      !window.confirm(
+        `Reset the authenticator for ${member.name ?? 'this member'}? They are signed out and set up a new authenticator at their next sign-in.`,
+      )
+    )
+      return;
+    setBusy(true);
+    feedback.clear();
+    try {
+      await withStepUp(() => teamControl(tenant, 'authenticator-reset', { userId }));
+      feedback.success(
+        `Authenticator reset for ${member.name ?? 'the member'}. They set up a new one at their next sign-in.`,
+      );
+      form.reset();
+    } catch (error) {
+      feedback.error(error instanceof Error ? error.message : 'The reset was not saved.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form className="operator-form ux-controls-reset" onSubmit={(event) => void reset(event)}>
+      <fieldset disabled={busy || !tenant || !active.length}>
+        <legend>Reset a lost authenticator</legend>
+        <p>
+          For a member who lost their phone or authenticator app. You confirm your own authenticator
+          first. The change is recorded in the security history.
+        </p>
+        <label className="field">
+          Member to reset
+          <select name="member" required defaultValue="">
+            <option value="" disabled>
+              {active.length ? 'Choose a member' : 'Load workspace members first'}
+            </option>
+            {active.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.name ?? 'Unnamed member'} · {roleNames[m.role ?? ''] ?? m.role}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="primary-link">{busy ? 'Please wait…' : 'Reset authenticator'}</button>
+        <ActionFeedback
+          scope="authenticator-reset"
+          feedback={feedback.feedback}
+          onClear={feedback.clear}
+        />
+      </fieldset>
+    </form>
+  );
+}
 
 type Member = {
   user_id?: string;
@@ -89,6 +389,7 @@ const groups = [
 ] as const;
 
 export function WorkspaceControls({
+  tenant: tenantProp,
   workspaceName,
   members,
   membersLoaded,
@@ -98,6 +399,8 @@ export function WorkspaceControls({
   onUpdateMember,
   onChangeFeature,
 }: {
+  /** Optional until the workspace passes it (integration note); see useCurrentTenant. */
+  tenant?: string;
   workspaceName: string;
   members: Member[];
   membersLoaded: boolean;
@@ -107,6 +410,7 @@ export function WorkspaceControls({
   onUpdateMember: (value: { userId: string; role: string; revoked: boolean }) => void;
   onChangeFeature: (key: string, value: boolean) => void;
 }) {
+  const tenant = useCurrentTenant(tenantProp);
   return (
     <div className="ux-workspace-controls">
       <header className="ux-controls-heading">
@@ -169,8 +473,8 @@ export function WorkspaceControls({
               </option>
               {members.map((member) => (
                 <option key={member.user_id} value={member.user_id}>
-                  {member.name ?? member.user_id} · {member.role} ·{' '}
-                  {member.revoked_at ? 'Revoked' : 'Active'}
+                  {member.name ?? 'Unnamed member'} · {roleNames[member.role ?? ''] ?? member.role}{' '}
+                  · {member.revoked_at ? 'Revoked' : 'Active'}
                 </option>
               ))}
             </select>
@@ -201,12 +505,14 @@ export function WorkspaceControls({
         <details className="ux-controls-help">
           <summary>Membership rules and recovery</summary>
           <p>
-            Only the workspace owner can change these roles. Clearing “Revoke membership” restores
-            that existing membership; it does not reactivate a suspended identity. New staff
-            invitations and lost authenticators require reviewed recovery.
+            Only the workspace owner can change these roles, send team invitations and reset an
+            authenticator. Clearing “Revoke membership” restores that existing membership; it does
+            not reactivate a suspended identity.
           </p>
         </details>
+        <AuthenticatorReset tenant={tenant} members={members} />
       </section>
+      <TeamInvites tenant={tenant} workspaceName={workspaceName} />
       <section className="ux-controls-features" aria-labelledby="workspace-tools-heading">
         <div className="ux-controls-section-heading">
           <div>
@@ -216,9 +522,9 @@ export function WorkspaceControls({
         </div>
         <div className="ux-controls-notice">
           <p>
-            A workspace setting does not activate a disabled deployment. Provider approval, source
-            rights and independent review remain separate. Test settings cannot authorize real
-            customer work, outreach or payouts.
+            A workspace setting does not switch on a feature that is off for the whole deployment.
+            Provider approval, source rights and independent review stay separate. No setting here
+            starts automated outreach or payouts.
           </p>
         </div>
         <PhoneFold

@@ -2,11 +2,22 @@ import { z } from 'zod';
 import { DomainError, role } from '@corridra/domain';
 import { withTenant, sessionHash, type Pool, type RequestContext } from '@corridra/db';
 import { realUseEnabled } from './customer-production';
+import { getTeamToday } from './team-today';
+import { TeamControl } from './team-control';
 export class AccessService {
   constructor(
     private pool: Pool,
     private identityPool?: Pool,
   ) {}
+  /** Today counts for the team (CQ-34, CQ-73), read with the person's own access. */
+  today(ctx: RequestContext) {
+    return getTeamToday(this.pool, ctx);
+  }
+  /** Team invitations and authenticator reset (CQ-74, V-03). Needs the restricted auth pool. */
+  team() {
+    if (!this.identityPool) throw new DomainError('Team management is unavailable', 503);
+    return new TeamControl(this.pool, this.identityPool);
+  }
   async tenants(token: string) {
     const db = await this.pool.connect();
     try {

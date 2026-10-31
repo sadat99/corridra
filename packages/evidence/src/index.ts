@@ -90,7 +90,7 @@ export class EvidenceService {
       ).rows,
     }));
   }
-  createSource(ctx: RequestContext, input: unknown) {
+  async createSource(ctx: RequestContext, input: unknown) {
     const v = sourceInput.parse(input);
     const links = sourceLinks(input);
     return withTenant(this.pool, ctx, 'trust.write', async (t) => {
