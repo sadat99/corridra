@@ -16,6 +16,7 @@ import {
   workspaceSections,
 } from '../../apps/web/lib/workspace-navigation';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
+import { signInNavigationFindingsIn } from './sign-in-navigation-guard';
 
 // Operator section addresses and view as stage 2 (Lane 9 of the UX update): the closed list of
 // addresses, the rule that a `#` part wins, and every switch-off path.
@@ -365,5 +366,9 @@ describe('signing in again from the workspace comes back to the same workspace a
           expect(element, path).not.toMatch(/\/operator\/signin|operatorSignIn/);
       expect(source, path).not.toContain('href="/operator/signin"');
     }
+  });
+  it('no Link or router call in the web app reaches sign-in through a variable, spread, alias or router', () => {
+    // The syntax tree guard (sign-in-navigation-guard.ts) sees what the regex scan above cannot.
+    expect(signInNavigationFindingsIn('apps/web')).toEqual([]);
   });
 });
