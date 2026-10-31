@@ -25,7 +25,7 @@ import { customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
 // (WS-A: plain errors on their field, required groups, country names, autocomplete, receipt hint and status
 // label; the request bodies are unchanged). It now names the commit with that form (WS-A, then the folded receipt check for V-57). After the program
 // merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
-const baseline = 'fedce51bf6ec3335c8160af8f0d691bb96144bcf';
+const baseline = '16141dbff716829a22f38d8b5ab5d83dc4cc1b30';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -1072,6 +1072,11 @@ test.describe('the page-length budget', () => {
         if (code === 'en') await open(page, 'en', query);
         else await openTranslated(page, code, query);
         await page.evaluate(() => document.fonts.ready);
+        // The budget was set on the page with the receipt check open. Since V-57 folds it, open it in
+        // every language so the measured page is the same quantity as before (both sides alike).
+        await page.evaluate(() =>
+          document.querySelector('details.receipt-disclosure')?.setAttribute('open', ''),
+        );
         const form = page.locator('form.intake-form');
         const answers = [
           () => form.locator('select').first().selectOption('sourcing'),
