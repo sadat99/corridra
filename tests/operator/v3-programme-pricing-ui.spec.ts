@@ -228,6 +228,7 @@ createRoot(document.getElementById('fixture')).render(<CustomerProgrammes subjec
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -390,7 +391,10 @@ test('a fee schedule is validated before sending and saved with exact minor-unit
   await area.getByLabel('Tier 1 name').fill(standard);
   await area.getByLabel(/Tier 1 fee/).fill('10000.505');
   await area.getByRole('button', { name: 'Create fee schedule' }).click();
-  await expect(area.getByRole('alert')).toContainText('positive amount using the currency');
+  // MoneyInput also explains the decimal places beside the field, so pick the form's own error.
+  await expect(
+    area.getByRole('alert').filter({ hasText: 'positive amount using the currency' }),
+  ).toBeVisible();
   await area.getByLabel(/Tier 1 fee/).fill('10000.50');
   await area.getByRole('button', { name: 'Add an early booking reduction' }).click();
   await area.getByLabel('Early booking 1 name').fill('Synthetic early booking discount');

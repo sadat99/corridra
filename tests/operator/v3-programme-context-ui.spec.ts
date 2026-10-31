@@ -16,6 +16,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -135,7 +136,9 @@ test('owner saves exact scope, date offsets, version and explicit participant sh
   });
   await page.goto(origin);
   await page.getByLabel('Reason for change', { exact: true }).fill('Synthetic revised reason');
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
   await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Programme details saved.');
   expect(command).toMatchObject({
@@ -167,7 +170,9 @@ test('short change reason stays editable without sending a rejected save', async
   const reason = page.getByLabel('Reason for change', { exact: true });
   await reason.fill('');
   await reason.pressSequentially('ab');
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
   await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
   expect(await reason.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true);
   expect(commands).toHaveLength(0);
@@ -199,7 +204,9 @@ test('wrong acknowledgement retains exact command for safe retry', async ({ page
     });
   });
   await page.goto(origin);
-  await page.getByLabel('I confirm these are fictional planning details only.').check();
+  await page
+    .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+    .check();
   await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Save could not be confirmed');
   await page.getByRole('button', { name: 'Retry same save', exact: true }).click();
@@ -224,7 +231,9 @@ for (const status of [403, 409, 503])
         : route.fulfill({ status, json: { error: 'Unavailable' } }),
     );
     await page.goto(origin);
-    await page.getByLabel('I confirm these are fictional planning details only.').check();
+    await page
+      .getByLabel('I confirm these details are accurate to the best of my knowledge.')
+      .check();
     await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
     await expect(page.getByRole('textbox')).toHaveCount(0);
     await expect(page.getByText(context.organiser, { exact: true })).toHaveCount(0);

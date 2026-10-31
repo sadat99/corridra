@@ -298,7 +298,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
                 );
               }}
             >
-              <h5>{status === 'NOT_APPLIED' ? 'Apply for a place' : 'Apply again'}</h5>
+              <h5>{status === 'NOT_APPLIED' ? 'Your place on this programme' : 'Apply again'}</h5>
               {full && <p role="status">This programme is full and has no waiting list.</p>}
               {!full && !data.placesAvailable && (
                 <p role="status">All places are taken. You can join the waiting list.</p>

@@ -65,7 +65,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     return unavailable('Access could not be confirmed. Reload your account before continuing.');
   }
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Start a request">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="New request">
       <p>Workspace: {name}</p>
       <GuidedRequest
         subject={session.data.user.id}

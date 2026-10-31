@@ -3,6 +3,7 @@
 // invented: a card exists only where a real state exists, a date only where a real date exists, and an
 // action only for a role that may take it.
 import type { Holder, MoveVerb } from '../components/mr/types';
+import { formatDate } from './ux/format';
 
 export type WorkspaceRole = 'owner' | 'admin' | 'member';
 
@@ -25,6 +26,8 @@ export type MoveInput = {
       dueOn: string | null;
     }[];
   }[];
+  /** CQ-77: approved reports published for requests the person created (listDeliveredPublications). */
+  reports?: { id: string; title: string; requestId: string; publishedAt: string; href: string }[];
   /** Requests with the progress a customer may read. */
   requests: {
     id: string;
@@ -38,7 +41,7 @@ export type MoveInput = {
   }[];
 };
 
-export type MoveCardKind = 'draft' | 'quote' | 'company' | 'move';
+export type MoveCardKind = 'draft' | 'quote' | 'company' | 'move' | 'report';
 
 /** A card is data only. The words for each kind come from the message module, in the person's language. */
 export type MoveCardData = {
@@ -79,7 +82,10 @@ export type MoveModel = {
   latest: null | { id: string; createdAt: string; status: string | null; href: string };
 };
 
+// D6 and CQ-21: a request the customer sent is with the team from the moment it is received, so a
+// DRAFT mission (received, waiting for review) is listed under waiting, never left out.
 const teamStatuses = [
+  'DRAFT',
   'QUALIFICATION',
   'ACTIVE',
   'TARGETING',
@@ -183,7 +189,7 @@ export function buildMoveModel(
           verb: move.verb,
           holder: 'you',
           context: received.get(entry.requestId)
-            ? `Request received ${received.get(entry.requestId)}`
+            ? `Request received ${formatDate(`${received.get(entry.requestId)}T00:00:00Z`, { timeZone: 'UTC' })}`
             : undefined,
           href,
           object: move.object,
@@ -200,6 +206,19 @@ export function buildMoveModel(
           href,
         });
     }
+
+  // A new report comes first among the person's own cards: it is the result they asked for.
+  for (const report of [...(input.reports ?? [])].sort((a, b) =>
+    b.publishedAt.localeCompare(a.publishedAt),
+  ))
+    cards.push({
+      id: `report:${report.id}`,
+      kind: 'report',
+      verb: 'Read',
+      holder: 'you',
+      context: report.title,
+      href: report.href,
+    });
 
   const replyCandidates: MoveModel['replyCandidates'] = [];
   for (const request of input.requests) {

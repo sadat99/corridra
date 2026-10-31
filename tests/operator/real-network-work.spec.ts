@@ -60,6 +60,7 @@ test.beforeAll(async () => {
     },
     outfile: apiFile,
     bundle: true,
+    loader: { '.css': 'empty' },
     platform: 'node',
     format: 'esm',
     packages: 'external',
@@ -120,6 +121,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -287,7 +289,7 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   await worker.getByRole('button', { name: 'Verify and open workspace' }).click();
   await expect(worker).toHaveURL(origin + '/contributor?workspace=' + f.realTenant);
   await expect(
-    worker.getByText('No current reviewed assignment is available.', { exact: true }),
+    worker.getByText('You’re set up. No tasks assigned yet.', { exact: true }),
   ).toBeVisible();
   await inspect(worker, 'contributor-empty');
   const principal = (
@@ -319,7 +321,9 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
     .fill('Source-reported equipment finding. Availability remains unverified.');
   await worker.getByLabel('Submission context').fill('Only the scoped task disclosure was used');
   await worker.getByRole('button', { name: 'Submit for evidence review' }).click();
-  await expect(worker.getByText('SUBMIT · ES · work country DE', { exact: true })).toBeVisible();
+  await expect(
+    worker.getByText('Submit · Spain · work country Germany', { exact: true }),
+  ).toBeVisible();
   await inspect(worker, 'contributor-submitted');
   const events = await f.owner.query(
     'SELECT action FROM app.network_event WHERE task_id=$1 ORDER BY version',

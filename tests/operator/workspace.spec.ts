@@ -3093,9 +3093,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       reason: 'Synthetic access suspension after acceptance',
     });
     await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
-    await expect(
-      contributorPage.getByText('No current reviewed assignment is available.'),
-    ).toBeVisible();
+    await expect(contributorPage.getByText('You’re set up. No tasks assigned yet.')).toBeVisible();
 
     // A refused sign-out says so in place and can be tried again.
     const assignedTasks = contributorPage.getByRole('region', { name: 'Assigned tasks' });
@@ -3192,9 +3190,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       await contributorPage.evaluate(() => 'beforeSignIn' in window),
       'returned with a new page',
     ).toBe(false);
-    await expect(
-      contributorPage.getByText('No current reviewed assignment is available.'),
-    ).toBeVisible();
+    await expect(contributorPage.getByText('You’re set up. No tasks assigned yet.')).toBeVisible();
     await expect(contributorPage.getByText('Received and saved', { exact: false })).toHaveCount(0);
 
     // A principal with no workspace membership who returns to a workspace sees the existing denial.

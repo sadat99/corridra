@@ -42,7 +42,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="results" eyebrow="RESULTS" title="Your commercial mission">
+    <CustomerShell tab="results" eyebrow="REPORTS" title="Your commercial mission">
       <SavedCommercialReport
         resourceId={id.data}
         subject={session.data.user.id}

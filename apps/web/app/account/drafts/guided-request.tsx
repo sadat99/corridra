@@ -1,5 +1,6 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { formatDateTime } from '../../../lib/ux/format';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   composeBrief,
@@ -73,12 +74,8 @@ const familyShort: Record<MissionDraftFamily, string> = {
 };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const stamp = (v: unknown): v is string => typeof v === 'string' && Number.isFinite(Date.parse(v));
-const clock = (v: string) =>
-  new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(v)) + ' UTC';
+// D11: one date and time style with the viewer's time zone.
+const clock = (v: string) => formatDateTime(v);
 
 function blank(family: MissionDraftFamily): DraftFormValues {
   let timezone = 'UTC';
@@ -248,7 +245,8 @@ function Guided(scope: Scope) {
         const page = parseList(await r.json(), scope);
         setRows((old) => (after && old ? [...old, ...page.drafts] : page.drafts));
         setNextAfter(page.nextAfter);
-        setMessage(page.drafts.length ? '' : 'You have no saved drafts yet.');
+        // CQ-22: the empty line only when the first page is empty, never beside drafts already listed.
+        if (!after) setMessage(page.drafts.length ? '' : 'You have no saved drafts yet.');
       } catch {
         if (active.current && !controller.signal.aborted)
           setMessage('Your drafts could not be loaded. Try again.');
@@ -581,7 +579,7 @@ function Guided(scope: Scope) {
       <section aria-label="Guided request drafts">
         <p>
           {realCustomerInput()
-            ? 'Enter a clear description with at least two characters.'
+            ? 'Start a request in a few questions, save it and come back later. What you enter is self-declared until the Corridra team checks it.'
             : 'Start a request in a few questions, save it and come back later. Everything you enter is self-declared and unverified. This is test mode: start your text with the word Synthetic.'}{' '}
         </p>
         <p role="status">{message}</p>

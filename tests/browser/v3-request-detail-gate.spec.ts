@@ -9,9 +9,7 @@ test('closed detail page and API never expose optional source data', async ({ pa
   expect(result.status()).toBe(200);
   expect(result.headers()['referrer-policy']).toBe('no-referrer');
   await page.goto('/account/requests/' + id);
-  await expect(page.getByRole('status')).toHaveText(
-    'Saved sample request details are unavailable.',
-  );
+  await expect(page.getByRole('status')).toHaveText('Saved request details are unavailable.');
   await expect(page.getByRole('link', { name: 'Return to your account' })).toHaveAttribute(
     'href',
     '/account',

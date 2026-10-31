@@ -82,6 +82,7 @@ createRoot(document.getElementById('fixture')).render(<Component key={issuer+':'
     ],
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -208,14 +209,12 @@ test('owner team UI issues one-time codes, confirms cancellation and revocation,
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
   }
-  const panel = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+  const panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await panel.getByLabel('Sample invitation label', { exact: true }).fill('new teammate');
   await panel.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
-  await expect(
-    panel.getByLabel('New test workspace invitation code', { exact: true }),
-  ).toBeVisible();
+  await expect(panel.getByLabel('New workspace invitation code', { exact: true })).toBeVisible();
   expect(
-    (await panel.getByLabel('New test workspace invitation code', { exact: true }).inputValue()) ===
+    (await panel.getByLabel('New workspace invitation code', { exact: true }).inputValue()) ===
       token,
   ).toBe(true);
   await expect(
@@ -320,7 +319,7 @@ test('lost issuance retries after reload without recovering a secret, and a new 
   });
   await page.goto(origin);
   await page.getByText('Manage team', { exact: true }).click();
-  let panel = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+  let panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await panel.getByLabel('Sample invitation label', { exact: true }).fill('lost response');
   await panel.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(panel.getByRole('alert')).toContainText('Issuing was not confirmed');
@@ -329,15 +328,13 @@ test('lost issuance retries after reload without recovering a secret, and a new 
   );
   await page.reload();
   await page.getByText('Manage team', { exact: true }).click();
-  panel = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+  panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await expect(panel.getByLabel('Sample invitation label', { exact: true })).toHaveValue(
     'lost response',
   );
   await panel.getByRole('button', { name: 'Retry issuing invitation', exact: true }).click();
   await expect(panel.getByRole('alert')).toContainText('code cannot be retrieved');
-  await expect(panel.getByLabel('New test workspace invitation code', { exact: true })).toHaveCount(
-    0,
-  );
+  await expect(panel.getByLabel('New workspace invitation code', { exact: true })).toHaveCount(0);
   expect(commands.length).toBe(2);
   expect(commands[0] === commands[1]).toBe(true);
   expect(invitations.length).toBe(1);
@@ -350,7 +347,7 @@ test('lost issuance retries after reload without recovering a secret, and a new 
   await panel.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(panel.getByRole('alert')).toContainText('Team access could not be loaded');
   expect(
-    (await panel.getByLabel('New test workspace invitation code', { exact: true }).inputValue()) ===
+    (await panel.getByLabel('New workspace invitation code', { exact: true }).inputValue()) ===
       token,
   ).toBe(true);
   expect(commands[2] === commands[0]).toBe(false);
@@ -359,7 +356,7 @@ test('lost issuance retries after reload without recovering a secret, and a new 
   await panel.getByRole('button', { name: 'Retry loading team access', exact: true }).click();
   await expect(panel.getByText('Synthetic new confirmed code', { exact: true })).toBeVisible();
   expect(
-    (await panel.getByLabel('New test workspace invitation code', { exact: true }).inputValue()) ===
+    (await panel.getByLabel('New workspace invitation code', { exact: true }).inputValue()) ===
       token,
   ).toBe(true);
 });
@@ -404,7 +401,7 @@ test('members and admins receive no owner controls; denied or malformed owner vi
   ]) {
     await page.goto(origin);
     await page.getByText('Manage team', { exact: true }).click();
-    const panel = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+    const panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
     await expect(panel.getByRole('alert')).toContainText('Team access could not be loaded');
     await expect(
       panel.getByRole('button', { name: 'Issue sample invitation', exact: true }),
@@ -446,7 +443,7 @@ test('blocked browser storage sends no invitation, and malformed acknowledgement
   });
   await page.goto(origin);
   await page.getByText('Manage team', { exact: true }).click();
-  const panel = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+  const panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await panel.getByLabel('Sample invitation label', { exact: true }).fill('blocked request');
   await panel.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(panel.getByRole('alert')).toContainText('No invitation request was sent');
@@ -459,9 +456,7 @@ test('blocked browser storage sends no invitation, and malformed acknowledgement
   await panel.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(panel.getByRole('alert')).toContainText('Issuing was not confirmed');
   expect(posts).toBe(1);
-  await expect(panel.getByLabel('New test workspace invitation code', { exact: true })).toHaveCount(
-    0,
-  );
+  await expect(panel.getByLabel('New workspace invitation code', { exact: true })).toHaveCount(0);
   await expect(
     panel.getByRole('button', { name: 'Retry issuing invitation', exact: true }),
   ).toBeVisible();
@@ -520,7 +515,7 @@ test('independent history cursors and saved invitation requests remain scoped to
     .filter({ has: page.getByText(owner.name, { exact: true }) })
     .getByText('Manage team', { exact: true })
     .click();
-  const first = page.getByRole('region', { name: 'Test team for ' + owner.name, exact: true });
+  const first = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await first.getByRole('button', { name: 'Next invitations', exact: true }).click();
   await expect(first.getByText(inv2.label, { exact: true })).toBeVisible();
   await first.getByRole('button', { name: 'Next invited members', exact: true }).click();
@@ -534,7 +529,7 @@ test('independent history cursors and saved invitation requests remain scoped to
     .filter({ has: page.getByText(other.name, { exact: true }) })
     .getByText('Manage team', { exact: true })
     .click();
-  const second = page.getByRole('region', { name: 'Test team for ' + other.name, exact: true });
+  const second = page.getByRole('region', { name: 'Team for ' + other.name, exact: true });
   await second.getByLabel('Sample invitation label', { exact: true }).fill('Alice second pending');
   await second.getByRole('button', { name: 'Issue sample invitation', exact: true }).click();
   await expect(second.getByRole('alert')).toContainText('Issuing was not confirmed');
@@ -549,7 +544,7 @@ test('independent history cursors and saved invitation requests remain scoped to
     origin + '?subject=' + currentSubject + '&issuer=' + encodeURIComponent(currentIssuer),
   );
   await page.getByText('Manage team', { exact: true }).click();
-  const next = page.getByRole('region', { name: 'Test team for ' + bob.name, exact: true });
+  const next = page.getByRole('region', { name: 'Team for ' + bob.name, exact: true });
   await expect(next.getByLabel('Sample invitation label', { exact: true })).toBeEmpty();
   await expect(
     next.getByRole('button', { name: 'Retry issuing invitation', exact: true }),

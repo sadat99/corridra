@@ -1,4 +1,3 @@
-import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
@@ -21,12 +20,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!customerRequestDetailsEnabled())
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your saved request" compact>
-        <p role="status">
-          {' '}
-          {realCustomerInput()
-            ? 'Saved request details are unavailable.'
-            : 'Saved sample request details are unavailable.'}{' '}
-        </p>
+        <p role="status"> Saved request details are unavailable. </p>
         <a className="text-link" href="/account">
           Return to your account
         </a>
@@ -49,7 +43,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Your saved request">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Your saved request">
       {uxSwitchOn('CORRIDRA_UX_ROAD') && (
         <p>
           <a className="text-link" href={`/account/rooms/${parsed.data}`}>

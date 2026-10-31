@@ -42,7 +42,7 @@ export function CustomerMissions() {
           Private mission invitation
           <input name="invitation" type="text" autoComplete="off" required maxLength={300} />
         </label>
-        <button className="primary-link">Open authorized mission</button>
+        <button className="primary-link">Open shared mission</button>
       </form>
       {error && (
         <p ref={feedback} tabIndex={-1} className="ux-error-summary" role="alert">

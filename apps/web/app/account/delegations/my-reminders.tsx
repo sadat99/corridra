@@ -96,6 +96,14 @@ function ScopedReminders({ subject, issuer }: Props) {
   const total = data
     ? data.assignedToYou.length + data.forParticipant.length + data.termsToAccept.length
     : 0;
+  // CQ-87: reminders are a convenience. When there is nothing due, or they cannot be read right now,
+  // the section stays out of the way instead of showing an error beside a registration.
+  if (
+    phase === 'unavailable' ||
+    phase === 'failed' ||
+    (phase === 'ready' && total === 0 && !notice)
+  )
+    return null;
   return (
     <section
       className="detail-card"
@@ -108,17 +116,8 @@ function ScopedReminders({ subject, issuer }: Props) {
         push message is sent.
       </p>
       {phase === 'loading' && <p role="status">Checking what is due…</p>}
-      {phase === 'unavailable' && <p role="status">Reminders are unavailable right now.</p>}
       {phase === 'denied' && (
         <p role="alert">Your access changed. Private details were cleared. Reload your account.</p>
-      )}
-      {phase === 'failed' && (
-        <>
-          <p role="alert">Reminders could not be loaded.</p>
-          <button type="button" className="text-link" onClick={() => void load()}>
-            Reload reminders
-          </button>
-        </>
       )}
       {phase === 'ready' && data && (
         <>

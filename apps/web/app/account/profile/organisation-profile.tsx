@@ -1,6 +1,8 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { CountrySelect } from '../../../components/ux/pickers';
+import { countryName } from '../../../lib/ux/options';
 const roleOptions = [
   ['BUYER', 'Buyer'],
   ['SELLER', 'Seller'],
@@ -207,7 +209,7 @@ export function OrganisationProfile(props: {
         if (r.status === 400) {
           setPending(null);
           setMessage(
-            'Check the required text, the website host, the country code and the roles, then save again.',
+            'Check the required text, the website host, the country and the roles, then save again.',
           );
           return;
         }
@@ -302,7 +304,12 @@ export function OrganisationProfile(props: {
         .filter(Boolean),
       sizeBand: draft.sizeBand,
       summary: draft.summary,
-      reason: draft.reason,
+      // CQ-28: a reason is asked for only when an existing profile changes. The first version
+      // records a plain fixed reason, so the history still says why each version exists.
+      reason:
+        view.currentVersion === 0 && !draft.reason.trim()
+          ? 'First version of the company profile'
+          : draft.reason,
       acknowledged: true,
     };
     setPending(body);
@@ -314,7 +321,7 @@ export function OrganisationProfile(props: {
       <p>
         {realCustomerInput()
           ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
-          : 'Sample details only, kept private to this test workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'}{' '}
+          : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'}{' '}
       </p>
       <p role="status">{message}</p>
       {profile && (
@@ -322,7 +329,7 @@ export function OrganisationProfile(props: {
           <dt>Company</dt>
           <dd>{profile.legalName}</dd>
           <dt>Country</dt>
-          <dd>{profile.countryCode}</dd>
+          <dd>{countryName(profile.countryCode)}</dd>
           <dt>Website</dt>
           <dd>{profile.website ?? 'Not provided'}</dd>
           <dt>Roles</dt>
@@ -374,15 +381,12 @@ export function OrganisationProfile(props: {
               />
             </div>
             <div>
-              <label htmlFor={id + 'countryCode'}>Country code</label>
-              <input
+              <CountrySelect
                 id={id + 'countryCode'}
+                label="Country"
                 required
-                pattern="[A-Za-z]{2}"
-                maxLength={2}
-                placeholder="BD"
-                value={draft.countryCode}
-                onChange={(e) => set('countryCode', e.target.value)}
+                value={draft.countryCode ? draft.countryCode.toUpperCase() : null}
+                onChange={(code) => set('countryCode', code ?? '')}
               />
             </div>
             <div>
@@ -460,17 +464,19 @@ export function OrganisationProfile(props: {
                 onChange={(e) => set('summary', e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor={id + 'reason'}>Reason for this change</label>
-              <input
-                id={id + 'reason'}
-                required
-                minLength={3}
-                maxLength={1000}
-                value={draft.reason}
-                onChange={(e) => set('reason', e.target.value)}
-              />
-            </div>
+            {view.currentVersion > 0 && (
+              <div>
+                <label htmlFor={id + 'reason'}>Reason for this change</label>
+                <input
+                  id={id + 'reason'}
+                  required
+                  minLength={3}
+                  maxLength={1000}
+                  value={draft.reason}
+                  onChange={(e) => set('reason', e.target.value)}
+                />
+              </div>
+            )}
             <label
               style={{
                 display: 'flex',
@@ -479,10 +485,8 @@ export function OrganisationProfile(props: {
                 marginBlock: '1rem',
               }}
             >
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />{' '}
-              {realCustomerInput()
-                ? 'I confirm these details are accurate to the best of my knowledge.'
-                : 'I confirm these are fictional planning details only.'}{' '}
+              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
+              confirm these details are accurate to the best of my knowledge.{' '}
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>

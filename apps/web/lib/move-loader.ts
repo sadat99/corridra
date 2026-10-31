@@ -7,6 +7,7 @@ import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organi
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
+import type { CustomerDeliveredReportService } from '@corridra/auth/customer-delivered-reports';
 import { foundations } from './foundations';
 import type { MoveInput } from './move-cards';
 
@@ -154,6 +155,12 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
   }
 
   input.moves = (moveRecords?.requests ?? []) as NonNullable<MoveInput['moves']>;
+
+  // CQ-77: published reports, once the service wiring provides the delivered-reports service.
+  const delivered = (
+    services as unknown as { customerDeliveredReports?: CustomerDeliveredReportService }
+  ).customerDeliveredReports;
+  if (delivered) input.reports = (await attempt(() => delivered.list(subject, issuer))) ?? [];
 
   return {
     input,

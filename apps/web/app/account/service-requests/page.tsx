@@ -9,7 +9,7 @@ export const metadata = {
 };
 export default function Page() {
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Service requests">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Service requests">
       <WorkspaceChooser kind="services" enabled={customerServiceRequestsEnabled()} />
     </CustomerShell>
   );

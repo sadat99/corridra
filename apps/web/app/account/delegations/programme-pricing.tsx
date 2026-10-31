@@ -1,7 +1,9 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { lazy, Suspense, useRef, useState, type KeyboardEvent } from 'react';
-import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
+import { currencies, formatMoney } from '@corridra/domain/opportunities';
+import { MoneyInput } from '../../../components/ux/money-input';
+import { CurrencySelect } from '../../../components/ux/pickers';
 import {
   customerHeaders,
   minorText,
@@ -73,7 +75,6 @@ type Props = {
 };
 type Section = 'pricing' | 'series' | 'exports';
 
-const codes = Object.keys(currencies) as Code[];
 const blankTier = () => ({ label: realCustomerInput() ? '' : 'Synthetic ', amount: '' });
 const blankEarly = () => ({
   label: realCustomerInput() ? '' : 'Synthetic ',
@@ -276,7 +277,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
       c
         ? c.tiers.map((x) => ({
             label: x.label,
-            amount: money(x.amountMinor, c.currency).slice(4),
+            amount: x.amountMinor,
           }))
         : [blankTier()],
     );
@@ -285,7 +286,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
         ? c.earlyBird.map((x) => ({
             label: x.label,
             until: x.untilDate,
-            reduction: money(x.reductionMinor, c.currency).slice(4),
+            reduction: x.reductionMinor,
           }))
         : [],
     );
@@ -294,7 +295,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
         ? c.groupDiscounts.map((x) => ({
             label: x.label,
             min: String(x.minParticipants),
-            reduction: money(x.reductionMinor, c.currency).slice(4),
+            reduction: x.reductionMinor,
           }))
         : [],
     );
@@ -316,15 +317,11 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
           ? 'Enter a clear description with at least two characters.'
           : 'Start the description with the word Synthetic, or clear it.',
       );
+    // CQ-84: the money fields hold exact minor units (MoneyInput); only a positive amount is accepted.
     const amount = (value: string, where: string) => {
-      try {
-        const minor = parseMoney(value, currency);
-        if (!/^[1-9][0-9]{0,17}$/.test(minor)) throw Error('range');
-        return minor;
-      } catch {
-        fail(where + ': enter a positive amount using the currency’s decimal places.');
-        return null;
-      }
+      if (/^[1-9][0-9]{0,17}$/.test(value)) return value;
+      fail(where + ': enter a positive amount using the currency’s decimal places.');
+      return null;
     };
     const outTiers: Content['tiers'] = [];
     for (const [i, t] of tiers.entries()) {
@@ -603,7 +600,8 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
           {error && <p role="alert">{error}</p>}
           {templates.data.templates.length === 0 ? (
             <p>
-              No fee schedules yet. Create one to start charging participants from a price list.
+              No fee schedules yet. Create one to record fees owed by participants (your own
+              bookkeeping; Corridra moves no money).
             </p>
           ) : (
             <ul>
@@ -613,6 +611,15 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   tier
                   {t.tierCount === 1 ? '' : 's'}
                   {t.retired ? ' · retired' : ''}{' '}
+                  {t.content.tiers.length > 0 && (
+                    <span className="ux-hint">
+                      {' '}
+                      ·{' '}
+                      {t.content.tiers
+                        .map((tier) => `${tier.label}: ${money(tier.amountMinor, t.currency)}`)
+                        .join('; ')}
+                    </span>
+                  )}{' '}
                   <button
                     type="button"
                     className="text-link"
@@ -675,20 +682,14 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </label>
-              <label className="field">
-                Currency
-                <select
-                  value={currency}
-                  disabled={busy}
-                  onChange={(e) => setCurrency(e.target.value as Code)}
-                >
-                  {codes.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CurrencySelect
+                label="Currency"
+                value={currency}
+                disabled={busy}
+                onChange={(code) => {
+                  if (code && code in currencies) setCurrency(code as Code);
+                }}
+              />
               <h5>Tiers</h5>
               {tiers.map((t, i) => (
                 <fieldset key={i}>
@@ -707,21 +708,15 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       }
                     />
                   </label>
-                  <label className="field">
-                    Tier {i + 1} fee ({currencies[currency]} decimal places)
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={t.amount}
-                      disabled={busy}
-                      onChange={(e) =>
-                        setTiers(
-                          tiers.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)),
-                        )
-                      }
-                    />
-                  </label>
+                  <MoneyInput
+                    label={`Tier ${i + 1} fee`}
+                    currency={currency}
+                    value={t.amount || null}
+                    disabled={busy}
+                    onChange={(minor) =>
+                      setTiers(tiers.map((x, j) => (j === i ? { ...x, amount: minor ?? '' } : x)))
+                    }
+                  />
                   {tiers.length > 1 && (
                     <button
                       type="button"
@@ -775,21 +770,17 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       }
                     />
                   </label>
-                  <label className="field">
-                    Early booking {i + 1} amount taken off each fee
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={t.reduction}
-                      disabled={busy}
-                      onChange={(e) =>
-                        setEarly(
-                          early.map((x, j) => (j === i ? { ...x, reduction: e.target.value } : x)),
-                        )
-                      }
-                    />
-                  </label>
+                  <MoneyInput
+                    label={`Early booking ${i + 1} amount taken off each fee`}
+                    currency={currency}
+                    value={t.reduction || null}
+                    disabled={busy}
+                    onChange={(minor) =>
+                      setEarly(
+                        early.map((x, j) => (j === i ? { ...x, reduction: minor ?? '' } : x)),
+                      )
+                    }
+                  />
                   <button
                     type="button"
                     className="text-link"
@@ -841,21 +832,17 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       }
                     />
                   </label>
-                  <label className="field">
-                    Group {i + 1} amount taken off each fee
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={t.reduction}
-                      disabled={busy}
-                      onChange={(e) =>
-                        setGroups(
-                          groups.map((x, j) => (j === i ? { ...x, reduction: e.target.value } : x)),
-                        )
-                      }
-                    />
-                  </label>
+                  <MoneyInput
+                    label={`Group ${i + 1} amount taken off each fee`}
+                    currency={currency}
+                    value={t.reduction || null}
+                    disabled={busy}
+                    onChange={(minor) =>
+                      setGroups(
+                        groups.map((x, j) => (j === i ? { ...x, reduction: minor ?? '' } : x)),
+                      )
+                    }
+                  />
                   <button
                     type="button"
                     className="text-link"
