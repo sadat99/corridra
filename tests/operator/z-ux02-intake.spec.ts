@@ -318,9 +318,10 @@ test('the sample form completes in German and Arabic against the real intake and
       );
       await page.locator('#receipt-check button.primary-link').click();
       const receiptBody = (await checked).postData() ?? '';
+      // D6: a request with a receipt was sent, so it reads as received, not as a draft.
       await expect(
         page.locator(code === 'en' ? '#receipt-check strong' : '#receipt-check strong[lang="en"]'),
-      ).toHaveText('DRAFT');
+      ).toHaveText('Received, waiting for review');
       const body = response.request().postData() ?? '';
       await context.close();
       return { body, result, receiptBody };

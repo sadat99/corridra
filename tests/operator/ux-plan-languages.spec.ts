@@ -15,12 +15,17 @@ import { words as de } from '../../apps/web/lib/i18n/form-words/de';
 import { words as es } from '../../apps/web/lib/i18n/form-words/es';
 import { words as fr } from '../../apps/web/lib/i18n/form-words/fr';
 import { words as zh } from '../../apps/web/lib/i18n/form-words/zh';
+import { customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
 
 // The request form in the chosen language (Lane 11), mounted in the real frame: the real header, the real /plan
 // page (its main region, heading and form) and the built stylesheets. The page is compared with the request page
-// of PR 214 (c29f2cc), built from `git show` of that commit, so "with the form switch off nothing changes" is
+// of the baseline commit, built from `git show` of that commit, so "with the form switch off nothing changes" is
 // proved against the code as it was, not against a copy of it.
-const baseline = 'c29f2cc6da10052ba0be7a9e8ba2daf60f1e2f8d';
+// The baseline was PR 214 (c29f2cc) until the commercial readiness program changed the English form on purpose
+// (WS-A: plain errors on their field, required groups, country names, autocomplete, receipt hint and status
+// label; the request bodies are unchanged). It now names the WS-A commit with that form. After the program
+// merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
+const baseline = '93cc41a6c3fa692e0dcd463ec780663fcce45860';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -356,7 +361,7 @@ async function compareWithBaseline(
 test.describe('with the form switch off', () => {
   for (const pages of ['', 'true', 'es,de'])
     for (const code of localeCodes)
-      test(`${code}, page words ${pages || 'unset'}: the request form is exactly the PR 214 form at every step`, async ({
+      test(`${code}, page words ${pages || 'unset'}: the request form is exactly the baseline form at every step`, async ({
         page,
       }) => {
         await compareWithBaseline(page, code, `pages=${pages}`, 'sample');
@@ -368,7 +373,7 @@ test.describe('with the form switch off', () => {
       ['real', 'mode=real&code=1&pages=true'],
       ['private', 'mode=private&pages=true'],
     ] as const)
-      test(`${code}, ${query}: the request form is exactly the PR 214 form at every step`, async ({
+      test(`${code}, ${query}: the request form is exactly the baseline form at every step`, async ({
         page,
       }) => {
         await compareWithBaseline(page, code, query, mode);
@@ -515,7 +520,10 @@ test.describe('with the form released', () => {
         'Anyone with this code can read the mission status and replies. It expires after 30 days.',
       );
       await expect(page.locator('#receipt-check h2')).toHaveText(words['form.check.sampleTitle']);
-      await expect(page.locator('#receipt-check strong[lang="en"]')).toHaveText('UNDER REVIEW');
+      await expect(page.locator('#receipt-check strong[lang="en"]')).toHaveText(
+        // The customer label for the stored status (D6), an English part.
+        customerStatusLabel('UNDER_REVIEW', true).label,
+      );
       await expect(page.locator('#receipt-check .detail-card p')).toHaveAttribute('dir', 'auto');
       await expect(page.locator('#receipt-check .detail-card p')).toHaveText('Sample reply body.');
     });
@@ -1412,7 +1420,7 @@ test.describe('messages in the chosen language', () => {
 
 test.describe('the request sent is the same in every language', () => {
   for (const code of ['de', 'ar'] as const)
-    test(`${code}: the request body equals the PR 214 form's for the same answers`, async ({
+    test(`${code}: the request body equals the baseline form's for the same answers`, async ({
       browser,
     }) => {
       const sent = async (query: string, translated: boolean) => {
