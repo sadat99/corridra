@@ -276,6 +276,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     has: page.getByRole('heading', { name: 'Browser Mission Test Company', exact: true }),
   });
   await expect(card).toHaveCount(1);
+  // CQ-32: the notice version is kept in the record details, not in the summary line.
+  await card.getByText('Record details', { exact: true }).click();
   await expect(card.getByText('synthetic-intake-2026-10-05-v1', { exact: false })).toBeVisible();
   await card.getByLabel('Structured market').selectOption('ES');
   await card
