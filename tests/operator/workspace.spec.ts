@@ -503,7 +503,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await card.getByLabel('Mission action').selectOption('cancel');
   await card.getByLabel('Reason for change').fill('Synthetic browser cancellation');
   await card.getByRole('button', { name: 'Save mission action' }).click();
-  await expect(card.getByText('CANCELLED', { exact: false })).toBeVisible();
+  await expect(
+    card.locator('p.label').filter({ hasText: /^Cancelled · version \d+$/ }),
+  ).toBeVisible();
   expect((await page.request.get(`/api/workspace/workspace?tenant=${randomUUID()}`)).status()).toBe(
     403,
   );
