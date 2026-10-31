@@ -2,7 +2,7 @@
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
-import { StatusChip } from '../../components/ux/page-header';
+import { StatusChip } from '../../components/ux/status-chip';
 import type { MissionBrief } from '@corridra/domain/missions';
 import { CommercialMission } from './commercial-mission';
 import { MissionMoves } from './mission-moves';

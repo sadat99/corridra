@@ -322,7 +322,7 @@ test('lost issuance never regenerates a secret or creates a second invitation du
   await page.getByRole('button', { name: 'Create sample invitation code' }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
   await page.getByRole('button', { name: 'Retry same participant request' }).click();
-  await expect(page.getByText(/secret cannot be recovered/)).toBeVisible();
+  await expect(page.getByText(/Its code cannot be shown again/)).toBeVisible();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
   expect(bodies[1]).toEqual(bodies[0]);
   await expect(page.getByRole('button', { name: 'Revoke invitation', exact: true })).toHaveCount(1);

@@ -3,7 +3,6 @@
 import './ux-kit.css';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { ChipTone } from '../../lib/ux/customer-road';
 
 export function PageHeader({
   title,
@@ -44,11 +43,4 @@ export function PageHeader({
   );
 }
 
-/** A status label with a tone. The words carry the meaning; colour only supports them. */
-export function StatusChip({ status }: { status: { label: string; tone: ChipTone } }) {
-  return (
-    <span className="ux-kit-chip" data-tone={status.tone}>
-      {status.label}
-    </span>
-  );
-}
+export { StatusChip } from './status-chip';

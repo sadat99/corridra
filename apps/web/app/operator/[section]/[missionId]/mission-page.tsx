@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { StatusChip } from '../../../../components/ux/page-header';
+import { StatusChip } from '../../../../components/ux/status-chip';
 import { formatDate, formatDateTime } from '../../../../lib/ux/format';
 import { formatMoney } from '../../../../lib/ux/money';
 import { CommercialMission } from '../../commercial-mission';

@@ -97,7 +97,9 @@ describe('the switch and every switch-off path', () => {
     const page = read('apps/web/app/operator/owner/page.tsx');
     expect(page).toContain("{uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (");
     expect(page.indexOf('<FrontDoor')).toBeGreaterThan(page.indexOf('className="ux-owner"'));
-    expect(page.indexOf('<FrontDoor')).toBeLessThan(page.indexOf('className="owner-lede"'));
+    // The owner page now opens on the status board (commercial readiness UX-03); the door stays above it.
+    expect(page.indexOf('className="owner-board"')).toBeGreaterThan(-1);
+    expect(page.indexOf('<FrontDoor')).toBeLessThan(page.indexOf('className="owner-board"'));
   });
   it('the helper page keeps its three links word for word with the switch off', () => {
     const page = read('apps/web/app/contributor/page.tsx');

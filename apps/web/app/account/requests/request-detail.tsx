@@ -10,7 +10,7 @@ import {
   type MissionBrief,
 } from '@corridra/domain/missions';
 import { displayMoney } from '@corridra/domain/locale';
-import { StatusChip } from '../../../components/ux/page-header';
+import { StatusChip } from '../../../components/ux/status-chip';
 import { customerStatusLabel } from '../../../lib/ux/customer-road';
 import { formatDate, formatDateTime } from '../../../lib/ux/format';
 import { groupFields, placeName, requestTitle } from '../request-words';

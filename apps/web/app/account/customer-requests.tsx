@@ -2,7 +2,7 @@
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshButton } from './refresh-button';
-import { StatusChip } from '../../components/ux/page-header';
+import { StatusChip } from '../../components/ux/status-chip';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
 
