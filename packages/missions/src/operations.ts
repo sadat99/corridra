@@ -6,7 +6,7 @@ import {
   type RequestContext,
   type DatabaseClient,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, stepUpRequired } from '@corridra/domain';
 import { routePack } from '@corridra/domain/corridors';
 import {
   missionCatalogue,
@@ -254,7 +254,7 @@ export class OperationsService {
         ? 'config.manage'
         : 'opportunities.accounting',
       async ({ db, actorId, freshMfa }) => {
-        if (!freshMfa) throw new DomainError('Verify your authenticator again to continue', 401);
+        if (!freshMfa) throw stepUpRequired();
         await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
           ctx.tenantId + ':operations',
         ]);

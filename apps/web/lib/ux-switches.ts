@@ -21,6 +21,12 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_FAIRS',
   'CORRIDRA_UX_BOOKS',
   'CORRIDRA_UX_FRONT_DOORS',
+  // Commercial readiness program (31 Oct 2026, section 5.4). Off in production until the owner sets them.
+  'CORRIDRA_UX_SHELLS_V2',
+  'CORRIDRA_UX_MISSIONS_V2',
+  'CORRIDRA_NOTIFICATIONS_V2',
+  'CORRIDRA_TEAM_INVITES',
+  'CORRIDRA_ROUTE_PACK_FORM',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

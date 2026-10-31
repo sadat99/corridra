@@ -10,7 +10,9 @@
     "./corridors": "./src/corridors.ts",
     "./commercial": "./src/commercial.ts",
     "./operations": "./src/operations.ts",
-    "./moves": "./src/moves.ts"
+    "./moves": "./src/moves.ts",
+    "./route-assignment": "./src/route-assignment.ts",
+    "./route-pack-form": "./src/route-pack-form.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",

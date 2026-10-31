@@ -1,11 +1,9 @@
 'use client';
-import { PhoneFold } from '../../components/phone-fold';
 import Link from 'next/link';
 import { OperatorIcon } from '../../components/operator-icon';
 import { ReviewSettings } from './review-settings';
 import { WorkspaceControls } from './workspace-controls';
 import { WorkspaceAudit } from './workspace-audit';
-import { PanelHeading } from './panel-heading';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
@@ -31,37 +29,11 @@ import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
 import { subscribeToHash } from '../../lib/address-store';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
-type RecordRow = {
-  id: string;
-  statement?: string;
-  locator?: string;
-  status?: string;
-  scan_status?: string;
-  mime?: string;
-  role?: string;
-  user_id?: string;
-  name?: string | null;
-  revoked_at?: string | null;
-  type?: string;
-  occurred_at?: string;
-  aggregate_type?: string;
-  aggregate_id?: string;
-  actor_id?: string;
-  correlation_id?: string;
-  version?: number;
-  key?: string;
-  value?: { enabled: boolean };
-};
-type Snapshot = {
-  purpose?: string;
-  uploadsConfigured: boolean;
-  scanMode: 'required' | 'bypass';
-  role: string;
-  sources: RecordRow[];
-  claims: RecordRow[];
-  evidence: RecordRow[];
-  facts: RecordRow[];
-};
+import { SourcesPanel } from './sources-panel';
+import { EvidencePanel } from './evidence-panel';
+import type { OperatorRecordRow, OperatorSnapshot } from './workspace-types';
+type RecordRow = OperatorRecordRow;
+type Snapshot = OperatorSnapshot;
 type Tenant = { id: string; name: string; role: string };
 export function Workspace({
   tenants,
@@ -600,278 +572,16 @@ function TenantWorkspace({
               </div>
             </>
           )}
-          <div
-            id="workspace-sources"
-            tabIndex={-1}
-            className="detail-grid workspace-panel ux-panel"
-            hidden={view !== 'workspace-sources'}
-          >
-            <div className="ux-sources-heading">
-              <PanelHeading
-                title="Sources and claims"
-                icon="document"
-                description="Record where information came from, review its claims and keep verified facts separate."
-              />
-            </div>
-            <section className="detail-card">
-              <h3>Sources</h3>
-              <ul>
-                {data.sources.map((r) => (
-                  <li key={r.id}>
-                    {r.locator}
-                    <details>
-                      <summary>Source reference</summary>
-                      <p>Source reference: {r.id}</p>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-              {data.role !== 'viewer' && (
-                <PhoneFold summary="Record a new source (4 fields)">
-                  <form className="operator-form" onSubmit={source}>
-                    <label className="field">
-                      Source type
-                      <select name="kind" defaultValue="observation">
-                        <option value="observation">Observed information</option>
-                        <option value="public_record">Existing public record</option>
-                        <option value="self_declaration">Original declaration</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      Source visibility
-                      <select name="classification" defaultValue="INTERNAL">
-                        <option value="INTERNAL">Internal</option>
-                        <option value="PUBLIC">Already public</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      Source AI permission
-                      <select name="aiPolicy" defaultValue="DENY">
-                        <option value="DENY">Do not use for AI</option>
-                        <option value="REVIEW_REQUIRED">Requires a separate rights review</option>
-                      </select>
-                    </label>
-                    <p>
-                      Public visibility describes an already public source. A separate rights review
-                      and approved provider policy are required before inference.
-                    </p>
-                    <label className="field">
-                      Source description
-                      <input name="locator" required maxLength={500} />
-                    </label>
-                    <button className="primary-link" disabled={busy}>
-                      Record source
-                    </button>
-                  </form>
-                </PhoneFold>
-              )}
-            </section>
-            <section className="detail-card">
-              <h3>Claims</h3>
-              <ul>
-                {data.claims.map((r) => (
-                  <li key={r.id}>
-                    {r.statement} <span className="evidence-label">Self-declared</span>
-                    <details>
-                      <summary>Claim reference</summary>
-                      <p>Claim reference: {r.id}</p>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-              {data.role !== 'viewer' && (
-                <PhoneFold summary="Record a new claim (2 fields)">
-                  <form className="operator-form" onSubmit={claim}>
-                    <label className="field">
-                      Source
-                      <select name="source" required>
-                        <option value="">Choose a source</option>
-                        {data.sources.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.locator}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      Claim
-                      <textarea name="statement" required maxLength={2000} />
-                    </label>
-                    <button className="primary-link" disabled={busy}>
-                      Record claim
-                    </button>
-                  </form>
-                </PhoneFold>
-              )}
-            </section>
-            <section className="detail-card">
-              <h3>Verified facts</h3>
-              {data.facts.length ? (
-                data.facts.map((r) => <p key={r.id}>{r.statement}</p>)
-              ) : (
-                <p>No current verified facts.</p>
-              )}
-            </section>
-          </div>
-          <section
-            id="workspace-evidence"
-            tabIndex={-1}
-            className="operator-section workspace-panel ux-panel"
-            hidden={view !== 'workspace-evidence'}
-          >
-            <h2>Evidence review</h2>
-            <p>
-              {data.scanMode === 'bypass'
-                ? 'Malware scanning is temporarily disabled. Validated files are marked unscanned. Verification still requires a different reviewer and a fresh authenticator check.'
-                : 'Files remain quarantined until validation completes. Verification requires a different reviewer and a fresh authenticator check.'}
-            </p>
-            {data.evidence.map((r) => (
-              <div className="evidence-row" key={r.id}>
-                <span>
-                  {r.mime} · {r.status} · Scan:{' '}
-                  {r.scan_status === 'BYPASSED' ? 'Not scanned' : r.scan_status}
-                </span>
-                {(r.scan_status === 'CLEAN' ||
-                  (r.scan_status === 'BYPASSED' &&
-                    data.scanMode === 'bypass' &&
-                    flags.some((f) => f.key === 'evidence.scan_bypass' && f.value?.enabled))) && (
-                  <a
-                    className="text-link"
-                    href={`/api/workspace/download?tenant=${tenant}&id=${r.id}`}
-                  >
-                    {r.scan_status === 'BYPASSED'
-                      ? 'Download unscanned evidence'
-                      : 'Download evidence'}
-                  </a>
-                )}
-                {(r.status === 'SUBMITTED' ||
-                  (r.scan_status === 'BYPASSED' &&
-                    ['UNDER_REVIEW', 'VERIFIED'].includes(r.status ?? '') &&
-                    data.scanMode === 'required')) &&
-                  data.role !== 'viewer' && (
-                    <button
-                      onClick={() => act(() => request('scan', { id: r.id }))}
-                      disabled={busy}
-                    >
-                      Run validation
-                    </button>
-                  )}
-              </div>
-            ))}
-            {data.role !== 'viewer' && (
-              <form
-                className="operator-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const f = new FormData(event.currentTarget);
-                  const file = f.get('file') as File;
-                  void act(async () => {
-                    const r = await fetch(
-                      `/api/workspace/upload?tenant=${tenant}&claim=${f.get('claim')}`,
-                      { method: 'POST', headers: { 'Content-Type': file.type }, body: file },
-                    );
-                    const d = await r.json();
-                    if (!r.ok) throw new Error(d.error);
-                  });
-                }}
-              >
-                <label className="field">
-                  Claim
-                  <select name="claim" required>
-                    <option value="">Choose a claim</option>
-                    {data.claims.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.statement}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Evidence file
-                  <input
-                    type="file"
-                    name="file"
-                    accept="application/pdf,image/png,image/jpeg"
-                    required
-                  />
-                </label>
-                <p>
-                  PDF, PNG or JPEG. Maximum 4 MiB. Private storage, file type, size and integrity
-                  checks apply.
-                  {data.scanMode === 'bypass'
-                    ? ' Malware scanning is temporarily disabled.'
-                    : ' A configured scanner is required.'}
-                </p>
-                <button
-                  className="primary-link"
-                  disabled={
-                    busy ||
-                    !data.uploadsConfigured ||
-                    !flags.some((f) => f.key === 'evidence.uploads' && f.value?.enabled)
-                  }
-                >
-                  Submit for validation
-                </button>
-              </form>
-            )}
-            {['owner', 'admin', 'reviewer'].includes(data.role) && (
-              <form
-                className="operator-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const f = new FormData(event.currentTarget);
-                  void act(() =>
-                    request('verify', {
-                      id: f.get('evidence'),
-                      decision: f.get('decision'),
-                      method: f.get('method'),
-                      scope: f.get('scope'),
-                      validUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
-                    }),
-                  );
-                }}
-              >
-                <label className="field">
-                  Evidence to review
-                  <select name="evidence" required>
-                    <option value="">Choose evidence</option>
-                    {data.evidence
-                      .filter((r) => r.status === 'UNDER_REVIEW')
-                      .map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.id}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Decision
-                  <select name="decision">
-                    <option>VERIFIED</option>
-                    <option>REJECTED</option>
-                  </select>
-                </label>
-                <label className="field">
-                  Method
-                  <input name="method" minLength={3} maxLength={300} required />
-                </label>
-                <label className="field">
-                  Scope and limits
-                  <textarea name="scope" minLength={3} maxLength={1000} required />
-                </label>
-                <p>Recorded decisions have a 30-day validity window.</p>
-                <button
-                  className="primary-link"
-                  disabled={
-                    busy ||
-                    !flags.some((f) => f.key === 'evidence.verification' && f.value?.enabled)
-                  }
-                >
-                  Record decision
-                </button>
-              </form>
-            )}
-          </section>
+          <SourcesPanel data={data} view={view} busy={busy} source={source} claim={claim} />
+          <EvidencePanel
+            data={data}
+            view={view}
+            busy={busy}
+            tenant={tenant}
+            flags={flags}
+            act={act}
+            request={request}
+          />
           <section
             id="workspace-authenticator"
             tabIndex={-1}

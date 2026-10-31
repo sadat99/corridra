@@ -111,6 +111,20 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/notifications/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/picker/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/move/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
