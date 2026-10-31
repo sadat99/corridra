@@ -660,7 +660,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.unrouteAll({ behavior: 'wait' });
   await page.reload();
   await openSection(page, 'main');
-  await expect(page.getByText('Synthetic workspace', { exact: true })).toBeVisible();
+  await expect(page.getByText('Preview workspace', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(

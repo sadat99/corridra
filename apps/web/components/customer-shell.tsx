@@ -27,7 +27,7 @@ export function CustomerShell({
             <>Your work stays private to the people given access.</>
           ) : (
             <>
-              <strong>Test mode:</strong> invented data only. Use made-up names and details.
+              <strong>Preview workspace:</strong> use made-up names and details here.
             </>
           )}
         </p>
@@ -38,6 +38,7 @@ export function CustomerShell({
           companies={customerCompaniesEnabled()}
           plainNames={uxSwitchOn('CORRIDRA_UX_NAV')}
           move={uxSwitchOn('CORRIDRA_UX_MOVE')}
+          translated={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')}
         />
       }
     >

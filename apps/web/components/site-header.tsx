@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { CornerDock } from './corner-dock';
 import { LanguageSwitcher } from './language-switcher';
-import { ModeLabel } from './mr/mode-label';
-import { mrLabelsFor } from './mr/labels';
-import { useLanguage, useT } from './language-provider';
+import { useT } from './language-provider';
+import { AppHeader } from './ux/app-header';
+import { signedInShellFor } from '../lib/ux/shells';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
@@ -68,19 +70,55 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
   return who;
 }
 
-export function SiteHeader({
-  accounts = false,
-  mode,
-}: {
+/** The wordmark, drawn here only (the design system allows this one inline drawing). */
+function BrandMark() {
+  return (
+    <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path
+        d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+    </svg>
+  );
+}
+
+type HeaderProps = {
   accounts?: boolean;
   /**
-   * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): one Sample or Real label for the whole site
-   * replaces the "(sample request)" screen-reader text on the start button. Absent is the header as it was.
+   * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): the start button keeps its plain name. The
+   * site-wide Sample or Real badge is no longer shown in the public header (CQ-47); the team shell
+   * shows "Live" or "Preview" instead. Absent keeps the "(sample request)" screen-reader text.
    */
   mode?: 'sample' | 'real';
-}) {
+  /**
+   * `CORRIDRA_UX_SHELLS_V2` (D14), read on the server. On a signed-in page (team, customer or
+   * contributor) the public marketing header gives way to that shell's own header. Off or absent,
+   * the header is the same on every page as before.
+   */
+  shells?: boolean;
+  /** `CORRIDRA_NOTIFICATIONS_V2`: the signed-in header shows the inbox. */
+  notifications?: boolean;
+  /** True on the production service: the team header says "Live", elsewhere "Preview". */
+  live?: boolean;
+};
+
+export function SiteHeader({
+  shells = false,
+  notifications = false,
+  live = false,
+  ...rest
+}: HeaderProps) {
+  const shell = signedInShellFor(usePathname());
+  if (shells && shell)
+    return (
+      <AppHeader kind={shell} live={live} notifications={notifications} brandMark={<BrandMark />} />
+    );
+  return <PublicHeader {...rest} />;
+}
+
+function PublicHeader({ accounts = false, mode }: Pick<HeaderProps, 'accounts' | 'mode'>) {
   const t = useT();
-  const { locale } = useLanguage();
   const who = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
@@ -104,16 +142,10 @@ export function SiteHeader({
       }}
     >
       <Link prefetch={false} className="brand" href="/" aria-label={t('header.home')}>
-        <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path
-            d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
-            stroke="currentColor"
-            strokeWidth="3"
-          />
-        </svg>
+        <BrandMark />
         <span>Corridra</span>
       </Link>
-      {mode && <ModeLabel real={mode === 'real'} labels={mrLabelsFor(locale).mode} />}
+      <CornerDock variant="header" />
       <button
         ref={toggle}
         className="menu-toggle"

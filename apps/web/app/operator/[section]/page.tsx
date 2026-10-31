@@ -2,12 +2,20 @@ import '../operator-overview.css';
 import { notFound } from 'next/navigation';
 import { sectionForSlug } from '../../../lib/operator-urls';
 import { uxSwitchOn } from '../../../lib/ux-switches';
+import { privatePageMetadata } from '../../../lib/ux/page-metadata';
+import { teamSectionTitle } from '../../../lib/ux/shells';
 import { OperatorEntry } from '../operator-entry';
 export const dynamic = 'force-dynamic';
-export const metadata = {
-  title: 'Operator workspace | Corridra',
-  robots: { index: false, follow: false },
-};
+
+/** Each section has its own title with the shells switch on (CQ-36); off, the one title as before. */
+export async function generateMetadata({ params }: { params: Promise<{ section: string }> }) {
+  const section = uxSwitchOn('CORRIDRA_UX_SHELLS_V2')
+    ? sectionForSlug((await params).section)
+    : null;
+  return section
+    ? privatePageMetadata(teamSectionTitle(section))
+    : { title: 'Operator workspace | Corridra', robots: { index: false, follow: false } };
+}
 
 /**
  * One section of the team workspace at its own address (Lane 9). With the switch off, or for any word

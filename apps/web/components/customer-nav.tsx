@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { CorridraIcon } from './corridra-icon';
+import { T } from './language-provider';
+import { LocaleNav } from './ux/locale-region';
+import type { MessageKey } from '../lib/i18n/messages';
 
 export type CustomerTab = 'home' | 'move' | 'work' | 'companies' | 'results' | 'more';
 
@@ -22,7 +25,10 @@ export function CustomerNav({
   companies = false,
   plainNames = false,
   move = false,
+  translated = false,
 }: {
+  /** `CORRIDRA_UX_SHELLS_V2`: tab names follow the chosen language and its direction. */
+  translated?: boolean;
   current: CustomerTab;
   /** True where the approved-companies module is on. */
   companies?: boolean;
@@ -54,19 +60,38 @@ export function CustomerNav({
       ];
   // With Your Move as the first tab, the older Home view stays reachable by its address and is read as the same place.
   const here = plainNames && move && current === 'home' ? 'move' : current;
+  const links = items.map((item) => (
+    <Link
+      key={item.tab}
+      prefetch={false}
+      href={item.href}
+      aria-current={item.tab === here ? 'page' : undefined}
+    >
+      <CorridraIcon name={plainNames && item.tab === 'results' ? 'library' : icons[item.tab]} />
+      <span>{translated ? <T k={labelKeys[item.label] ?? 'wse.nav.more'} /> : item.label}</span>
+    </Link>
+  ));
+  // With the shells switch on the tabs follow the chosen language and direction (CQ-10).
+  if (translated)
+    return (
+      <LocaleNav className="guide-tabs" labelKey="wse.nav.customer">
+        {links}
+      </LocaleNav>
+    );
   return (
     <nav className="guide-tabs" aria-label="Customer navigation">
-      {items.map((item) => (
-        <Link
-          key={item.tab}
-          prefetch={false}
-          href={item.href}
-          aria-current={item.tab === here ? 'page' : undefined}
-        >
-          <CorridraIcon name={plainNames && item.tab === 'results' ? 'library' : icons[item.tab]} />
-          <span>{item.label}</span>
-        </Link>
-      ))}
+      {links}
     </nav>
   );
 }
+
+const labelKeys: Record<string, MessageKey> = {
+  Home: 'wse.nav.home',
+  'Your Move': 'wse.nav.move',
+  Missions: 'wse.nav.missions',
+  'My Work': 'wse.nav.work',
+  Companies: 'wse.nav.companies',
+  Library: 'wse.nav.library',
+  Results: 'wse.nav.results',
+  More: 'wse.nav.more',
+};

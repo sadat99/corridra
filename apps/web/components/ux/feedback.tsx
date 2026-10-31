@@ -78,13 +78,7 @@ export function ErrorSummary({
   }, [attempt, errors.length]);
   if (errors.length === 0) return null;
   return (
-    <div
-      className="ux-kit-summary"
-      ref={box}
-      tabIndex={-1}
-      role="alert"
-      aria-labelledby={titleId}
-    >
+    <div className="ux-kit-summary" ref={box} tabIndex={-1} role="alert" aria-labelledby={titleId}>
       <h2 id={titleId}>{title}</h2>
       <ul>
         {errors.map((e) => (
