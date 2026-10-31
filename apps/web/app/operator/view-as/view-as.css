@@ -13,7 +13,7 @@
   padding: var(--space-4) var(--space-6);
   border-block-end: 4px solid var(--caution);
   background: var(--caution-surface);
-  color: var(--caution);
+  color: var(--caution-text, var(--text-1));
 }
 .ux-view-as .view-as-bar p {
   margin: 0;
@@ -50,7 +50,7 @@ body:has(.ux-view-as) .site-header .menu-toggle {
   font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: var(--caution);
+  color: var(--caution-text, var(--text-1));
   opacity: 0.1;
   transform: rotate(-18deg);
   transform-origin: center;

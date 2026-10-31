@@ -1,5 +1,6 @@
 'use client';
 import { FounderOverview } from '../../components/founder-overview';
+import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
 import {
   OperatorWorkbench,
@@ -10,6 +11,12 @@ import { SubmissionFailure } from '../../components/retained-submission';
 import { displayDate } from '@corridra/domain/locale';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
+import {
+  DEFERRED_LABEL,
+  LIVE_STATE,
+  blockedItems,
+  deferredControls,
+} from '@corridra/auth/deferred-controls';
 type Row = Record<string, unknown>;
 type Dashboard = {
   summary: Row;
@@ -82,74 +89,66 @@ const labels: Record<string, string> = {
   rollback: 'Deployment and rollback',
   pilot: 'Real-user pilot acceptance',
 };
-const blockedControls = [
-  [
-    'D01',
-    'Production malware scanner',
-    'Infrastructure owner',
-    'Provision authenticated private EU scanner; pass clean, EICAR and outage checks; retire the authorized synthetic bypass.',
-  ],
-  [
-    'D02',
-    'Enforced release protection',
-    'GitHub account owner',
-    'Verify private-repository entitlement and main protection. Until then retain exact-head CI, normal reviewed PR merge and deployment proof.',
-  ],
-  [
-    'D03',
-    'Secret scanning and push protection',
-    'GitHub account owner',
-    'Verify entitlement and active settings, or approve and validate an available alternative.',
-  ],
-  [
-    'D04',
-    'Code security analysis',
-    'GitHub account owner',
-    'Enable entitled CodeQL and review an actual successful analysis, or approve a validated alternative. A skipped run is not acceptance.',
-  ],
-  [
-    'D05',
-    'Production evidence storage',
-    'Infrastructure owner',
-    'Approve private EU production storage, scoped identity, lifecycle, recovery and complete hash/length reconciliation.',
-  ],
-  [
-    'D06',
-    'Object cleanup and lawful retention',
-    'Account owner',
-    'Review retained objects, orphan manifest, legal holds and an explicit deletion policy before running cleanup.',
-  ],
-  [
-    'D08',
-    'Real customer operations',
-    'Account owner and legal reviewer',
-    'Approve notices, controller/processor roles, transfers, retention, DSAR/deletion, separate production data setup, identity recovery, support and pilot evidence.',
-  ],
-  [
-    'OUTREACH',
-    'Commercial outreach',
-    'Account owner and legal reviewer',
-    'Approve route-specific basis, opt-out handling, source licensing, regional provider and sender readiness. Identity email approval does not approve outreach.',
-  ],
-  [
-    'AI',
-    'Live AI and network work',
-    'Account owner',
-    'Provide approved provider credentials, region/terms, live evaluation and budget evidence; separately approve contributor eligibility, privacy, reward terms and pilot.',
-  ],
-  [
-    'RESTORE',
-    'Production backup and restore',
-    'Infrastructure owner',
-    'Verify actual PITR retention and conduct an approved isolated restore drill without copying personal data into previews.',
-  ],
-  [
-    'WRITE',
-    'Production commercial write acceptance',
-    'Account owner',
-    'Approve a separate test plan; use synthetic records. Real money or real customer test transactions require separate authorization.',
-  ],
-] as const;
+const readinessLabels: Record<string, string> = {
+  BLOCKED: 'Blocked',
+  PASS: 'Ready',
+  NOT_APPLICABLE: 'Not applicable',
+};
+const readinessLabel = (status: unknown) =>
+  readinessLabels[String(status)] ?? String(status ?? 'Unknown');
+const releaseLabels: Record<string, string> = {
+  UNPUBLISHED: 'Not published',
+  SYNTHETIC_APPROVED: 'Approved for limited use',
+  PAUSED: 'Paused',
+};
+const releaseLabel = (state: string) => releaseLabels[state] ?? state;
+/** A code shown as words: "market_access" becomes "Market access" (D9, CQ-32). */
+const plainLabel = (code: string) => {
+  const words = code
+    .replace(/[_.-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : code;
+};
+const stageLabels: Record<string, string> = {
+  LEAD: 'Lead',
+  QUALIFIED_OPPORTUNITY: 'Qualified opportunity',
+  PROPOSAL: 'Proposal',
+  COMMITMENT: 'Commitment',
+  CONTRACT: 'Contract',
+  INVOICE: 'Invoice',
+  CASH_COLLECTED: 'Cash collected',
+  RECURRING_REVENUE: 'Recurring revenue',
+  LOST: 'Lost',
+};
+/** The owner filter, chosen by name from the team (CQ-32). */
+function FilterOwner({ tenant }: { tenant: string }) {
+  const [owner, setOwner] = useState<string | null>(null);
+  return (
+    <ReferencePicker
+      kind="reviewer"
+      tenant={tenant}
+      label="Owner"
+      name="owner"
+      value={owner}
+      onChange={setOwner}
+    />
+  );
+}
+/** The readiness evidence source, chosen by name (D9). The hidden input keeps the form post. */
+function ReadinessSource({ tenant }: { tenant: string }) {
+  const [source, setSource] = useState<string | null>(null);
+  return (
+    <ReferencePicker
+      kind="source"
+      tenant={tenant}
+      label="Readiness evidence source (optional)"
+      name="source"
+      value={source}
+      onChange={setSource}
+    />
+  );
+}
 function value(v: unknown) {
   return v === null || v === undefined
     ? 'Unknown'
@@ -418,7 +417,7 @@ export function Operations({
       reason:
         state === 'PAUSED'
           ? 'Explicitly pause new assignments for this route service'
-          : 'Independent synthetic route readiness review; no real customer activation',
+          : 'Independent route readiness review for limited use',
     });
   }
   function preparePack(event: MouseEvent<HTMLButtonElement>) {
@@ -526,7 +525,7 @@ export function Operations({
       <p>
         {purpose === 'commercial_qualification'
           ? 'Founder visibility, route readiness and accountable recovery for this authorized workspace. Provider activation and independent approvals remain separate.'
-          : 'Founder visibility, route readiness and accountable recovery. The current environment uses synthetic missions. Account signup does not authorize real mission intake.'}
+          : 'Founder visibility, route readiness and accountable recovery. Corridra is live at small scale; creating an account does not by itself admit a customer request.'}
       </p>
       <p role="status" aria-live="polite" aria-label="Operations status">
         {message}
@@ -565,23 +564,39 @@ export function Operations({
                   ))}
                 </select>
               </label>
-              {(['corridor', 'type', 'customer', 'industry', 'owner', 'programme'] as const).map(
-                (k) => (
-                  <label className="field" key={k}>
-                    {
-                      {
-                        corridor: 'Corridor ID',
-                        type: 'Mission type key',
-                        customer: 'Recorded customer reference',
-                        industry: 'Recorded industry',
-                        owner: 'Owner ID',
-                        programme: 'Programme ID',
-                      }[k]
-                    }
-                    <input name={k} />
-                  </label>
-                ),
-              )}
+              <label className="field">
+                Mission type
+                <select name="type" defaultValue="">
+                  <option value="">All mission types</option>
+                  {[...new Set(catalogue?.packs.flatMap((p) => p.configuration.missionTypes) ?? [])]
+                    .sort()
+                    .map((t) => (
+                      <option key={t} value={t}>
+                        {plainLabel(t)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="field">
+                Customer reference
+                <input name="customer" minLength={3} maxLength={100} />
+              </label>
+              <label className="field">
+                Industry
+                <input name="industry" minLength={3} maxLength={100} />
+              </label>
+              <FilterOwner tenant={tenant} />
+              <details className="ops-advanced-filters">
+                <summary>Advanced (developers)</summary>
+                <label className="field">
+                  Corridor reference
+                  <input name="corridor" />
+                </label>
+                <label className="field">
+                  Programme reference
+                  <input name="programme" />
+                </label>
+              </details>
               <label className="field">
                 From intake date
                 <input type="date" name="from" />
@@ -605,7 +620,9 @@ export function Operations({
                     'RECURRING_REVENUE',
                     'LOST',
                   ].map((k) => (
-                    <option key={k}>{k}</option>
+                    <option key={k} value={k}>
+                      {stageLabels[k] ?? plainLabel(k)}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -852,6 +869,11 @@ export function Operations({
           hidden={activeSection !== 'ops-center'}
         >
           <h3>Global Corridor Control Center</h3>
+          <p className="ops-live-state">
+            <strong>Status: {LIVE_STATE}.</strong> Open controls are deferred by the owner and
+            listed under <a href="#ops-gates">Production readiness</a>. None of them is passed or
+            approved.
+          </p>
           <FounderOverview tenant={tenant} />
           <div className="ops-center-config">
             <div>
@@ -1058,8 +1080,8 @@ export function Operations({
                   const current = r && r.pack_id === pack.id && r.current === true;
                   return {
                     dimension: labels[d],
-                    status: current ? r.status : 'BLOCKED',
-                    recorded_status: r?.status ?? 'No observation',
+                    status: readinessLabel(current ? r.status : 'BLOCKED'),
+                    recorded_status: r ? readinessLabel(r.status) : 'No observation',
                     valid_until: r?.valid_until ?? 'Unknown',
                     owner: r?.owner_id ?? null,
                     evidence: r?.source_id ?? null,
@@ -1095,10 +1117,13 @@ export function Operations({
                   </label>
                   <label className="field">
                     Readiness status
-                    <select name="status">
-                      <option>BLOCKED</option>
-                      <option>PASS</option>
-                      <option value="NOT_APPLICABLE">NOT APPLICABLE, dependencies only</option>
+                    <select name="status" defaultValue="">
+                      <option value="" disabled>
+                        Choose a status
+                      </option>
+                      <option value="BLOCKED">Blocked</option>
+                      <option value="PASS">Ready</option>
+                      <option value="NOT_APPLICABLE">Not applicable (dependencies only)</option>
                     </select>
                   </label>
                   <label className="field">
@@ -1111,10 +1136,7 @@ export function Operations({
                       ))}
                     </select>
                   </label>
-                  <label className="field">
-                    Readiness evidence source ID
-                    <input name="source" />
-                  </label>
+                  <ReadinessSource tenant={tenant} />
                   <label className="field">
                     Readiness valid until
                     <input type="datetime-local" name="until" step="1" required />
@@ -1130,19 +1152,21 @@ export function Operations({
               </form>
               <p>
                 Release state:{' '}
-                {value(
-                  controls?.releases.find((r) => r.route_id === route && r.mission_type === type)
-                    ?.state ?? 'UNPUBLISHED',
+                {releaseLabel(
+                  String(
+                    controls?.releases.find((r) => r.route_id === route && r.mission_type === type)
+                      ?.state ?? 'UNPUBLISHED',
+                  ),
                 )}
-                . Independent approval requires all thirteen current dimensions. Synthetic approval
-                never permits real customer intake or public operational claims.
+                . Approval needs all thirteen current dimensions and an independent reviewer. It
+                does not open the route to the public or make any public claim.
               </p>
               <button
                 className="button"
                 disabled={busy}
                 onClick={() => release('SYNTHETIC_APPROVED')}
               >
-                Approve synthetic route readiness
+                Approve route readiness for limited use
               </button>
               <button
                 className="button button-secondary"
@@ -1460,86 +1484,54 @@ export function Operations({
         hidden={activeSection !== 'ops-gates'}
       >
         <h3>Production readiness and activation</h3>
-        {admin && (
-          <details className="detail-card">
-            <summary>GitHub setup guide for the repository owner</summary>
-            <p>
-              Use a GitHub account with repository administration access. A 403 from the integration
-              does not prove that a paid entitlement is absent. Check the actual plan and settings
-              before purchasing anything.
-            </p>
-            <ol>
-              <li>
-                <a className="text-link" href="https://github.com/sadat99/corridra/settings/rules">
-                  Open repository rules
-                </a>
-                : protect main with pull requests, the CI validate check, appropriate independent
-                review, and restrictions on force pushes and deletion. Confirm the rule applies to
-                this private repository.
-              </li>
-              <li>
-                <a
-                  className="text-link"
-                  href="https://github.com/sadat99/corridra/settings/security_analysis"
-                >
-                  Open security settings
-                </a>
-                : inspect secret scanning, push protection and code-scanning availability. Gitleaks
-                and the limited local Semgrep rules are already CI checks.
-              </li>
-              <li>
-                <a
-                  className="text-link"
-                  href="https://github.com/sadat99/corridra/actions/workflows/security.yml"
-                >
-                  Inspect CodeQL runs
-                </a>
-                : only enable CODEQL_ENABLED after entitlement and configuration are confirmed, then
-                require an actual successful analysis. A skipped job is not clearance.
-              </li>
-              <li>
-                <a className="text-link" href="https://github.com/sadat99/corridra/pulls">
-                  Review open dependency PRs
-                </a>
-                : merge tested compatible changes, verify production, then delete only accepted
-                branches. Keep main and unfinished work; the maximum is ten Git branches including
-                main.
-              </li>
-            </ol>
-            <p>
-              Record actual settings and approval evidence through the existing source/readiness
-              controls. This guide cannot change GitHub settings or clear a blocked control.
-            </p>
-          </details>
-        )}
-        <p>
-          Development and preview are synthetic. A production-candidate setup and approved real-data
-          production require separate verified database, storage, credentials and recorded
-          approvals. The current deployment remains the live synthetic environment. Real operational
-          activation is OFF for every route.
+        <p className="ops-live-state">
+          <strong>Status: {LIVE_STATE}.</strong> Corridra serves a small number of real customers.
+          The controls below are open and deferred by the owner. None of them is passed or approved.
         </p>
         <Table
-          label="External production prerequisites"
-          rows={blockedControls.map(([id, issue, owner, next]) => ({
-            id,
-            issue,
-            status: 'BLOCKED: external prerequisite',
-            owner,
-            next,
+          label="Deferred controls"
+          rows={deferredControls.map((control) => ({
+            id: control.id,
+            name: control.name,
+            status: DEFERRED_LABEL,
+            risk: control.risk,
+            owner: control.whoActs,
           }))}
           columns={[
             ['id', 'Control'],
-            ['issue', 'Issue'],
+            ['name', 'What it covers'],
             ['status', 'Status'],
-            ['owner', 'Owner'],
-            ['next', 'Safe next action'],
+            ['risk', 'Risk while deferred'],
+            ['owner', 'Who acts'],
           ]}
         />
+        <Table
+          label="Blocked"
+          rows={blockedItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            reason: item.reason,
+            owner: item.whoActs,
+          }))}
+          columns={[
+            ['name', 'Item'],
+            ['reason', 'Why it is blocked'],
+            ['owner', 'Who acts'],
+          ]}
+        />
+        {admin && (
+          <p>
+            Repository settings for these controls (branch rules, secret scanning and code analysis)
+            are described in the owner technical setup runbook,
+            docs/runbooks/owner-technical-setup.md. Nothing on this page changes a setting or clears
+            a control.
+          </p>
+        )}
         <p>
-          BD → China priorities: sourcing and machinery before delegations. BD → Spain/EU
-          priorities: buyer and export-market access before selective reverse services. Future
-          routes remain unpublished. No readiness status can waive platform authorization, evidence
-          quarantine, retention or legal approval.
+          Bangladesh to China: sourcing and machinery come before delegations. Bangladesh to Spain
+          and the EU: buyer and export market access come before reverse services. Other routes stay
+          unpublished. No readiness status can waive access checks, evidence quarantine, retention
+          or legal approval.
         </p>
         <a className="text-link" href="#workspace-navigation">
           Return to workspace navigation

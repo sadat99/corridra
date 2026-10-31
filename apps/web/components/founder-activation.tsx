@@ -19,7 +19,7 @@ const states: Record<State, { text: string; tone: 'positive' | 'caution' | 'unkn
   OFF: { text: 'Off, flag unset', tone: 'unknown' },
   WAITING_PREREQUISITE: { text: 'Flag set, waiting for a prerequisite module', tone: 'caution' },
   LOCKED_PRODUCTION: { text: 'Locked, never runs in production', tone: 'caution' },
-  LOCKED_NOT_SYNTHETIC: { text: 'Locked, data is not synthetic', tone: 'caution' },
+  LOCKED_NOT_SYNTHETIC: { text: 'Locked by the data environment setting', tone: 'caution' },
 };
 
 // The response is untrusted input to the browser: accept only the exact documented shape.
@@ -136,7 +136,7 @@ export function FounderActivation({
         <strong>{data.environment.data}</strong> data. {data.counts.on} of {data.counts.total}{' '}
         customer modules are on.
         {data.environment.productionUnlocked
-          ? ' Production is unlocked for synthetic use by the owner.'
+          ? ' The owner unlocked these modules in production.'
           : ''}
         {data.environment.openAdmission
           ? ' Any email-verified account is admitted automatically.'

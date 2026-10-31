@@ -253,15 +253,17 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   test.setTimeout(90000);
   await page.context().addCookies([{ name: 'fixture_owner', value: 'authorized', url: origin }]);
   await page.goto(origin + '/owner');
-  await expect(page.getByRole('button', { name: 'Prepare contributor invitation' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Send contributor invitation' })).toBeEnabled();
   await inspect(page, 'owner-empty');
   await page.getByLabel('Contributor name', { exact: true }).fill('Invited research contributor');
   await page.getByLabel('Contributor email', { exact: true }).fill(email);
   await page
     .getByRole('combobox', { name: 'Contributor operating country', exact: true })
     .selectOption('DE');
-  await page.getByRole('button', { name: 'Prepare contributor invitation' }).click();
-  await expect(page.getByRole('status')).toContainText('Invitation prepared');
+  await page.getByRole('button', { name: 'Send contributor invitation' }).click();
+  await expect(page.locator('[data-feedback-scope="contributor-invite"]')).toContainText(
+    'Invitation sent',
+  );
   await expect(page.getByText(email, { exact: true })).toBeVisible();
   await inspect(page, 'owner-invited');
   const workerContext = await browser.newContext();
@@ -348,7 +350,7 @@ test('Network invitation form supports scoped submission and an editable paused 
   await page.goto(origin + '/network-owner');
   const invitations = page.getByRole('region', { name: 'Contributor invitations', exact: true });
   await expect(
-    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    invitations.getByRole('button', { name: 'Send contributor invitation' }),
   ).toBeEnabled();
   await invitations
     .getByLabel('Contributor name', { exact: true })
@@ -380,8 +382,10 @@ test('Network invitation form supports scoped submission and an editable paused 
       path: `work/real-use/network-browser/network-ready-viewport-${width}.png`,
     });
   }
-  await invitations.getByRole('button', { name: 'Prepare contributor invitation' }).click();
-  await expect(invitations.getByRole('status')).toContainText('Invitation prepared');
+  await invitations.getByRole('button', { name: 'Send contributor invitation' }).click();
+  await expect(invitations.locator('[data-feedback-scope="contributor-invite"]')).toContainText(
+    'Invitation sent',
+  );
   await expect(
     invitations.getByText('network-usability@business.test', { exact: true }),
   ).toBeVisible();
@@ -406,7 +410,7 @@ test('Network invitation form supports scoped submission and an editable paused 
       .getByRole('combobox', { name: 'Contributor operating country', exact: true })
       .selectOption('DE');
     await expect(
-      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+      invitations.getByRole('button', { name: 'Send contributor invitation' }),
     ).toBeDisabled();
     await page.getByRole('button', { name: 'Choose workspace', exact: true }).click();
     await expect(page.getByRole('combobox', { name: 'Workspace', exact: true })).toBeFocused();
@@ -479,12 +483,12 @@ test('Network invitation form supports scoped submission and an editable paused 
     invitations.getByRole('combobox', { name: 'Contributor operating country', exact: true }),
   ).toBeDisabled();
   await expect(
-    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    invitations.getByRole('button', { name: 'Send contributor invitation' }),
   ).toBeDisabled();
   await page.unroute('**/api/workspace/network-invitations?*');
   await invitations.getByRole('button', { name: 'Refresh invitations', exact: true }).click();
   await expect(
-    invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+    invitations.getByRole('button', { name: 'Send contributor invitation' }),
   ).toBeEnabled();
 });
 
@@ -516,7 +520,7 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
       invitations.getByRole('combobox', { name: 'Contributor operating country', exact: true }),
     ).toBeDisabled();
     await expect(
-      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+      invitations.getByRole('button', { name: 'Send contributor invitation' }),
     ).toBeDisabled();
     const endpoint = origin + '/api/workspace/network-invitation?tenant=' + f.realTenant;
     const list = await page.request.get(
@@ -561,7 +565,7 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
     );
     await invitations.getByRole('button', { name: 'Refresh invitations', exact: true }).click();
     await expect(
-      invitations.getByRole('button', { name: 'Prepare contributor invitation' }),
+      invitations.getByRole('button', { name: 'Send contributor invitation' }),
     ).toBeEnabled();
     await expect(invitations.getByLabel('Contributor name', { exact: true })).toHaveValue(
       'Retained expired MFA draft',
@@ -572,8 +576,10 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
     await invitations
       .getByRole('combobox', { name: 'Contributor operating country', exact: true })
       .selectOption('DE');
-    await invitations.getByRole('button', { name: 'Prepare contributor invitation' }).click();
-    await expect(invitations.getByRole('status')).toContainText('Invitation prepared');
+    await invitations.getByRole('button', { name: 'Send contributor invitation' }).click();
+    await expect(invitations.locator('[data-feedback-scope="contributor-invite"]')).toContainText(
+      'Invitation sent',
+    );
     await expect(
       invitations.getByText('expired-mfa-draft@business.test', { exact: true }),
     ).toBeVisible();

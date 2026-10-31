@@ -3,6 +3,9 @@ import { OperatorWorkbench } from '../../components/operator-workbench';
 import { PanelHeading } from './panel-heading';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
+import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
+import { DateTimeInput } from '../../components/ux/date-time-input';
+import { readJson, withStepUp } from '../../lib/ux/step-up';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
   packs: {
@@ -36,6 +39,214 @@ const commands = {
   },
 } as const;
 type Command = keyof typeof commands;
+
+const packStatuses = [
+  ['DRAFT', 'Draft, not used yet'],
+  ['TESTING', 'Testing'],
+  ['LIMITED', 'Limited use'],
+  ['ACTIVE', 'Active'],
+  ['PAUSED', 'Paused'],
+] as const;
+const packLanguages = [
+  ['en', 'English'],
+  ['bn', 'Bengali'],
+  ['zh', 'Chinese'],
+  ['es', 'Spanish'],
+  ['ar', 'Arabic'],
+  ['fr', 'French'],
+  ['de', 'German'],
+] as const;
+const packCurrencies = [
+  ['BDT', 'Bangladeshi Taka'],
+  ['USD', 'US Dollar'],
+  ['EUR', 'Euro'],
+  ['CNY', 'Chinese Yuan'],
+  ['GBP', 'British Pound'],
+] as const;
+const packZones = [
+  ['Asia/Dhaka', 'Dhaka'],
+  ['Europe/Madrid', 'Madrid'],
+  ['Asia/Shanghai', 'Shanghai'],
+  ['UTC', 'UTC'],
+] as const;
+const words = (code: string) => {
+  const text = code
+    .replace(/[_.-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return text ? text[0].toUpperCase() + text.slice(1) : code;
+};
+
+/**
+ * Guided "Add route pack" form (CQ-66). The server builds the reviewed pack command with
+ * createRoutePack; nobody types JSON. Shown only when CORRIDRA_ROUTE_PACK_FORM is on: the server
+ * answers 404 otherwise. Review stays required and the raw command stays under Advanced.
+ */
+function RoutePackForm({
+  tenant,
+  catalogue,
+  onSaved,
+}: {
+  tenant: string;
+  catalogue: Catalogue;
+  onSaved: () => void;
+}) {
+  const [available, setAvailable] = useState(false);
+  const [routeId, setRouteId] = useState('');
+  const [effectiveFrom, setEffectiveFrom] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const feedback = useActionFeedback();
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, { cache: 'no-store' })
+      .then((r) => {
+        if (live) setAvailable(r.ok);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [tenant]);
+  if (!available) return null;
+  const nextVersion =
+    Math.max(0, ...catalogue.packs.filter((p) => p.route_id === routeId).map((p) => p.version)) + 1;
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const f = new FormData(form);
+    const missionTypes = f.getAll('missionTypes').map(String);
+    if (!missionTypes.length) {
+      feedback.error('Choose at least one mission type.');
+      return;
+    }
+    setBusy(true);
+    feedback.clear();
+    try {
+      await withStepUp(async () =>
+        readJson(
+          await fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              routeId,
+              version: nextVersion,
+              status: f.get('status'),
+              effectiveFrom: effectiveFrom ?? new Date(Date.now() + 60000).toISOString(),
+              reason: f.get('reason'),
+              missionTypes,
+              languages: f.getAll('languages').map(String),
+              currencies: f.getAll('currencies').map(String),
+              timeZones: f.getAll('timeZones').map(String),
+              manualChannel: f.get('manualChannel') === 'on',
+            }),
+          }),
+        ),
+      );
+      feedback.success(`Route pack version ${nextVersion} saved. Review is still required.`);
+      form.reset();
+      setRouteId('');
+      setEffectiveFrom(null);
+      onSaved();
+    } catch (error) {
+      feedback.error(error instanceof Error ? error.message : 'The route pack was not saved.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <details>
+      <summary data-step="03">Add route pack</summary>
+      <form className="operator-form" onSubmit={(event) => void submit(event)}>
+        <fieldset disabled={busy}>
+          <legend>New route pack</legend>
+          <label className="field">
+            Route
+            <select
+              name="route"
+              required
+              value={routeId}
+              onChange={(event) => setRouteId(event.target.value)}
+            >
+              <option value="">Choose a route</option>
+              {catalogue.routes.map((route) => (
+                <option key={route.id} value={route.id}>
+                  {route.origin_market} to {route.destination_market}
+                </option>
+              ))}
+            </select>
+          </label>
+          {routeId && <p>This will be version {nextVersion} of the route pack.</p>}
+          <fieldset>
+            <legend>Mission types</legend>
+            {catalogue.types.map((type) => (
+              <label key={type.id} className="ux-check">
+                <input type="checkbox" name="missionTypes" value={type.key} /> {words(type.key)}
+              </label>
+            ))}
+          </fieldset>
+          <label className="field">
+            Status
+            <select name="status" required defaultValue="">
+              <option value="" disabled>
+                Choose a status
+              </option>
+              {packStatuses.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <DateTimeInput
+            label="Starts"
+            hint="Leave empty to start one minute from now."
+            value={effectiveFrom}
+            onChange={setEffectiveFrom}
+          />
+          <fieldset>
+            <legend>Languages</legend>
+            {packLanguages.map(([value, label]) => (
+              <label key={value} className="ux-check">
+                <input type="checkbox" name="languages" value={value} /> {label}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset>
+            <legend>Currencies</legend>
+            {packCurrencies.map(([value, label]) => (
+              <label key={value} className="ux-check">
+                <input type="checkbox" name="currencies" value={value} /> {label}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset>
+            <legend>Time zones</legend>
+            {packZones.map(([value, label]) => (
+              <label key={value} className="ux-check">
+                <input type="checkbox" name="timeZones" value={value} /> {label}
+              </label>
+            ))}
+          </fieldset>
+          <label className="ux-check">
+            <input type="checkbox" name="manualChannel" /> The team contacts companies by hand
+            (manual channel)
+          </label>
+          <label className="field">
+            Reason for this pack
+            <textarea name="reason" required minLength={3} maxLength={500} />
+          </label>
+          <button className="primary-link">{busy ? 'Saving…' : 'Save route pack'}</button>
+          <ActionFeedback
+            scope="route-pack"
+            feedback={feedback.feedback}
+            onClear={feedback.clear}
+          />
+        </fieldset>
+      </form>
+    </details>
+  );
+}
+
 export function ReviewSettings({ tenant, role }: { tenant: string; role: string }) {
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null),
     [message, setMessage] = useState(''),
@@ -135,7 +346,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           { label: 'Directional route', heading: 'Create a directional corridor route' },
           {
             label: 'Source rights and model policies',
-            heading: 'Advanced versioned policy review',
+            heading: 'Advanced (developers): versioned policy review',
           },
           {
             label: 'Pinned configuration references',
@@ -254,8 +465,19 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             </button>
           </form>
         </details>
+        {catalogue && (
+          <RoutePackForm
+            tenant={tenant}
+            catalogue={catalogue}
+            onSaved={() =>
+              void request('mission-catalogue')
+                .then(setCatalogue)
+                .catch(() => undefined)
+            }
+          />
+        )}
         <details>
-          <summary data-step="03">Advanced versioned policy review</summary>
+          <summary data-step="04">Advanced (developers): versioned policy review</summary>
           <form className="operator-form" onSubmit={submit}>
             <label className="field">
               Reviewed configuration action
@@ -299,7 +521,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           </form>
         </details>
         <details>
-          <summary data-step="04">Current route packs and definition references</summary>
+          <summary data-step="05">Current route packs and definition references</summary>
           {catalogue ? (
             <>
               <h3>Directional route references</h3>

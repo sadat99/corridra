@@ -53,7 +53,8 @@ export const taskInput = z
   .object({
     id: z.uuid().toLowerCase(),
     missionId: z.uuid().toLowerCase(),
-    routeAssignmentId: z.uuid().toLowerCase(),
+    // Optional: when absent the server uses the mission's current route assignment (CQ-64).
+    routeAssignmentId: z.uuid().toLowerCase().optional(),
     kind: taskKinds,
     market: country,
     workCountry: country,

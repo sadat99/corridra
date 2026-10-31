@@ -208,9 +208,11 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.locator('#ops-gates')).toBeFocused();
   await expect(operations.locator('.ux-operations-panel:visible')).toHaveCount(1);
   await expect(page.locator('#ops-dashboard')).toBeHidden();
-  await expect(
-    operations.getByRole('region', { name: 'External production prerequisites' }),
-  ).toContainText('BLOCKED: external prerequisite');
+  await expect(operations.getByRole('region', { name: 'Deferred controls' })).toContainText(
+    'Deferred by owner decision on',
+  );
+  await expect(page.locator('#ops-gates')).toContainText('Live, small scale');
+  await expect(page.locator('#ops-gates')).not.toContainText('PASS');
   await operationNavigation
     .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
     .click();
@@ -250,7 +252,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByText('Current route packs and definition references', { exact: true })
     .click();
   await expect(settings.getByText(/JP → KE · [0-9a-f-]{36}/)).toBeVisible();
-  await settings.getByText('Advanced versioned policy review', { exact: true }).click();
+  await settings
+    .getByText('Advanced (developers): versioned policy review', { exact: true })
+    .click();
   await settings.getByLabel('Reviewed command JSON').fill('{');
   await settings.getByRole('checkbox').check();
   await settings.getByRole('button', { name: 'Save reviewed configuration' }).click();

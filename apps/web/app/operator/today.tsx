@@ -20,8 +20,15 @@ type Meeting = {
 type FollowUp = { id: string; status: string; due_at: string; next_action: string };
 type Page = { missions: Mission[]; total: number };
 type MeetingRead = { meetings: Meeting[]; followups: FollowUp[] };
+/** getTeamToday counts (CQ-34, CQ-73). Unread counts are listed in `unavailable`, never zero. */
+type TeamCounts = {
+  acceptedQuotesNotStarted: number;
+  repliesToReview: number;
+  unavailable?: string[];
+};
 type Today = {
   observedAt: string;
+  team: TeamCounts | null;
   fresh: Page;
   overdue: Page;
   open: Page;
@@ -102,6 +109,16 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
       missions(tenant, 'filter=open&stage=DRAFT', signal),
       missions(tenant, 'filter=overdue', signal),
       missions(tenant, 'filter=open', signal),
+      // Accepted quotes and replies come from getTeamToday; a failed read only hides these tiles.
+      fetch(`/api/team-control/today?${new URLSearchParams({ tenant })}`, {
+        signal,
+        cache: 'no-store',
+      })
+        .then(async (r) => (r.ok ? ((await r.json()) as TeamCounts) : null))
+        .catch((error: unknown) => {
+          if (error instanceof DOMException && error.name === 'AbortError') throw error;
+          return null;
+        }),
       // Meetings are optional here: a role without access, or a failed read, only hides this part.
       get(tenant, 'meetings', '', signal)
         .then((body: MeetingRead) => body)
@@ -110,7 +127,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
           return null;
         }),
     ])
-      .then(([fresh, overdue, open, meetingRead]) => {
+      .then(([fresh, overdue, open, team, meetingRead]) => {
         const now = Date.now();
         const work = meetingRead
           ? {
@@ -132,7 +149,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
                 meetingRead.followups.length >= readLimit,
             }
           : null;
-        setToday({ fresh, overdue, open, work, observedAt: new Date(now).toISOString() });
+        setToday({ fresh, overdue, open, team, work, observedAt: new Date(now).toISOString() });
         setFailed(false);
       })
       .catch((error: unknown) => {
@@ -146,6 +163,8 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
     !!today &&
     today.fresh.total === 0 &&
     today.overdue.total === 0 &&
+    (!today.team ||
+      (today.team.acceptedQuotesNotStarted === 0 && today.team.repliesToReview === 0)) &&
     (!work ||
       (work.upcoming.length === 0 &&
         work.reschedule.length === 0 &&
@@ -225,6 +244,44 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
                         'meeting in the next 7 days',
                         'meetings in the next 7 days',
                       )}
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                </li>
+              </>
+            )}
+            {today.team && (
+              <>
+                <li>
+                  <a href="#workspace-commercial">
+                    <OperatorIcon name="progress" />
+                    <strong>
+                      {today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                        ? 'Not available'
+                        : today.team.acceptedQuotesNotStarted}
+                    </strong>
+                    <span>
+                      {today.team.acceptedQuotesNotStarted === 1 &&
+                      !today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                        ? 'accepted quote not started'
+                        : 'accepted quotes not started'}
+                    </span>
+                    <OperatorIcon name="chevron" className="operator-nav-arrow" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#workspace-delivery">
+                    <OperatorIcon name="document" />
+                    <strong>
+                      {today.team.unavailable?.includes('repliesToReview')
+                        ? 'Not available'
+                        : today.team.repliesToReview}
+                    </strong>
+                    <span>
+                      {today.team.repliesToReview === 1 &&
+                      !today.team.unavailable?.includes('repliesToReview')
+                        ? 'reply to review'
+                        : 'replies to review'}
                     </span>
                     <OperatorIcon name="chevron" className="operator-nav-arrow" />
                   </a>
