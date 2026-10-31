@@ -1703,7 +1703,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
   await page.getByRole('button', { name: 'Verify and open workspace' }).click();
   const verified = await verification;
-  const verificationResult = await verified.json();
+  // Sign-in leaves with a full page load once the code is accepted (KI-30), which takes the response
+  // body with it, so the body is read only for the failure message, when the form stays.
+  const verificationResult = verified.ok() ? {} : await verified.json();
   expect(
     verified.ok(),
     JSON.stringify({
@@ -3119,22 +3121,27 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         await new Promise((resolve) => setTimeout(resolve, 2000));
       await route.continue();
     });
-    await contributorPage.evaluate(() => Object.assign(window, { beforeSignOut: true }));
+    await contributorPage.evaluate(() => {
+      Object.assign(window, { beforeSignOut: true });
+      // The button as the page is replaced, kept in this tab's session storage.
+      window.addEventListener('pagehide', () => {
+        const button = Array.from(document.querySelectorAll('button')).find(
+          (candidate) => candidate.textContent === 'Sign out of assigned work',
+        );
+        sessionStorage.setItem(
+          'signOutButtonWhenLeaving',
+          button ? (button.disabled ? 'disabled' : 'enabled') : '',
+        );
+      });
+    });
     const signedOut = contributorPage.waitForResponse(signOutRoute);
     await signOutButton.click();
     expect((await signedOut).ok()).toBe(true);
-    await contributorPage.waitForTimeout(1000);
-    // Read in the page: a locator would wait for the held navigation to finish first.
-    expect(
-      await contributorPage.evaluate(
-        () =>
-          Array.from(document.querySelectorAll('button')).find(
-            (button) => button.textContent === 'Sign out of assigned work',
-          )?.disabled,
-      ),
-      'still disabled while the next page loads',
-    ).toBe(true);
     await expect(contributorPage).toHaveURL('http://127.0.0.1:3200/contributor');
+    expect(
+      await contributorPage.evaluate(() => sessionStorage.getItem('signOutButtonWhenLeaving')),
+      'still disabled when the next page replaced it',
+    ).toBe('disabled');
     await expect(
       contributorPage.getByRole('heading', { name: 'Your assigned tasks.' }),
     ).toBeVisible();
@@ -3169,10 +3176,17 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .getByLabel('Six-digit code', { exact: true })
       .fill(totp(contributorSecret));
     contributorCounter = Math.floor(Date.now() / 30000);
+    await contributorPage.evaluate(() => Object.assign(window, { beforeSignIn: true }));
     await contributorPage.getByRole('button', { name: 'Verify and open workspace' }).click();
     await expect(contributorPage).toHaveURL(
       `http://127.0.0.1:3200/contributor?workspace=${seed.tenantId}`,
     );
+    // Sign-in returns with a full page load (KI-30), so the task board is a new document.
+    await expect(assignedTasks).toBeVisible();
+    expect(
+      await contributorPage.evaluate(() => 'beforeSignIn' in window),
+      'returned with a new page',
+    ).toBe(false);
     await expect(
       contributorPage.getByText('No current reviewed assignment is available.'),
     ).toBeVisible();

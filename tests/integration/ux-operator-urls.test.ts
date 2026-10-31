@@ -281,6 +281,16 @@ describe('signing in again from the workspace comes back to the same workspace a
     expect(signOut).not.toMatch(/\brouter\./);
     expect(signOut).not.toContain('useRouter');
   });
+  it('sign-in returns with a full page load, never a router call', () => {
+    const form = read('apps/web/app/operator/signin/signin-form.tsx');
+    expect(form).toContain('window.location.replace(destination);');
+    expect(form).not.toMatch(/\brouter\.(replace|refresh|push)\b/);
+    expect(form).not.toContain('useRouter');
+    // The return address is still checked on the client, with the `#` re-check, before leaving.
+    expect(form).toContain(
+      "returnTo.startsWith('/operator') && !returnTo.includes('#')\n            ? operatorReturnTo(returnTo + window.location.hash)\n            : operatorReturnTo(returnTo);",
+    );
+  });
   it('the page for someone with no membership keeps the workspace and section address asked for', () => {
     const entry = read('apps/web/app/operator/operator-entry.tsx');
     expect(entry).toContain('href={operatorSignInPath(requested, section)}');
