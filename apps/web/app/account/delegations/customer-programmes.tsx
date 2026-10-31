@@ -304,7 +304,9 @@ function ScopedProgrammes({
       setAck(false);
       setMessage(
         realCustomerInput()
-          ? 'Your planning programme is saved. Participant and delivery operations are not available here.'
+          ? participantsEnabled
+            ? 'Your programme is saved. Next, invite participants from People.'
+            : 'Your programme is saved.'
           : 'Your sample planning programme is saved. Participant and delivery operations are not available here.',
       );
       await load();
@@ -334,13 +336,15 @@ function ScopedProgrammes({
       </a>
       <p>
         {realCustomerInput()
-          ? 'Fictional planning only. This creates a programme in your workspace. Participant'
-          : 'Fictional sample planning only. This creates a programme in your workspace. Participant'}{' '}
-        {participantsEnabled
-          ? realCustomerInput()
-            ? 'invitations and consented registrations have separate controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
-            : 'invitations and consented registrations have separate sample controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
-          : 'invitations, private missions, dates, agendas, meetings, fees and costs are not available here yet.'}
+          ? 'This creates a programme in your workspace.'
+          : 'Fictional sample planning only. This creates a programme in your workspace.'}{' '}
+        {realCustomerInput()
+          ? participantsEnabled
+            ? 'Invite participants and see consented registrations in People.'
+            : ''
+          : participantsEnabled
+            ? 'Participant invitations and consented registrations have separate sample controls below. Private missions, dates, agendas, meetings, fees and costs are not available here yet.'
+            : 'Participant invitations, private missions, dates, agendas, meetings, fees and costs are not available here yet.'}
       </p>
       {status === 'loading' && <p role="status">Checking programme access…</p>}
       {status === 'denied' && (

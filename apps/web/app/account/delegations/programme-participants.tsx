@@ -1,7 +1,8 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammeObjectives } from './programme-objectives';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { formatDateTime } from '../../../lib/ux/format';
 import Link from 'next/link';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 type Props = ParticipantScope & {
@@ -18,7 +19,8 @@ export function ProgrammeParticipants(props: Props) {
   );
 }
 function ScopedParticipants(props: Props) {
-  const [label, setLabel] = useState('Synthetic participant invitation'),
+  const labelInput = useRef<HTMLInputElement>(null);
+  const [label, setLabel] = useState(realCustomerInput() ? '' : 'Synthetic participant invitation'),
     [reason, setReason] = useState(''),
     [issueAck, setIssueAck] = useState(false),
     [changeAck, setChangeAck] = useState(false),
@@ -174,6 +176,10 @@ function ScopedParticipants(props: Props) {
       {view.status === 'ready' && view.data && (
         <>
           <h4>Invitations</h4>
+          <p>
+            For your participants&apos; security, a code is shown only once, when you create it. If
+            a code is lost or has expired, create a replacement code.
+          </p>
           {view.data.invitations.length === 0 ? (
             <p className="ux-empty">
               {' '}
@@ -190,8 +196,22 @@ function ScopedParticipants(props: Props) {
                       : i.status === 'USED'
                         ? 'Invitation used'
                         : 'Invitation unavailable'}{' '}
-                    · Expires {i.expiresAt}
+                    · Expires {formatDateTime(i.expiresAt)}
                   </p>
+                  {!view.pending && (
+                    <button
+                      type="button"
+                      className="text-link"
+                      disabled={view.busy}
+                      onClick={() => {
+                        setLabel(i.label);
+                        setIssueAck(false);
+                        labelInput.current?.focus();
+                      }}
+                    >
+                      Create replacement code<span className="sr-only"> for {i.label}</span>
+                    </button>
+                  )}
                   {i.status === 'ISSUED' && (
                     <button
                       data-intent="destructive"
@@ -305,11 +325,14 @@ function ScopedParticipants(props: Props) {
             >
               <h4>
                 {' '}
-                {realCustomerInput() ? 'Create a invitation' : 'Create a sample invitation'}{' '}
+                {realCustomerInput()
+                  ? 'Create an invitation code'
+                  : 'Create a sample invitation'}{' '}
               </h4>
               <label className="field">
                 Invitation label
                 <input
+                  ref={labelInput}
                   value={label}
                   required
                   minLength={realCustomerInput() ? 2 : 11}
@@ -327,8 +350,8 @@ function ScopedParticipants(props: Props) {
                   onChange={(e) => setIssueAck(e.target.checked)}
                 />
                 {realCustomerInput()
-                  ? 'I will share this code only with an approved test participant. No message is sent.'
-                  : 'I will share this sample code only with an approved test participant. No message is sent.'}{' '}
+                  ? 'I will share this code only with the participant it is meant for. Corridra does not send it for me.'
+                  : 'I will share this sample code only with the participant it is meant for. Corridra does not send it for me.'}{' '}
               </label>
               <button className="primary-link" disabled={view.busy}>
                 {realCustomerInput()
@@ -344,8 +367,9 @@ function ScopedParticipants(props: Props) {
                 <input readOnly autoComplete="off" value={String(view.result.token)} />
               </label>
               <p>
-                Select and copy this code privately. It is shown once and clears when this view is
-                hidden or expires. The recipient can use{' '}
+                Select and copy this code now and send it to the participant yourself. It is shown
+                once and clears when this view is hidden or expires; after that, create a
+                replacement code. The recipient can use{' '}
                 <Link className="text-link" href="/account/delegations">
                   Delegation registrations
                 </Link>{' '}

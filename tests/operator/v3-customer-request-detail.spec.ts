@@ -24,6 +24,8 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    // Shared UX components import their kit stylesheet; the fixture page does not need it.
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -163,7 +165,7 @@ test('reopens original requirements,precise currency,canonical status and replie
   ).toBeVisible();
   await expect(page.getByText(/BHD.*1\.234/)).toBeVisible();
   await expect(page.getByText('Original team reply বাংলা')).toBeVisible();
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Back to my saved requests' })).toHaveAttribute(
     'href',
     '/account#customer-requests',

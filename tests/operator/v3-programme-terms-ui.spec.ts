@@ -38,6 +38,7 @@ render({});window.addEventListener('fixture-customer-change',e=>render(e.detail)
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -908,9 +909,9 @@ test('reminders list what is due or late, mark done sends one exact request, and
     },
   });
   await organiser(second, '?c=reminders');
-  await expect(
-    second.getByText('Nothing is due soon. You are up to date as of 2026-10-20.'),
-  ).toBeVisible();
+  // CQ-87: with nothing due, the reminders section stays out of the way.
+  await expect(second.getByRole('heading', { name: 'Your reminders' })).toHaveCount(0);
+  await expect(second.getByText(/Nothing is due soon/)).toHaveCount(0);
 });
 
 test('a reminder that is no longer yours is reported, and denied access clears the list', async ({

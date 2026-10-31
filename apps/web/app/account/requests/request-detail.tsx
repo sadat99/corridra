@@ -9,7 +9,13 @@ import {
   missionStatus,
   type MissionBrief,
 } from '@corridra/domain/missions';
-import { displayMoney, displayDate } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { StatusChip } from '../../../components/ux/page-header';
+import { customerStatusLabel } from '../../../lib/ux/customer-road';
+import { formatDate, formatDateTime } from '../../../lib/ux/format';
+import { groupFields, placeName, requestTitle } from '../request-words';
+
+const displayDate = (value: string) => formatDateTime(value);
 
 type Detail = {
   id: string;
@@ -28,8 +34,8 @@ type Scope = {
   serviceRequestsEnabled?: boolean;
 };
 const labels: Record<string, string> = {
-  objective: 'Commercial objective',
-  market: 'Target country or market',
+  objective: 'Goal',
+  market: 'Target market',
   attendance: 'Visit planned',
   startDate: 'Start date',
   endDate: 'End date',
@@ -41,26 +47,46 @@ const labels: Record<string, string> = {
   name: 'Contact name',
   company: 'Company',
   email: 'Contact email',
-  acknowledged: realCustomerInput()
-    ? 'Privacy and request notice acknowledged'
-    : 'Sample-data notice acknowledged',
+  acknowledged: 'Privacy and request notice acknowledged',
   experience: 'Commercial requirements',
-  schemaVersion: 'Request format version',
   companyCountry: 'Company country',
   marketCode: 'Target country or trade bloc',
   job: 'Type of work',
   requirements: 'Requirements',
-  budgetMinor: 'Budget in original minor units',
-  currency: 'Original currency',
+  budgetMinor: 'Budget',
+  currency: 'Currency',
   budgetBasis: 'Budget basis',
   moq: 'Minimum order quantity (MOQ)',
   oemOdm: 'Custom manufacturing (OEM / ODM)',
   incoterm: 'Delivery term (Incoterm)',
   machinery: 'Machinery requirements',
 };
+// Sentence case for any field without a written label (CQ-24): "Delivery window", never "Delivery Window".
 function label(key: string) {
-  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
   return labels[key] ?? words.charAt(0).toUpperCase() + words.slice(1);
+}
+// Country codes become names ("AZ" is shown as "Azerbaijan"); dates use one style (D11).
+const placeKeys = new Set(['market', 'marketCode', 'companyCountry']);
+function plain(key: string, item: unknown): string {
+  if (typeof item !== 'string') return String(item);
+  if (placeKeys.has(key)) return placeName(item);
+  if ((key === 'startDate' || key === 'endDate') && /^\d{4}-\d{2}-\d{2}$/.test(item))
+    return formatDate(`${item}T00:00:00Z`, { timeZone: 'UTC' });
+  return item;
+}
+/** CQ-24: the original brief in groups (Goal, Where, Details, Results, Contact), without internal fields. */
+function GroupedFields({ value }: { value: Record<string, unknown> }) {
+  return (
+    <>
+      {groupFields(value).map((group) => (
+        <section key={group.title} aria-label={group.title}>
+          <h3>{group.title}</h3>
+          <OriginalFields value={Object.fromEntries(group.keys.map((key) => [key, value[key]]))} />
+        </section>
+      ))}
+    </>
+  );
 }
 function OriginalFields({ value }: { value: Record<string, unknown> }) {
   return (
@@ -88,7 +114,7 @@ function OriginalFields({ value }: { value: Record<string, unknown> }) {
             ) : item === '' || item == null ? (
               'Not provided'
             ) : (
-              String(item)
+              plain(key, item)
             )}
           </dd>
         </div>
@@ -206,7 +232,7 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
         {' '}
         {realCustomerInput()
           ? 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'
-          : 'Sample data only. A request is not an accepted engagement, confirmed meeting or deal.'}{' '}
+          : 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Loading your saved request…</p>}
       {status === 'denied' && (
@@ -221,7 +247,7 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
         <p role="status">
           {realCustomerInput()
             ? 'Saved request details are unavailable. Your receipts and shared mission links are separate.'
-            : 'Saved sample request details are unavailable. Your receipts and shared mission links are separate.'}{' '}
+            : 'Saved request details are unavailable. Your receipts and shared mission links are separate.'}{' '}
         </p>
       )}
       {status === 'failed' && <p role="alert">Your request could not be loaded. Try again.</p>}
@@ -234,11 +260,12 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
         ) : (
           <>
             <section aria-label="Request overview" className="detail-card">
-              <h2>{original?.objective}</h2>
-              <p>{original?.market}</p>
-              <p>
-                Mission status: <strong>{detail.progress?.status}</strong>
-              </p>
+              <h2>{requestTitle(original) ?? original?.objective}</h2>
+              {detail.progress && (
+                <p>
+                  Status: <StatusChip status={customerStatusLabel(detail.progress.status, true)} />
+                </p>
+              )}
               <p>
                 Received{' '}
                 {detail.progress && (
@@ -288,7 +315,7 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
                     ({requirements.budgetBasis}). No currency conversion.
                   </p>
                 )}
-                <OriginalFields value={original} />
+                <GroupedFields value={original as unknown as Record<string, unknown>} />
               </details>
             )}
           </>

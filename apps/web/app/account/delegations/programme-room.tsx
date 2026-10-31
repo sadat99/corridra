@@ -34,7 +34,8 @@ const marks = {
 
 // The same list, shapes and words as the request Road (components/mr/road.tsx), with the programme's
 // own steps. Each state is worked out from a record or it is "not tracked yet".
-function Road({ counts }: { counts: BoardingCounts | null }) {
+// CQ-85: the Invite step opens the People view, where invitations are created.
+function Road({ counts, onInvite }: { counts: BoardingCounts | null; onInvite?: () => void }) {
   const states = programmeRoadStates(counts);
   const labels = mrLabels.road;
   return (
@@ -52,7 +53,14 @@ function Road({ counts }: { counts: BoardingCounts | null }) {
                 {marks[state](index)}
               </span>
               <span className="mr-road-text">
-                <b>{step.label}</b>
+                {step.key === 'invite' && onInvite ? (
+                  <button type="button" className="text-link" onClick={onInvite}>
+                    <b>{step.label}</b>
+                    <span className="sr-only"> (open People)</span>
+                  </button>
+                ) : (
+                  <b>{step.label}</b>
+                )}
                 <span className="mr-road-state">{labels.states[state]}</span>
               </span>
             </li>
@@ -68,14 +76,16 @@ function Status({
   counts,
   notice = '',
   onRefresh,
+  onInvite,
 }: {
   counts: BoardingCounts | null;
   notice?: string;
   onRefresh?: () => void;
+  onInvite?: () => void;
 }) {
   return (
     <>
-      <Road counts={counts} />
+      <Road counts={counts} onInvite={onInvite} />
       <p className="programme-boarding">
         <strong>Boarding</strong> {boardingLine(counts)}
         {onRefresh && (
@@ -116,7 +126,15 @@ function useOnScreen() {
 // Reads the invitations and consented registrations the participants panel reads, with the same
 // access rules and the same hiding when the page is hidden. Counts only. The participants panel keeps its
 // own copy of the same read, so the room reads again whenever the person changes view or asks for it.
-function LiveStatus({ scope, onRefresh }: { scope: ParticipantScope; onRefresh: () => void }) {
+function LiveStatus({
+  scope,
+  onRefresh,
+  onInvite,
+}: {
+  scope: ParticipantScope;
+  onRefresh: () => void;
+  onInvite?: () => void;
+}) {
   const view = useParticipantView(scope, noop);
   const counts =
     view.status === 'ready' && view.data
@@ -127,7 +145,7 @@ function LiveStatus({ scope, onRefresh }: { scope: ParticipantScope; onRefresh: 
           moreRegistrations: !!view.data.nextRegistrationAfter,
         })
       : null;
-  return <Status counts={counts} notice={view.notice} onRefresh={onRefresh} />;
+  return <Status counts={counts} notice={view.notice} onRefresh={onRefresh} onInvite={onInvite} />;
 }
 
 export function ProgrammeRoom({
@@ -158,6 +176,7 @@ export function ProgrammeRoom({
   const available = roomLenses.filter((item) => item.key === 'overview' || panels[item.key]);
   const emblem = emblemFor(name);
   const refresh = () => setReads((count) => count + 1);
+  const onInvite = panels.people ? () => choose('people') : undefined;
   function choose(key: RoomLensKey) {
     if (key !== lens) refresh();
     setLens(key);
@@ -176,9 +195,9 @@ export function ProgrammeRoom({
         </div>
       </header>
       {participantsEnabled && onScreen ? (
-        <LiveStatus key={reads} scope={scope} onRefresh={refresh} />
+        <LiveStatus key={reads} scope={scope} onRefresh={refresh} onInvite={onInvite} />
       ) : (
-        <Status counts={null} />
+        <Status counts={null} onInvite={onInvite} />
       )}
       <div className="room-lenses" role="group" aria-label="Programme views">
         {available.map((item) => (

@@ -60,6 +60,7 @@ createRoot(document.getElementById('fixture')).render(<CustomerWorkspaces key={i
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',

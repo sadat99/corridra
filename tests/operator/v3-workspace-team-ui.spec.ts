@@ -82,6 +82,7 @@ createRoot(document.getElementById('fixture')).render(<Component key={issuer+':'
     ],
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
