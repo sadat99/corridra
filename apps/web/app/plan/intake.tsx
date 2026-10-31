@@ -12,6 +12,10 @@ import { fill } from '../../lib/i18n/fill';
 import { formEn, type FormKey } from '../../lib/i18n/form-words/en';
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
+import { rememberSentRequest } from '../../lib/private-request-storage';
+import { customerStatusLabel } from '../../lib/ux/customer-road';
+import { formatDateTime } from '../../lib/ux/format';
+import { countryOptions, euCountries, pinnedCountries } from '../../lib/ux/options';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -135,6 +139,90 @@ const attendanceWords = {
   'Not decided': 'form.where.undecided',
 } satisfies Record<(typeof attendanceOptions)[number], FormKey>;
 const jobWord = (key: (typeof missionCatalogue)[number]['key']): FormKey => `form.job.${key}`;
+/**
+ * Where a problem the structured request reports is shown (CQ-11): next to the field the person typed it in, never
+ * under an unrelated optional field. A problem without its own field stays on the shared requirements line.
+ */
+const requirementField: Record<string, keyof Draft> = {
+  product: 'offer',
+  specifications: 'parameters',
+  quantity: 'quantity',
+  unit: 'unit',
+  technicalConstraints: 'preferences',
+  budgetMinor: 'budgetAmount',
+  currency: 'currency',
+  budgetBasis: 'budgetBasis',
+  travelDates: 'whenNeeded',
+  decisionCriteria: 'worthwhile',
+  machinery: 'technicalPurpose',
+};
+function issueField(path: readonly PropertyKey[], message: string): string {
+  if (path[0] === 'organiser' || path[0] === 'participants') return String(path[0]);
+  if (path[0] !== 'requirements') return 'requirements';
+  if (path.length === 1)
+    return message.startsWith('Quantity needs')
+      ? 'unit'
+      : message.startsWith('Budget needs')
+        ? 'budgetAmount'
+        : 'requirements';
+  return requirementField[String(path[1])] ?? 'requirements';
+}
+// The step each field is asked on, so a final check that finds a problem opens the step where it can be fixed.
+const fieldStep: Record<string, number> = {
+  objective: 0,
+  job: 0,
+  companyCountry: 1,
+  marketCode: 1,
+  market: 1,
+  whenNeeded: 1,
+  attendance: 1,
+  startDate: 1,
+  endDate: 1,
+  timezone: 1,
+  offer: 2,
+  website: 2,
+  technicalPurpose: 2,
+  parameters: 2,
+  quantity: 2,
+  unit: 2,
+  preferences: 2,
+  budgetAmount: 2,
+  currency: 2,
+  budgetBasis: 2,
+  organiser: 2,
+  participants: 2,
+  requirements: 2,
+  worthwhile: 3,
+  outcomes: 3,
+  notes: 3,
+};
+const budgetFields = ['budgetAmount', 'currency', 'budgetBasis'];
+/** The choices a link can make (`?job`, `?companyCountry` and `?marketCode`), applied to a draft. */
+function withLinkChoices(base: Draft): Draft {
+  const query = new URLSearchParams(window.location.search);
+  const next = { ...base };
+  const job = query.get('job');
+  if (job && missionCatalogue.some((t) => t.key === job)) {
+    next.job = job;
+    next.objective = objectiveForJob(job);
+  }
+  const companyCountry = query.get('companyCountry'),
+    marketCode = query.get('marketCode');
+  if (
+    companyCountry &&
+    countryCodes.includes(companyCountry as (typeof countryCodes)[number]) &&
+    marketCode &&
+    (marketCode === 'EU' || countryCodes.includes(marketCode as (typeof countryCodes)[number]))
+  ) {
+    next.companyCountry = companyCountry;
+    next.marketCode = marketCode;
+    next.market =
+      marketCode === 'EU'
+        ? 'European Union'
+        : (new Intl.DisplayNames(['en'], { type: 'region' }).of(marketCode) ?? marketCode);
+  }
+  return next;
+}
 // The receipt's sentences on who can read it and how long it lasts stay English (Lane 11).
 const receiptReaders = 'Anyone with this code can read the mission status and replies.';
 const receiptExpiry = 'It expires after 30 days.';
@@ -170,6 +258,8 @@ async function claimSavedRequest(storageKey: string, navigate: (path: string) =>
     throw new Error(formEn['form.message.claimUnreadable']);
   try {
     sessionStorage.removeItem(storageKey);
+    // The account request page can say "Request sent" for this id once (CQ-58).
+    rememberSentRequest(sessionStorage, body.id);
   } catch {
     /* Navigation still works when tab storage is blocked. */
   }
@@ -216,6 +306,7 @@ function IntakeForm({
     withEnglish,
     showMessage,
     englishProps,
+    wsa,
   } = useFormWords();
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
@@ -240,11 +331,17 @@ function IntakeForm({
     [deviceSaved, setDeviceSaved] = useState(false),
     [forgotten, setForgotten] = useState(false),
     [ready, setReady] = useState(false),
-    [draftNotice, setDraftNotice] = useState('');
+    [draftNotice, setDraftNotice] = useState(''),
+    // A link asked for another job than the saved draft has (CQ-14): the person chooses which to keep.
+    [jobChoice, setJobChoice] = useState(''),
+    [checkEmpty, setCheckEmpty] = useState(false);
   const key = useRef(''),
     submitted = useRef(false),
     heading = useRef<HTMLHeadingElement>(null),
-    errorSummary = useRef<HTMLDivElement>(null);
+    errorSummary = useRef<HTMLDivElement>(null),
+    // The error summary takes focus once, when a check finds problems; typing in a field never moves focus.
+    focusSummary = useRef(false),
+    budgetDetails = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
@@ -276,6 +373,13 @@ function IntakeForm({
           setDraftNotice(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`);
         const query = new URLSearchParams(window.location.search);
         const suggestedJob = query.get('job');
+        if (
+          restored &&
+          suggestedJob &&
+          missionCatalogue.some((t) => t.key === suggestedJob) &&
+          saved.draft.job !== suggestedJob
+        )
+          setJobChoice(suggestedJob);
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
           setDraft((current) => ({
             ...current,
@@ -361,7 +465,14 @@ function IntakeForm({
       controller.abort();
     };
   }, [realMode, privateMode, draftStorageKey, navigate]);
+  // A budget problem opens the budget section so its field is visible; the person can close it again.
+  const budgetProblem = budgetFields.some((name) => errors[name]?.length);
   useEffect(() => {
+    if (budgetProblem && budgetDetails.current) budgetDetails.current.open = true;
+  }, [budgetProblem]);
+  useEffect(() => {
+    if (!focusSummary.current) return;
+    focusSummary.current = false;
     if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
   }, [errors]);
   function persist(v: Draft, n: number) {
@@ -418,7 +529,7 @@ function IntakeForm({
     }
     setDraft(v);
     persist(v, step);
-    setErrors((e) => ({ ...e, [field]: [] }));
+    setErrors((e) => (e[field]?.length ? { ...e, [field]: [] } : e));
   }
   function canonicalDraft() {
     const {
@@ -481,19 +592,40 @@ function IntakeForm({
       )
         next.marketCode = [formEn['form.message.chooseMarket']];
     }
-    if (step === 2 || fields.length === groups.flat().length) {
+    const all = fields.length === groups.flat().length;
+    if (step >= 2 || all) {
+      // The structured request is checked on the details step and after it; each problem is shown on its field.
+      const shown = (field: string) => all || fieldStep[field] === step;
       let structured;
       try {
         structured = intakeExperience.safeParse(experience());
       } catch (err) {
-        next.requirements = [
-          err instanceof Error ? err.message : formEn['form.message.checkAmount'],
-        ];
+        if (shown('budgetAmount'))
+          next.budgetAmount = [
+            err instanceof Error ? err.message : formEn['form.message.checkAmount'],
+          ];
       }
-      if (structured && !structured.success)
-        next.requirements = [structured.error.issues.map((e) => e.message).join(issueSeparator)];
+      if (structured && !structured.success) {
+        const shared: string[] = [];
+        for (const issue of structured.error.issues) {
+          const target = issueField(issue.path, issue.message);
+          if (!shown(target)) continue;
+          if (target === 'requirements') shared.push(issue.message);
+          else if (!next[target]) next[target] = [issue.message];
+        }
+        if (shared.length) next.requirements = [shared.join(issueSeparator)];
+      }
     }
+    focusSummary.current = Object.keys(next).length > 0;
     setErrors(next);
+    if (all && Object.keys(next).length) {
+      // Open the first step that has a problem, so the person sees the field to fix.
+      const first = Math.min(...Object.keys(next).map((f) => fieldStep[f] ?? 4));
+      if (first !== step) {
+        setStep(first);
+        persist(draft, first);
+      }
+    }
     return Object.keys(next).length === 0;
   }
   function move(n: number) {
@@ -655,6 +787,10 @@ function IntakeForm({
   async function check(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
+    if (!checkCode.trim()) {
+      setCheckEmpty(true);
+      return;
+    }
     setResult(null);
     setBusy(true);
     setMessage('');
@@ -673,12 +809,13 @@ function IntakeForm({
       setBusy(false);
     }
   }
-  const field = (name: keyof Draft, label: string, type = 'text') => (
+  const field = (name: keyof Draft, label: string, type = 'text', autoComplete?: string) => (
     <div className="field" key={name}>
       <label htmlFor={`brief-${name}`}>{label}</label>
       <input
         id={`brief-${name}`}
         type={type}
+        autoComplete={autoComplete}
         dir={translated ? inputDirection(name, type) : undefined}
         value={String(draft[name])}
         onChange={(e) => change(name, e.target.value)}
@@ -700,8 +837,38 @@ function IntakeForm({
     ) : null;
   const regionNames = new Intl.DisplayNames([tag], { type: 'region' });
   const chosenJob = missionCatalogue.find((item) => item.key === draft.job);
+  // Countries by name in the shown language (CQ-15): the three route countries first, then the EU, then the rest.
+  const countries = countryOptions(tag);
+  const countryGroups = [
+    { label: wsa('wsa.plan.countries.pinned'), codes: [...pinnedCountries] as string[] },
+    {
+      label: wsa('wsa.plan.countries.eu'),
+      codes: countries.filter((c) => c.hint === 'EU').map((c) => c.value),
+    },
+    {
+      label: wsa('wsa.plan.countries.other'),
+      codes: countries
+        .filter(
+          (c) =>
+            !(pinnedCountries as readonly string[]).includes(c.value) &&
+            !(euCountries as readonly string[]).includes(c.value),
+        )
+        .map((c) => c.value),
+    },
+  ];
+  const countryChoices = countryGroups.map((group) => (
+    <optgroup key={group.label} label={group.label}>
+      {group.codes.map((code) => (
+        <option key={code} value={code}>
+          {countries.find((c) => c.value === code)?.label ?? regionNames.of(code)}
+        </option>
+      ))}
+    </optgroup>
+  ));
+  const delegation = draft.job === 'delegations';
   return (
-    <div className="ux-intake-layout">
+    // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
+    <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
       <div className="guide-plan-top">
         {realMode ? (
           <aside className="intake-notice">
@@ -835,6 +1002,37 @@ function IntakeForm({
               </div>
             </section>
           )}
+          {jobChoice && !finished && !pendingReady && (
+            <section className="ux-job-choice" role="group" aria-labelledby="job-choice-text">
+              <p id="job-choice-text">
+                {fill(wsa('wsa.plan.jobChoice'), {
+                  job: say(jobWord(jobChoice as (typeof missionCatalogue)[number]['key'])),
+                })}
+              </p>
+              <div className="guide-actions">
+                <button type="button" className="button-secondary" onClick={() => setJobChoice('')}>
+                  {wsa('wsa.plan.jobChoice.continue')}
+                </button>
+                <button
+                  type="button"
+                  className="primary-link"
+                  onClick={() => {
+                    const fresh = withLinkChoices(empty);
+                    key.current = crypto.randomUUID();
+                    setDraft(fresh);
+                    setDraftNotice('');
+                    setJobChoice('');
+                    setErrors({});
+                    setStep(0);
+                    persist(fresh, 0);
+                    queueMicrotask(() => heading.current?.focus());
+                  }}
+                >
+                  {wsa('wsa.plan.jobChoice.start')}
+                </button>
+              </div>
+            </section>
+          )}
           {!finished && !pendingReady && (
             <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
               <p className="label">
@@ -924,11 +1122,7 @@ function IntakeForm({
                       required
                     >
                       <option value="">{say('form.where.chooseCountry')}</option>
-                      {countryCodes.map((code) => (
-                        <option key={code} value={code}>
-                          {regionNames.of(code)} ({code})
-                        </option>
-                      ))}
+                      {countryChoices}
                     </select>
                   </label>
                   {error('companyCountry')}
@@ -941,11 +1135,7 @@ function IntakeForm({
                     >
                       <option value="">{say('form.where.chooseMarket')}</option>
                       <option value="EU">{say('form.where.eu')}</option>
-                      {countryCodes.map((code) => (
-                        <option key={code} value={code}>
-                          {regionNames.of(code)} ({code})
-                        </option>
-                      ))}
+                      {countryChoices}
                     </select>
                   </label>
                   {error('marketCode')}
@@ -991,14 +1181,18 @@ function IntakeForm({
               {step === 2 && (
                 <>
                   <label className="field">
-                    {say('form.details.offer')}
+                    {delegation ? wsa('wsa.plan.trip.offer') : say('form.details.offer')}
                     <textarea
                       rows={6}
                       dir={translated ? 'auto' : undefined}
                       maxLength={1000}
                       value={draft.offer}
                       onChange={(e) => change('offer', e.target.value)}
-                      placeholder={say('form.details.offerExample')}
+                      placeholder={
+                        delegation
+                          ? wsa('wsa.plan.trip.offerExample')
+                          : say('form.details.offerExample')
+                      }
                       aria-invalid={!!errors.offer?.length}
                       aria-describedby={
                         errors.offer?.length ? 'offer-hint offer-error' : 'offer-hint'
@@ -1006,7 +1200,9 @@ function IntakeForm({
                     />
                     {error('offer')}
                   </label>
-                  <p id="offer-hint">{say('form.details.offerHint')}</p>
+                  <p id="offer-hint">
+                    {delegation ? wsa('wsa.plan.trip.offerHint') : say('form.details.offerHint')}
+                  </p>
                   {draft.job === 'machinery_procurement' && (
                     <>
                       {field('technicalPurpose', say('form.details.technicalPurpose'))}
@@ -1047,7 +1243,7 @@ function IntakeForm({
                     </>
                   )}
                   {['sourcing', 'machinery_procurement'].includes(draft.job) && (
-                    <details>
+                    <details ref={budgetDetails}>
                       <summary>{say('form.budget.summary')}</summary>
                       {field('budgetAmount', say('form.budget.amount'))}
                       <label className="field">
@@ -1055,6 +1251,8 @@ function IntakeForm({
                         <select
                           value={draft.currency}
                           onChange={(e) => change('currency', e.target.value)}
+                          aria-invalid={!!errors.currency?.length}
+                          aria-describedby={errors.currency?.length ? 'currency-error' : undefined}
                         >
                           <option value="">{say('form.budget.none')}</option>
                           {Object.entries(currencies).map(([code, places]) => (
@@ -1064,6 +1262,7 @@ function IntakeForm({
                           ))}
                         </select>
                       </label>
+                      {error('currency')}
                       {field('budgetBasis', say('form.budget.basis'))}
                       <p className="guide-hint">
                         {sayWith('form.budget.hint', {
@@ -1081,8 +1280,18 @@ function IntakeForm({
               {step === 3 && (
                 <>
                   {field('worthwhile', say('form.results.worthwhile'))}
-                  <fieldset>
-                    <legend>{say('form.results.legend')}</legend>
+                  <fieldset
+                    aria-describedby={
+                      errors.outcomes?.length ? 'outcomes-hint outcomes-error' : 'outcomes-hint'
+                    }
+                  >
+                    <legend>
+                      {say('form.results.legend')}{' '}
+                      <span className="ux-required">({wsa('wsa.plan.required')})</span>
+                    </legend>
+                    <p id="outcomes-hint" className="guide-hint">
+                      {wsa('wsa.plan.outcomesHint')}
+                    </p>
                     <div className="guide-options">
                       {outcomeOptions.map((v) => (
                         <label className="choice" key={v}>
@@ -1126,9 +1335,9 @@ function IntakeForm({
               )}
               {step === 4 && (
                 <>
-                  {field('name', say('form.contact.name'))}
-                  {field('company', say('form.contact.company'))}
-                  {field('email', say('form.contact.email'), 'email')}
+                  {field('name', say('form.contact.name'), 'text', 'name')}
+                  {field('company', say('form.contact.company'), 'text', 'organization')}
+                  {field('email', say('form.contact.email'), 'email', 'email')}
                   <label className="choice" {...englishProps}>
                     <input
                       type="checkbox"
@@ -1220,12 +1429,15 @@ function IntakeForm({
                   className="text-link"
                   type="button"
                   onClick={() => {
+                    // A cleared draft starts again from what the link asked for (CQ-14).
+                    const fresh = withLinkChoices(empty);
                     key.current = crypto.randomUUID();
-                    setDraft(empty);
+                    setDraft(fresh);
                     setDraftNotice('');
+                    setJobChoice('');
                     setStep(0);
                     setErrors({});
-                    persist(empty, 0);
+                    persist(fresh, 0);
                   }}
                 >
                   {say('form.action.clearDraft')}
@@ -1315,18 +1527,31 @@ function IntakeForm({
           )}
           <section id="receipt-check" tabIndex={-1} className="receipt-panel" hidden={privateMode}>
             <h2>{realMode ? say('form.check.realTitle') : say('form.check.sampleTitle')}</h2>
-            <form className="operator-form" onSubmit={check}>
+            <form className="operator-form" onSubmit={check} noValidate>
               <label className="field">
                 {say('form.check.code')}
                 <input
                   required
                   dir={translated ? 'ltr' : undefined}
                   value={checkCode}
-                  onChange={(e) => setCheckCode(e.target.value)}
+                  onChange={(e) => {
+                    setCheckCode(e.target.value);
+                    setCheckEmpty(false);
+                  }}
                   autoComplete="off"
                   maxLength={64}
+                  aria-invalid={checkEmpty}
+                  aria-describedby={checkEmpty ? 'check-hint check-error' : 'check-hint'}
                 />
               </label>
+              <p id="check-hint" className="guide-hint">
+                {realMode ? wsa('wsa.plan.check.hintReal') : wsa('wsa.plan.check.hintSample')}
+              </p>
+              {checkEmpty && (
+                <p id="check-error" role="alert" className="field-error">
+                  {wsa('wsa.plan.check.empty')}
+                </p>
+              )}
               <button className="primary-link" disabled={!ready || busy}>
                 {say('form.check.submit')}
               </button>
@@ -1342,7 +1567,12 @@ function IntakeForm({
               <div>
                 <p>
                   {sayWith('form.check.status', {
-                    status: <strong {...englishProps}>{result.status.replaceAll('_', ' ')}</strong>,
+                    // A request with a receipt was sent, so it is never shown as a draft (D6).
+                    status: (
+                      <strong {...englishProps}>
+                        {customerStatusLabel(result.status, true).label}
+                      </strong>
+                    ),
                   })}
                 </p>
                 {result.replies.length ? (
@@ -1350,9 +1580,7 @@ function IntakeForm({
                     <article className="detail-card" key={i}>
                       <p dir={translated ? 'auto' : undefined}>{r.body}</p>
                       <time dateTime={r.createdAt}>
-                        {translated
-                          ? new Date(r.createdAt).toLocaleString(tag)
-                          : new Date(r.createdAt).toLocaleString()}
+                        {formatDateTime(r.createdAt, translated ? { locale: tag } : {})}
                       </time>
                     </article>
                   ))
@@ -1394,7 +1622,8 @@ function IntakeForm({
                       : say('form.side.notChosen')}
                 </dd>
               </div>
-              <div>
+              {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
+              <div hidden={!draft.budgetAmount}>
                 <dt>{say('form.side.budget')}</dt>
                 <dd>
                   {!draft.budgetAmount ? (

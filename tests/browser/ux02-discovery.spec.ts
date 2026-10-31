@@ -17,11 +17,9 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await openFineTune(page);
   await page.getByRole('combobox', { name: 'Your perspective' }).selectOption('institution');
   await expect(page.getByRole('combobox', { name: "I'm trying to" })).toHaveValue('delegations');
-  await page
-    .getByRole('combobox', { name: 'Commercial direction', exact: true })
-    .selectOption('bangladesh-eu');
-  const atlas = page.getByLabel('Corridor Atlas', { exact: true });
-  await expect(atlas).toContainText('EU is a trade-bloc scope');
+  await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('bangladesh-eu');
+  const atlas = page.getByLabel('Route map', { exact: true });
+  await expect(atlas).toContainText('The EU is a group of countries');
   await page.getByRole('button', { name: 'Open the sample mission' }).click();
   const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example).toContainText('Run a multi-company mission');
@@ -30,14 +28,12 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await page.keyboard.press('Enter');
   await expect(example).toContainText('Evidence not established');
   await expect(example).toContainText('Unknown terms stay unknown');
-  await page
-    .getByRole('combobox', { name: 'Commercial direction', exact: true })
-    .selectOption('spain-bangladesh');
-  await expect(atlas).toContainText('selectively configurable');
+  await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('spain-bangladesh');
+  await expect(atlas).toContainText('Spanish companies entering Bangladesh is a separate route');
   await expect(example).toContainText('No operating offer is announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
-  await example.getByRole('link', { name: 'Continue with a sample request' }).click();
+  await example.getByRole('link', { name: 'Start a request on this route' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',
@@ -132,14 +128,18 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
     await expect(page.getByRole('main')).toContainText(
       route === '/signin'
         ? 'Team members sign in separately'
-        : ['/forgot-password', '/reset-password'].includes(route)
-          ? 'It does not change a team password.'
-          : 'missions shared with you.',
+        : route === '/signup'
+          ? 'Create your account to send and follow requests.'
+          : ['/forgot-password', '/reset-password'].includes(route)
+            ? 'It does not change a team password.'
+            : 'missions shared with you.',
     );
     await expect(
-      page
-        .getByRole('main')
-        .getByRole('link', { name: 'Prepare an example request without an account' }),
+      page.getByRole('main').getByRole('link', {
+        name: ['/signin', '/signup'].includes(route)
+          ? 'Start a request without an account'
+          : 'Prepare an example request without an account',
+      }),
     ).toHaveAttribute('href', '/plan');
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   }
@@ -201,9 +201,9 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
     '/plan?companyCountry=ES&marketCode=BD&job=market_entry',
   );
   await openFineTune(page);
-  await expect(
-    page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
-  ).toHaveValue('spain-bangladesh');
+  await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toHaveValue(
+    'spain-bangladesh',
+  );
   await expect(group.getByRole('link', { name: /Help locally/ })).toHaveAttribute(
     'href',
     '/network',

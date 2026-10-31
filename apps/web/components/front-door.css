@@ -37,3 +37,35 @@
   border-color: var(--brand);
   border-inline-start-width: 4px;
 }
+
+/* Home page example row (CQ-53). Below the two-column width the examples sit in one swipe row:
+   the next card peeks in from the edge and two buttons move one card at a time. */
+.ac1-proof-nav {
+  display: none;
+}
+@media (max-width: 69.99rem) {
+  .ac1-proof-nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+  }
+  .ac1-proof-nav button {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .ac1-proof-nav button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .ux-guide-home .ac1-proofs .ac1-proof {
+    flex-basis: min(84%, 34rem);
+  }
+}

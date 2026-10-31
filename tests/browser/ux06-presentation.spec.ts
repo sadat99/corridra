@@ -19,8 +19,9 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(
     page.getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link'),
   ).toHaveCount(3);
+  // The six road steps (D5): Define, Find, Compare, Visit, Decide, Follow through.
   await expect(page.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
-    4,
+    6,
   );
   await expect(page.getByRole('link', { name: 'How we label facts' })).toHaveAttribute(
     'href',
@@ -43,9 +44,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/corridors');
   await openFineTune(page);
-  await expect(
-    page.getByRole('combobox', { name: 'Commercial direction', exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/trust');
   await expect(
@@ -82,12 +81,8 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
     'step',
   );
   await openFineTune(page);
-  await page
-    .getByRole('combobox', { name: 'Commercial direction', exact: true })
-    .selectOption('china-bangladesh');
-  await expect(page.getByLabel('Corridor Atlas', { exact: true })).toContainText(
-    'China → Bangladesh',
-  );
+  await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('china-bangladesh');
+  await expect(page.getByLabel('Route map', { exact: true })).toContainText('China → Bangladesh');
   await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',

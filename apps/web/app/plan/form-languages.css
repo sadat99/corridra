@@ -107,3 +107,21 @@
   ) {
   line-height: 1.55;
 }
+
+/* Required groups (CQ-13) and the saved-draft question (CQ-14). */
+.ux-intake-page .ux-required {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-intake-page .ux-job-choice {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.ux-intake-page .ux-job-choice p {
+  margin: 0;
+}

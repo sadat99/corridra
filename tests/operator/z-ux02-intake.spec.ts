@@ -40,7 +40,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
       .getByRole('combobox', { name: "I'm trying to" })
       .selectOption('machinery_procurement');
     await page
-      .getByRole('combobox', { name: 'Commercial direction', exact: true })
+      .getByRole('combobox', { name: 'Route', exact: true })
       .selectOption('bangladesh-china');
     await page.getByRole('link', { name: 'Plan a mission on this route' }).click();
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
@@ -149,14 +149,15 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await page.reload();
     await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
     await page.getByRole('button', { name: 'Check status and replies' }).click();
-    await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+    // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
+    await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
     await page.getByLabel('Receipt code', { exact: true }).fill('0'.repeat(64));
     const rejected = page.waitForResponse((response) =>
       response.url().endsWith('/api/intake/receipt'),
     );
     await page.getByRole('button', { name: 'Check status and replies' }).click();
     expect((await rejected).ok()).toBe(false);
-    await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Received, waiting for review', { exact: true })).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   } finally {
     server.kill('SIGTERM');
@@ -317,9 +318,10 @@ test('the sample form completes in German and Arabic against the real intake and
       );
       await page.locator('#receipt-check button.primary-link').click();
       const receiptBody = (await checked).postData() ?? '';
+      // D6: a request with a receipt was sent, so it reads as received, not as a draft.
       await expect(
         page.locator(code === 'en' ? '#receipt-check strong' : '#receipt-check strong[lang="en"]'),
-      ).toHaveText('DRAFT');
+      ).toHaveText('Received, waiting for review');
       const body = response.request().postData() ?? '';
       await context.close();
       return { body, result, receiptBody };

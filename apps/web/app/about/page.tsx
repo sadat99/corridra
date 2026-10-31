@@ -25,22 +25,16 @@ const useCases = [
     'For chambers, institutions and organisers. Coordinate the programme while keeping each participant’s objectives and private information separate.',
   ],
 ];
+// The customer road (D5): the same six steps the home page, How it works and the account use.
 const missionProcess = [
+  ['Define', 'Tell us the market, the commercial need and what would make the work worthwhile.'],
+  ['Find', 'We research companies that could fit and agree the scope and any fees with you first.'],
+  ['Compare', 'See each company and offer side by side, with what is claimed and what is checked.'],
+  ['Visit', 'We prepare introductions and coordinate the meetings and visits you agree to.'],
+  ['Decide', 'Choose who to work with, with the evidence and the open questions in view.'],
   [
-    'Define the objective',
-    'Tell us the market, the commercial need and what would make the work worthwhile.',
-  ],
-  [
-    'Agree the work',
-    'Review the scope, responsibilities, evidence needs and any service fees before proceeding.',
-  ],
-  [
-    'Prepare and coordinate',
-    'Build the relevant company context, prepare questions and coordinate agreed tasks and meetings.',
-  ],
-  [
-    'Record progress and follow through',
-    'Keep the next action, responsible person and supporting evidence with the work. Distinguish activity from commercial results.',
+    'Follow through',
+    'Keep the next action, the responsible person and the evidence with the work until there is a result.',
   ],
 ];
 
@@ -56,7 +50,7 @@ export default function Page() {
             <span aria-hidden="true">/</span>
             <span aria-current="page">About</span>
           </nav>
-          <p className="label">ABOUT CORRIDRA</p>
+          <p className="label">About Corridra</p>
           <h1>Make market entry deliberate.</h1>
           <p className="guide-lead">
             Corridra helps companies turn a cross-border commercial objective into planned work,
@@ -183,8 +177,8 @@ export default function Page() {
             </p>
             <p>
               Programme terms and service quotes make scope, fees, responsibilities and exclusions
-              explicit. Accepting a quote records an intention to proceed. Online billing and
-              payments are not available.
+              explicit. Accepting a quote records an intention to proceed. Online payment is not
+              available.
             </p>
             <p>
               {process.env.CORRIDRA_NETWORK_ENABLED === 'true'
@@ -199,8 +193,8 @@ export default function Page() {
               </Link>
             </p>
             <p>
-              Corridra is operated by Sadat in Gulshan, Dhaka. For account or privacy questions, see
-              the{' '}
+              Corridra is operated by Corridra Pte Ltd, 101 Robinson Road, Singapore 180239, with
+              operations in Gulshan, Dhaka, Bangladesh. For account or privacy questions, see the{' '}
               <Link className="text-link" prefetch={false} href="/privacy">
                 privacy information
               </Link>

@@ -5,6 +5,8 @@ import { CorridraIcon } from '../components/corridra-icon';
 import { FactLabel, factLabels } from '../components/fact-label';
 import { HomeExampleRecord } from '../components/home-example-record';
 import Link from 'next/link';
+import { useRef } from 'react';
+import '../components/front-door.css';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 import { useT } from '../components/language-provider';
@@ -43,11 +45,14 @@ const starts = [
   icon: string;
 }[];
 
+// The customer road (D5): the same six names the request, the account and How it works use.
 const steps = [
-  ['home.step.say.title', 'home.step.say.text'],
+  ['home.step.define.title', 'home.step.define.text'],
   ['home.step.find.title', 'home.step.find.text'],
-  ['home.step.review.title', 'home.step.review.text'],
-  ['home.step.meet.title', 'home.step.meet.text'],
+  ['home.step.compare.title', 'home.step.compare.text'],
+  ['home.step.visit.title', 'home.step.visit.text'],
+  ['home.step.decide.title', 'home.step.decide.text'],
+  ['home.step.follow.title', 'home.step.follow.text'],
 ] as const satisfies readonly (readonly [MessageKey, MessageKey])[];
 
 const buyers = [
@@ -131,6 +136,18 @@ const routes = [
 
 export default function Home() {
   const t = useT();
+  // On narrow screens the two examples sit in one swipe row; the buttons move one card at a time (CQ-53).
+  const proofs = useRef<HTMLDivElement>(null);
+  const turn = (direction: 1 | -1) => {
+    const row = proofs.current;
+    const card = row?.querySelector<HTMLElement>('.ac1-proof');
+    if (!row || !card) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    row.scrollBy({
+      left: direction * (card.offsetWidth + 16),
+      behavior: reduce ? 'auto' : 'smooth',
+    });
+  };
   return (
     <PublicShell className="ux-guide-home ac1-home" translated>
       <LegacyHashRedirect />
@@ -194,7 +211,22 @@ export default function Home() {
         <p className="label ac1-rule">{t('home.example')}</p>
         <h2 id="proof-title">{t('home.proof.title')}</h2>
         <p className="ac1-lead">{t('home.proof.lead')}</p>
-        <div className="ac1-proofs" role="region" aria-label={t('home.proof.aria')} tabIndex={0}>
+        <div className="ac1-proof-nav">
+          <button type="button" onClick={() => turn(-1)} aria-controls="home-proofs">
+            <span aria-hidden="true">‹</span> {t('home.proof.prev')}
+          </button>
+          <button type="button" onClick={() => turn(1)} aria-controls="home-proofs">
+            {t('home.proof.next')} <span aria-hidden="true">›</span>
+          </button>
+        </div>
+        <div
+          ref={proofs}
+          id="home-proofs"
+          className="ac1-proofs"
+          role="region"
+          aria-label={t('home.proof.aria')}
+          tabIndex={0}
+        >
           <div className="ac1-proof">
             <div>
               <h3 className="ac1-proof-title">

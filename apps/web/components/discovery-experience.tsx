@@ -207,7 +207,7 @@ export function DiscoveryExperience() {
             )}
           </div>
         </div>
-        <div className="ux-atlas" aria-label="Corridor Atlas">
+        <div className="ux-atlas" aria-label="Route map">
           {custom && world ? (
             <WorldRouteMap
               world={world}
@@ -227,12 +227,12 @@ export function DiscoveryExperience() {
               </Link>
               {route.slug && (
                 <Link className="button-secondary" href={`/corridors/${route.slug}`}>
-                  Read this corridor&apos;s scope
+                  Read about this route
                 </Link>
               )}
             </div>
             <p className="guide-route-foot">
-              Commercial directions only, not shipment routes or local coverage.
+              Business routes only, not shipping routes or a promise of local coverage.
             </p>
           </div>
         </div>
@@ -300,7 +300,7 @@ export function DiscoveryExperience() {
               </select>
             </label>
             <label className="field">
-              Commercial direction
+              Route
               <select
                 value={direction}
                 onChange={(e) => {
@@ -395,11 +395,11 @@ export function DiscoveryExperience() {
             </div>
             <p>
               {route.reverse
-                ? 'This reverse direction needs its own scope. No operating offer is announced.'
-                : 'This is an initial product direction.'}
+                ? 'This route runs the other way and needs its own review. No operating offer is announced yet.'
+                : 'This is one of the routes we start with.'}
             </p>
             <Link className="text-link" href={briefUrl}>
-              Continue with a sample request <Arrow />
+              Start a request on this route <Arrow />
             </Link>
             <button
               className="text-link"
