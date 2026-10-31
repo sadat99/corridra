@@ -80,6 +80,52 @@ export function BrandMark() {
 }
 
 /**
+ * The words of the signed-in shell headers and navigation (D14, CQ-10), kept next to the public
+ * header's own words so every header message is listed in one place. The signed-in header reads
+ * its words from here; the team sidebar (lib/ux/shells.ts) and the customer tabs (customer-nav.tsx)
+ * use the `team` and `nav` keys.
+ */
+export const shellWords = {
+  names: {
+    team: 'wse.shell.team',
+    customer: 'wse.shell.customer',
+    contributor: 'wse.shell.contributor',
+  },
+  live: 'wse.shell.live',
+  preview: 'wse.shell.preview',
+  statusLabel: 'wse.shell.statusLabel',
+  inbox: 'wse.shell.inbox',
+  menu: 'wse.shell.menu',
+  website: 'wse.shell.website',
+  help: 'wse.shell.help',
+  trustNote: 'wse.trust.note',
+  team: [
+    'wse.team.nav',
+    'wse.team.today',
+    'wse.team.missions',
+    'wse.team.companies',
+    'wse.team.meetings',
+    'wse.team.quotes',
+    'wse.team.reports',
+    'wse.team.network',
+    'wse.team.evidence',
+    'wse.team.settings',
+    'wse.team.owner',
+  ],
+  nav: [
+    'wse.nav.customer',
+    'wse.nav.home',
+    'wse.nav.move',
+    'wse.nav.missions',
+    'wse.nav.work',
+    'wse.nav.companies',
+    'wse.nav.library',
+    'wse.nav.results',
+    'wse.nav.more',
+  ],
+} as const satisfies Record<string, unknown>;
+
+/**
  * The public header. On signed-in pages with `CORRIDRA_UX_SHELLS_V2` on, the root layout shows the
  * shell's own header instead (components/ux/shell-header.tsx).
  */

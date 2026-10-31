@@ -46,19 +46,18 @@ test('E-2: the skip link is the first stop, sits above the header and moves focu
   await expect(page.locator('#main')).toBeFocused();
 });
 
-test('E-3: Arabic sets right to left on the public and contributor shells, with no marketing header in the app', async ({
+test('E-3: Arabic sets right to left on a signed-in shell, with no marketing header in the app', async ({
   page,
 }, info) => {
   await page.addInitScript(() => localStorage.setItem('corridra.language', 'ar'));
-  let response = await page.goto('/how-it-works', { waitUntil: 'domcontentloaded' });
+  // Static public pages carry the languages offered at build time (English only in this build), so
+  // the boot script for them is proved in tests/integration/ux-kit.test.ts. Server-rendered pages
+  // carry this server's offer (drafts on), so the contributor shell shows Arabic right to left.
+  const response = await page.goto('/contributor', { waitUntil: 'domcontentloaded' });
   expect(response?.status()).toBe(200);
   // The boot script sets the direction before the page is drawn.
   expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
-  await expect(page.locator('#public-navigation')).toHaveCount(1);
-
-  response = await page.goto('/contributor');
-  expect(response?.status()).toBe(200);
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   const header = page.locator('header.ux-app-header[data-shell="contributor"]');
   await expect(header).toBeVisible();

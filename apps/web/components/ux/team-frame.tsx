@@ -9,6 +9,7 @@ import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
 import { subscribeToHash } from '../../lib/address-store';
 import { teamSidebarShown } from '../../lib/ux/shells';
+import { StepUpDialog } from './step-up-dialog';
 import { TeamSidebar } from './team-sidebar';
 
 export function TeamFrame({
@@ -52,6 +53,7 @@ export function TeamFrame({
         <TeamSidebar urls={urls} ownerPage={ownerPage} />
       </div>
       <div className="ux-team-page">{children}</div>
+      <StepUpDialog />
     </div>
   );
 }

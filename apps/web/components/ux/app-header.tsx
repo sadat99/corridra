@@ -7,6 +7,7 @@ import './shells.css';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { CornerDock } from '../corner-dock';
+import { shellWords } from '../site-header';
 import { LanguageSwitcher } from '../language-switcher';
 import { useLanguage, useT } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
@@ -23,11 +24,7 @@ const homes: Record<SignedInShell, string> = {
   customer: '/account',
   contributor: '/contributor',
 };
-const names = {
-  team: 'wse.shell.team',
-  customer: 'wse.shell.customer',
-  contributor: 'wse.shell.contributor',
-} as const;
+const names = shellWords.names;
 
 function InboxButton({ tenant }: { tenant: string }) {
   const t = useT();
@@ -63,7 +60,7 @@ function InboxButton({ tenant }: { tenant: string }) {
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
       >
-        {t('wse.shell.inbox')}
+        {t(shellWords.inbox)}
       </button>
       <div id={panelId} className="ux-app-popover" hidden={!open}>
         {open ? <NotificationInbox tenant={tenant} /> : null}
@@ -103,15 +100,15 @@ export function AppHeader({
       <span className="ux-app-name">{t(names[kind])}</span>
       {kind === 'team' ? (
         <span className="ux-app-status" data-live={live ? 'true' : 'false'}>
-          <span className="sr-only">{t('wse.shell.statusLabel')}: </span>
-          {live ? t('wse.shell.live') : t('wse.shell.preview')}
+          <span className="sr-only">{t(shellWords.statusLabel)}: </span>
+          {live ? t(shellWords.live) : t(shellWords.preview)}
         </span>
       ) : null}
       <div className="ux-app-tools">
         {notifications && kind === 'team' && tenant ? <InboxButton tenant={tenant} /> : null}
         <LanguageSwitcher />
         <Link prefetch={false} className="ux-app-link" href="/">
-          {t('wse.shell.website')}
+          {t(shellWords.website)}
         </Link>
         <CornerDock variant="header" />
       </div>
