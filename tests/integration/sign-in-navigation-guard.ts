@@ -5,8 +5,12 @@ import ts from 'typescript';
 // KI-30: every way into operator sign-in is a full page load. A Next <Link> or a router push or
 // replace into sign-in is a soft navigation, and Next 16.4.3 then doubles or keeps an old `#` on
 // the way back. This walks the syntax tree, so it also sees what the regex scan in
-// ux-operator-urls.test.ts cannot: an href held in a variable, spread props, an aliased import, a
-// Link with an element in an earlier prop, and router calls.
+// ux-operator-urls.test.ts cannot: an href held in a variable of the same file or built with an
+// operatorSignIn* helper, spread props, next/link imported under another name, a Link with an
+// element in an earlier prop, and push or replace on a router from useRouter().
+// It does not follow constants or helpers imported from other files or renamed on import, paths
+// built in pieces, wrapper components that pass an href on to a Link, or server redirect(). The
+// actual fix is that the sign-in form leaves with a full page load; this guard is a backstop.
 
 /**
  * Links that may spread props, each with the reason it cannot reach operator sign-in. A spread

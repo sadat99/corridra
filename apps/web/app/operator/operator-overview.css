@@ -777,10 +777,12 @@
   }
 }
 /* One frame per panel on phones (owner decision 23 Oct 2026; a card inside a card is a tinted
-   block). Below 40rem the Delivery panel is the only bordered frame: the delivery card, its phone
-   fold, the delivery experience card and the five billing cards lose their side chrome, so the
-   staff billing text keeps a readable column at 320 and 390 instead of breaking every few letters.
-   The fold summary, notices, forms and timeline keep theirs. Nothing changes from 40rem up. */
+   block). Below 40rem the nested cards between the Delivery panel and the billing text lose their
+   side chrome: the delivery card, its phone fold, the delivery experience card and the five
+   billing cards. The staff billing text then keeps a readable column at 320 and 390 instead of
+   breaking every few letters. The fold summary, notices, forms and timeline keep theirs, and so do
+   other disclosures inside the panel, such as "Plans on offer and plan versions" in the plans card
+   (bordered by globals.css). Nothing changes from 40rem up. */
 @media (max-width: 39.99rem) {
   .ux-workspace-body #workspace-delivery section.delivery-ops.detail-card,
   .ux-workspace-body #workspace-delivery details.phone-fold > section.detail-card {
