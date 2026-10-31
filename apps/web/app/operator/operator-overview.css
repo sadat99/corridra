@@ -776,6 +776,44 @@
     margin-inline: 0;
   }
 }
+/* One frame per panel on phones (owner decision 23 Oct 2026; a card inside a card is a tinted
+   block). Below 40rem the Delivery panel is the only bordered frame: the delivery card, its phone
+   fold, the delivery experience card and the five billing cards lose their side chrome, so the
+   staff billing text keeps a readable column at 320 and 390 instead of breaking every few letters.
+   The fold summary, notices, forms and timeline keep theirs. Nothing changes from 40rem up. */
+@media (max-width: 39.99rem) {
+  .ux-workspace-body #workspace-delivery section.delivery-ops.detail-card,
+  .ux-workspace-body #workspace-delivery details.phone-fold > section.detail-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    section.delivery-ops
+    > details.phone-fold[data-phone-fold='phone'] {
+    border: 0;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    section.delivery-ops
+    > details.phone-fold[data-phone-fold='phone']
+    > :not(summary) {
+    margin-inline: 0;
+  }
+  /* A hairline keeps the five billing panels apart; the hub gap between them stays. */
+  .ux-workspace-body #workspace-delivery .billing-hub .detail-card {
+    padding: var(--space-6) 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    background: none;
+  }
+  .ux-workspace-body #workspace-delivery .billing-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 /* Wide record tables (six or more columns) scroll sideways; narrow ones keep their layout. */
 .ux-workspace-body
   .ux-operations-panel

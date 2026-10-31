@@ -1,0 +1,280 @@
+{
+  "320 panel length": {
+    "closed": 2594.28125,
+    "open": 6164.359375
+  },
+  "320 requests": {
+    "card": 206,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 detail": {
+    "card": 206,
+    "detail": 206,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 conflict": {
+    "card": 206,
+    "detail": 206,
+    "notice": 167,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 unconfirmed": {
+    "card": 206,
+    "detail": 206,
+    "notice": 167,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 saved": {
+    "card": 206,
+    "detail": 206,
+    "notice": 167,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 plan form": {
+    "card": 206,
+    "detail": 206,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 empty": {
+    "card": 206,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 denied": {
+    "card": 206,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "320 loading": {
+    "card": 206,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 panel length": {
+    "closed": 2165.546875,
+    "open": 4988.453125
+  },
+  "390 requests": {
+    "card": 276,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 detail": {
+    "card": 276,
+    "detail": 276,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 conflict": {
+    "card": 276,
+    "detail": 276,
+    "notice": 237,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 unconfirmed": {
+    "card": 276,
+    "detail": 276,
+    "notice": 237,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 saved": {
+    "card": 276,
+    "detail": 276,
+    "notice": 237,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 plan form": {
+    "card": 276,
+    "detail": 276,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 empty": {
+    "card": 276,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 denied": {
+    "card": 276,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "390 loading": {
+    "card": 276,
+    "detail": null,
+    "notice": null,
+    "wider": [],
+    "spilled": [],
+    "split": [],
+    "small": [],
+    "sideways": false
+  },
+  "768 frames": [
+    {
+      "selector": "#workspace-delivery section.delivery-ops.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold",
+      "border": "0px 0px",
+      "padding": "0px 0px",
+      "background": "rgba(0, 0, 0, 0)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#billing-plans > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    }
+  ],
+  "1024 frames": [
+    {
+      "selector": "#workspace-delivery section.delivery-ops.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold",
+      "border": "0px 0px",
+      "padding": "0px 0px",
+      "background": "rgba(0, 0, 0, 0)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#billing-plans > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    }
+  ],
+  "1440 frames": [
+    {
+      "selector": "#workspace-delivery section.delivery-ops.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold",
+      "border": "0px 0px",
+      "padding": "0px 0px",
+      "background": "rgba(0, 0, 0, 0)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#workspace-delivery details.phone-fold > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    },
+    {
+      "selector": "#billing-plans > section.detail-card",
+      "border": "1px 1px",
+      "padding": "24px 24px",
+      "background": "rgb(255, 255, 255)",
+      "radius": "12px"
+    }
+  ]
+}
