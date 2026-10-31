@@ -103,7 +103,7 @@ test('job-first navigation exposes machinery and commercial trips with real entr
     'Give each day a commercial purpose.',
   );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('link', { name: 'Plan a business trip' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Plan a business trip' }).click();
   await expect(page).toHaveURL('/plan?job=business_trips');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'business_trips',

@@ -340,7 +340,8 @@ function IntakeForm({
     heading = useRef<HTMLHeadingElement>(null),
     errorSummary = useRef<HTMLDivElement>(null),
     // The error summary takes focus once, when a check finds problems; typing in a field never moves focus.
-    focusSummary = useRef(false);
+    focusSummary = useRef(false),
+    budgetDetails = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
@@ -464,6 +465,11 @@ function IntakeForm({
       controller.abort();
     };
   }, [realMode, privateMode, draftStorageKey, navigate]);
+  // A budget problem opens the budget section so its field is visible; the person can close it again.
+  const budgetProblem = budgetFields.some((name) => errors[name]?.length);
+  useEffect(() => {
+    if (budgetProblem && budgetDetails.current) budgetDetails.current.open = true;
+  }, [budgetProblem]);
   useEffect(() => {
     if (!focusSummary.current) return;
     focusSummary.current = false;
@@ -860,7 +866,6 @@ function IntakeForm({
     </optgroup>
   ));
   const delegation = draft.job === 'delegations';
-  const budgetOpen = budgetFields.some((name) => errors[name]?.length);
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
     <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
@@ -1238,7 +1243,7 @@ function IntakeForm({
                     </>
                   )}
                   {['sourcing', 'machinery_procurement'].includes(draft.job) && (
-                    <details open={budgetOpen || undefined}>
+                    <details ref={budgetDetails}>
                       <summary>{say('form.budget.summary')}</summary>
                       {field('budgetAmount', say('form.budget.amount'))}
                       <label className="field">

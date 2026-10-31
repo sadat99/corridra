@@ -56,7 +56,7 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
   await page.getByLabel('My company is in', { exact: true }).selectOption('BD');
   await page.getByLabel('I want to reach', { exact: true }).selectOption('CN');
   await expect(atlas.getByRole('heading', { name: 'Bangladesh → China' })).toBeVisible();
-  await expect(atlas.getByRole('link', { name: /Read this corridor.s scope/ })).toHaveAttribute(
+  await expect(atlas.getByRole('link', { name: 'Read about this route' })).toHaveAttribute(
     'href',
     '/corridors/bangladesh-china',
   );

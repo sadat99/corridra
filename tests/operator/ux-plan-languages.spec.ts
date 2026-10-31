@@ -1231,7 +1231,7 @@ test.describe('messages in the chosen language', () => {
       await form.locator('#brief-budgetBasis').fill('Total equipment budget');
       await next.click();
       await expect(page.locator('#offer-error')).toHaveText(words['form.message.offerShort']);
-      await expect(page.locator('#requirements-error')).toHaveText(
+      await expect(page.locator('#budgetAmount-error')).toHaveText(
         fill(words['form.message.decimals'], { code: 'CNY', places: '2' }),
       );
       await form.locator('textarea').first().fill('Packaging machines for a towel factory line.');
@@ -1305,7 +1305,7 @@ test.describe('messages in the chosen language', () => {
       await form.locator('#brief-budgetAmount').fill('12.345');
       await form.locator('details select').selectOption('CNY');
       await next.click();
-      const error = page.locator('#requirements-error');
+      const error = page.locator('#budgetAmount-error');
       await expect(error).toHaveText(
         fill(drafts[code]['form.message.decimals'], { code: 'CNY', places: '2' }),
       );
