@@ -397,6 +397,7 @@ function Scoped({ tenant }: { tenant: string }) {
     <section
       aria-label={sample === false ? 'Customer plans' : 'Customer sample plans'}
       className="detail-card"
+      data-madeup-panel={sample === false ? undefined : ''}
     >
       <h3>{sample === false ? 'Customer plans' : 'Customer sample plans'}</h3>
       <p>

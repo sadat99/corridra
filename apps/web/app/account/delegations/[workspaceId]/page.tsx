@@ -57,7 +57,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Plan delegations">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Plan delegations">
       {uxSwitchOn('CORRIDRA_UX_PROGRAMME') && <ProgrammeRoomStyles />}
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}

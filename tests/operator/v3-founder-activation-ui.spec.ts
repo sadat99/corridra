@@ -149,7 +149,7 @@ test('shows the environment, the count and each module with a plain reason', asy
     'never runs in production',
   );
   await expect(table.getByRole('row', { name: /Company continuity/ })).toContainText(
-    'data is not synthetic',
+    'Locked by the data environment setting',
   );
   await expect(table.getByText('CORRIDRA_CUSTOMER_REQUESTS_ENABLED')).toBeVisible();
   await expect(page.getByText('checked separately by the owner')).toBeVisible();
@@ -173,7 +173,7 @@ test('says plainly when production is unlocked and accounts are admitted automat
   await page.goto(origin);
   const summary = page.getByText(/This deployment is/);
   await expect(summary).toContainText('production');
-  await expect(summary).toContainText('Production is unlocked for synthetic use by the owner.');
+  await expect(summary).toContainText('The owner unlocked these modules in production.');
   await expect(summary).toContainText('Any email-verified account is admitted automatically.');
 });
 

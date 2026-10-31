@@ -48,6 +48,8 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
       'loading',
     ),
     [stale, setStale] = useState(false),
+    // CQ-72: true only when the quote really changed between reading it and confirming.
+    [quoteChanged, setQuoteChanged] = useState(false),
     [panel, setPanel] = useState<Panel>(null),
     [note, setNote] = useState(starter),
     [ack, setAck] = useState(false),
@@ -57,46 +59,54 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
     [draft, setDraft] = useState({ need: '', region: '', from: '', to: '' });
   const alive = useRef(false),
     task = useRef<AbortController | null>(null);
-  const load = useCallback(async () => {
-    task.current?.abort();
-    const controller = new AbortController();
-    task.current = controller;
-    const result = await callServiceApi<ServiceRequestDetail>(
-      { subject, issuer },
-      { scope: 'detail', workspaceId, requestId },
-      null,
-      validDetail,
-      controller.signal,
-    );
-    if (controller.signal.aborted || !alive.current) return;
-    if (!result.ok) {
-      setDetail(null);
-      setState(
-        result.status === 401 || result.status === 403
-          ? 'denied'
-          : result.status === 503
-            ? 'off'
-            : 'error',
+  // `quiet` refreshes the page without clearing what is shown or typed if the refresh fails.
+  const load = useCallback(
+    async (quiet = false): Promise<boolean> => {
+      task.current?.abort();
+      const controller = new AbortController();
+      task.current = controller;
+      const result = await callServiceApi<ServiceRequestDetail>(
+        { subject, issuer },
+        { scope: 'detail', workspaceId, requestId },
+        null,
+        validDetail,
+        controller.signal,
       );
-      setMessage(problemText(result.status, 'load this request'));
-      return;
-    }
-    if (result.data.request.id !== requestId || result.data.workspaceId !== workspaceId) {
-      setDetail(null);
-      setState('gone');
-      setMessage('This answer did not match the request you opened. Reload the page.');
-      return;
-    }
-    setDetail(result.data);
-    setDraft({
-      need: result.data.need.text,
-      region: result.data.need.region,
-      from: result.data.need.preferredFrom ?? '',
-      to: result.data.need.preferredTo ?? '',
-    });
-    setStale(false);
-    setState('ready');
-  }, [subject, issuer, workspaceId, requestId]);
+      if (controller.signal.aborted || !alive.current) return false;
+      if (!result.ok && quiet) return false;
+      if (!result.ok) {
+        setDetail(null);
+        setState(
+          result.status === 401 || result.status === 403
+            ? 'denied'
+            : result.status === 503
+              ? 'off'
+              : 'error',
+        );
+        setMessage(problemText(result.status, 'load this request'));
+        return false;
+      }
+      if (result.data.request.id !== requestId || result.data.workspaceId !== workspaceId) {
+        if (quiet) return false;
+        setDetail(null);
+        setState('gone');
+        setMessage('This answer did not match the request you opened. Reload the page.');
+        return false;
+      }
+      setDetail(result.data);
+      if (!quiet)
+        setDraft({
+          need: result.data.need.text,
+          region: result.data.need.region,
+          from: result.data.need.preferredFrom ?? '',
+          to: result.data.need.preferredTo ?? '',
+        });
+      setStale(false);
+      setState('ready');
+      return true;
+    },
+    [subject, issuer, workspaceId, requestId],
+  );
   useEffect(() => {
     alive.current = true;
     void Promise.resolve().then(() => load());
@@ -105,15 +115,19 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
       task.current?.abort();
     };
   }, [load]);
-  // The page stays readable and keeps typed text, but acting needs a fresh look at the request.
+  // The page stays readable and keeps typed text. When its view expires it refreshes itself quietly;
+  // only a refresh that fails turns the buttons off (CQ-72: no "out of date" while confirming).
   useEffect(() => {
     if (!detail) return;
     const timer = setTimeout(
-      () => setStale(true),
+      () =>
+        void load(true).then((ok) => {
+          if (!ok && alive.current) setStale(true);
+        }),
       Math.max(0, Date.parse(detail.expiresAt) - Date.now()),
     );
     return () => clearTimeout(timer);
-  }, [detail]);
+  }, [detail, load]);
   useEffect(() => {
     if (!pending) return;
     const leave = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -177,17 +191,38 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
     const text = note.trim();
     void send(pending ?? act({ action: kind, note: text.length > starter.length ? text : null }));
   }
-  function submitAccept(e: FormEvent) {
+  // CQ-72: read the request again just before accepting. Accept goes ahead when the quote is the one the
+  // person read; a quote that really changed is shown again with a plain way to review it.
+  async function submitAccept(e: FormEvent) {
     e.preventDefault();
-    if (!detail?.quote || !ack) return;
+    if (!detail?.quote || !ack || busy) return;
+    if (pending) return void send(pending);
+    const seen = { version: detail.quote.version, digest: detail.quote.digest };
+    setBusy(true);
+    const fresh = await callServiceApi<ServiceRequestDetail>(
+      { subject, issuer },
+      { scope: 'detail', workspaceId, requestId },
+      null,
+      validDetail,
+    );
+    if (!alive.current) return;
+    setBusy(false);
+    if (fresh.ok && fresh.data.request.id === requestId && fresh.data.workspaceId === workspaceId) {
+      setDetail(fresh.data);
+      setStale(false);
+      if (fresh.data.quote?.version !== seen.version || fresh.data.quote?.digest !== seen.digest) {
+        setQuoteChanged(true);
+        setAck(false);
+        return;
+      }
+    }
     void send(
-      pending ??
-        act({
-          action: 'accept',
-          quoteVersion: detail.quote.version,
-          quoteDigest: detail.quote.digest,
-          acknowledged: true,
-        }),
+      act({
+        action: 'accept',
+        quoteVersion: seen.version,
+        quoteDigest: seen.digest,
+        acknowledged: true,
+      }),
     );
   }
   function submitRevise(e: FormEvent) {
@@ -375,7 +410,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           </details>
 
           {quote && (
-            <section aria-label="Quote" className="detail-card">
+            <section aria-label="Quote" className="detail-card" id={id + 'quote'}>
               <h3>
                 Quote, version {quote.version}
                 {quote.expired && ' (expired)'}
@@ -519,8 +554,29 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     </button>
                   )}
                 </div>
-                {panel === 'accept' && quote && (
-                  <form onSubmit={submitAccept} aria-label="Accept the quote">
+                {panel === 'accept' && quote && quoteChanged && (
+                  <div className="ux-state" data-state="expired">
+                    <p className="ux-state-label">The quote changed</p>
+                    <div role="alert">
+                      The Corridra team changed this quote while you were reading it. Nothing was
+                      accepted. Review the new version before you accept.
+                    </div>
+                    <div className="ux-state-actions">
+                      <button
+                        type="button"
+                        className="button"
+                        onClick={() => {
+                          setQuoteChanged(false);
+                          document.getElementById(id + 'quote')?.scrollIntoView({ block: 'start' });
+                        }}
+                      >
+                        Review the new version
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {panel === 'accept' && quote && !quoteChanged && (
+                  <form onSubmit={(e) => void submitAccept(e)} aria-label="Accept the quote">
                     <p>
                       You are accepting version {quote.version} for a fixed price of{' '}
                       <strong>{money(quote.fixedTotalMinor, quote.currency)}</strong>, plus

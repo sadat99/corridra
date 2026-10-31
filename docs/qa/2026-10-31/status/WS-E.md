@@ -1,5 +1,22 @@
-State: RUNNING
-Items: (none started)
-Gates: not run
+State: DONE
+Items: CQ-01=DONE (contract focuses once per submit; unit tests; /plan regression in integration, see note 1), kit accessibility=DONE (44 px targets, visible focus, unique ids, field help), D14/UX-02/CQ-31/CQ-36=DONE (behind CORRIDRA_UX_SHELLS_V2: Public, Customer, Team sidebar, Contributor; one section rendered at a time; per-section titles and H1), CQ-10=DONE (shell header and customer tabs follow the locale and dir; dir set before paint), CQ-12/CQ-15/CQ-50/CQ-84/UX-12=DONE (Wave 0 contracts and tests, no change needed), CQ-17=DONE (308 with path and query from other production hosts, canonical link on every page), CQ-20=DONE, CQ-30/D7/UX-06=PARTIAL (notify sends email through the mission email provider and keeps codes out of the inbox; inbox in the Team shell; customer and contributor inbox need a customer-proof read path, note 5), CQ-46/D18=PARTIAL (globals.css warning text is Ink and a test fails on unknown hex colours in components; other streams' CSS, note 2), CQ-47=DONE, CQ-48=PARTIAL (trust label tooltip, dir and lang before paint; static pages still swap text after load because a server-rendered locale would make every page dynamic), UX-05=DONE (StepUpDialog mounted in the Team shell, rendered only while open), UX-09/UX-11=DONE (FieldHelp component; pages adopt it), UX-15=DONE (Help in the header on phones, auto-hide on scroll, logical properties for right to left), V-52..V-60 harness=PARTIAL (scripts/qa/ux-measure.ts, CI verification job in validate, integration spec; the 7 locales are covered by unit tests and E-3, not as 7 Playwright projects)
+Gates: format:check ok (0), lint ok (0), typecheck ok (0), test ok (0: 65 node tests, 7 python), vitest 13 touched files ok (328 tests, DB lock), build ok (0), verification ws-e ok (18 passed at 1280/768/390), e2e focused ok (corner-dock, header-session, ux02-discovery, public-experience, product-experience: 66 passed); operator suite not run locally (KI-16, CI is the proof)
 Integration notes:
-Decisions taken:
+
+1. WS-A: apps/web/app/plan/intake.tsx line 364 focuses its own summary on every errors change (each keystroke); use ErrorSummary with an attempt counter or focus only in the submit handler (CQ-01). Proof: tests/e2e/verification/integration/ux-measures.spec.ts "CQ-01".
+2. WS-B components/mr/{mode-label,quote-card,road}.css and WS-D app/operator/view-as/view-as.css: replace text `color: var(--caution)` with `var(--caution-text)` (Ink, D18).
+3. Lead: tests/integration/language-catalog.test.ts "every message key is used" reads a fixed file list; add apps/web/components/ux/*.tsx, apps/web/lib/ux/shells.ts and apps/web/components/customer-nav.tsx (WS-E keys are listed in site-header.tsx `shellWords` meanwhile; other streams will hit the same test).
+4. Lead: commit 3b7e150 added five .claude/worktrees/* gitlinks to the integration branch; remove them.
+5. Lead or WS-B: /api/notifications reads staff only; a customer branch through CustomerSessionBoundary (proof hash) is needed before NotificationInbox can show in the Customer and Contributor shells.
+6. Producers (WS-B, WS-C, WS-D): call notify with recipientEmail and emailChoice; put invitation codes in emailOnly.lines, never in payload (secret-looking payload keys and outside links are dropped).
+7. Verification server now sets CORRIDRA_LANGUAGES_PREVIEW=true (E-3); static pages keep the build-time offer.
+8. After deploy: `curl -I "https://corridra.vercel.app/how-it-works?x=1"` should answer 308 to https://c.obsidianglobal.studio/how-it-works?x=1.
+9. Updated copy assertions of WS-E shells only: tests/operator/workspace.spec.ts:663 ("Preview workspace"), tests/operator/ux-first-question.spec.ts and tests/integration/ux-first-question.test.ts (no badge in the public header, CQ-47).
+   Decisions taken:
+
+- The header choice lives in components/ux/shell-header.tsx so site-header.tsx stays free of router hooks (operator fixtures mock next/navigation with useRouter only).
+- Team sidebar links use /operator/<section> when CORRIDRA_UX_OPERATOR_URLS is on, else the old # links; all other sections and the Owner page sit under Settings.
+- Team status shows "Live" only when VERCEL_ENV is production, else "Preview".
+- Emails go only with CORRIDRA_NOTIFICATIONS_V2, the mission email switch (real use) and complete provider settings; invitations send even without a saved email choice.
+- "Test mode" and "Synthetic workspace" lines in the WS-E shells now read "Preview workspace" (D1).
+- The canonical link is the owned origin plus the path, rendered from the root layout on every page.

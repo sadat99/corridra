@@ -46,7 +46,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Company profile">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Company profile">
       <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
       {customerOrganisationLinksEnabled() && (
         <CompanyLink subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />

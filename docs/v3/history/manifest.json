@@ -238,6 +238,14 @@
       "bytes": 12250,
       "sha256": "0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc",
       "meaning": "Exact active-index snapshot before the 31 October 2026 CI speedup records refresh (unchanged from 1b09e89 to 33b7cfc), which recorded the PR222 merge and deploy, draft PR224 (six operator shards, the Chromium cache and browser runtime fingerprint, the install verifier requiring all six operator shards, the shard guard and the startup test timeout) and the owner's 31 October words, and shortened the PR219 to PR221 and phone follow-ups lines; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "d91ac1a",
+      "archive": "docs/v3/history/ledger-before-commercial-readiness-records-2026-10-31.md",
+      "bytes": 12250,
+      "sha256": "0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 commercial readiness records refresh, which recorded the Wave 0 merge (PR223, d91ac1a), the five workstreams and the release PR; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

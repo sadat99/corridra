@@ -15,6 +15,7 @@ export const REQUIRED_CI_JOBS = [
   'operator (4)',
   'operator (5)',
   'operator (6)',
+  'verification',
   'validate',
 ];
 

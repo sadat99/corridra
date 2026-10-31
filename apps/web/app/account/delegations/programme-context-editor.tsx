@@ -372,10 +372,8 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
                 marginBlock: '1rem',
               }}
             >
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />{' '}
-              {realCustomerInput()
-                ? 'I confirm these details are accurate to the best of my knowledge.'
-                : 'I confirm these are fictional planning details only.'}{' '}
+              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
+              confirm these details are accurate to the best of my knowledge.{' '}
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>

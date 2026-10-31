@@ -13,6 +13,9 @@ import { ParticipantScope } from '../components/participant-scope';
 import { OperatorWorkbench } from '../components/operator-workbench';
 import { MissionPassport } from '../components/mission-passport';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
+/** CQ-42: one plain line for a link that no longer opens (expired, replaced or withdrawn). */
+export const linkGone =
+  'This private link has expired or was replaced. Ask the person who sent it for a new link.';
 export function DeliveryView({
   audience,
   capability,
@@ -90,7 +93,7 @@ function ScopedDeliveryView({
       Promise.resolve().then(() => {
         if (active) {
           setFailureKind('denied');
-          setError('Open the private link shared by your Corridra operator.');
+          setError(linkGone);
         }
       });
       return () => {
@@ -153,7 +156,7 @@ function ScopedDeliveryView({
     try {
       await post({ action: 'respond', ...request });
       setPendingResponse(null);
-      setNotice('Response received as a self-declaration. Your operator will review it.');
+      setNotice('Response received as a self-declaration. The Corridra team will review it.');
       await refresh().catch((e) => {
         setReadInterrupted(true);
         setError(e.message);
@@ -199,13 +202,13 @@ function ScopedDeliveryView({
     return (
       <AccessState kind={error ? failureKind : 'loading'}>
         <p ref={feedback} tabIndex={-1}>
-          {error || 'Opening your approved view…'}
+          {error ? (failureKind === 'denied' ? linkGone : error) : 'Opening your report…'}
         </p>
         {error && (
           <>
             <p>
-              Use the original private link. If it expired or was revoked, ask the person who shared
-              it for a new reviewed link.
+              Have a Corridra account? Sign in, then paste this link under Saved missions to open
+              the report there.
             </p>
             {
               <button
@@ -214,7 +217,7 @@ function ScopedDeliveryView({
                 onClick={() => {
                   token.current = capability;
                   if (!/^[a-f0-9]{64}$/.test(token.current)) {
-                    setError('Open the private link shared by your Corridra operator.');
+                    setError(linkGone);
                     return;
                   }
                   if (inFlight.current) return;
@@ -229,7 +232,7 @@ function ScopedDeliveryView({
                     });
                 }}
               >
-                Retry approved view
+                Try again
               </button>
             }
             <Link className="text-link" href="/account">
@@ -266,8 +269,8 @@ function ScopedDeliveryView({
       )}
       <p role="status">{notice}</p>
       {report.purpose === 'synthetic_validation' && (
-        <p className="evidence-label">
-          Sample data. The people and companies in this report are invented.
+        <p className="evidence-label" data-madeup-panel>
+          (madeup) Sample report. The people and companies in it are made up.
         </p>
       )}
       <OperatorWorkbench
@@ -447,7 +450,7 @@ function ScopedDeliveryView({
                   <strong>{mt.label}</strong> · {mt.status.toLowerCase().replaceAll('_', ' ')}
                   <p>
                     {mt.scheduleChanged
-                      ? 'Schedule changed. Please await an updated itinerary from your operator.'
+                      ? 'Schedule changed. The Corridra team will send an updated itinerary.'
                       : mt.startsAt
                         ? `${new Date(mt.startsAt).toLocaleString('en', { timeZone: mt.timezone })} (${mt.timezone}) · ${mt.location ?? 'Location to be confirmed'}`
                         : 'Schedule to be confirmed.'}
@@ -495,7 +498,7 @@ function ScopedDeliveryView({
                         </label>
                         <label>
                           <input type="checkbox" name="acknowledged" required /> This response is my
-                          declaration. Supporting documents will follow the operator&apos;s
+                          declaration. Supporting documents follow the Corridra team&apos;s
                           controlled collection and review process.
                         </label>
                       </fieldset>

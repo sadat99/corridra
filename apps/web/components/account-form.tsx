@@ -264,8 +264,16 @@ export function AccountForm({
             minLength={mode === 'signin' ? undefined : 14}
             maxLength={128}
             required
+            aria-describedby={mode === 'reset' ? 'account-password-rule' : undefined}
           />
         </label>
+      )}
+      {/* CQ-38: the rule is visible before the person submits (the create-account page shows it above
+          the form, so only the new-password form adds it here). */}
+      {mode === 'reset' && !sent && !viaCode && (
+        <p className="field-help" id="account-password-rule">
+          Your password needs at least 14 characters.
+        </p>
       )}
       {mode === 'verify' && sent && (
         <label className="field">

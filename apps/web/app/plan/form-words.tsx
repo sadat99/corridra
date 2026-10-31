@@ -4,6 +4,30 @@ import { fillNodes } from '../../lib/i18n/fill';
 import { formEn, type FormCatalog, type FormKey } from '../../lib/i18n/form-words/en';
 import { readFormMessage } from '../../lib/i18n/form-words/messages';
 import { defaultLocale, localeMeta, type Locale } from '../../lib/i18n/locales';
+import { translate } from '../../lib/i18n/messages';
+import { wsAEn } from '../../lib/i18n/ws/ws-a';
+
+/** A WS-A message key (commercial readiness program): words added to the form after its own catalogue. */
+export type WsaKey = keyof typeof wsAEn;
+
+/**
+ * Plain English for the validation library's own wording (CQ-11). The schemas' raw messages stay as they are,
+ * because the translated catalogues and the message reader key on them; only the English the person reads changes.
+ */
+const plainEnglish: readonly (readonly [RegExp, string])[] = [
+  [/Too small: expected string to have >=(\d+) characters?/g, 'Write at least $1 characters'],
+  [/Too big: expected string to have <=(\d+) characters?/g, 'Use $1 characters or fewer'],
+  [/Too small: expected array to have >=1 items?/g, 'Choose at least one'],
+  [
+    /Invalid string: must match pattern \/\^\[1-9\]\[0-9\]\{0,11\}\$\//g,
+    'Enter a whole number, for example 500',
+  ],
+  [/Invalid email address/g, 'Enter an email address, for example name@company.com'],
+  [/Invalid input[^.]*/g, 'Check this answer'],
+];
+export function plainMessage(text: string) {
+  return plainEnglish.reduce((current, [pattern, words]) => current.replace(pattern, words), text);
+}
 
 /** The language the form's words are shown in, and its words. No words means English. */
 export type FormWords = { locale: Locale; words: FormCatalog | null };
@@ -49,7 +73,8 @@ export function useFormWords() {
      * sentence after a translated one starts on its own line. A count is part of the sentence; codes and addresses
      * are data, marked English. */
     const showMessage = (text: string): ReactNode => {
-      if (!translated || !text) return text;
+      if (!text) return text;
+      if (!translated) return plainMessage(text);
       const parts = readFormMessage(text);
       if (!parts)
         return createElement(Fragment, null, say('form.message.untranslated'), englishIsland(text));
@@ -94,6 +119,8 @@ export function useFormWords() {
       englishIsland,
       withEnglish,
       showMessage,
+      /** A WS-A word in the shown language; English while the form is English. */
+      wsa: (key: WsaKey) => (translated ? translate(locale, key) : wsAEn[key]),
       /** Spread on an element that stays English: adds `lang="en" dir="ltr"` only when the form is translated. */
       englishProps: translated ? englishAttributes : noAttributes,
     };

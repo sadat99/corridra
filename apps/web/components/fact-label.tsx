@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { CorridraIcon } from './corridra-icon';
+import { TrustTag } from './ux/trust-tag';
 
 /** The five fact labels. Icon plus word, so colour is never the only clue. */
 export const factLabels = [
@@ -50,6 +51,14 @@ export function FactLabel({
   children?: ReactNode;
 }) {
   const fact = factLabels.find((item) => item.label === label)!;
+  // On a translated page the English trust word carries a short note saying why (CQ-48).
+  if (english)
+    return (
+      <TrustTag as={Tag} tone={fact.tone}>
+        <CorridraIcon name={fact.icon} />
+        {children ?? fact.label}
+      </TrustTag>
+    );
   return (
     <Tag className="guide-tag" data-tone={fact.tone} lang={english ? 'en' : undefined}>
       <CorridraIcon name={fact.icon} />

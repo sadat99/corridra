@@ -95,7 +95,8 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await page.reload();
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
   await page.getByRole('button', { name: 'Check status and replies' }).click();
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
   await writeFile('.cache/part04-browser-receipt.json', JSON.stringify(result), { mode: 0o600 });
 });
 test('invited operator enrolls MFA, records provenance, manages flags and signs out', async ({
@@ -207,14 +208,16 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.locator('#ops-gates')).toBeFocused();
   await expect(operations.locator('.ux-operations-panel:visible')).toHaveCount(1);
   await expect(page.locator('#ops-dashboard')).toBeHidden();
-  await expect(
-    operations.getByRole('region', { name: 'External production prerequisites' }),
-  ).toContainText('BLOCKED: external prerequisite');
+  await expect(operations.getByRole('region', { name: 'Deferred controls' })).toContainText(
+    'Deferred by owner decision on',
+  );
+  await expect(page.locator('#ops-gates')).toContainText('Live, small scale');
+  await expect(page.locator('#ops-gates')).not.toContainText('PASS');
   await operationNavigation
     .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
     .click();
   await operations
-    .getByRole('textbox', { name: 'Recorded industry', exact: true })
+    .getByRole('textbox', { name: 'Industry', exact: true })
     .fill('unrecorded synthetic sector');
   await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
   await expect(
@@ -226,7 +229,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(
     operations.locator('caption').filter({ hasText: 'Customer trade amounts' }),
   ).toHaveCount(0);
-  await operations.getByRole('textbox', { name: 'Recorded industry', exact: true }).fill('');
+  await operations.getByRole('textbox', { name: 'Industry', exact: true }).fill('');
   await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
   await expect(
     operations.getByRole('button', { name: 'Refresh operations', exact: true }),
@@ -249,7 +252,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByText('Current route packs and definition references', { exact: true })
     .click();
   await expect(settings.getByText(/JP → KE · [0-9a-f-]{36}/)).toBeVisible();
-  await settings.getByText('Advanced versioned policy review', { exact: true }).click();
+  await settings
+    .getByText('Advanced (developers): versioned policy review', { exact: true })
+    .click();
   await settings.getByLabel('Reviewed command JSON').fill('{');
   await settings.getByRole('checkbox').check();
   await settings.getByRole('button', { name: 'Save reviewed configuration' }).click();
@@ -276,6 +281,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     has: page.getByRole('heading', { name: 'Browser Mission Test Company', exact: true }),
   });
   await expect(card).toHaveCount(1);
+  // CQ-32: the notice version is kept in the record details, not in the summary line.
+  await card.getByText('Record details', { exact: true }).click();
   await expect(card.getByText('synthetic-intake-2026-10-05-v1', { exact: false })).toBeVisible();
   await card.getByLabel('Structured market').selectOption('ES');
   await card
@@ -340,7 +347,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByLabel('Company name', { exact: true })
     .fill('Synthetic Browser Distributor A');
   await research.getByLabel('Company country').selectOption('ES');
-  await research.getByLabel('Invented company domain').fill('browser.example.invalid');
+  await research.getByLabel('Company domain (madeup)').fill('browser.example.invalid');
   await research.getByLabel('Public business address').fill('Synthetic Browser Business Park');
   await research.getByLabel('Country-scoped identifier').fill('BROWSER-A');
   await research.getByRole('button', { name: 'Add company record', exact: true }).click();
@@ -377,7 +384,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .selectOption({ label: 'https://example.invalid/browser-registry' });
   await research.getByLabel('Contact name', { exact: true }).fill('Synthetic Buyer');
   await research.getByLabel('Contact job title').fill('Synthetic procurement manager');
-  await research.getByLabel('Invented contact email').fill('buyer@example.invalid');
+  await research.getByLabel('Contact email (madeup)').fill('buyer@example.invalid');
   await research.getByRole('button', { name: 'Add private contact', exact: true }).click();
   await expect(research.getByText(/Synthetic Buyer.*buyer@example.invalid/)).toBeVisible();
   await research
@@ -496,7 +503,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await card.getByLabel('Mission action').selectOption('cancel');
   await card.getByLabel('Reason for change').fill('Synthetic browser cancellation');
   await card.getByRole('button', { name: 'Save mission action' }).click();
-  await expect(card.getByText('CANCELLED', { exact: false })).toBeVisible();
+  await expect(
+    card.locator('p.label').filter({ hasText: /^Cancelled · version \d+$/ }),
+  ).toBeVisible();
   expect((await page.request.get(`/api/workspace/workspace?tenant=${randomUUID()}`)).status()).toBe(
     403,
   );
@@ -660,7 +669,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.unrouteAll({ behavior: 'wait' });
   await page.reload();
   await openSection(page, 'main');
-  await expect(page.getByText('Synthetic workspace', { exact: true })).toBeVisible();
+  await expect(page.getByText('Preview workspace', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(
@@ -1056,7 +1065,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Meeting command reason')
     .fill('Attribute acceptance to the recorded buyer response');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: ACCEPTED/)).toBeVisible();
+  await expect(card.getByText(/State: Accepted/)).toBeVisible();
   const start = new Date(Date.now() - 3600000);
   start.setUTCSeconds(0, 0);
   const end = new Date(start.getTime() + 1800000);
@@ -1071,7 +1080,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await card.getByLabel('Meeting location').fill('Synthetic meeting room');
   await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: SCHEDULED/)).toBeVisible();
+  await expect(card.getByText(/State: Scheduled/)).toBeVisible();
   await card.getByLabel('Next meeting state').selectOption('HELD');
   await card
     .getByLabel('Observed meeting outcome')
@@ -1083,12 +1092,12 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Meeting command reason')
     .fill('Record observed attendance and owned follow-up');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
-  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  await expect(card.getByText(/State: Held/)).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Send the agreed requirement summary', exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(card.getByText(/State: HELD/)).toBeVisible();
+  await expect(card.getByText(/State: Held/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const heldSnapshot = await (
     await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)
@@ -1669,9 +1678,10 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await revocation).ok()).toBe(true);
   await expect(institutionalAccess).toContainText('Revoked');
   await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
-  await expect(client.getByRole('alert').filter({ hasText: 'Access denied' })).toContainText(
-    'unavailable',
-  );
+  // CQ-42: a revoked link says plainly that it has expired or was replaced.
+  await expect(
+    client.getByRole('alert').filter({ hasText: 'This private link has expired or was replaced' }),
+  ).toBeVisible();
   await clientContext.close();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
@@ -2365,7 +2375,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await expect(
     expiredPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toHaveCount(0);
-  await expiredPage.getByRole('button', { name: 'Retry approved view' }).click();
+  await expiredPage.getByRole('button', { name: 'Try again' }).click();
   await expect(expiredPage.locator('.ux-workspace').getByRole('alert')).toBeVisible();
   await expiredPage.close();
   const wrongAudience = await guestContext.newPage();
@@ -2381,7 +2391,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     clientPage.getByRole('heading', { name: 'Requirements and decisions', exact: true }),
   ).toHaveCount(0);
   await expect(
-    clientPage.getByRole('alert').filter({ hasText: 'Access denied or link unavailable' }),
+    clientPage
+      .getByRole('alert')
+      .filter({ hasText: 'This private link has expired or was replaced' }),
   ).toBeVisible();
   await post('communication', {
     action: 'revoke',
@@ -2991,9 +3003,13 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       } else await route.continue();
     });
     await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    // CQ-59: the message now appears next to the form that caused it (scoped feedback).
     await expect(
-      reviewerPage.getByRole('region', { name: 'Execution network' }).getByRole('status'),
-    ).toContainText('Receipt not confirmed.');
+      reviewerPage
+        .getByRole('region', { name: 'Execution network' })
+        .getByText(/Receipt not confirmed\./)
+        .first(),
+    ).toBeVisible();
     await networkPanel
       .getByLabel('Review reason', { exact: true })
       .first()
@@ -3088,9 +3104,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       reason: 'Synthetic access suspension after acceptance',
     });
     await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
-    await expect(
-      contributorPage.getByText('No current reviewed assignment is available.'),
-    ).toBeVisible();
+    await expect(contributorPage.getByText('You’re set up. No tasks assigned yet.')).toBeVisible();
 
     // A refused sign-out says so in place and can be tried again.
     const assignedTasks = contributorPage.getByRole('region', { name: 'Assigned tasks' });
@@ -3187,9 +3201,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       await contributorPage.evaluate(() => 'beforeSignIn' in window),
       'returned with a new page',
     ).toBe(false);
-    await expect(
-      contributorPage.getByText('No current reviewed assignment is available.'),
-    ).toBeVisible();
+    await expect(contributorPage.getByText('You’re set up. No tasks assigned yet.')).toBeVisible();
     await expect(contributorPage.getByText('Received and saved', { exact: false })).toHaveCount(0);
 
     // A principal with no workspace membership who returns to a workspace sees the existing denial.
@@ -3247,8 +3259,10 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     .first();
   await expect(card).toContainText(mission.brief.offer);
   await operatorEvidence(page, card, 'mission-control');
-  await expect(card).toContainText(mission.claim_status);
-  await expect(card).toContainText(`VERSION ${mission.version}`);
+  // CQ-32: plain labels instead of raw codes.
+  const claimLabels: Record<string, string> = { self_declared: 'Self-declared' };
+  await expect(card).toContainText(claimLabels[mission.claim_status] ?? mission.claim_status);
+  await expect(card).toContainText(new RegExp(`version ${mission.version}\\b`, 'i'));
   await expect(card.locator('.ux-mission-passport')).toContainText(
     'No independent verification implied',
   );

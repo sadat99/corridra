@@ -2315,3 +2315,24 @@ Follows the entry above; records the CI run that was pending when it was written
 Records (this scribe pass, over `ef82c98`): this entry; `docs/V3_LEDGER.md` (state, the PR224 line with the measured result, next action).
 
 Next: the records commits need CI green, then the owner's "squash merge when green" applies to PR224. The only route to a real speedup is the measured shard-map follow-up: the shard holding the `workspace.spec.ts` chain is the floor, so split the chain by re-running the `workspace.spec.ts` setup tests where needed, and split `ux-plan-languages.spec.ts` by its five describe blocks, aiming at about 14 to 15 minutes.
+
+## 31 October 2026: commercial readiness program, Waves 1 and 2 (five workstreams, integration, release PR)
+
+Wave 0 merged as PR223 (`d91ac1a`, Vercel success). Five background agents then worked in local worktrees from `b57cf69`, one per stream, each limited to the paths in `docs/qa/2026-10-31/OWNERSHIP.md`; none pushed. The lead merged C, E, A, B and D into `claude/sleepy-mccarthy-lchg16` as each finished (all clean, no conflicts) and applied the glue.
+
+What shipped (detail and per-item status in [RESULTS.md](../qa/2026-10-31/RESULTS.md); stream reports in `docs/qa/2026-10-31/status/`):
+
+- WS-A: live public copy (routes, business trips, machinery, workspace, fairs, how it works and home on the six Road steps), plain /plan errors on their fields, the ?job choice, privacy contents and summary, /about wording equal to /privacy, 404 title, safe `/signin?next=`.
+- WS-B: "Received, waiting for review" for sent requests, request titles and grouped detail, one New request action with a More menu, profile country picker, MoneyInput fee schedules, quote accept re-read, contributor set-up state, replacement codes, delivered reports in Library and Your Move.
+- WS-C: mission queue and mission page with tabs and one side panel (behind `CORRIDRA_UX_MISSIONS_V2`), route assignment, D3 real-invoice guard on production with real data, plain meeting and private link copy, money and date inputs, `listDeliveredPublications`.
+- WS-D: "Live, small scale" and one deferred register, owner status board first, evidence decision without a default, my submitted evidence, source links, picker API for six kinds, Today counts, guided route pack form, team invites (owner only by the existing RLS) and authenticator reset with step-up, dry-run QA data scripts, DSAR and PITR runbooks.
+- WS-E: four shells behind `CORRIDRA_UX_SHELLS_V2` with the Team sidebar, kit accessibility and focus-once error summary, step-up dialog in the Team shell, notify email through the mission email provider with codes kept out of the inbox, 308 host redirect and canonical link, skip link, token rule, CI `verification` job in `validate`.
+- Lead glue: delivered reports wired in foundations (an empty publish time no longer hides a report), reset password rule under the field, sign-in return paths on account pages, no-store headers for the new APIs, workspace props for sources and controls, the language test now scans every web source file, twelve unused WS-D message keys removed, contract test updated for the real services.
+
+Security review during the run: a flag on WS-B ("test removal") was checked; no test was deleted, every changed assertion is a copy rename or a program item with its denial checks kept. CodeQL found an open redirect in the Wave 0 inbox and DOM text in the moved evidence link; both fixed before PR223 merged.
+
+Verification (cloud container, Node 22 with the Node 24 pin warning): `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` exit 0 on the integrated tree; vitest on the stream and contract files 105 of 105 plus 131 of 131 (language, operator URLs, contracts, customer words, owner page). Each stream ran its own verification specs (A 27, B 9, C 21, D 4 plus 2 by design at one width, E 18) and focused browser specs. The full operator, e2e, ux and verification suites: CI on the release PR head.
+
+Not done or limited: the recipient read for quote accepted, report published and request received notifications; the sliding 30-minute view window; customer inbox; CQ-82 client drafts; native review of the new words. These need reviewed SQL or owner steps and are listed in RESULTS.md.
+
+Next: green CI on the release PR, merge with a merge commit (the /plan language spec builds from WS-A commit `93cc41a`), verify the deployment, then the owner checklist.

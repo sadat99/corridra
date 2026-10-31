@@ -153,12 +153,13 @@ function PrivateDelivery({ tenant, mission }: Props) {
     }
   }
   return (
-    <details className="ux-mission-detail" style={{ overflowWrap: 'anywhere' }}>
+    <details className="ux-mission-detail" style={{ overflowWrap: 'anywhere' }} data-madeup-panel>
       <summary>Deliver a reviewed mission to the customer account</summary>
       <p>
-        Explicitly approve your existing client report for the original request creator. Workspace
-        colleagues and organisers inherit no private access. This optional synthetic capability
-        requires owner/admin access and fresh MFA;real delivery remains closed.
+        Approve your existing client report for the person who created the original request.
+        Workspace colleagues and organisers get no private access. This works in sample workspaces
+        only (madeup records) and needs owner or admin access and a fresh authenticator check.
+        Delivery to real customer accounts stays closed.
       </p>
       <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
         Load account delivery review

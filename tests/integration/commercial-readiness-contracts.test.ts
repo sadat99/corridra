@@ -194,16 +194,13 @@ describe('service contracts', () => {
     expect(routeConfiguration.parse(configuration).reviewRequired).toBe(true);
     expect(configuration.channels).toEqual(['SYNTHETIC']);
   });
-  test('Wave 0 stubs answer their fixed shapes', async () => {
-    const pool = {} as never;
-    await expect(getTeamToday(pool, {} as never)).resolves.toEqual({
-      newSubmittedRequests: 0,
-      overdueSubmittedRequests: 0,
-      acceptedQuotesNotStarted: 0,
-      repliesToReview: 0,
-      meetingsNextSevenDays: 0,
-    });
-    await expect(listDeliveredPublications(pool, 'a'.repeat(64), 'x')).resolves.toEqual([]);
+  test('service contracts keep their signatures; real behaviour is proved on the database', async () => {
+    // getTeamToday (WS-D): tests/integration/ws-d-team-control.test.ts. listDeliveredPublications
+    // (WS-C): tests/integration/ws-c-team-work.test.ts. Here only the fixed signatures and the
+    // no-proof guard, which must never read anything.
+    expect(getTeamToday).toHaveLength(2);
+    expect(listDeliveredPublications).toHaveLength(3);
+    await expect(listDeliveredPublications({} as never, 'not a proof', 'x')).resolves.toEqual([]);
     expect(notificationTypes).toHaveLength(9);
   });
   test('the five program flags are registered and described', () => {

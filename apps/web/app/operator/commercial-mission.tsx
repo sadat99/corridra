@@ -7,6 +7,7 @@ import {
 import { useState, type FormEvent } from 'react';
 import { machineryFields, missionCatalogue } from '@corridra/domain/commercial-missions';
 import { parseMoney, formatMoney, currency } from '@corridra/domain/opportunities';
+import { readJson, withStepUp } from '../../lib/ux/step-up';
 
 type Row = { id: string; version: number; created_at: string; [key: string]: unknown };
 type Snapshot = {
@@ -168,20 +169,23 @@ export function CommercialMission({
     [target, setTarget] = useState(''),
     [selectedPack, setSelectedPack] = useState(''),
     [dates, setDates] = useState({ observedAt: '', dueAt: '' });
+  // A save refused for a stale authenticator check re-verifies in place and retries once with the same
+  // command id, so the form and its values stay as typed (CQ-67, CQ-75).
   async function request(action: string, body?: unknown) {
-    const r = await fetch(
-      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}&mission=${missionId}`,
-      body === undefined
-        ? {}
-        : {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-    );
-    const v = await r.json();
-    if (!r.ok) throw new Error(v.error);
-    return v;
+    const send = async () =>
+      readJson<Snapshot & Catalogue & Proof>(
+        await fetch(
+          `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}&mission=${missionId}`,
+          body === undefined
+            ? {}
+            : {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              },
+        ),
+      );
+    return body === undefined ? send() : withStepUp(send);
   }
   async function load() {
     setDates({

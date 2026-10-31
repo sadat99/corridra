@@ -157,7 +157,7 @@ function ScopedAccount(
       </a>
       <p>
         {realCustomerInput()
-          ? 'Fictional registration only. An invitation grants no organiser workspace membership or private commercial access. Only the display name you consent to share is visible to programme organisers.'
+          ? 'An invitation gives no access to the organiser’s workspace or private commercial details. Organisers see only the display name you agree to share.'
           : 'Fictional sample registration only. An invitation grants no organiser workspace membership or private commercial access. Only the display name you consent to share is visible to programme organisers.'}{' '}
       </p>
       {props.termsEnabled && <MyReminders subject={props.subject} issuer={props.issuer} />}
@@ -281,9 +281,7 @@ function ScopedAccount(
               >
                 <h2>
                   {' '}
-                  {realCustomerInput()
-                    ? 'Inspect a invitation'
-                    : 'Inspect a sample invitation'}{' '}
+                  {realCustomerInput() ? 'Check an invitation' : 'Inspect a sample invitation'}{' '}
                 </h2>
                 <label className="field">
                   {realCustomerInput()

@@ -12,15 +12,15 @@ test('corridor pages explain the actual direction, status and geographic limits'
     await page.goto(`/corridors/${slug}`);
     await expect(page.getByText(name, { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Current availability' })).toBeVisible();
-    await expect(page.getByText('Structurally supported', { exact: true })).toBeVisible();
-    await expect(page.getByText('Being piloted', { exact: true })).toBeVisible();
-    await expect(page.getByText('Operationally available', { exact: true })).toBeVisible();
-    await expect(page.getByText('Not yet available', { exact: true })).toBeVisible();
+    await expect(page.getByText('Available now', { exact: true })).toBeVisible();
+    await expect(page.getByText('What happens', { exact: true })).toBeVisible();
+    await expect(page.getByText('Not offered', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Start a request on this route' })).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.locator('body').innerText()).not.toContain('—');
   }
   await expect(
-    page.getByText('The EU is a trade-bloc scope, not a country and not all of Europe.', {
+    page.getByText('The EU is a group of countries, not one market and not all of Europe.', {
       exact: false,
     }),
   ).toBeVisible();
@@ -33,7 +33,7 @@ test('global selector retains an unsupported operating direction and opens the a
   await page.goto('/corridors');
   await page.getByRole('combobox', { name: 'My company is in', exact: true }).selectOption('JP');
   await page.getByRole('combobox', { name: 'I want to reach', exact: true }).selectOption('KE');
-  await expect(page.getByLabel('Corridor Atlas', { exact: true })).toContainText(
+  await expect(page.getByLabel('Route map', { exact: true })).toContainText(
     'No operating offer is announced',
   );
   await page.getByRole('link', { name: 'Plan a mission on this route', exact: true }).click();
@@ -103,7 +103,7 @@ test('job-first navigation exposes machinery and commercial trips with real entr
     'Give each day a commercial purpose.',
   );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('link', { name: 'Prepare a business-trip example request' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Plan a business trip' }).click();
   await expect(page).toHaveURL('/plan?job=business_trips');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'business_trips',

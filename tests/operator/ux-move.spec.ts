@@ -173,7 +173,7 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   await expect(page.getByRole('heading', { name: 'Waiting for you', exact: true })).toBeVisible();
   await expect(page.getByText('Send your draft request')).toBeVisible();
   await expect(page.getByText('Add evidence for your company link')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open the draft' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Finish and send' })).toHaveAttribute(
     'href',
     `/account/drafts/${owner.id}`,
   );
@@ -206,7 +206,7 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   const card = page.locator('.mr-move').filter({ hasText: 'Add your import licence number' });
   await expect(card).toBeVisible();
   await expect(card).toContainText('You');
-  await expect(card.locator('time')).toHaveText('Nov 5, 2026');
+  await expect(card.locator('time')).toHaveText('5 Nov 2026');
   await expect(card.getByRole('link', { name: 'Open the request' })).toHaveAttribute(
     'href',
     '/account/requests/r1',
@@ -342,7 +342,7 @@ test('speaks the chosen language, says which language the region is in and mirro
   const region = page.locator('.move-view');
   await expect(region).toHaveAttribute('lang', 'bn');
   await expect(page.getByRole('heading', { name: 'আপনার জন্য অপেক্ষায়' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'খসড়া খুলুন' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'শেষ করে পাঠান' })).toBeVisible();
   await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
   await page.reload();
   await expect(region).toHaveAttribute('lang', 'ar');

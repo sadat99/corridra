@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { displayDate } from '@corridra/domain/locale';
+import { formatDateTime } from '../../../../lib/ux/format';
+import { placeName, requestTitle } from '../../request-words';
 import { FactLabel, factLabels } from '../../../../components/fact-label';
 import { useLanguage } from '../../../../components/language-provider';
 import { ModeLabel, Road, mrLabelsFor } from '../../../../components/mr';
@@ -55,7 +56,9 @@ export function RoomView({
   const [showAll, setShowAll] = useState(false);
 
   const original = detail?.original ?? null;
-  const title = original?.objective?.trim() || '…';
+  // CQ-23: the same plain title as the requests list ("Sell in Spain").
+  const title = requestTitle(original) ?? (original?.objective?.trim() || '…');
+  const day = (value: string) => formatDateTime(value, { locale });
   const emblem = emblemFor(title);
   const replies = detail?.progress
     ? [...detail.progress.replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -94,9 +97,9 @@ export function RoomView({
             <div>
               <h2>{title}</h2>
               <p>
-                {original?.market ? `${original.market} · ` : ''}
+                {original?.market ? `${placeName(original.market)} · ` : ''}
                 {fill(say('room.received'), {
-                  date: displayDate(detail.progress.receivedAt, 'UTC', locale),
+                  date: day(detail.progress.receivedAt),
                 })}
               </p>
               <ModeLabel real={realCustomerInput()} labels={labels.mode} />
@@ -115,9 +118,7 @@ export function RoomView({
                   <p lang="en" dir="ltr">
                     {reply.body}
                   </p>
-                  <time dateTime={reply.createdAt}>
-                    {displayDate(reply.createdAt, 'UTC', locale)}
-                  </time>
+                  <time dateTime={reply.createdAt}>{day(reply.createdAt)}</time>
                 </div>
               ))
             )}

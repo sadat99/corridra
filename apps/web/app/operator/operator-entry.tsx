@@ -9,6 +9,7 @@ import { uxSwitchOn } from '../../lib/ux-switches';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
+import { teamSectionTitle } from '../../lib/ux/shells';
 /**
  * The protected workspace, shared by `/operator` and (with the address switch on) `/operator/<section>`.
  * `section` is a section id from the closed list; the rendering is otherwise the same.
@@ -71,10 +72,14 @@ export async function OperatorEntry({
         </a>
       </WorkspaceShell>
     );
+  const shellsV2 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');
+  // With the shells switch and section addresses on, each section has its own heading (CQ-36).
+  const heading =
+    shellsV2 && uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS') ? teamSectionTitle(section) : null;
   return (
     <WorkspaceShell
-      eyebrow="OPERATOR WORKSPACE"
-      title="Your workspace."
+      eyebrow={shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE'}
+      title={heading ?? 'Your workspace.'}
       className="ux-operator-home"
     >
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
@@ -84,6 +89,7 @@ export async function OperatorEntry({
           initialSection={section}
           ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
           moveRecords={customerMovesEnabled()}
+          shellsV2={shellsV2}
         />
       </OperatorFlags>
     </WorkspaceShell>

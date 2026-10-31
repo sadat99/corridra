@@ -9,6 +9,18 @@ import {
   type Introduction,
   type MeetingStatus,
 } from '@corridra/domain/access';
+import { formatDateTime } from '../../lib/ux/format';
+/** Plain label for a stored delivery channel code. The stored code never changes. */
+function channelLabel(channel: string) {
+  if (channel === 'SYNTHETIC') return 'Recorded receipt (no email sent)';
+  if (channel === 'MANUAL') return 'Manual handoff';
+  return plain(channel);
+}
+/** "HELD" reads "Held", "AWAITING_REPLY" reads "Awaiting reply". */
+function plain(code: string) {
+  const words = code.replaceAll('_', ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 type Policy = {
   id: string;
   jurisdiction: string;
@@ -285,17 +297,19 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         Refresh access and meetings
       </button>
       <p>
-        Invented records only. Synthetic delivery sends no email. Manual delivery records a human
-        handoff. Owners must enable introductions and dispatch in Workspace controls.
+        Each introduction goes out through the channel its approved policy names. Manual handoff
+        records that a team member passed it on themselves. Recorded receipt keeps the receipt in
+        Corridra and sends no email. Owners turn on introductions and dispatch in Workspace
+        controls.
       </p>
       <details>
         <summary>Approved communication policy and templates</summary>
         <ul>
           {comms.policies.map((p) => (
             <li key={p.id}>
-              {p.jurisdiction} / {p.channel} / {p.contact_purpose.replaceAll('_', ' ')}: version{' '}
-              {p.version}, {p.enabled ? 'enabled' : 'disabled'}, expires{' '}
-              {new Date(p.valid_until).toLocaleString()}. {p.basis}
+              {p.jurisdiction} / {channelLabel(p.channel)} /{' '}
+              {p.contact_purpose.replaceAll('_', ' ')}: version {p.version},{' '}
+              {p.enabled ? 'on' : 'off'}, valid until {formatDateTime(p.valid_until)}. {p.basis}
             </li>
           ))}
         </ul>
@@ -318,8 +332,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             >
               <h3>Approve a policy version</h3>
               <p>
-                This approves an invented demonstration. It does not establish a legal basis for
-                real outreach. Fresh MFA is required.
+                Approving records the basis you write below for this channel and purpose. It does
+                not by itself establish a legal basis for outreach. A fresh authenticator check is
+                required.
               </p>
               <label className="field">
                 Recipient jurisdiction
@@ -332,7 +347,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               <label className="field">
                 Delivery channel
                 <select name="channel">
-                  <option value="SYNTHETIC">Synthetic receipt</option>
+                  <option value="SYNTHETIC">{channelLabel('SYNTHETIC')}</option>
                   <option value="MANUAL">Manual handoff</option>
                 </select>
               </label>
@@ -453,8 +468,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   .filter((p) => p.enabled)
                   .map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.jurisdiction} / {p.channel} / {p.contact_purpose.replaceAll('_', ' ')} v
-                      {p.version}
+                      {p.jurisdiction} / {channelLabel(p.channel)} /{' '}
+                      {p.contact_purpose.replaceAll('_', ' ')} v{p.version}
                     </option>
                   ))}
               </select>
@@ -537,9 +552,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       )}
       <h3>Introductions and replies</h3>
       <p>
-        Latest 50 introductions. A receipt shows delivery through the selected demonstration
-        channel, not a held meeting or commercial result.
+        Latest 50 introductions. A receipt shows the introduction went out through its channel. It
+        is not a held meeting or a commercial result.
       </p>
+      {comms.messages.length === 0 && (
+        <p className="ux-empty" role="note">
+          No introductions yet. Create one above once a mission has a target and a contact.
+        </p>
+      )}
       {manage && (
         <button className="secondary-link" disabled={busy} onClick={() => void act('dispatch', {})}>
           Dispatch pending introductions
@@ -549,10 +569,11 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         <article className="detail-card introduction-card" key={m.id}>
           <h4>{m.presentation.company}</h4>
           <p>
-            {m.channel}: {m.delivery_status}. Attempts: {m.attempts}. Buyer response:{' '}
-            {m.decision ?? 'Awaiting response'}. {m.revoked ? 'Link revoked.' : ''}
+            {channelLabel(m.channel)}: {plain(m.delivery_status)}. Attempts: {m.attempts}. Buyer
+            response: {m.decision ? plain(m.decision) : 'Awaiting response'}.{' '}
+            {m.revoked ? 'Link revoked.' : ''}
           </p>
-          <p>Link expires {new Date(m.expires_at).toLocaleString()}.</p>
+          <p>Link expires {formatDateTime(m.expires_at)}.</p>
           {manage && !m.revoked && (
             <form
               className="operator-form"
@@ -720,9 +741,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         <article key={f.id} className="detail-card">
           <h4>{f.next_action}</h4>
           <p>
-            {f.status}. Owner:{' '}
-            {meetings.owners.find((o) => o.user_id === f.owner_id)?.name ?? f.owner_id}. Due{' '}
-            {new Date(f.due_at).toLocaleString()}.{' '}
+            {plain(f.status)}. Owner:{' '}
+            {meetings.owners.find((o) => o.user_id === f.owner_id)?.name ?? 'Not assigned'}. Due{' '}
+            {formatDateTime(f.due_at)}.{' '}
             {f.status === 'OPEN' && new Date(f.due_at).getTime() < defaults.now ? 'Overdue.' : ''}
           </p>
           {manage && f.status === 'OPEN' && (
@@ -788,7 +809,7 @@ function MeetingCard({
     <article className="detail-card meeting-card">
       <h4>{m.title}</h4>
       <p>
-        State: {m.status}. Version {m.version}.
+        State: {plain(m.status)}. Version {m.version}.
       </p>
       <p>{m.brief}</p>
       <p>
@@ -801,8 +822,8 @@ function MeetingCard({
       {m.starts_at && m.ends_at && m.timezone && (
         <p>
           {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
-          {m.timezone}). Your time: {new Date(m.starts_at).toLocaleString()} to{' '}
-          {new Date(m.ends_at).toLocaleString()}. Location: {m.location}.
+          {m.timezone}). Your time: {formatDateTime(m.starts_at)} to {formatDateTime(m.ends_at)}.
+          Location: {m.location}.
         </p>
       )}
       {data.outcomes

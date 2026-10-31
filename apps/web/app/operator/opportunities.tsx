@@ -519,7 +519,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
       <p>
         {realCustomerInput()
           ? 'Connect held meetings to commercial evidence. Record actual outcomes with their supporting information.'
-          : 'Connect held meetings to commercial evidence. Use invented records while customer controls are completed.'}
+          : 'Connect held meetings to commercial evidence. This is a sample workspace, so every record here is made up.'}
       </p>
       <p role="status" aria-live="polite" aria-label="Commercial status">
         {message}

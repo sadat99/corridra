@@ -1,5 +1,5 @@
 'use client';
-import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { customerLabelAllowed, realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 export type ParticipantScope = {
@@ -211,7 +211,9 @@ export function useParticipantView(
     writing = useRef(false),
     intent = useRef<ParticipantCommand | null>(null),
     deadline = useRef(0),
-    timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    timer = useRef<ReturnType<typeof setTimeout> | null>(null),
+    // CQ-87: the programme name from the invitation the person checked, for a plain confirmation.
+    previewName = useRef<string | null>(null);
   const expire = useCallback(() => {
     available.current = false;
     if (timer.current) clearTimeout(timer.current);
@@ -408,7 +410,7 @@ export function useParticipantView(
         if ([400, 415, 422].includes(response.status)) {
           intent.current = null;
           setPending(null);
-          setNotice('This request was not accepted. Check the fictional details and try again.');
+          setNotice('This request was not accepted. Check the details and try again.');
           return;
         }
         if (!response.ok) throw Error('Unconfirmed participant command');
@@ -419,6 +421,8 @@ export function useParticipantView(
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(expire, Math.max(0, deadline.current - Date.now()));
         }
+        if (command.action === 'preview')
+          previewName.current = typeof value.name === 'string' ? value.name : null;
         setResult({
           ...value,
           ...(command.action === 'preview' ? { requestToken: command.token } : {}),
@@ -431,9 +435,15 @@ export function useParticipantView(
           setNotice(
             command.action === 'invite'
               ? value.issued
-                ? 'The sample invitation code is ready. No message was sent.'
-                : 'The invitation already exists. Its secret cannot be recovered; revoke and reissue it.'
-              : 'The programme access change is saved. Check the updated list.',
+                ? realCustomerInput()
+                  ? 'The invitation code is ready. Copy it and send it to the participant yourself.'
+                  : 'The sample invitation code is ready. No message was sent.'
+                : 'The invitation already exists. Its code cannot be shown again; create a replacement code.'
+              : command.action === 'accept'
+                ? previewName.current
+                  ? `You’re registered for ${previewName.current}.`
+                  : 'You’re registered for this programme.'
+                : 'The programme access change is saved. Check the updated list.',
           );
           await load(undefined, undefined, true);
         }

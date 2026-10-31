@@ -203,13 +203,16 @@ test('works with the keyboard and moves on to the next step', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Where?' })).toBeVisible();
 });
 
-test('shows one Sample label and the start button keeps a plain name', async ({ page }) => {
+test('the public header shows no Sample or Real badge and the start button keeps a plain name', async ({
+  page,
+}) => {
+  // CQ-47 (31 Oct 2026): the badge is gone from the public header; the team shell says Live or Preview.
   await open(page, 'fq=1&mode=sample');
-  await expect(page.locator('.mr-mode')).toHaveCount(1);
-  await expect(page.locator('.mr-mode')).toHaveText('Sample');
+  await expect(page.locator('.mr-mode')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Start a request', exact: true })).toBeVisible();
   await open(page, 'fq=1&mode=real');
-  await expect(page.locator('.mr-mode')).toHaveText('Real');
+  await expect(page.locator('.mr-mode')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Start a request', exact: true })).toBeVisible();
   await open(page);
   await expect(page.locator('.mr-mode')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Start a request (sample request)' })).toBeVisible();

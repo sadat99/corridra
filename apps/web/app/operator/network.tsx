@@ -8,7 +8,12 @@ import {
   useRetainedSubmission,
 } from '../../components/retained-submission';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ActionFeedback, type Feedback } from '../../components/ux/feedback';
+import { ReferencePicker } from '../../components/ux/reference-picker';
+import { DateTimeInput } from '../../components/ux/date-time-input';
+import type { PickerKind } from '../../lib/ux/picker';
 type Profile = {
   id: string;
   principal_id: string;
@@ -73,46 +78,108 @@ const taskKinds = [
   'delegation_assistance',
 ];
 const labels: Record<string, string> = {
-  principalId: 'Invited principal reference',
   alias: 'Private working name',
   capabilities: 'Reviewed capabilities, separated by commas',
   markets: 'Market countries, separated by commas',
   workCountries: 'Reviewed work countries, separated by commas',
   languages: 'Languages, separated by commas',
   sectors: 'Sectors, separated by commas',
-  eligibilitySourceId: 'Reviewed eligibility source reference',
-  expiresAt: 'Access cutoff (ISO date and time)',
-  missionId: 'Mission reference',
-  routeAssignmentId: 'Current route assignment reference',
+
   market: 'Task market country',
   workCountry: 'Work country',
   location: 'Disclosed work location',
   language: 'Task language',
   sector: 'Task sector',
   instructions: 'Exact work to perform',
-  deadline: 'Submission deadline (ISO date and time)',
+
   evidenceRequired: 'Evidence to submit',
   effort: 'Expected effort',
   dataHandling: 'Data handling terms',
   cancellationTerms: 'Cancellation terms',
   disputeTerms: 'Dispute terms',
-  reviewerId: 'Independent reviewer principal reference',
   rewardRuleId: 'Disclosed reward rule reference, optional',
   reason: 'Review reason',
 };
-function Fields({ names }: { names: string[] }) {
+// References are chosen by name from a searchable picker, never typed as IDs (D9, CQ-64).
+const pickerFields: Record<string, { kind: PickerKind; label: string; hint: string }> = {
+  principalId: {
+    kind: 'contributor',
+    label: 'Contributor',
+    hint: 'People who accepted a contributor invitation in this workspace.',
+  },
+  eligibilitySourceId: {
+    kind: 'source',
+    label: 'Eligibility evidence',
+    hint: 'The source record that shows this person may do this work, for example a checked CV or a reference. Record it under Sources first.',
+  },
+  missionId: { kind: 'mission', label: 'Mission', hint: 'The mission this task belongs to.' },
+  reviewerId: {
+    kind: 'reviewer',
+    label: 'Reviewer',
+    hint: 'Someone other than you. The person who creates a task cannot review it.',
+  },
+  sourceId: {
+    kind: 'source',
+    label: 'Approval source',
+    hint: 'The source record that supports this decision.',
+  },
+};
+const dateFields: Record<string, { label: string; hint: string }> = {
+  expiresAt: {
+    label: 'Access ends',
+    hint: 'After this time the person can no longer open the work.',
+  },
+  deadline: { label: 'Submission deadline', hint: 'When the evidence must be submitted.' },
+};
+function PickerField({ name, tenant }: { name: string; tenant: string }) {
+  const [value, setValue] = useState<string | null>(null);
+  const field = pickerFields[name]!;
+  return (
+    <ReferencePicker
+      kind={field.kind}
+      tenant={tenant}
+      label={field.label}
+      hint={field.hint}
+      name={name}
+      value={value}
+      onChange={setValue}
+      required
+    />
+  );
+}
+function DateField({ name }: { name: string }) {
+  const [value, setValue] = useState<string | null>(null);
+  const field = dateFields[name]!;
+  return (
+    <DateTimeInput
+      label={field.label}
+      hint={field.hint}
+      name={name}
+      value={value}
+      onChange={setValue}
+      required
+    />
+  );
+}
+function Fields({ names, tenant }: { names: string[]; tenant: string }) {
   return (
     <>
-      {names.map((name) => (
-        <label className="field" key={name}>
-          {labels[name] ?? name}
-          <input
-            name={name}
-            required={name !== 'rewardRuleId'}
-            maxLength={name === 'instructions' ? 2000 : 500}
-          />
-        </label>
-      ))}
+      {names.map((name) =>
+        pickerFields[name] ? (
+          <PickerField key={name} name={name} tenant={tenant} />
+        ) : dateFields[name] ? (
+          <DateField key={name} name={name} />
+        ) : (
+          <label className="field" key={name}>
+            {labels[name] ?? name}
+            <input
+              name={name}
+              required={name !== 'rewardRuleId'}
+              maxLength={name === 'instructions' ? 2000 : 500}
+            />
+          </label>
+        ),
+      )}
     </>
   );
 }
@@ -129,6 +196,7 @@ export function ExecutionNetwork({
 }) {
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
+    [feedback, setFeedback] = useState<{ form: HTMLFormElement; value: Feedback } | null>(null),
     [busy, setBusy] = useState(false);
   const admin = ['owner', 'admin'].includes(role);
   const request = useCallback(
@@ -168,23 +236,29 @@ export function ExecutionNetwork({
     };
   }, [request]);
   const submit = useRetainedSubmission();
+  // Feedback shows next to the form that caused it and nowhere else, so an old error never sits
+  // beside a later action (CQ-59).
   async function act(action: string, input: unknown, form: HTMLFormElement) {
     setBusy(true);
     setMessage('');
+    setFeedback(null);
+    const show = (kind: 'success' | 'error', text: string) =>
+      setFeedback({ form, value: { kind, text } });
     try {
       const result = await submit(form, action, input, request);
-      const receipt = result.id ? `Saved reference: ${result.id}` : 'Saved.';
-      setMessage(receipt);
+      const receipt = result.id ? `Saved. Reference ${result.id}.` : 'Saved.';
+      show('success', receipt);
       try {
         setData(await request('network'));
       } catch {
-        setMessage(
+        show(
+          'success',
           receipt +
-            ' Refresh failed; refresh execution work instead of submitting the received command again.',
+            ' The list did not refresh. Refresh execution work instead of submitting again.',
         );
       }
     } catch (e) {
-      setMessage(submissionMessage(e, 'Work could not be saved'));
+      show('error', submissionMessage(e, 'Work could not be saved'));
     } finally {
       setBusy(false);
     }
@@ -224,7 +298,6 @@ export function ExecutionNetwork({
     const input: Record<string, unknown> = { id: crypto.randomUUID() };
     for (const name of [
       'missionId',
-      'routeAssignmentId',
       'kind',
       'market',
       'workCountry',
@@ -247,6 +320,7 @@ export function ExecutionNetwork({
       .split(',')
       .map((v) => v.trim());
     input.rewardRuleId = f.get('rewardRuleId') || null;
+    if (f.get('routeAssignmentId')) input.routeAssignmentId = f.get('routeAssignmentId');
     void act('network-task', input, e.currentTarget);
   }
   function taskEvent(e: FormEvent<HTMLFormElement>, task: Task) {
@@ -312,6 +386,15 @@ export function ExecutionNetwork({
       <p role="status" aria-live="polite">
         {message}
       </p>
+      {feedback &&
+        createPortal(
+          <ActionFeedback
+            scope="network"
+            feedback={feedback.value}
+            onClear={() => setFeedback(null)}
+          />,
+          feedback.form,
+        )}
       {!data && (
         <p>
           {message
@@ -382,13 +465,11 @@ export function ExecutionNetwork({
           <summary>Review an invited contributor profile</summary>
           <p>
             The identity must already be invited with an authenticator. This review creates no
-            tenant membership.{' '}
-            {data?.purpose === 'commercial_qualification'
-              ? 'Use current reviewed eligibility evidence.'
-              : 'Use synthetic eligibility evidence only.'}
+            tenant membership. Choose the eligibility evidence from your recorded sources.
           </p>
           <form className="operator-form" onSubmit={createProfile}>
             <Fields
+              tenant={tenant}
               names={[
                 'principalId',
                 'alias',
@@ -444,9 +525,9 @@ export function ExecutionNetwork({
               </select>
             </label>
             <Fields
+              tenant={tenant}
               names={[
                 'missionId',
-                'routeAssignmentId',
                 'market',
                 'workCountry',
                 'location',
@@ -466,6 +547,13 @@ export function ExecutionNetwork({
                 'reason',
               ]}
             />
+            <details className="ops-advanced-filters">
+              <summary>Advanced (developers)</summary>
+              <label className="field">
+                Route assignment reference (optional; the mission&apos;s current route is used)
+                <input name="routeAssignmentId" />
+              </label>
+            </details>
             <button className="primary-link" disabled={busy || !data?.enabled}>
               Create task for reviewed assignment
             </button>
@@ -537,7 +625,7 @@ export function ExecutionNetwork({
                   Relationship disclosure
                   <input name="relationshipDisclosure" required minLength={3} maxLength={500} />
                 </label>
-                <Fields names={['reason']} />
+                <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
                   Approve exact assignment
                 </button>
@@ -557,7 +645,7 @@ export function ExecutionNetwork({
                   Review rationale
                   <input name="rationale" required minLength={3} maxLength={500} />
                 </label>
-                <Fields names={['reason']} />
+                <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
                   Review original submitted declaration
                 </button>
@@ -591,7 +679,7 @@ export function ExecutionNetwork({
                     </select>
                   </label>
                 )}
-                <Fields names={['reason']} />
+                <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
                   Save independent decision
                 </button>
@@ -612,7 +700,7 @@ export function ExecutionNetwork({
                   );
                 }}
               >
-                <Fields names={['reason']} />
+                <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
                   Assess contribution once
                 </button>
@@ -687,7 +775,7 @@ export function ExecutionNetwork({
                     <option value="ACTIVE">Renew reviewed eligibility</option>
                   </select>
                 </label>
-                <Fields names={['reason']} />
+                <Fields tenant={tenant} names={['reason']} />
                 <button className="text-link" disabled={busy}>
                   Append status review
                 </button>
@@ -723,11 +811,8 @@ export function ExecutionNetwork({
               Contribution reference
               <input name="contributionId" required />
             </label>
-            <label className="field">
-              Reward approval source reference
-              <input name="sourceId" required />
-            </label>
-            <Fields names={['reason']} />
+            <PickerField name="sourceId" tenant={tenant} />
+            <Fields tenant={tenant} names={['reason']} />
             <button className="primary-link" disabled={busy || !data?.enabled}>
               Record independently approved obligation
             </button>
@@ -762,11 +847,8 @@ export function ExecutionNetwork({
               Original reward ledger reference
               <input name="ledgerId" required />
             </label>
-            <label className="field">
-              Compensation source reference
-              <input name="sourceId" required />
-            </label>
-            <Fields names={['reason']} />
+            <PickerField name="sourceId" tenant={tenant} />
+            <Fields tenant={tenant} names={['reason']} />
             <button className="primary-link" disabled={busy || !data?.enabled}>
               Record compensating obligation
             </button>

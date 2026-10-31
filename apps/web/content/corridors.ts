@@ -12,9 +12,11 @@ export const corridorPages = {
       'Commercial delegations',
     ],
     qualification:
-      'China is a country market. Supplier location, visit location and shipment route are recorded separately. A proposed visit is not a confirmed appointment.',
+      'Where a supplier is based, where you visit and how goods ship are recorded separately. A proposed visit is not a confirmed appointment.',
     reverse:
-      'China-to-Bangladesh work requires its own configured route and review. The direction does not inherit an operating offer.',
+      'Work from China into Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
+    available:
+      'Sourcing requests for products, components and machinery. Supplier offers stay side by side in their original currency and terms.',
   },
   'bangladesh-spain': {
     title: 'Bangladesh–Spain',
@@ -29,9 +31,11 @@ export const corridorPages = {
       'Commercial missions',
     ],
     qualification:
-      'Spain is one country market. A Spanish counterparty does not establish coverage or a legal basis across every EU member country.',
+      'Spain is one country. A buyer in Spain does not give you access to every EU country, so we plan each country on its own.',
     reverse:
-      'Spain-to-Bangladesh market entry is selectively configurable and requires a separate reviewed scope.',
+      'Spanish companies entering Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
+    available:
+      'Requests to reach buyers and distributors in Spain. Each conversation, sample and follow-up stays on one record with a named owner.',
   },
   'bangladesh-eu': {
     title: 'Bangladesh–EU',
@@ -46,8 +50,10 @@ export const corridorPages = {
       'Country-specific market validation',
     ],
     qualification:
-      'The EU is a trade-bloc scope, not a country and not all of Europe. Membership does not establish local operator coverage or country-level compliance approval.',
+      'The EU is a group of countries, not one market and not all of Europe. We agree which member countries matter before any research starts.',
     reverse:
-      'EU-to-Bangladesh work must identify the actual company country and its own selectively configured direction.',
+      'For work from an EU country into Bangladesh, name the actual country in your request. We review each one on its own.',
+    available:
+      'Requests to reach buyers and distributors in the EU countries you choose, with each conversation and follow-up kept on one record.',
   },
 } as const;

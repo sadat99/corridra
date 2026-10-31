@@ -3,7 +3,13 @@ import Link from 'next/link';
 import { AccessState } from '../../../components/access-state';
 import { displayDate } from '@corridra/domain/locale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-type Invitation = { available: boolean; role?: string; expiresAt?: string; workspaceId?: string };
+type Invitation = {
+  available: boolean;
+  role?: string;
+  expiresAt?: string;
+  workspaceId?: string;
+  teamSessionActive?: boolean;
+};
 export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contributor' }) {
   const contributor = kind === 'contributor';
   const inFlight = useRef(false);
@@ -120,10 +126,17 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
         <form method="post" className="operator-form" onSubmit={submit}>
           <h2>Accept {invite.role} access</h2>
           {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>}
+          {invite.teamSessionActive && (
+            <p role="alert" className="ux-session-warning">
+              This browser is signed in to a Corridra team workspace. When you sign in with this new{' '}
+              {kind} account, that team session ends here. To keep both, finish this setup in a
+              private window or another browser.
+            </p>
+          )}
           <p>
             {contributor
               ? 'This invitation grants no team membership or full mission access. Only reviewed, explicitly assigned tasks can become available. Keep your password and authenticator recovery codes private.'
-              : 'Your invitation is for the synthetic workspace. It does not authorize real customer operations. Keep your password and authenticator recovery codes private.'}
+              : 'This invitation gives access to one Corridra team workspace with the role shown above. Keep your password and authenticator recovery codes private.'}
           </p>
           <label className="field">
             New {kind} password

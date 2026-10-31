@@ -47,8 +47,14 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   await page.getByRole('link', { name: 'What is on and off', exact: true }).click();
   await expect(page).toHaveURL(/\/operator\/owner$/);
   await expect(page.getByRole('heading', { level: 1, name: 'What is on and off.' })).toBeVisible();
-  for (const name of ['What is on and off', 'Waiting on the Corridra team', 'Open gaps'])
+  // The status board comes first; the setting tables sit under "Technical details" (UX-03).
+  await expect(page.getByText('Live, small scale', { exact: true })).toBeVisible();
+  for (const name of ['Status', 'Waiting on the Corridra team', 'Blocked', 'Open gaps'])
     await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible();
+  await page.getByText('Technical details', { exact: true }).click();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'What is on and off', exact: true }),
+  ).toBeVisible();
 
   // Read only: nothing on the page can change anything.
   expect(await page.locator('main button, main form, main input, main select').count()).toBe(0);
@@ -72,6 +78,10 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   for (const id of ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D08'])
     await expect(page.getByRole('listitem').filter({ hasText: id }).first()).toContainText('Open');
   await expect(page.locator('main')).not.toContainText('Closed');
+  // Deferred by owner decision, never passed or approved (D2).
+  await expect(page.getByRole('listitem').filter({ hasText: 'D01' })).toContainText(
+    'Deferred by owner decision on',
+  );
   await expect(page.getByRole('listitem').filter({ hasText: 'D01' })).toContainText(
     'Deferred; explicitly authorized BYPASSED mode',
   );

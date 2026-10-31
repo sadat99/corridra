@@ -38,7 +38,8 @@ test('operator overview follows the bento references and preserves every authori
   const home = page.locator('.ux-overview');
   const workflow = page.getByRole('navigation', { name: 'Mission workflow' });
   await expect(workflow.getByRole('link')).toHaveCount(5);
-  await expect(home.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(5);
+  // Today shows seven counts (accepted quotes and replies added, CQ-34 and CQ-73).
+  await expect(home.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(7);
   const directory = page.locator('#workspace-navigation details');
   await expect(directory).not.toHaveAttribute('open');
   await page.getByText('Manage this workspace', { exact: true }).click();

@@ -1,7 +1,30 @@
+import { SCANNER_LINE } from '@corridra/auth/deferred-controls';
 import type { OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 
-// Extracted unchanged from workspace.tsx on 31 Oct 2026 (commercial readiness program, Wave 0) so
-// the team-control stream (WS-D) owns this section in its own file.
+const mimeLabels: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'image/png': 'PNG image',
+  'image/jpeg': 'JPEG image',
+};
+const statusLabels: Record<string, string> = {
+  SUBMITTED: 'Waiting for file checks',
+  UNDER_REVIEW: 'Waiting for another reviewer',
+  VERIFIED: 'Verified',
+  REJECTED: 'Rejected',
+  EXPIRED: 'Expired',
+};
+const scanLabels: Record<string, string> = {
+  PENDING: 'Not checked yet',
+  CLEAN: 'Checked, clean',
+  BYPASSED: 'Not scanned',
+  INFECTED: 'Blocked by the check',
+  ERROR: 'Check failed, retry',
+};
+type EvidenceRow = OperatorRecordRow & { claim_id?: string; created_by?: string };
+
+// Evidence review (moved from workspace.tsx in Wave 0; WS-D owns it). The decision has no default
+// (CQ-79). The uploader sees their own submissions (CQ-81) and can never review them; the server
+// refuses self-review too. The scanner line is the deferred control D01 (CQ-35).
 export function EvidencePanel({
   data,
   view,
@@ -19,6 +42,12 @@ export function EvidencePanel({
   act: (work: () => Promise<unknown>) => Promise<boolean>;
   request: (action: string, body?: unknown) => Promise<unknown>;
 }) {
+  const actorId = (data as OperatorSnapshot & { actorId?: string }).actorId;
+  const evidence = data.evidence as EvidenceRow[];
+  const claimText = (id?: string) => data.claims.find((c) => c.id === id)?.statement ?? 'a claim';
+  const describe = (r: EvidenceRow) =>
+    `${mimeLabels[r.mime ?? ''] ?? 'File'} for ${claimText(r.claim_id)}`;
+  const mine = actorId ? evidence.filter((r) => r.created_by === actorId) : [];
   return (
     <section
       id="workspace-evidence"
@@ -29,14 +58,31 @@ export function EvidencePanel({
       <h2>Evidence review</h2>
       <p>
         {data.scanMode === 'bypass'
-          ? 'Malware scanning is temporarily disabled. Validated files are marked unscanned. Verification still requires a different reviewer and a fresh authenticator check.'
-          : 'Files remain quarantined until validation completes. Verification requires a different reviewer and a fresh authenticator check.'}
+          ? 'Validated files are marked not scanned. Verification still needs a different reviewer and a fresh authenticator check.'
+          : 'Files stay in quarantine until the checks finish. Verification needs a different reviewer and a fresh authenticator check.'}
       </p>
-      {data.evidence.map((r) => (
+      <p className="ux-scanner-line">{SCANNER_LINE}</p>
+      {mine.length > 0 && (
+        <section aria-labelledby="my-evidence-heading" className="ux-my-evidence">
+          <h3 id="my-evidence-heading">My submitted evidence</h3>
+          <ul>
+            {mine.map((r) => (
+              <li key={r.id}>
+                <strong>{describe(r)}</strong>
+                <span> · {statusLabels[r.status ?? ''] ?? r.status}</span>
+              </li>
+            ))}
+          </ul>
+          <p>
+            Someone else on the team must review your evidence. You cannot verify your own files.
+          </p>
+        </section>
+      )}
+      {evidence.map((r) => (
         <div className="evidence-row" key={r.id}>
           <span>
-            {r.mime} · {r.status} · Scan:{' '}
-            {r.scan_status === 'BYPASSED' ? 'Not scanned' : r.scan_status}
+            {describe(r)} · {statusLabels[r.status ?? ''] ?? r.status} · File check:{' '}
+            {scanLabels[r.scan_status ?? ''] ?? r.scan_status}
           </span>
           {(r.scan_status === 'CLEAN' ||
             (r.scan_status === 'BYPASSED' &&
@@ -92,13 +138,7 @@ export function EvidencePanel({
             Evidence file
             <input type="file" name="file" accept="application/pdf,image/png,image/jpeg" required />
           </label>
-          <p>
-            PDF, PNG or JPEG. Maximum 4 MiB. Private storage, file type, size and integrity checks
-            apply.
-            {data.scanMode === 'bypass'
-              ? ' Malware scanning is temporarily disabled.'
-              : ' A configured scanner is required.'}
-          </p>
+          <p>PDF, PNG or JPEG. Maximum 4 MiB. Files are kept in private storage. {SCANNER_LINE}</p>
           <button
             className="primary-link"
             disabled={
@@ -132,20 +172,23 @@ export function EvidencePanel({
             Evidence to review
             <select name="evidence" required>
               <option value="">Choose evidence</option>
-              {data.evidence
-                .filter((r) => r.status === 'UNDER_REVIEW')
+              {evidence
+                .filter((r) => r.status === 'UNDER_REVIEW' && r.created_by !== actorId)
                 .map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.id}
+                    {describe(r)}
                   </option>
                 ))}
             </select>
           </label>
           <label className="field">
             Decision
-            <select name="decision">
-              <option>VERIFIED</option>
-              <option>REJECTED</option>
+            <select name="decision" required defaultValue="">
+              <option value="" disabled>
+                Choose a decision
+              </option>
+              <option value="VERIFIED">Verified</option>
+              <option value="REJECTED">Rejected</option>
             </select>
           </label>
           <label className="field">

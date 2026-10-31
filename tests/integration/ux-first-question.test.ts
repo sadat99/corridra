@@ -182,18 +182,18 @@ describe('one Sample or Real label per site', () => {
     expect(html).toContain('Start a request <span class="sr-only">(sample request)</span>');
     expect(html).not.toContain('mr-mode');
   });
-  it('with the switch on there is one visible label and no repeated suffix', async () => {
+  it('with the switch on the public header shows no mode badge and no repeated suffix', async () => {
+    // CQ-47 (31 Oct 2026): the Sample or Real badge left the public header; the team shell says
+    // Live or Preview instead. The start button keeps its plain name.
     const { SiteHeader } = await load('components/site-header');
     const sample = render(SiteHeader, { accounts: false, mode: 'sample' });
-    expect(sample.match(/class="mr-mode"/g)).toHaveLength(1);
-    expect(sample).toContain('data-mode="sample"');
-    expect(sample).toContain('>Sample<');
+    expect(sample).not.toContain('mr-mode');
     expect(sample).not.toContain('(sample request)');
     expect(sample).toContain('>Start a request<');
     const real = render(SiteHeader, { accounts: false, mode: 'real' });
-    expect(real).toContain('data-mode="real"');
-    expect(real).toContain('>Real<');
+    expect(real).not.toContain('mr-mode');
     expect(real).not.toContain('(sample request)');
+    expect(real).toContain('>Start a request<');
   });
   it('is chosen by the server layout from the switch and the real-use state', () => {
     const layout = read('apps/web/app/layout.tsx');

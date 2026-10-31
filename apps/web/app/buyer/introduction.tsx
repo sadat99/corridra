@@ -238,7 +238,11 @@ function ScopedIntroduction({
       )}
       {data && (
         <>
-          <p className="evidence-label">Invented demonstration. No real outreach.</p>
+          {data.synthetic && (
+            <p className="evidence-label" data-madeup-panel>
+              (madeup) Sample introduction. No real outreach.
+            </p>
+          )}
           <ParticipantScope
             purpose={data.introduction.conversationPurpose}
             expiresAt={data.expiresAt}

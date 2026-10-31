@@ -42,7 +42,7 @@ test('V3 founder clarity retains source-backed operations and denies the ordinar
   await overview
     .getByText('What Corridra can do, what is on and what is blocked (5 answers)', { exact: true })
     .click();
-  await expect(overview).toContainText('Synthetic mission operations only.');
+  await expect(overview).toContainText('Live, small scale.');
   await expect(overview).toContainText('MISSING');
   await expect(overview).toContainText('GATED');
   await expect(
@@ -63,7 +63,7 @@ test('V3 founder clarity retains source-backed operations and denies the ordinar
     measurements.push({ width, axeViolations: axe.violations.length, overflowPx: overflow });
   }
   await writeFile(`${out}/observations.json`, JSON.stringify(measurements, null, 2) + '\n');
-  await overview.getByRole('link', { name: 'Synthetic product explorer' }).click();
+  await overview.getByRole('link', { name: 'Sample mission explorer (madeup)' }).click();
   await expect(page.getByRole('region', { name: 'Sample mission' })).toBeVisible();
   const memberships = await (await page.request.get('/api/workspace/tenants')).json();
   const operator = memberships.find((m: { role: string }) => m.role === 'operator');

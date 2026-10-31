@@ -4,12 +4,12 @@ import { WorkspaceChooser } from '../../../../components/workspace-chooser';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Manage programmes | Corridra',
+  title: 'Programmes | Corridra',
   robots: { index: false, follow: false },
 };
 export default function Page() {
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Manage programmes">
+    <CustomerShell tab="work" eyebrow="PROGRAMMES" title="Programmes">
       <WorkspaceChooser kind="programmes" enabled={customerProgrammesEnabled()} />
     </CustomerShell>
   );

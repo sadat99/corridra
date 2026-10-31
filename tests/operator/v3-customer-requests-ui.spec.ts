@@ -25,6 +25,8 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    // Shared UX components import their kit stylesheet; the fixture page does not need it.
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -139,7 +141,8 @@ test('private saved requests show canonical status, original-script replies, exp
   });
   await page.goto(origin);
   await expect(page.getByRole('heading', { name: 'Saved requests', exact: true })).toBeVisible();
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
+  await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
   await expect(page.getByText(id('1'), { exact: true })).toBeHidden();
   await page.getByText('Request reference', { exact: true }).first().click();
   await expect(page.getByText(id('1'), { exact: true })).toBeVisible();
@@ -163,7 +166,8 @@ test('private saved requests show canonical status, original-script replies, exp
     await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),
   ).toEqual({ local: 0, session: 0 });
   await page.reload();
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
+  await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
 });
 
 test('failed reads recover to empty and unavailable without pretending a request was created', async ({
@@ -259,7 +263,8 @@ test('saved request views retain keyboard access and fit three widths with acces
     });
   }
   await page.goto(origin);
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
+  await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(
@@ -280,7 +285,8 @@ test('saved request views retain keyboard access and fit three widths with acces
     page.getByRole('button', { name: 'Refresh saved requests', exact: true }),
   ).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
+  await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
 });
 
 test('identity changes abort stale private reads and remount without prior account state', async ({

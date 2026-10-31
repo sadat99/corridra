@@ -11,6 +11,11 @@ import {
   type CatalogueResult,
   type ServiceRequestSummary,
 } from './service-request-client';
+import { formatDate } from '../../../lib/ux/format';
+
+// D11: the chosen day in one style ("24 Oct 2026"), whatever the browser shows in the date field.
+const chosenDay = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(`${value}T00:00:00Z`, { timeZone: 'UTC' }) : '';
 
 type Workspace = { id: string; name: string; role: string };
 type Props = {
@@ -46,6 +51,13 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
     [done, setDone] = useState<ServiceRequestSummary | null>(null);
   const alive = useRef(false);
+  const sentHeading = useRef<HTMLHeadingElement>(null);
+  // CQ-71: the confirmation is brought into view and focused, so it is never left off-screen.
+  useEffect(() => {
+    if (!done) return;
+    sentHeading.current?.scrollIntoView({ block: 'start' });
+    sentHeading.current?.focus();
+  }, [done]);
   useEffect(() => {
     alive.current = true;
     const controller = new AbortController();
@@ -153,7 +165,9 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
     return (
       <section aria-label="Help request sent">
         <div className="ux-state" data-state="complete">
-          <p className="ux-state-label">Request sent</p>
+          <h2 className="ux-state-label" ref={sentHeading} tabIndex={-1}>
+            Request sent
+          </h2>
           <div role="status">
             Your request for {done.serviceTitle} was sent. We will prepare a quote. Nothing is
             charged.
@@ -300,8 +314,10 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                     id={id + 'from'}
                     type="date"
                     value={from}
+                    aria-describedby={from ? id + 'from-day' : undefined}
                     onChange={(e) => edit(setFrom)(e.target.value)}
                   />
+                  {from && <p id={id + 'from-day'}>{chosenDay(from)}</p>}
                 </div>
                 <div className="field">
                   <label htmlFor={id + 'to'}>Latest date (optional)</label>
@@ -310,8 +326,10 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                     type="date"
                     min={from || undefined}
                     value={to}
+                    aria-describedby={to ? id + 'to-day' : undefined}
                     onChange={(e) => edit(setTo)(e.target.value)}
                   />
+                  {to && <p id={id + 'to-day'}>{chosenDay(to)}</p>}
                 </div>
               </>
             )}

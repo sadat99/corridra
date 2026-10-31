@@ -27,6 +27,13 @@ export const queueFilters = z
   })
   .strict();
 export const digest = (v: string) => createHash('sha256').update(v).digest('hex');
+// Latest reviewed route of a mission as plain text ("BD to ES"), or null while it has none (D15, CQ-09).
+const routeLabel = (alias: string) =>
+  `SELECT r.origin_market||' to '||r.destination_market AS route_label FROM app.mission_route_assignment a
+   JOIN app.corridor_pack_version pv ON pv.tenant_id=a.tenant_id AND pv.id=a.pack_id
+   JOIN app.corridor_route r ON r.tenant_id=pv.tenant_id AND r.id=pv.route_id
+   WHERE a.tenant_id=${alias}.tenant_id AND a.mission_id=${alias}.id AND a.status='ASSIGNED'
+   ORDER BY a.version DESC LIMIT 1`;
 export class MissionService {
   constructor(
     private pool: DatabasePool,
@@ -210,7 +217,8 @@ export class MissionService {
         FROM app.target_profile tp WHERE tp.tenant_id=$1 AND tp.mission_id IN (SELECT id FROM page)
         ORDER BY tp.mission_id,tp.version DESC
       )
-      SELECT p.*,tp.description AS target_profile FROM page p LEFT JOIN profiles tp ON tp.mission_id=p.id
+      SELECT p.*,tp.description AS target_profile,ra.route_label FROM page p LEFT JOIN profiles tp ON tp.mission_id=p.id
+      LEFT JOIN LATERAL (${routeLabel('p')}) ra ON true
       ORDER BY CASE WHEN p.status IN ('CANCELLED','CLOSED') THEN 1 ELSE 0 END,p.due_at,p.id`,
           [...args, offset],
         )
@@ -232,6 +240,46 @@ export class MissionService {
           await db.query(
             'SELECT * FROM app.mission_reply WHERE tenant_id=$1 AND mission_id=ANY($2::uuid[]) ORDER BY created_at DESC',
             [ctx.tenantId, ids],
+          )
+        ).rows,
+      };
+    });
+  }
+  /**
+   * One mission for the mission page (D15), in the same shape as a one-row queue page, so the page and
+   * the queue read the same records and the same permission ('missions.read', tenant RLS) applies.
+   */
+  mission(ctx: RequestContext, missionId: string) {
+    const id = z.uuid().parse(missionId);
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, role }) => {
+      const missions = (
+        await db.query(
+          `SELECT m.*,i.brief,i.notice_version,i.acknowledged_at,i.source_kind,i.claim_status,i.retention_until,mk.country_code,
+            (SELECT tp.description FROM app.target_profile tp WHERE tp.tenant_id=m.tenant_id AND tp.mission_id=m.id ORDER BY tp.version DESC LIMIT 1) AS target_profile,
+            ra.route_label
+          FROM app.mission m JOIN app.mission_intake i ON i.tenant_id=m.tenant_id AND i.id=m.id
+          JOIN app.mission_market mk ON mk.tenant_id=m.tenant_id AND mk.mission_id=m.id
+          LEFT JOIN LATERAL (${routeLabel('m')}) ra ON true
+          WHERE m.tenant_id=$1 AND m.id=$2`,
+          [ctx.tenantId, id],
+        )
+      ).rows;
+      if (!missions.length) throw new DomainError('Mission not found', 404);
+      return {
+        role,
+        missions,
+        total: 1,
+        owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
+        history: (
+          await db.query(
+            'SELECT id,mission_id,action,reason,details,actor_id,resulting_version,created_at FROM app.mission_command WHERE tenant_id=$1 AND mission_id=$2 ORDER BY created_at DESC',
+            [ctx.tenantId, id],
+          )
+        ).rows,
+        replies: (
+          await db.query(
+            'SELECT * FROM app.mission_reply WHERE tenant_id=$1 AND mission_id=$2 ORDER BY created_at DESC',
+            [ctx.tenantId, id],
           )
         ).rows,
       };

@@ -31,7 +31,9 @@ function build(say: Say) {
       },
       legend: say('mr.road.legend'),
       sublines: {
-        DRAFT: say('mr.road.subline.DRAFT'),
+        // D6: a mission exists only once the customer has sent the request, so a DRAFT mission is a
+        // received request waiting for review, never an unsent draft.
+        DRAFT: say('wsb.status.received'),
         QUALIFICATION: say('mr.road.subline.QUALIFICATION'),
         ACTIVE: say('mr.road.subline.ACTIVE'),
         TARGETING: say('mr.road.subline.TARGETING'),
@@ -41,6 +43,8 @@ function build(say: Say) {
         COMMERCIAL_PIPELINE: say('mr.road.subline.COMMERCIAL_PIPELINE'),
         CLOSED: say('mr.road.subline.CLOSED'),
       },
+      /** An unsent guided draft (never a mission): "The request is saved as a draft." */
+      draftSubline: say('mr.road.subline.DRAFT'),
       asides: {
         on_hold: say('mr.road.aside.on_hold'),
         cancelled: say('mr.road.aside.cancelled'),

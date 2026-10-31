@@ -14,8 +14,8 @@ export default function Page() {
           <article className="detail-card">
             <h2>Plan a mission</h2>
             <p>
-              Tell us what you want to achieve and where. It takes a few minutes and needs no
-              account.
+              Tell us what you want to achieve and where. It takes a few minutes. Start without an
+              account. You create one at the last step to send it.
             </p>
             <Link className="primary-link" href="/plan">
               Plan a mission

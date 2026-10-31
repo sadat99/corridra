@@ -28,6 +28,7 @@ function evidence(overrides = {}) {
     'operator (4)',
     'operator (5)',
     'operator (6)',
+    'verification',
     'validate',
   ];
   return {

@@ -268,3 +268,39 @@ test('one owned icon family: Meridian line, no stray inline icons, no sparkle', 
     assert.doesNotMatch(source, /<svg[\s>]/, `${file} draws its own icon; use CorridraIcon`);
   }
 });
+
+test('components use no colour outside the AC/1 palette (D18)', async () => {
+  // A hex colour in a component or helper must be one of the declared primitives; anything else
+  // is an unknown colour and fails. Tokens (var(--...)) are the normal way and are not counted.
+  const { readdir } = await import('node:fs/promises');
+  const app = new URL('../apps/web/', import.meta.url);
+  const palette = new Set(
+    [...css.matchAll(/--ac-[a-z-]+:\s*(#[0-9a-fA-F]{3,8})\b/g)].map((m) => m[1].toLowerCase()),
+  );
+  assert.ok(palette.has('#18283c') && palette.has('#2856c5'), 'palette read from the token layer');
+  const colour = /(?<![\w&/])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b(?![-\w])/g;
+  const files = (await readdir(app, { recursive: true })).filter(
+    (file) =>
+      /\.(?:tsx|ts)$/.test(file) &&
+      /^(?:components|app|lib)\//.test(file) &&
+      !/(?:^|\/)(?:node_modules|\.next)\//.test(file),
+  );
+  assert.ok(files.length > 50, 'component sources discovered');
+  for (const file of files) {
+    const source = await readFile(new URL(file, app), 'utf8');
+    const unknown = (source.match(colour) ?? []).filter((v) => !palette.has(v.toLowerCase()));
+    assert.deepEqual(unknown, [], `unknown hex colour in ${file}`);
+  }
+});
+
+test('warning text is Ink on the warning tint, never the brown (D18)', async () => {
+  assert.equal(resolve('--caution-text'), resolve('--ac-ink'));
+  const overview = await readFile(
+    new URL('../apps/web/app/operator/operator-overview.css', import.meta.url),
+    'utf8',
+  );
+  for (const source of [css, overview]) {
+    assert.doesNotMatch(source, /(?:^|[\s;{])color:\s*var\(--(?:caution|ac-warning)\)/m);
+  }
+  assert.ok(contrast('--caution-text', '--caution-surface') >= 4.5);
+});

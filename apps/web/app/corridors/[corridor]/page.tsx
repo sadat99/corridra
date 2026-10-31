@@ -42,14 +42,14 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               className="primary-link"
               href={`/plan?companyCountry=BD&marketCode=${c.market}`}
             >
-              Prepare a test mission request
+              Start a request on this route
             </Link>
           </div>
         </div>
       </section>
       <section className="guide-detail" aria-label="About this route">
         <article className="guide-detail-card">
-          <h2>Commercial jobs</h2>
+          <h2>What we help with</h2>
           <ul>
             {c.jobs.map((job) => (
               <li key={job}>{job}</li>
@@ -59,32 +59,31 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
         <article className="guide-detail-card">
           <h2>Current availability</h2>
           <dl>
-            <dt data-tone="info">Structurally supported</dt>
+            <dt data-tone="positive">Available now</dt>
+            <dd>{c.available}</dd>
+            <dt data-tone="info">What happens</dt>
             <dd>
-              Versioned routes and shared mission requirements, supplier offers and actual meeting
-              records.
+              Send a request and follow it in your account. Our team reviews it, agrees the scope
+              and a written quote with you, and only then starts the research and meeting planning.
             </dd>
-            <dt data-tone="caution">Being piloted</dt>
-            <dd>No customer pilot is announced here. Operator validation uses invented records.</dd>
-            <dt data-tone="positive">Operationally available</dt>
-            <dd>Customer account access and scoped synthetic test journeys.</dd>
-            <dt data-tone="unknown">Not yet available</dt>
+            <dt data-tone="unknown">Not offered</dt>
             <dd>
-              Real customer mission admission, verified local coverage, automatic outreach and
-              confirmed visit services.
+              Online payment, automated outreach and AI assistance are switched off. We do not claim
+              local coverage we have not checked, and a visit counts only once the meeting is
+              confirmed.
             </dd>
           </dl>
         </article>
         <article className="guide-detail-card">
-          <h2>Geography and evidence</h2>
+          <h2>Where the work happens</h2>
           <p>{c.qualification}</p>
           <p>{c.reverse}</p>
         </article>
       </section>
       <section className="guide-note">
         <p>
-          Counterparties and operators are evaluated for an explicitly agreed scope. No supplier
-          network, guaranteed buyer or certification is asserted.
+          We check each company against the scope you agree. We do not claim a supplier network,
+          guaranteed buyers or certification.
         </p>
         <Link prefetch={false} href="/trust" className="text-link">
           How evidence and uncertainty are handled

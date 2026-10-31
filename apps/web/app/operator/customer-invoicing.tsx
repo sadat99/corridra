@@ -288,8 +288,8 @@ function Scoped({ tenant }: { tenant: string }) {
   const can = (a: string) => !!detail && detail.actions.includes(a);
   const inv = detail?.invoice ?? null;
   return (
-    <section aria-label="Customer sample invoices" className="detail-card">
-      <h3>Customer sample invoices</h3>
+    <section aria-label="Customer sample invoices" className="detail-card" data-madeup-panel>
+      <h3>Customer sample invoices (madeup)</h3>
       <p>
         Sample invoices for plan periods you activated. They record what is asked for, what the team
         says was received and any credit. Nothing is collected and no money moves. Every note starts

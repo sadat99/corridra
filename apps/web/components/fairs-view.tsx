@@ -12,7 +12,16 @@ export function FairsIndexView({ list, today }: { list: readonly Fair[]; today: 
         day it was checked is shown. A date we have not checked is not shown.
       </p>
       {list.length === 0 ? (
-        <p className="ux-empty">No fairs are listed yet.</p>
+        <div className="ux-empty">
+          <p>No fairs are listed yet.</p>
+          <p>
+            Going to a trade fair? Tell us which one and we will help you plan who to meet and what
+            to follow up.
+          </p>
+          <Link className="primary-link" href="/plan?job=trade_fairs">
+            Ask us about a fair
+          </Link>
+        </div>
       ) : (
         <ul className="fairs-list">
           {list.map((fair) => {
