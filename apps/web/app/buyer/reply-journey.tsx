@@ -30,6 +30,7 @@ export type ReplyData = {
   template: string;
   expiresAt: string;
   decision: string | null;
+  synthetic?: boolean;
 };
 export type ReplyDecision = 'INTERESTED' | 'NEED_INFO' | 'NOT_RELEVANT';
 type Phase = 'answer' | 'message' | ReplyGroup | 'check' | 'receipt';
@@ -365,7 +366,11 @@ export function ReplyJourney({
 
   return (
     <div className="reply" lang={lang.lang} dir={lang.dir} data-phase={effective}>
-      <p className="reply-sample">{words.sampleOnly}</p>
+      {data.synthetic && (
+        <p className="reply-sample" data-madeup-panel>
+          {words.sampleOnly}
+        </p>
+      )}
       <ParticipantScope
         purpose={data.introduction.conversationPurpose}
         expiresAt={data.expiresAt}

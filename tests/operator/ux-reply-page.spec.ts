@@ -141,7 +141,7 @@ test('asks one question first: the answer, with the shared requirement and the t
   for (const name of ['Interested', 'Need more information', 'Not relevant'])
     await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Stop further introductions' })).toBeVisible();
-  await expect(page.getByText('Invented demonstration. No real outreach.')).toBeVisible();
+  await expect(page.getByText('(madeup) Sample introduction. No real outreach.')).toBeVisible();
   // Nothing past the first question is on the page yet.
   await expect(page.getByLabel('Your message to the team')).toHaveCount(0);
 });

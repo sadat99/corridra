@@ -426,7 +426,7 @@ export function Counterparties({
                 defaultValue={validDefault}
               />
               <p>
-                Company ingestion accepts invented public records with a https://example.invalid
+                Company ingestion accepts made-up public records with a https://example.invalid
                 source. No URL is fetched. AI use is denied.
               </p>
               <button className="primary-link">Save research source</button>
@@ -456,7 +456,7 @@ export function Counterparties({
                 </select>
               </label>
               <Field
-                label="Invented company domain"
+                label="Company domain (madeup)"
                 name="domain"
                 defaultValue="company.example.invalid"
               />
@@ -742,7 +742,7 @@ export function Counterparties({
                       <Select label="Contact source" name="sourceId" rows={sources} />
                       <Field label="Contact name" name="name" />
                       <Field label="Contact job title" name="jobTitle" />
-                      <Field label="Invented contact email" name="email" type="email" />
+                      <Field label="Contact email (madeup)" name="email" type="email" />
                       <Field
                         label="Contact valid until (UTC)"
                         name="validUntil"
