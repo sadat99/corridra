@@ -29,6 +29,7 @@ import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
 import { foundations } from '../../lib/foundations';
 import { AccountHashRedirect } from './hash-redirect';
+import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
 export const dynamic = 'force-dynamic';
@@ -239,6 +240,7 @@ export default async function Page({
       {view === 'results' && (
         <div id="results" tabIndex={-1} className="ux-account-groups">
           <div id="customer-missions" tabIndex={-1}>
+            {requestIssuer && <DeliveredReports subject={data.user.id} issuer={requestIssuer} />}
             {savedMissionIssuer && (
               <div id="saved-commercial-missions">
                 {customerDeliveryEnabled() && (

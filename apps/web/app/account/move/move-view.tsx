@@ -79,7 +79,8 @@ const objectKey: Record<Exclude<MoveCardData['kind'], 'move'>, MessageKey> = {
   report: 'wsb.move.report.object',
 };
 const actionKey: Record<MoveCardData['kind'], MessageKey> = {
-  draft: 'wsb.move.draft.action',
+  // Older label kept for the catalogue; an unsent draft now reads 'Finish and send' (D6, CQ-21).
+  draft: 'move.card.draft.action',
   quote: 'move.card.quote.action',
   company: 'move.card.company.action',
   move: 'move.card.reply.action',
@@ -165,10 +166,14 @@ export function MoveView({
             context={
               card.kind === 'report'
                 ? `${say('wsb.move.report.title')}: ${card.context ?? ''}`
-                : card.context
+                : card.kind === 'draft'
+                  ? [card.context, labels.road.draftSubline].filter(Boolean).join(' · ')
+                  : card.context
             }
             href={card.href}
-            action={say(actionKey[card.kind])}
+            action={
+              card.kind === 'draft' ? say('wsb.move.draft.action') : say(actionKey[card.kind])
+            }
             labels={labels}
           />
         )}

@@ -246,8 +246,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
                     <form onSubmit={(e) => submit(e, item.id)}>
                       <label className="check-field">
                         <input type="checkbox" required disabled={busy} />I understand this saves a
-                        private shortcut to the approved synthetic report. It grants no access to
-                        colleagues.
+                        private shortcut to the approved report. It grants no access to colleagues.
                       </label>
                       <button className="primary-link" disabled={busy} type="submit">
                         Save and open approved report

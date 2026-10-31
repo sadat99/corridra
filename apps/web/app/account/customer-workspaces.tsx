@@ -357,7 +357,12 @@ export function CustomerWorkspaces({
               {rows.map((row) => (
                 <li key={row.id}>
                   <p className="ux-row-title">
-                    <strong>{row.name}</strong> · {row.role}
+                    <strong>{row.name}</strong>
+                    {/* CQ-56: a made-up example workspace says so in a live account. */}
+                    {realCustomerInput() && row.synthetic && !row.name.includes('(madeup)')
+                      ? ' (madeup)'
+                      : ''}{' '}
+                    · {row.role}
                   </p>
                   {linksEnabled && <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />}
                   <div className="guide-actions-row">

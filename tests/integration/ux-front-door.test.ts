@@ -138,7 +138,8 @@ describe('what Your Move shows', () => {
         request('r4', 'ON_HOLD'),
       ],
     });
-    expect(model.waiting.map((w) => w.id)).toEqual(['request:r1']);
+    // D6 and CQ-21: a sent request in DRAFT is received and waiting for the team's review.
+    expect(model.waiting.map((w) => w.id)).toEqual(['request:r1', 'request:r2']);
     expect(model.waiting[0]).toMatchObject({
       holder: 'team',
       status: 'OUTREACH',
