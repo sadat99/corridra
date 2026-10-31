@@ -1,5 +1,23 @@
 import { pathToFileURL } from 'node:url';
 
+// Every job ci.yml runs on a push to main, matrix shards included. The test fails if ci.yml
+// defines a job this list leaves out, so adding a shard cannot leave it unchecked.
+export const REQUIRED_CI_JOBS = [
+  'changes',
+  'checks',
+  'browser',
+  'ux (1)',
+  'ux (2)',
+  'ux (3)',
+  'operator (1)',
+  'operator (2)',
+  'operator (3)',
+  'operator (4)',
+  'operator (5)',
+  'operator (6)',
+  'validate',
+];
+
 // Installation credentials are released only by the protected environment. In
 // addition, require completed evidence for this exact main revision.
 export async function verifyInstallHead({ repository, sha, ref, request }) {
@@ -16,18 +34,7 @@ export async function verifyInstallHead({ repository, sha, ref, request }) {
     const jobs = (await request(`${base}/actions/runs/${run.id}/jobs?per_page=100`)).jobs;
     const expected =
       name === 'CI'
-        ? [
-            'changes',
-            'checks',
-            'browser',
-            'ux (1)',
-            'ux (2)',
-            'ux (3)',
-            'operator (1)',
-            'operator (2)',
-            'operator (3)',
-            'validate',
-          ]
+        ? REQUIRED_CI_JOBS
         : ['Analyze (actions)', 'Analyze (javascript-typescript)', 'Analyze (python)'];
     for (const job of expected)
       if (
