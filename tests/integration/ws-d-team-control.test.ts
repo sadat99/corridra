@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import { fixture } from './support';
 import { TeamControl } from '../../packages/auth/src/team-control';
@@ -7,6 +8,8 @@ import { OperatorSetup } from '../../packages/auth/src/operator-setup';
 import { EvidenceService } from '../../packages/evidence/src/index';
 import { NetworkService } from '../../packages/network/src/index';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import * as label from '../../scripts/qa/label-synthetic';
+import * as cleanup from '../../scripts/qa/cleanup-qa-records';
 import {
   DEFERRED_LABEL,
   deferredControls,
@@ -268,11 +271,38 @@ test('a source links only to a mission of the same workspace', async () => {
   expect(other.sources.some((s: { id: string }) => s.id === plain.id)).toBe(false);
 });
 
+const forbidden = new RegExp('\\b(passed|approved|closed)\\b|' + String.fromCharCode(0x2014), 'i');
 test('the deferred register never calls a control passed or approved', () => {
   expect(DEFERRED_LABEL).toMatch(/^Deferred by owner decision on \d{1,2} [A-Z][a-z]{2} \d{4}$/);
   for (const control of deferredControls) {
     expect(control.risk.length).toBeGreaterThan(10);
-    expect(`${control.name} ${control.risk}`).not.toMatch(/\b(passed|approved|closed)\b|—/i);
+    expect(`${control.name} ${control.risk}`).not.toMatch(forbidden);
   }
   expect(SCANNER_LINE).toBe('Files are checked for type and size. Virus scanning is deferred.');
+});
+
+test('the QA data scripts need an explicit connection, default to a dry run and never delete', async () => {
+  for (const parse of [label.parseArgs, cleanup.parseArgs]) {
+    expect(() => parse([])).toThrow('--connection');
+    expect(() => parse(['--connection', 'x', '--apply'])).toThrow('--confirm-production');
+    expect(parse(['--connection', 'x'])).toMatchObject({ apply: false });
+  }
+  expect(() => cleanup.parseArgs(['--connection', 'x', '--apply', '--confirm-production'])).toThrow(
+    '--actor',
+  );
+  const before = (await f.owner.query('SELECT count(*)::int n FROM app.organisation')).rows[0].n;
+  const labels = await label.plan(f.owner);
+  expect(Array.isArray(labels.organisations)).toBe(true);
+  const found = await cleanup.plan(f.owner);
+  expect(Object.keys(found).sort()).toEqual(
+    ['claims', 'evidence', 'links', 'missions', 'programmes', 'publications'].sort(),
+  );
+  expect((await f.owner.query('SELECT count(*)::int n FROM app.organisation')).rows[0].n).toBe(
+    before,
+  );
+  for (const file of ['scripts/qa/label-synthetic.ts', 'scripts/qa/cleanup-qa-records.ts']) {
+    const text = readFileSync(file, 'utf8');
+    expect(text).not.toMatch(/\bDELETE\s+FROM\b|\bTRUNCATE\b|\bDROP\s/i);
+    expect(text).not.toMatch(/process\.env\.(DATABASE|PG)/);
+  }
 });

@@ -30,9 +30,17 @@ async function handle(request: Request) {
         403,
       );
     const proof = { email: data.user.email, emailVerified: true };
+    // CQ-62: tell the page when this browser already holds a team session, so it can warn before
+    // the new sign-in replaces it. Only a yes or no leaves the server.
+    let teamSessionActive = false;
+    try {
+      teamSessionActive = !!(await services.provider.getSession(request.headers));
+    } catch {
+      teamSessionActive = false;
+    }
     return Response.json(
       request.method === 'GET'
-        ? await services.operatorSetup.status(proof)
+        ? { ...(await services.operatorSetup.status(proof)), teamSessionActive }
         : await services.operatorSetup.complete(
             proof,
             JSON.parse((await boundedBody(request, 2048)).toString('utf8')),

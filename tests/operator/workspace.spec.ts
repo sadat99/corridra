@@ -251,7 +251,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByText('Current route packs and definition references', { exact: true })
     .click();
   await expect(settings.getByText(/JP → KE · [0-9a-f-]{36}/)).toBeVisible();
-  await settings.getByText('Advanced versioned policy review', { exact: true }).click();
+  await settings
+    .getByText('Advanced (developers): versioned policy review', { exact: true })
+    .click();
   await settings.getByLabel('Reviewed command JSON').fill('{');
   await settings.getByRole('checkbox').check();
   await settings.getByRole('button', { name: 'Save reviewed configuration' }).click();

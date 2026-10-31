@@ -4,6 +4,7 @@ import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../../lib/foundations';
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
+import { createRoutePack } from '@corridra/missions/route-pack-form';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,15 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         status: 201,
         headers,
       });
+    if (action === 'route-pack') {
+      // CQ-66: guided route pack form. The reviewed command is built on the server.
+      if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM')) throw new DomainError('Not found', 404);
+      if (request.method === 'GET') return Response.json({ enabled: true }, { headers });
+      return Response.json(await createRoutePack(s.corridors, ctx, await body()), {
+        status: 201,
+        headers,
+      });
+    }
     throw new DomainError('Not found', 404);
   } catch (error) {
     const status =
