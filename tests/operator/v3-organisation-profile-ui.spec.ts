@@ -221,7 +221,10 @@ test('owner saves the exact typed profile with the expected version and account 
   await page
     .getByLabel('Company name (start with Synthetic)')
     .fill('Synthetic Dhaka Garments Limited');
-  await page.getByLabel('Country code').fill('bd');
+  // CQ-28: the country is chosen by name from the searchable picker.
+  await page.getByRole('combobox', { name: 'Country' }).fill('Bangladesh');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('combobox', { name: 'Country' })).toHaveValue('Bangladesh');
   await page.getByLabel('Buyer').check();
   await page.getByLabel('Seller').check();
   await page.getByLabel('Sectors (comma separated, up to ten)').fill(' Knitwear , Denim ,');
@@ -229,7 +232,9 @@ test('owner saves the exact typed profile with the expected version and account 
   await page
     .getByLabel('About the company (start with Synthetic)')
     .fill('Synthetic exporter of knit and denim garments');
-  await fillRequired(page);
+  // CQ-28: the first save asks for no reason; the history records a fixed first-version reason.
+  await expect(page.getByLabel('Reason for this change', { exact: true })).toHaveCount(0);
+  await page.getByLabel('I confirm these are fictional planning details only.').check();
   await saveButton(page).click();
   await expect(page.getByRole('status')).toHaveText('Company profile saved.');
   expect(command).toMatchObject({
@@ -241,7 +246,7 @@ test('owner saves the exact typed profile with the expected version and account 
     commercialRoles: ['BUYER', 'SELLER'],
     sectors: ['Knitwear', 'Denim'],
     sizeBand: '201-1000',
-    reason: 'Synthetic revised profile',
+    reason: 'First version of the company profile',
     acknowledged: true,
   });
   for (const key of ['organisationId', 'verified', 'provenance', 'canonicalLinked'])

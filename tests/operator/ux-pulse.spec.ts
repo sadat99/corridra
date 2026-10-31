@@ -130,13 +130,14 @@ test.describe('email choices', () => {
     page,
   }) => {
     await openChoices(page);
+    await expect(page.getByRole('checkbox', { name: /One thing needs you/ })).toBeChecked();
+    // CQ-50: messages that are not sent yet are not listed.
     for (const label of [
-      'One thing needs you',
       'Your request moved forward',
       'A date is coming up',
       'Your mission is complete',
     ])
-      await expect(page.getByRole('checkbox', { name: new RegExp(label) })).toBeChecked();
+      await expect(page.getByRole('checkbox', { name: new RegExp(label) })).toHaveCount(0);
     await expect(page.getByRole('checkbox', { name: /One email a day/ })).not.toBeChecked();
     await expect(page.getByRole('checkbox', { name: /Quiet hours/ })).not.toBeChecked();
     await expect(page.getByLabel('Quiet from')).toHaveCount(0);
@@ -179,9 +180,9 @@ test.describe('email choices', () => {
       'Your mission is complete',
     ]) {
       const box = page.getByRole('checkbox', { name: new RegExp(label) });
-      await expect(box).not.toBeChecked();
+      await expect(box).toHaveCount(0);
     }
-    await expect(page.getByText('Not sent yet.')).toHaveCount(3);
+    await expect(page.getByText('Not sent yet.')).toHaveCount(0);
     await page.getByRole('button', { name: 'Switch email on' }).click();
     await expect(
       page.getByRole('status').filter({ hasText: 'Email is on. These choices apply from now on.' }),
@@ -245,13 +246,8 @@ test.describe('email choices', () => {
   }) => {
     const sent = await openChoices(page, { initial: neverChose() });
     await page.getByRole('checkbox', { name: /Email me when something needs me/ }).check();
-    for (const label of [
-      'One thing needs you',
-      'Your request moved forward',
-      'A date is coming up',
-      'Your mission is complete',
-    ])
-      await page.getByRole('checkbox', { name: new RegExp(label) }).uncheck();
+    // CQ-50: only the message that is sent today is listed.
+    await page.getByRole('checkbox', { name: /One thing needs you/ }).uncheck();
     await page.getByRole('button', { name: 'Switch email on' }).click();
     await expect(page.getByRole('alert')).toHaveText(
       'Pick at least one message, or leave email off.',
@@ -263,7 +259,8 @@ test.describe('email choices', () => {
     const sent = await openChoices(page, {
       initial: initial({ timeZone: 'Asia/Dhaka', version: 1 }),
     });
-    await page.getByRole('checkbox', { name: /A date is coming up/ }).uncheck();
+    // CQ-50: messages not sent yet are not listed; the person's earlier choices for them are kept.
+    await expect(page.getByRole('checkbox', { name: /A date is coming up/ })).toHaveCount(0);
     await page.getByRole('checkbox', { name: /One email a day/ }).check();
     await page.getByRole('checkbox', { name: /Quiet hours/ }).check();
     await page.getByLabel('Quiet from').fill('21:30');
@@ -273,7 +270,7 @@ test.describe('email choices', () => {
     await expect(page.getByRole('status').filter({ hasText: 'Email is on.' })).toBeVisible();
     expect(sent).toEqual([
       {
-        kinds: ['your-move', 'update', 'complete'],
+        kinds: ['your-move', 'update', 'countdown', 'complete'],
         digest: true,
         quietStart: '21:30',
         quietEnd: '06:45',

@@ -8,6 +8,7 @@ import {
   type NotificationPreferences,
 } from '@corridra/domain/notifications';
 import './notifications-form.css';
+import { TimeZoneSelect } from '../../../components/ux/pickers';
 
 // The words people read here are plain English. Another language needs a reviewed catalog entry first;
 // the page is not offered in any other language until then (ADR-066).
@@ -35,13 +36,9 @@ const languageWords: Record<string, string> = {
   es: 'Spanish',
   ar: 'Arabic',
 };
-const zones = (() => {
-  try {
-    return Intl.supportedValuesOf('timeZone');
-  } catch {
-    return ['UTC'];
-  }
-})();
+// CQ-50: only messages that are really sent are offered. A choice already saved for a message that is
+// not sent yet is kept as it is (the person's own earlier tick), but it is not listed.
+const sentToday: readonly NotificationKind[] = ['your-move'];
 
 type SavedSettings = Pick<
   NotificationPreferences,
@@ -208,20 +205,22 @@ export function NotificationsForm({
         <>
           <fieldset>
             <legend>Which messages</legend>
-            {notificationKinds.map((kind) => (
-              <label key={kind} className="notifications-check">
-                <input
-                  type="checkbox"
-                  checked={kinds.includes(kind)}
-                  onChange={() => toggle(kind)}
-                  disabled={closed}
-                />
-                <span>
-                  <strong>{kindWords[kind].label}</strong>
-                  <span>{kindWords[kind].line}</span>
-                </span>
-              </label>
-            ))}
+            {notificationKinds
+              .filter((kind) => sentToday.includes(kind))
+              .map((kind) => (
+                <label key={kind} className="notifications-check">
+                  <input
+                    type="checkbox"
+                    checked={kinds.includes(kind)}
+                    onChange={() => toggle(kind)}
+                    disabled={closed}
+                  />
+                  <span>
+                    <strong>{kindWords[kind].label}</strong>
+                    <span>{kindWords[kind].line}</span>
+                  </span>
+                </label>
+              ))}
           </fieldset>
           <fieldset>
             <legend>How often</legend>
@@ -271,20 +270,14 @@ export function NotificationsForm({
                 </label>
               </div>
             )}
-            <label className="field">
-              Your time zone
-              <select
-                value={timeZone}
-                onChange={(event) => setTimeZone(event.target.value)}
-                disabled={closed}
-              >
-                {(zones.includes(timeZone) ? zones : [timeZone, ...zones]).map((zone) => (
-                  <option key={zone} value={zone}>
-                    {zone}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <TimeZoneSelect
+              label="Your time zone"
+              value={timeZone}
+              onChange={(zone) => {
+                if (zone) setTimeZone(zone);
+              }}
+              disabled={closed}
+            />
           </fieldset>
           <fieldset>
             <legend>Language of the email</legend>
