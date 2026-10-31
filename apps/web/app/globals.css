@@ -1317,7 +1317,7 @@ summary:hover {
   background: var(--positive-surface);
 }
 .ux-status[data-tone='caution'] {
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .ux-status[data-tone='critical'] {
@@ -2135,6 +2135,8 @@ summary:hover {
   --positive-surface: var(--ac-positive-surface);
   --caution: var(--ac-warning);
   --caution-surface: var(--ac-warning-surface);
+  /* D18: warning text is Ink on the warning tint; the brown stays for borders and marks only. */
+  --caution-text: var(--ac-ink);
   --critical: var(--ac-critical);
   --critical-surface: var(--ac-critical-surface);
   --info: var(--ac-cobalt);
@@ -3029,7 +3031,7 @@ th {
   background: var(--positive-surface);
 }
 .guide-tag[data-tone='caution'] {
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .guide-hero .label,
@@ -4266,7 +4268,7 @@ th {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .guide-bn > summary {
@@ -4871,7 +4873,7 @@ th {
   background: var(--info-surface);
 }
 .guide-detail-card dt[data-tone='caution'] {
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .guide-detail-card dt[data-tone='positive'] {
@@ -7832,7 +7834,7 @@ th {
   font-weight: 600;
 }
 .ac1-compare [data-tone='miss'] {
-  color: var(--caution);
+  color: var(--caution-text);
   font-weight: 600;
 }
 .ac1-compare [data-tone='bad'] {
