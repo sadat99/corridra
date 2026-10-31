@@ -15,7 +15,8 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
   page,
   request,
 }) => {
-  test.setTimeout(120000);
+  // PR221 added outage page loads, a sign-in and axe at four widths: CI now takes about 120 s.
+  test.setTimeout(180000);
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const hydrationErrors: string[] = [];

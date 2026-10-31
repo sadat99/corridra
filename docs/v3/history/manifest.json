@@ -230,6 +230,14 @@
       "bytes": 12062,
       "sha256": "b81aa2af82a699c40e7f685ae8ff10eceaffc9e057d356b12cc25b161bc99847",
       "meaning": "Exact active-index snapshot before the 31 October 2026 phone follow-ups records refresh (unchanged from dac948d to f06d610), which recorded the PR221 merge and deploy, the draft phone follow-ups PR (billing plan form and Research and Delivery jump bars on phones) and the owner's 31 October words, and folded the PR219, PR220 and PR221 lines into one; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "1b09e89",
+      "archive": "docs/v3/history/ledger-before-ci-speedup-records-2026-10-31.md",
+      "bytes": 12250,
+      "sha256": "0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 CI speedup records refresh (unchanged from 1b09e89 to 33b7cfc), which recorded the PR222 merge and deploy, draft PR224 (six operator shards, the Chromium cache and browser runtime fingerprint, the install verifier requiring all six operator shards, the shard guard and the startup test timeout) and the owner's 31 October words, and shortened the PR219 to PR221 and phone follow-ups lines; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
