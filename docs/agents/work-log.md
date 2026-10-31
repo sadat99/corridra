@@ -2285,3 +2285,17 @@ Preserved: every test assertion; no retries added; the `validate` job and its ne
 Records (this scribe pass, over `33b7cfc`): this entry; `docs/V3_LEDGER.md` (state, owner words, PR219 to PR222 folded into one line, the PR224 line, next action, lessons); `docs/v3/KNOWN_ISSUES.md` (KI-02 Chromium cache sentence, KI-28 fingerprint Do bullet); `docs/v3/history/ledger-before-ci-speedup-records-2026-10-31.md` (the exact 12,250-byte ledger at `1b09e89`, unchanged to `33b7cfc`, sha256 `0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc`, in the manifest and the documentation map).
 
 Next: PR224 needs CI green on its final head; then the owner's "squash merge when green" applies. Then the measured shard map follow-up. The owner decisions above stay open; otherwise unchanged: the owner's Pulse checks and the home page words review.
+
+## 31 October 2026: CI result on the CI speedup PR (PR224, head `33b7cfc`)
+
+Follows the entry above; records the CI run that was pending when it was written. Source: GitHub check runs and annotations for `33b7cfc` (REST), and the job times relayed by the conductor.
+
+- Result: every job green, `validate` success (18:58:01Z). CodeQL analyses success.
+- Job durations (s): `operator (1)` 338, `(2)` 1172, `(3)` 296, `(4)` 272, `(5)` 271, `(6)` 1610; `browser` 952; `ux` 256, 288, 287; `checks` 162. The round ran 18:30:45Z to 18:58:01Z, about 27 minutes.
+- Honest outcome: the expected 22 to 24 minutes did NOT happen. `operator (6)` holds the `workspace.spec.ts` chain plus the remaining late files and now sets the round, as `operator (3)` did before. Wall-clock gain is about zero. The real gains of this PR are the startup outage timeout headroom (no more 30-minute re-runs for that test), the stricter install verifier (all six operator shards) and the runtime fingerprint.
+- Fingerprint (KI-28): the "Browser runtime fingerprint" notice is identical in all 10 browser jobs: `playwright=1.64.1`, `browsers=chromium-1248 chromium_headless_shell-1248 ffmpeg-1013`, `fonts=c0acc313fcf66d1e`, `font-packages=0c3cd4dad3ac6db4`, `image=ubuntu24-20261026.354.1`. Nine jobs had `cache-hit=false` and one `cache-hit=true` with the same hashes, so the cache does not change fonts (answers the brief's UNKNOWN item 5 for this image).
+- Current-shape docs checked for "three operator shards": none found outside `ci.yml` and the install verifier, which already say six; mentions of `operator (3)` in KI-01, KI-02 and older receipts are historical and left as written.
+
+Records (this scribe pass, over `ef82c98`): this entry; `docs/V3_LEDGER.md` (state, the PR224 line with the measured result, next action).
+
+Next: the records commits need CI green, then the owner's "squash merge when green" applies to PR224. The only route to a real speedup is the measured shard-map follow-up: the shard holding the `workspace.spec.ts` chain is the floor, so split the chain by re-running the `workspace.spec.ts` setup tests where needed, and split `ux-plan-languages.spec.ts` by its five describe blocks, aiming at about 14 to 15 minutes.
