@@ -63,6 +63,9 @@ const env = {
   CORRIDRA_TEAM_INVITES: 'true',
   CORRIDRA_ROUTE_PACK_FORM: 'true',
   CORRIDRA_UX_OPERATOR_URLS: 'true',
+  // Draft languages are offered here so the shells can be checked in every language and in Arabic
+  // right to left (E-3, V-54). Production offers only reviewed languages.
+  CORRIDRA_LANGUAGES_PREVIEW: 'true',
   CORRIDRA_AI_FIXTURE_URL: 'http://127.0.0.1:3301',
   APP_ORIGIN: 'http://127.0.0.1:3300',
   DATA_ENVIRONMENT: 'synthetic',
