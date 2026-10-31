@@ -107,8 +107,9 @@ export function operatorReturnTo(value: string | undefined): string {
     : '/operator';
 }
 
-// Every way into operator sign-in is a full page load (a plain anchor or location change): it drops
-// the cached workspace, and Next 16.4.3 brings back a doubled or stale # on a soft return.
+// Every link into operator sign-in, and signing out, is a full page load (a plain anchor or location
+// change): it drops the cached workspace, and Next 16.4.3 brings back a doubled or stale # on a soft
+// return.
 export const operatorSignInPage = '/operator/signin';
 
 /**

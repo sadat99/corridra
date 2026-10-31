@@ -141,6 +141,14 @@ test('Verify workspace access returns to the same workspace and section', async 
         'workspace-sources?token=x',
         '//example.invalid',
       ]) {
+        // Back to a section first, so each bad # is a real change the link has to follow.
+        await page.evaluate(() => {
+          window.location.hash = 'workspace-evidence';
+        });
+        await expect(link).toHaveAttribute(
+          'href',
+          signIn('/operator?workspace=' + tenant + '#workspace-evidence'),
+        );
         await page.evaluate((value) => {
           window.location.hash = value;
         }, hash);
@@ -214,6 +222,7 @@ test('Verify workspace access returns to the same workspace and section', async 
       expect(new URL(page.url()).hash).toBe('#workspace-sources');
       await expect(select).toHaveValue(tenant);
       await expect(page.locator('#workspace-sources')).toBeVisible();
+      await expect(page.locator('#workspace-sources')).toBeInViewport();
       await expect(page.locator('#workspace-sources')).toBeFocused();
     });
 
