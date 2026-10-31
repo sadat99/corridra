@@ -172,7 +172,12 @@ test('Verify workspace access returns to the same workspace and section', async 
       );
       await page.unroute(workspaceRead);
       await retry.click();
-      await expect(page.getByText('Your access: owner', { exact: true })).toBeVisible();
+      // Recovered in place: the section the address names opens, and the access state is gone.
+      await expect(page.locator('#workspace-sources')).toBeVisible();
+      await expect(select).toHaveValue(tenant);
+      await expect(page.getByText('Workspace could not be loaded.', { exact: true })).toHaveCount(
+        0,
+      );
       await expect(link).toHaveCount(0);
     });
 
