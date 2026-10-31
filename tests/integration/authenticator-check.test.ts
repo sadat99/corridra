@@ -7,9 +7,19 @@ import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 
 const roles = ['owner', 'admin', 'operator', 'reviewer', 'viewer'] as const;
 
-test('a verify answer without an error is the only accepted code', () => {
-  expect(classifyVerifyResult({ error: null })).toBe('accepted');
-  expect(classifyVerifyResult({})).toBe('accepted');
+test('only a verify answer that carries a session token and user id is an accepted code', () => {
+  expect(classifyVerifyResult({ data: { token: 't', user: { id: 'u' } }, error: null })).toBe(
+    'accepted',
+  );
+  for (const result of [
+    { error: null },
+    {},
+    { data: {}, error: null },
+    { data: { token: 't' }, error: null },
+    { data: { user: { id: 'u' } }, error: null },
+    { data: '<html>', error: null },
+  ])
+    expect(classifyVerifyResult(result)).toBe('unknown');
 });
 
 test('a wrong or expired code is not accepted, and only that answer says so', () => {

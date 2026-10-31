@@ -5,23 +5,43 @@ import { workspaceSections } from './workspace-navigation';
 export type AuthenticatorOutcome =
   'accepted' | 'invalid-code' | 'rate-limited' | 'signed-out' | 'origin-rejected' | 'unknown';
 
-type VerifyResult = { error?: { status?: number; code?: string } | null } | null | undefined;
+type VerifyResult =
+  { data?: unknown; error?: { status?: number; code?: string } | null } | null | undefined;
 
 /**
- * The outcome of a two-factor verify answer. A wrong or expired code is the only "not accepted";
- * a limit, an ended sign-in or a refused origin means the code was not checked; anything else
- * stays unknown, never success.
+ * The outcome of a two-factor verify answer. Only an answer that carries the session the server
+ * records the check against (a token and a user id, the same shape the assurance hook in
+ * packages/auth/src/index.ts reads) is accepted. A wrong or expired code is the only "not
+ * accepted"; a limit, an ended sign-in or a refused origin means the code was not checked;
+ * anything else stays unknown, never success.
  */
 export function classifyVerifyResult(result: VerifyResult): AuthenticatorOutcome {
   if (!result || typeof result !== 'object') return 'unknown';
   const { error } = result;
-  if (error === null || error === undefined) return 'accepted';
+  if (error === null || error === undefined)
+    return hasSession(result.data) ? 'accepted' : 'unknown';
   if (error.status === 401) return error.code === 'INVALID_CODE' ? 'invalid-code' : 'signed-out';
   if (error.status === 400 && error.code === 'TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE')
     return 'signed-out';
   if (error.status === 429) return 'rate-limited';
   if (error.status === 403) return 'origin-rejected';
   return 'unknown';
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function hasSession(data: unknown): boolean {
+  if (!data || typeof data !== 'object' || !('token' in data) || !('user' in data)) return false;
+  const { token, user } = data;
+  return (
+    isNonEmptyString(token) &&
+    !!user &&
+    typeof user === 'object' &&
+    'id' in user &&
+    isNonEmptyString(user.id)
+  );
 }
 
 /**

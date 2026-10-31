@@ -72,7 +72,8 @@ test('the authenticator panel says each check result beside the field and keeps 
       await handler(route);
     });
   }
-  const accept = (route: Route) => route.fulfill({ json: {} });
+  const accept = (route: Route) =>
+    route.fulfill({ json: { token: 'synthetic-session', user: { id: 'synthetic-user' } } });
   async function openFromControls() {
     await openSection(page, 'workspace-controls');
     await page.locator('#workspace-controls a[href="#workspace-authenticator"]').click();
@@ -246,7 +247,8 @@ test('the authenticator panel says each check result beside the field and keeps 
       );
       await expect(panel.getByRole('link', { name: 'Sign in again' })).toHaveAttribute(
         'href',
-        '/operator/signin?next=%2Foperator%23workspace-authenticator',
+        '/operator/signin?next=' +
+          encodeURIComponent('/operator?workspace=' + seed.tenantId + '#workspace-authenticator'),
       );
       await expect(panel).not.toContainText('Code not accepted');
 
@@ -267,6 +269,17 @@ test('the authenticator panel says each check result beside the field and keeps 
       await expect(notice).not.toHaveAttribute('data-tone');
       await expect(panel).not.toContainText('Code accepted');
       await expect(panel).not.toContainText('Code not accepted');
+      await expect(statusLine).toBeEmpty();
+
+      // A success status without the session the server records the check against is no answer.
+      await answerVerify((route) => route.fulfill({ json: {} }));
+      await submit('123456');
+      await expect.poll(() => verifyRequests).toBe(1);
+      await expect(panel.getByRole('status')).toHaveText(
+        'The check did not finish. There was no clear answer, so the code may not have been checked. Try again with the code your app shows now.',
+      );
+      await expect(notice).not.toHaveAttribute('data-tone');
+      await expect(panel).not.toContainText('Code accepted');
       await expect(statusLine).toBeEmpty();
       expect(
         (await new AxeBuilder({ page }).include('#workspace-authenticator').analyze()).violations,

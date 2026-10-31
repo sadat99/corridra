@@ -870,6 +870,7 @@ function TenantWorkspace({
               busy={busy}
               act={act}
               returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
+              tenant={tenant}
             />
           </section>
           {['owner', 'admin'].includes(data.role) && (

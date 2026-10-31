@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { PanelHeading } from './panel-heading';
 import { classifyVerifyResult, type AuthenticatorOutcome } from '../../lib/authenticator-check';
-import { operatorEntry } from '../../lib/workspace-navigation';
+import { operatorReturnTo } from '../../lib/workspace-navigation';
 
 type ResultKind = AuthenticatorOutcome | 'accepted-not-refreshed';
 type Result = { kind: ResultKind; acceptedAt: Date | null };
@@ -31,10 +31,12 @@ export function AuthenticatorCheck({
   busy,
   act,
   returnTo,
+  tenant,
 }: {
   busy: boolean;
   act: (work: () => Promise<unknown>) => Promise<boolean>;
   returnTo: ReturnTarget;
+  tenant: string;
 }) {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -154,7 +156,7 @@ export function AuthenticatorCheck({
               role={errorKinds.includes(result.kind) ? 'alert' : 'status'}
               aria-atomic="true"
             >
-              <ResultText result={result} returnTo={returnTo} />
+              <ResultText result={result} returnTo={returnTo} tenant={tenant} />
             </p>
           )
         )}
@@ -163,7 +165,26 @@ export function AuthenticatorCheck({
   );
 }
 
-function ResultText({ result, returnTo }: { result: Result; returnTo: ReturnTarget }) {
+// Sign in again and come back to this panel in this workspace. The return address goes through
+// the closed operator return list, so anything it does not allow falls back to the workspace.
+function signInAgain(tenant: string): string {
+  return (
+    '/operator/signin?next=' +
+    encodeURIComponent(
+      operatorReturnTo('/operator?workspace=' + tenant + '#workspace-authenticator'),
+    )
+  );
+}
+
+function ResultText({
+  result,
+  returnTo,
+  tenant,
+}: {
+  result: Result;
+  returnTo: ReturnTarget;
+  tenant: string;
+}) {
   const back = returnTo && (
     <>
       {' '}
@@ -219,7 +240,7 @@ function ResultText({ result, returnTo }: { result: Result; returnTo: ReturnTarg
         <>
           <strong>You are signed out.</strong> The code was not checked because your sign-in has
           ended. Copy any unsaved entries before you leave this page.{' '}
-          <Link className="text-link" href={operatorEntry('workspace-authenticator')}>
+          <Link className="text-link" href={signInAgain(tenant)}>
             Sign in again
           </Link>
         </>
