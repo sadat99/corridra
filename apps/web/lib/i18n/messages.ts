@@ -4,9 +4,20 @@
 // are never shown to the public before that.
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
+import { wsA, wsAEn } from './ws/ws-a';
+import { wsB, wsBEn } from './ws/ws-b';
+import { wsC, wsCEn } from './ws/ws-c';
+import { wsD, wsDEn } from './ws/ws-d';
+import { wsE, wsEEn } from './ws/ws-e';
 
 export const en = {
   ...homeEn,
+  // Commercial readiness stream blocks (one file per stream, so streams never edit the same lines).
+  ...wsAEn,
+  ...wsBEn,
+  ...wsCEn,
+  ...wsDEn,
+  ...wsEEn,
   skip: 'Skip to content',
   'header.home': 'Corridra home',
   'header.menu': 'Menu',
@@ -161,6 +172,11 @@ export type MessageKey = keyof typeof en;
 type Catalog = Record<MessageKey, string>;
 
 const bn: Catalog = {
+  ...wsA.bn,
+  ...wsB.bn,
+  ...wsC.bn,
+  ...wsD.bn,
+  ...wsE.bn,
   'fq.visits.label': 'ব্যবসায়িক সফর, পরিদর্শন বা মেলা',
   'fq.visits.hint': 'অথবা অন্য কোনো আন্তর্জাতিক ব্যবসার লক্ষ্য।',
   ...homeWords.bn,
@@ -313,6 +329,11 @@ const bn: Catalog = {
 };
 
 const zh: Catalog = {
+  ...wsA.zh,
+  ...wsB.zh,
+  ...wsC.zh,
+  ...wsD.zh,
+  ...wsE.zh,
   'fq.visits.label': '商务旅行、参观或展会',
   'fq.visits.hint': '或其他国际业务目标。',
   ...homeWords.zh,
@@ -456,6 +477,11 @@ const zh: Catalog = {
 };
 
 const es: Catalog = {
+  ...wsA.es,
+  ...wsB.es,
+  ...wsC.es,
+  ...wsD.es,
+  ...wsE.es,
   'fq.visits.label': 'Viajes, visitas o ferias',
   'fq.visits.hint': 'U otro objetivo de negocio internacional.',
   ...homeWords.es,
@@ -609,6 +635,11 @@ const es: Catalog = {
 };
 
 const ar: Catalog = {
+  ...wsA.ar,
+  ...wsB.ar,
+  ...wsC.ar,
+  ...wsD.ar,
+  ...wsE.ar,
   'fq.visits.label': 'رحلات أو زيارات أو معارض',
   'fq.visits.hint': 'أو هدف آخر للأعمال الدولية.',
   ...homeWords.ar,
@@ -755,6 +786,11 @@ const ar: Catalog = {
 };
 
 const fr: Catalog = {
+  ...wsA.fr,
+  ...wsB.fr,
+  ...wsC.fr,
+  ...wsD.fr,
+  ...wsE.fr,
   'fq.visits.label': 'Voyages, visites ou salons',
   'fq.visits.hint': 'Ou un autre objectif commercial international.',
   ...homeWords.fr,
@@ -909,6 +945,11 @@ const fr: Catalog = {
 };
 
 const de: Catalog = {
+  ...wsA.de,
+  ...wsB.de,
+  ...wsC.de,
+  ...wsD.de,
+  ...wsE.de,
   'fq.visits.label': 'Reisen, Besuche oder Messen',
   'fq.visits.hint': 'Oder ein anderes internationales Geschäftsziel.',
   ...homeWords.de,

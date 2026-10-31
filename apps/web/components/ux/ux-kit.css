@@ -1,0 +1,208 @@
+/* Shared form and feedback kit (commercial readiness program, 5.2). Brand tokens only (D18). Owner: WS-E. */
+.ux-kit-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.ux-kit-label {
+  font-weight: 600;
+  color: var(--ac-ink);
+}
+.ux-kit-hint {
+  color: var(--ac-text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+.ux-kit-error {
+  color: var(--ac-critical);
+  font-size: 0.875rem;
+  margin: 0;
+}
+.ux-kit-input {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ac-border-strong);
+  border-radius: 8px;
+  background: var(--ac-paper);
+  color: var(--ac-ink);
+  font: inherit;
+}
+.ux-kit-input:focus-visible,
+.ux-kit-option:focus-visible,
+.ux-kit-button:focus-visible {
+  outline: 3px solid var(--ac-cobalt);
+  outline-offset: 2px;
+}
+.ux-kit-input[aria-invalid='true'] {
+  border-color: var(--ac-critical);
+}
+.ux-kit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.ux-kit-row > .ux-kit-input {
+  flex: 1 1 12rem;
+  width: auto;
+}
+.ux-kit-zone,
+.ux-kit-preview {
+  color: var(--ac-text-secondary);
+  font-size: 0.875rem;
+}
+.ux-kit-combo {
+  position: relative;
+  min-width: 0;
+}
+.ux-kit-listbox {
+  position: absolute;
+  z-index: 30;
+  inset-inline: 0;
+  top: calc(100% + 4px);
+  max-height: 18rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--ac-paper);
+  border: 1px solid var(--ac-border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-2);
+}
+.ux-kit-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 44px;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ac-ink);
+}
+.ux-kit-option[aria-selected='true'],
+.ux-kit-option[data-active='true'] {
+  background: var(--ac-surface-selected);
+}
+.ux-kit-option-hint {
+  color: var(--ac-text-secondary);
+  font-size: 0.8125rem;
+}
+.ux-kit-divider {
+  border-top: 1px solid var(--ac-border);
+  margin: 0.25rem 0;
+}
+.ux-kit-feedback {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+}
+.ux-kit-feedback[data-kind='success'] {
+  background: var(--ac-positive-surface);
+  color: var(--ac-ink);
+}
+.ux-kit-feedback[data-kind='error'] {
+  background: var(--ac-critical-surface);
+  color: var(--ac-ink);
+}
+.ux-kit-summary {
+  border: 2px solid var(--ac-critical);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  background: var(--ac-critical-surface);
+  color: var(--ac-ink);
+}
+.ux-kit-summary h2 {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+.ux-kit-summary a {
+  color: var(--ac-ink);
+}
+.ux-kit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--ac-border-strong);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ac-ink);
+  background: var(--ac-surface-subtle);
+  white-space: nowrap;
+}
+.ux-kit-chip[data-tone='waiting'] {
+  background: var(--ac-warning-surface);
+}
+.ux-kit-chip[data-tone='active'] {
+  background: var(--ac-surface-selected);
+}
+.ux-kit-chip[data-tone='done'] {
+  background: var(--ac-positive-surface);
+}
+.ux-kit-chip[data-tone='stopped'] {
+  background: var(--ac-critical-surface);
+}
+.ux-kit-dialog {
+  border: 1px solid var(--ac-border-strong);
+  border-radius: 12px;
+  padding: 1.25rem;
+  max-width: min(28rem, calc(100vw - 2rem));
+  color: var(--ac-ink);
+  background: var(--ac-paper);
+}
+.ux-kit-dialog::backdrop {
+  background: color-mix(in srgb, var(--ac-navy) 45%, transparent);
+}
+.ux-kit-button {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--ac-navy);
+  background: var(--ac-navy);
+  color: var(--ac-paper);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ux-kit-button[data-variant='secondary'] {
+  background: transparent;
+  color: var(--ac-navy);
+}
+.ux-kit-header {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.ux-kit-header h1 {
+  margin: 0;
+}
+.ux-kit-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+.ux-kit-crumbs li + li::before {
+  content: '/';
+  margin-inline-end: 0.35rem;
+  color: var(--ac-text-tertiary);
+}
+.ux-kit-inbox ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.ux-kit-inbox li[data-unread='true'] {
+  font-weight: 600;
+}

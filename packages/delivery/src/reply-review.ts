@@ -1,5 +1,5 @@
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { stepUpRequired } from '@corridra/domain';
 import {
   replyReviewCommand,
   type ReplyReviewReason,
@@ -44,7 +44,7 @@ export class ReplyReviewService {
   async review(ctx: RequestContext, input: unknown) {
     const value = replyReviewCommand.parse(input);
     return withTenant(this.pool, ctx, 'delivery.share', async ({ db, freshMfa }) => {
-      if (!freshMfa) throw new DomainError('Verify your authenticator again to continue', 401);
+      if (!freshMfa) throw stepUpRequired();
       const { rows } = await db.query<{ r: { id: string; replayed: boolean } }>(
         'SELECT app.review_recipient_reply($1,$2,$3,$4,$5,$6) AS r',
         [

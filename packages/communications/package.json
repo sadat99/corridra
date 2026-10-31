@@ -5,10 +5,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./adapters": "./src/adapters.ts"
+    "./adapters": "./src/adapters.ts",
+    "./inbox": "./src/inbox.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",
-    "@corridra/domain": "workspace:*"
+    "@corridra/domain": "workspace:*",
+    "zod": "4.6.7"
   }
 }

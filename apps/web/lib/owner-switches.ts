@@ -544,6 +544,41 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Delivery',
     kind: 'planned',
   },
+  {
+    name: 'CORRIDRA_UX_SHELLS_V2',
+    label: 'One app frame per role',
+    line: 'Customers, the team and contributors each get their own frame without the public header; the team gets a left sidebar.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_UX_MISSIONS_V2',
+    label: 'Mission queue and mission pages',
+    line: 'The team mission list becomes a compact queue, and each mission opens on its own page with tabs.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_NOTIFICATIONS_V2',
+    label: 'Inbox and hand-off emails',
+    line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_TEAM_INVITES',
+    label: 'Team invitations in the app',
+    line: 'Owners and admins invite team members by email with a role and a 7-day expiry, and can resend or cancel.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_ROUTE_PACK_FORM',
+    label: 'Guided route pack form',
+    line: 'Route packs are added with a guided form instead of raw JSON, which stays under Advanced (developers).',
+    group: 'Team access',
+    kind: 'flag',
+  },
 ];
 
 /** Names that hold a secret. They are never listed and their values are never read. */
