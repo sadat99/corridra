@@ -1,3 +1,5 @@
+import { CustomerDeliveredReportService } from '@corridra/auth/customer-delivered-reports';
+import { listDeliveredPublications } from '@corridra/delivery/delivered-publications';
 import { InboxService } from '@corridra/communications/inbox';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
@@ -288,6 +290,21 @@ function createServices() {
       readCustomerSession,
     ),
     customerDelivery: new CustomerDeliveryService(runtimePool),
+    // CQ-77: reports published for the customer's own requests (WS-B service, WS-C lister).
+    customerDeliveredReports: new CustomerDeliveredReportService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerDeliveryEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+      listDeliveredPublications,
+    ),
     customerAssignedMissions: new CustomerAssignedMissionService(
       runtimePool,
       authPool,

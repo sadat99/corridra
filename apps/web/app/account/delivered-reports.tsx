@@ -27,7 +27,7 @@ export async function DeliveredReports({ subject, issuer }: { subject: string; i
           <li key={report.id}>
             <Link prefetch={false} href={report.href}>
               <strong>{report.title}</strong>
-              <span>Published {formatDate(report.publishedAt)}</span>
+              {report.publishedAt ? <span>Published {formatDate(report.publishedAt)}</span> : null}
             </Link>
           </li>
         ))}

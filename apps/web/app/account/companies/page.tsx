@@ -36,7 +36,7 @@ export default async function Page() {
         </a>
       </WorkspaceShell>
     );
-  if (!session.data?.user) redirect('/signin');
+  if (!session.data?.user) redirect(`/signin?next=${encodeURIComponent('/account/companies')}`);
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell

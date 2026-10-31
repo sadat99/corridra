@@ -117,9 +117,11 @@ describe('CQ-77: a published report reaches Your Move', () => {
       },
       { id: 'd', title: '', requestId: 'r', publishedAt: '2026-10-01T00:00:00Z', href: '/y' },
       { id: 'e', title: 'Bad date', requestId: 'r', publishedAt: 'soon', href: '/z' },
+      // The reviewed delivery read gives no publish time today; such a report is still shown.
+      { id: 'f', title: 'No date (madeup)', requestId: 'r', publishedAt: '', href: '/w' },
       null,
     ]);
-    expect(rows.map((r) => r.id)).toEqual(['a']);
+    expect(rows.map((r) => r.id)).toEqual(['a', 'f']);
     expect(cleanReports('not a list')).toEqual([]);
   });
 });

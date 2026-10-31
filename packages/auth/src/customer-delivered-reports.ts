@@ -37,7 +37,9 @@ export function cleanReports(rows: unknown): DeliveredReport[] {
         (row as DeliveredReport).title.trim().length > 0 &&
         typeof (row as DeliveredReport).requestId === 'string' &&
         typeof (row as DeliveredReport).publishedAt === 'string' &&
-        Number.isFinite(Date.parse((row as DeliveredReport).publishedAt)) &&
+        // The reviewed delivery read does not always give a publish time; an empty one is kept.
+        ((row as DeliveredReport).publishedAt === '' ||
+          Number.isFinite(Date.parse((row as DeliveredReport).publishedAt))) &&
         typeof (row as DeliveredReport).href === 'string' &&
         (row as DeliveredReport).href.startsWith('/') &&
         !(row as DeliveredReport).href.startsWith('//'),

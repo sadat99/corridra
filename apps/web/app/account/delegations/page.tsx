@@ -38,7 +38,7 @@ export default async function Page() {
   const session = await auth.getSession({ query: { disableCookieCache: true } }).catch(() => null);
   if (!session || session.error)
     return unavailable('Your account could not be checked. Return and try again.');
-  if (!session.data?.user) redirect('/signin');
+  if (!session.data?.user) redirect(`/signin?next=${encodeURIComponent('/account/delegations')}`);
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="Delegation registrations">

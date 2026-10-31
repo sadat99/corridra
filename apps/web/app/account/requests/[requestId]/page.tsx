@@ -40,7 +40,8 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         </a>
       </WorkspaceShell>
     );
-  if (!session.data?.user) redirect('/signin');
+  if (!session.data?.user)
+    redirect(`/signin?next=${encodeURIComponent(`/account/requests/${parsed.data}`)}`);
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="Your saved request">
