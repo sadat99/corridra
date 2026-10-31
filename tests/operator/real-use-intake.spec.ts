@@ -431,7 +431,7 @@ for (const width of [1366, 390])
       page.getByRole('heading', { name: 'Your private request', exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Source suppliers', exact: true }),
+      page.getByRole('heading', { name: 'Source suppliers in China', exact: true }),
     ).toBeVisible();
     await expect(page.getByText(/Sample data only/)).toHaveCount(0);
     const requests = (
@@ -531,7 +531,7 @@ for (const code of ['de', 'ar'] as const)
     await expect(page).toHaveURL(/\/account\/requests\/[a-f0-9-]{36}$/);
     // The request in the account is the English one: the stored objective and market are the English values.
     await expect(
-      page.getByRole('heading', { name: 'Source suppliers', exact: true }),
+      page.getByRole('heading', { name: 'Source suppliers in China', exact: true }),
     ).toBeVisible();
     const rows = (
       await owner.query(

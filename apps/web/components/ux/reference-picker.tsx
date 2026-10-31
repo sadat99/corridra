@@ -41,13 +41,21 @@ export function ReferencePicker({
       )
         .then(async (r) => {
           if (!r.ok) throw new Error('search failed');
-          const body = (await r.json()) as { options: PickerOption[] };
+          const body = (await r.json().catch(() => null)) as { options?: unknown } | null;
           if (call !== latest.current) return;
+          // A response without a list of options is a failed search, never an empty crash.
+          if (!body || !Array.isArray(body.options)) throw new Error('search failed');
+          const found = body.options.filter(
+            (o): o is PickerOption =>
+              !!o &&
+              typeof (o as PickerOption).value === 'string' &&
+              typeof (o as PickerOption).label === 'string',
+          );
           setFailed(false);
           // Keep the chosen option visible even when a new search does not return it.
           setOptions((current) => {
             const chosen = current.find((o) => o.value === value);
-            const next = body.options;
+            const next = found;
             return chosen && !next.some((o) => o.value === chosen.value) ? [chosen, ...next] : next;
           });
         })
