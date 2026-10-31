@@ -154,8 +154,9 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
           </button>
         </form>
       )}
+      {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}
       {done && (
-        <Link
+        <a
           className="primary-link"
           href={
             contributor && invite?.workspaceId
@@ -165,7 +166,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
           }
         >
           Sign in and set up authenticator
-        </Link>
+        </a>
       )}
     </section>
   );

@@ -53,7 +53,7 @@ Every change meets the [quality bar](quality-bar.md): clean, secure, easy to use
 
 ## Finishing
 
-1. The scribe's work-log and ledger updates go in the same PR as the change.
+1. The scribe's work-log and ledger updates go in the same PR as the change. When a run ships several PRs, only the last PR updates the ledger, and its records commit comes last.
 2. Push, open a draft PR, watch it. Merge and deploy only as the owner directions in the brief allow, and only when the verifier says READY on the exact head.
 3. After the merge, the verifier confirms the deployment for the merged commit; the next run's scribe records it.
 4. Clean up branches and preview databases only as the standing rules in `AGENTS.md` allow.

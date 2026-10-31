@@ -104,7 +104,11 @@ function Notice({
       data-tone={ok ? 'ok' : 'error'}
       role={ok ? 'status' : 'alert'}
     >
-      {!ok && <strong>Problem.</strong>}
+      {!ok && (
+        <>
+          <strong>Problem.</strong>{' '}
+        </>
+      )}
       {text}
     </p>
   );

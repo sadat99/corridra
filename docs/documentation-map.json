@@ -1199,6 +1199,16 @@
       "use": "Exact 031029e active-ledger bytes before the 30 October 2026 form-release check refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr219-records-2026-10-31.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact 0221edc active-ledger bytes before the 31 October 2026 PR219 records refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-pr220-records-2026-10-31.md",
+      "classification": "Immutable historical execution snapshot",
+      "use": "Exact bbc1da1 active-ledger bytes before the 31 October 2026 PR220 records refresh; manifest hash preserves evidence, relative links use docs/V3_LEDGER.md, not current state."
+    },
+    {
       "path": "docs/adr/0072-pinned-customer-specification-confirmation.md",
       "classification": "Architecture decision",
       "use": "Pinned customer confirmation through existing delivery requests; optional protected installation and independent activation."

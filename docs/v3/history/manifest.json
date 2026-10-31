@@ -198,6 +198,22 @@
       "bytes": 12226,
       "sha256": "ab1b4052ce11ccc5f6908540c95a637c6c06fda79c49caaeacf6a36a39bbf4a9",
       "meaning": "Exact active-index snapshot before the 30 October 2026 form-release check refresh, which recorded PR217 merged and deployed, the live six-language request form check and the owner-only list and next action; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "0221edc",
+      "archive": "docs/v3/history/ledger-before-pr219-records-2026-10-31.md",
+      "bytes": 12125,
+      "sha256": "e125d386b0dba28f0dbe0dc3024ca2768ab19797318c33543efaa0452c11ede9",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 PR219 records refresh, which recorded PR219 (the operator authenticator result) merged as 0221edc, the owner's production observation and KI-29, and shortened the install runs, PR215, PR216 and archive lines; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "bbc1da1",
+      "archive": "docs/v3/history/ledger-before-pr220-records-2026-10-31.md",
+      "bytes": 12003,
+      "sha256": "2413c41a26840088735872f643f944827ab4a3168fc39a41e8872c071d6f740a",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 PR220 records refresh (unchanged from bbc1da1 to a498343), which recorded draft PR220 (notice spacing and full-page-load sign-in links), the owner's 31 October directions and KI-30, and shortened the PR219, merged, install runs, PR215, PR216 and UX update lines; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

@@ -6,6 +6,7 @@ import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../lib/foundations';
 import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
 import { uxSwitchOn } from '../../lib/ux-switches';
+import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
 /**
@@ -64,9 +65,10 @@ export async function OperatorEntry({
         <Link className="text-link" href="/signin">
           Other sign-in options
         </Link>
-        <Link className="text-link" href="/operator/signin">
+        {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}
+        <a className="text-link" href={operatorSignInPath(requested, section)}>
           Verify your access
-        </Link>
+        </a>
       </WorkspaceShell>
     );
   return (

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { operatorSignInPage } from '../lib/workspace-navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
@@ -416,9 +417,9 @@ export function AccountForm({
           <Link className="text-link" href={accessPath('/verify-email')}>
             Verify your email
           </Link>
-          <Link className="text-link" href="/operator/signin">
+          <a className="text-link" href={operatorSignInPage}>
             Invited operator sign-in
-          </Link>
+          </a>
         </>
       )}
       {(mode === 'signup' || mode === 'verify') && (

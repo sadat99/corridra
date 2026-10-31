@@ -694,6 +694,10 @@ test('staff decline with a reason, keep internal notes apart and retry a lost sa
     .fill('Synthetic reason: not available for this team yet');
   await decline.getByRole('button', { name: 'Decline this request' }).click();
   await expect(page.getByRole('alert')).toContainText('Could not confirm');
+  // The bold lead is followed by one real space, so it reads "Problem. Could not..." aloud too.
+  const problem = page.locator('.billing-notice[data-tone="error"]');
+  expect(await problem.textContent()).toMatch(/^Problem\. \S/);
+  await expect(problem.locator('strong')).toHaveCSS('margin-right', '0px');
   await decline.getByRole('button', { name: 'Decline this request' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(2);

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { operatorSignInPage } from '../../lib/workspace-navigation';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
@@ -70,9 +71,9 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
             ? 'If this address has an active operator account, you will receive an operator password reset email. Check spam too. A pending invitation needs setup instead.'
             : 'Your operator password has changed. Previous operator sessions have been signed out. Sign in with your new password and existing authenticator.'}
         </p>
-        <Link className="primary-link" href="/operator/signin">
+        <a className="primary-link" href={operatorSignInPage}>
           Return to operator sign-in
-        </Link>
+        </a>
         {mode === 'request' && (
           <Link className="text-link" href="/operator/setup">
             Finish a pending invitation
