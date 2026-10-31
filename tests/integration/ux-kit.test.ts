@@ -46,6 +46,9 @@ vi.mock('next/link', () => ({
   default: ({ children, href }: { children: unknown; href: string }) =>
     createElement('a', { href }, children as never),
 }));
+// The kit files are TSX; the package type check has no JSX setting, so they are loaded by path.
+const kitDir = '../../apps/web/components/ux';
+const loadKit = async (name: string) => await import(/* @vite-ignore */ `${kitDir}/${name}`);
 
 describe('error summary focus (CQ-01)', () => {
   test('takes focus once per submit and never while the person types', () => {
@@ -76,7 +79,7 @@ describe('error summary focus (CQ-01)', () => {
     expect(fieldAnchor('a b"<x>')).toBe('a-b--x-');
   });
   test('the summary links each error to its field and has a unique title id', async () => {
-    const { ErrorSummary } = await import('../../apps/web/components/ux/feedback');
+    const { ErrorSummary } = await loadKit('feedback');
     const html = renderToStaticMarkup(
       createElement(ErrorSummary, {
         attempt: 1,
@@ -97,7 +100,7 @@ describe('error summary focus (CQ-01)', () => {
 
 describe('field help (UX-09, UX-11)', () => {
   test('one visible line and a named "?" button that controls the details', async () => {
-    const { FieldHelp } = await import('../../apps/web/components/ux/field-help');
+    const { FieldHelp } = await loadKit('field-help');
     const html = renderToStaticMarkup(
       createElement(FieldHelp, {
         id: 'budget-help',

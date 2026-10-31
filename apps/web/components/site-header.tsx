@@ -1,14 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-
-import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { CornerDock } from './corner-dock';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
-import { AppHeader } from './ux/app-header';
-import { signedInShellFor } from '../lib/ux/shells';
 import { sessionChanged } from './session-events';
 import { useSignOut } from './use-sign-out';
 
@@ -71,7 +67,7 @@ function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
 }
 
 /** The wordmark, drawn here only (the design system allows this one inline drawing). */
-function BrandMark() {
+export function BrandMark() {
   return (
     <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <path
@@ -83,7 +79,14 @@ function BrandMark() {
   );
 }
 
-type HeaderProps = {
+/**
+ * The public header. On signed-in pages with `CORRIDRA_UX_SHELLS_V2` on, the root layout shows the
+ * shell's own header instead (components/ux/shell-header.tsx).
+ */
+export function SiteHeader({
+  accounts = false,
+  mode,
+}: {
   accounts?: boolean;
   /**
    * UX update (`CORRIDRA_UX_FIRSTQ`, read on the server): the start button keeps its plain name. The
@@ -91,33 +94,7 @@ type HeaderProps = {
    * shows "Live" or "Preview" instead. Absent keeps the "(sample request)" screen-reader text.
    */
   mode?: 'sample' | 'real';
-  /**
-   * `CORRIDRA_UX_SHELLS_V2` (D14), read on the server. On a signed-in page (team, customer or
-   * contributor) the public marketing header gives way to that shell's own header. Off or absent,
-   * the header is the same on every page as before.
-   */
-  shells?: boolean;
-  /** `CORRIDRA_NOTIFICATIONS_V2`: the signed-in header shows the inbox. */
-  notifications?: boolean;
-  /** True on the production service: the team header says "Live", elsewhere "Preview". */
-  live?: boolean;
-};
-
-export function SiteHeader({
-  shells = false,
-  notifications = false,
-  live = false,
-  ...rest
-}: HeaderProps) {
-  const shell = signedInShellFor(usePathname());
-  if (shells && shell)
-    return (
-      <AppHeader kind={shell} live={live} notifications={notifications} brandMark={<BrandMark />} />
-    );
-  return <PublicHeader {...rest} />;
-}
-
-function PublicHeader({ accounts = false, mode }: Pick<HeaderProps, 'accounts' | 'mode'>) {
+}) {
   const t = useT();
   const who = useSignedIn(accounts);
   const { busy, message, signOut } = useSignOut();

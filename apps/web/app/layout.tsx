@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import { readNeonAuthConfig } from '@corridra/config';
-import { SiteHeader } from '../components/site-header';
+import { ShellHeader } from '../components/ux/shell-header';
 import { SiteFooter } from '../components/site-footer';
 import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
@@ -108,7 +108,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <CanonicalLink />
           <SkipLink />
           <div className="site-shell">
-            <SiteHeader
+            <ShellHeader
               shells={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')}
               notifications={uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')}
               live={process.env.VERCEL_ENV === 'production'}
