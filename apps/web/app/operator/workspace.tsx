@@ -364,12 +364,13 @@ function TenantWorkspace({
               Retry workspace
             </button>
           )}
-          <Link
+          {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}
+          <a
             className="text-link"
             href={operatorSignInPath(tenant, fragmentFor(hash, initialSection))}
           >
             Verify workspace access
-          </Link>
+          </a>
           <Link className="text-link" href="/signin">
             Other sign-in options
           </Link>

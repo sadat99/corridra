@@ -23,6 +23,17 @@ async function returnOf(page: Page) {
   return next;
 }
 
+// Sign-in opens as a new document, so nothing from the workspace page survives into it.
+async function markPage(page: Page) {
+  await page.evaluate(() => Object.assign(window, { beforeSignIn: true }));
+}
+async function expectNewDocument(page: Page) {
+  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+  expect
+    .soft(await page.evaluate(() => 'beforeSignIn' in window), 'sign-in opened as a new page')
+    .toBe(false);
+}
+
 // A viewer membership for the signed-in operator. One made by an earlier suite is reused.
 async function viewerWorkspace(ownerPassword: string, principalId: string) {
   const db = new Pool({
@@ -172,8 +183,10 @@ test('Verify workspace access returns to the same workspace and section', async 
       const target = signIn(workspaceUrl + '#workspace-sources');
       await expect(link).toHaveAttribute('href', target);
       await page.unroute(workspaceRead);
+      await markPage(page);
       await link.click();
       await expect(page).toHaveURL(origin + target);
+      await expectNewDocument(page);
       await clearSignInLimits(local.ownerPassword);
       await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
       await page.getByLabel('Password', { exact: true }).fill(seed.password);
@@ -193,6 +206,7 @@ test('Verify workspace access returns to the same workspace and section', async 
       await code.fill(totp(secret));
       await page.getByRole('button', { name: 'Verify and open workspace' }).click();
       await expect(page).toHaveURL(origin + workspaceUrl + '#workspace-sources');
+      expect(new URL(page.url()).hash).toBe('#workspace-sources');
       await expect(select).toHaveValue(tenant);
       await expect(page.locator('#workspace-sources')).toBeVisible();
       await expect(page.locator('#workspace-sources')).toBeFocused();
@@ -236,6 +250,69 @@ test('Verify workspace access returns to the same workspace and section', async 
       expect(memberships).toContain(await select.inputValue());
       expect(hydrationErrors).toEqual([]);
     });
+  } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await clearSignInLimits(local.ownerPassword);
+  }
+});
+
+test('Sign in again from a fresh authenticator load returns once to the panel', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const workspaceUrl = '/operator?workspace=' + seed.tenantId;
+  const verifyRoute = '**/api/operator-auth/two-factor/verify-totp';
+  const panel = page.locator('#workspace-authenticator');
+  await clearSignInLimits(local.ownerPassword);
+  try {
+    await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
+    const signInCounter = Math.floor(Date.now() / 30000);
+    await page.goto('/operator/signin');
+    await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(seed.password);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+
+    // A fresh load straight onto the panel, so the address the page started from carries the section.
+    await page.goto('about:blank');
+    await page.goto(workspaceUrl + '#workspace-authenticator');
+    await expect(panel).toBeVisible();
+    await page.route(verifyRoute, (route) =>
+      route.fulfill({
+        status: 401,
+        json: { code: 'INVALID_TWO_FACTOR_COOKIE', message: 'Invalid two factor cookie' },
+      }),
+    );
+    await panel.getByLabel('Current authenticator code', { exact: true }).fill('123456');
+    await panel.getByRole('button', { name: 'Verify again', exact: true }).click();
+    await expect(panel.getByRole('alert')).toContainText('You are signed out.');
+    const again = panel.getByRole('link', { name: 'Sign in again' });
+    const target = signIn(workspaceUrl + '#workspace-authenticator');
+    await expect(again).toHaveAttribute('href', target);
+    await page.unroute(verifyRoute);
+
+    await markPage(page);
+    await again.click();
+    await expect(page).toHaveURL(origin + target);
+    await expectNewDocument(page);
+    await clearSignInLimits(local.ownerPassword);
+    await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(seed.password);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    // A code is used once per window: wait past the window used to sign in.
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
+      .toBeGreaterThan(signInCounter);
+    await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect(page).toHaveURL(origin + workspaceUrl + '#workspace-authenticator');
+    expect(new URL(page.url()).hash).toBe('#workspace-authenticator');
+    await expect(panel).toBeVisible();
   } finally {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
     await clearSignInLimits(local.ownerPassword);

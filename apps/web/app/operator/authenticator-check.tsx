@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 import { PanelHeading } from './panel-heading';
@@ -229,9 +228,10 @@ function ResultText({
         <>
           <strong>You are signed out.</strong> The code was not checked because your sign-in has
           ended. Copy any unsaved entries before you leave this page.{' '}
-          <Link className="text-link" href={operatorSignInPath(tenant, 'workspace-authenticator')}>
+          {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}
+          <a className="text-link" href={operatorSignInPath(tenant, 'workspace-authenticator')}>
             Sign in again
-          </Link>
+          </a>
         </>
       );
     case 'origin-rejected':

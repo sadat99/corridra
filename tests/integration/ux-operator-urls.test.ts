@@ -203,4 +203,29 @@ describe('signing in again from the workspace comes back to the same workspace a
       '/operator',
     );
   });
+  it('every link into sign-in is a full page load, never a client-side Link', () => {
+    // Next 16.4.3 doubles the # part when a soft navigation returns to a page first loaded with one.
+    for (const path of [
+      'apps/web/app/operator/workspace.tsx',
+      'apps/web/app/operator/authenticator-check.tsx',
+      'apps/web/app/operator/operator-entry.tsx',
+    ]) {
+      const source = read(path);
+      expect(source, path).toMatch(/<a\s+className="text-link"\s+href=\{operatorSignInPath\(/);
+      expect(source, path).not.toMatch(/<Link[^>]*operatorSignInPath/);
+    }
+    expect(read('apps/web/app/operator/authenticator-check.tsx')).not.toContain("from 'next/link'");
+    const sources = (dir: string): string[] =>
+      readdirSync(resolve(dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory()
+          ? ['node_modules', '.next'].includes(entry.name)
+            ? []
+            : sources(`${dir}/${entry.name}`)
+          : /\.tsx?$/.test(entry.name)
+            ? [`${dir}/${entry.name}`]
+            : [],
+      );
+    for (const path of sources('apps/web'))
+      expect(read(path), path).not.toMatch(/<Link[^>]*operatorSignInPath/);
+  });
 });

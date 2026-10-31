@@ -65,9 +65,10 @@ export async function OperatorEntry({
         <Link className="text-link" href="/signin">
           Other sign-in options
         </Link>
-        <Link className="text-link" href={operatorSignInPath(requested, section)}>
+        {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}
+        <a className="text-link" href={operatorSignInPath(requested, section)}>
           Verify your access
-        </Link>
+        </a>
       </WorkspaceShell>
     );
   return (
