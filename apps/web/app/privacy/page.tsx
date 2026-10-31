@@ -6,12 +6,33 @@ import { customerSpecificationConfirmationEnabled } from '@corridra/auth/custome
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
+import './privacy.css';
 
 export const metadata = {
   title: 'Privacy notice | Corridra',
   description:
     'Who is responsible for your information, what Corridra collects and why, who it is shared with, where it is stored, how long it is kept and how to use your rights.',
 };
+// The contents list (UX-14). Each entry links to the section with that id below; the titles match the headings.
+const contents = [
+  ['summary', 'In short'],
+  ['contact', 'Who is responsible'],
+  ['accounts', 'Your account'],
+  ['requests', 'What a request contains'],
+  ['purposes', 'What we collect and why'],
+  ['drafts', 'Drafts and account activation'],
+  ['access', 'Who can see the work'],
+  ['contributors', 'Invited contributor work'],
+  ['sharing', 'Who we share information with'],
+  ['storage', 'Cookies and browser storage'],
+  ['transfers', 'Where information is stored'],
+  ['files', 'Files and deferred scanning'],
+  ['retention', 'Retention and deletion requests'],
+  ['rights', 'Your rights'],
+  ['security', 'How we protect information'],
+  ['children', 'Children'],
+  ['updates', 'Replies and next steps'],
+] as const;
 export default function Page() {
   const real = realUseEnabled();
   // The first mission email says what it does only while it can actually be sent.
@@ -41,16 +62,37 @@ export default function Page() {
           </nav>
           <p className="label">PRIVACY NOTICE</p>
           <h1>{real ? 'Your information, clearly explained.' : 'Use test details for now.'}</h1>
-          <p className="guide-lead">
-            {real
-              ? 'What we save, why we need it, who can access it and how to ask for help.'
-              : 'Mission intake is available for testing. Use invented names, companies and requests, with an email ending in @example.invalid. Do not submit real customer details or confidential documents.'}
-          </p>
+          {real ? (
+            <p className="guide-lead">
+              What we save, why we need it, who can access it and how to ask for help.
+            </p>
+          ) : (
+            // Only a preview or local copy runs without real use. It accepts made-up details only.
+            <p className="guide-lead" data-madeup-panel>
+              Mission intake is available for testing. Use invented names, companies and requests,
+              with an email ending in @example.invalid. Do not submit real customer details or
+              confidential documents.
+            </p>
+          )}
           <p className="guide-hint">
             Updated {updatedDay} October 2026. Request notice version: {noticeVersion}.
           </p>
         </div>
       </section>
+      <nav className="guide-doc guide-contents" aria-labelledby="privacy-contents-title">
+        <h2 id="privacy-contents-title">Contents</h2>
+        <ol>
+          {contents
+            .filter(
+              ([id]) => id !== 'contributors' || process.env.CORRIDRA_NETWORK_ENABLED === 'true',
+            )
+            .map(([id, title]) => (
+              <li key={id}>
+                <a href={`#${id}`}>{title}</a>
+              </li>
+            ))}
+        </ol>
+      </nav>
       <section className="guide-doc" aria-label="How Corridra handles information">
         <article id="summary">
           <h2>In short</h2>

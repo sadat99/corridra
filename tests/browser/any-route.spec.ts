@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 // The platform is multi-corridor. Two routes are spotlighted, but any pair of countries works.
 async function openAnyRoute(page: import('@playwright/test').Page) {
   await page.goto('/corridors');
-  return page.getByLabel('Corridor Atlas', { exact: true });
+  return page.getByLabel('Route map', { exact: true });
 }
 
 test('any pair of countries shows on the world map with an honest, non-operating status', async ({

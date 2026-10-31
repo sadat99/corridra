@@ -43,7 +43,7 @@ export type PublicPageContent = {
 
 export const publicPages: Record<string, PublicPageContent> = {
   sell: {
-    label: 'SELL IN A NEW MARKET',
+    label: 'Sell in a new market',
     title: 'Make the trip commercially useful.',
     description:
       'We are building a way to find and qualify buyers in Spain and the EU before you arrive, and to follow up after you leave.',
@@ -92,10 +92,10 @@ export const publicPages: Record<string, PublicPageContent> = {
         'Who owns the next step, and what became business.',
       ],
     },
-    related: { href: '/how-it-works', label: 'See the planned process' },
+    related: { href: '/how-it-works', label: 'See how it works' },
   },
   source: {
-    label: 'SOURCE SUPPLIERS',
+    label: 'Source suppliers',
     title: 'Visit fewer suppliers. Visit the ones that fit.',
     description:
       'Start with your requirements. We are building sourcing around a short list worth visiting, not a directory.',
@@ -139,7 +139,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/trust', label: 'Understand the evidence labels' },
   },
   'enter-market': {
-    label: 'ENTER A NEW MARKET',
+    label: 'Enter a new market',
     title: 'Enter an unfamiliar market without entering it blind.',
     description:
       'We are building support for finding customers and partners, with local help when remote research is not enough.',
@@ -183,7 +183,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/about', label: 'See where Corridra is starting' },
   },
   'trade-missions': {
-    label: 'RUN A TRADE MISSION',
+    label: 'Run a trade mission',
     title: 'Give every participant a reason to be in the room.',
     description:
       'We are building missions around each participant’s goal, a qualified agenda and follow-up after the trip.',
@@ -227,9 +227,9 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/institutions', label: 'Explore the institutional approach' },
   },
   'how-it-works': {
-    label: 'HOW IT WORKS',
+    label: 'How it works',
     title: 'One commercial objective. One mission. A clear record of what happens next.',
-    description: 'The process we are building, from first goal to recorded outcome.',
+    description: 'How a request moves from your first goal to a recorded result, in six steps.',
     introduction: {
       title: 'Begin with a decision you need to make.',
       text: 'A mission gives the work a clear goal, scope and window.',
@@ -237,44 +237,34 @@ export const publicPages: Record<string, PublicPageContent> = {
     groups: ['Before you meet', 'Meet and follow up'],
     sections: [
       {
-        title: 'Say what you want',
-        name: 'Intent',
-        text: 'Say what a good result looks like and by when.',
-      },
-      {
-        title: 'Choose the market',
-        name: 'Market',
-        text: 'Choose the market and window. Describe your offer or need.',
+        title: 'Define what you need',
+        name: 'Define',
+        text: 'Say what you want to buy, sell or organise, in which market and by when.',
       },
       {
         title: 'Find companies that fit',
-        name: 'Counterparties',
-        text: 'Research companies that could fit, beyond event lists and old contacts.',
+        name: 'Find',
+        text: 'We research companies beyond event lists and old contacts.',
       },
       {
-        title: 'Check what is proven',
-        name: 'Qualification',
-        text: 'Separate claims, evidence, completed checks and open questions.',
+        title: 'Compare what is proven',
+        name: 'Compare',
+        text: 'See offers side by side, with what is claimed, what has evidence and what is still open.',
       },
       {
-        title: 'Get introduced',
-        name: 'Access',
-        text: 'Prepare introductions with context for the other side.',
+        title: 'Visit and meet',
+        name: 'Visit',
+        text: 'We plan introductions and meetings. A proposed meeting is not a confirmed one.',
       },
       {
-        title: 'Hold the meetings',
-        name: 'Execution',
-        text: 'Coordinate meetings and local work. Record what happened and what is next.',
+        title: 'Decide with the facts in view',
+        name: 'Decide',
+        text: 'Choose who to work with, with the evidence and the open questions in front of you.',
       },
       {
-        title: 'Follow each opportunity',
-        name: 'Progression',
-        text: 'Follow opportunities, quotes, samples and proposals. Keep owners and timing visible.',
-      },
-      {
-        title: 'Record the result',
-        name: 'Outcome',
-        text: 'Record commitments, contracts, invoices and cash separately.',
+        title: 'Follow through',
+        name: 'Follow through',
+        text: 'Keep owners, dates, quotes and samples visible until the result is recorded.',
       },
     ],
     statements: [
@@ -286,11 +276,14 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'A meeting is a start. What follows matters.',
       text: 'Progress needs a clear record of what happened.',
     },
-    band: { title: 'Ready to try it?', text: 'Tell us your goal. No account needed.' },
+    band: {
+      title: 'Ready to start?',
+      text: 'Tell us your goal. You can start without an account and create one at the last step to send it.',
+    },
     related: { href: '/trust', label: 'See how claims and evidence differ' },
   },
   network: {
-    label: 'CORRIDRA NETWORK',
+    label: 'Corridra Network',
     title: 'Your local knowledge can have commercial value.',
     description:
       'We are building a network for scoped local work, with a clear task, evidence and reward before you accept.',
@@ -320,7 +313,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/trust', label: 'Read the evidence approach' },
   },
   institutions: {
-    label: 'FOR INSTITUTIONS',
+    label: 'For institutions',
     title: 'Stop measuring trade missions by attendance.',
     description:
       'We are building a way to turn participant goals into qualified agendas and to track business progress after the programme.',
@@ -350,7 +343,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     related: { href: '/trade-missions', label: 'Explore trade missions' },
   },
   trust: {
-    label: 'TRUST & EVIDENCE',
+    label: 'Trust and evidence',
     title: 'Know what is claimed. Know what is evidenced. Know the difference.',
     description: 'A repeated claim does not become a verified fact.',
     introduction: {
@@ -385,7 +378,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
     ],
     progress: {
-      label: 'WHAT COUNTS AS PROGRESS',
+      label: 'Commercial outcome stages (each needs its own evidence)',
       title: ['A meeting is not a sale.', 'A contract is not cash.'],
       text: 'Each step needs its own evidence.',
       steps: [
@@ -406,10 +399,10 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'AI can help reason. It cannot redefine reality.',
       text: 'AI can support research. It cannot decide permissions, handle money or declare a fact verified. Consequential actions need human review.',
     },
-    related: { href: '/how-it-works', label: 'Follow the planned process' },
+    related: { href: '/how-it-works', label: 'See how it works' },
   },
   about: {
-    label: 'ABOUT CORRIDRA',
+    label: 'About Corridra',
     title: 'Make market entry deliberate.',
     description:
       'Corridra is being built for cross-border market access: find the right companies, get access, follow the relationship.',
@@ -435,12 +428,12 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Start with one objective.',
       text: 'Explore the approach, then plan a mission when you are ready.',
     },
-    related: { href: '/how-it-works', label: 'See how it will work' },
+    related: { href: '/how-it-works', label: 'See how it works' },
   },
 };
 
 publicPages.machinery = {
-  label: 'PROCURE MACHINERY',
+  label: 'Procure machinery',
   title: 'A machine is useful only if it fits the work.',
   description: 'Define the application, capacity and site limits before comparing suppliers.',
   introduction: {
@@ -466,11 +459,11 @@ publicPages.machinery = {
     text: 'Record the evidence behind a choice and what is unknown. Corridra does not certify a machine or place an order.',
   },
   intakeJob: 'machinery_procurement',
-  cta: 'Prepare a machinery example request',
-  related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh–China sourcing' },
+  cta: 'Plan a machinery request',
+  related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh to China sourcing' },
 };
 publicPages['business-trips'] = {
-  label: 'PLAN A BUSINESS TRIP',
+  label: 'Plan a business trip',
   title: 'Give each day a commercial purpose.',
   description: 'Work backwards from the conversations and decisions the trip should produce.',
   introduction: {
@@ -493,10 +486,10 @@ publicPages['business-trips'] = {
   ],
   closing: {
     title: 'Plan the work around the journey.',
-    text: 'No travel booking or guaranteed meetings. This test flow lets you describe a mission with invented details.',
+    text: 'We do not book travel or guarantee meetings. Tell us the purpose of the trip and we plan the conversations around it.',
   },
   intakeJob: 'business_trips',
-  cta: 'Prepare a business-trip example request',
+  cta: 'Plan a business trip',
   related: { href: '/how-it-works', label: 'See the mission process' },
 };
 

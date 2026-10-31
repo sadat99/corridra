@@ -1,0 +1,28 @@
+/* Privacy notice contents list (UX-14): the sections in two columns on wide screens, one on phones. */
+.guide-doc.guide-contents {
+  grid-template-columns: minmax(12rem, 1fr) minmax(0, 3fr);
+  gap: var(--space-8);
+  margin-bottom: 0;
+  padding-block: var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+.guide-contents ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.guide-contents li a {
+  display: inline-block;
+  padding-block: var(--space-2);
+}
+.guide-doc article {
+  scroll-margin-top: var(--space-12);
+}
+@media (max-width: 47.99rem) {
+  .guide-doc.guide-contents {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+}

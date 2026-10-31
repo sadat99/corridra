@@ -91,9 +91,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
               Corridra
             </Link>
             <span aria-hidden="true">/</span>
-            <span aria-current="page">
-              {content.label.toLowerCase().replace(/^./, (c) => c.toUpperCase())}
-            </span>
+            <span aria-current="page">{content.label}</span>
           </nav>
           <p className="label">{content.label}</p>
           <h1>
@@ -114,7 +112,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
         </div>
         {content.route && (
           <aside className="guide-route" aria-label="Route for this page">
-            <p className="label">THE ROUTE THIS PAGE IS ABOUT</p>
+            <p className="label">The route this page is about</p>
             <strong>{content.route.label}</strong>
             <Link prefetch={false} className="text-link" href={content.route.href}>
               {content.route.linkLabel} <Arrow />
@@ -162,7 +160,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
       {content.record && (
         <section className="guide-record" aria-labelledby="record-title">
           <div>
-            <p className="label">YOUR RECORD</p>
+            <p className="label">Your record</p>
             <h2 id="record-title">{content.record.title}</h2>
           </div>
           <ul>
@@ -196,7 +194,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
 
       {content.statements ? (
         <section className="guide-statements" id="page-next" aria-labelledby="close-title">
-          <p className="label">WHAT TO EXPECT</p>
+          <p className="label">What to expect</p>
           <h2 id="close-title">{content.closing.title}</h2>
           <p className="guide-lead">{content.closing.text}</p>
           <ul>
