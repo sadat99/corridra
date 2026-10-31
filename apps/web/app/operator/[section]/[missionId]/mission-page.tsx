@@ -122,10 +122,7 @@ export function MissionPage({
     return (
       <div className="mission-page">
         <p role={failure ? 'alert' : 'status'}>{failure || 'Loading the mission…'}</p>
-        <a
-          className="text-link"
-          href={`/operator/missions?workspace=${encodeURIComponent(tenant)}`}
-        >
+        <a className="text-link" href={sectionHref(tenant, 'missions')}>
           Back to all missions
         </a>
       </div>
@@ -142,10 +139,7 @@ export function MissionPage({
   return (
     <div className="mission-page">
       <nav aria-label="Breadcrumb">
-        <a
-          className="text-link"
-          href={`/operator/missions?workspace=${encodeURIComponent(tenant)}`}
-        >
+        <a className="text-link" href={sectionHref(tenant, 'missions')}>
           All missions
         </a>{' '}
         · {workspaceName}
@@ -168,7 +162,7 @@ export function MissionPage({
             key={key}
             role="tab"
             id={`mission-tab-${key}`}
-            aria-controls={`mission-tabpanel-${key}`}
+            aria-controls={tab === key ? `mission-tabpanel-${key}` : undefined}
             aria-selected={tab === key}
             tabIndex={tab === key ? 0 : -1}
             type="button"
@@ -371,9 +365,14 @@ function Loading({ error, children }: { error: string; children?: ReactNode }) {
   return <p role={error ? 'alert' : 'status'}>{error || children || 'Loading…'}</p>;
 }
 
+/** The full workspace section, which works whether or not section addresses are switched on. */
+function sectionHref(tenant: string, slug: string) {
+  return `/operator?workspace=${encodeURIComponent(tenant)}#workspace-${slug}`;
+}
+
 function SectionLink({ tenant, slug, label }: { tenant: string; slug: string; label: string }) {
   return (
-    <a className="text-link" href={`/operator/${slug}?workspace=${encodeURIComponent(tenant)}`}>
+    <a className="text-link" href={sectionHref(tenant, slug)}>
       {label}
     </a>
   );
