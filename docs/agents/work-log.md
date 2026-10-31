@@ -2336,3 +2336,11 @@ Verification (cloud container, Node 22 with the Node 24 pin warning): `pnpm form
 Not done or limited: the recipient read for quote accepted, report published and request received notifications; the sliding 30-minute view window; customer inbox; CQ-82 client drafts; native review of the new words. These need reviewed SQL or owner steps and are listed in RESULTS.md.
 
 Next: green CI on the release PR, merge with a merge commit (the /plan language spec builds from WS-A commit `93cc41a`), verify the deployment, then the owner checklist.
+
+## 31 October 2026: PR225 merged, commercial readiness release in production
+
+CI fixes on the release branch after integration (each reproduced and verified locally before pushing): the inline language boot script became a same-origin file (security rule `corridra-no-raw-html`) with its embedded JSON escaped (CodeQL); `StatusChip` moved to its own file so fixture bundles render without `next/link`; the reference picker treats a response without options as a failed search instead of crashing; the `/plan` receipt check folds until needed (V-57, one open form), with the code sign-in link outside the fold; the verification suite shares one owner authenticator, measures after load and reads closed `<details>` content as hidden; the CI verification job builds `/fairs` with its live switch; operator specs updated where they asserted copy or counts the program changed on purpose (every behaviour and denial assertion kept). The `/plan` language spec baseline names `16141db`, reachable from `main` because PR225 merged with a merge commit.
+
+Result: every job on `7a118aa` green (checks, browser, operator 1 to 6, UX 1 to 3, verification, `validate`); merged as `5c689a7`; Vercel production status success. Local receipts: verification 133 passed, 2 skipped by design (three widths); operator chain (`workspace`, `z-ux02-access`, `zz-operator-overview`, `zz-today`) 14 of 14.
+
+Next: the owner checklist in RESULTS.md section 6. The program flags stay off in production until the owner sets them; the commercial readiness database module is installed by the owner's next `Install customer modules` run.

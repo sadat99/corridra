@@ -1317,6 +1317,11 @@
       "path": "docs/v3/history/ledger-before-commercial-readiness-records-2026-10-31.md",
       "classification": "Historical ledger snapshot",
       "use": "Exact ledger before the commercial readiness records refresh; history only"
+    },
+    {
+      "path": "docs/v3/history/ledger-before-pr225-merge-records-2026-10-31.md",
+      "classification": "Historical ledger snapshot",
+      "use": "Exact ledger before the PR225 merge records; history only"
     }
   ]
 }
