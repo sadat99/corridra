@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   fragmentFor,
+  operatorPlaceFor,
   operatorSectionPath,
   operatorSlugs,
   reservedOperatorSegments,
@@ -10,6 +11,7 @@ import {
 } from '../../apps/web/lib/operator-urls';
 import {
   operatorReturnTo,
+  operatorSignInPage,
   operatorSignInPath,
   workspaceSections,
 } from '../../apps/web/lib/workspace-navigation';
@@ -87,6 +89,86 @@ describe('what the workspace shows for an address', () => {
     expect(
       operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates'),
     ).toBe('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates');
+  });
+});
+
+describe('the error page signs in again to the workspace and section it was showing', () => {
+  const workspace = '11111111-1111-4111-8111-111111111111';
+  const at = (address: string) => operatorPlaceFor(new URL(address, 'http://127.0.0.1:3200'));
+  const returnOf = (address: string) => {
+    const place = at(address);
+    return decodeURIComponent(
+      (place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage).split(
+        '?next=',
+      )[1] ?? '',
+    );
+  };
+  it('reads the workspace and the # part on /operator', () => {
+    expect(at('/operator?workspace=' + workspace + '#workspace-sources')).toEqual({
+      workspace,
+      section: 'workspace-sources',
+    });
+    expect(at('/operator?workspace=' + workspace)).toEqual({ workspace, section: '' });
+    expect(at('/operator#workspace-sources')).toEqual({
+      workspace: '',
+      section: 'workspace-sources',
+    });
+  });
+  it('reads the section from a section address, and a # part wins', () => {
+    expect(at('/operator/sources?workspace=' + workspace)).toEqual({
+      workspace,
+      section: 'workspace-sources',
+    });
+    expect(at('/operator/sources?workspace=' + workspace + '#workspace-evidence')).toEqual({
+      workspace,
+      section: 'workspace-evidence',
+    });
+  });
+  it('gives nothing with neither a workspace nor a section, or on any other operator page', () => {
+    expect(at('/operator')).toBeNull();
+    expect(at('/operator#')).toBeNull();
+    for (const reserved of reservedOperatorSegments)
+      expect(
+        at('/operator/' + reserved + '?workspace=' + workspace + '#workspace-sources'),
+        reserved,
+      ).toBeNull();
+    for (const other of ['/operator/unknown', '/operator/sources/extra', '/workspace', '/'])
+      expect(at(other + '?workspace=' + workspace), other).toBeNull();
+    // Nothing to come back to, so the link stays the plain sign-in page, not a ?next=/operator.
+    expect(returnOf('/operator')).toBe('');
+  });
+  it('a bad workspace or section falls back exactly as the sign-in path already does', () => {
+    expect(returnOf('/operator?workspace=' + workspace + '#workspace-sources')).toBe(
+      '/operator?workspace=' + workspace + '#workspace-sources',
+    );
+    expect(returnOf('/operator?workspace=' + workspace + '#nonexistent')).toBe(
+      '/operator?workspace=' + workspace,
+    );
+    expect(returnOf('/operator?workspace=not-a-workspace#workspace-sources')).toBe(
+      '/operator#workspace-sources',
+    );
+    expect(returnOf('/operator?workspace=not-a-workspace')).toBe('/operator');
+    expect(returnOf('/operator#//example.invalid')).toBe('/operator');
+    for (const address of [
+      '/operator?workspace=' + workspace + '#workspace-sources?token=x',
+      '/operator?workspace=' + workspace + '&next=//evil.test#workspace-sources',
+      '/operator/sources?workspace=' + workspace + '#main',
+    ])
+      expect(operatorReturnTo(returnOf(address)), address).toBe(returnOf(address));
+  });
+  it('the error page link is a plain anchor read from the address store, and no Link goes to sign-in', () => {
+    const page = read('apps/web/app/operator/error.tsx');
+    expect(page).toMatch(
+      /useSyncExternalStore\(\s*subscribeToHash,\s*\(\) => window\.location\.href,\s*\(\) => '',\s*\)/,
+    );
+    expect(page).toContain(
+      'href={place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage}',
+    );
+    for (const [element] of page.matchAll(/<Link\b[\s\S]*?(?:<\/Link>|\/>)/g))
+      expect(element).not.toMatch(/operatorSignIn|\/operator\/signin/);
+    expect(read('apps/web/app/operator/workspace.tsx')).toContain(
+      "import { subscribeToHash } from '../../lib/address-store';",
+    );
   });
 });
 
@@ -236,7 +318,7 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
       [
         'apps/web/app/operator/error.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n          Verify operator access\n        </a>',
+        '<a\n          className="text-link"\n          href={place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage}\n        >\n          Verify operator access\n        </a>',
       ],
       [
         'apps/web/app/operator/reset-password/page.tsx',

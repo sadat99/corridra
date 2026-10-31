@@ -57,3 +57,21 @@ export function operatorSectionPath(id: string): string | null {
 export function fragmentFor(hash: string, initialSection: string): string {
   return hash.replace(/^#/, '') || initialSection;
 }
+
+/**
+ * The workspace and section an operator address shows, for a link that should come back to it (the
+ * error page's sign-in link). `/operator` takes its section from the `#` part; a section address takes
+ * it from the address word unless a `#` part wins. Any other page under /operator, or an address with
+ * neither a workspace nor a section, gives null. Nothing is validated here: `operatorSignInPath`
+ * keeps only a return address `operatorReturnTo` allows.
+ */
+export function operatorPlaceFor(
+  address: Pick<URL, 'pathname' | 'search' | 'hash'>,
+): { workspace: string; section: string } | null {
+  const slug = /^\/operator\/([^/]+)$/.exec(address.pathname)?.[1];
+  const named = slug === undefined ? null : sectionForSlug(slug);
+  if (address.pathname !== '/operator' && !named) return null;
+  const workspace = new URLSearchParams(address.search).get('workspace') ?? '';
+  const section = fragmentFor(address.hash, named ?? '');
+  return workspace || section ? { workspace, section } : null;
+}
