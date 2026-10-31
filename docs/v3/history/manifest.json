@@ -222,6 +222,14 @@
       "bytes": 12214,
       "sha256": "fe2b0cdef98e248c86b1f9db6d34a4f1f12c932002bb960aa806ab6b50cf3728",
       "meaning": "Exact active-index snapshot before the 31 October 2026 PR221 records refresh (unchanged from d073641 to 5a50fd9), which recorded the PR220 merge and deploy, draft PR221 (the five KI-30 follow-ups) and the owner's 31 October directions, and shortened the state, PR219 and PR220 lines; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "dac948d",
+      "archive": "docs/v3/history/ledger-before-phone-followups-records-2026-10-31.md",
+      "bytes": 12062,
+      "sha256": "b81aa2af82a699c40e7f685ae8ff10eceaffc9e057d356b12cc25b161bc99847",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 phone follow-ups records refresh (unchanged from dac948d to f06d610), which recorded the PR221 merge and deploy, the draft phone follow-ups PR (billing plan form and Research and Delivery jump bars on phones) and the owner's 31 October words, and folded the PR219, PR220 and PR221 lines into one; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

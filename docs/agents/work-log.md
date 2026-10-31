@@ -2208,3 +2208,38 @@ Preserved: the `operatorReturnTo` body (open-redirect guard); MFA order; sign-ou
 Records (this scribe pass, over `5a50fd9`): this entry; `docs/V3_LEDGER.md` (state, the owner's 31 Oct words, the PR219/PR220 line, the PR221 line, next action; older archive links folded into a pointer to the manifest); `docs/v3/history/ledger-before-pr221-records-2026-10-31.md` (the exact 12,214-byte ledger at `d073641`, unchanged to `5a50fd9`, sha256 `fe2b0cdef98e248c86b1f9db6d34a4f1f12c932002bb960aa806ab6b50cf3728`, in the manifest and the documentation map); KI-30 in `docs/v3/KNOWN_ISSUES.md` (root fix recorded, the guard's reach stated plainly, remaining soft entries, the Stop button gap); `docs/PLAN_STATUS.md` (CURRENT rows for the squad skill, quality bar and agent briefs; a CURRENT, DATED row for this work log).
 
 Next: PR221 needs the verifier's preflight and CI on its final head, then the owner's merge command. The owner decision above stays open. Otherwise unchanged: the owner's Pulse checks and the home page words review.
+
+## 31 October 2026: the phone follow-ups (billing plan form and jump bars on phones), and the PR221 merge
+
+Request (owner, chat, relayed by the conductor): "squash merge" for PR221, then "fix the phone follow-ups too" (the two phone follow-ups at the end of the PR221 entry). Authority: brief stamp `auth-91c14474335c`; agent squad run (authority, designer spec in place of product and architect for this CSS-only task, builder, verifier, scribe).
+
+PR221: squash-merged as `dac948d` on the owner's "squash merge". Vercel status for `dac948d`: success (GitHub commit status, 15:41:42Z).
+
+Changed (the phone follow-ups PR on `claude/modest-ride-1ewl6b`, draft, PR number not known when written; head `f06d610` on `dac948d`, plus this records commit):
+
+- `f06d610` "Fit the billing plan form and the Research and Delivery jump bars on phones": `apps/web/app/operator/operator-overview.css` only, every rule below 40rem. Presentation only: no option value or text, name, id, href, label, test hook or copy changed.
+- Billing plan form: inside "Plans on offer and plan versions" the disclosure drops its border and its body uses the full card width. Select width at 320 px: 138 to 206 px (room for the value 83 to 156 px, so "Tax to be confirmed" at 145 px now fits); at 390 px: 208 to 276 px.
+- Jump bars: Research and Delivery become a wrapped row of chips sized to their words, 44 px tall, breaking only at spaces. Delivery at 320 px: the mid-word splits in "Programmes", "Participants" and "Publication" are gone and every chip is 44 px tall (before: 48 and 71 px); one chip per row, so the bar is about 70 px taller. Research at 320 px: the "relationships" split is gone and every chip is 44 px tall.
+- 768, 1024 and 1440 px: computed styles identical before and after, asserted by the new test.
+- Test: `tests/operator/zz-billing-phone.spec.ts` gains "on phones the plan form selects show whole values and the jump bars keep whole words, unchanged from 40rem up".
+- Evidence: `docs/design-system/evidence/phone-followups-2026-10-31/before/` and `after/` (captures at 320, 390, 768 and 1440 px, plus `measurements.json`).
+
+Old code shown failing: `work/op-followups-before2-2026-10-31T16-03-24-872Z.log`, exit 1 (the new test fails on the word splits and the narrow selects, as expected).
+
+Verification (local receipts under `work/`, not committed; receipt head field `dac948d` with the change uncommitted in the tree):
+
+- Focused operator run (`workspace.spec.ts` intake and MFA tests, both billing phone tests): 4 passed, exit 0 (`work/op-followups-after3-2026-10-31T16-06-09-485Z.log`).
+- `pnpm format:check` exit 0 (`work/format-followups2-2026-10-31T16-08-26-373Z.log`), `pnpm typecheck` exit 0 (`work/typecheck-followups2-2026-10-31T16-09-30-476Z.log`), `pnpm lint` exit 0 (`work/lint-followups-2026-10-31T16-01-16-323Z.log`, taken before the last focused run). A `pnpm build` exit 0 receipt exists from 15:57 (`work/build-followups-2026-10-31T15-57-51-402Z.log`), before the final tree; not claimed for it.
+- Not run locally and not claimed: `pnpm test`, `test:e2e`, `test:ux`, the full `test:operator` suite (KI-16: a shared selector on a protected surface needs it before merge) and axe. CI on the final head was pending when this entry was written.
+
+Not done or limited:
+
+- OWNER DECISION (carried): an authenticator code that was just accepted is accepted again for a second sign-in in the same 30-second window.
+- OWNER DECISION: the Programme select's first option "All programmes / independent client missions" is still cut off on phones (335 px of text, 151 px of room at 320). It cannot fit without shrinking the 16 px control text or shortening the label; a shorter label is a copy change.
+- Follow-up, unconfirmed: the governance panel jump bars (Operations, Intelligence; the phone rule near line 972 of `operator-overview.css`) may split words the same way. Not touched.
+
+Preserved: billing select values and option text, every name and id, link destinations, form payloads, test hooks and copy; the plans summary bar keeps its fill, sign and focus ring. No server, API, auth, RLS, migration or money change.
+
+Records (this scribe pass, over `f06d610`): this entry; `docs/V3_LEDGER.md` (state, the owner's words, the PR219 to PR221 lines folded into one, the phone follow-ups line, next action); `docs/v3/history/ledger-before-phone-followups-records-2026-10-31.md` (the exact 12,062-byte ledger at `dac948d`, unchanged to `f06d610`, sha256 `b81aa2af82a699c40e7f685ae8ff10eceaffc9e057d356b12cc25b161bc99847`, in the manifest and the documentation map).
+
+Next: the phone follow-ups PR needs CI on its final head, then the owner's merge command. The two owner decisions above stay open. Otherwise unchanged: the owner's Pulse checks and the home page words review.

@@ -781,8 +781,9 @@
    side chrome: the delivery card, its phone fold, the delivery experience card and the five
    billing cards. The staff billing text then keeps a readable column at 320 and 390 instead of
    breaking every few letters. The fold summary, notices, forms and timeline keep theirs, and so do
-   other disclosures inside the panel, such as "Plans on offer and plan versions" in the plans card
-   (bordered by globals.css). Nothing changes from 40rem up. */
+   other disclosures inside the panel. Nothing changes from 40rem up.
+   The plans disclosure loses its border and its body uses the full card width, so the plan form's
+   selects show their whole value; the summary bar keeps its fill, sign and focus ring. */
 @media (max-width: 39.99rem) {
   .ux-workspace-body #workspace-delivery section.delivery-ops.detail-card,
   .ux-workspace-body #workspace-delivery details.phone-fold > section.detail-card {
@@ -814,6 +815,26 @@
   }
   .ux-workspace-body #workspace-delivery .billing-pair {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-workspace-body #workspace-delivery #billing-plans details:not(.ux-journey-disclosure) {
+    border: 0;
+  }
+  .ux-workspace-body
+    #workspace-delivery
+    #billing-plans
+    details:not(.ux-journey-disclosure)
+    > :not(summary) {
+    margin-inline: 0;
+  }
+  .ux-workspace-body #workspace-delivery #billing-plans form.billing-form {
+    padding: var(--space-6) 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    background: none;
+  }
+  .ux-workspace-body #workspace-delivery #billing-plans form.billing-form select {
+    padding-inline: var(--space-3);
   }
 }
 /* Wide record tables (six or more columns) scroll sideways; narrow ones keep their layout. */
@@ -1190,16 +1211,30 @@
     grid-column: auto;
   }
 }
+/* Phones: the Research and Delivery jump bars are a wrapped row of chips sized to their words,
+   44 px tall; a label breaks only at spaces. */
 @media (max-width: 39.99rem) {
   .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench > div {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
     gap: var(--space-2);
   }
   .ux-workspace-body :is(#workspace-research, #workspace-delivery) .ux-operator-workbench button {
-    width: 100%;
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    max-width: 100%;
+    min-height: 2.75rem;
     margin: 0;
+    padding-inline: var(--space-3);
+    text-align: center;
     white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: manual;
   }
 }
 /* Client and programme delivery: closed sections in pairs and the paid-service and sample-plan
