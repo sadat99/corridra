@@ -1577,16 +1577,6 @@ function IntakeForm({
                   {say('form.check.submit')}
                 </button>
               </form>
-              {realMode && !privateMode && !account && codeSignIn && (
-                <p className="guide-hint">
-                  <Link
-                    className="text-link"
-                    href={accountAccessPath('/signin', '/account', 'code')}
-                  >
-                    {say('form.pending.codeSignIn')}
-                  </Link>
-                </p>
-              )}
               {result && (
                 <div>
                   <p>
@@ -1614,6 +1604,13 @@ function IntakeForm({
                 </div>
               )}
             </details>
+            {realMode && !privateMode && !account && codeSignIn && (
+              <p className="guide-hint">
+                <Link className="text-link" href={accountAccessPath('/signin', '/account', 'code')}>
+                  {say('form.pending.codeSignIn')}
+                </Link>
+              </p>
+            )}
           </section>
         </div>
         {!finished && (
