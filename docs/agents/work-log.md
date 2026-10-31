@@ -2243,3 +2243,45 @@ Preserved: billing select values and option text, every name and id, link destin
 Records (this scribe pass, over `f06d610`): this entry; `docs/V3_LEDGER.md` (state, the owner's words, the PR219 to PR221 lines folded into one, the phone follow-ups line, next action); `docs/v3/history/ledger-before-phone-followups-records-2026-10-31.md` (the exact 12,062-byte ledger at `dac948d`, unchanged to `f06d610`, sha256 `b81aa2af82a699c40e7f685ae8ff10eceaffc9e057d356b12cc25b161bc99847`, in the manifest and the documentation map).
 
 Next: the phone follow-ups PR needs CI on its final head, then the owner's merge command. The two owner decisions above stay open. Otherwise unchanged: the owner's Pulse checks and the home page words review.
+
+## 31 October 2026: the CI speedup (six operator shards, Chromium cache, stricter install verifier), and the PR222 merge
+
+Request (owner, chat, relayed by the conductor): "squash merge when green" for PR222, then "do the CI speedup too" and, for this PR, "squash merge when green". Why: a CI round took 25 to 28 minutes. Authority: brief stamp `auth-b8035e401ac0`; agent squad run (authority, architect, builder, verifier, scribe). Task class: tooling (CI workflow, a test timeout) plus the protected-installation gate script.
+
+PR222: CI passed on `de7e9d5`. The first `operator (3)` run failed on a chip width that depends on CI's fonts (KI-28), which was fixed; the second attempt timed out in `z-startup-recovery.spec.ts` at its 120 s limit; one re-run of the failed job passed. Squash-merged as `1b09e89` (GitHub: merged 17:42:30Z, head `de7e9d5`) on the owner's "squash merge when green". Vercel status for `1b09e89`: success (GitHub commit status, 17:44:05Z).
+
+Measured before this PR (recent CI runs, step times): a round takes 25 to 28 minutes and is set by `operator (3)` (1340 to 1706 s). The browser runtime install takes only 17 to 36 s per job; the builder's earlier estimate of about 5 minutes was wrong. Floors that sharding alone cannot beat: `ux-plan-languages.spec.ts` (one file, about 15.6 min) and the chain `workspace.spec.ts` then the `y-`, `z-`, `zz-` and `zzz-` files (about 19 to 21 min, must stay in one shard). Expected round after this PR: about 22 to 24 minutes, not yet measured.
+
+Changed (PR224, https://github.com/sadat99/corridra/pull/224, draft, branch `claude/modest-ride-1ewl6b`, head `33b7cfc` on `1b09e89`, plus this records commit):
+
+- `15d497b` "Split the operator browser tests six ways instead of three": `.github/workflows/ci.yml` operator matrix `[1..6]`, `--shard=N/6` through `strategy.job-total`. Playwright gives each shard whole files in name order by test count (workers 1, not fully parallel); each shard builds its own database. Shard sizes 145/137/138/153/128/131 = 832 tests. The `ux` matrix (3), `validate` (needs every job, runs unless cancelled, KI-03), fail-fast off and the 45-minute limit are unchanged.
+- `662f064` "Cache the Chromium download and print a browser runtime fingerprint": in the `browser`, `operator` and `ux` jobs, `actions/cache@v6` on `~/.cache/ms-playwright`, key `ms-playwright-<image>-<arch>-<exact Playwright version>`, no restore keys. Apt is not cached, so `--with-deps` still installs fonts and system libraries through apt (KI-02 resilience file, 4-minute first install, 12-minute retry unchanged). A "Browser runtime fingerprint (KI-28)" step (continue on error) prints a notice with the Playwright version, browsers, cache hit, font and font package hashes and the image.
+- `d222aea` "Require all six operator shards before a protected installation": `scripts/verify-real-use-install-head.mjs` exports `REQUIRED_CI_JOBS` (13 jobs: changes, checks, browser, `ux (1)` to `(3)`, `operator (1)` to `(6)`, validate). Stricter than before: a three-shard run no longer authorizes installation. `tests/real-use-install-head.test.mjs` adds that denial and a drift test that expands the `ci.yml` matrices and compares them with the list.
+- `46e4de0` "Fail the document tests if an operator shard split would break a chain": `tests/operator-shards.test.mjs`, added to `test:docs` in `package.json`. It lists each shard with Playwright, checks every operator spec is in exactly one shard, and that every spec reading a `.cache/*.json` file is in the writer's shard and after it. It calls node with Playwright's `cli.js` directly (see the incident below).
+- `33b7cfc` "Give the startup outage test three minutes instead of two": `tests/operator/z-startup-recovery.spec.ts` limit 120 s to 180 s, with a one-line reason. Assertions unchanged, no retries. Local body 12.2 s; the longest single navigation in the trace was 1.02 s, under the 20 s stop condition in the plan.
+
+Verification (local receipts under `work/`, not committed):
+
+- `node --test tests/real-use-install-head.test.mjs tests/workflow-inputs.test.mjs tests/operator-shards.test.mjs`: 15/15, exit 0, head `33b7cfc` (`work/node-tests-2026-10-31T18-25-58-260Z.log`).
+- `pnpm test:docs`: 68/68, exit 0, head `33b7cfc` (`work/test-docs-2026-10-31T18-26-16-532Z.log`).
+- `pnpm format:check`, `pnpm lint`, `pnpm typecheck`: exit 0, head `33b7cfc` (`work/format-2026-10-31T18-26-37-215Z.log`, `work/lint-2026-10-31T18-27-35-888Z.log`, `work/typecheck-2026-10-31T18-28-32-284Z.log`). `pnpm build`: exit 0 at head `46e4de0` (`work/build-2026-10-31T18-23-24-213Z.log`); `33b7cfc` changes only a test file.
+- `pnpm test:operator z-startup-recovery.spec.ts --trace=on`: 1 passed (12.2 s), exit 0, receipt head `46e4de0` (`work/startup-trace-2026-10-31T18-24-32-543Z.log`).
+- Not run and not claimed: the full browser suites (playwright not run by the scribe; local runs are not CI shape). CI on PR224 was pending when this entry was written, so the new round time, the cache hit path and the fingerprint notices are not yet seen.
+
+Local incident (builder, honest record): an earlier version of the shard guard ran `pnpm exec` from a temporary folder. pnpm then rebuilt `node_modules` with its store pointing at that temporary folder. Repaired with `CI=true pnpm install --frozen-lockfile --offline`, exit 0 (`work/pnpm-repair-2026-10-31T18-19-14-589Z.log`); the committed guard calls node and Playwright's `cli.js` directly. First time recorded, so no AGENTS.md line (the rule asks for one only when a mistake happens twice).
+
+Not done or limited:
+
+- The z-startup-recovery timeout happened once in CI (PR222, after PR221 added outage page loads, a full-page sign-in, a raw request and axe at four widths). Explained in this run, so no known-issues entry; limit now 180 s.
+- Whether the apt fonts on a cached run match an uncached run exactly is not yet known: compare the fingerprint notices across jobs (KI-28 Do bullet); any difference blocks merge.
+- Follow-up PR, not started: a measured shard map to reach about 14 to 15 minutes. Split the operator chain by re-running the `workspace.spec.ts` setup tests where needed, and split `ux-plan-languages.spec.ts` by its five describe blocks.
+- OWNER DECISION (carried): an authenticator code just accepted is accepted again for a second sign-in in the same 30-second window.
+- OWNER DECISION (carried): the Programme select's first option "All programmes / independent client missions" is too long for phones; a shorter label is a copy change.
+- Unconfirmed (carried): the governance panel jump bars (Operations, Intelligence) may split words at 320 px.
+- UNRESOLVED for the owner (brief): his 29 Oct "the last PR alone updates the ledger" against records in each PR of a run; this PR is the last of this run and carries the records.
+
+Preserved: every test assertion; no retries added; the `validate` job and its needs; the KI-02 apt resilience steps and limits; CodeQL jobs and analyses in the install verifier. The install verifier is stricter, never looser. No application, server, API, auth, RLS, migration or money change.
+
+Records (this scribe pass, over `33b7cfc`): this entry; `docs/V3_LEDGER.md` (state, owner words, PR219 to PR222 folded into one line, the PR224 line, next action, lessons); `docs/v3/KNOWN_ISSUES.md` (KI-02 Chromium cache sentence, KI-28 fingerprint Do bullet); `docs/v3/history/ledger-before-ci-speedup-records-2026-10-31.md` (the exact 12,250-byte ledger at `1b09e89`, unchanged to `33b7cfc`, sha256 `0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc`, in the manifest and the documentation map).
+
+Next: PR224 needs CI green on its final head; then the owner's "squash merge when green" applies. Then the measured shard map follow-up. The owner decisions above stay open; otherwise unchanged: the owner's Pulse checks and the home page words review.
