@@ -217,7 +217,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
     .click();
   await operations
-    .getByRole('textbox', { name: 'Recorded industry', exact: true })
+    .getByRole('textbox', { name: 'Industry', exact: true })
     .fill('unrecorded synthetic sector');
   await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
   await expect(
@@ -229,7 +229,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(
     operations.locator('caption').filter({ hasText: 'Customer trade amounts' }),
   ).toHaveCount(0);
-  await operations.getByRole('textbox', { name: 'Recorded industry', exact: true }).fill('');
+  await operations.getByRole('textbox', { name: 'Industry', exact: true }).fill('');
   await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
   await expect(
     operations.getByRole('button', { name: 'Refresh operations', exact: true }),
