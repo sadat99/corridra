@@ -138,6 +138,20 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: Pinned Playwright version and runner image
+        id: playwright
+        run: |
+          echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
+      # Only the browser download is cached, keyed on the exact Playwright version, so it is always the
+      # Chromium that version expects (KI-28); it is saved only after a passing job. Fonts and system
+      # libraries are not cached: `--with-deps` below installs them through apt on every run.
+      - name: Cached Chromium for the pinned Playwright
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ steps.playwright.outputs.image }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       # `playwright install --with-deps` downloads packages through apt. Twice on a hosted runner (KI-02)
       # the Ubuntu mirror stalled for minutes, once for the whole 30-minute job. Fail fast inside apt
       # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
@@ -145,12 +159,6 @@ jobs:
       - name: Resilient apt settings
         run: |
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
-      # Speed: keep the downloaded Chromium between runs; system packages still install below.
-      - name: Playwright browser cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -165,6 +173,16 @@ jobs:
           sleep 2
           sudo dpkg --configure -a
           pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime fingerprint (KI-28)
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.playwright.outputs.version }}
+          CACHE_HIT: ${{ steps.browser-cache.outputs.cache-hit }}
+        run: |
+          browsers=$(ls ~/.cache/ms-playwright | sort | tr '\n' ' ')
+          fonts=$(fc-list --format '%{file}|%{family}|%{style}\n' | sort | sha256sum | cut -c1-16)
+          packages=$(dpkg-query -W -f '${Package}=${Version}\n' | grep -E '^(fonts-|fontconfig|libfontconfig|libfreetype|libharfbuzz)' | sort | sha256sum | cut -c1-16)
+          echo "::notice title=Browser runtime fingerprint::playwright=$PLAYWRIGHT_VERSION browsers=$browsers cache-hit=${CACHE_HIT:-false} fonts=$fonts font-packages=$packages image=$ImageOS-$ImageVersion"
       - name: Browser and accessibility tests
         run: pnpm test:e2e
       - uses: actions/upload-artifact@v7
@@ -176,6 +194,10 @@ jobs:
             !test-results/workspace-*/**
           retention-days: 7
 
+  # Six operator shards. Playwright gives each shard whole files, in name order, by test count
+  # (workers 1, fullyParallel false); each shard runs on its own fresh database. workspace.spec.ts
+  # enrols the authenticator that the y-, zz- and zzz- files after it sign in with, so that chain must
+  # stay in one shard: tests/operator-shards.test.mjs fails if it would split.
   operator:
     needs: changes
     if: ${{ needs.changes.outputs.docs_only != 'true' }}
@@ -184,7 +206,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -223,6 +245,20 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: Pinned Playwright version and runner image
+        id: playwright
+        run: |
+          echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
+      # Only the browser download is cached, keyed on the exact Playwright version, so it is always the
+      # Chromium that version expects (KI-28); it is saved only after a passing job. Fonts and system
+      # libraries are not cached: `--with-deps` below installs them through apt on every run.
+      - name: Cached Chromium for the pinned Playwright
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ steps.playwright.outputs.image }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       # `playwright install --with-deps` downloads packages through apt. Twice on a hosted runner (KI-02)
       # the Ubuntu mirror stalled for minutes, once for the whole 30-minute job. Fail fast inside apt
       # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
@@ -230,12 +266,6 @@ jobs:
       - name: Resilient apt settings
         run: |
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
-      # Speed: keep the downloaded Chromium between runs; system packages still install below.
-      - name: Playwright browser cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -250,10 +280,20 @@ jobs:
           sleep 2
           sudo dpkg --configure -a
           pnpm exec playwright install --with-deps chromium
-      - name: Protected operator browser tests (shard ${{ matrix.shard }} of 3)
+      - name: Browser runtime fingerprint (KI-28)
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.playwright.outputs.version }}
+          CACHE_HIT: ${{ steps.browser-cache.outputs.cache-hit }}
+        run: |
+          browsers=$(ls ~/.cache/ms-playwright | sort | tr '\n' ' ')
+          fonts=$(fc-list --format '%{file}|%{family}|%{style}\n' | sort | sha256sum | cut -c1-16)
+          packages=$(dpkg-query -W -f '${Package}=${Version}\n' | grep -E '^(fonts-|fontconfig|libfontconfig|libfreetype|libharfbuzz)' | sort | sha256sum | cut -c1-16)
+          echo "::notice title=Browser runtime fingerprint::playwright=$PLAYWRIGHT_VERSION browsers=$browsers cache-hit=${CACHE_HIT:-false} fonts=$fonts font-packages=$packages image=$ImageOS-$ImageVersion"
+      - name: Protected operator browser tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
         env:
           UX06_EVIDENCE_STAGE: after
-        run: pnpm test:operator --shard=${{ matrix.shard }}/3
+        run: pnpm test:operator --shard=${{ matrix.shard }}/${{ strategy.job-total }}
       - name: Synthetic UX browser evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -416,15 +456,23 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: Pinned Playwright version and runner image
+        id: playwright
+        run: |
+          echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
+      # Only the browser download is cached, keyed on the exact Playwright version, so it is always the
+      # Chromium that version expects (KI-28); it is saved only after a passing job. Fonts and system
+      # libraries are not cached: `--with-deps` below installs them through apt on every run.
+      - name: Cached Chromium for the pinned Playwright
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ steps.playwright.outputs.image }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       - name: Resilient apt settings
         run: |
           printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
-      # Speed: keep the downloaded Chromium between runs; system packages still install below.
-      - name: Playwright browser cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -439,6 +487,16 @@ jobs:
           sleep 2
           sudo dpkg --configure -a
           pnpm exec playwright install --with-deps chromium
+      - name: Browser runtime fingerprint (KI-28)
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.playwright.outputs.version }}
+          CACHE_HIT: ${{ steps.browser-cache.outputs.cache-hit }}
+        run: |
+          browsers=$(ls ~/.cache/ms-playwright | sort | tr '\n' ' ')
+          fonts=$(fc-list --format '%{file}|%{family}|%{style}\n' | sort | sha256sum | cut -c1-16)
+          packages=$(dpkg-query -W -f '${Package}=${Version}\n' | grep -E '^(fonts-|fontconfig|libfontconfig|libfreetype|libharfbuzz)' | sort | sha256sum | cut -c1-16)
+          echo "::notice title=Browser runtime fingerprint::playwright=$PLAYWRIGHT_VERSION browsers=$browsers cache-hit=${CACHE_HIT:-false} fonts=$fonts font-packages=$packages image=$ImageOS-$ImageVersion"
       - name: AC/1 UX quality gate (shard ${{ matrix.shard }} of 3, every static route at six widths, ratcheted baseline)
         run: pnpm test:ux --shard=${{ matrix.shard }}/3 --fully-parallel
       - name: AC/1 UX gate report and screenshots
