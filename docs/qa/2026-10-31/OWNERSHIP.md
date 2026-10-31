@@ -25,6 +25,15 @@ Document status: CURRENT, DATED. Written by the lead in Wave 0 on 31 Oct 2026 fr
 
 In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium` (or the `chromium-1194` path if present) for browser runs. Concurrent Playwright runs need distinct `--output` paths.
 
+## Working beside four other streams on one machine
+
+The five streams share one cloud container (4 CPUs) and one local PostgreSQL 16 on port 54329 (KI-15). Ports 3100, 3200 and 3300 and the fixed test database names are shared too. So:
+
+- Before anything else in a new worktree: `cp /home/user/corridra/.cache/part03-local.json .cache/` (create `.cache` first) and `pnpm install --frozen-lockfile --config.engine-strict=false`.
+- Wrap every database or browser run in a lock: `flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/<file>` and `flock /tmp/corridra-browser.lock <playwright command>`. Wrap builds: `flock /tmp/corridra-build.lock pnpm build`.
+- Run only the vitest files and browser specs that cover what you changed. The full `pnpm test:integration`, `pnpm test:operator`, `pnpm test:e2e` and `pnpm test:ux` run in CI on the integration PR.
+- Never stop or reset the shared PostgreSQL server.
+
 ## WS-A Public site and intake
 
 - `apps/web/app/page.tsx`, `apps/web/app/not-found.tsx`
@@ -51,7 +60,7 @@ In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers
 ## WS-C Team work
 
 - `apps/web/app/operator/{missions.tsx,mission-moves.tsx,commercial-mission.tsx,opportunities.tsx,delivery.tsx,delivery-experience.tsx,customer-billing.tsx,customer-invoicing.tsx,customer-real-invoicing.tsx,customer-simulated-payments.tsx,customer-service-catalogue.tsx,customer-service-requests.tsx,customer-mission-delivery.tsx,specification-requests.tsx,reply-review.tsx,reply-review.css,counterparties.tsx,company-link-review.tsx,decision-disclosures.tsx,access.tsx,country-options.tsx}`
-- `apps/web/app/operator/missions/**` (new: the queue page and `[missionId]` tabs)
+- `apps/web/app/operator/[section]/[missionId]/**` (new: the mission page with tabs at `/operator/missions/<id>`; it must answer not found for any section other than `missions`). Do not create an `app/operator/missions/` folder: `tests/integration/ux-operator-urls.test.ts` forbids a folder named like a section word. The queue at `/operator/missions` is the existing section, rendered by `missions.tsx`.
 - `apps/web/app/{client,buyer,programme}/**`, `apps/web/app/delivery-view.tsx`, `apps/web/app/mission-experience-view.tsx`
 - `apps/web/app/api/{buyer,delivery,mission-mail,reply}/**`, `apps/web/app/api/workspace/{customer-billing,customer-decision-disclosures,customer-mission-delivery,customer-organisation-links,customer-service-requests,customer-simulated-payments,delivery,specification-confirmations}/**`, new `apps/web/app/api/team-work/**`
 - `packages/missions/**`, `packages/opportunities/**`, `packages/delivery/**`, `packages/counterparties/**`, `packages/communications/src/{index.ts,adapters.ts}`, `apps/web/workflows/**`
