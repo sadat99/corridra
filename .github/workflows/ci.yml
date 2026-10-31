@@ -143,6 +143,10 @@ jobs:
             !test-results/workspace-*/**
           retention-days: 7
 
+  # Six operator shards. Playwright gives each shard whole files, in name order, by test count
+  # (workers 1, fullyParallel false); each shard runs on its own fresh database. workspace.spec.ts
+  # enrols the authenticator that the y-, zz- and zzz- files after it sign in with, so that chain must
+  # stay in one shard: tests/operator-shards.test.mjs fails if it would split.
   operator:
     needs: changes
     if: ${{ needs.changes.outputs.docs_only != 'true' }}
@@ -151,7 +155,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -194,10 +198,10 @@ jobs:
           sleep 2
           sudo dpkg --configure -a
           pnpm exec playwright install --with-deps chromium
-      - name: Protected operator browser tests (shard ${{ matrix.shard }} of 3)
+      - name: Protected operator browser tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
         env:
           UX06_EVIDENCE_STAGE: after
-        run: pnpm test:operator --shard=${{ matrix.shard }}/3
+        run: pnpm test:operator --shard=${{ matrix.shard }}/${{ strategy.job-total }}
       - name: Synthetic UX browser evidence
         if: always()
         uses: actions/upload-artifact@v7
