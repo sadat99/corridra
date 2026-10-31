@@ -8,7 +8,11 @@ import {
   reservedOperatorSegments,
   sectionForSlug,
 } from '../../apps/web/lib/operator-urls';
-import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
+import {
+  operatorReturnTo,
+  operatorSignInPath,
+  workspaceSections,
+} from '../../apps/web/lib/workspace-navigation';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 
 // Operator section addresses and view as stage 2 (Lane 9 of the UX update): the closed list of
@@ -142,5 +146,48 @@ describe('every switch-off path', () => {
     expect(operations).not.toMatch(/window\.location\.hash|hashchange/);
     // The workspace hands it the section that follows the # part and, with the switch on, the address.
     expect(read('apps/web/app/operator/workspace.tsx')).toContain('section={fragment}');
+  });
+});
+
+describe('signing in again from the workspace comes back to the same workspace and section', () => {
+  const workspace = '11111111-1111-4111-8111-111111111111';
+  const back = (hash: string, initialSection: string) =>
+    decodeURIComponent(
+      operatorSignInPath(workspace, fragmentFor(hash, initialSection)).split('?next=')[1]!,
+    );
+  it('a section address with no # part returns to that section as a # part', () => {
+    expect(back('', 'workspace-sources')).toBe(
+      '/operator?workspace=' + workspace + '#workspace-sources',
+    );
+  });
+  it('a # part on a section address wins, as it does for what the workspace shows', () => {
+    expect(back('#workspace-evidence', 'workspace-sources')).toBe(
+      '/operator?workspace=' + workspace + '#workspace-evidence',
+    );
+  });
+  it('a # part that is not a section keeps only the workspace, also on a section address', () => {
+    for (const hash of [
+      '#nonexistent',
+      '#main',
+      '#workspace-sources?token=x',
+      '#//example.invalid',
+    ])
+      expect(back(hash, 'workspace-sources'), hash).toBe('/operator?workspace=' + workspace);
+    expect(back('', '')).toBe('/operator?workspace=' + workspace);
+  });
+  it('the workspace link follows the # part through a store that reads nothing on the server', () => {
+    const workspaceSource = read('apps/web/app/operator/workspace.tsx');
+    expect(workspaceSource).toContain(
+      'href={operatorSignInPath(tenant, fragmentFor(hash, initialSection))}',
+    );
+    expect(workspaceSource).toMatch(
+      /useSyncExternalStore\(\s*subscribeToHash,\s*\(\) => window\.location\.hash,\s*\(\) => '',\s*\)/,
+    );
+    expect(workspaceSource).not.toContain('href="/operator/signin"');
+    // Signing out still goes to the plain sign-in page, with no address to come back to.
+    expect(workspaceSource).toContain("router.replace('/operator/signin');");
+    expect(read('apps/web/app/operator/authenticator-check.tsx')).toContain(
+      "operatorSignInPath(tenant, 'workspace-authenticator')",
+    );
   });
 });

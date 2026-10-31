@@ -343,6 +343,12 @@ test('the authenticator panel says each check result beside the field and keeps 
       );
       await submit('123456');
       await expect(page.getByRole('link', { name: 'Verify workspace access' })).toBeVisible();
+      // Signing in again comes back to this panel in this workspace.
+      await expect(page.getByRole('link', { name: 'Verify workspace access' })).toHaveAttribute(
+        'href',
+        '/operator/signin?next=' +
+          encodeURIComponent('/operator?workspace=' + seed.tenantId + '#workspace-authenticator'),
+      );
       await expect(panel).toHaveCount(0);
       await page.unroute('**/api/workspace/workspace?*');
     });

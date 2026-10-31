@@ -8,7 +8,7 @@ import { WorkspaceAudit } from './workspace-audit';
 import { PanelHeading } from './panel-heading';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { RoleNavigation } from '../../components/role-navigation';
 import { WorkspaceAreaBar, panelFor } from '../../components/workspace-area-bar';
@@ -22,7 +22,7 @@ import { ControlledAccess } from './access';
 import { GovernedAssistance } from './intelligence';
 import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
-import { workspaceSections } from '../../lib/workspace-navigation';
+import { operatorSignInPath, workspaceSections } from '../../lib/workspace-navigation';
 import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
@@ -58,6 +58,16 @@ type Snapshot = {
   facts: RecordRow[];
 };
 type Tenant = { id: string; name: string; role: string };
+// The address `#` part as an external store, so a link can follow it from the first render on: the
+// server and the hydrating render both read '' and the real value arrives right after.
+function subscribeToHash(notify: () => void) {
+  window.addEventListener('hashchange', notify);
+  window.addEventListener('popstate', notify);
+  return () => {
+    window.removeEventListener('hashchange', notify);
+    window.removeEventListener('popstate', notify);
+  };
+}
 export function Workspace({
   tenants,
   initialTenant,
@@ -111,6 +121,11 @@ function TenantWorkspace({
 }) {
   const router = useRouter();
   const edited = useRef(false);
+  const hash = useSyncExternalStore(
+    subscribeToHash,
+    () => window.location.hash,
+    () => '',
+  );
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -349,7 +364,10 @@ function TenantWorkspace({
               Retry workspace
             </button>
           )}
-          <Link className="text-link" href="/operator/signin">
+          <Link
+            className="text-link"
+            href={operatorSignInPath(tenant, fragmentFor(hash, initialSection))}
+          >
             Verify workspace access
           </Link>
           <Link className="text-link" href="/signin">
