@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
+import {
+  operatorReturnTo,
+  operatorSignInPath,
+  workspaceSections,
+} from '../../apps/web/lib/workspace-navigation';
 
 describe('protected tool return destinations', () => {
   it('preserves registered tool and workspace destinations only', () => {
@@ -27,5 +31,60 @@ describe('protected tool return destinations', () => {
     ]) {
       expect(operatorReturnTo(next)).toBe('/operator');
     }
+  });
+});
+
+describe('the sign-in address that comes back to a workspace', () => {
+  const workspace = '12345678-abcd-1234-abcd-123456789abc';
+  // Every address is the sign-in page with one `next`, and that `next` survives the closed return list.
+  function returnOf(href: string): string {
+    const url = new URL(href, 'http://corridra.invalid');
+    expect(url.pathname).toBe('/operator/signin');
+    expect([...url.searchParams.keys()]).toEqual(['next']);
+    const next = url.searchParams.get('next')!;
+    expect(operatorReturnTo(next)).toBe(next);
+    return next;
+  }
+
+  it('keeps the workspace and every listed section', () => {
+    for (const id of [...workspaceSections.map((section) => section.id), 'workspace-navigation'])
+      expect(returnOf(operatorSignInPath(workspace, id))).toBe(
+        '/operator?workspace=' + workspace + '#' + id,
+      );
+    expect(returnOf(operatorSignInPath(workspace))).toBe('/operator?workspace=' + workspace);
+    expect(returnOf(operatorSignInPath(workspace, ''))).toBe('/operator?workspace=' + workspace);
+  });
+
+  it('gives the authenticator panel the same address as before', () => {
+    expect(operatorSignInPath(workspace, 'workspace-authenticator')).toBe(
+      '/operator/signin?next=' +
+        encodeURIComponent('/operator?workspace=' + workspace + '#workspace-authenticator'),
+    );
+  });
+
+  it('drops a section that is not listed and keeps the workspace', () => {
+    for (const section of [
+      'main',
+      'nonexistent',
+      'workspace-sources?token=x',
+      '//example.invalid',
+      'WORKSPACE-SOURCES',
+      '__proto__',
+      'constructor',
+    ])
+      expect(returnOf(operatorSignInPath(workspace, section))).toBe(
+        '/operator?workspace=' + workspace,
+      );
+  });
+
+  it('drops a workspace that is not an id and keeps a listed section', () => {
+    for (const bad of ['invalid', workspace + 'a', workspace + '#ops-center', '../x']) {
+      expect(returnOf(operatorSignInPath(bad, 'workspace-sources'))).toBe(
+        '/operator#workspace-sources',
+      );
+      expect(returnOf(operatorSignInPath(bad, 'nonexistent'))).toBe('/operator');
+      expect(returnOf(operatorSignInPath(bad))).toBe('/operator');
+    }
+    expect(returnOf(operatorSignInPath())).toBe('/operator');
   });
 });
