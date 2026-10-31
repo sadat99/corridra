@@ -161,7 +161,11 @@ export default async function Page({
             ))}
           </ul>
         </section>
-        <section aria-labelledby="owner-gaps" className="owner-section owner-section-tight">
+        <section
+          aria-labelledby="owner-gaps"
+          className="owner-section owner-section-tight"
+          data-deferred-register
+        >
           <h2 id="owner-gaps">Open gaps</h2>
           <p>
             These {deferredControls.length} controls are open. Each one is deferred by your decision
