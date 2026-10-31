@@ -246,6 +246,14 @@
       "bytes": 12250,
       "sha256": "0f7c888faf5960e1512eff489010f3c13a9f8c0c74c477aca4995043c62605dc",
       "meaning": "Exact active-index snapshot before the 31 October 2026 commercial readiness records refresh, which recorded the Wave 0 merge (PR223, d91ac1a), the five workstreams and the release PR; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "5c689a7",
+      "archive": "docs/v3/history/ledger-before-pr225-merge-records-2026-10-31.md",
+      "bytes": 12012,
+      "sha256": "955a7f4ac6062a160b2037253495d00b9344b7e17413e564f96b15d5e65c89c6",
+      "meaning": "Exact active-index snapshot before the 31 October 2026 records refresh that recorded the PR225 merge (commercial readiness release, 5c689a7) and its deployment; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
