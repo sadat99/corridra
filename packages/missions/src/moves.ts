@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, stepUpRequired } from '@corridra/domain';
 import { moveCommand } from '@corridra/domain/moves';
 
 // Move records written by the Corridra team (ADR-068). The database is the authority: it checks the
@@ -63,7 +63,7 @@ export class MissionMoveService {
       ctx,
       'missions.manage',
       async ({ db, actorId, tenantId, freshMfa }) => {
-        if (!freshMfa) throw new DomainError('Verify your authenticator again to continue', 401);
+        if (!freshMfa) throw stepUpRequired();
         // One command at a time per mission: the cap and the replacement are decided under this lock.
         await db.query('SELECT id FROM app.mission WHERE tenant_id=$1 AND id=$2 FOR UPDATE', [
           tenantId,

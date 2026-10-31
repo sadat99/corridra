@@ -2244,6 +2244,22 @@ Records (this scribe pass, over `f06d610`): this entry; `docs/V3_LEDGER.md` (sta
 
 Next: the phone follow-ups PR needs CI on its final head, then the owner's merge command. The two owner decisions above stay open. Otherwise unchanged: the owner's Pulse checks and the home page words review.
 
+## 31 October 2026: commercial readiness program, Wave 0 (contracts, schema module, scaffolding, CI speed)
+
+Owner instruction (chat, 31 Oct): run `CORRIDRA_COMMERCIAL_READINESS_PROGRAM.md` as the lead, with "advanced approval for everything", "keep committing, merging, deploying directly to production" and a CI speedup. The program file records how that is applied: each program PR merges after its own green `validate`; the session branch stands in for the release branch to stay inside the branch budget; agents still never touch the production database, dispatch the install workflow or set production switches, and the five program flags stay off in production.
+
+Built (Wave 0):
+
+- Contracts with working internals and fixed signatures: `apps/web/lib/ux/` (dates in the D11 shape with zone and offset, exact minor-unit money with ISO 4217 exponents and pinned currencies, country and time zone options, the D6 customer status labels over the existing Road, step-up client helpers, session drafts, page titles), `apps/web/components/ux/` (an accessible combobox without a dependency, country, currency and time zone pickers, money and date-time inputs, reference picker, scoped feedback, an error summary that takes focus once per submit, page header, status chip, the in-place step-up dialog, the inbox), `notify()` and `InboxService`, `GET/POST /api/notifications` and `GET /api/picker/<kind>` (empty results until WS-D fills them), and thin wrappers `assignRoute` and `createRoutePack` over `CorridorService`, plus `getTeamToday` and `listDeliveredPublications` stubs.
+- Step-up code: `DomainError` gains an optional `code`; `stepUpRequired()` replaces the four identical "Verify your authenticator again" throws (message and status unchanged) and the workspace API returns `code: "STEP_UP_REQUIRED"`.
+- Schema module `commercial-readiness-migrations/0001_inbox_and_links.sql` (additive): `app.inbox_notification` readable and markable by its recipient only, written through `app.inbox_record`; nullable mission and company links on sources and claims; nullable participant email on programme invitations. Added to the default installer list of `Install customer modules`; not installed in production by this PR.
+- Scaffolding: five flags registered and described; one message file per stream merged into every catalog; the sources and evidence sections moved unchanged out of `workspace.tsx`; the verification server, seed and Playwright config at three widths; ownership map, baseline, language review list and status files under `docs/qa/2026-10-31/`.
+- CI speed: pnpm store, Next.js build cache and Playwright browser cache in every job. No check removed or weakened.
+
+Verification (cloud container, Node 22 with the Node 24 pin warning): `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm build` exit 0; `pnpm test` 63 of 63 after the token fix; new vitest files 14 of 14 and 6 of 6 on native PostgreSQL 16. Full `pnpm test:integration` and the browser suites: CI on the exact head.
+
+Next: the five workstreams in local worktrees, then integration, RESULTS.md and the release PR.
+
 ## 31 October 2026: the CI speedup (six operator shards, Chromium cache, stricter install verifier), and the PR222 merge
 
 Request (owner, chat, relayed by the conductor): "squash merge when green" for PR222, then "do the CI speedup too" and, for this PR, "squash merge when green". Why: a CI round took 25 to 28 minutes. Authority: brief stamp `auth-b8035e401ac0`; agent squad run (authority, architect, builder, verifier, scribe). Task class: tooling (CI workflow, a test timeout) plus the protected-installation gate script.

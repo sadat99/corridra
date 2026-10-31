@@ -1,3 +1,4 @@
+import { InboxService } from '@corridra/communications/inbox';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
 import {
@@ -238,6 +239,7 @@ function createServices() {
     ...identity,
     missionMail,
     viewAs: new ViewAsService(runtimePool),
+    inbox: new InboxService(runtimePool),
     operatorSetup: new OperatorSetup(authPool),
     networkInvitations: new NetworkInvitations(
       authPool,

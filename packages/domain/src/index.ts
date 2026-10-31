@@ -33,9 +33,16 @@ export class DomainError extends Error {
   constructor(
     message: string,
     public status = 403,
+    public code?: string,
   ) {
     super(message);
   }
+}
+/** The one code a client uses to open the in-place re-verify dialog and retry (D12). */
+export const STEP_UP_REQUIRED = 'STEP_UP_REQUIRED';
+/** A refused action that needs a fresh authenticator check. HTTP 401 with code STEP_UP_REQUIRED. */
+export function stepUpRequired(message = 'Verify your authenticator again to continue') {
+  return new DomainError(message, 401, STEP_UP_REQUIRED);
 }
 export const purpose = z.enum([
   'synthetic_validation',

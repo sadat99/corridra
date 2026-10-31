@@ -1252,6 +1252,61 @@
       "path": "docs/implementation/ux-repair-acceptance-2026-10-29.md",
       "classification": "Dated implementation evidence",
       "use": "29 October repair scope; re-check runtime receipts before quoting"
+    },
+    {
+      "path": "docs/qa/2026-10-31/OWNERSHIP.md",
+      "classification": "Program scaffolding",
+      "use": "Commercial readiness program file ownership and contracts; current for the program"
+    },
+    {
+      "path": "docs/qa/2026-10-31/BASELINE.md",
+      "classification": "Dated implementation evidence",
+      "use": "Commercial readiness program baseline on 31 Oct 2026"
+    },
+    {
+      "path": "docs/qa/2026-10-31/i18n-review.md",
+      "classification": "Language review record",
+      "use": "New program message keys awaiting native review"
+    },
+    {
+      "path": "docs/qa/2026-10-31/status/WS-A.md",
+      "classification": "Program status",
+      "use": "Commercial readiness workstream status file"
+    },
+    {
+      "path": "docs/qa/2026-10-31/status/WS-B.md",
+      "classification": "Program status",
+      "use": "Commercial readiness workstream status file"
+    },
+    {
+      "path": "docs/qa/2026-10-31/status/WS-C.md",
+      "classification": "Program status",
+      "use": "Commercial readiness workstream status file"
+    },
+    {
+      "path": "docs/qa/2026-10-31/status/WS-D.md",
+      "classification": "Program status",
+      "use": "Commercial readiness workstream status file"
+    },
+    {
+      "path": "docs/qa/2026-10-31/status/WS-E.md",
+      "classification": "Program status",
+      "use": "Commercial readiness workstream status file"
+    },
+    {
+      "path": "docs/runbooks/dsar-manual.md",
+      "classification": "Operational runbook",
+      "use": "Manual data subject request steps (D08 deferred)"
+    },
+    {
+      "path": "docs/runbooks/backup-pitr.md",
+      "classification": "Operational runbook",
+      "use": "Backup and point-in-time restore record (V-51)"
+    },
+    {
+      "path": "docs/runbooks/owner-technical-setup.md",
+      "classification": "Operational runbook",
+      "use": "Owner install and configuration steps moved off the owner page"
     }
   ]
 }

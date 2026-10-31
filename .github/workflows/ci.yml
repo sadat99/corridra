@@ -53,6 +53,16 @@ jobs:
           node-version-file: .node-version
       - name: Install pinned pnpm
         run: npm install --global pnpm@11.19.0
+      # Speed (31 Oct 2026): reuse the pnpm store between runs; the lockfile still decides every version.
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install workspace
         run: pnpm install --frozen-lockfile
       - name: Git branch budget below nine, preserving open PRs
@@ -97,6 +107,16 @@ jobs:
           node-version-file: .node-version
       - name: Install pinned pnpm
         run: npm install --global pnpm@11.19.0
+      # Speed (31 Oct 2026): reuse the pnpm store between runs; the lockfile still decides every version.
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install workspace
         run: pnpm install --frozen-lockfile
       - name: Isolated PostgreSQL
@@ -107,6 +127,13 @@ jobs:
         run: pnpm scanner:local
       - name: Database, identity, adapter and recovery integration tests
         run: pnpm test:integration
+      # Speed: Next.js keeps its compiler cache between runs. A stale entry only costs a rebuild.
+      - name: Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.ts', 'apps/web/**/*.tsx', 'apps/web/**/*.css', 'packages/**/*.ts') }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Production build
         run: pnpm build
         env:
@@ -189,6 +216,16 @@ jobs:
           node-version-file: .node-version
       - name: Install pinned pnpm
         run: npm install --global pnpm@11.19.0
+      # Speed (31 Oct 2026): reuse the pnpm store between runs; the lockfile still decides every version.
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install workspace
         run: pnpm install --frozen-lockfile
       - name: Isolated PostgreSQL
@@ -197,6 +234,13 @@ jobs:
         run: pnpm db:prepare-local
       - name: Real malware scanner readiness
         run: pnpm scanner:local
+      # Speed: Next.js keeps its compiler cache between runs. A stale entry only costs a rebuild.
+      - name: Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.ts', 'apps/web/**/*.tsx', 'apps/web/**/*.css', 'packages/**/*.ts') }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Production build
         run: pnpm build
         env:
@@ -305,6 +349,16 @@ jobs:
           node-version-file: .node-version
       - name: Install pinned pnpm
         run: npm install --global pnpm@11.19.0
+      # Speed (31 Oct 2026): reuse the pnpm store between runs; the lockfile still decides every version.
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install workspace
         run: pnpm install --frozen-lockfile
       - name: Isolated PostgreSQL
@@ -313,6 +367,13 @@ jobs:
         run: pnpm db:prepare-local
       - name: Real malware scanner readiness
         run: pnpm scanner:local
+      # Speed: Next.js keeps its compiler cache between runs. A stale entry only costs a rebuild.
+      - name: Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.ts', 'apps/web/**/*.tsx', 'apps/web/**/*.css', 'packages/**/*.ts') }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Production build
         run: pnpm build
         env:

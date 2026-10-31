@@ -25,7 +25,8 @@
     "db:prepare-local": "tsx scripts/prepare-local.ts",
     "scanner:local": "tsx scripts/local-scanner.ts",
     "test:operator": "playwright test --config playwright.operator.config.ts",
-    "test:infrastructure": "python -B -m unittest discover -s tests -p neon_projects_test.py"
+    "test:infrastructure": "python -B -m unittest discover -s tests -p neon_projects_test.py",
+    "test:verification": "playwright test --config playwright.verification.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

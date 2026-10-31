@@ -1,6 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
-import { authorize, DomainError, type Permission, type Role } from '@corridra/domain';
+import {
+  authorize,
+  DomainError,
+  type Permission,
+  type Role,
+  stepUpRequired,
+} from '@corridra/domain';
 export { Pool };
 export type { PoolClient };
 export type DatabaseClient = Pick<PoolClient, 'query' | 'release'>;
@@ -100,7 +106,7 @@ export async function withTenant<T>(
       ].includes(permission) &&
       !a.fresh
     )
-      throw new DomainError('Verify your authenticator again to continue', 401);
+      throw stepUpRequired();
     const result = await work({
       db,
       actorId: a.actor_id,

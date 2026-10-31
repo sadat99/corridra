@@ -34,6 +34,7 @@ import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
 import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
 import { migrateCustomerNotifications } from '../packages/db/src/customer-notification-migrate';
+import { migrateCommercialReadiness } from '../packages/db/src/commercial-readiness-migrate';
 import {
   configureNotifications,
   emailAddressSourceReady,
@@ -226,6 +227,7 @@ const registries = [
   'customer_notification_migrations',
   'recipient_reply_review_migrations',
   'view_as_migrations',
+  'commercial_readiness_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -253,6 +255,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['paid-service requests', migrateCustomerServiceRequests],
   ['synthetic plans, subscriptions and entitlements', migrateCustomerBilling],
   ['synthetic invoices, payment records and credit notes', migrateCustomerInvoicing],
+  ['inbox and optional source links (commercial readiness)', migrateCommercialReadiness],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);
