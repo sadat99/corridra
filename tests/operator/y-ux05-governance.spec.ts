@@ -104,21 +104,31 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await ops.getByRole('combobox', { name: 'Route service', exact: true }).selectOption('sourcing');
   const readiness = ops.getByRole('region', { name: 'Route readiness evidence', exact: true });
   await expect(readiness.getByRole('row')).toHaveCount(14);
-  await expect(readiness.getByRole('cell', { name: 'BLOCKED', exact: true })).toHaveCount(13);
+  await expect(readiness.getByRole('cell', { name: 'Blocked', exact: true })).toHaveCount(13);
   const missingEvidence = page.waitForResponse(
     (r) =>
       new URL(r.url()).pathname === '/api/workspace/operations' && r.request().method() === 'POST',
   );
-  await ops.getByRole('button', { name: 'Approve synthetic route readiness', exact: true }).click();
+  await ops
+    .getByRole('button', { name: 'Approve route readiness for limited use', exact: true })
+    .click();
   expect((await missingEvidence).status()).toBe(409);
   await expect(ops.getByRole('status')).toContainText('Reference:');
-  await expect(readiness.getByRole('cell', { name: 'BLOCKED', exact: true })).toHaveCount(13);
-  await expect(ops).toContainText('UNPUBLISHED');
+  await expect(readiness.getByRole('cell', { name: 'Blocked', exact: true })).toHaveCount(13);
+  await expect(ops).toContainText('Release state: Not published');
   await ops
     .getByRole('combobox', { name: 'Readiness dimension', exact: true })
     .selectOption('offer');
   await ops.getByRole('combobox', { name: 'Readiness status', exact: true }).selectOption('PASS');
-  await ops.getByLabel('Readiness evidence source ID', { exact: true }).fill(source);
+  // The evidence source is chosen by name from the picker (D9), never typed as an ID.
+  await ops
+    .getByRole('combobox', { name: 'Readiness evidence source (optional)', exact: true })
+    .fill('Synthetic UX-05 operations source');
+  await ops
+    .getByRole('option', { name: /Synthetic UX-05 operations source/ })
+    .first()
+    .click();
+  expect(source).toBeTruthy();
   // Chromium shortens a datetime-local value that ends in :00 seconds and Playwright then rejects the
   // fill as malformed, so a run that lands on a whole minute failed about one time in sixty.
   const validUntil = new Date(Date.now() + 10000);
@@ -129,13 +139,13 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await ops.getByRole('button', { name: 'Record readiness', exact: true }).click();
   await expect(ops.getByRole('status')).toContainText('Recorded.');
   const offer = readiness.getByRole('row').filter({ hasText: 'Commercial offer and pricing' });
-  await expect(offer.getByRole('cell', { name: 'PASS', exact: true })).toHaveCount(2);
+  await expect(offer.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(2);
   await expect
     .poll(() => Date.now(), { timeout: 15000, intervals: [1000] })
     .toBeGreaterThan(Date.parse(until));
   await ops.getByRole('button', { name: 'Refresh operations', exact: true }).click();
-  await expect(offer.getByRole('cell', { name: 'BLOCKED', exact: true })).toHaveCount(1);
-  await expect(offer.getByRole('cell', { name: 'PASS', exact: true })).toHaveCount(1);
+  await expect(offer.getByRole('cell', { name: 'Blocked', exact: true })).toHaveCount(1);
+  await expect(offer.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(1);
   await expect(offer).toContainText('Evidence expired or configuration changed');
   await ops
     .getByRole('button', { name: 'Prepare next configuration version', exact: true })

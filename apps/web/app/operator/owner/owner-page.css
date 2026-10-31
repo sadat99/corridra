@@ -130,6 +130,92 @@
 .ux-owner .owner-facts dd {
   margin: 0;
 }
+/* Status board first (UX-03, CQ-39). Geist for labels; Mono only for codes (UX-13). */
+.ux-owner .owner-board {
+  display: grid;
+  gap: var(--space-4);
+}
+.ux-owner .owner-live {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  margin: 0;
+}
+.ux-owner .owner-section-tight {
+  margin-block-start: var(--space-6);
+}
+.ux-owner .owner-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-1);
+}
+.ux-owner .owner-code {
+  font-size: var(--text-xs);
+  color: var(--text-2);
+}
+.ux-owner .owner-gap-cards li {
+  display: grid;
+  gap: var(--space-1);
+}
+@media (min-width: 48rem) {
+  .ux-owner .owner-gap-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.ux-owner .owner-technical {
+  margin-block-start: var(--space-8);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-owner .owner-technical > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ux-owner .owner-table th,
+.ux-owner .owner-table td,
+.ux-owner .owner-label,
+.ux-owner .owner-line {
+  font-family: var(--font-ui);
+}
+/* Cards on phones: no sideways scroll (CQ-57). */
+@media (max-width: 47.99rem) {
+  .ux-owner .owner-scroll {
+    overflow-x: visible;
+  }
+  .ux-owner .owner-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ux-owner .owner-table,
+  .ux-owner .owner-table tbody,
+  .ux-owner .owner-table tr,
+  .ux-owner .owner-table th,
+  .ux-owner .owner-table td {
+    display: block;
+  }
+  .ux-owner .owner-table tr {
+    border-block-end: 1px solid var(--border-subtle);
+  }
+  .ux-owner .owner-table th,
+  .ux-owner .owner-table td {
+    border-block-end: 0;
+  }
+  .ux-owner .owner-table td {
+    padding-block-start: 0;
+  }
+}
 @media (min-width: 48rem) {
   .ux-owner .owner-facts {
     grid-template-columns: 12rem minmax(0, 1fr);

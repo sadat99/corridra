@@ -207,9 +207,11 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(page.locator('#ops-gates')).toBeFocused();
   await expect(operations.locator('.ux-operations-panel:visible')).toHaveCount(1);
   await expect(page.locator('#ops-dashboard')).toBeHidden();
-  await expect(
-    operations.getByRole('region', { name: 'External production prerequisites' }),
-  ).toContainText('BLOCKED: external prerequisite');
+  await expect(operations.getByRole('region', { name: 'Deferred controls' })).toContainText(
+    'Deferred by owner decision on',
+  );
+  await expect(page.locator('#ops-gates')).toContainText('Live, small scale');
+  await expect(page.locator('#ops-gates')).not.toContainText('PASS');
   await operationNavigation
     .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
     .click();
