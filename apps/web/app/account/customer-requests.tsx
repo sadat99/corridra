@@ -2,6 +2,9 @@
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshButton } from './refresh-button';
+import { StatusChip } from '../../components/ux/page-header';
+import { customerStatusLabel } from '../../lib/ux/customer-road';
+import { formatDateTime } from '../../lib/ux/format';
 
 type RequestRow = {
   id: string;
@@ -9,6 +12,8 @@ type RequestRow = {
   createdAt: string;
   synthetic: boolean;
   available: boolean;
+  /** CQ-23: the objective and market the customer chose, for example "Sell in Spain". */
+  title?: string;
   progress: null | {
     status: string;
     receivedAt: string;
@@ -83,13 +88,7 @@ async function fetchPage(
   return page as Page;
 }
 function time(value: string) {
-  return (
-    new Intl.DateTimeFormat('en-GB', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'UTC',
-    }).format(new Date(value)) + ' UTC'
-  );
+  return formatDateTime(value);
 }
 
 export function CustomerRequests(props: {
@@ -244,21 +243,21 @@ function PrivateRequests({
           <article
             key={request.id}
             className="detail-card"
-            aria-label={'Request saved ' + time(request.createdAt)}
+            aria-label={(request.title ?? 'Request') + ', sent ' + time(request.createdAt)}
           >
-            <h3>Request</h3>
+            <h3>{request.title ?? 'Request sent ' + time(request.createdAt)}</h3>
             {detailsEnabled && (
               <a className="text-link" href={'/account/requests/' + request.id}>
                 Open request details
               </a>
             )}
             <p>
-              Saved <time dateTime={request.createdAt}>{time(request.createdAt)}</time>
+              Sent <time dateTime={request.createdAt}>{time(request.createdAt)}</time>
             </p>
             {request.available && request.progress ? (
               <>
                 <p>
-                  Mission status: <strong>{request.progress.status}</strong>
+                  Status: <StatusChip status={customerStatusLabel(request.progress.status, true)} />
                 </p>
                 <p>A saved request is not an accepted engagement, confirmed meeting or deal.</p>
                 <h4>Replies from the Corridra team</h4>
@@ -300,7 +299,7 @@ function PrivateRequests({
       {canSubmit ? (
         <p>
           <a className="text-link" href="/account#customer-workspaces">
-            Choose a workspace to send a request
+            New request
           </a>
         </p>
       ) : (

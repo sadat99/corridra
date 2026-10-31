@@ -543,6 +543,8 @@ test('the plan link appears beside a workspace only when the module is on', asyn
     }),
   );
   await page.goto(origin + '/?view=workspaces');
+  // UX-07: secondary workspace actions sit in the workspace's More menu.
+  await page.locator('details.ux-more-menu > summary').first().click();
   await expect(page.getByRole('link', { name: 'Plan and billing' })).toHaveAttribute(
     'href',
     '/account/billing/' + workspaceId,

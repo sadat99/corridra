@@ -41,7 +41,7 @@ export default async function Page() {
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Delegation registrations">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Delegation registrations">
       <ParticipantAccount
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}

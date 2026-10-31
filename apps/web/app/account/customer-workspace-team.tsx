@@ -495,7 +495,7 @@ export function CustomerWorkspaceTeam({
       }}
     >
       <summary>Manage team</summary>
-      <section aria-label={'Test team for ' + workspace.name} aria-busy={loading || busy}>
+      <section aria-label={'Team for ' + workspace.name} aria-busy={loading || busy}>
         <p>
           {realCustomerInput()
             ? 'Workspace access only. No private mission, company or financial information is shared.'
@@ -753,7 +753,7 @@ export function CustomerWorkspaceTeam({
             {issued.token ? (
               <>
                 <label className="field">
-                  New test workspace invitation code
+                  New workspace invitation code
                   <input value={issued.token} readOnly autoComplete="off" spellCheck={false} />
                 </label>
                 <p>

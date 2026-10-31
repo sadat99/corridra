@@ -114,7 +114,7 @@ async function openOwnerTeam(page: Page, memberships: Member[], query = '') {
   );
   await page.goto(origin + '/' + query);
   await page.getByText('Manage team', { exact: true }).click();
-  return page.getByRole('region', { name: 'Test team for ' + owned.name, exact: true });
+  return page.getByRole('region', { name: 'Team for ' + owned.name, exact: true });
 }
 
 test('an owner changes a role only after confirming, with one exact request, and the list reflects the new role', async ({
@@ -200,7 +200,7 @@ test('role controls are absent without the flag, or when the module is not insta
   );
   await page.goto(origin + '/');
   await page.getByText('Manage team', { exact: true }).click();
-  const on = page.getByRole('region', { name: 'Test team for ' + owned.name, exact: true });
+  const on = page.getByRole('region', { name: 'Team for ' + owned.name, exact: true });
   await expect(on.getByText('Synthetic Dhaka buyer lead · member · active')).toBeVisible();
   await expect(on.getByRole('button', { name: /Make Synthetic/ })).toHaveCount(0);
 });
@@ -231,7 +231,7 @@ test('a stale role, an unavailable module and a lost owner right are each handle
   await expect(panel.getByRole('alert')).toContainText('not confirmed');
   status = 403;
   await panel.getByRole('button', { name: 'Confirm admin role' }).click();
-  await expect(page.getByRole('region', { name: /Test team for/ })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: /Team for/ })).toHaveCount(0);
   await expect(page.getByText('Your account or saved request changed.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Reload account' })).toBeVisible();
 });

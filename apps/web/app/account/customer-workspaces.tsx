@@ -11,6 +11,15 @@ import { CompanyLinkLine, useCompanyLinkOverview } from './company-link-status';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
+// UX-07: one primary action per workspace; the other actions sit in this "More" menu (44 px targets).
+const moreSummary = { minHeight: 44, cursor: 'pointer', listStyle: 'none' } as const;
+const moreList = {
+  listStyle: 'none',
+  padding: 0,
+  margin: '0.5rem 0 0',
+  display: 'grid',
+  gap: 4,
+} as const;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 function workspace(value: unknown): value is CustomerWorkspace {
   if (!value || typeof value !== 'object') return false;
@@ -212,7 +221,7 @@ export function CustomerWorkspaces({
       setMessage({
         text: realCustomerInput()
           ? 'Enter a workspace name between 2 and 120 characters.'
-          : 'Enter a fictional workspace name between 1 and 110 characters.',
+          : 'Enter a workspace name between 1 and 110 characters.',
         error: true,
       });
       return;
@@ -352,49 +361,71 @@ export function CustomerWorkspaces({
                   </p>
                   {linksEnabled && <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />}
                   <div className="guide-actions-row">
-                    {profilesEnabled && (
-                      <p>
-                        <a className="text-link" href={'/account/profile/' + row.id}>
-                          {['owner', 'admin'].includes(row.role)
-                            ? 'Edit company profile'
-                            : 'View company profile'}
-                        </a>
-                      </p>
-                    )}
-                    {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
-                      <p>
-                        <a className="text-link" href={'/account/delegations/' + row.id}>
-                          Plan delegations
-                        </a>
-                      </p>
-                    )}
-                    {draftsEnabled && (
-                      <p>
-                        <a className="text-link" href={'/account/drafts/' + row.id}>
-                          Start or continue a guided request
-                        </a>
-                      </p>
-                    )}
-                    {serviceRequestsEnabled && (
-                      <p>
-                        <a className="text-link" href={'/account/service-requests/' + row.id}>
-                          Paid-service requests
-                        </a>
-                      </p>
-                    )}
-                    {billingEnabled && (
-                      <p>
-                        <a className="text-link" href={'/account/billing/' + row.id}>
-                          Plan and billing
-                        </a>
-                      </p>
-                    )}
-                    {requestsEnabled && (
-                      <p>
-                        <a className="text-link" href={'/account/request/' + row.id}>
-                          Send a private request
-                        </a>
-                      </p>
+                    {draftsEnabled ? (
+                      <a className="primary-link" href={'/account/drafts/' + row.id}>
+                        New request<span className="sr-only"> in {row.name}</span>
+                      </a>
+                    ) : requestsEnabled ? (
+                      <a className="primary-link" href={'/account/request/' + row.id}>
+                        New request<span className="sr-only"> in {row.name}</span>
+                      </a>
+                    ) : null}
+                    {(profilesEnabled ||
+                      (programmesEnabled && ['owner', 'admin'].includes(row.role)) ||
+                      serviceRequestsEnabled ||
+                      billingEnabled ||
+                      (draftsEnabled && requestsEnabled)) && (
+                      <details className="ux-more-menu">
+                        <summary className="button button-secondary" style={moreSummary}>
+                          More<span className="sr-only"> for {row.name}</span>
+                        </summary>
+                        <ul style={moreList}>
+                          {draftsEnabled && (
+                            <li>
+                              <a className="text-link" href={'/account/drafts/' + row.id}>
+                                Continue a saved draft
+                              </a>
+                            </li>
+                          )}
+                          {draftsEnabled && requestsEnabled && (
+                            <li>
+                              <a className="text-link" href={'/account/request/' + row.id}>
+                                Send a private request
+                              </a>
+                            </li>
+                          )}
+                          {profilesEnabled && (
+                            <li>
+                              <a className="text-link" href={'/account/profile/' + row.id}>
+                                {['owner', 'admin'].includes(row.role)
+                                  ? 'Edit company profile'
+                                  : 'View company profile'}
+                              </a>
+                            </li>
+                          )}
+                          {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
+                            <li>
+                              <a className="text-link" href={'/account/delegations/' + row.id}>
+                                Plan delegations
+                              </a>
+                            </li>
+                          )}
+                          {serviceRequestsEnabled && (
+                            <li>
+                              <a className="text-link" href={'/account/service-requests/' + row.id}>
+                                Paid-service requests
+                              </a>
+                            </li>
+                          )}
+                          {billingEnabled && (
+                            <li>
+                              <a className="text-link" href={'/account/billing/' + row.id}>
+                                Plan and billing
+                              </a>
+                            </li>
+                          )}
+                        </ul>
+                      </details>
                     )}
                   </div>
                   {memberRolesEnabled && row.role !== 'owner' && (
@@ -482,7 +513,7 @@ export function CustomerWorkspaces({
               <p id="workspace-name-hint" className="ux-hint">
                 {realCustomerInput()
                   ? 'Use a name you and your team will recognise.'
-                  : 'Use a fictional name. We add “Synthetic” in front.'}
+                  : 'Use a name you will recognise. This environment adds “Synthetic” in front.'}
               </p>
             </div>
             {pending && (

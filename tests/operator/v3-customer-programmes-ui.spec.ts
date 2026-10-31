@@ -367,6 +367,9 @@ test('planning entry stays contextual to current owner/admin workspace cards and
     }),
   );
   await page.goto(origin + '/?mode=workspaces&enabled=true');
+  // UX-07: secondary workspace actions sit in each workspace's More menu.
+  await expect(page.locator('details.ux-more-menu > summary')).toHaveCount(2);
+  for (const more of await page.locator('details.ux-more-menu > summary').all()) await more.click();
   const links = page.getByRole('link', { name: 'Plan delegations' });
   await expect(links).toHaveCount(2);
   await expect(links.nth(0)).toHaveAttribute('href', '/account/delegations/' + ids[0]);

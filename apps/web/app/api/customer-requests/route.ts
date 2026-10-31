@@ -1,5 +1,7 @@
 import { DomainError } from '@corridra/domain';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
+import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
+import { requestTitle } from '../../account/request-words';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -17,17 +19,48 @@ function failure(error: unknown) {
     return deliveryError(new DomainError('Customer requests are unavailable', 503));
   return deliveryError(error);
 }
+/**
+ * CQ-23: each saved request gets a plain title ("Sell in Spain") from the brief the same customer
+ * wrote. The detail is read through the customer's own detail service under the same session proof;
+ * only the derived title is added. A detail that cannot be read leaves the title out, never the row.
+ */
+async function withTitles(
+  s: Awaited<ReturnType<typeof services>>,
+  page: unknown,
+  subject: string | undefined,
+  issuer: string | undefined,
+) {
+  const value = page as { requests?: { id: string; available?: boolean }[] } | null;
+  if (!customerRequestDetailsEnabled() || !value || !Array.isArray(value.requests)) return page;
+  const requests = await Promise.all(
+    value.requests.map(async (row) => {
+      if (row.available !== true) return row;
+      try {
+        const detail = (await s.customerRequestDetails.detail(row.id, subject, issuer)) as {
+          original?: unknown;
+        } | null;
+        const title = requestTitle(detail?.original);
+        return title ? { ...row, title } : row;
+      } catch {
+        return row;
+      }
+    }),
+  );
+  return { ...value, requests };
+}
 export async function GET(request: Request) {
   try {
     const s = await services();
-    return Response.json(
-      await s.customerRequests.list(
-        Object.fromEntries(new URL(request.url).searchParams),
-        request.headers.get('x-corridra-customer-subject') ?? undefined,
-        request.headers.get('x-corridra-customer-issuer') ?? undefined,
-      ),
-      { headers: deliveryHeaders },
+    const subject = request.headers.get('x-corridra-customer-subject') ?? undefined;
+    const issuer = request.headers.get('x-corridra-customer-issuer') ?? undefined;
+    const page = await s.customerRequests.list(
+      Object.fromEntries(new URL(request.url).searchParams),
+      subject,
+      issuer,
     );
+    return Response.json(await withTitles(s, page, subject, issuer), {
+      headers: deliveryHeaders,
+    });
   } catch (error) {
     return failure(error);
   }

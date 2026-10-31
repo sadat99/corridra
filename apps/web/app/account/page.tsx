@@ -39,10 +39,10 @@ export const metadata = {
 const views = ['home', 'work', 'results', 'more'] as const;
 type View = (typeof views)[number];
 const headings: Record<View, { eyebrow: string; title: string }> = {
-  home: { eyebrow: 'YOUR ACCOUNT', title: 'What would you like to do?' },
-  work: { eyebrow: 'MY WORK', title: 'Workspaces and requests.' },
-  results: { eyebrow: 'RESULTS', title: 'Missions shared with you.' },
-  more: { eyebrow: 'MORE', title: 'Your account and help.' },
+  home: { eyebrow: 'HOME', title: 'What would you like to do?' },
+  work: { eyebrow: 'REQUESTS', title: 'Your requests and workspaces.' },
+  results: { eyebrow: 'REPORTS', title: 'Reports and missions shared with you.' },
+  more: { eyebrow: 'ACCOUNT', title: 'Your account and settings.' },
 };
 export default async function Page({
   searchParams,
@@ -115,13 +115,13 @@ export default async function Page({
         <>
           <PendingRequestNotice where="account" />
           <NextStepCard
-            title={requestCreationEnabled ? 'Start a request' : 'Plan a mission'}
+            title="New request"
             text={
               requestCreationEnabled
                 ? 'Choose a workspace, then say what you want to achieve.'
                 : 'Tell us your goal. It takes a few minutes.'
             }
-            action={requestCreationEnabled ? 'Choose a workspace' : 'Plan a mission'}
+            action="New request"
             href={requestCreationEnabled ? '/account?view=work#customer-workspaces' : '/plan'}
           />
           <section className="guide-area ux-account-groups" aria-labelledby="open-title">
@@ -175,7 +175,7 @@ export default async function Page({
               {customerProgrammesEnabled() && (
                 <li>
                   <Link prefetch={false} href="/account/delegations/organise">
-                    <strong>Manage programmes</strong>
+                    <strong>Programmes</strong>
                     <span>Participants, terms, places, fee schedules and delivery.</span>
                   </Link>
                 </li>
@@ -192,7 +192,7 @@ export default async function Page({
                 <li>
                   <Link prefetch={false} href="/account/billing">
                     <strong>Plan and billing</strong>
-                    <span>The sample plan your workspace holds and the plans on offer.</span>
+                    <span>The plan your workspace holds and the plans on offer.</span>
                   </Link>
                 </li>
               )}
@@ -289,7 +289,7 @@ export default async function Page({
                 {customerProgrammesEnabled() && (
                   <li>
                     <Link prefetch={false} href="/account/delegations/organise">
-                      <strong>Manage programmes</strong>
+                      <strong>Programmes</strong>
                       <span>Programme terms, places, pricing and coordination.</span>
                     </Link>
                   </li>
@@ -306,7 +306,7 @@ export default async function Page({
                   <li>
                     <Link prefetch={false} href="/account/billing">
                       <strong>Plan and billing</strong>
-                      <span>Your sample plan and the plans on offer.</span>
+                      <span>Your current plan and the plans on offer.</span>
                     </Link>
                   </li>
                 )}

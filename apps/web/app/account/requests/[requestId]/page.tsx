@@ -49,7 +49,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="MY WORK" title="Your saved request">
+    <CustomerShell tab="work" eyebrow="REQUESTS" title="Your saved request">
       {uxSwitchOn('CORRIDRA_UX_ROAD') && (
         <p>
           <a className="text-link" href={`/account/rooms/${parsed.data}`}>

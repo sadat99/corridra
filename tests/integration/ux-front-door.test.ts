@@ -243,7 +243,7 @@ describe('the Your Move screen', () => {
     const html = render(MoveView, { model, startHref: '/plan' });
     expect(html).toContain('Waiting for you');
     expect(html).toContain('Send your draft request');
-    expect(html).toContain('Open the draft');
+    expect(html).toContain('Finish and send');
     expect(html).toContain('Waiting on others');
     expect(html).toContain('The Corridra team is looking for suppliers or buyers.');
     expect(html).toContain('Workspace owner or admin');

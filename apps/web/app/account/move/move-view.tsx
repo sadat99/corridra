@@ -8,6 +8,7 @@ import { fill } from '../../../lib/i18n/fill';
 import { localeMeta } from '../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../lib/i18n/messages';
 import { moveWorkspaceCap } from '../../../lib/move-constants';
+import { formatDate } from '../../../lib/ux/format';
 import {
   unreadReplies,
   type MoveCardData,
@@ -69,27 +70,25 @@ const verbOf: Record<Exclude<MoveCardData['kind'], 'move'>, MoveVerb> = {
   draft: 'Send',
   quote: 'Answer',
   company: 'Add',
+  report: 'Read',
 };
 const objectKey: Record<Exclude<MoveCardData['kind'], 'move'>, MessageKey> = {
   draft: 'move.card.draft.object',
   quote: 'move.card.quote.object',
   company: 'move.card.company.object',
+  report: 'wsb.move.report.object',
 };
 const actionKey: Record<MoveCardData['kind'], MessageKey> = {
-  draft: 'move.card.draft.action',
+  draft: 'wsb.move.draft.action',
   quote: 'move.card.quote.action',
   company: 'move.card.company.action',
   move: 'move.card.reply.action',
+  report: 'wsb.move.report.action',
 };
 /** A real due date (year-month-day) in the person's language. */
 function day(value: string, locale: string) {
-  try {
-    return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(
-      new Date(`${value}T00:00:00Z`),
-    );
-  } catch {
-    return value;
-  }
+  // D11: one date style ("24 Oct 2026"), never a US numeric date or a raw ISO string.
+  return formatDate(`${value}T00:00:00Z`, { timeZone: 'UTC', locale }) || value;
 }
 
 /**
@@ -129,7 +128,7 @@ export function MoveView({
           verb="Read"
           object={say('move.card.reply.object')}
           holder="you"
-          context={fill(say('move.received'), { date: reply.received })}
+          context={fill(say('move.received'), { date: day(reply.received, locale) })}
           href={reply.href}
           action={say('move.card.reply.action')}
           labels={labels}
@@ -163,7 +162,11 @@ export function MoveView({
             verb={verbOf[card.kind]}
             object={say(objectKey[card.kind])}
             holder={card.holder}
-            context={card.context}
+            context={
+              card.kind === 'report'
+                ? `${say('wsb.move.report.title')}: ${card.context ?? ''}`
+                : card.context
+            }
             href={card.href}
             action={say(actionKey[card.kind])}
             labels={labels}
@@ -240,7 +243,9 @@ export function MoveView({
                   <p className="move-wait-title">
                     {row.kind !== 'move' && row.title
                       ? row.title
-                      : fill(say('move.received'), { date: row.received ?? '' })}
+                      : fill(say('move.received'), {
+                          date: row.received ? day(row.received, locale) : '',
+                        })}
                   </p>
                 ) : null}
                 <p lang={row.kind === 'move' ? 'en' : undefined}>{waitingLine(row)}</p>
