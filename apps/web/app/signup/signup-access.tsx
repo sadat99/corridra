@@ -21,12 +21,12 @@ export function SignupAccess() {
       <section className="ux-account-access" aria-label="Customer account access">
         <p>Create your account to send and follow requests.</p>
         <PendingRequestNotice where="signup" />
+        <p id="password-rule" className="ux-password-rule">
+          Your password needs at least {passwordMinimum} characters. A short sentence you can
+          remember works well.
+        </p>
         {config ? (
           <>
-            <p id="password-rule" className="ux-password-rule">
-              Your password needs at least {passwordMinimum} characters. A short sentence you can
-              remember works well.
-            </p>
             <Suspense fallback={<p>Loading account access…</p>}>
               <AccountForm
                 mode="signup"

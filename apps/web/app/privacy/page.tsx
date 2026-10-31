@@ -74,7 +74,8 @@ export default function Page() {
               confidential documents.
             </p>
           )}
-          <p className="guide-hint">
+          {/* The version the database pins. Without real use it names the preview notice, a made-up data setting. */}
+          <p className="guide-hint" data-madeup-panel={real ? undefined : ''}>
             Updated {updatedDay} October 2026. Request notice version: {noticeVersion}.
           </p>
         </div>

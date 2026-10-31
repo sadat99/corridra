@@ -95,7 +95,8 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await page.reload();
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
   await page.getByRole('button', { name: 'Check status and replies' }).click();
-  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
+  await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
   await writeFile('.cache/part04-browser-receipt.json', JSON.stringify(result), { mode: 0o600 });
 });
 test('invited operator enrolls MFA, records provenance, manages flags and signs out', async ({

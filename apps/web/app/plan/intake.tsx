@@ -13,6 +13,8 @@ import { formEn, type FormKey } from '../../lib/i18n/form-words/en';
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
 import { rememberSentRequest } from '../../lib/private-request-storage';
+import { customerStatusLabel } from '../../lib/ux/customer-road';
+import { formatDateTime } from '../../lib/ux/format';
 import { countryOptions, euCountries, pinnedCountries } from '../../lib/ux/options';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
@@ -1560,7 +1562,12 @@ function IntakeForm({
               <div>
                 <p>
                   {sayWith('form.check.status', {
-                    status: <strong {...englishProps}>{result.status.replaceAll('_', ' ')}</strong>,
+                    // A request with a receipt was sent, so it is never shown as a draft (D6).
+                    status: (
+                      <strong {...englishProps}>
+                        {customerStatusLabel(result.status, true).label}
+                      </strong>
+                    ),
                   })}
                 </p>
                 {result.replies.length ? (
@@ -1568,9 +1575,7 @@ function IntakeForm({
                     <article className="detail-card" key={i}>
                       <p dir={translated ? 'auto' : undefined}>{r.body}</p>
                       <time dateTime={r.createdAt}>
-                        {translated
-                          ? new Date(r.createdAt).toLocaleString(tag)
-                          : new Date(r.createdAt).toLocaleString()}
+                        {formatDateTime(r.createdAt, translated ? { locale: tag } : {})}
                       </time>
                     </article>
                   ))

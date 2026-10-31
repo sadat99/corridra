@@ -149,14 +149,15 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await page.reload();
     await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
     await page.getByRole('button', { name: 'Check status and replies' }).click();
-    await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+    // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
+    await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
     await page.getByLabel('Receipt code', { exact: true }).fill('0'.repeat(64));
     const rejected = page.waitForResponse((response) =>
       response.url().endsWith('/api/intake/receipt'),
     );
     await page.getByRole('button', { name: 'Check status and replies' }).click();
     expect((await rejected).ok()).toBe(false);
-    await expect(page.getByText('DRAFT', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Received, waiting for review', { exact: true })).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   } finally {
     server.kill('SIGTERM');
