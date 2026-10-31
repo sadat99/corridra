@@ -1,6 +1,6 @@
 # Product vision: working summary for coding agents
 
-**The governing document is [Corridra Product Vision v2.1](../product/corridra-product-vision-v2.1.md)** (owner, 15 October 2026). Read it in full before any substantial work. This file is a short working summary that connects it to the older founding documents in `docs/source/`, `docs/brand/` and `docs/product/`, and to the UI rules. If this summary and v2.1 differ, v2.1 governs. Section numbers refer to v2.1 unless stated.
+**The governing document is [Corridra Product Vision v2.1](../product/corridra-product-vision-v2.1.md)** (owner, 15 October 2026). Read it in full before any substantial work. This file is a short working summary that connects it to the older founding documents in `docs/source/`, `docs/brand/` and `docs/product/`, and to the UI rules. If this summary and v2.1 differ, v2.1 governs, except where a later owner decision changed a point and this summary names it. Section numbers refer to v2.1 unless stated.
 
 ## What Corridra is
 
@@ -44,7 +44,7 @@ Bangladesh exporter. Bangladesh importer sourcing from China. Machinery buyer. E
 
 ## Where the work stands (section 18, 19)
 
-The V2 foundation is merged. The accepted posture is **synthetic and testing**. These stay closed: real customer mission data, unrestricted outreach, production AI inference, open paid contributor participation, automated international payouts, unreviewed real-file processing, unapproved route launch.
+The V2 foundation is merged. v2.1 section 18 (15 October) describes a synthetic and testing posture; the owner's later decision of 21 October replaced that point, so **real use is enabled** under [ADR-056](../adr/0056-real-use-admission-and-progressive-registration.md) (real admission in production since 22 October). File scanning stays deferred: unscanned evidence is recorded as `BYPASSED`, never as clean, and private storage, access checks and evidence review still apply. These stay closed until each has its own implementation and activation: unrestricted outreach, production AI inference, open paid contributor participation, automated international payouts, unapproved route launch. What is switched on today is in the [ledger](../V3_LEDGER.md).
 
 Immediate priorities, in order: **A** complete verified user experience, **B** fix practical workflow defects for the exporter, China sourcing buyer, machinery purchaser, operator, institution, supplier and owner, **C** operational readiness (external evidence), **D** activate each corridor independently when ready, **E** measure commercial reality.
 
