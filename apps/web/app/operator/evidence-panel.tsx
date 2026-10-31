@@ -42,7 +42,10 @@ export function EvidencePanel({
             (r.scan_status === 'BYPASSED' &&
               data.scanMode === 'bypass' &&
               flags.some((f) => f.key === 'evidence.scan_bypass' && f.value?.enabled))) && (
-            <a className="text-link" href={`/api/workspace/download?tenant=${tenant}&id=${r.id}`}>
+            <a
+              className="text-link"
+              href={`/api/workspace/download?${new URLSearchParams({ tenant, id: r.id })}`}
+            >
               {r.scan_status === 'BYPASSED' ? 'Download unscanned evidence' : 'Download evidence'}
             </a>
           )}
