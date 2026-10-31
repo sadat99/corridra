@@ -24,6 +24,8 @@ import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
 import { workspaceSections } from '../../lib/workspace-navigation';
 import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
+import { authenticatorReturnTarget } from '../../lib/authenticator-check';
+import { AuthenticatorCheck } from './authenticator-check';
 type RecordRow = {
   id: string;
   statement?: string;
@@ -186,11 +188,17 @@ function TenantWorkspace({
   const loaded = !!data;
   const currentRole = data?.role;
   const realWorkspace = data?.purpose === 'commercial_qualification';
-  const [fragment, setFragment] = useState('');
+  // The section before the current one is kept so the authenticator panel can offer a way back.
+  const [nav, setNav] = useState({ fragment: '', previous: '' });
+  const fragment = nav.fragment;
   useEffect(() => {
     if (!loaded) return;
     // A `#` part always wins, so the old links keep working on a section address too.
-    const read = () => setFragment(fragmentFor(window.location.hash, initialSection));
+    const read = () =>
+      setNav((current) => {
+        const next = fragmentFor(window.location.hash, initialSection);
+        return next === current.fragment ? current : { fragment: next, previous: current.fragment };
+      });
     read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
@@ -227,15 +235,19 @@ function TenantWorkspace({
       setBusy(false);
     }
   }
-  async function act(work: () => Promise<unknown>) {
+  // True once the work is done and the records are refreshed; callers that only need the shared
+  // status line ignore it.
+  async function act(work: () => Promise<unknown>): Promise<boolean> {
     setBusy(true);
     setMessage('');
     try {
       await work();
       await refresh();
       setMessage('Saved.');
+      return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Request failed');
+      return false;
     } finally {
       setBusy(false);
     }
@@ -854,52 +866,12 @@ function TenantWorkspace({
             className="operator-section workspace-panel ux-panel"
             hidden={view !== 'workspace-authenticator'}
           >
-            <PanelHeading
-              title="Confirm a sensitive action"
-              eyebrow="Settings and access"
-              icon="lock"
-              description="Use a fresh code from your authenticator app to continue a protected action."
+            <AuthenticatorCheck
+              busy={busy}
+              act={act}
+              returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
+              tenant={tenant}
             />
-            <div className="ux-authenticator-guidance">
-              <p>
-                Stay signed in while you verify. Invitation access requires a check made within the
-                last five minutes.
-              </p>
-              <p>
-                After verification, return to the form you were using and refresh its records.
-                Verification does not grant a new role or change your country scope.
-              </p>
-            </div>
-            <form
-              className="operator-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const code = String(new FormData(event.currentTarget).get('code'));
-                void act(async () => {
-                  const r = await identityClient.twoFactor.verifyTotp({ code, trustDevice: false });
-                  if (r.error) throw new Error('Authenticator code was not accepted');
-                });
-              }}
-            >
-              <label className="field">
-                Current authenticator code
-                <input
-                  name="code"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  aria-describedby="workspace-authenticator-help"
-                  required
-                />
-              </label>
-              <p id="workspace-authenticator-help">
-                Enter the six-digit code. Your existing form entries stay in their workspace tabs.
-              </p>
-              <button className="primary-link" disabled={busy}>
-                Verify again
-              </button>
-            </form>
           </section>
           {['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
