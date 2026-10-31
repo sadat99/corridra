@@ -107,6 +107,10 @@ export function operatorReturnTo(value: string | undefined): string {
     : '/operator';
 }
 
+// Every way into operator sign-in is a full page load (a plain anchor or location change): it drops
+// the cached workspace, and Next 16.4.3 brings back a doubled or stale # on a soft return.
+export const operatorSignInPage = '/operator/signin';
+
 /**
  * The operator sign-in address that comes back to a workspace and section afterwards. Every return
  * address is checked by `operatorReturnTo` above and only one it keeps unchanged is used: a section
@@ -119,5 +123,5 @@ export function operatorSignInPath(workspace = '', section = ''): string {
     [place + '#' + section, place, '/operator#' + section].find(
       (candidate) => operatorReturnTo(candidate) === candidate,
     ) ?? '/operator';
-  return '/operator/signin?next=' + encodeURIComponent(next);
+  return operatorSignInPage + '?next=' + encodeURIComponent(next);
 }

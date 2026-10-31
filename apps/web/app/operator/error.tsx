@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { operatorSignInPage } from '../../lib/workspace-navigation';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { AccessState } from '../../components/access-state';
 export default function WorkspaceError() {
@@ -27,9 +28,9 @@ export default function WorkspaceError() {
         Retry workspace
       </a>
       <nav className="access-options" aria-label="Workspace recovery">
-        <Link className="text-link" href="/operator/signin">
+        <a className="text-link" href={operatorSignInPage}>
           Verify operator access
-        </Link>
+        </a>
         <Link className="text-link" href="/workspace">
           All workspaces and tools
         </Link>

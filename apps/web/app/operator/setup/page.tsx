@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { operatorSignInPage } from '../../../lib/workspace-navigation';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { SetupForm } from './setup-form';
 export const metadata = {
@@ -19,9 +20,9 @@ export default function Page() {
         <Link className="text-link" href="/account">
           Customer account and email verification
         </Link>
-        <Link className="text-link" href="/operator/signin">
+        <a className="text-link" href={operatorSignInPage}>
           Operator sign-in and authenticator
-        </Link>
+        </a>
         <Link className="text-link" href="/workspace">
           All workspaces and tools
         </Link>

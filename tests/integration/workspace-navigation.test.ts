@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   operatorReturnTo,
+  operatorSignInPage,
   operatorSignInPath,
   workspaceSections,
 } from '../../apps/web/lib/workspace-navigation';
@@ -38,6 +39,7 @@ describe('the sign-in address that comes back to a workspace', () => {
   const workspace = '12345678-abcd-1234-abcd-123456789abc';
   // Every address is the sign-in page with one `next`, and that `next` survives the closed return list.
   function returnOf(href: string): string {
+    expect(href.startsWith(operatorSignInPage + '?next=')).toBe(true);
     const url = new URL(href, 'http://corridra.invalid');
     expect(url.pathname).toBe('/operator/signin');
     expect([...url.searchParams.keys()]).toEqual(['next']);
@@ -45,6 +47,10 @@ describe('the sign-in address that comes back to a workspace', () => {
     expect(operatorReturnTo(next)).toBe(next);
     return next;
   }
+
+  it('is built from the one operator sign-in page address', () => {
+    expect(operatorSignInPage).toBe('/operator/signin');
+  });
 
   it('keeps the workspace and every listed section', () => {
     for (const id of [...workspaceSections.map((section) => section.id), 'workspace-navigation'])

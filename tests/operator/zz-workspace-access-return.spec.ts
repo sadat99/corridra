@@ -318,3 +318,20 @@ test('Sign in again from a fresh authenticator load returns once to the panel', 
     await clearSignInLimits(local.ownerPassword);
   }
 });
+
+test('every way into operator sign-in from the access pages is a full page load', async ({
+  page,
+}) => {
+  for (const [path, name] of [
+    ['/operator/forgot-password', 'Back to operator sign-in'],
+    ['/operator/setup', 'Operator sign-in and authenticator'],
+    ['/operator/reset-password', 'Back to operator sign-in'],
+  ]) {
+    await page.goto('about:blank');
+    await page.goto(path);
+    await markPage(page);
+    await page.getByRole('link', { name, exact: true }).click();
+    await expect(page).toHaveURL(origin + '/operator/signin');
+    await expectNewDocument(page);
+  }
+});

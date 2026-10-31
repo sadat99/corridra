@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { operatorSignInPage } from '../../../lib/workspace-navigation';
 import { Suspense } from 'react';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
@@ -32,9 +33,9 @@ export default function Page() {
         <Link className="text-link" href="/operator/setup">
           Finish a pending invitation
         </Link>
-        <Link className="text-link" href="/operator/signin">
+        <a className="text-link" href={operatorSignInPage}>
           Back to operator sign-in
-        </Link>
+        </a>
         <Link className="text-link" href="/forgot-password">
           Reset a customer account password
         </Link>

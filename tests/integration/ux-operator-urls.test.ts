@@ -228,4 +228,51 @@ describe('signing in again from the workspace comes back to the same workspace a
     for (const path of sources('apps/web'))
       expect(read(path), path).not.toMatch(/<Link[^>]*operatorSignInPath/);
   });
+  it('every other way into operator sign-in is a full page load to the same address', () => {
+    const links: [string, string][] = [
+      [
+        'apps/web/components/account-form.tsx',
+        '<a className="text-link" href={operatorSignInPage}>\n            Invited operator sign-in\n          </a>',
+      ],
+      [
+        'apps/web/app/operator/forgot-password/page.tsx',
+        '<a className="text-link" href={operatorSignInPage}>\n          Back to operator sign-in\n        </a>',
+      ],
+      [
+        'apps/web/app/operator/error.tsx',
+        '<a className="text-link" href={operatorSignInPage}>\n          Verify operator access\n        </a>',
+      ],
+      [
+        'apps/web/app/operator/reset-password/page.tsx',
+        '<a className="text-link" href={operatorSignInPage}>\n        Back to operator sign-in\n      </a>',
+      ],
+      [
+        'apps/web/app/operator/recovery-form.tsx',
+        '<a className="primary-link" href={operatorSignInPage}>\n          Return to operator sign-in\n        </a>',
+      ],
+      [
+        'apps/web/app/operator/setup/page.tsx',
+        '<a className="text-link" href={operatorSignInPage}>\n          Operator sign-in and authenticator\n        </a>',
+      ],
+      [
+        'apps/web/app/operator/opportunities.tsx',
+        "<a href={operatorSignInPath(tenant, 'workspace-commercial')}>\n            Sign in and verify your authenticator again\n          </a>",
+      ],
+    ];
+    for (const [path, link] of links) expect(read(path), path).toContain(link);
+    expect(read('apps/web/app/operator/reset-password/page.tsx')).not.toContain("from 'next/link'");
+    const sources = (dir: string): string[] =>
+      readdirSync(resolve(dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory()
+          ? sources(`${dir}/${entry.name}`)
+          : entry.name.endsWith('.tsx')
+            ? [`${dir}/${entry.name}`]
+            : [],
+      );
+    for (const path of [...sources('apps/web/app'), ...sources('apps/web/components')]) {
+      const source = read(path);
+      expect(source, path).not.toMatch(/<Link\b[^>]*href=(?:"\/operator\/signin|\{operatorSignIn)/);
+      expect(source, path).not.toContain('href="/operator/signin"');
+    }
+  });
 });
