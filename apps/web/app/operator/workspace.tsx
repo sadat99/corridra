@@ -22,7 +22,11 @@ import { ControlledAccess } from './access';
 import { GovernedAssistance } from './intelligence';
 import { ExecutionNetwork } from './network';
 import { Delivery } from './delivery';
-import { operatorSignInPath, workspaceSections } from '../../lib/workspace-navigation';
+import {
+  operatorSignInPage,
+  operatorSignInPath,
+  workspaceSections,
+} from '../../lib/workspace-navigation';
 import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
@@ -119,7 +123,6 @@ function TenantWorkspace({
   moveRecords: boolean;
   initialSection: string;
 }) {
-  const router = useRouter();
   const edited = useRef(false);
   const hash = useSyncExternalStore(
     subscribeToHash,
@@ -293,8 +296,7 @@ function TenantWorkspace({
       const result = await identityClient.signOut();
       if (result.error) throw new Error('Sign-out could not be confirmed. Please try again.');
       setData(null);
-      router.replace('/operator/signin');
-      router.refresh();
+      window.location.replace(operatorSignInPage);
     } catch {
       setMessage('Sign-out could not be confirmed. Please try again.');
     } finally {

@@ -335,3 +335,55 @@ test('every way into operator sign-in from the access pages is a full page load'
     await expectNewDocument(page);
   }
 });
+
+// Last in this file: it ends the session.
+test('signing out is a full page load and the next sign-in opens the overview, not the last section', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  async function enterPassword() {
+    await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(seed.password);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  }
+  await clearSignInLimits(local.ownerPassword);
+  try {
+    await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
+    const signInCounter = Math.floor(Date.now() / 30000);
+    await page.goto('/operator/signin');
+    await enterPassword();
+    await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+
+    // A fresh load with a section in the address, so the router has cached it with the #.
+    await page.goto('about:blank');
+    await page.goto('/operator#workspace-sources');
+    await expect(page.locator('#workspace-sources')).toBeVisible();
+    await markPage(page);
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(page).toHaveURL(origin + '/operator/signin');
+    await expectNewDocument(page);
+    expect(
+      (await page.request.get(`/api/workspace/workspace?tenant=${seed.tenantId}`)).status(),
+    ).toBe(401);
+
+    await clearSignInLimits(local.ownerPassword);
+    await enterPassword();
+    // A code is used once per window: wait past the window used to sign in.
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
+      .toBeGreaterThan(signInCounter);
+    await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/operator');
+    await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+    await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
+  } finally {
+    await clearSignInLimits(local.ownerPassword);
+  }
+});

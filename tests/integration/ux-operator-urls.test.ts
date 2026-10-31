@@ -184,8 +184,10 @@ describe('signing in again from the workspace comes back to the same workspace a
       /useSyncExternalStore\(\s*subscribeToHash,\s*\(\) => window\.location\.hash,\s*\(\) => '',\s*\)/,
     );
     expect(workspaceSource).not.toContain('href="/operator/signin"');
-    // Signing out still goes to the plain sign-in page, with no address to come back to.
-    expect(workspaceSource).toContain("router.replace('/operator/signin');");
+    // Signing out is a full page load to the plain sign-in page, with no address to come back to.
+    expect(workspaceSource).toContain('window.location.replace(operatorSignInPage);');
+    expect(workspaceSource).not.toContain("router.replace('/operator/signin')");
+    expect(workspaceSource).not.toMatch(/location\.replace\(operatorSignInPath/);
     expect(read('apps/web/app/operator/authenticator-check.tsx')).toContain(
       "operatorSignInPath(tenant, 'workspace-authenticator')",
     );
