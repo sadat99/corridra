@@ -2,6 +2,8 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { formatDateTime } from '../../lib/ux/format';
+import { MoneyInput } from '../../components/ux/money-input';
+import { currencyOptions } from '../../lib/ux/money';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 import { CustomerServiceCatalogue } from './customer-service-catalogue';
 import {
@@ -69,7 +71,10 @@ type Detail = {
 };
 type Row = { kind: string; label: string; treatment: string; amount: string };
 const starter = realCustomerInput() ? '' : 'Synthetic ';
-const currencies = ['USD', 'EUR', 'GBP', 'BDT', 'JPY'];
+// Pinned first (D10); JPY stays available. Labels are names, not codes; the stored value is the ISO code.
+const currencies = ['BDT', 'USD', 'EUR', 'CNY', 'GBP', 'JPY'];
+const currencyName = (code: string) =>
+  currencyOptions().find((o) => o.value === code)?.label ?? code;
 const kinds: [string, string][] = [
   ['service_fee', 'Service fee'],
   ['local_cost', 'Local cost'],
@@ -457,7 +462,7 @@ function Scoped({ tenant }: { tenant: string }) {
               <fieldset disabled={busy}>
                 <legend>{latest ? 'Prepare a new quote version' : 'Prepare a quote'}</legend>
                 <p>
-                  Amounts are whole minor units (for example 4500 is 45.00). A tax line is required:
+                  Type amounts as you would write them, for example 45.00. A tax line is required:
                   mark it Not included if tax is left out.
                 </p>
                 <label className="field">
@@ -467,7 +472,9 @@ function Scoped({ tenant }: { tenant: string }) {
                     onChange={(e) => edit(() => setCurrency(e.target.value))}
                   >
                     {currencies.map((c) => (
-                      <option key={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {currencyName(c)}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -534,24 +541,20 @@ function Scoped({ tenant }: { tenant: string }) {
                         ))}
                       </select>
                     </label>
-                    <label className="field">
-                      Amount in minor units {p.treatment === 'not_included' ? '(optional)' : ''}
-                      <input
-                        inputMode="numeric"
-                        pattern="(0|[1-9][0-9]{0,10})"
-                        required={p.treatment !== 'not_included'}
-                        value={p.amount}
-                        onChange={(e) =>
-                          edit(() =>
-                            setParts(
-                              parts.map((x, i) =>
-                                i === index ? { ...x, amount: e.target.value } : x,
-                              ),
-                            ),
-                          )
-                        }
-                      />
-                    </label>
+                    <MoneyInput
+                      key={`${index}:${currency}`}
+                      label={`Amount${p.treatment === 'not_included' ? ' (optional)' : ''}`}
+                      currency={currency}
+                      required={p.treatment !== 'not_included'}
+                      value={p.amount === '' ? null : p.amount}
+                      onChange={(minor) =>
+                        edit(() =>
+                          setParts(
+                            parts.map((x, i) => (i === index ? { ...x, amount: minor ?? '' } : x)),
+                          ),
+                        )
+                      }
+                    />
                     {parts.length > 2 && (
                       <button
                         type="button"

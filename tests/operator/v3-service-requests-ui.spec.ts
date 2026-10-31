@@ -1020,9 +1020,9 @@ test('staff open a request, prepare a quote with every part, and the form sends 
     .first()
     .fill('Synthetic interpreter day fee');
   await form
-    .getByLabel(/Amount in minor units/)
+    .getByLabel(/^Amount \(USD\)/)
     .first()
-    .fill('45000');
+    .fill('450.00');
   await form.getByLabel('Label (start with Synthetic)').nth(1).fill('Synthetic local sales tax');
   await form.getByLabel(/Scope/).fill('Synthetic scope: one interpreter for one day');
   await form.getByLabel(/Left out/).fill('Synthetic exclusion: interpreter travel outside Dhaka');
@@ -1312,7 +1312,7 @@ test('staff can prepare bundled supply terms without publishing acquisition cost
     .first()
     .fill('Synthetic bundled coordination');
   await form
-    .getByLabel(/Amount in minor units/)
+    .getByLabel(/^Amount \(USD\)/)
     .first()
     .fill('0');
   await form.getByLabel('Label (start with Synthetic)').nth(1).fill('Synthetic tax excluded');

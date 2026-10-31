@@ -48,7 +48,6 @@ const realSupplier = {
   gstRegistrationNo: 'M9-1234567-8',
   madeupFields: [],
 };
-const ctx = { token: 'staff', tenantId: randomUUID(), purpose: 'commercial_qualification' };
 const prepare = () => ({
   action: 'prepare_invoice',
   commandId: randomUUID(),
@@ -157,24 +156,24 @@ describe('mission page read (D15)', () => {
     f = await fixture();
     s = new MissionService(f.runtime, 'unit-test-only-secret');
     await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
-    missionId = (
-      await s.submit(randomUUID(), {
-        objective: 'Sell in a new market',
-        market: 'Spain',
-        attendance: 'Yes',
-        startDate: '2026-11-01',
-        endDate: '2026-11-07',
-        timezone: 'Europe/Madrid',
-        offer: 'QA test (madeup) hotel towels',
-        website: 'https://example.invalid/catalogue',
-        notes: 'QA test (madeup) only',
-        outcomes: ['Relevant meetings'],
-        name: 'QA Person',
-        company: 'QA Test Co (madeup)',
-        email: 'qa-mission@example.invalid',
-        acknowledged: true,
-      })
-    ).id;
+    const submitted = await s.submit(randomUUID(), {
+      objective: 'Sell in a new market',
+      market: 'Spain',
+      attendance: 'Yes',
+      startDate: '2026-11-01',
+      endDate: '2026-11-07',
+      timezone: 'Europe/Madrid',
+      offer: 'QA test (madeup) hotel towels',
+      website: 'https://example.invalid/catalogue',
+      notes: 'QA test (madeup) only',
+      outcomes: ['Relevant meetings'],
+      name: 'QA Person',
+      company: 'QA Test Co (madeup)',
+      email: 'qa-mission@example.invalid',
+      acknowledged: true,
+    });
+    expect(submitted.id).toBeTruthy();
+    missionId = submitted.id!;
   });
   afterAll(async () => {
     await f?.close();
