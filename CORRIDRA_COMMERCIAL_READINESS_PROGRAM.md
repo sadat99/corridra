@@ -1,6 +1,8 @@
 # CORRIDRA COMMERCIAL READINESS PROGRAM v1.0
 
-Document status: CURRENT.
+Document status: PARTLY BUILT.
+
+Built and released 31 Oct to 1 Nov 2026 (PR223, PR225, PR226, PR227). Only the work listed in [docs/qa/2026-10-31/REMAINING.md](docs/qa/2026-10-31/REMAINING.md) is open; follow that file, not the wave plan below.
 
 ## Owner override recorded 31 Oct 2026 (latest decision wins)
 

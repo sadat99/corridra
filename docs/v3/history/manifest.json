@@ -254,6 +254,14 @@
       "bytes": 12012,
       "sha256": "955a7f4ac6062a160b2037253495d00b9344b7e17413e564f96b15d5e65c89c6",
       "meaning": "Exact active-index snapshot before the 31 October 2026 records refresh that recorded the PR225 merge (commercial readiness release, 5c689a7) and its deployment; relative links use original sourcePath; historical, not current state."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "31ccecf",
+      "archive": "docs/v3/history/ledger-before-owner-checklist-records-2026-11-01.md",
+      "bytes": 11860,
+      "sha256": "27245015f9efa7f542d801b98d5a9e6e5ac3b4ed4d33e90fff38651922cb6641",
+      "meaning": "Exact active-index snapshot before the 1 November 2026 records refresh that recorded the owner checklist (flags, install runs 46 and 49, real UEN), PR226 and PR227, and the remaining work order; relative links use original sourcePath; historical, not current state."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

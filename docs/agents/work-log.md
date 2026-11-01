@@ -2354,3 +2354,15 @@ Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default su
 Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database. Real invoices stay refused while the GST number, bank account and finance label are made up (D3).
 
 Next: owner runs `set_supplier` with the real UEN; real GST number, bank account and finance label before the first real invoice.
+
+## 1 November 2026: owner installs, real UEN in production, takeover records
+
+Request: the owner asked the agent to start the install ("u do the installation, i will review and approve"), then to update the essential documents so another agent can take over at once.
+
+Production, read from the workflow logs (no agent touched the database or settings): `Install customer modules` run 47 (owner) wrote the supplier with the UEN still marked made up; run 48 (agent started, owner approved) stopped at `verify-real-use-install-head.mjs` because main CI on `31ccecf` had not finished, nothing changed; run 49 (agent started after `CI` and `CodeQL Advanced` were green on `31ccecf`, owner approved, 06:39 UTC) `set_supplier` with UEN `202612345X` out of `madeupFields`: `supplier changed=true`, `control changed=false`.
+
+Records: new `docs/qa/2026-10-31/REMAINING.md` (CURRENT work order A to G, owner-only list, binding rules); program file `PARTLY BUILT` pointing to it; two rows in `docs/PLAN_STATUS.md`; RESULTS.md header and section 6; ledger refreshed (state `31ccecf`, owner directions of 31 Oct and 1 Nov, settings, next action) with its exact previous version archived as `docs/v3/history/ledger-before-owner-checklist-records-2026-11-01.md`, listed in the manifest and documentation map.
+
+Lesson: start an install only after `CI` and `CodeQL Advanced` are green on the exact `main` commit.
+
+Next: REMAINING.md item A (notification recipient read and customer inbox).
