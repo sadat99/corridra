@@ -2344,3 +2344,13 @@ CI fixes on the release branch after integration (each reproduced and verified l
 Result: every job on `7a118aa` green (checks, browser, operator 1 to 6, UX 1 to 3, verification, `validate`); merged as `5c689a7`; Vercel production status success. Local receipts: verification 133 passed, 2 skipped by design (three widths); operator chain (`workspace`, `z-ux02-access`, `zz-operator-overview`, `zz-today`) 14 of 14.
 
 Next: the owner checklist in RESULTS.md section 6. The program flags stay off in production until the owner sets them; the commercial readiness database module is installed by the owner's next `Install customer modules` run.
+
+## 1 November 2026: owner checklist answers, placeholder UEN
+
+Request: the owner reported the install run, the five program flags and the public report link switch set in Vercel production, and asked for the UEN `202612345X` (given the day before as "202612345X[Madeup]").
+
+Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, with `uen` kept in `madeupFields` so issued documents still disclose it and the D3 production guard still refuses real invoices (the guard reads the listed fields as well as the "(madeup)" text). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent.
+
+Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database.
+
+Next: owner runs `set_supplier` if the placeholder should show on documents now; registered UEN before the first real invoice (D4).

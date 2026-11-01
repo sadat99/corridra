@@ -48,13 +48,15 @@ export const realInvoicingEntityInput = z
     'A GST registered supplier needs its number',
   );
 
-// What the owner supplied on 24 October 2026, with the missing organisation details made up and marked (madeup).
-// Each made-up field is listed in madeupFields, so every document issued with it says so until the owner replaces it.
+// What the owner supplied on 24 October 2026 (UEN 202612345X on 1 November 2026), with the missing organisation
+// details made up. Each made-up field is listed in madeupFields, so every document issued with it says so and the
+// production guard refuses real documents until the owner replaces it. The UEN stays listed: the owner gave it as a
+// placeholder on 1 November 2026; drop 'uen' from madeupFields only once it is the registered number.
 export const defaultRealInvoicingEntity = {
   legalName: 'Corridra Pte Ltd',
   address: '101 Robinson Road, Singapore 180239',
   country: 'SG',
-  uen: '202600000A (madeup)',
+  uen: '202612345X',
   gstRegistered: true,
   gstRegistrationNo: 'M9-0000000-0 (madeup)',
   taxLabel: 'GST',
