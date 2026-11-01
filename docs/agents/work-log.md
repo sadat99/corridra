@@ -2349,7 +2349,7 @@ Next: the owner checklist in RESULTS.md section 6. The program flags stay off in
 
 Request: the owner reported the install run, the five program flags and the public report link switch set in Vercel production, and asked for the UEN `202612345X` (given the day before as "202612345X[Madeup]").
 
-Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, with `uen` kept in `madeupFields` so issued documents still disclose it and the D3 production guard still refuses real invoices (the guard reads the listed fields as well as the "(madeup)" text). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent.
+Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, with `uen` kept in `madeupFields` so issued documents still disclose it and the D3 production guard still refuses real invoices (the guard reads the listed fields as well as the "(madeup)" text). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent. Install run 46 (owner, `apply=yes`, `37d9e0e`) succeeded; its log shows `commercial_readiness_migrations` going from not installed to 1 applied.
 
 Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database.
 
