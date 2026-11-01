@@ -1314,6 +1314,11 @@
       "use": "Commercial readiness program results, owner checklist and deferred register on 31 Oct 2026"
     },
     {
+      "path": "docs/qa/2026-10-31/REMAINING.md",
+      "classification": "Current bounded implementation plan",
+      "use": "Open work from the commercial readiness program (A to G), owner-only items and binding rules; read before resuming that program"
+    },
+    {
       "path": "docs/v3/history/ledger-before-commercial-readiness-records-2026-10-31.md",
       "classification": "Historical ledger snapshot",
       "use": "Exact ledger before the commercial readiness records refresh; history only"
@@ -1322,6 +1327,11 @@
       "path": "docs/v3/history/ledger-before-pr225-merge-records-2026-10-31.md",
       "classification": "Historical ledger snapshot",
       "use": "Exact ledger before the PR225 merge records; history only"
+    },
+    {
+      "path": "docs/v3/history/ledger-before-owner-checklist-records-2026-11-01.md",
+      "classification": "Historical ledger snapshot",
+      "use": "Exact ledger before the owner checklist records of 1 Nov 2026; history only"
     }
   ]
 }

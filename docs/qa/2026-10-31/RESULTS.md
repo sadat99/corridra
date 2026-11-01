@@ -11,8 +11,8 @@ Document status: CURRENT, DATED. Written by the lead on 31 Oct 2026 after the fi
 | Integration     | PR225 (branch `claude/sleepy-mccarthy-lchg16`, in the role of `release/commercial-ready-2026-11`) merged to `main` as `5c689a7` with a merge commit; every CI job on `7a118aa` green (checks, browser, six operator shards, three UX shards, verification, `validate`); Vercel production deployment of `5c689a7` reported success |
 | Preview         | none: the owner asked for direct production; verification ran on the local production build with the repository's isolated PostgreSQL (`scripts/qa/verification-server.ts`) and in CI                                                                                                                                              |
 | Database branch | no Neon branch was created or touched; local PostgreSQL 16 only                                                                                                                                                                                                                                                                    |
-| Flags           | `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2`, `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`: on in the verification server, unset (off) in production. Copy and content fixes ship without a flag.                                                                                        |
-| Schema          | `commercial-readiness-migrations/0001` (inbox, optional source and claim links, optional participant email); in the default installer list, not installed in production until the owner runs `Install customer modules`                                                                                                            |
+| Flags           | `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2`, `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`: on in the verification server; set to `true` in production by the owner on 1 Nov 2026 (owner report, section 6). Copy and content fixes ship without a flag.                                 |
+| Schema          | `commercial-readiness-migrations/0001` (inbox, optional source and claim links, optional participant email); installed in production by the owner's `Install customer modules` run 46 on 1 Nov 2026 (section 6)                                                                                                                    |
 
 ## 2. Summary
 
@@ -174,10 +174,11 @@ Test names refer to files under `tests/`. Screenshots are written by the verific
 
 Owner answers on 1 Nov 2026 (reported by the owner, not checked by an agent against production):
 
-- UEN: `202612345X`, confirmed real by the owner. The code default uses it and it is no longer a made-up field. Production keeps its seeded supplier version until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier`. The GST number, bank account and finance label are still made up, so the D3 guard keeps refusing real invoices until those are real.
+- UEN: `202612345X`, confirmed real by the owner. In production since install run 49 (1 Nov 2026 06:39 UTC, `31ccecf`, `set_supplier`, started by an agent at the owner's request and approved by the owner; log `supplier changed=true`, `control changed=false`). Run 47 had written it still marked made up; run 48 stopped at the revision check before main CI finished and changed nothing. The GST number, bank account and finance label are still made up, so the D3 guard keeps refusing real invoices until those are real.
 - `Install customer modules` with `apply=yes`: run by the owner (run 46, 1 Nov 2026 03:56 UTC, success on `37d9e0e`; the log shows `commercial_readiness_migrations: not installed` before and `1 applied` after, read by an agent from the workflow log).
 - The five program flags set to `true` in Vercel production: `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2`, `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`.
 - `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` set to `true` (signed-out viewers of fresh live report links, CQ-78; needs real use on).
+- Open work after this checklist: [REMAINING.md](REMAINING.md).
 - Optionally run `scripts/qa/label-synthetic.ts` and `scripts/qa/cleanup-qa-records.ts --dry-run` (both list only by default).
 - Native review of the new draft words (`docs/qa/2026-10-31/i18n-review.md`).
 - No preview to promote: merges to `main` deploy to production directly (owner instruction, 31 Oct).
