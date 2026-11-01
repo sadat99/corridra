@@ -174,7 +174,7 @@ Test names refer to files under `tests/`. Screenshots are written by the verific
 
 Owner answers on 1 Nov 2026 (reported by the owner, not checked by an agent against production):
 
-- UEN: `202612345X`, given as a placeholder. The code default now uses it and keeps `uen` in `madeupFields`, so documents still say the UEN is made up and the D3 guard still refuses real invoices. Production keeps its seeded supplier version until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier`. Confirm Corridra Pte Ltd registration and the registered UEN before the first real invoice (D4).
+- UEN: `202612345X`, confirmed real by the owner. The code default uses it and it is no longer a made-up field. Production keeps its seeded supplier version until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier`. The GST number, bank account and finance label are still made up, so the D3 guard keeps refusing real invoices until those are real.
 - `Install customer modules` with `apply=yes`: run by the owner (run 46, 1 Nov 2026 03:56 UTC, success on `37d9e0e`; the log shows `commercial_readiness_migrations: not installed` before and `1 applied` after, read by an agent from the workflow log).
 - The five program flags set to `true` in Vercel production: `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2`, `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`.
 - `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` set to `true` (signed-out viewers of fresh live report links, CQ-78; needs real use on).

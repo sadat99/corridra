@@ -2345,12 +2345,12 @@ Result: every job on `7a118aa` green (checks, browser, operator 1 to 6, UX 1 to 
 
 Next: the owner checklist in RESULTS.md section 6. The program flags stay off in production until the owner sets them; the commercial readiness database module is installed by the owner's next `Install customer modules` run.
 
-## 1 November 2026: owner checklist answers, placeholder UEN
+## 1 November 2026: owner checklist answers, real UEN
 
-Request: the owner reported the install run, the five program flags and the public report link switch set in Vercel production, and asked for the UEN `202612345X` (given the day before as "202612345X[Madeup]").
+Request: the owner reported the install run, the five program flags and the public report link switch set in Vercel production, and gave the UEN `202612345X`, confirmed as real.
 
-Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, with `uen` kept in `madeupFields` so issued documents still disclose it and the D3 production guard still refuses real invoices (the guard reads the listed fields as well as the "(madeup)" text). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent. Install run 46 (owner, `apply=yes`, `37d9e0e`) succeeded; its log shows `commercial_readiness_migrations` going from not installed to 1 applied.
+Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, removed from `madeupFields`; `tests/integration/customer-invoicing-real.test.ts` asserts the seeded UEN and the four remaining made-up fields. `tests/integration/customer-invoicing.test.ts` strips ids before its forbidden-number check: an event's random UUID contained `777` and failed CI on PR227 (ids are allowed in events, the check is otherwise unchanged). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent. Install run 46 (owner, `apply=yes`, `37d9e0e`) succeeded; its log shows `commercial_readiness_migrations` going from not installed to 1 applied.
 
-Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database.
+Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database. Real invoices stay refused while the GST number, bank account and finance label are made up (D3).
 
-Next: owner runs `set_supplier` if the placeholder should show on documents now; registered UEN before the first real invoice (D4).
+Next: owner runs `set_supplier` with the real UEN; real GST number, bank account and finance label before the first real invoice.
