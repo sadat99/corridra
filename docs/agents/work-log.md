@@ -2344,3 +2344,13 @@ CI fixes on the release branch after integration (each reproduced and verified l
 Result: every job on `7a118aa` green (checks, browser, operator 1 to 6, UX 1 to 3, verification, `validate`); merged as `5c689a7`; Vercel production status success. Local receipts: verification 133 passed, 2 skipped by design (three widths); operator chain (`workspace`, `z-ux02-access`, `zz-operator-overview`, `zz-today`) 14 of 14.
 
 Next: the owner checklist in RESULTS.md section 6. The program flags stay off in production until the owner sets them; the commercial readiness database module is installed by the owner's next `Install customer modules` run.
+
+## 1 November 2026: owner checklist answers, real UEN
+
+Request: the owner reported the install run, the five program flags and the public report link switch set in Vercel production, and gave the UEN `202612345X`, confirmed as real.
+
+Changed: `packages/auth/src/customer-invoicing-real-configuration.ts` default supplier UEN `202612345X`, removed from `madeupFields`; `tests/integration/customer-invoicing-real.test.ts` asserts the seeded UEN and the four remaining made-up fields. `tests/integration/customer-invoicing.test.ts` strips ids before its forbidden-number check: an event's random UUID contained `777` and failed CI on PR227 (ids are allowed in events, the check is otherwise unchanged). RESULTS.md section 6 records the owner answers as reported. No production database, workflow or setting was touched by an agent. Install run 46 (owner, `apply=yes`, `37d9e0e`) succeeded; its log shows `commercial_readiness_migrations` going from not installed to 1 applied.
+
+Production effect: none until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier` and the supplier JSON, because the default only seeds an empty database. Real invoices stay refused while the GST number, bank account and finance label are made up (D3).
+
+Next: owner runs `set_supplier` with the real UEN; real GST number, bank account and finance label before the first real invoice.

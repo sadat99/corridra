@@ -172,10 +172,12 @@ Test names refer to files under `tests/`. Screenshots are written by the verific
 
 ## 6. Owner checklist
 
-- Confirm Corridra Pte Ltd registration and real UEN before the first real invoice (D4).
-- Run `Install customer modules` with `apply=yes` to add the commercial readiness module (additive; nothing visible changes).
-- Review the signed-in screens, then set the five program flags in Vercel production when ready: `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2` (needs the module), `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`.
-- Decide on `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` (signed-out viewers of fresh live report links, CQ-78).
+Owner answers on 1 Nov 2026 (reported by the owner, not checked by an agent against production):
+
+- UEN: `202612345X`, confirmed real by the owner. The code default uses it and it is no longer a made-up field. Production keeps its seeded supplier version until the owner runs `Install customer modules` with `real_invoicing_action=set_supplier`. The GST number, bank account and finance label are still made up, so the D3 guard keeps refusing real invoices until those are real.
+- `Install customer modules` with `apply=yes`: run by the owner (run 46, 1 Nov 2026 03:56 UTC, success on `37d9e0e`; the log shows `commercial_readiness_migrations: not installed` before and `1 applied` after, read by an agent from the workflow log).
+- The five program flags set to `true` in Vercel production: `CORRIDRA_UX_SHELLS_V2`, `CORRIDRA_UX_MISSIONS_V2`, `CORRIDRA_NOTIFICATIONS_V2`, `CORRIDRA_TEAM_INVITES`, `CORRIDRA_ROUTE_PACK_FORM`.
+- `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` set to `true` (signed-out viewers of fresh live report links, CQ-78; needs real use on).
 - Optionally run `scripts/qa/label-synthetic.ts` and `scripts/qa/cleanup-qa-records.ts --dry-run` (both list only by default).
 - Native review of the new draft words (`docs/qa/2026-10-31/i18n-review.md`).
 - No preview to promote: merges to `main` deploy to production directly (owner instruction, 31 Oct).

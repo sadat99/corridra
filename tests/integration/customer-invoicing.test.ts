@@ -1060,9 +1060,10 @@ test('events carry ids, the sample number and a sequence only, one chain per cha
   expect(events.map((e) => e.aggregate_version)).toEqual([1, 2, 3]);
   for (const e of events) {
     expect(e.tenant_id).toBe(a.target);
-    expect(e.p).not.toMatch(
-      /secret|words|5390|4900|490|1234|777|USD|reference|reason|amount|date/i,
-    );
+    // Ids are allowed in events; strip them so a random UUID cannot match a forbidden number.
+    expect(
+      e.p.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<id>'),
+    ).not.toMatch(/secret|words|5390|4900|490|1234|777|USD|reference|reason|amount|date/i);
     expect(JSON.parse(e.p)).toMatchObject({
       invoiceId: inv.id,
       number: inv.number,
