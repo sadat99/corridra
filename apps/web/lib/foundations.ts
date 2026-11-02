@@ -1,6 +1,7 @@
 import { CustomerDeliveredReportService } from '@corridra/auth/customer-delivered-reports';
 import { listDeliveredPublications } from '@corridra/delivery/delivered-publications';
 import { InboxService } from '@corridra/communications/inbox';
+import { CustomerInboxService } from './customer-inbox';
 import { uxSwitchOn } from './ux-switches';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
@@ -244,6 +245,20 @@ function createServices() {
     missionMail,
     viewAs: new ViewAsService(runtimePool),
     inbox,
+    customerInbox: new CustomerInboxService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerRequestsEnabled() && uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2'),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+      inbox,
+    ),
     operatorSetup: new OperatorSetup(authPool),
     networkInvitations: new NetworkInvitations(
       authPool,

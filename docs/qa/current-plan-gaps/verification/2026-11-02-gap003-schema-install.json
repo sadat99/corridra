@@ -1,0 +1,18 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-003",
+  "run": "https://github.com/sadat99/corridra/actions/runs/41480437108",
+  "job": 125397004655,
+  "revision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+  "apply": "yes",
+  "optionalActivationInputs": "unchanged",
+  "ownerApproval": "Owner reported Approved in GitHub; the subsequent job completed successfully.",
+  "conclusion": "success",
+  "observedLog": [
+    "2026-11-02T16:25:44.0989992Z commercial_readiness_migrations: 4 applied",
+    "2026-11-02T16:30:19.4358814Z commercial_readiness_migrations: 5 applied"
+  ],
+  "limits": [
+    "Runtime switch values, private live journeys and provider delivery remain unverified."
+  ]
+}

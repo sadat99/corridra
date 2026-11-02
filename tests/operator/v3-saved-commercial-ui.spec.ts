@@ -13,12 +13,16 @@ test.beforeAll(async () => {
       contents: `import { createRoot } from 'react-dom/client';
         import { SavedMissions } from ${JSON.stringify(resolve('apps/web/app/account/saved-missions.tsx'))};
         import { SavedCommercialReport } from ${JSON.stringify(resolve('apps/web/app/account/missions/saved-commercial-report.tsx'))};
+        import { AppHeader } from ${JSON.stringify(resolve('apps/web/components/ux/app-header.tsx'))};
+        import { LanguageProvider } from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
+        import { publishTeamContext } from ${JSON.stringify(resolve('apps/web/lib/ux/team-context.ts'))};
         const query = new URLSearchParams(location.search);
         const subject = query.get('subject') || 'synthetic-alice';
         const issuer = query.get('issuer') || ${JSON.stringify(issuer)};
         
         const root=createRoot(document.getElementById('fixture'));
-        const render=(subject,issuer)=>query.get('mode')==='report'?<SavedCommercialReport subject={subject} issuer={issuer} resourceId="00000000-0000-4000-8000-000000000001"/>:<SavedMissions subject={subject} issuer={issuer}/>;root.render(query.has('before')?null:render(subject,issuer));
+        publishTeamContext({tenant:'00000000-0000-4000-8000-000000000099',role:'owner'});
+        const render=(subject,issuer)=>query.get('mode')?.startsWith('inbox-')?<LanguageProvider offered={[{code:'en',draft:false}]}><AppHeader kind={query.get('mode')==='inbox-customer'?'customer':'contributor'} live={false} notifications={!query.has('off')}/></LanguageProvider>:query.get('mode')==='report'?<SavedCommercialReport subject={subject} issuer={issuer} resourceId="00000000-0000-4000-8000-000000000001"/>:<SavedMissions subject={subject} issuer={issuer}/>;root.render(query.has('before')?null:render(subject,issuer));
         window.addEventListener('fixture-customer-change',event=>root.render(render(event.detail.subject,event.detail.issuer)));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -31,7 +35,7 @@ test.beforeAll(async () => {
     jsx: 'automatic',
     // Components import their own stylesheets; this spec does not mount them for styling.
     loader: { '.css': 'empty' },
-    define: { 'process.env.NODE_ENV': '"production"' },
+    define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
     metafile: true,
   });
   expect(
@@ -555,4 +559,93 @@ test('malformed quotation currencies and meeting time zones fail safely before r
     await expect(page.getByText('Original approved requirements 工厂 বাংলা')).toHaveCount(0);
     await expect(page.getByText('Recorded commercial progress', { exact: true })).toHaveCount(0);
   }
+});
+
+for (const kind of ['customer', 'contributor'] as const) {
+  test(`GAP-004 ${kind} shell uses its own inbox endpoint and marks only the selected item`, async ({
+    page,
+  }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    const endpoint = kind === 'customer' ? '/api/customer-inbox' : '/api/notifications';
+    const id = '00000000-0000-4000-8000-000000000071';
+    let read = false;
+    const methods: string[] = [];
+    await page.route('**/api/**', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      expect(url.pathname).toBe(endpoint);
+      expect(url.search).toBe('');
+      methods.push(request.method());
+      if (request.method() === 'POST') {
+        expect(request.postDataJSON()).toEqual({ id });
+        read = true;
+        await route.fulfill({ json: { read: true } });
+      } else
+        await route.fulfill({
+          json: [
+            {
+              id,
+              type: 'REPORT_PUBLISHED',
+              payload: { title: 'QA inbox item' },
+              readAt: read ? '2026-11-02T12:00:00Z' : null,
+              createdAt: '2026-11-02T11:00:00Z',
+            },
+          ],
+        });
+    });
+    await page.goto(origin + '/?mode=inbox-' + kind);
+    expect(pageErrors).toEqual([]);
+    const header = page.locator(`header[data-shell="${kind}"]`);
+    const button = header.getByRole('button', { name: 'Inbox', exact: true });
+    await expect(button).toBeVisible();
+    await button.click();
+    await expect(page.getByRole('button', { name: 'QA inbox item', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'QA inbox item', exact: true }).click();
+    await expect(page.locator('.ux-kit-inbox li')).toHaveAttribute('data-unread', 'false');
+    expect(methods).toEqual(['GET', 'POST', 'GET']);
+    await page.keyboard.press('Escape');
+    await expect(button).toBeFocused();
+    await page.goto(origin + '/?mode=inbox-' + kind + '&off=1');
+    await expect(page.getByRole('button', { name: 'Inbox', exact: true })).toHaveCount(0);
+  });
+}
+test('GAP-004 customer inbox clears private items when a refresh loses its session', async ({
+  page,
+}) => {
+  let allowed = true;
+  await page.route('**/api/customer-inbox', (route) =>
+    route.fulfill(
+      allowed
+        ? {
+            json: [
+              {
+                id: '00000000-0000-4000-8000-000000000072',
+                type: 'REQUEST_RECEIVED',
+                payload: { title: 'QA private update' },
+                readAt: null,
+                createdAt: '2026-11-02T11:00:00Z',
+              },
+            ],
+          }
+        : { status: 401, json: { error: 'Sign in to continue' } },
+    ),
+  );
+  await page.goto(origin + '/?mode=inbox-customer');
+  await page.getByRole('button', { name: 'Inbox', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'QA private update', exact: true })).toBeVisible();
+  allowed = false;
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(page.getByRole('alert')).toContainText('Sign in to continue');
+  await expect(page.getByRole('button', { name: 'QA private update', exact: true })).toHaveCount(0);
+});
+
+test('GAP-004 compiled customer inbox applies private headers to an inaccessible request', async ({
+  request,
+}) => {
+  const response = await request.get('http://127.0.0.1:3200/api/customer-inbox');
+  expect(response.status()).toBeGreaterThanOrEqual(400);
+  expect(response.headers()['cache-control']).toContain('no-store');
+  expect(response.headers()['referrer-policy']).toBe('no-referrer');
+  expect(response.headers()['x-content-type-options']).toBe('nosniff');
 });

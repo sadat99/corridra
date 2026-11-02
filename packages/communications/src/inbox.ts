@@ -97,7 +97,10 @@ export class InboxService {
     work: (
       q: (sql: string, args?: unknown[]) => Promise<{ rows: T[]; rowCount: number | null }>,
     ) => Promise<unknown>,
+    transaction?: DatabaseClient,
   ) {
+    // The verified customer boundary supplies its configured transaction and owns its lifetime.
+    if (transaction) return work((sql, args) => transaction.query(sql, args) as never);
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
@@ -142,37 +145,45 @@ export class InboxService {
   }
 
   /** The signed-in person's own items, newest first. */
-  async list(who: InboxContext, limit = 30): Promise<InboxItem[]> {
+  async list(who: InboxContext, limit = 30, transaction?: DatabaseClient): Promise<InboxItem[]> {
     return (await this.run<{
       id: string;
       type: NotificationType;
       payload: Record<string, unknown>;
       read_at: Date | null;
       created_at: Date;
-    }>(who, async (q) => {
-      const r = await q(
-        'SELECT id,type,payload,read_at,created_at FROM app.inbox_notification ORDER BY created_at DESC LIMIT $1',
-        [Math.min(Math.max(limit, 1), 100)],
-      );
-      return r.rows.map((row) => ({
-        id: row.id,
-        type: row.type,
-        payload: row.payload,
-        readAt: row.read_at ? row.read_at.toISOString() : null,
-        createdAt: row.created_at.toISOString(),
-      }));
-    })) as InboxItem[];
+    }>(
+      who,
+      async (q) => {
+        const r = await q(
+          'SELECT id,type,payload,read_at,created_at FROM app.inbox_notification ORDER BY created_at DESC LIMIT $1',
+          [Math.min(Math.max(limit, 1), 100)],
+        );
+        return r.rows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          payload: row.payload,
+          readAt: row.read_at ? row.read_at.toISOString() : null,
+          createdAt: row.created_at.toISOString(),
+        }));
+      },
+      transaction,
+    )) as InboxItem[];
   }
 
   /** Marks one of the person's own items as read. Another person's item is never changed. */
-  async markRead(who: InboxContext, id: string): Promise<boolean> {
+  async markRead(who: InboxContext, id: string, transaction?: DatabaseClient): Promise<boolean> {
     const target = z.uuid().parse(id);
-    return (await this.run(who, async (q) => {
-      const r = await q(
-        'UPDATE app.inbox_notification SET read_at=now() WHERE id=$1 AND read_at IS NULL',
-        [target],
-      );
-      return (r.rowCount ?? 0) > 0;
-    })) as boolean;
+    return (await this.run(
+      who,
+      async (q) => {
+        const r = await q(
+          'UPDATE app.inbox_notification SET read_at=now() WHERE id=$1 AND read_at IS NULL',
+          [target],
+        );
+        return (r.rowCount ?? 0) > 0;
+      },
+      transaction,
+    )) as boolean;
   }
 }

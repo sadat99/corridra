@@ -127,6 +127,15 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   ).toBe(false);
   await expect(page.locator('#workspace-delivery')).toBeVisible();
   await evidence(page, `V-05-${info.project.name}`);
+  // Actual contributor route reuses staff identity and reads an account-wide inbox, without team context.
+  await page.goto('/contributor');
+  const contributorHeader = page.locator('header.ux-app-header[data-shell="contributor"]');
+  await contributorHeader.getByRole('button', { name: 'Inbox', exact: true }).click();
+  await expect(page.getByText('Nothing new.', { exact: true })).toBeVisible();
+  const contributorInbox = await page.request.get('/api/notifications');
+  expect(contributorInbox.status()).toBe(200);
+  expect(await contributorInbox.json()).toEqual([]);
+  await evidence(page, `GAP-004-contributor-${info.project.name}`);
 });
 
 test('V-45 infrastructure: the inbox answers 401 to a signed-out visitor', async ({ request }) => {

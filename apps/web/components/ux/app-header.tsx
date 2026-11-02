@@ -26,7 +26,7 @@ const homes: Record<SignedInShell, string> = {
 };
 const names = shellWords.names;
 
-function InboxButton({ tenant }: { tenant: string }) {
+function InboxButton({ endpoint }: { endpoint: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const panelId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-inbox`;
@@ -63,7 +63,7 @@ function InboxButton({ tenant }: { tenant: string }) {
         {t(shellWords.inbox)}
       </button>
       <div id={panelId} className="ux-app-popover" hidden={!open}>
-        {open ? <NotificationInbox tenant={tenant} /> : null}
+        {open ? <NotificationInbox endpoint={endpoint} /> : null}
       </div>
     </div>
   );
@@ -91,6 +91,14 @@ export function AppHeader({
     readServerTeamContext,
   );
   const meta = localeMeta[locale];
+  const inboxEndpoint =
+    kind === 'customer'
+      ? '/api/customer-inbox'
+      : kind === 'contributor'
+        ? '/api/notifications'
+        : tenant
+          ? `/api/notifications?tenant=${encodeURIComponent(tenant)}`
+          : null;
   return (
     <header className="site-header ux-app-header" data-shell={kind} lang={meta.html} dir={meta.dir}>
       <Link prefetch={false} className="brand" href={homes[kind]} aria-label={t(names[kind])}>
@@ -105,7 +113,9 @@ export function AppHeader({
         </span>
       ) : null}
       <div className="ux-app-tools">
-        {notifications && kind === 'team' && tenant ? <InboxButton tenant={tenant} /> : null}
+        {notifications && inboxEndpoint ? (
+          <InboxButton key={`${kind}:${inboxEndpoint}`} endpoint={inboxEndpoint} />
+        ) : null}
         <LanguageSwitcher />
         <Link prefetch={false} className="ux-app-link" href="/">
           {t(shellWords.website)}

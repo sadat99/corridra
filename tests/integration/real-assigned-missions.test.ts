@@ -12,6 +12,7 @@ import { DeliveryService } from '../../packages/delivery/src/index';
 import { CustomerDeliveryService } from '../../packages/delivery/src/customer-delivery';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { InboxService } from '../../packages/communications/src/inbox';
+import { CustomerInboxService } from '../../apps/web/lib/customer-inbox';
 const reportReceipts: string[] = [];
 import { MissionService } from '../../packages/missions/src/index';
 
@@ -247,6 +248,31 @@ test('the real customer sees the delivery without any identity or bearer; collea
   await expect(
     staff.assign(staffCtx(), { ...assignment(), requestId: randomUUID() }),
   ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('real customer inbox reads and marks only the current verified account', async () => {
+  const inbox = new InboxService(f.runtime);
+  const own = new CustomerInboxService(
+    f.runtime,
+    f.auth,
+    options,
+    sessionFor('assigned-alice'),
+    inbox,
+  );
+  const other = new CustomerInboxService(
+    f.runtime,
+    f.auth,
+    options,
+    sessionFor('assigned-bob'),
+    inbox,
+  );
+  expect((await own.list()).filter((item) => item.id === reportReceipts[0])).toMatchObject([
+    { type: 'REPORT_PUBLISHED' },
+  ]);
+  expect((await other.list()).filter((item) => item.id === reportReceipts[0])).toEqual([]);
+  expect(await other.markRead(reportReceipts[0])).toBe(false);
+  expect(await own.markRead(reportReceipts[0])).toBe(true);
+  await expect(own.list('assigned-bob', issuer)).rejects.toMatchObject({ status: 409 });
 });
 
 test('accepting needs the acknowledgement, then saves the report and opens the original approved content', async () => {

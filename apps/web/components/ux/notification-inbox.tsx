@@ -2,7 +2,7 @@
 // The in-app inbox for a signed-in shell (D7). Lists the person's own items from /api/notifications
 // and marks one read when opened. Owner after Wave 0: WS-E.
 import './ux-kit.css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson } from '../../lib/ux/step-up';
 import { safeInternalPath } from '../../lib/ux/safe-path';
@@ -27,33 +27,61 @@ const typeTitle: Record<string, string> = {
   REPLY_POSTED: 'New reply',
 };
 
-export function NotificationInbox({ tenant }: { tenant: string }) {
+export function NotificationInbox({ endpoint }: { endpoint: string }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState('');
+  const active = useRef<AbortController | null>(null);
   const load = useCallback(() => {
-    fetch(`/api/notifications?tenant=${encodeURIComponent(tenant)}`)
+    active.current?.abort();
+    const controller = new AbortController();
+    active.current = controller;
+    fetch(endpoint, { cache: 'no-store', signal: controller.signal })
       .then((r) => readJson<Item[]>(r))
       .then((list) => {
+        if (controller.signal.aborted) return;
         setItems(list);
         setError('');
       })
-      .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : 'The inbox could not be loaded.'),
-      );
-  }, [tenant]);
+      .catch((e: unknown) => {
+        if (controller.signal.aborted) return;
+        setItems(null);
+        setError(e instanceof Error ? e.message : 'The inbox could not be loaded.');
+      });
+  }, [endpoint]);
   useEffect(() => {
     load();
+    function visibility() {
+      active.current?.abort();
+      if (document.visibilityState === 'hidden') {
+        setItems(null);
+        setError('');
+      } else {
+        load();
+      }
+    }
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      active.current?.abort();
+      active.current = null;
+      document.removeEventListener('visibilitychange', visibility);
+    };
   }, [load]);
   function markRead(item: Item) {
     if (item.readAt) return;
-    void fetch(`/api/notifications?tenant=${encodeURIComponent(tenant)}`, {
+    void fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: item.id }),
       keepalive: true,
     })
-      .then(() => load())
-      .catch(() => undefined);
+      .then((response) => readJson(response))
+      .then(() => {
+        if (active.current && document.visibilityState === 'visible') load();
+      })
+      .catch((error: unknown) => {
+        setItems(null);
+        setError(error instanceof Error ? error.message : 'The inbox could not be updated.');
+      });
   }
   return (
     <section className="ux-kit-inbox" aria-labelledby="ux-inbox-title">
