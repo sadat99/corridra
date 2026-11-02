@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { MissionService, digest } from '../../packages/missions/src/index';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
 let f: Awaited<ReturnType<typeof fixture>>;
 let real: MissionService;
 const issuer =
@@ -208,6 +210,8 @@ test('only fresh verified identity with matching email and possession can read t
 
 test('verified submission-first claim creates one real private request and retries concurrently without duplicate ownership', async () => {
   const { CustomerRequestService } = await import('../../packages/auth/src/customer-requests');
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
   const service = new CustomerRequestService(
     f.runtime,
     f.auth,
@@ -225,6 +229,8 @@ test('verified submission-first claim creates one real private request and retri
       emailVerified: true,
       expiresAt: new Date(Date.now() + 60000),
     }),
+    undefined,
+    (db, id) => inbox.recordRequestReceived(db, id),
   );
   const saved = await real.stagePendingRequest(randomUUID(), brief());
   const cap = real.pendingRequestCapability(saved.cookie);
@@ -239,6 +245,16 @@ test('verified submission-first claim creates one real private request and retri
   expect(first).toEqual(second);
   expect(first.id).toMatch(/^[a-f0-9-]{36}$/);
   expect(first.synthetic).toBe(false);
+  await service.claimPending(cap, prepare);
+  const notices = (
+    await f.owner.query(
+      `SELECT n.id FROM app.inbox_notification n JOIN customer_private.owned_request r
+     ON r.principal_id=n.recipient_account_id
+     WHERE r.id=$1 AND n.event_key=$2 AND n.type='REQUEST_RECEIVED'`,
+      [first.id, `request:${first.id}`],
+    )
+  ).rows;
+  expect(notices).toHaveLength(1);
   const rows = (
     await f.owner.query(
       `SELECT r.id,t.synthetic,m.purpose,i.notice_version,i.brief->>'email' email FROM customer_private.owned_request r JOIN app.mission m ON m.id=r.mission_id AND m.tenant_id=r.mission_tenant_id JOIN app.tenant t ON t.id=r.workspace_id JOIN app.mission_intake i ON i.id=m.id AND i.tenant_id=m.tenant_id WHERE r.command_id=$1`,

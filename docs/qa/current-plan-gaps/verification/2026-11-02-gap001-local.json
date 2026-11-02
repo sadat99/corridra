@@ -3,22 +3,39 @@
   "finding": "GAP-001",
   "baseRevision": "b336c9a00f11e04912e76871aa674d5cea50c8d0",
   "testedWorkingTree": true,
-  "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-requests.test.ts tests/integration/commercial-readiness-database.test.ts tests/integration/real-intake-boundary.test.ts",
   "exit": 0,
-  "testsPassed": 23,
-  "testFilesPassed": 3,
-  "logSha256": "4fbefba0ed813f59dc4d79aea6bf236e35ef4a3d6f33f49360b3ba2517a2aea7",
+  "testsPassed": 31,
+  "testFilesPassed": 4,
   "scope": [
     "transactional inbox receipt",
     "concurrent and exact retry deduplication",
     "requester-only access and denied roles",
     "notification failure and recovery",
     "canonical commit rollback",
-    "existing real-intake regression"
+    "existing real-intake regression",
+    "verified real-mode guest claim, concurrent and consumed-capability retry deduplication"
   ],
   "limits": [
     "Not frozen-head CI or production acceptance.",
     "New SQL requires protected installation.",
     "Existing receipt-email channel unchanged; no provider messages sent."
+  ],
+  "runs": [
+    {
+      "baseRevision": "b336c9a00f11e04912e76871aa674d5cea50c8d0",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-requests.test.ts tests/integration/commercial-readiness-database.test.ts tests/integration/real-intake-boundary.test.ts",
+      "exit": 0,
+      "testsPassed": 23,
+      "testFilesPassed": 3,
+      "logSha256": "4fbefba0ed813f59dc4d79aea6bf236e35ef4a3d6f33f49360b3ba2517a2aea7"
+    },
+    {
+      "baseRevision": "9a29909fe1efa954e0ee650b4d91bfe7187187ef",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/real-guest-handoff.test.ts",
+      "exit": 0,
+      "testsPassed": 8,
+      "testFilesPassed": 1,
+      "logSha256": "288bf59633f652a7e8647be199a8eec96792d34ff17699833747d7620b5e9548"
+    }
   ]
 }

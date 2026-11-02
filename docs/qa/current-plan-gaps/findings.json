@@ -33,7 +33,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Transactional request receipt and retry recovery implemented locally; 23 database tests passed. Frozen CI, additive schema installation and deployment acceptance remain pending.",
+        "summary": "Transactional request receipt and retry recovery implemented locally; 31 database tests passed. Frozen CI, additive schema installation and deployment acceptance remain pending.",
         "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
         "evidenceObservedOn": "2026-11-01",
         "lastRecordedOn": "2026-11-02",
