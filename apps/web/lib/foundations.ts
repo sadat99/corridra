@@ -568,6 +568,24 @@ function createServices() {
         issuer: customerIssuerFromEnv(),
       },
       readCustomerSession,
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? async (db, commandId) => {
+            const receipt = await inbox.recordQuoteAccepted(db, commandId);
+            return async () => {
+              const { notifyRecorded } = await import('./notify');
+              return notifyRecorded(
+                {
+                  ...receipt,
+                  recipientEmail: receipt.recipientEmail ?? undefined,
+                  recipientKind: 'staff',
+                  type: 'QUOTE_ACCEPTED',
+                  locale: 'en',
+                },
+                receipt.id,
+              );
+            };
+          }
+        : undefined,
     ),
     customerOrganisationProfiles: new CustomerOrganisationProfileService(
       runtimePool,

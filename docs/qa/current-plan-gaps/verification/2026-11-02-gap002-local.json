@@ -1,0 +1,24 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-002",
+  "baseRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+  "testedWorkingTree": true,
+  "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-service-requests.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-parallelism",
+  "exit": 0,
+  "testsPassed": 32,
+  "testFilesPassed": 2,
+  "logSha256": "f731402bf4601a53f445fef0d4298d8aa2b51b937fd55f23f712181215080568",
+  "scope": [
+    "Accepted-quote issuer lookup with active membership",
+    "Concurrent and exact retry deduplication",
+    "Denied unauthenticated, auth-role, other-customer and revoked-recipient lookups",
+    "Recipient-only inbox reads",
+    "SQL failure preserves acceptance and replay recovers receipt",
+    "Email failure preserves acceptance",
+    "Deferred commit failure leaves no receipt or dispatch"
+  ],
+  "limits": [
+    "No provider messages sent.",
+    "Frozen-head CI, protected schema installation and production acceptance pending."
+  ]
+}

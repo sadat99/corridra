@@ -33,6 +33,14 @@ export type InboxItem = {
   createdAt: string;
 };
 
+export type RecordedStaffNotification = {
+  id: string;
+  recipientAccountId: string;
+  recipientEmail: string | null;
+  tenantId: string;
+  payload: Record<string, unknown>;
+};
+
 const recordInput = z
   .object({
     recipientKind: z.enum(['staff', 'customer']),
@@ -49,6 +57,16 @@ export type InboxContext =
 
 export class InboxService {
   constructor(private readonly pool: DatabasePool) {}
+
+  async recordQuoteAccepted(
+    db: DatabaseClient,
+    commandId: string,
+  ): Promise<RecordedStaffNotification> {
+    const result = await db.query('SELECT customer.record_quote_accepted($1) receipt', [
+      z.uuid().parse(commandId),
+    ]);
+    return result.rows[0].receipt;
+  }
 
   /** Uses the submitting transaction's verified customer proof; recipient choice stays in SQL. */
   async recordRequestReceived(db: DatabaseClient, requestId: string): Promise<string> {

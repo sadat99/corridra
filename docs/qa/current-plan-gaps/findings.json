@@ -33,22 +33,25 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Transactional request receipt and retry recovery implemented locally; 31 database tests passed. Frozen CI, additive schema installation and deployment acceptance remain pending.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Implementation merged in PR233; exact-head CI passed and production revision 289abc7 is READY. Protected schema installation and live activation acceptance remain pending.",
+        "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap001-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-02-gap001-release.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap001-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-local.json",
+              "verification/2026-11-02-gap001-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "READY",
+            "evidence": ["verification/2026-11-02-gap001-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -85,6 +88,15 @@
           "evidenceRevision": "b336c9a00f11e04912e76871aa674d5cea50c8d0",
           "disposition": "OPEN",
           "note": "Owner authorized sequential fixes 001–021 excluding language items 008/013/014/021, including commit, green-CI merge and exact-SHA deployment. Local implementation underway; no closure or activation inferred."
+        },
+        {
+          "eventId": "GAP-001-H003",
+          "recordedOn": "2026-11-02",
+          "type": "MERGED_DEPLOYED",
+          "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+          "disposition": "OPEN",
+          "note": "Implementation merged in PR233; exact-head CI passed and production revision 289abc7 is READY. Protected schema installation and live activation acceptance remain pending.",
+          "evidence": ["verification/2026-11-02-gap001-release.json"]
         }
       ]
     },
@@ -101,18 +113,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`apps/web/app/api/customer-service-requests/route.ts:63` returns the acceptance command without unified notification. Resolve only the permitted staff recipient; acceptance itself exists.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Transactional accepted-quote inbox lookup, stable email hand-off after commit and retry recovery implemented locally. 32 PostgreSQL tests passed; CI, release and protected installation pending.",
+        "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-002"]
+            "evidence": ["verification/2026-11-02-gap002-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap002-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -145,6 +157,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-002-H002",
+          "recordedOn": "2026-11-02",
+          "type": "WORK_STARTED",
+          "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+          "disposition": "OPEN",
+          "note": "Transactional accepted-quote inbox lookup, stable email hand-off after commit and retry recovery implemented locally. 32 PostgreSQL tests passed; CI, release and protected installation pending.",
+          "evidence": ["verification/2026-11-02-gap002-local.json"]
         }
       ]
     },
