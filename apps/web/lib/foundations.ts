@@ -576,7 +576,7 @@ function createServices() {
               return notifyRecorded(
                 {
                   ...receipt,
-                  recipientEmail: receipt.recipientEmail ?? undefined,
+                  recipientEmail: await inbox.staffEmail(authPool, receipt),
                   recipientKind: 'staff',
                   type: 'QUOTE_ACCEPTED',
                   locale: 'en',

@@ -113,8 +113,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "PR234 deployed at0fd21d9 after19 passing checks. Real-mode verification then reproduced a recipient-purpose mismatch. Additive0004 corrects it locally;40 PostgreSQL tests across real/synthetic paths passed. Corrective CI/deployment and schema installation pending.",
-        "evidenceRevision": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+        "summary": "PR234 is deployed. PR235 corrects real-workspace purpose and resolves the request staff owner across quote revisions; customer SQL returns no email.40 real/synthetic database tests pass. Corrective CI/deployment and protected installation pending.",
+        "evidenceRevision": "0368c12aed502724089c128f72935649a6b7eb00",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
@@ -184,6 +184,15 @@
             "verification/2026-11-02-gap002-release.json",
             "verification/2026-11-02-gap002-real-purpose.json"
           ]
+        },
+        {
+          "eventId": "GAP-002-H004",
+          "recordedOn": "2026-11-02",
+          "type": "CORRECTION_VERIFIED_LOCALLY",
+          "evidenceRevision": "0368c12aed502724089c128f72935649a6b7eb00",
+          "disposition": "OPEN",
+          "note": "PR234 is deployed. PR235 corrects real-workspace purpose and resolves the request staff owner across quote revisions; customer SQL returns no email.40 real/synthetic database tests pass. Corrective CI/deployment and protected installation pending.",
+          "evidence": ["verification/2026-11-02-gap002-real-purpose.json"]
         }
       ]
     },

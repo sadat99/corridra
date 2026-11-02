@@ -1,3 +1,4 @@
+-- Updated A–G plan: acceptance goes to the request staff owner, including quotes revised by another staff member.
 -- Real staff use commercial_qualification; synthetic staff retain synthetic_validation.
 -- Preserve installed migration0003 and every recipient/command authorization check.
 -- Recipient lookup is restricted to the current customer's own committed acceptance command.
@@ -7,15 +8,15 @@ CREATE OR REPLACE FUNCTION customer.record_quote_accepted(command uuid) RETURNS 
 DECLARE actor uuid := customer.actor_id(); accepted record; item uuid; body jsonb;
 BEGIN
  IF actor IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
- SELECT e.request_id,q.id quote_id,q.prepared_by recipient,q.staff_tenant_id tenant,u.email,
-  u."emailVerified" verified
+ SELECT e.request_id,q.id quote_id,claim.claimed_by recipient,q.staff_tenant_id tenant
  INTO accepted
  FROM customer_private.service_request_command c
  JOIN customer_private.service_request_event e ON e.request_id=(c.result->>'id')::uuid AND e.customer_actor=c.actor_id AND e.kind='accepted'
  JOIN customer_private.service_request r ON r.id=e.request_id
  JOIN customer_private.service_quote q ON q.id=e.quote_id AND q.request_id=r.id AND q.version=(c.request->>'quoteVersion')::integer
+ JOIN customer_private.service_request_claim claim ON claim.request_id=r.id AND claim.staff_tenant_id=q.staff_tenant_id
  JOIN app.tenant t ON t.id=q.staff_tenant_id
- JOIN identity.principal p ON p.id=q.prepared_by AND p.disabled_at IS NULL
+ JOIN identity.principal p ON p.id=claim.claimed_by AND p.disabled_at IS NULL
  JOIN identity."user" u ON u.id=p.identity_id
  JOIN app.membership m ON m.user_id=p.id AND m.tenant_id=q.staff_tenant_id AND m.revoked_at IS NULL
  WHERE c.actor_id=actor AND c.command_id=command AND c.operation='accept'
@@ -34,7 +35,7 @@ BEGIN
    AND type='QUOTE_ACCEPTED' AND event_key='quote:'||accepted.quote_id::text;
  END IF;
  RETURN jsonb_build_object('id',item,'recipientAccountId',accepted.recipient,'tenantId',accepted.tenant,
-  'recipientEmail',CASE WHEN accepted.verified THEN accepted.email END,'payload',body);
+  'payload',body);
 END $$;
 REVOKE ALL ON FUNCTION customer.record_quote_accepted(uuid) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION customer.record_quote_accepted(uuid) TO corridra_runtime;

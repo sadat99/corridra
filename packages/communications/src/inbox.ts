@@ -36,7 +36,6 @@ export type InboxItem = {
 export type RecordedStaffNotification = {
   id: string;
   recipientAccountId: string;
-  recipientEmail: string | null;
   tenantId: string;
   payload: Record<string, unknown>;
 };
@@ -57,6 +56,19 @@ export type InboxContext =
 
 export class InboxService {
   constructor(private readonly pool: DatabasePool) {}
+
+  /** Server composition resolves mail using its auth login, after SQL has selected the recipient. */
+  async staffEmail(
+    auth: DatabasePool,
+    receipt: RecordedStaffNotification,
+  ): Promise<string | undefined> {
+    const result = await auth.query<{ email: string }>(
+      `SELECT u.email FROM identity.principal p JOIN identity."user" u ON u.id=p.identity_id
+       WHERE p.id=$1 AND p.disabled_at IS NULL AND u."emailVerified" IS TRUE`,
+      [z.uuid().parse(receipt.recipientAccountId)],
+    );
+    return result.rows[0]?.email;
+  }
 
   async recordQuoteAccepted(
     db: DatabaseClient,
