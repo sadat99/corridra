@@ -791,7 +791,10 @@
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap009-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap009-local.json",
+              "verification/2026-11-02-gap009-security-controls.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -834,6 +837,16 @@
           "disposition": "OPEN",
           "note": "Timezone-aware shared inputs now cover remaining mission/meeting/commercial instant fields. Four actual mission form/service/RLS/PostgreSQL cases preserve unchanged milliseconds and selected instants in UTC/Dhaka/Kathmandu/Madrid;30 backend and8 operator/bootstrap regressions, types, lint, formatting and preparation build passed. Exact-head CI and deployment pending.",
           "evidence": ["verification/2026-11-02-gap009-local.json"]
+        },
+        {
+          "eventId": "GAP-009-H003",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "e58d24202e1a4029f091838a21f4fe1891e4999a",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "Initial PR242 checks flagged the exact public SHA-256 recorded for operator/access.tsx, not a credential. Local file bytes verify that hash. A generic-api-key exception matches only that exact hash AND evidence path;7 isolated boundary controls and the unchanged full-history scanner pass. Feature source hashes and prior behavior checks are unchanged; final-head CI/deployment remain pending.",
+          "evidence": ["verification/2026-11-02-gap009-security-controls.json"]
         }
       ]
     },
