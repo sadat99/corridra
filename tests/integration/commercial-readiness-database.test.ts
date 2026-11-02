@@ -23,6 +23,7 @@ describe('installation', () => {
       '0002_request_received.sql',
       '0003_quote_accepted.sql',
       '0004_quote_accepted_processing_purpose.sql',
+      '0005_report_published.sql',
     ]);
     await migrateCommercialReadiness(f.owner);
     expect(

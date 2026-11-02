@@ -33,7 +33,7 @@ export type InboxItem = {
   createdAt: string;
 };
 
-export type RecordedStaffNotification = {
+export type RecordedNotification = {
   id: string;
   recipientAccountId: string;
   tenantId: string;
@@ -58,10 +58,7 @@ export class InboxService {
   constructor(private readonly pool: DatabasePool) {}
 
   /** Server composition resolves mail using its auth login, after SQL has selected the recipient. */
-  async staffEmail(
-    auth: DatabasePool,
-    receipt: RecordedStaffNotification,
-  ): Promise<string | undefined> {
+  async staffEmail(auth: DatabasePool, receipt: RecordedNotification): Promise<string | undefined> {
     const result = await auth.query<{ email: string }>(
       `SELECT u.email FROM identity.principal p JOIN identity."user" u ON u.id=p.identity_id
        WHERE p.id=$1 AND p.disabled_at IS NULL AND u."emailVerified" IS TRUE`,
@@ -70,11 +67,18 @@ export class InboxService {
     return result.rows[0]?.email;
   }
 
-  async recordQuoteAccepted(
+  async recordQuoteAccepted(db: DatabaseClient, commandId: string): Promise<RecordedNotification> {
+    const result = await db.query('SELECT customer.record_quote_accepted($1) receipt', [
+      z.uuid().parse(commandId),
+    ]);
+    return result.rows[0].receipt;
+  }
+
+  async recordReportPublished(
     db: DatabaseClient,
     commandId: string,
-  ): Promise<RecordedStaffNotification> {
-    const result = await db.query('SELECT customer.record_quote_accepted($1) receipt', [
+  ): Promise<RecordedNotification> {
+    const result = await db.query('SELECT app.record_report_published($1) receipt', [
       z.uuid().parse(commandId),
     ]);
     return result.rows[0].receipt;

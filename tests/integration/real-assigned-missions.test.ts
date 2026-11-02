@@ -10,6 +10,9 @@ import { CustomerSavedMissionService } from '../../packages/auth/src/customer-sa
 import { CustomerAssignedMissionService } from '../../packages/auth/src/customer-assigned-missions';
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { CustomerDeliveryService } from '../../packages/delivery/src/customer-delivery';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
+const reportReceipts: string[] = [];
 import { MissionService } from '../../packages/missions/src/index';
 
 // Staff assign a reviewed report to the real customer who made the request, and the customer accepts it into
@@ -82,6 +85,7 @@ beforeAll(async () => {
   vi.stubEnv('CORRIDRA_REAL_USE_ENABLED', 'true');
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
+  await migrateCommercialReadiness(f.owner);
   await admitSyntheticCustomer(f.owner, {
     issuer,
     subject: 'local-bootstrap-fixture',
@@ -101,7 +105,13 @@ beforeAll(async () => {
   ).rows[0].intake_tenant_id;
   missions = new MissionService(f.runtime, 'real-assigned-fixture-secret', 'real');
   delivery = new DeliveryService(f.runtime, missions, 'real-assigned-fixture-secret');
-  staff = new CustomerDeliveryService(f.runtime);
+  staff = new CustomerDeliveryService(f.runtime, async (db, id) => {
+    const receipt = await new InboxService(f.runtime).recordReportPublished(db, id);
+    expect(receipt).not.toHaveProperty('recipientEmail');
+    return async () => {
+      reportReceipts.push(receipt.id);
+    };
+  });
   workspaceId = (
     await workspaces('assigned-alice').provision({
       commandId: randomUUID(),
@@ -186,6 +196,25 @@ test('staff assign their own reviewed report once; a retry is the same assignmen
   const value = assignment();
   assignmentId = (await staff.assign(staffCtx(), value)).id;
   expect(await staff.assign(staffCtx(), value)).toEqual({ id: assignmentId });
+  expect(reportReceipts).toHaveLength(2);
+  expect(new Set(reportReceipts).size).toBe(1);
+  expect(
+    (
+      await f.owner.query(
+        'SELECT recipient_account_id,payload FROM app.inbox_notification WHERE id=$1',
+        [reportReceipts[0]],
+      )
+    ).rows,
+  ).toEqual([
+    {
+      recipient_account_id: (
+        await f.owner.query('SELECT principal_id FROM customer_private.owned_request WHERE id=$1', [
+          requestId,
+        ])
+      ).rows[0].principal_id,
+      payload: { title: 'A report is ready', href: '/account?view=results' },
+    },
+  ]);
   const events = (
     await f.owner.query(
       "SELECT id,actor_id FROM app.domain_event WHERE aggregate_type='customer_delivery_assignment' AND aggregate_id=$1",

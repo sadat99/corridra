@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-003",
+  "baseRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+  "testedWorkingTree": true,
+  "verification": {
+    "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-delivery.test.ts tests/integration/real-assigned-missions.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-paralleli",
+    "exit": 0,
+    "logSha256": "653d8cc7bdb2add9ca631b0e4a564f3d0eb36d07358712e8db84e4a8af355e70"
+  },
+  "testsPassed": 34,
+  "testFilesPassed": 3,
+  "typecheck": {
+    "command": "pnpm typecheck",
+    "exit": 0,
+    "logSha256": "0276fe82b6e5458d8e284dedd71447d5db0bbdf9b2d0ee3e87a8e5ad71d271ce"
+  },
+  "scope": [
+    "Synthetic and real reviewed assignment record the permitted customer inbox item",
+    "Exact and concurrent retries reuse one receipt",
+    "Recipient-only reads; colleagues and unauthorized staff/auth/bare-runtime lookup denied",
+    "Unknown assignment and revoked original link denied",
+    "Notification SQL failure preserves assignment; exact replay recovers receipt",
+    "Email dispatch failure preserves assignment",
+    "Deferred canonical commit failure leaves neither assignment nor inbox receipt and dispatches nothing",
+    "Existing assignment response, exact events, private report access and optional upgrade assertions preserved"
+  ],
+  "limits": [
+    "Frozen-head CI, additive schema installation and live acceptance pending.",
+    "No provider messages sent. Recipient-only SQL returns no addresses; the existing notifier reports email not_sent when no verified address is supplied.",
+    "Customer inbox shell/API wiring is GAP-004 and is not claimed by this evidence."
+  ]
+}
