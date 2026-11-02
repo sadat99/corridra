@@ -1,0 +1,22 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-005",
+  "workflowRun": 41505093037,
+  "url": "https://github.com/sadat99/corridra/actions/runs/41505093037",
+  "sourceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+  "prerequisites": {
+    "ciRun": 41501081299,
+    "codeqlRun": 41501081153,
+    "headSha": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+    "conclusion": "success"
+  },
+  "input": {
+    "apply": "yes",
+    "activationInputs": "unchanged defaults"
+  },
+  "observedStatus": "waiting",
+  "environment": "customer-modules-install",
+  "requiredReviewers": 1,
+  "intendedDelta": "real-use0011; previously installed commercial-readiness0002–0005 is not a new delta",
+  "limits": ["Owner review is pending. No schema installation or new activation is claimed."]
+}

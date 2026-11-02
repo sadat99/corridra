@@ -1,0 +1,22 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-006",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/239",
+  "testedHead": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+  "ciRun": 41501552835,
+  "codeqlRun": 41501552811,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+  "productionDeployment": {
+    "id": "dpl_HJv7zCSJucthczvDy17jCpCwWARe",
+    "state": "READY",
+    "githubCommitSha": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+    "alias": "corridra.vercel.app"
+  },
+  "limits": [
+    "Initial release is partial: two additional local browser checks against its source reproduced lost tier labels and commercial criteria.",
+    "Completion work and its new release remain separately tracked."
+  ]
+}

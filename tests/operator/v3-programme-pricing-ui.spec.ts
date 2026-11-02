@@ -813,6 +813,12 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
     .fill('Synthetic unsent description');
   await area.getByLabel('Tier 1 name').fill('Synthetic unsent tier');
   await area.getByLabel(/Tier 1 fee/).fill('1234.56');
+  await area.getByRole('button', { name: 'Add an early booking reduction', exact: true }).click();
+  await area.getByLabel('Early booking 1 name').fill('Synthetic unsent early label');
+  await area.getByLabel('Early booking 1 last day it applies').fill('2026-11-30');
+  await area.getByRole('button', { name: 'Add a group reduction', exact: true }).click();
+  await area.getByLabel('Group 1 name').fill('Synthetic unsent group label');
+  await area.getByLabel('Group 1 applies from this many participants').fill('8');
   await page.reload();
   await area.getByRole('button', { name: 'New fee schedule' }).click();
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
@@ -822,13 +828,27 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
     'Synthetic unsent description',
   );
   await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('');
+  await expect(area.getByLabel('Tier 1 name')).toHaveValue('Synthetic unsent tier');
+  await expect(area.getByLabel('Early booking 1 name')).toHaveValue('Synthetic unsent early label');
+  await expect(area.getByLabel('Early booking 1 last day it applies')).toHaveValue('2026-11-30');
+  await expect(area.getByLabel('Group 1 name')).toHaveValue('Synthetic unsent group label');
+  await expect(area.getByLabel('Group 1 applies from this many participants')).toHaveValue('8');
+
   const saved = await page.evaluate(() =>
     Object.keys(sessionStorage)
       .filter((key) => key.startsWith('corridra.draft.programme-pricing:'))
       .map((key) => JSON.parse(sessionStorage.getItem(key)!)),
   );
   expect(saved).toEqual([
-    { name: 'Synthetic unsent fee wording', description: 'Synthetic unsent description' },
+    {
+      name: 'Synthetic unsent fee wording',
+      description: 'Synthetic unsent description',
+      'tier.v0.0.label': 'Synthetic unsent tier',
+      'early.v0.0.label': 'Synthetic unsent early label',
+      'early.v0.0.until': '2026-11-30',
+      'group.v0.0.label': 'Synthetic unsent group label',
+      'group.v0.0.min': '8',
+    },
   ]);
   await area.getByRole('button', { name: 'Cancel', exact: true }).click();
   await area
@@ -840,4 +860,60 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
     'Synthetic unsent fee wording',
   );
+});
+
+test('GAP-006 edited labels survive row removal without restoring amounts or crossing schedule versions', async ({
+  page,
+}) => {
+  let current = template();
+  const posts = await mock(page, {
+    templates: () => ({
+      json: { workspaceId, expiresAt: future(), templates: [current], nextAfter: null },
+    }),
+  });
+  const area = await open(page);
+  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await area.getByLabel('Tier 1 name').fill('Synthetic removed label');
+  await area.getByRole('button', { name: 'Add a tier', exact: true }).click();
+  await area.getByLabel('Tier 2 name').fill('Synthetic retained label');
+  await area.getByLabel(/Tier 2 fee/).fill('72.34');
+  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await area.getByLabel('Name (start with Synthetic)').fill('Synthetic reordered draft');
+  await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('72.34');
+  await page.reload();
+  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await expect(area.getByLabel('Tier 1 name')).toHaveValue('Synthetic retained label');
+  await expect(area.getByLabel('Tier 2 name')).toHaveCount(0);
+  await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('');
+  await area.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await area
+    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .click();
+  const originalSecond = await area.getByLabel(/Tier 2 fee/).inputValue();
+  await area.getByLabel('Tier 2 name').fill('Synthetic own second label');
+  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await page.reload();
+  await area
+    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .click();
+  await expect(area.getByLabel('Tier 1 name')).toHaveValue(standard);
+  await expect(area.getByLabel('Tier 2 name')).toHaveValue('Synthetic own second label');
+  await expect(area.getByLabel(/Tier 2 fee/)).toHaveValue(originalSecond);
+  current = {
+    ...current,
+    version: current.version + 1,
+    content: {
+      ...current.content,
+      tiers: current.content.tiers.map((tier, i) =>
+        i === 1 ? { ...tier, amountMinor: '88800' } : tier,
+      ),
+    },
+  };
+  await page.reload();
+  await area
+    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .click();
+  await expect(area.getByLabel('Tier 2 name')).toHaveValue(student);
+  await expect(area.getByLabel(/Tier 2 fee/)).not.toHaveValue(originalSecond);
+  expect(posts).toHaveLength(0);
 });

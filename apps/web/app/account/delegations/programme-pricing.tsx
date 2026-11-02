@@ -76,17 +76,47 @@ type Props = {
 };
 type Section = 'pricing' | 'series' | 'exports';
 
-const blankTier = () => ({ label: realCustomerInput() ? '' : 'Synthetic ', amount: '' });
-const blankEarly = () => ({
+const blankTier = (draftIndex = 0) => ({
+  label: realCustomerInput() ? '' : 'Synthetic ',
+  amount: '',
+  draftIndex,
+});
+const blankEarly = (draftIndex = 0) => ({
+  draftIndex,
   label: realCustomerInput() ? '' : 'Synthetic ',
   until: '',
   reduction: '',
 });
-const blankGroup = () => ({
+const blankGroup = (draftIndex = 0) => ({
+  draftIndex,
   label: realCustomerInput() ? '' : 'Synthetic ',
   min: '',
   reduction: '',
 });
+
+// Drafts contain edited words only. Row indices are local form positions, never money or record ids.
+function feeText(value: unknown, version: number): Record<string, string> {
+  if (!object(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, string] => {
+      const [key, words] = entry;
+      const [kind, , index, field] = key.split('.');
+      const rowText =
+        new RegExp('^(tier|early|group)\\.v' + version + '\\.\\d{1,16}\\.(label|until|min)$').test(
+          key,
+        ) &&
+        Number.isSafeInteger(Number(index)) &&
+        (field === 'label' ||
+          (kind === 'early' && field === 'until') ||
+          (kind === 'group' && field === 'min'));
+      return (
+        typeof words === 'string' &&
+        words.length <= (key === 'description' ? 500 : 120) &&
+        (key === 'name' || key === 'description' || rowText)
+      );
+    }),
+  );
+}
 
 function checkContent(c: unknown): Content {
   if (
@@ -243,7 +273,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
   const [error, setError] = useState('');
   const writing = useRef(false);
   const [editing, setEditing] = useState<Template | 'new' | null>(null);
-  const textDraft = useFormDraft<{ name?: string; description?: string }>(
+  const textDraft = useFormDraft<Record<string, string>>(
     'programme-pricing:' +
       JSON.stringify([
         issuer,
@@ -253,31 +283,83 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
       ]),
   );
 
+  const draftVersion = editing && editing !== 'new' ? editing.version : 0;
+  const savedText = feeText(textDraft.draft, draftVersion);
+  const restoredEditor = useRef<Template | 'new' | null>(null);
   const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
-  useEffect(() => {
-    if (!editing || !textDraft.restored) return;
-    let active = true;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const saved = textDraft.draft;
-      setName((old) => (typeof saved?.name === 'string' ? saved.name.slice(0, 120) : old));
-      setDescription((old) =>
-        typeof saved?.description === 'string' ? saved.description.slice(0, 500) : old,
-      );
-    });
-    return () => {
-      active = false;
-    };
-  }, [editing, textDraft.restored, textDraft.draft]);
 
   const [currency, setCurrency] = useState<Code>('BDT');
   const [tiers, setTiers] = useState([blankTier()]);
   const [early, setEarly] = useState<ReturnType<typeof blankEarly>[]>([]);
   const [groups, setGroups] = useState<ReturnType<typeof blankGroup>[]>([]);
+  useEffect(() => {
+    if (!editing || !textDraft.restored || restoredEditor.current === editing) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      restoredEditor.current = editing;
+      const saved = feeText(textDraft.draft, draftVersion);
+      setName((old) => (typeof saved?.name === 'string' ? saved.name.slice(0, 120) : old));
+      setDescription((old) =>
+        typeof saved?.description === 'string' ? saved.description.slice(0, 500) : old,
+      );
+      const restore = <T extends { label: string; draftIndex: number }>(
+        old: T[],
+        kind: string,
+        blank: (index: number) => T,
+        limit: number,
+      ) => {
+        const prefix = kind + '.v' + draftVersion + '.';
+        const entries = Object.entries(saved).filter(([key]) => key.startsWith(prefix));
+        const rows = editing === 'new' && entries.length ? ([] as T[]) : [...old];
+        for (const [key, label] of entries) {
+          const field = key.split('.').at(-1)!;
+          if ((field === 'until' && kind !== 'early') || (field === 'min' && kind !== 'group'))
+            continue;
+          const index = Number(key.split('.').at(-2));
+          const found = rows.findIndex((row) => row.draftIndex === index);
+          if (found >= 0) rows[found] = { ...rows[found]!, [field]: label };
+          else if (rows.length < limit) rows.push({ ...blank(index), [field]: label });
+        }
+        return rows;
+      };
+      setTiers((old) => restore(old, 'tier', blankTier, 12));
+      setEarly((old) => restore(old, 'early', blankEarly, 6));
+      setGroups((old) => restore(old, 'group', blankGroup, 6));
+    });
+    return () => {
+      active = false;
+    };
+  }, [editing, textDraft.restored, textDraft.draft, draftVersion]);
+
   const [programme, setProgramme] = useState('');
   const [overviewTick, setOverviewTick] = useState(0);
 
+  const saveLabel = (kind: string, index: number, value: string, field = 'label') =>
+    textDraft.save({
+      ...savedText,
+      [kind + '.v' + draftVersion + '.' + index + '.' + field]: value,
+    });
+  const removeLabel = (kind: string, index: number) =>
+    textDraft.save(
+      Object.fromEntries(
+        Object.entries(savedText).filter(
+          ([key]) => !key.startsWith(kind + '.v' + draftVersion + '.' + index + '.'),
+        ),
+      ),
+    );
+  function nextLabelIndex(kind: string, rows: { draftIndex: number }[]) {
+    const base =
+      editing && editing !== 'new'
+        ? kind === 'tier'
+          ? editing.content.tiers.length
+          : kind === 'early'
+            ? editing.content.earlyBird.length
+            : editing.content.groupDiscounts.length
+        : 0;
+    return Math.max(base - 1, ...rows.map((row) => row.draftIndex)) + 1;
+  }
   async function guard(work: () => Promise<void>) {
     if (writing.current) return;
     writing.current = true;
@@ -293,6 +375,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     }
   }
   function startEdit(t: Template | null) {
+    restoredEditor.current = null;
     setError('');
     setNotice('');
     setEditing(t ?? 'new');
@@ -302,7 +385,8 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     setCurrency(c?.currency ?? 'BDT');
     setTiers(
       c
-        ? c.tiers.map((x) => ({
+        ? c.tiers.map((x, draftIndex) => ({
+            draftIndex,
             label: x.label,
             amount: x.amountMinor,
           }))
@@ -310,7 +394,8 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     );
     setEarly(
       c
-        ? c.earlyBird.map((x) => ({
+        ? c.earlyBird.map((x, draftIndex) => ({
+            draftIndex,
             label: x.label,
             until: x.untilDate,
             reduction: x.reductionMinor,
@@ -319,7 +404,8 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     );
     setGroups(
       c
-        ? c.groupDiscounts.map((x) => ({
+        ? c.groupDiscounts.map((x, draftIndex) => ({
+            draftIndex,
             label: x.label,
             min: String(x.minParticipants),
             reduction: x.reductionMinor,
@@ -697,12 +783,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   disabled={busy || !textDraft.restored}
                   onChange={(e) => {
                     setName(e.target.value);
-                    textDraft.save({
-                      ...(typeof textDraft.draft?.description === 'string'
-                        ? { description: textDraft.draft.description }
-                        : {}),
-                      name: e.target.value,
-                    });
+                    textDraft.save({ ...savedText, name: e.target.value });
                   }}
                 />
               </label>
@@ -717,12 +798,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   disabled={busy || !textDraft.restored}
                   onChange={(e) => {
                     setDescription(e.target.value);
-                    textDraft.save({
-                      ...(typeof textDraft.draft?.name === 'string'
-                        ? { name: textDraft.draft.name }
-                        : {}),
-                      description: e.target.value,
-                    });
+                    textDraft.save({ ...savedText, description: e.target.value });
                   }}
                 />
               </label>
@@ -736,7 +812,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
               />
               <h5>Tiers</h5>
               {tiers.map((t, i) => (
-                <fieldset key={i}>
+                <fieldset key={t.draftIndex}>
                   <legend>Tier {i + 1}</legend>
                   <label className="field">
                     Tier {i + 1} name
@@ -745,11 +821,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       maxLength={120}
                       value={t.label}
                       disabled={busy}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTiers(
                           tiers.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
-                        )
-                      }
+                        );
+                        saveLabel('tier', t.draftIndex, e.target.value);
+                      }}
                     />
                   </label>
                   <MoneyInput
@@ -766,7 +843,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       type="button"
                       className="text-link"
                       disabled={busy}
-                      onClick={() => setTiers(tiers.filter((_, j) => j !== i))}
+                      onClick={() => {
+                        setTiers(tiers.filter((_, j) => j !== i));
+                        removeLabel('tier', t.draftIndex);
+                      }}
                     >
                       Remove tier {i + 1}
                     </button>
@@ -777,13 +857,13 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 type="button"
                 className="text-link"
                 disabled={busy || tiers.length >= 12}
-                onClick={() => setTiers([...tiers, blankTier()])}
+                onClick={() => setTiers([...tiers, blankTier(nextLabelIndex('tier', tiers))])}
               >
                 Add a tier
               </button>
               <h5>Early booking reductions</h5>
               {early.map((t, i) => (
-                <fieldset key={i}>
+                <fieldset key={t.draftIndex}>
                   <legend>Early booking {i + 1}</legend>
                   <label className="field">
                     Early booking {i + 1} name
@@ -792,11 +872,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       maxLength={120}
                       value={t.label}
                       disabled={busy}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setEarly(
                           early.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
-                        )
-                      }
+                        );
+                        saveLabel('early', t.draftIndex, e.target.value);
+                      }}
                     />
                   </label>
                   <label className="field">
@@ -807,11 +888,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       max="2100-01-01"
                       value={t.until}
                       disabled={busy}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setEarly(
                           early.map((x, j) => (j === i ? { ...x, until: e.target.value } : x)),
-                        )
-                      }
+                        );
+                        saveLabel('early', t.draftIndex, e.target.value, 'until');
+                      }}
                     />
                   </label>
                   <MoneyInput
@@ -829,7 +911,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     type="button"
                     className="text-link"
                     disabled={busy}
-                    onClick={() => setEarly(early.filter((_, j) => j !== i))}
+                    onClick={() => {
+                      setEarly(early.filter((_, j) => j !== i));
+                      removeLabel('early', t.draftIndex);
+                    }}
                   >
                     Remove early booking {i + 1}
                   </button>
@@ -839,13 +924,13 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 type="button"
                 className="text-link"
                 disabled={busy || early.length >= 6}
-                onClick={() => setEarly([...early, blankEarly()])}
+                onClick={() => setEarly([...early, blankEarly(nextLabelIndex('early', early))])}
               >
                 Add an early booking reduction
               </button>
               <h5>Group reductions</h5>
               {groups.map((t, i) => (
-                <fieldset key={i}>
+                <fieldset key={t.draftIndex}>
                   <legend>Group {i + 1}</legend>
                   <label className="field">
                     Group {i + 1} name
@@ -854,11 +939,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       maxLength={120}
                       value={t.label}
                       disabled={busy}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setGroups(
                           groups.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
-                        )
-                      }
+                        );
+                        saveLabel('group', t.draftIndex, e.target.value);
+                      }}
                     />
                   </label>
                   <label className="field">
@@ -869,11 +955,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       autoComplete="off"
                       value={t.min}
                       disabled={busy}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setGroups(
                           groups.map((x, j) => (j === i ? { ...x, min: e.target.value } : x)),
-                        )
-                      }
+                        );
+                        saveLabel('group', t.draftIndex, e.target.value, 'min');
+                      }}
                     />
                   </label>
                   <MoneyInput
@@ -891,7 +978,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     type="button"
                     className="text-link"
                     disabled={busy}
-                    onClick={() => setGroups(groups.filter((_, j) => j !== i))}
+                    onClick={() => {
+                      setGroups(groups.filter((_, j) => j !== i));
+                      removeLabel('group', t.draftIndex);
+                    }}
                   >
                     Remove group {i + 1}
                   </button>
@@ -901,7 +991,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 type="button"
                 className="text-link"
                 disabled={busy || groups.length >= 6}
-                onClick={() => setGroups([...groups, blankGroup()])}
+                onClick={() => setGroups([...groups, blankGroup(nextLabelIndex('group', groups))])}
               >
                 Add a group reduction
               </button>
