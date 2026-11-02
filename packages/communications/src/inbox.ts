@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { sessionHash, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  sessionHash,
+  type DatabaseClient,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 
 // In-app inbox (commercial readiness program, D7 and 5.3). Rows live in app.inbox_notification from
 // the commercial readiness database module. Reads and marks are limited to the recipient by RLS; a
@@ -44,6 +49,14 @@ export type InboxContext =
 
 export class InboxService {
   constructor(private readonly pool: DatabasePool) {}
+
+  /** Uses the submitting transaction's verified customer proof; recipient choice stays in SQL. */
+  async recordRequestReceived(db: DatabaseClient, requestId: string): Promise<string> {
+    const result = await db.query('SELECT customer.record_request_received($1) id', [
+      z.uuid().parse(requestId),
+    ]);
+    return result.rows[0].id;
+  }
 
   private async run<T>(
     who: InboxContext,

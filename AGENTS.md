@@ -1,5 +1,11 @@
 # Working on Corridra
 
+## Codex: keep the work lean
+
+Owner instruction, 2 November 2026: **“Keep it lean: reuse existing work, make only the requested changes, use no subagents unless I ask, and run only the minimum necessary checks.”**
+
+For Codex this overrides mandatory squad/subagent routing. Work in the main session, reuse unchanged context and existing implementations, and read the relevant current sources. Do not add tools, frameworks, process or scope unless the task needs them. Preserve required security and release gates; repeat checks only after relevant changes or failures. Record concrete progress and the next action in the existing shared handoff so another agent can resume.
+
 Unqualified Part 1, Part 2 and subsequent part numbers refer to the revised five-part V2 roadmap. The original twelve-part V1 plan is historical: V1 Parts 1–8 remain the accepted baseline. Follow the latest explicit V2 packet; do not resume V1 Parts 9–12 automatically. Revised V2 Part 4 combines governed AI and the Commercial Execution Network. All five V2 parts were subsequently implemented and merged. UX-01 through UX-05 are merged with bounded UX-06/access repairs; full programme coverage remains unverified. Use `docs/implementation/current-plan.md` for current status, not historical next-task prose.
 
 For V2 work, read `docs/architecture/multi-corridor-v2.md` first. Reuse existing domain services and versioned data; never add country-specific forks, infer compliance approval, weaken RLS or historical money/evidence rules, or activate unapproved real customer-data flows.

@@ -1,6 +1,7 @@
 import { CustomerDeliveredReportService } from '@corridra/auth/customer-delivered-reports';
 import { listDeliveredPublications } from '@corridra/delivery/delivered-publications';
 import { InboxService } from '@corridra/communications/inbox';
+import { uxSwitchOn } from './ux-switches';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { realReportPublicLinkEnabled } from '@corridra/auth/real-report-access';
 import {
@@ -236,12 +237,13 @@ function createServices() {
         },
       }
     : undefined;
+  const inbox = new InboxService(runtimePool);
   return {
     config,
     ...identity,
     missionMail,
     viewAs: new ViewAsService(runtimePool),
-    inbox: new InboxService(runtimePool),
+    inbox,
     operatorSetup: new OperatorSetup(authPool),
     networkInvitations: new NetworkInvitations(
       authPool,
@@ -619,6 +621,9 @@ function createServices() {
       },
       readCustomerSession,
       missionMailPort,
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? (db, requestId) => inbox.recordRequestReceived(db, requestId)
+        : undefined,
     ),
     customerSavedMissions: new CustomerSavedMissionService(
       runtimePool,
