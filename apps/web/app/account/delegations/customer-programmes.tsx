@@ -4,6 +4,7 @@ import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode'
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeRoom } from './programme-room';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useFormDraft } from '../../../lib/ux/use-form-draft';
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
 );
@@ -104,9 +105,19 @@ function ScopedProgrammes({
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
-  const [name, setName] = useState(''),
-    [purpose, setPurpose] = useState(''),
-    [ack, setAck] = useState(false);
+  const planningDraft = useFormDraft<{ name: string; purpose: string }>(
+    'programme-planning:' + JSON.stringify([issuer, subject, workspaceId]),
+  );
+  const name =
+    typeof planningDraft.draft?.name === 'string' ? planningDraft.draft.name.slice(0, 160) : '';
+  const purpose =
+    typeof planningDraft.draft?.purpose === 'string'
+      ? planningDraft.draft.purpose.slice(0, 500)
+      : '';
+  const setName = (value: string) => planningDraft.save({ name: value, purpose });
+  const setPurpose = (value: string) => planningDraft.save({ name, purpose: value });
+  const clearPlanningDraft = planningDraft.clear;
+  const [ack, setAck] = useState(false);
   const [pending, setPending] = useState<Command | null>(null),
     [busy, setBusy] = useState(false),
     [visible, setVisible] = useState(true),
@@ -123,12 +134,11 @@ function ScopedProgrammes({
     setRows([]);
     setNext(null);
     setPending(null);
-    setName('');
-    setPurpose('');
+    clearPlanningDraft();
     setAck(false);
     setMessage('Account or workspace access changed. Local planning details were cleared.');
     setStatus('denied');
-  }, []);
+  }, [clearPlanningDraft]);
   const load = useCallback(
     async (after?: string) => {
       getTask.current?.abort();
@@ -299,8 +309,7 @@ function ScopedProgrammes({
       )
         throw Error('Unconfirmed programme response');
       setPending(null);
-      setName('');
-      setPurpose('');
+      clearPlanningDraft();
       setAck(false);
       setMessage(
         realCustomerInput()
@@ -720,7 +729,7 @@ function ScopedProgrammes({
                 minLength={3}
                 maxLength={160}
                 required
-                disabled={busy || !!pending}
+                disabled={busy || !!pending || !planningDraft.restored}
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
@@ -731,7 +740,7 @@ function ScopedProgrammes({
                 minLength={10}
                 maxLength={500}
                 required
-                disabled={busy || !!pending}
+                disabled={busy || !!pending || !planningDraft.restored}
                 onChange={(event) => setPurpose(event.target.value)}
               />
             </label>
@@ -740,14 +749,14 @@ function ScopedProgrammes({
                 type="checkbox"
                 checked={ack}
                 required
-                disabled={busy || !!pending}
+                disabled={busy || !!pending || !planningDraft.restored}
                 onChange={(event) => setAck(event.target.checked)}
               />
               {realCustomerInput()
                 ? 'I confirm these planning details. Arrangements and costs need separate agreement.'
                 : 'I am using fictional information for sample planning only.'}
             </label>
-            <button className="primary-link" disabled={busy}>
+            <button className="primary-link" disabled={busy || !planningDraft.restored}>
               {pending
                 ? 'Retry same planning request'
                 : realCustomerInput()

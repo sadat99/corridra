@@ -800,3 +800,44 @@ for (const width of [320, 390, 768, 1440])
       ).violations,
     ).toEqual([]);
   });
+
+test('GAP-006 reload restores edited fee schedule text without storing money or server rows', async ({
+  page,
+}) => {
+  await mock(page);
+  const area = await open(page);
+  await area.getByRole('button', { name: 'New fee schedule' }).click();
+  await area.getByLabel('Name (start with Synthetic)').fill('Synthetic unsent fee wording');
+  await area
+    .getByLabel('Description (optional, start with Synthetic)')
+    .fill('Synthetic unsent description');
+  await area.getByLabel('Tier 1 name').fill('Synthetic unsent tier');
+  await area.getByLabel(/Tier 1 fee/).fill('1234.56');
+  await page.reload();
+  await area.getByRole('button', { name: 'New fee schedule' }).click();
+  await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
+    'Synthetic unsent fee wording',
+  );
+  await expect(area.getByLabel('Description (optional, start with Synthetic)')).toHaveValue(
+    'Synthetic unsent description',
+  );
+  await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('');
+  const saved = await page.evaluate(() =>
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('corridra.draft.programme-pricing:'))
+      .map((key) => JSON.parse(sessionStorage.getItem(key)!)),
+  );
+  expect(saved).toEqual([
+    { name: 'Synthetic unsent fee wording', description: 'Synthetic unsent description' },
+  ]);
+  await area.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await area
+    .getByRole('button', { name: 'Edit fee schedule ' + template().name, exact: true })
+    .click();
+  await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(template().name);
+  await area.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
+    'Synthetic unsent fee wording',
+  );
+});

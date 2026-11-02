@@ -16,20 +16,22 @@ function read<T>(key: string): T | null {
 }
 
 export function useFormDraft<T extends Record<string, unknown>>(key: string) {
-  const [draft, setDraft] = useState<T | null>(null);
-  const [restored, setRestored] = useState(false);
+  const [state, setState] = useState<{ key: string; draft: T | null; restored: boolean }>({
+    key,
+    draft: null,
+    restored: false,
+  });
   useEffect(() => {
     // Read after mount so the server render and the first client render match.
     const value = read<T>(key);
     const timer = window.setTimeout(() => {
-      setDraft(value);
-      setRestored(true);
+      setState({ key, draft: value, restored: true });
     }, 0);
     return () => window.clearTimeout(timer);
   }, [key]);
   const save = useCallback(
     (values: T) => {
-      setDraft(values);
+      setState({ key, draft: values, restored: true });
       try {
         window.sessionStorage.setItem(prefix + key, JSON.stringify(values));
       } catch {
@@ -39,12 +41,17 @@ export function useFormDraft<T extends Record<string, unknown>>(key: string) {
     [key],
   );
   const clear = useCallback(() => {
-    setDraft(null);
+    setState({ key, draft: null, restored: true });
     try {
       window.sessionStorage.removeItem(prefix + key);
     } catch {
       // Nothing stored.
     }
   }, [key]);
-  return { draft, restored, save, clear };
+  return {
+    draft: state.key === key ? state.draft : null,
+    restored: state.key === key && state.restored,
+    save,
+    clear,
+  };
 }

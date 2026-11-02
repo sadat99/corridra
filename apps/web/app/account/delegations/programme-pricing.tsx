@@ -1,9 +1,10 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { lazy, Suspense, useRef, useState, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { currencies, formatMoney } from '@corridra/domain/opportunities';
 import { MoneyInput } from '../../../components/ux/money-input';
 import { CurrencySelect } from '../../../components/ux/pickers';
+import { useFormDraft } from '../../../lib/ux/use-form-draft';
 import {
   customerHeaders,
   minorText,
@@ -242,8 +243,34 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
   const [error, setError] = useState('');
   const writing = useRef(false);
   const [editing, setEditing] = useState<Template | 'new' | null>(null);
+  const textDraft = useFormDraft<{ name?: string; description?: string }>(
+    'programme-pricing:' +
+      JSON.stringify([
+        issuer,
+        subject,
+        workspaceId,
+        editing && editing !== 'new' ? editing.id : 'new',
+      ]),
+  );
+
   const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
+  useEffect(() => {
+    if (!editing || !textDraft.restored) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const saved = textDraft.draft;
+      setName((old) => (typeof saved?.name === 'string' ? saved.name.slice(0, 120) : old));
+      setDescription((old) =>
+        typeof saved?.description === 'string' ? saved.description.slice(0, 500) : old,
+      );
+    });
+    return () => {
+      active = false;
+    };
+  }, [editing, textDraft.restored, textDraft.draft]);
+
   const [currency, setCurrency] = useState<Code>('BDT');
   const [tiers, setTiers] = useState([blankTier()]);
   const [early, setEarly] = useState<ReturnType<typeof blankEarly>[]>([]);
@@ -415,6 +442,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
       });
       if (!result.ok) return setError(result.message);
       checkTemplate(result.body.template);
+      if (!override) textDraft.clear();
       setEditing(null);
       setNotice(
         retired
@@ -666,8 +694,16 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   type="text"
                   maxLength={120}
                   value={name}
-                  disabled={busy}
-                  onChange={(e) => setName(e.target.value)}
+                  disabled={busy || !textDraft.restored}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    textDraft.save({
+                      ...(typeof textDraft.draft?.description === 'string'
+                        ? { description: textDraft.draft.description }
+                        : {}),
+                      name: e.target.value,
+                    });
+                  }}
                 />
               </label>
               <label className="field">
@@ -678,8 +714,16 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   type="text"
                   maxLength={500}
                   value={description}
-                  disabled={busy}
-                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={busy || !textDraft.restored}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    textDraft.save({
+                      ...(typeof textDraft.draft?.name === 'string'
+                        ? { name: textDraft.draft.name }
+                        : {}),
+                      description: e.target.value,
+                    });
+                  }}
                 />
               </label>
               <CurrencySelect

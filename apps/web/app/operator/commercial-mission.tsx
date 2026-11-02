@@ -4,7 +4,8 @@ import {
   useFormChangeGuard,
   formAcknowledged,
 } from '../../components/operator-workbench';
-import { useState, type FormEvent } from 'react';
+import { createContext, useContext, useState, type FormEvent } from 'react';
+import { useFormDraft } from '../../lib/ux/use-form-draft';
 import { machineryFields, missionCatalogue } from '@corridra/domain/commercial-missions';
 import { parseMoney, formatMoney, currency } from '@corridra/domain/opportunities';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
@@ -113,6 +114,57 @@ const lines = (v: FormData, k: string) =>
     .filter(Boolean);
 const optional = (v: FormData, keys: string[]) =>
   Object.fromEntries(keys.filter((k) => words(v, k)).map((k) => [k, words(v, k)]));
+// Only customer/operator-typed descriptive text is persisted, never loaded records, prices or selectors.
+const draftTextFields = new Set([
+  'declaration',
+  'objective',
+  'product',
+  'category',
+  'specifications',
+  'unit',
+  'orderFrequency',
+  'materials',
+  'dimensions',
+  'technicalConstraints',
+  'oemOdm',
+  'delivery',
+  'leadTime',
+  'incoterm',
+  'budgetBasis',
+  'requiredEvidence',
+  'certifications',
+  'constraints',
+  'method',
+  'basis',
+  'buyerContext',
+  'requestedTerms',
+  'specification',
+  'warranty',
+  'installation',
+  'spares',
+  'paymentTerms',
+  'uncertainties',
+  'rationale',
+  'title',
+  'purpose',
+  'brief',
+  'participants',
+  'checklist',
+  'evidenceRequests',
+  'nextAction',
+  'label',
+  'location',
+  'note',
+  'summary',
+  'reason',
+  ...machineryFields,
+  ...machineryFields.flatMap((key) => [
+    'technical.' + key + '.basis',
+    key + '.requirement',
+    key + '.basis',
+  ]),
+]);
+const CommercialTextDraft = createContext<Record<string, string>>({});
 function Field({
   name,
   label,
@@ -128,18 +180,15 @@ function Field({
   multiline?: boolean;
   maxLength?: number;
 }) {
+  const draft = useContext(CommercialTextDraft);
+  const initial = draft[name] ?? defaultValue;
   return (
     <label className="field">
       {label}
       {multiline ? (
-        <textarea
-          name={name}
-          required={required}
-          defaultValue={defaultValue}
-          maxLength={maxLength}
-        />
+        <textarea name={name} required={required} defaultValue={initial} maxLength={maxLength} />
       ) : (
-        <input name={name} required={required} defaultValue={defaultValue} maxLength={1000} />
+        <input name={name} required={required} defaultValue={initial} maxLength={1000} />
       )}
     </label>
   );
@@ -169,6 +218,15 @@ export function CommercialMission({
     [target, setTarget] = useState(''),
     [selectedPack, setSelectedPack] = useState(''),
     [dates, setDates] = useState({ observedAt: '', dueAt: '' });
+  const formDraft = useFormDraft<Record<string, string>>(
+    'commercial-mission:' + JSON.stringify([tenant, missionId, job]),
+  );
+  const typedText = Object.fromEntries(
+    Object.entries(formDraft.draft ?? {}).filter(
+      ([key, value]) =>
+        draftTextFields.has(key) && typeof value === 'string' && value.length <= 2000,
+    ),
+  );
   // A save refused for a stale authenticator check re-verifies in place and retries once with the same
   // command id, so the form and its values stay as typed (CQ-67, CQ-75).
   async function request(action: string, body?: unknown) {
@@ -449,6 +507,7 @@ export function CommercialMission({
       await request(action, payload);
       delete form.dataset.commandId;
       formAcknowledged(form);
+      formDraft.clear();
       setData(await request('commercial-mission'));
       onChanged?.();
       setMessage('Saved with source and decision history.');
@@ -729,7 +788,7 @@ export function CommercialMission({
             </details>
           ))}
           {manage && (
-            <>
+            <CommercialTextDraft value={typedText}>
               <label className="field">
                 Next task
                 <select
@@ -758,7 +817,20 @@ export function CommercialMission({
                   ))}
                 </select>
               </label>
-              <form className="operator-form" key={job} onSubmit={submit}>
+              <form
+                className="operator-form"
+                key={`${job}:${formDraft.restored}`}
+                inert={!formDraft.restored}
+                onSubmit={submit}
+                onChange={(event) => {
+                  const field = event.target;
+                  if (
+                    (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) &&
+                    draftTextFields.has(field.name)
+                  )
+                    formDraft.save({ ...typedText, [field.name]: field.value });
+                }}
+              >
                 {job === 'route' ? (
                   <>
                     <label className="field">
@@ -1235,7 +1307,7 @@ export function CommercialMission({
                   Save {job.replaceAll('_', ' ')}
                 </button>
               </form>
-            </>
+            </CommercialTextDraft>
           )}
         </>
       )}
