@@ -1,0 +1,20 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-001",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/233",
+  "testedHead": "2f0bf8892317571a2ddd1b883517b9c2c583938b",
+  "ciRun": 41413651235,
+  "ciConclusion": "success",
+  "requiredChecks": "19 completed; success, neutral or skipped; no pending or failed checks",
+  "mergedRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+  "productionDeployment": {
+    "id": "dpl_HahAs6azmeXcav3PF5ufkVav35j9",
+    "state": "READY",
+    "githubCommitSha": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+    "alias": "corridra.vercel.app"
+  },
+  "limits": [
+    "Schema installation and live recipient acceptance remain pending.",
+    "READY metadata proves the revision deployed, not that private journeys or email delivery passed."
+  ]
+}

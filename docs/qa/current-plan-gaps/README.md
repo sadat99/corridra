@@ -8,6 +8,8 @@ The [machine-readable register](findings.json) is canonical. This table is its h
 
 Initial registration on 2 November imports the audit at `1e9104a4`; it makes no claim that product work changed since that audit. Every row retains its baseline category and current disposition. Implementation, verification, deployment, activation, approval and commercial operation are separate fields in JSON. UNKNOWN means no finding-specific evidence establishes that stage. CI success and a READY deployment do not establish every feature's acceptance or activation.
 
+Repair progress, 2 November: GAP-001 is merged and its exact production revision is READY; protected schema installation and live acceptance remain pending. GAP-002 is implemented in [draft PR234](https://github.com/sadat99/corridra/pull/234), with32 passing database tests; CI/release/installation remain pending. The owner selected GAP-001–021 except language items008/013/014/021. OPEN remains until each finding's acceptance evidence exists; it does not mean every implementation is absent.
+
 | Disposition      | Meaning                                                                                                                                                                  |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | OPEN             | Traced engineering, discrepancy or verification-infrastructure work; its scope field preserves whether it is A–G, a current language phase or a newly found discrepancy. |

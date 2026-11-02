@@ -49,7 +49,10 @@ export function notificationEmailReady(env: NodeJS.ProcessEnv = process.env) {
   return notificationsOn(env) && missionMailApplicationEnabled(env) && !!readAuthMailConfig(env);
 }
 
-async function sendEmail(input: NotifyInput, key: string): Promise<NotifyResult['email']> {
+async function sendEmail(
+  input: Omit<NotifyInput, 'writer'>,
+  key: string,
+): Promise<NotifyResult['email']> {
   const decision = emailDecision({
     type: input.type,
     recipientEmail: input.recipientEmail,
@@ -80,6 +83,15 @@ async function sendEmail(input: NotifyInput, key: string): Promise<NotifyResult[
     console.error(JSON.stringify({ event: 'notification_email_failed', type: input.type }));
     return 'not_sent';
   }
+}
+
+/** Trusted producers call this after their transaction commits an authorized inbox receipt. */
+export async function notifyRecorded(
+  input: Omit<NotifyInput, 'writer'>,
+  id: string,
+): Promise<NotifyResult> {
+  if (!notificationsOn()) return { inbox: 'off', email: 'off' };
+  return { inbox: 'recorded', id, email: await sendEmail(input, id) };
 }
 
 export async function notify(input: NotifyInput): Promise<NotifyResult> {

@@ -1,0 +1,27 @@
+{
+  "recordedOn": "2026-11-02",
+  "blockedMainRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+  "run": 41416900700,
+  "job": 125182931636,
+  "failedStep": "Database, identity, adapter and recovery integration tests",
+  "observedAt": "2026-11-02T09:10:03.2169562Z",
+  "failedAssertion": "tests/integration/meetings.test.ts:278: rejects.toThrow('future meeting')",
+  "fixtureInstant": "2026-11-02T09:00:00Z",
+  "observedIntegrationTotals": {
+    "passed": 1865,
+    "failed": 1,
+    "skipped": 1
+  },
+  "repair": "Use a date one day ahead with matching Madrid wall times; preserve all assertions and application rules.",
+  "localVerification": {
+    "head": "c99a37648ba0b56e9493a2a524f8b8b761b2da87",
+    "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/meetings.test.ts --maxWorkers=1 --no-file-parallelism",
+    "exit": 0,
+    "logSha256": "0f0b92bc1c4ba5ec887d35ab460ed2dfc513573512e8a87662073a7ff04ea434"
+  },
+  "testsPassed": 6,
+  "limits": [
+    "Not a successful main CI run; no protected installation dispatched from this failed revision.",
+    "New exact-head CI must pass before PR234 merges."
+  ]
+}

@@ -1,6 +1,11 @@
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
-import { CustomerSessionBoundary } from './customer-session';
+import type { DatabaseClient, DatabasePool } from '@corridra/db';
+import {
+  CustomerSessionBoundary,
+  type CustomerSession,
+  type CustomerWorkspaceOptions,
+} from './customer-session';
 import { customerWorkspacesEnabled } from './customer-workspaces';
 
 export function customerServiceRequestsEnabled(env: NodeJS.ProcessEnv = process.env) {
@@ -205,6 +210,15 @@ export type ServiceRequestDetail = {
 
 // Server-only: the current provider session decides who is acting; the workspace role comes from the database.
 export class CustomerServiceRequestService extends CustomerSessionBoundary {
+  constructor(
+    runtime: DatabasePool,
+    auth: DatabasePool,
+    options: CustomerWorkspaceOptions,
+    readSession: () => Promise<CustomerSession | null>,
+    private accepted?: (db: DatabaseClient, commandId: string) => Promise<() => Promise<unknown>>,
+  ) {
+    super(runtime, auth, options, readSession);
+  }
   async catalogue(subject?: string, issuer?: string) {
     return this.transaction(
       async (db) =>
@@ -258,16 +272,36 @@ export class CustomerServiceRequestService extends CustomerSessionBoundary {
   }
   async command(input: unknown, subject?: string, issuer?: string) {
     const { action, commandId, ...payload } = customerServiceCommandInput.parse(input);
-    return this.transaction(
-      async (db) =>
-        (
+    let dispatch: (() => Promise<unknown>) | undefined;
+    const result = await this.transaction(
+      async (db) => {
+        const result = (
           await db.query<{ result: ServiceRequestSummary & { commandId: string } }>(
             'SELECT customer.service_request_command($1,$2,$3) AS result',
             [commandId, action, JSON.stringify(payload)],
           )
-        ).rows[0].result,
+        ).rows[0].result;
+        if (action === 'accept' && this.accepted) {
+          await db.query('SAVEPOINT quote_accepted');
+          try {
+            dispatch = await this.accepted(db, commandId);
+            await db.query('RELEASE SAVEPOINT quote_accepted');
+          } catch {
+            await db.query('ROLLBACK TO SAVEPOINT quote_accepted');
+            await db.query('RELEASE SAVEPOINT quote_accepted');
+            console.error(JSON.stringify({ event: 'quote_accepted_notification_failed' }));
+          }
+        }
+        return result;
+      },
       subject,
       issuer,
     );
+    try {
+      await dispatch?.();
+    } catch {
+      console.error(JSON.stringify({ event: 'quote_accepted_email_failed' }));
+    }
+    return result;
   }
 }

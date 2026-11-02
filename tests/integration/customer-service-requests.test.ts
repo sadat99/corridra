@@ -28,6 +28,8 @@ import {
   staffServiceCommandInput,
 } from '../../packages/delivery/src/customer-service-staff';
 import { DeliveryService } from '../../packages/delivery/src/index';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 
 // Invented provider-session fixtures exercise the real restricted SQL logins and the real staff session rows.
@@ -219,11 +221,15 @@ async function snapshot() {
     ).rows,
   };
 }
-async function rawProof(work: (db: DatabaseClient) => Promise<unknown>, milliseconds = 25000) {
+async function rawProof(
+  work: (db: DatabaseClient) => Promise<unknown>,
+  milliseconds = 25000,
+  person = 'alice',
+) {
   const hash = sessionHash(randomBytes(32).toString('hex'));
   await f.auth.query(
     "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at) VALUES($1,$2,$3,clock_timestamp()+$4*interval '1 millisecond')",
-    [hash, issuer, session('alice').subject, milliseconds],
+    [hash, issuer, session(person).subject, milliseconds],
   );
   const db = await f.runtime.connect();
   try {
@@ -1104,6 +1110,205 @@ test('acceptance needs the whole quote to have been shown, the exact version and
     )
   ).rows.map((x) => x.relname);
   expect(objects.some((n) => /payment|invoice|charge|subscription|refund/.test(n))).toBe(false);
+});
+
+test('accepted quote hand-off resolves only its active issuer, deduplicates retries and dispatches after commit', async () => {
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
+  const r = await create();
+  await quote(r.id);
+  const shown = await view(r.id);
+  const command = {
+    action: 'accept',
+    commandId: randomUUID(),
+    workspaceId,
+    requestId: r.id,
+    quoteVersion: 1,
+    quoteDigest: shown.quote.digest,
+    acknowledged: true,
+  };
+  const dispatched: string[] = [];
+  const notified = new CustomerServiceRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    async (db, id) => {
+      const receipt = await inbox.recordQuoteAccepted(db, id);
+      expect(receipt.recipientAccountId).toBe(f.users.owner.id);
+      expect(receipt.payload).toEqual({
+        title: 'Your quote was accepted',
+        href: '/operator?workspace=' + f.tenantA,
+      });
+      return async () => {
+        expect(
+          (await f.owner.query('SELECT id FROM app.inbox_notification WHERE id=$1', [receipt.id]))
+            .rows,
+        ).toHaveLength(1);
+        dispatched.push(receipt.id);
+      };
+    },
+  );
+  const results = await Promise.all([notified.command(command), notified.command(command)]);
+  expect(results[0]).toEqual(results[1]);
+  await notified.command(command);
+  expect(dispatched).toHaveLength(3);
+  expect(new Set(dispatched).size).toBe(1); // Provider idempotency key uses this stable receipt.
+  const own = await inbox.list({ kind: 'staff', ctx: staffCtx() });
+  expect(own.filter((x) => x.id === dispatched[0])).toHaveLength(1);
+  expect(await inbox.list({ kind: 'staff', ctx: otherStaffCtx() })).toEqual([]);
+  for (const pool of [f.runtime, f.auth]) {
+    await expect(
+      pool.query('SELECT customer.record_quote_accepted($1)', [command.commandId]),
+    ).rejects.toMatchObject({ code: '42501' });
+  }
+  expect(
+    await rawProof((db) => db.query('SELECT customer.record_quote_accepted($1)', [randomUUID()])),
+  ).toMatchObject({ code: '42501' });
+  expect(
+    await rawProof(
+      (db) => db.query('SELECT customer.record_quote_accepted($1)', [command.commandId]),
+      25000,
+      'bob',
+    ),
+  ).toMatchObject({ code: '42501' });
+  await rawContext(
+    f.owner,
+    staffCtx(),
+    'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+    [f.tenantA, f.users.owner.id, 'viewer'],
+  );
+  try {
+    expect(
+      await rawProof((db) =>
+        db.query('SELECT customer.record_quote_accepted($1)', [command.commandId]),
+      ),
+    ).toMatchObject({ code: '42501' });
+  } finally {
+    await rawContext(
+      f.owner,
+      staffCtx(),
+      'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, f.users.owner.id, 'owner'],
+    );
+  }
+  await rawContext(
+    f.owner,
+    staffCtx(),
+    'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2',
+    [f.tenantA, f.users.owner.id],
+  );
+  try {
+    expect(
+      await rawProof((db) =>
+        db.query('SELECT customer.record_quote_accepted($1)', [command.commandId]),
+      ),
+    ).toMatchObject({ code: '42501' });
+  } finally {
+    await rawContext(
+      f.owner,
+      staffCtx(),
+      'UPDATE app.membership SET revoked_at=NULL WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, f.users.owner.id],
+    );
+  }
+});
+
+test('inbox and email failure preserve acceptance and replay recovers a missing receipt', async () => {
+  const r = await create();
+  await quote(r.id);
+  const shown = await view(r.id);
+  const command = {
+    action: 'accept',
+    commandId: randomUUID(),
+    workspaceId,
+    requestId: r.id,
+    quoteVersion: 1,
+    quoteDigest: shown.quote.digest,
+    acknowledged: true,
+  };
+  const failing = new CustomerServiceRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    async (db) => {
+      await db.query('SELECT 1/0');
+      throw new Error('unreachable');
+    },
+  );
+  expect((await failing.command(command)).status).toBe('accepted');
+  const recovered = new CustomerServiceRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    async (db, id) => {
+      await new InboxService(f.runtime).recordQuoteAccepted(db, id);
+      return async () => {
+        throw new Error('provider unavailable');
+      };
+    },
+  );
+  expect((await recovered.command(command)).status).toBe('accepted');
+  expect(
+    (
+      await f.owner.query(
+        "SELECT id FROM app.inbox_notification WHERE type='QUOTE_ACCEPTED' AND event_key=$1",
+        ['quote:' + shown.quote.id],
+      )
+    ).rows,
+  ).toHaveLength(1);
+});
+
+test('failed acceptance commit leaves no receipt and sends no email', async () => {
+  const r = await create();
+  await quote(r.id);
+  const shown = await view(r.id);
+  let dispatched = false;
+  const notified = new CustomerServiceRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    async (db, id) => {
+      await new InboxService(f.runtime).recordQuoteAccepted(db, id);
+      return async () => {
+        dispatched = true;
+      };
+    },
+  );
+  await f.owner.query(`CREATE FUNCTION customer_private.test_accept_commit() RETURNS trigger
+    LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced acceptance commit failure'; END $$`);
+  await f.owner
+    .query(`CREATE CONSTRAINT TRIGGER test_accept_commit AFTER INSERT ON customer_private.service_order_intent
+    DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION customer_private.test_accept_commit()`);
+  try {
+    await expect(
+      notified.command({
+        action: 'accept',
+        commandId: randomUUID(),
+        workspaceId,
+        requestId: r.id,
+        quoteVersion: 1,
+        quoteDigest: shown.quote.digest,
+        acknowledged: true,
+      }),
+    ).rejects.toThrow('forced acceptance commit failure');
+  } finally {
+    await f.owner.query('DROP TRIGGER test_accept_commit ON customer_private.service_order_intent');
+    await f.owner.query('DROP FUNCTION customer_private.test_accept_commit()');
+  }
+  expect(dispatched).toBe(false);
+  expect(
+    (
+      await f.owner.query(
+        "SELECT id FROM app.inbox_notification WHERE type='QUOTE_ACCEPTED' AND event_key=$1",
+        ['quote:' + shown.quote.id],
+      )
+    ).rows,
+  ).toEqual([]);
+  expect((await view(r.id)).request.status).toBe('quoted');
 });
 
 test('staff move an accepted request to in progress, delivered and closed with notes the customer reads; internal notes stay hidden', async () => {
