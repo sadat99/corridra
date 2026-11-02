@@ -23,6 +23,8 @@ import { CustomerProgrammeService } from '../../packages/auth/src/customer-progr
 import { CustomerProgrammeTermsService } from '../../packages/auth/src/customer-programme-terms';
 import { CustomerProgrammePricingService } from '../../packages/auth/src/customer-programme-pricing';
 import { CustomerServiceRequestService } from '../../packages/auth/src/customer-service-requests';
+import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
+import { sessionHash } from '../../packages/db/src/index';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { InboxService } from '../../packages/communications/src/inbox';
 let f: Awaited<ReturnType<typeof fixture>>;
@@ -81,6 +83,95 @@ afterAll(async () => {
   await f?.close();
   vi.unstubAllEnvs();
 });
+test('private view leases slide for30 minutes while remaining bounded by provider expiry', async () => {
+  const providerExpiry = new Date(Date.now() + 90 * 60000);
+  const reader = new CustomerOrganisationProfileService(f.runtime, f.auth, options, async () => ({
+    ...(await session()),
+    expiresAt: providerExpiry,
+  }));
+  const first = await reader.view({ workspaceId });
+  expect(Date.parse(first.expiresAt) - Date.now()).toBeGreaterThan(29 * 60000);
+  expect(Date.parse(first.expiresAt) - Date.now()).toBeLessThanOrEqual(30 * 60000);
+  await f.owner.query('SELECT pg_sleep(0.01)');
+  const second = await reader.view({ workspaceId });
+  expect(Date.parse(second.expiresAt)).toBeGreaterThan(Date.parse(first.expiresAt));
+  const shortExpiry = new Date(Date.now() + 120000);
+  const short = new CustomerOrganisationProfileService(f.runtime, f.auth, options, async () => ({
+    ...(await session()),
+    expiresAt: shortExpiry,
+  }));
+  expect(Date.parse((await short.view({ workspaceId })).expiresAt)).toBeLessThanOrEqual(
+    shortExpiry.getTime(),
+  );
+});
+
+test('a long display lease never lengthens authentication proof or permits unverified expiry writes', async () => {
+  class ProofProbe extends CustomerSessionBoundary {
+    inspect() {
+      return this.transaction(
+        async (_db, proof) =>
+          (
+            await f.owner.query(
+              'SELECT extract(epoch FROM expires_at-clock_timestamp()) seconds,provider_expires_at FROM customer_private.session_proof WHERE hash=$1',
+              [proof.hash],
+            )
+          ).rows[0],
+      );
+    }
+  }
+  const expiry = new Date(Date.now() + 3600000);
+  const proof = await new ProofProbe(f.runtime, f.auth, options, async () => ({
+    ...(await session()),
+    expiresAt: expiry,
+  })).inspect();
+  expect(Number(proof.seconds)).toBeGreaterThan(0);
+  expect(Number(proof.seconds)).toBeLessThanOrEqual(25);
+  expect(proof.provider_expires_at.toISOString()).toBe(expiry.toISOString());
+  await expect(
+    f.runtime.query('SELECT customer_private.set_view_expiry($1,$2)', ['x', expiry]),
+  ).rejects.toMatchObject({ code: '42501' });
+  await expect(
+    f.runtime.query('SELECT customer_private.private_view_expiry()'),
+  ).rejects.toMatchObject({ code: '42501' });
+  const hash = sessionHash(randomUUID());
+  await f.auth.query(
+    "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at) VALUES($1,$2,$3,clock_timestamp()+interval '100 milliseconds')",
+    [hash, issuer, (await session()).subject],
+  );
+  try {
+    await f.owner.query('SELECT pg_sleep(0.12)');
+    await expect(
+      f.auth.query('SELECT customer_private.set_view_expiry($1,$2)', [hash, expiry]),
+    ).rejects.toMatchObject({ code: '42501' });
+  } finally {
+    await f.auth.query('DELETE FROM customer_private.session_proof WHERE hash=$1', [hash]);
+  }
+  const expired = new CustomerOrganisationProfileService(f.runtime, f.auth, options, async () => ({
+    ...(await session()),
+    expiresAt: new Date(Date.now() - 1000),
+  }));
+  await expect(expired.view({ workspaceId })).rejects.toMatchObject({ status: 401 });
+});
+test('a renewed view still refuses a disabled customer principal', async () => {
+  const reader = new CustomerOrganisationProfileService(f.runtime, f.auth, options, async () => ({
+    ...(await session()),
+    expiresAt: new Date(Date.now() + 3600000),
+  }));
+  await reader.view({ workspaceId });
+  await f.owner.query(
+    'UPDATE customer_private.principal SET disabled_at=clock_timestamp() WHERE issuer=$1 AND subject=$2',
+    [issuer, (await session()).subject],
+  );
+  try {
+    await expect(reader.view({ workspaceId })).rejects.toMatchObject({ code: '42501' });
+  } finally {
+    await f.owner.query(
+      'UPDATE customer_private.principal SET disabled_at=NULL WHERE issuer=$1 AND subject=$2',
+      [issuer, (await session()).subject],
+    );
+  }
+});
+
 test('real guided drafts accept ordinary company details and compose a normal contact email', async () => {
   const details = {
     title: 'Supplier discussions',

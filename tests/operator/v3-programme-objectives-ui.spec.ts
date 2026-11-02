@@ -548,3 +548,23 @@ test('wrong-request or impossible-version acknowledgement retains the same pendi
   expect(sent[1]).toEqual(sent[0]);
   expect(sent[2]).toEqual(sent[0]);
 });
+
+test('GAP-005 honours a30-minute server view lease beyond the old60-second cap and clears at expiry', async ({
+  page,
+}) => {
+  const now = Date.now();
+  await page.clock.install({ time: new Date(now) });
+  await page.route('**/api/customer-programme-objectives*', (route) =>
+    route.fulfill({ json: view([shared()], null, now + 30 * 60000) }),
+  );
+  await page.goto(origin);
+  const summary = page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true });
+  await expect(summary).toBeVisible();
+  await page.clock.fastForward(120000);
+  await expect(summary).toBeVisible();
+  await page.clock.fastForward(29 * 60000);
+  await expect(
+    page.getByText('Private details and drafts were cleared. Reload to check current access.'),
+  ).toBeVisible();
+  await expect(summary).toHaveCount(0);
+});
