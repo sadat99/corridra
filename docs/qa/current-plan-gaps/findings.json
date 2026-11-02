@@ -113,28 +113,25 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "PR234 is deployed. PR235 corrects real-workspace purpose and resolves the request staff owner across quote revisions; customer SQL returns no email.40 real/synthetic database tests pass. Corrective CI/deployment and protected installation pending.",
-        "evidenceRevision": "0368c12aed502724089c128f72935649a6b7eb00",
+        "summary": "Request-owner and real-purpose corrections merged in PR235 after19 passing checks; exact production revision9647b61 is READY.40 real/synthetic PostgreSQL tests passed. Protected schema installation and live acceptance remain pending.",
+        "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap002-real-purpose.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
           },
           "verification": {
             "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-02-gap002-real-purpose.json",
-              "verification/2026-11-02-gap002-release.json"
+              "verification/2026-11-02-gap002-corrective-release.json"
             ]
           },
           "deployment": {
-            "state": "PARTIAL",
-            "evidence": [
-              "verification/2026-11-02-gap002-release.json",
-              "verification/2026-11-02-gap002-real-purpose.json"
-            ]
+            "state": "READY",
+            "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -193,6 +190,15 @@
           "disposition": "OPEN",
           "note": "PR234 is deployed. PR235 corrects real-workspace purpose and resolves the request staff owner across quote revisions; customer SQL returns no email.40 real/synthetic database tests pass. Corrective CI/deployment and protected installation pending.",
           "evidence": ["verification/2026-11-02-gap002-real-purpose.json"]
+        },
+        {
+          "eventId": "GAP-002-H005",
+          "recordedOn": "2026-11-02",
+          "type": "CORRECTIVE_RELEASE",
+          "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+          "disposition": "OPEN",
+          "note": "Request-owner and real-purpose corrections merged in PR235 after19 passing checks; exact production revision9647b61 is READY.40 real/synthetic PostgreSQL tests passed. Protected schema installation and live acceptance remain pending.",
+          "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
         }
       ]
     },
@@ -209,18 +215,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`apps/web/app/api/workspace/customer-mission-delivery/route.ts:38` assigns delivery without notifying the customer principal. Delivery and delivered-report reads exist.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Transactional report-published inbox hand-off implemented with current reviewed-delivery authorization and recipient-only lookup.34 real/synthetic PostgreSQL tests pass. CI, deployment, schema installation and live acceptance pending.",
+        "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-003"]
+            "evidence": ["verification/2026-11-02-gap003-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap003-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -253,6 +259,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-003-H002",
+          "recordedOn": "2026-11-02",
+          "type": "WORK_STARTED",
+          "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+          "disposition": "OPEN",
+          "note": "Transactional report-published inbox hand-off implemented with current reviewed-delivery authorization and recipient-only lookup.34 real/synthetic PostgreSQL tests pass. CI, deployment, schema installation and live acceptance pending.",
+          "evidence": ["verification/2026-11-02-gap003-local.json"]
         }
       ]
     },

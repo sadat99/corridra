@@ -19,6 +19,18 @@ import {
 } from '../../packages/auth/src/customer-assigned-missions';
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { CustomerDeliveryService } from '../../packages/delivery/src/customer-delivery';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
+const reportReceipts: string[] = [];
+class DeliveryInboxReader extends CustomerAssignedMissionService {
+  items(id: string) {
+    return this.transaction(
+      async (db) =>
+        (await db.query('SELECT id,type,payload FROM app.inbox_notification WHERE id=$1', [id]))
+          .rows,
+    );
+  }
+}
 const issuer =
     'https://ep-account-delivery-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
   options = { enabled: true, synthetic: true, production: false, issuer };
@@ -144,7 +156,17 @@ beforeAll(async () => {
   f = await accessFixture();
   await migrateCustomerSavedMissions(f.owner);
   delivery = new DeliveryService(f.runtime, f.mission, 'synthetic-account-delivery');
-  staff = new CustomerDeliveryService(f.runtime);
+  staff = new CustomerDeliveryService(f.runtime, async (db, id) => {
+    const receipt = await new InboxService(f.runtime).recordReportPublished(db, id);
+    expect(receipt).not.toHaveProperty('recipientEmail');
+    return async () => {
+      expect(
+        (await f.owner.query('SELECT id FROM app.inbox_notification WHERE id=$1', [receipt.id]))
+          .rows,
+      ).toHaveLength(1);
+      reportReceipts.push(receipt.id);
+    };
+  });
   for (const person of ['alice', 'bob']) {
     principals[person] = (
       await admitSyntheticCustomer(f.owner, {
@@ -206,6 +228,7 @@ beforeAll(async () => {
   await migrateCustomerDelivery(f.owner);
   expect(await snapshot()).toEqual(installed);
   preserved = true;
+  await migrateCommercialReadiness(f.owner);
 });
 afterAll(async () => {
   await f?.close();
@@ -233,6 +256,25 @@ test('owner explicitly assigns their own reviewed canonical report;exact retry c
   const value = input();
   assignmentId = (await staff.assign(f.users.owner.ctx, value)).id;
   expect(await staff.assign(f.users.owner.ctx, value)).toEqual({ id: assignmentId });
+  await Promise.all([
+    staff.assign(f.users.owner.ctx, value),
+    staff.assign(f.users.owner.ctx, value),
+  ]);
+  expect(reportReceipts).toHaveLength(4);
+  expect(new Set(reportReceipts).size).toBe(1);
+  expect(
+    (
+      await f.owner.query(
+        'SELECT recipient_account_id,payload FROM app.inbox_notification WHERE id=$1',
+        [reportReceipts[0]],
+      )
+    ).rows,
+  ).toEqual([
+    {
+      recipient_account_id: principals.alice,
+      payload: { title: 'A report is ready', href: '/account?view=results' },
+    },
+  ]);
   const events = (
     await f.owner.query(
       "SELECT id,actor_id FROM app.domain_event WHERE aggregate_type='customer_delivery_assignment' AND aggregate_id=$1",
@@ -538,6 +580,91 @@ test('expired customer proof during original save lock wait creates no bookmark 
       .rows[0].n,
   ).toBe(before);
 });
+test('report notifications are requester-only and other publishers cannot resolve the private recipient', async () => {
+  const reader = (person: string) =>
+    new DeliveryInboxReader(f.runtime, f.auth, options, async () => session(person));
+  expect(await reader('alice').items(reportReceipts[0])).toMatchObject([
+    { type: 'REPORT_PUBLISHED' },
+  ]);
+  expect(await reader('bob').items(reportReceipts[0])).toEqual([]);
+  for (const role of ['operator', 'reviewer', 'viewer', 'other', 'outsider']) {
+    await expect(
+      rawContext(f.runtime, f.users[role].ctx, 'SELECT app.record_report_published($1)', [
+        assignmentId,
+      ]),
+    ).rejects.toMatchObject({ code: '42501' });
+  }
+  for (const pool of [f.runtime, f.auth])
+    await expect(
+      pool.query('SELECT app.record_report_published($1)', [assignmentId]),
+    ).rejects.toMatchObject({ code: '42501' });
+  await expect(
+    rawContext(f.runtime, f.users.owner.ctx, 'SELECT app.record_report_published($1)', [
+      randomUUID(),
+    ]),
+  ).rejects.toMatchObject({ code: '42501' });
+});
+test('notification SQL failure preserves delivery and exact replay recovers its receipt; email failure preserves it too', async () => {
+  const l = await share();
+  const value = { ...input(), linkId: l.id };
+  const failing = new CustomerDeliveryService(f.runtime, async (db) => {
+    await db.query('SELECT 1/0');
+    throw new Error('unreachable');
+  });
+  expect(await failing.assign(f.users.owner.ctx, value)).toEqual({ id: value.commandId });
+  const rows = async () =>
+    (
+      await f.owner.query(
+        "SELECT id FROM app.inbox_notification WHERE type='REPORT_PUBLISHED' AND event_key=$1",
+        ['assignment:' + value.commandId],
+      )
+    ).rows;
+  expect(await rows()).toEqual([]);
+  const recovering = new CustomerDeliveryService(f.runtime, async (db, id) => {
+    await new InboxService(f.runtime).recordReportPublished(db, id);
+    return async () => {
+      throw new Error('provider unavailable');
+    };
+  });
+  expect(await recovering.assign(f.users.owner.ctx, value)).toEqual({ id: value.commandId });
+  expect(await rows()).toHaveLength(1);
+});
+test('canonical report-delivery commit failure leaves no receipt and dispatches nothing', async () => {
+  const l = await share();
+  const value = { ...input(), linkId: l.id };
+  const before = reportReceipts.length;
+  await f.owner.query(
+    `CREATE FUNCTION app.test_report_commit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced report commit failure'; END $$`,
+  );
+  await f.owner.query(
+    `CREATE CONSTRAINT TRIGGER test_report_commit AFTER INSERT ON app.customer_delivery_assignment DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION app.test_report_commit()`,
+  );
+  try {
+    await expect(staff.assign(f.users.owner.ctx, value)).rejects.toThrow(
+      'forced report commit failure',
+    );
+  } finally {
+    await f.owner.query('DROP TRIGGER test_report_commit ON app.customer_delivery_assignment');
+    await f.owner.query('DROP FUNCTION app.test_report_commit()');
+  }
+  expect(reportReceipts).toHaveLength(before);
+  expect(
+    (
+      await f.owner.query('SELECT id FROM app.customer_delivery_assignment WHERE id=$1', [
+        value.commandId,
+      ])
+    ).rows,
+  ).toEqual([]);
+  expect(
+    (
+      await f.owner.query(
+        "SELECT id FROM app.inbox_notification WHERE type='REPORT_PUBLISHED' AND event_key=$1",
+        ['assignment:' + value.commandId],
+      )
+    ).rows,
+  ).toEqual([]);
+});
+
 test('actual report expiry removes title and prevents acknowledgement without deleting the assignment', async () => {
   const l = await share(
       publicationId,
@@ -572,6 +699,11 @@ test('original link revocation closes both account delivery and existing saved r
     publicationId: null,
     reason: 'Synthetic original approved-report revocation',
   });
+  await expect(
+    rawContext(f.runtime, f.users.owner.ctx, 'SELECT app.record_report_published($1)', [
+      assignmentId,
+    ]),
+  ).rejects.toMatchObject({ code: '42501' });
   const entry = (await assigned().list()).assignments.find(
     (v: { id: string }) => v.id === assignmentId,
   );

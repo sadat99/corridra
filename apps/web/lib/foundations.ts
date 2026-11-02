@@ -291,7 +291,21 @@ function createServices() {
       },
       readCustomerSession,
     ),
-    customerDelivery: new CustomerDeliveryService(runtimePool),
+    customerDelivery: new CustomerDeliveryService(
+      runtimePool,
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? async (db, commandId) => {
+            const receipt = await inbox.recordReportPublished(db, commandId);
+            return async () => {
+              const { notifyRecorded } = await import('./notify');
+              return notifyRecorded(
+                { ...receipt, recipientKind: 'customer', type: 'REPORT_PUBLISHED', locale: 'en' },
+                receipt.id,
+              );
+            };
+          }
+        : undefined,
+    ),
     // CQ-77: reports published for the customer's own requests (WS-B service, WS-C lister).
     customerDeliveredReports: new CustomerDeliveredReportService(
       runtimePool,
