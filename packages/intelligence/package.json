@@ -11,12 +11,12 @@
     "./local-fixture": "./src/local-fixture.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "4.0.89",
-    "@ai-sdk/google": "4.0.106",
-    "@ai-sdk/openai": "4.0.103",
+    "@ai-sdk/anthropic": "4.0.92",
+    "@ai-sdk/google": "4.0.108",
+    "@ai-sdk/openai": "4.0.105",
     "@corridra/db": "workspace:*",
     "@corridra/domain": "workspace:*",
-    "ai": "7.0.154",
+    "ai": "7.0.157",
     "zod": "4.6.7"
   }
 }
