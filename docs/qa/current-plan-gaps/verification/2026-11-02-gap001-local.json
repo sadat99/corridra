@@ -1,0 +1,24 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-001",
+  "baseRevision": "b336c9a00f11e04912e76871aa674d5cea50c8d0",
+  "testedWorkingTree": true,
+  "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-requests.test.ts tests/integration/commercial-readiness-database.test.ts tests/integration/real-intake-boundary.test.ts",
+  "exit": 0,
+  "testsPassed": 23,
+  "testFilesPassed": 3,
+  "logSha256": "4fbefba0ed813f59dc4d79aea6bf236e35ef4a3d6f33f49360b3ba2517a2aea7",
+  "scope": [
+    "transactional inbox receipt",
+    "concurrent and exact retry deduplication",
+    "requester-only access and denied roles",
+    "notification failure and recovery",
+    "canonical commit rollback",
+    "existing real-intake regression"
+  ],
+  "limits": [
+    "Not frozen-head CI or production acceptance.",
+    "New SQL requires protected installation.",
+    "Existing receipt-email channel unchanged; no provider messages sent."
+  ]
+}

@@ -56,6 +56,7 @@ export class CustomerRequestService extends CustomerSessionBoundary {
     options: CustomerWorkspaceOptions,
     readSession: () => Promise<CustomerSession | null>,
     private mail?: MissionMailPort,
+    private received?: (db: DatabaseClient, requestId: string) => Promise<unknown>,
   ) {
     super(runtime, auth, options, readSession);
   }
@@ -67,6 +68,20 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       } catch {
         console.info(JSON.stringify({ event: 'mission_mail_dispatch_failed' }));
       }
+  }
+
+  private async recordReceived(db: DatabaseClient, result: { id: string; available: boolean }) {
+    if (!this.received || !result?.id || result.available !== true) return;
+    await db.query('SAVEPOINT request_received');
+    try {
+      await this.received(db, result.id);
+      await db.query('RELEASE SAVEPOINT request_received');
+    } catch {
+      await db.query('ROLLBACK TO SAVEPOINT request_received');
+      await db.query('RELEASE SAVEPOINT request_received');
+      // Notification failure must not discard the customer's submitted work. Retrying can recover it.
+      console.error(JSON.stringify({ event: 'request_received_notification_failed' }));
+    }
   }
 
   async list(input: unknown = {}, expectedSubject?: string, expectedIssuer?: string) {
@@ -126,7 +141,10 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       value.workspaceId,
       body,
     ]);
-    if (retry.rows[0].result) return retry.rows[0].result;
+    if (retry.rows[0].result) {
+      await this.recordReceived(db, retry.rows[0].result);
+      return retry.rows[0].result;
+    }
     const plan = prepare(
       {
         issuer: proof.issuer,
@@ -155,6 +173,7 @@ export class CustomerRequestService extends CustomerSessionBoundary {
       [value.commandId, value.workspaceId, body],
     );
     const stored = result.rows[0].result;
+    await this.recordReceived(db, stored);
     // Inside the same transaction, in a savepoint: a mail problem never fails or undoes the request.
     if (this.mail && jobs && proof.email && stored?.id) {
       const job = await this.mail.enqueue(db, {
@@ -221,13 +240,16 @@ export class CustomerRequestService extends CustomerSessionBoundary {
           );
           requestId = request.id;
         }
-        return (
+        const completed = (
           await db.query('SELECT customer.complete_pending_request($1,$2,$3) result', [
             cap.id,
             cap.hash,
             requestId,
           ])
         ).rows[0].result;
+        if (pending.requestId)
+          await this.recordReceived(db, { id: pending.requestId, available: true });
+        return completed;
       },
       scope.subject,
       scope.issuer,

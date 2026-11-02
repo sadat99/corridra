@@ -18,16 +18,23 @@ describe('installation', () => {
   test('is idempotent, refuses a changed file and hides its registry from runtime roles', async () => {
     const applied = (await f.owner.query('SELECT * FROM commercial_readiness_migrations.applied'))
       .rows;
-    expect(applied).toHaveLength(1);
+    expect(applied.map((row) => row.name)).toEqual([
+      '0001_inbox_and_links.sql',
+      '0002_request_received.sql',
+    ]);
     await migrateCommercialReadiness(f.owner);
     expect(
       (await f.owner.query('SELECT * FROM commercial_readiness_migrations.applied')).rows,
     ).toEqual(applied);
-    await f.owner.query("UPDATE commercial_readiness_migrations.applied SET sha256=repeat('0',64)");
+    await f.owner.query(
+      "UPDATE commercial_readiness_migrations.applied SET sha256=repeat('0',64) WHERE name=$1",
+      [applied[0].name],
+    );
     await expect(migrateCommercialReadiness(f.owner)).rejects.toThrow('history mismatch');
-    await f.owner.query('UPDATE commercial_readiness_migrations.applied SET sha256=$1', [
-      applied[0].sha256,
-    ]);
+    await f.owner.query(
+      'UPDATE commercial_readiness_migrations.applied SET sha256=$1 WHERE name=$2',
+      [applied[0].sha256, applied[0].name],
+    );
     for (const pool of [f.runtime, f.auth])
       await expect(
         pool.query('SELECT * FROM commercial_readiness_migrations.applied'),

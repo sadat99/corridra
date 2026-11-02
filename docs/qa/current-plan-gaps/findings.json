@@ -33,18 +33,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`apps/web/app/api/intake/route.ts:41` and private request submission lack the new `notify(REQUEST_RECEIVED)` producer. Existing receipt mail **does** enqueue at `packages/auth/src/customer-requests.ts:158`; do not call all receipt email missing.",
+        "summary": "Transactional request receipt and retry recovery implemented locally; 23 database tests passed. Frozen CI, additive schema installation and deployment acceptance remain pending.",
         "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
         "evidenceObservedOn": "2026-11-01",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-001"]
+            "evidence": ["verification/2026-11-02-gap001-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap001-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -77,6 +77,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-001-H002",
+          "recordedOn": "2026-11-02",
+          "type": "WORK_STARTED",
+          "evidenceRevision": "b336c9a00f11e04912e76871aa674d5cea50c8d0",
+          "disposition": "OPEN",
+          "note": "Owner authorized sequential fixes 001–021 excluding language items 008/013/014/021, including commit, green-CI merge and exact-SHA deployment. Local implementation underway; no closure or activation inferred."
         }
       ]
     },

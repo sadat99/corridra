@@ -19,6 +19,8 @@ import {
 import { MissionService } from '../../packages/missions/src/index';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { sessionHash } from '../../packages/db/src/index';
+import { InboxService } from '../../packages/communications/src/inbox';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 const issuer = 'https://ep-request-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const options = { enabled: true, synthetic: true, production: false, issuer };
 let f: Awaited<ReturnType<typeof fixture>>, missions: MissionService;
@@ -558,6 +560,137 @@ test('resource revocation waiting on read lock is observed before content return
     lock.release();
   }
   await checked;
+});
+
+class RequestReceiptReader extends CustomerWorkspaceService {
+  receipts() {
+    return this.transaction((db) => db.query('SELECT * FROM app.inbox_notification'));
+  }
+  recordReceipt(id: string) {
+    return this.transaction((db) =>
+      db.query('SELECT customer.record_request_received($1) id', [id]),
+    );
+  }
+}
+
+test('request inbox receipts are atomic, retry-safe and readable only by the verified requester', async () => {
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
+  const submitting = new CustomerRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    undefined,
+    (db, id) => inbox.recordRequestReceived(db, id),
+  );
+  const value = input();
+  const [first, concurrent] = await Promise.all([
+    submitting.submit(value, prepare),
+    submitting.submit(value, prepare),
+  ]);
+  expect(concurrent).toEqual(first);
+  await submitting.submit(value, prepare);
+  const reader = (person: string) =>
+    new RequestReceiptReader(f.runtime, f.auth, options, async () => session(person));
+  const rows = (await reader('alice').receipts()).rows;
+  expect(rows.filter((row) => row.event_key === `request:${first.id}`)).toHaveLength(1);
+  expect(rows.find((row) => row.event_key === `request:${first.id}`)).toMatchObject({
+    recipient_kind: 'customer',
+    recipient_account_id: principals.alice,
+    type: 'REQUEST_RECEIVED',
+    payload: { title: 'Request received', href: `/account/requests/${first.id}` },
+  });
+  expect((await reader('bob').receipts()).rows).toEqual([]);
+  await expect(reader('bob').recordReceipt(first.id)).rejects.toMatchObject({ code: '42501' });
+  await expect(
+    f.runtime.query('SELECT customer.record_request_received($1)', [first.id]),
+  ).rejects.toMatchObject({ code: '42501' });
+  await expect(
+    f.auth.query('SELECT customer.record_request_received($1)', [first.id]),
+  ).rejects.toMatchObject({ code: '42501' });
+  await revokeSyntheticCustomerRequest(f.owner, {
+    requestId: first.id,
+    reason: 'Receipt access must retain independent request revocation',
+  });
+  await expect(reader('alice').recordReceipt(first.id)).rejects.toMatchObject({ code: '42501' });
+});
+
+test('a failed inbox write preserves submission and a retry recovers exactly one receipt', async () => {
+  const value = input();
+  const failing = new CustomerRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    undefined,
+    (db) => db.query('SELECT 1/0'),
+  );
+  const submitted = await failing.submit(value, prepare);
+  expect(submitted.available).toBe(true);
+  expect(
+    (
+      await f.owner.query('SELECT id FROM app.inbox_notification WHERE event_key=$1', [
+        `request:${submitted.id}`,
+      ])
+    ).rows,
+  ).toEqual([]);
+  const inbox = new InboxService(f.runtime);
+  const recovered = new CustomerRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    undefined,
+    (db, id) => inbox.recordRequestReceived(db, id),
+  );
+  expect(await recovered.submit(value, prepare)).toEqual(submitted);
+  await recovered.submit(value, prepare);
+  expect(
+    (
+      await f.owner.query('SELECT id FROM app.inbox_notification WHERE event_key=$1', [
+        `request:${submitted.id}`,
+      ])
+    ).rows,
+  ).toHaveLength(1);
+});
+
+test('a failed canonical commit cannot leave a request inbox receipt behind', async () => {
+  const inbox = new InboxService(f.runtime);
+  const submitting = new CustomerRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    undefined,
+    (db, id) => inbox.recordRequestReceived(db, id),
+  );
+  const value = input();
+  const prior = (await f.owner.query('SELECT count(*)::int n FROM app.inbox_notification')).rows[0]
+    .n;
+  await f.owner.query(`CREATE FUNCTION customer_private.test_receipt_commit() RETURNS trigger
+    LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced request commit failure'; END $$`);
+  await f.owner.query(`CREATE CONSTRAINT TRIGGER test_receipt_commit
+    AFTER INSERT ON customer_private.owned_request DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION customer_private.test_receipt_commit()`);
+  try {
+    await expect(submitting.submit(value, prepare)).rejects.toThrow(
+      'forced request commit failure',
+    );
+  } finally {
+    await f.owner.query('DROP TRIGGER test_receipt_commit ON customer_private.owned_request');
+    await f.owner.query('DROP FUNCTION customer_private.test_receipt_commit()');
+  }
+  expect(
+    (await f.owner.query('SELECT count(*)::int n FROM app.inbox_notification')).rows[0].n,
+  ).toBe(prior);
+  expect(
+    (
+      await f.owner.query('SELECT id FROM customer_private.owned_request WHERE command_id=$1', [
+        value.commandId,
+      ])
+    ).rows,
+  ).toEqual([]);
 });
 
 test('request admission disable serializes against new commands and never revives by re-admission', async () => {

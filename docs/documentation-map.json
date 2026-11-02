@@ -1352,6 +1352,11 @@
       "path": "docs/qa/current-plan-gaps/baselines/2026-11-01/REPORT.md",
       "classification": "Immutable dated audit derivative",
       "use": "Read the original 60-row conclusions with stable IDs and portable links; raw original bytes remain separately preserved."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-gap-repairs-2026-11-02.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger before 2 November gap repairs; use current ledger for live state."
     }
   ]
 }
