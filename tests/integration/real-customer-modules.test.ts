@@ -23,6 +23,8 @@ import { CustomerProgrammeService } from '../../packages/auth/src/customer-progr
 import { CustomerProgrammeTermsService } from '../../packages/auth/src/customer-programme-terms';
 import { CustomerProgrammePricingService } from '../../packages/auth/src/customer-programme-pricing';
 import { CustomerServiceRequestService } from '../../packages/auth/src/customer-service-requests';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
 let f: Awaited<ReturnType<typeof fixture>>;
 let workspaceId: string;
 let intakeTenantId: string;
@@ -48,6 +50,7 @@ beforeAll(async () => {
   vi.stubEnv('CORRIDRA_REAL_USE_ENABLED', 'true');
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
+  await migrateCommercialReadiness(f.owner);
   await admitSyntheticCustomer(f.owner, {
     issuer,
     subject: 'local-bootstrap-fixture',
@@ -237,7 +240,30 @@ test('real staff discover their authorized scope and preserve exact quote and ac
   expect(tenants.some((row) => row.id === intakeTenantId)).toBe(true);
   expect(tenants[0].id).toBe(intakeTenantId);
   expect(tenants.some((row) => row.id === f.tenantA)).toBe(true);
-  const services = new CustomerServiceRequestService(f.runtime, f.auth, options, session);
+  expect(
+    (
+      await f.owner.query(
+        'SELECT allowed_purposes FROM app.membership WHERE tenant_id=$1 AND user_id=$2',
+        [intakeTenantId, f.users.owner.id],
+      )
+    ).rows[0].allowed_purposes,
+  ).toEqual(['commercial_qualification']);
+  const receipts: string[] = [];
+  const inbox = new InboxService(f.runtime);
+  const services = new CustomerServiceRequestService(
+    f.runtime,
+    f.auth,
+    options,
+    session,
+    async (db, commandId) => {
+      const receipt = await inbox.recordQuoteAccepted(db, commandId);
+      expect(receipt.recipientAccountId).toBe(f.users.owner.id);
+      expect(receipt.tenantId).toBe(intakeTenantId);
+      return async () => {
+        receipts.push(receipt.id);
+      };
+    },
+  );
   const workspaceId = (
     await new CustomerWorkspaceService(f.runtime, f.auth, options, session).provision({
       commandId: randomUUID(),
@@ -305,16 +331,23 @@ test('real staff discover their authorized scope and preserve exact quote and ac
     fixedTotalMinor: '12345',
     estimatedTotalMinor: '300',
   });
-  const accepted = await services.command({
-    action: 'accept',
+  const acceptance = {
+    action: 'accept' as const,
     commandId: randomUUID(),
     workspaceId,
     requestId: request.id,
     quoteVersion: shown.quote!.version,
     quoteDigest: shown.quote!.digest,
-    acknowledged: true,
-  });
+    acknowledged: true as const,
+  };
+  const accepted = await services.command(acceptance);
   expect(accepted.status).toBe('accepted');
+  await services.command(acceptance);
+  expect(receipts).toHaveLength(2);
+  expect(new Set(receipts).size).toBe(1);
+  expect(
+    (await inbox.list({ kind: 'staff', ctx })).filter((item) => item.id === receipts[0]),
+  ).toMatchObject([{ type: 'QUOTE_ACCEPTED' }]);
   expect((await services.view({ workspaceId, requestId: request.id })).orderIntent).toMatchObject({
     currency: 'EUR',
     fixedTotalMinor: '12345',

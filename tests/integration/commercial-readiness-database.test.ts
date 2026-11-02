@@ -22,6 +22,7 @@ describe('installation', () => {
       '0001_inbox_and_links.sql',
       '0002_request_received.sql',
       '0003_quote_accepted.sql',
+      '0004_quote_accepted_processing_purpose.sql',
     ]);
     await migrateCommercialReadiness(f.owner);
     expect(
