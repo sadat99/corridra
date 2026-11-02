@@ -501,26 +501,20 @@
         "evidenceAndBoundary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work."
       },
       "current": {
-        "disposition": "RESOLVED",
+        "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Corrective PR240 passed frozen CI/CodeQL and19 completed checks, then reached the exact READY production revision. Programme/fee/commercial text survives reload; amounts/server records stay out of drafts, with row/version and access isolation proved. Selected text-draft closure criteria met.",
-        "evidenceRevision": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
+        "summary": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
+        "evidenceRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "IMPLEMENTED",
-            "evidence": [
-              "verification/2026-11-02-gap006-text-completion-local.json",
-              "verification/2026-11-02-gap006-completion-release.json"
-            ]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
           },
           "verification": {
-            "state": "VERIFIED",
-            "evidence": [
-              "verification/2026-11-02-gap006-text-completion-local.json",
-              "verification/2026-11-02-gap006-completion-release.json"
-            ]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
           },
           "deployment": {
             "state": "DEPLOYED",
@@ -543,10 +537,7 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": [
-          "verification/2026-11-02-gap006-text-completion-local.json",
-          "verification/2026-11-02-gap006-completion-release.json"
-        ]
+        "closureEvidence": []
       },
       "history": [
         {
@@ -599,6 +590,16 @@
             "verification/2026-11-02-gap006-text-completion-local.json",
             "verification/2026-11-02-gap006-completion-release.json"
           ]
+        },
+        {
+          "eventId": "GAP-006-H006",
+          "recordedOn": "2026-11-02",
+          "type": "REOPENED",
+          "evidenceRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
+          "priorDisposition": "RESOLVED",
+          "disposition": "OPEN",
+          "note": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
+          "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
         }
       ]
     },

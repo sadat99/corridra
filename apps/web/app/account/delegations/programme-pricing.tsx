@@ -285,7 +285,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
 
   const draftVersion = editing && editing !== 'new' ? editing.version : 0;
   const savedText = feeText(textDraft.draft, draftVersion);
-  const restoredEditor = useRef<Template | 'new' | null>(null);
+  const [restoredEditor, setRestoredEditor] = useState<Template | 'new' | null>(null);
   const [name, setName] = useState(realCustomerInput() ? '' : 'Synthetic ');
   const [description, setDescription] = useState('');
 
@@ -294,11 +294,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
   const [early, setEarly] = useState<ReturnType<typeof blankEarly>[]>([]);
   const [groups, setGroups] = useState<ReturnType<typeof blankGroup>[]>([]);
   useEffect(() => {
-    if (!editing || !textDraft.restored || restoredEditor.current === editing) return;
+    if (!editing || !textDraft.restored || restoredEditor === editing) return;
     let active = true;
     void Promise.resolve().then(() => {
       if (!active) return;
-      restoredEditor.current = editing;
       const saved = feeText(textDraft.draft, draftVersion);
       setName((old) => (typeof saved?.name === 'string' ? saved.name.slice(0, 120) : old));
       setDescription((old) =>
@@ -327,11 +326,12 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
       setTiers((old) => restore(old, 'tier', blankTier, 12));
       setEarly((old) => restore(old, 'early', blankEarly, 6));
       setGroups((old) => restore(old, 'group', blankGroup, 6));
+      setRestoredEditor(editing);
     });
     return () => {
       active = false;
     };
-  }, [editing, textDraft.restored, textDraft.draft, draftVersion]);
+  }, [editing, textDraft.restored, textDraft.draft, draftVersion, restoredEditor]);
 
   const [programme, setProgramme] = useState('');
   const [overviewTick, setOverviewTick] = useState(0);
@@ -375,7 +375,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
     }
   }
   function startEdit(t: Template | null) {
-    restoredEditor.current = null;
+    setRestoredEditor(null);
     setError('');
     setNotice('');
     setEditing(t ?? 'new');
@@ -765,7 +765,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
               New fee schedule
             </button>
           )}
-          {editing && (
+          {editing && (!textDraft.restored || restoredEditor !== editing) && (
+            <p role="status">Restoring your fee schedule draft…</p>
+          )}
+          {editing && textDraft.restored && restoredEditor === editing && (
             <form
               className="operator-form"
               onSubmit={(e) => {
