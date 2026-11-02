@@ -323,8 +323,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Customer proof-backed inbox API and customer/contributor header wiring implemented;41 access tests, four browser protocol cases, two actual-route verification cases, production build and type checks passed locally. Frozen CI and deployment pending.",
-        "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+        "summary": "PR237 merged and exact production revision is READY after successful CI and 19 completed checks. Live unauthenticated inbox returns application 401 with private headers; genuine provider-backed shell acceptance remains unverified.",
+        "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
@@ -334,11 +334,14 @@
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap004-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap004-local.json",
+              "verification/2026-11-02-gap004-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-02-gap004-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -385,6 +388,15 @@
           "disposition": "OPEN",
           "note": "Customer proof-backed inbox API and customer/contributor header wiring implemented;41 access tests, four browser protocol cases, two actual-route verification cases, production build and type checks passed locally. Frozen CI and deployment pending.",
           "evidence": ["verification/2026-11-02-gap004-local.json"]
+        },
+        {
+          "eventId": "GAP-004-H004",
+          "recordedOn": "2026-11-02",
+          "type": "DEPLOYED",
+          "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
+          "disposition": "OPEN",
+          "note": "PR237 merged and exact production revision is READY after successful CI and 19 completed checks. Live unauthenticated inbox returns application 401 with private headers; genuine provider-backed shell acceptance remains unverified.",
+          "evidence": ["verification/2026-11-02-gap004-release.json"]
         }
       ]
     },
@@ -401,18 +413,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Real-use SQL `0003_real_customer_modules.sql:1357`, `:1373`, `:1464` still returns 60-second windows; `packages/auth/src/customer-session.ts:162` caps proofs at 25 seconds. Current retries/step-up exist. Helper tests do not establish a sliding server window.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Additive real-use migration0011 implements provider-bounded sliding 30-minute display leases while preserving 25-second auth proof and existing resource/MFA checks. 44 database/security tests, typecheck and a browser expiry case passed locally; frozen CI, deployment and protected installation pending.",
+        "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-005"]
+            "evidence": ["verification/2026-11-02-gap005-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap005-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -445,6 +457,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-005-H002",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
+          "disposition": "OPEN",
+          "note": "Additive real-use migration0011 implements provider-bounded sliding 30-minute display leases while preserving 25-second auth proof and existing resource/MFA checks. 44 database/security tests, typecheck and a browser expiry case passed locally; frozen CI, deployment and protected installation pending.",
+          "evidence": ["verification/2026-11-02-gap005-local.json"]
         }
       ]
     },

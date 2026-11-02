@@ -83,7 +83,7 @@ function objectives(value: unknown, scope: ObjectiveScope) {
     items,
     next: value.nextAfter as string | null,
     active: value.active,
-    expiry: Math.min(date(value.viewExpiresAt), Date.now() + 60000),
+    expiry: Math.min(date(value.viewExpiresAt), Date.now() + 30 * 60_000),
   };
 }
 export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {

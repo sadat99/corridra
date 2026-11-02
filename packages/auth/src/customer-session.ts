@@ -182,6 +182,15 @@ export class CustomerSessionBoundary {
       );
     let db: DatabaseClient | undefined;
     try {
+      // Display metadata is separate from the short authentication proof. Old schemas keep their strict window.
+      try {
+        await this.auth.query('SELECT customer_private.set_view_expiry($1,$2)', [
+          hash,
+          session.expiresAt,
+        ]);
+      } catch (error) {
+        if ((error as { code?: string }).code !== '42883') throw error;
+      }
       // The admission function re-checks the fresh attestation in the database; the proof is removed below.
       if (this.options.openAdmission === true)
         await this.auth.query('SELECT customer_private.admit_verified_subject($1)', [hash]);
