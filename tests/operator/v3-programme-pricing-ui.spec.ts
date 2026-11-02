@@ -862,6 +862,29 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
   );
 });
 
+test('GAP-006 fee fields wait for their editor draft before accepting edits', async ({ page }) => {
+  const posts = await mock(page);
+  const area = await open(page);
+  const edit = area.getByRole('button', {
+    name: 'Edit fee schedule ' + template().name,
+    exact: true,
+  });
+  await expect(edit).toBeEnabled();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  // Pause the draft hook's timer while switching from the new-schedule storage key.
+  await edit.click({ force: true });
+  await expect(area.getByLabel('Tier 2 name')).toHaveCount(0);
+  await page.clock.runFor(20);
+  await page.clock.resume();
+  await area.getByLabel('Tier 2 name').fill('Synthetic edit after restoration');
+  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await page.reload();
+  await edit.click();
+  await expect(area.getByLabel('Tier 2 name')).toHaveValue('Synthetic edit after restoration');
+  expect(posts).toHaveLength(0);
+});
+
 test('GAP-006 edited labels survive row removal without restoring amounts or crossing schedule versions', async ({
   page,
 }) => {

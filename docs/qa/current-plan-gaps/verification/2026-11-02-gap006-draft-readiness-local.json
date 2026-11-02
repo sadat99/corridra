@@ -1,0 +1,90 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-006",
+  "baseRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
+  "testedWorkingTree": true,
+  "sourceSha256": {
+    "apps/web/app/account/delegations/programme-pricing.tsx": "f3a92d9ca81a7ff3053125d3fccbc962974eaba6d0fb4cbbe65ec8c777f4f728",
+    "tests/operator/v3-programme-pricing-ui.spec.ts": "ac1306ac2479434aab230233cd8ddab4e7083a13883fd631129fafb5962b85ee"
+  },
+  "failureEvidence": {
+    "ciRun": 41516407408,
+    "operatorJob": 125522118971,
+    "checksJob": 125521979340,
+    "observedFailure": "Expected edited second fee label, received original server label after row removal/reload; separate README formatting failure."
+  },
+  "receipts": {
+    "gap006-draft-readiness-reproduction": {
+      "name": "gap006-draft-readiness-reproduction",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-pricing-ui.spec.ts --grep fee fields wait --output work/gap006-readiness-repro",
+      "exit": 1,
+      "signal": null,
+      "seconds": 13,
+      "logBytes": 2755,
+      "logSha256": "49338e594dd7ae332f844fca3c9d3324670e40b9d154bbc393038366db958e6b",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 1,
+      "log": "work/gap006-draft-readiness-reproduction-2026-11-02T20-35-00-720Z.log"
+    },
+    "gap006-draft-readiness-fixed": {
+      "name": "gap006-draft-readiness-fixed",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-pricing-ui.spec.ts --grep GAP-006 --output work/gap006-readiness-fixed",
+      "exit": 0,
+      "signal": null,
+      "seconds": 19,
+      "logBytes": 1442,
+      "logSha256": "087c9e4a8e9ff1f76d87ffc4fc90806e97f36e18b5aa93470368c9098dfe303c",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 3,
+      "log": "work/gap006-draft-readiness-fixed-2026-11-02T20-35-29-490Z.log"
+    },
+    "gap006-readiness-pricing-regressions": {
+      "name": "gap006-readiness-pricing-regressions",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-pricing-ui.spec.ts --output work/gap006-readiness-pricing",
+      "exit": 0,
+      "signal": null,
+      "seconds": 57.8,
+      "logBytes": 3393,
+      "logSha256": "f6daa6b902b740bd1301f39a1a69455a6482c4a0f196d7b3ff55849ed8c8a861",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 7,
+      "log": "work/gap006-readiness-pricing-regressions-2026-11-02T20-36-04-221Z.log"
+    },
+    "gap006-readiness-types": {
+      "name": "gap006-readiness-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 34.1,
+      "logBytes": 218,
+      "logSha256": "55a452c7eeaa32e5cfb8326639f98a6bfcee97bff98790ca6908ff56a4ebbe3a",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 3,
+      "log": "work/gap006-readiness-types-2026-11-02T20-35-49-372Z.log"
+    },
+    "gap006-readiness-lint": {
+      "name": "gap006-readiness-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/account/delegations/programme-pricing.tsx tests/operator/v3-programme-pricing-ui.spec.ts --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 5.7,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 3,
+      "log": "work/gap006-readiness-lint-2026-11-02T20-35-51-000Z.log"
+    }
+  },
+  "verification": {
+    "pausedTimerReproduction": "1 failed on prior implementation: fee row was exposed while the editor draft restoration timer was paused.",
+    "focusedAfterCorrection": "3 passed, including delayed restoration, all text fields and row/version isolation.",
+    "pricingRegressionCasesPassed": 16,
+    "typesExit": 0,
+    "lintExit": 0
+  },
+  "limits": [
+    "Local tests are component/API protocol fixtures, not live private customer acceptance.",
+    "Correction is not deployed until exact-head CI succeeds and the merged revision is READY at the production alias.",
+    "No permission, money, SQL or activation change."
+  ]
+}

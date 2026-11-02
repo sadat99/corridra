@@ -50,7 +50,10 @@ export function notificationEmailReady(env: NodeJS.ProcessEnv = process.env) {
 }
 
 async function sendEmail(
-  input: Omit<NotifyInput, 'writer'>,
+  input: Pick<
+    NotifyInput,
+    'type' | 'recipientEmail' | 'emailChoice' | 'payload' | 'locale' | 'emailOnly'
+  >,
   key: string,
 ): Promise<NotifyResult['email']> {
   const decision = emailDecision({
@@ -83,6 +86,29 @@ async function sendEmail(
     console.error(JSON.stringify({ event: 'notification_email_failed', type: input.type }));
     return 'not_sent';
   }
+}
+
+/** A participant may not have an account yet: reuse email transport without inventing an inbox recipient. */
+export async function notifyParticipantInvitation(input: {
+  id: string;
+  recipientEmail: string;
+  token: string;
+}) {
+  if (!notificationsOn()) return 'off' as const;
+  const email = await sendEmail(
+    {
+      type: 'PARTICIPANT_INVITE',
+      recipientEmail: input.recipientEmail,
+      payload: {},
+      locale: 'en',
+      emailOnly: {
+        lines: ['Your private invitation code: ' + input.token],
+        link: '/account/delegations',
+      },
+    },
+    'participant-invitation:' + input.id,
+  );
+  return email === 'sent' ? 'sent' : 'not_sent';
 }
 
 /** Trusted producers call this after their transaction commits an authorized inbox receipt. */

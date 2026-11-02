@@ -387,6 +387,7 @@ function createServices() {
         issuer: customerIssuerFromEnv(),
       },
       readCustomerSession,
+      async (invitation) => (await import('./notify')).notifyParticipantInvitation(invitation),
     ),
     customerProgrammeTemplates: new CustomerProgrammeTemplateService(
       runtimePool,

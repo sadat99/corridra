@@ -1,5 +1,5 @@
 import { beforeAll, afterAll, test, expect, vi } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { CustomerServiceStaffService } from '../../packages/delivery/src/customer-service-staff';
 import { AccessService } from '../../packages/auth/src/access';
@@ -24,6 +24,7 @@ import { CustomerProgrammeTermsService } from '../../packages/auth/src/customer-
 import { CustomerProgrammePricingService } from '../../packages/auth/src/customer-programme-pricing';
 import { CustomerServiceRequestService } from '../../packages/auth/src/customer-service-requests';
 import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
+import { CustomerParticipantService } from '../../packages/auth/src/customer-participants';
 import { sessionHash } from '../../packages/db/src/index';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { InboxService } from '../../packages/communications/src/inbox';
@@ -610,3 +611,225 @@ test('real organisation links accept supporting website evidence without declari
   ).view({ workspaceId });
   expect(profile.verified).toBe(false);
 });
+
+for (const mode of ['real', 'synthetic'] as const) {
+  test(`GAP-007 ${mode} invitation email uses stored recipient, private code and fresh manager authority`, async () => {
+    const who = `gap007-${mode}`;
+    const cfg = {
+      ...options,
+      dataMode: mode,
+      synthetic: mode === 'synthetic',
+      openAdmission: mode === 'real',
+    };
+    const read = async () => ({
+      subject: who,
+      email: `${who}@example.test`,
+      emailVerified: true,
+      expiresAt: new Date(Date.now() + 3600000),
+    });
+    if (mode === 'synthetic')
+      await admitSyntheticCustomer(f.owner, {
+        issuer,
+        subject: who,
+        executorId: f.serviceId,
+        reason: 'Explicit isolated GAP-007 participant-email fixture',
+      });
+    const ws = await new CustomerWorkspaceService(f.runtime, f.auth, cfg, read).provision({
+      commandId: randomUUID(),
+      name: 'Synthetic email organiser',
+    });
+    const prog = await new CustomerProgrammeService(f.runtime, f.auth, cfg, read).create({
+      commandId: randomUUID(),
+      workspaceId: ws.id,
+      name: 'Synthetic email programme',
+      reportingPurpose: 'Synthetic participant invitation and privacy checks',
+      acknowledged: true,
+    });
+    const mails: { id: string; recipientEmail: string; token: string }[] = [];
+    let fail = false;
+    const participants = new CustomerParticipantService(
+      f.runtime,
+      f.auth,
+      cfg,
+      read,
+      async (mail) => {
+        mails.push(mail);
+        if (fail) throw Error('Fixture mail unavailable');
+        return 'sent';
+      },
+    );
+    const input = {
+      action: 'invite',
+      commandId: randomUUID(),
+      workspaceId: ws.id,
+      programmeId: prog.id,
+      label: 'Synthetic email participant',
+      recipientEmail: 'PARTICIPANT@EXAMPLE.TEST',
+      acknowledged: true,
+    };
+    const issued = await participants.command(input);
+    expect(issued.issued).toBe(true);
+    expect(issued.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(mails).toHaveLength(0);
+    const stored = (
+      await f.owner.query(
+        'SELECT recipient_email,token_hash FROM customer_private.programme_invitation WHERE id=$1',
+        [issued.id],
+      )
+    ).rows[0];
+    expect(stored).toEqual({
+      recipient_email: 'participant@example.test',
+      token_hash: sessionHash(issued.token),
+    });
+    const receipt = (
+      await f.owner.query(
+        'SELECT request FROM customer_private.programme_participant_command WHERE command_id=$1',
+        [input.commandId],
+      )
+    ).rows[0].request;
+    expect(JSON.stringify(receipt)).not.toContain('participant@example.test');
+    expect(receipt.recipientEmailHash).toBe(sessionHash('participant@example.test'));
+    const replay = await participants.command(input);
+    expect(replay.id).toBe(issued.id);
+    expect(replay.issued).toBe(false);
+    expect(replay.token).toBeNull();
+    await expect(
+      participants.command({ ...input, recipientEmail: 'different@example.test' }),
+    ).rejects.toMatchObject({ code: '23514' });
+    const list = JSON.stringify(
+      await participants.list({ workspaceId: ws.id, programmeId: prog.id }),
+    );
+    expect(list).not.toContain('participant@example.test');
+    expect(list).not.toContain(issued.token);
+    const email = {
+      action: 'emailInvitation',
+      commandId: randomUUID(),
+      workspaceId: ws.id,
+      programmeId: prog.id,
+      invitationId: issued.id,
+      token: issued.token,
+      acknowledged: true,
+    };
+    fail = true;
+    expect((await participants.command(email)).email).toBe('not_sent');
+    fail = false;
+    const sent = await participants.command(email);
+    expect(sent.email).toBe('sent');
+    expect(mails).toHaveLength(2);
+    expect(mails[0]).toEqual(mails[1]);
+    expect(mails[1]).toEqual({
+      id: issued.id,
+      recipientEmail: 'participant@example.test',
+      token: issued.token,
+    });
+    expect(JSON.stringify(sent)).not.toContain(issued.token);
+    expect(JSON.stringify(sent)).not.toContain('participant@example.test');
+    const count = (
+      await f.owner.query(
+        'SELECT count(*)::integer count FROM customer_private.programme_invitation WHERE id=$1',
+        [issued.id],
+      )
+    ).rows[0].count;
+    expect(count).toBe(1);
+    for (const bad of [
+      { token: 'b'.repeat(43) },
+      { workspaceId: randomUUID() },
+      { invitationId: randomUUID() },
+    ])
+      await expect(participants.command({ ...email, ...bad })).rejects.toMatchObject({
+        code: '42501',
+      });
+    await expect(participants.command({ ...email, acknowledged: false })).rejects.toThrow();
+    expect(mails).toHaveLength(2);
+    const expiredSession = new CustomerParticipantService(
+      f.runtime,
+      f.auth,
+      cfg,
+      async () => ({ ...(await read()), expiresAt: new Date(Date.now() - 1000) }),
+      async () => {
+        throw Error('Must not reach mail');
+      },
+    );
+    await expect(expiredSession.command(email)).rejects.toMatchObject({ status: 401 });
+    // An independent verified holder can still accept the code; it does not gain organiser email authority.
+    const guest = who + '-guest';
+    if (mode === 'synthetic')
+      await admitSyntheticCustomer(f.owner, {
+        issuer,
+        subject: guest,
+        executorId: f.serviceId,
+        reason: 'Isolated invitation holder, no organiser authority',
+      });
+    const guestRead = async () => ({
+      ...(await read()),
+      subject: guest,
+      email: guest + '@example.test',
+    });
+    const recipient = new CustomerParticipantService(
+      f.runtime,
+      f.auth,
+      cfg,
+      guestRead,
+      async (mail) => {
+        mails.push(mail);
+        return 'sent';
+      },
+    );
+    await expect(recipient.command(email)).rejects.toMatchObject({ code: '42501' });
+    await recipient.command({
+      action: 'accept',
+      commandId: randomUUID(),
+      token: issued.token,
+      programmeId: prog.id,
+      displayLabel: 'Synthetic invited participant',
+      consented: true,
+    });
+    await expect(participants.command(email)).rejects.toMatchObject({ code: '42501' });
+    expect(mails).toHaveLength(2);
+    const second = await participants.command({ ...input, commandId: randomUUID() });
+    await participants.command({
+      action: 'revoke',
+      commandId: randomUUID(),
+      workspaceId: ws.id,
+      programmeId: prog.id,
+      kind: 'invitation',
+      targetId: second.id,
+      reason: 'Synthetic invitation revocation check',
+      acknowledged: true,
+    });
+    await expect(
+      participants.command({ ...email, invitationId: second.id, token: second.token }),
+    ).rejects.toMatchObject({ code: '42501' });
+    expect(mails).toHaveLength(2);
+    // Append an already-expired fixture; invitations are immutable and their expiry is never rewritten.
+    const third = { id: randomUUID(), token: randomBytes(32).toString('base64url') };
+    await f.owner.query(
+      `INSERT INTO customer_private.programme_invitation(id,workspace_id,programme_id,created_by,label,token_hash,created_at,expires_at,recipient_email)
+       SELECT $1,$2,$3,created_by,'Synthetic expired invitation',$4,clock_timestamp()-interval '2 seconds',clock_timestamp()-interval '1 second',recipient_email FROM customer_private.programme_invitation WHERE id=$5`,
+      [third.id, ws.id, prog.id, sessionHash(third.token), issued.id],
+    );
+    await expect(
+      participants.command({ ...email, invitationId: third.id, token: third.token }),
+    ).rejects.toMatchObject({ code: '42501' });
+    const manual = await participants.command({
+      ...input,
+      recipientEmail: undefined,
+      commandId: randomUUID(),
+    });
+    await expect(
+      participants.command({ ...email, invitationId: manual.id, token: manual.token }),
+    ).rejects.toMatchObject({ code: '23514' });
+    expect(mails).toHaveLength(2);
+    await expect(
+      f.auth.query('SELECT customer.programme_invitation_email($1,$2,$3,$4)', [
+        manual.id,
+        ws.id,
+        prog.id,
+        sessionHash(manual.token),
+      ]),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      f.runtime.query('SELECT recipient_email FROM customer_private.programme_invitation'),
+    ).rejects.toMatchObject({ code: '42501' });
+  });
+}

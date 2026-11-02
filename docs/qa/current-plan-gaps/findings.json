@@ -503,28 +503,22 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
-        "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+        "summary": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
+        "evidenceRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": [
-              "verification/2026-11-02-gap006-local.json",
-              "verification/2026-11-02-gap006-text-completion-local.json"
-            ]
+            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": [
-              "verification/2026-11-02-gap006-local.json",
-              "verification/2026-11-02-gap006-text-completion-local.json"
-            ]
+            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap006-release.json"]
+            "evidence": ["verification/2026-11-02-gap006-completion-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -583,6 +577,29 @@
           "disposition": "OPEN",
           "note": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
           "evidence": ["verification/2026-11-02-gap006-text-completion-local.json"]
+        },
+        {
+          "eventId": "GAP-006-H005",
+          "recordedOn": "2026-11-02",
+          "type": "RESOLVED",
+          "evidenceRevision": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
+          "priorDisposition": "OPEN",
+          "disposition": "RESOLVED",
+          "note": "Corrective PR240 passed frozen CI/CodeQL and19 completed checks, then reached the exact READY production revision. Programme/fee/commercial text survives reload; amounts/server records stay out of drafts, with row/version and access isolation proved. Selected text-draft closure criteria met.",
+          "evidence": [
+            "verification/2026-11-02-gap006-text-completion-local.json",
+            "verification/2026-11-02-gap006-completion-release.json"
+          ]
+        },
+        {
+          "eventId": "GAP-006-H006",
+          "recordedOn": "2026-11-02",
+          "type": "REOPENED",
+          "evidenceRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
+          "priorDisposition": "RESOLVED",
+          "disposition": "OPEN",
+          "note": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
+          "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
         }
       ]
     },
@@ -599,18 +616,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`programme-participants.tsx:315` sends label only; `:352` says it is not sent; `customer-participants.ts:21` has no address input. `recipient_email` exists only as the additive nullable column. Invitation codes, replacement and acceptance already work.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
+        "evidenceRevision": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-007"]
+            "evidence": ["verification/2026-11-02-gap007-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap007-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -643,6 +660,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-007-H002",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+          "disposition": "OPEN",
+          "note": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
+          "evidence": ["verification/2026-11-02-gap007-local.json"]
         }
       ]
     },

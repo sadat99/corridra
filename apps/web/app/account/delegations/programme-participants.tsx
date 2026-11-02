@@ -21,6 +21,7 @@ export function ProgrammeParticipants(props: Props) {
 function ScopedParticipants(props: Props) {
   const labelInput = useRef<HTMLInputElement>(null);
   const [label, setLabel] = useState(realCustomerInput() ? '' : 'Synthetic participant invitation'),
+    [recipientEmail, setRecipientEmail] = useState(''),
     [reason, setReason] = useState(''),
     [issueAck, setIssueAck] = useState(false),
     [changeAck, setChangeAck] = useState(false),
@@ -31,7 +32,8 @@ function ScopedParticipants(props: Props) {
   } | null>(null);
   const [accessError, setAccessError] = useState('');
   const clear = useCallback(() => {
-    setLabel('Synthetic participant invitation');
+    setLabel(realCustomerInput() ? '' : 'Synthetic participant invitation');
+    setRecipientEmail('');
     setChangeTarget(null);
     setAccessError('');
     setReason('');
@@ -40,8 +42,10 @@ function ScopedParticipants(props: Props) {
     setError('');
   }, []);
   const saved = useCallback((command: { action: string }) => {
+    if (command.action === 'emailInvitation') return;
     if (command.action === 'invite') {
-      setLabel('Synthetic participant invitation');
+      setLabel(realCustomerInput() ? '' : 'Synthetic participant invitation');
+      setRecipientEmail('');
       setIssueAck(false);
     } else {
       setChangeTarget(null);
@@ -318,6 +322,7 @@ function ScopedParticipants(props: Props) {
                   workspaceId: props.workspaceId,
                   programmeId: props.programmeId,
                   label: label.trim(),
+                  ...(recipientEmail.trim() ? { recipientEmail: recipientEmail.trim() } : {}),
                   acknowledged: true,
                 });
                 setIssueAck(false);
@@ -341,6 +346,17 @@ function ScopedParticipants(props: Props) {
                   onChange={(e) => setLabel(e.target.value)}
                 />
               </label>
+              <label className="field">
+                Participant email (optional)
+                <input
+                  type="email"
+                  autoComplete="off"
+                  maxLength={254}
+                  value={recipientEmail}
+                  disabled={view.busy}
+                  onChange={(event) => setRecipientEmail(event.target.value)}
+                />
+              </label>
               <label className="check-field">
                 <input
                   type="checkbox"
@@ -350,8 +366,8 @@ function ScopedParticipants(props: Props) {
                   onChange={(e) => setIssueAck(e.target.checked)}
                 />
                 {realCustomerInput()
-                  ? 'I will share this code only with the participant it is meant for. Corridra does not send it for me.'
-                  : 'I will share this sample code only with the participant it is meant for. Corridra does not send it for me.'}{' '}
+                  ? 'I have permission to share this code with the participant and store their email if I enter it. Email is sent only when I choose Email invitation.'
+                  : 'I have permission to share this sample code and store the participant email if I enter it. Email is sent only when I choose Email invitation.'}{' '}
               </label>
               <button className="primary-link" disabled={view.busy}>
                 {realCustomerInput()
@@ -369,12 +385,33 @@ function ScopedParticipants(props: Props) {
               <p>
                 Select and copy this code now and send it to the participant yourself. It is shown
                 once and clears when this view is hidden or expires; after that, create a
-                replacement code. The recipient can use{' '}
+                replacement code. If you entered an email, you can also choose Email invitation. The
+                recipient can use{' '}
                 <Link className="text-link" href="/account/delegations">
                   Delegation registrations
                 </Link>{' '}
                 to inspect and accept it.
               </p>
+              {view.result.canEmail === true && (
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={view.busy}
+                  onClick={() =>
+                    void view.send({
+                      action: 'emailInvitation',
+                      commandId: crypto.randomUUID(),
+                      workspaceId: props.workspaceId,
+                      programmeId: props.programmeId,
+                      invitationId: view.result!.id,
+                      token: view.result!.token,
+                      acknowledged: true,
+                    })
+                  }
+                >
+                  Email invitation
+                </button>
+              )}
             </div>
           )}
         </>

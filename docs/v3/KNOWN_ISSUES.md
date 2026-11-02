@@ -195,3 +195,8 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Observed:** main CI41416900700, job125182931636: meetings.test.ts ran at09:10:03 UTC on2 November2026; its rescheduling fixture hard-coded `2026-11-02T10:00:00+01:00` (09:00 UTC). The final HELD command correctly succeeded for that now-past meeting, so the unchanged `rejects.toThrow('future meeting')` assertion failed. The integration log reported1 failed/1865 passed/1 skipped. PR233's earlier pre-merge run passed before that instant.
 - **Fix in PR234:** construct the rescheduled meeting one day ahead with matching Madrid wall times; preserve every assertion and the application's meeting guards. Do not rerun an expired immutable fixture expecting a different result. No application meeting code changed.
+
+### KI-32 Fee rows accepted edits before their draft restored
+
+- **Observed:** PR241 CI41516407408, operator job125522118971, lost the edited second fee label after row removal/reload. A paused-timer browser case reproduces enabled fields before the new editor storage key finishes restoring, even though title controls already waited.
+- **Fix:** expose the fee form only when both its keyed draft and initial row restoration have settled. Track the restored editor in state so the readiness transition renders atomically with its restored rows. Preserve the original row-removal/version/money assertions and add the delayed-restoration regression; do not hide the race with test sleeps.
