@@ -4,6 +4,8 @@ Begin with [Start here](START_HERE.md), then [the current plan](implementation/c
 
 ## Current engineering handoff
 
+The [current-plan gap register](qa/current-plan-gaps/README.md) gives stable IDs, a preserved dated baseline and an evidence-based update/compare procedure for all 60 audit records. It distinguishes engineering, missing proof, owner decisions and deferrals without creating another execution plan.
+
 | Need                                                          | Read                                                                                                                                                                                        |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | What was built, revised and remains open                      | [Current programme](implementation/current-plan.md)                                                                                                                                         |

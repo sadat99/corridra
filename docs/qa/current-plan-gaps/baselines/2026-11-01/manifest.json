@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "baselineId": "2026-11-01",
+  "auditedRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "importedOn": "2026-11-02",
+  "originalManifestVerifiedAt": "2026-11-01T14:51:00.269485+00:00",
+  "originalReportSha256": "103586fc7558dcb4eb857c011f6f0babaa5de06c617734fcd244b57c88681695",
+  "originalMappings": [
+    {
+      "originalPath": "work/current-plan-audit/REPORT.md",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/REPORT.md.txt",
+      "bytes": 30112,
+      "sha256": "103586fc7558dcb4eb857c011f6f0babaa5de06c617734fcd244b57c88681695"
+    },
+    {
+      "originalPath": "work/current-plan-audit/authority.md",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/authority.md.txt",
+      "bytes": 6953,
+      "sha256": "1d9aa0b7f4b164faf580a210fa0be43a0c07557d3148464f8fe1aefd949cc14a"
+    },
+    {
+      "originalPath": "work/current-plan-audit/final-remote-check.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/final-remote-check.json.txt",
+      "bytes": 258,
+      "sha256": "94b3bf798958b12d2f7ff63faa0fb0ebbb5f86d3e746a6798bc2fe5119e5f0fc"
+    },
+    {
+      "originalPath": "work/current-plan-audit/probe.vitest.config.mts",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/probe.vitest.config.mts.txt",
+      "bytes": 191,
+      "sha256": "8bb9163cbd87f16f832a68ff3c824c5b808d9450fbd0703223ae82bf1abf8c2b"
+    },
+    {
+      "originalPath": "work/current-plan-audit/production-flag-metadata.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "bytes": 3774,
+      "sha256": "8953e697e1f34b5609df78f51a7e915573577e97fbb7a835d7aa79e80d894f1f"
+    },
+    {
+      "originalPath": "work/current-plan-audit/reference-check.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/reference-check.json.txt",
+      "bytes": 12229,
+      "sha256": "6937be4d16f39644cbfb80d1be82817fba22f2327dcb9c2cf3d3a2358101a9b1"
+    },
+    {
+      "originalPath": "work/current-plan-audit/runtime-evidence.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/runtime-evidence.json.txt",
+      "bytes": 19130,
+      "sha256": "ed9bba139fdaf32281c7cdc851cf601de2b14e7a16ce1da207a5eebdef91dd41"
+    },
+    {
+      "originalPath": "work/current-plan-audit/source-history.tsv",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/source-history.tsv.txt",
+      "bytes": 14900,
+      "sha256": "17cc05401e41a1aa4e8e809219f49b92d94ca1e4a84d9c5e23440150e839ae62"
+    },
+    {
+      "originalPath": "work/current-plan-audit/team-resend.probe.test.ts",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/team-resend.probe.test.ts.txt",
+      "bytes": 2661,
+      "sha256": "9656c33a110bcf4dc7a7ad74ab7f0f74d02ae07b944827010069c313c64832ab"
+    },
+    {
+      "originalPath": "work/current-plan-audit/manifest.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/manifest.json.txt",
+      "bytes": 1778,
+      "sha256": "436d997689f373b4064a632daa127025386c4082db6031a66aa2bb5f5cac6498"
+    },
+    {
+      "originalPath": "work/audit-contracts-2026-11-01T14-19-57-165Z.log.receipt.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-contracts-2026-11-01T14-19-57-165Z.log.receipt.json.txt",
+      "bytes": 501,
+      "sha256": "4ac98bfe683ec637793cf88e320907a4f118fcbead8e30c64786c4a8ac74bc04"
+    },
+    {
+      "originalPath": "work/audit-contracts-2026-11-01T14-19-57-165Z.log",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-contracts-2026-11-01T14-19-57-165Z.log.txt",
+      "bytes": 381,
+      "sha256": "d9b66caeda08b6860a265fa7abac951e85de86b25dbf601bd9c3ca57eed449d2"
+    },
+    {
+      "originalPath": "work/audit-invoice-guard-2026-11-01T14-20-19-119Z.log.receipt.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-invoice-guard-2026-11-01T14-20-19-119Z.log.receipt.json.txt",
+      "bytes": 447,
+      "sha256": "025ca33041304dcf600359e27d71a199a86d022f1753e16c6d08f1ad414b8d5e"
+    },
+    {
+      "originalPath": "work/audit-invoice-guard-2026-11-01T14-20-19-119Z.log",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-invoice-guard-2026-11-01T14-20-19-119Z.log.txt",
+      "bytes": 192,
+      "sha256": "641c093663491777e460a29fd687bfc56ccf0e82ab0410b58df7ad3383d46130"
+    },
+    {
+      "originalPath": "work/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.receipt.json",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.receipt.json.txt",
+      "bytes": 438,
+      "sha256": "c3dac3e6e18cc40c56ac54f5516bf5d890777e8ba2c2396c85269704ba1a53c3"
+    },
+    {
+      "originalPath": "work/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log",
+      "trackedPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.txt",
+      "bytes": 180,
+      "sha256": "2b944621317bbb1325876349d97e77a982e36cef309f82e6715ab4bd3bfe4439"
+    }
+  ],
+  "derivedFiles": [
+    {
+      "path": "README.md",
+      "bytes": 2475,
+      "sha256": "b150f2752f0ba8b2c0076688c05a2c0befe0648d2fc0cfa5523ec7222f7a60cf"
+    },
+    {
+      "path": "REPORT.md",
+      "bytes": 60220,
+      "sha256": "3dd4ee11555a08e1258c4294d64089c9223a62f9f126c8043b35337590675cd0"
+    },
+    {
+      "path": "findings.json",
+      "bytes": 27325,
+      "sha256": "d8d6044fd339f66dfecb8760342683a0c98c9831b808b6dfe940d11eca2a1825"
+    }
+  ],
+  "limits": "Raw bytes are immutable. Portable report changes only its status notice, stable IDs and local links; it does not constitute a new audit."
+}

@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "baselineId": "2026-11-01",
+  "revision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "authorityStamp": "auth-280eb7e75bae",
+  "originalReportSha256": "103586fc7558dcb4eb857c011f6f0babaa5de06c617734fcd244b57c88681695",
+  "findings": [
+    {
+      "id": "GAP-001",
+      "originalRow": 1,
+      "category": "Partial, A, code-traced",
+      "title": "Unified request-received inbox/notification hand-off",
+      "evidenceAndBoundary": "`apps/web/app/api/intake/route.ts:41` and private request submission lack the new `notify(REQUEST_RECEIVED)` producer. Existing receipt mail **does** enqueue at `packages/auth/src/customer-requests.ts:158`; do not call all receipt email missing."
+    },
+    {
+      "id": "GAP-002",
+      "originalRow": 2,
+      "category": "Partial, A, code-traced",
+      "title": "Quote-accepted notification and recipient lookup",
+      "evidenceAndBoundary": "`apps/web/app/api/customer-service-requests/route.ts:63` returns the acceptance command without unified notification. Resolve only the permitted staff recipient; acceptance itself exists."
+    },
+    {
+      "id": "GAP-003",
+      "originalRow": 3,
+      "category": "Partial, A, code-traced",
+      "title": "Report-published notification and recipient lookup",
+      "evidenceAndBoundary": "`apps/web/app/api/workspace/customer-mission-delivery/route.ts:38` assigns delivery without notifying the customer principal. Delivery and delivered-report reads exist."
+    },
+    {
+      "id": "GAP-004",
+      "originalRow": 4,
+      "category": "Partial, A plus a newly found shell omission, code-traced",
+      "title": "Customer inbox API/account-shell wiring and contributor-shell inbox presentation",
+      "evidenceAndBoundary": "`api/notifications/route.ts:23` authenticates staff only; `components/ux/app-header.tsx:108` mounts the inbox only for team. Customer proof support already exists in `packages/communications/src/inbox.ts:67`, and customer RLS exists in `commercial-readiness-migrations/0001_inbox_and_links.sql:27`. `/contributor` uses staff identity; `lib/ux/shells.ts:22` and `components/ux/shell-header.tsx:27` select its excluded shell. Contributor presentation/context integration is missing; a missing contributor backend is not established, and its runtime inbox access remains unverified."
+    },
+    {
+      "id": "GAP-005",
+      "originalRow": 5,
+      "category": "Partial, B, code-traced",
+      "title": "Sliding 30-minute private view window",
+      "evidenceAndBoundary": "Real-use SQL `0003_real_customer_modules.sql:1357`, `:1373`, `:1464` still returns 60-second windows; `packages/auth/src/customer-session.ts:162` caps proofs at 25 seconds. Current retries/step-up exist. Helper tests do not establish a sliding server window."
+    },
+    {
+      "id": "GAP-006",
+      "originalRow": 6,
+      "category": "Partial, C, code-traced",
+      "title": "Programme and commercial text drafts surviving reload",
+      "evidenceAndBoundary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work."
+    },
+    {
+      "id": "GAP-007",
+      "originalRow": 7,
+      "category": "Partial, D, code-traced",
+      "title": "Participant invitation email collection, storage and send action",
+      "evidenceAndBoundary": "`programme-participants.tsx:315` sends label only; `:352` says it is not sent; `customer-participants.ts:21` has no address input. `recipient_email` exists only as the additive nullable column. Invitation codes, replacement and acceptance already work."
+    },
+    {
+      "id": "GAP-008",
+      "originalRow": 8,
+      "category": "Partial, E, code-traced",
+      "title": "Email locale support including French and German",
+      "evidenceAndBoundary": "`packages/domain/src/notifications.ts:7` accepts en/bn/zh/es/ar, not fr/de. Both mission-mail and Pulse catalogues currently contain English only with fallback. Adding fr/de to a picker alone would not provide translated mail. Existing preference tests are not delivered-language proof."
+    },
+    {
+      "id": "GAP-009",
+      "originalRow": 9,
+      "category": "Partial, F, code-traced",
+      "title": "Timezone-aware date input adoption on remaining mission/meeting/commercial forms",
+      "evidenceAndBoundary": "Native controls remain at `operator/missions.tsx:239` and `operator/opportunities.tsx:129`, `:154`, `:339`. The shared conversion component already exists at `components/ux/date-time-input.tsx:64`; report/link use is not missing."
+    },
+    {
+      "id": "GAP-010",
+      "originalRow": 10,
+      "category": "Partial, G/CQ-15, code-traced",
+      "title": "Searchable country picker on the request form",
+      "evidenceAndBoundary": "`app/plan/intake.tsx:1130` still uses native selects. Readable/ordered country names are already implemented. Existing select-driven tests do not prove search adoption."
+    },
+    {
+      "id": "GAP-011",
+      "originalRow": 11,
+      "category": "Partial, G/CQ-26, code-traced",
+      "title": "Customer tab-label reconciliation",
+      "evidenceAndBoundary": "`components/customer-nav.tsx:40` still names Your Move/Missions/Companies/Library/More; current remainder retains the requested Home/Requests/Companies/Reports/Account reconciliation. Existing headings are not proof those tab labels match."
+    },
+    {
+      "id": "GAP-012",
+      "originalRow": 12,
+      "category": "Partial, G/CQ-46, code-traced",
+      "title": "Warning text on caution-tinted components",
+      "evidenceAndBoundary": "`components/mr/quote-card.css:35`, `:104` and `mode-label.css:13` use caution text on caution surface. `tests/design-system.test.mjs:296` checks only globals/operator-overview for the Ink-text rule, so these files escape that assertion."
+    },
+    {
+      "id": "GAP-013",
+      "originalRow": 13,
+      "category": "Partial, G/CQ-48, code-traced",
+      "title": "Selected-language page words before first paint",
+      "evidenceAndBoundary": "`components/language-provider.tsx:74`, `:93` uses default locale for the server snapshot, then browser locale. `app/layout.tsx:99` bootstraps lang/dir, not translated server text. After-load Arabic tests do not prove initial translated text."
+    },
+    {
+      "id": "GAP-014",
+      "originalRow": 14,
+      "category": "Missing current open language phase, code-traced",
+      "title": "How-it-works body message migration",
+      "evidenceAndBoundary": "`app/how-it-works/page.tsx:1` loads literal English from `content/public-pages.ts:229`; `components/public-page.tsx:98` renders it. `lib/i18n/pages.ts:8` recognises only home-page keys. The language-switcher proposal explicitly leaves this phase open. Translated navigation exists."
+    },
+    {
+      "id": "GAP-015",
+      "originalRow": 15,
+      "category": "Existing-flow defect, reproduced",
+      "title": "Team invite Resend renews the code but sends no notification",
+      "evidenceAndBoundary": "The real handler at `api/team-control/[action]/route.ts:72` returns after `team.resend`; initial invite calls notify at `:54`. `packages/auth/src/team-control.ts:180` rotates the record only. UI `workspace-controls.tsx:143` says sent again. Fresh probe observed initial invite HTTP201/notify=1 versus resend HTTP201/notify=0. No provider mail was sent in the probe."
+    },
+    {
+      "id": "GAP-016",
+      "originalRow": 16,
+      "category": "Partial audit, code-traced; omitted from A–G",
+      "title": "Initiating-owner attribution for invitation resend and authenticator reset",
+      "evidenceAndBoundary": "`team-control.ts:235` authorizes the owner but resets in the auth transaction without recording that owner. `migrations/0005_integrity_versions.sql:48` records target identity changes. Tests `ws-d-team-control.test.ts:193` check target MFA/session events, not the initiating owner's attribution. Reset itself and denial controls exist."
+    },
+    {
+      "id": "GAP-017",
+      "originalRow": 17,
+      "category": "Missing hand-off integration; newly found worklist discrepancy",
+      "title": "Task-assigned unified notification/inbox producer",
+      "evidenceAndBoundary": "`api/workspace/[action]/route.ts:246` calls the task service directly. Type, template and inbox label exist, but no corresponding production notify call. The database test manually inserts TASK_ASSIGNED, which does not test the producer. Current D7 includes this hand-off."
+    },
+    {
+      "id": "GAP-018",
+      "originalRow": 18,
+      "category": "Missing hand-off integration; newly found worklist discrepancy",
+      "title": "Quote-sent unified notification/inbox producer",
+      "evidenceAndBoundary": "`api/workspace/customer-service-requests/route.ts:54` runs the staff command and returns. The type/template alone does not send or write an inbox row. This is distinct from A's quote-accepted event."
+    },
+    {
+      "id": "GAP-019",
+      "originalRow": 19,
+      "category": "Missing hand-off integration; newly found worklist discrepancy",
+      "title": "Reply-posted unified notification/inbox producer",
+      "evidenceAndBoundary": "`api/workspace/[action]/route.ts:272` directly calls the reply command. Existing supplier review and separate Pulse/receipt kinds do not implement this generic hand-off."
+    },
+    {
+      "id": "GAP-020",
+      "originalRow": 20,
+      "category": "Conditional wording defect, independently refuted then retained narrowly",
+      "title": "Email-off wording overpromises across separate email systems",
+      "evidenceAndBoundary": "`account/notifications/page.tsx:57` says Choose what we email you; form `:177`/`:183` says nothing is sent while Pulse is off. Transactional request receipts independently enqueue in `customer-requests.ts:158` and mission-mail SQL `:113`, without Pulse preferences. This can conflict when that independent mail service is enabled. No actual delivery or consent violation is claimed."
+    },
+    {
+      "id": "GAP-021",
+      "originalRow": 21,
+      "category": "Verification infrastructure incomplete",
+      "title": "Complete separate browser journeys per locale",
+      "evidenceAndBoundary": "`playwright.verification.config.ts:22` defines only w1280/w768/w390. Arabic fixtures and width coverage exist, but do not implement complete projects for every released locale. V-52–V-60 are not closed by a viewport-only test total."
+    },
+    {
+      "id": "GAP-022",
+      "originalRow": 22,
+      "category": "Supplier-data blocker, not missing invoice software",
+      "title": "Confirm real GST registration status/number, bank/payment details and finance label",
+      "evidenceAndBoundary": "Run49 fixes the real UEN. The remaining four marked fields are `gst_registration_no`, `gst_registered`, `payment_instructions` and `finance_label`; they still trigger D3. `customer-invoicing-real-staff.ts` refuses prepare/credit/approve in production real data. Fresh guard tests returned `409 MADEUP_SUPPLIER_DETAILS`. Tax, numbering, concurrency and invoice records are already implemented/tested."
+    },
+    {
+      "id": "GAP-023",
+      "originalRow": 23,
+      "category": "Current live proof missing",
+      "title": "Genuine updated customer provider-to-data journeys",
+      "evidenceAndBoundary": "Current isolated SQL tests and fixture/operator journeys do not establish real signup/verification/sign-in/reload/sign-out/revocation or customer service/report/participant journeys at this revision. `v3-code-signin.spec.ts:9` and `ux-pulse.spec.ts:8` explicitly describe stub/fixture boundaries. Historical identity activation is not denied."
+    },
+    {
+      "id": "GAP-024",
+      "originalRow": 24,
+      "category": "Current live proof missing, CQ-78",
+      "title": "Fresh signed-out live report link",
+      "evidenceAndBoundary": "Owner reports the switch enabled; Vercel metadata confirms its entry exists. A newly issued real-workspace link still needs actual signed-out/revocation/expiry observation. Do not retain the old claim that the switch is simply off."
+    },
+    {
+      "id": "GAP-025",
+      "originalRow": 25,
+      "category": "Current live proof missing",
+      "title": "Actual hand-off/mission/Pulse email delivery",
+      "evidenceAndBoundary": "Unified notification service is additionally gated by mail config and switches, and catches send failures at `lib/notify.ts:47`. Pure rendering and isolated database tests send no real mail. Provider acceptance/delivery and recipient-visible results remain unestablished here."
+    },
+    {
+      "id": "GAP-026",
+      "originalRow": 26,
+      "category": "Runtime configuration proof incomplete",
+      "title": "Actual values and behavior of encrypted switches",
+      "evidenceAndBoundary": "The six program/public-link entries and other settings were observed present, not decrypted. Their true values and intended live behavior were not proved by metadata. Some earlier unset claims are contradicted by later entry creation. This row is an observation limit, not a claim the features are off."
+    },
+    {
+      "id": "GAP-027",
+      "originalRow": 27,
+      "category": "Review record missing",
+      "title": "Home-page translated words",
+      "evidenceAndBoundary": "`language-review-record.md:49` still separates home-word review from accepted shared/form words. The plain production page-language flag is now observed true. Do not call the implementation or page-language setting absent."
+    },
+    {
+      "id": "GAP-028",
+      "originalRow": 28,
+      "category": "Review record missing for later additions",
+      "title": "New 31 October programme language additions",
+      "evidenceAndBoundary": "`docs/qa/2026-10-31/i18n-review.md:3` lists new A/B/E keys and changed home/form words as drafts after the 30 Oct approval. Earlier approval is not blanket evidence of a review of later text. The six original /plan drafts remain owner-approved; native review was explicitly not a release blocker for them."
+    },
+    {
+      "id": "GAP-029",
+      "originalRow": 29,
+      "category": "Owner evidence/decision missing",
+      "title": "Remaining Pulse email-text/privacy, watched mailbox and retention answers",
+      "evidenceAndBoundary": "`pulse-email-review-pack.md:7` records remaining mailbox, provider retention/location and indefinite queue-record questions. Database opening in run45 is completed, not a missing install. No conclusion is drawn about the owner's unrecorded private decisions."
+    },
+    {
+      "id": "GAP-030",
+      "originalRow": 30,
+      "category": "Provider acceptance missing, V-48",
+      "title": "Actual code-sign-in behavior for an unknown address",
+      "evidenceAndBoundary": "Current runbook asks whether a real provider code creates/verifies a new account and how notice/admission work. `tests/operator/v3-code-signin.spec.ts:9` uses stubbed transport. The sign-in implementation exists; real-provider behavior remains unverified."
+    },
+    {
+      "id": "GAP-031",
+      "originalRow": 31,
+      "category": "Production measurement missing, V-55",
+      "title": "Actual production speed measurement",
+      "evidenceAndBoundary": "Local/CI production-build measurements are not a current production measurement. Direct public probes were stopped by the cloud proxy before the application responded. No production performance defect is inferred."
+    },
+    {
+      "id": "GAP-032",
+      "originalRow": 32,
+      "category": "Acceptance reconciliation incomplete",
+      "title": "Complete current role/action/recovery and journey-to-requirement proof",
+      "evidenceAndBoundary": "Passing exact-head suites establish their assertions, not one-to-one runtime acceptance of all 507 requirements or every original control. Legacy counts/labels cannot fill that gap. No current missing-feature count is derived from the old requirement statuses."
+    },
+    {
+      "id": "GAP-033",
+      "originalRow": 33,
+      "category": "Owner-dependent, partly built",
+      "title": "Additional Pulse emitters for moved/date-coming-up/complete",
+      "evidenceAndBoundary": "Templates/preferences accept update/countdown/complete, but `customer-notifications.ts:167` calls SQL that enqueues only `your-move` at notification migration `:266`/`:299`. Current register retains interview/trigger decisions before more emitters. This is distinct from unified D7 hand-offs above."
+    },
+    {
+      "id": "GAP-034",
+      "originalRow": 34,
+      "category": "Owner-dependent, reserved",
+      "title": "Trip lens over an existing readable itinerary",
+      "evidenceAndBoundary": "`saved-commercial-report.tsx:443` already renders itinerary. `owner-switches.ts:471` reserves Trip as planned; no consuming lens was found. Reopening requires the owner; do not say itinerary data is absent."
+    },
+    {
+      "id": "GAP-035",
+      "originalRow": 35,
+      "category": "Owner-dependent, reserved",
+      "title": "Trip Book and Supplier Book exports",
+      "evidenceAndBoundary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission. Books need their own allowed contents/disclosure decision."
+    },
+    {
+      "id": "GAP-036",
+      "originalRow": 36,
+      "category": "Owner-dependent provenance",
+      "title": "Staff entering a supplier reply on the supplier's behalf",
+      "evidenceAndBoundary": "Current staff schema permits PUBLISH/ASK/REJECT of an existing reply (`domain/src/reply-review.ts:49`), not on-behalf authorship. Supplier submission and staff review exist; new provenance remains undecided."
+    },
+    {
+      "id": "GAP-037",
+      "originalRow": 37,
+      "category": "Owner-dependent disclosure",
+      "title": "Programme company lane",
+      "evidenceAndBoundary": "`lib/programme-room.ts:99` defines the five existing views. Consented labels do not create a permitted company-to-participant canonical projection. `ux-programme-room.test.ts:194` intentionally excludes participant-written labels."
+    },
+    {
+      "id": "GAP-038",
+      "originalRow": 38,
+      "category": "Owner-dependent disclosure",
+      "title": "Organiser timed agenda/conflict projection",
+      "evidenceAndBoundary": "Programme date windows and staff agenda exist. Coordination tasks have dueOn, not permitted per-item start/end intervals (`customer-programme-coordination.ts:46`). A new bounded organiser view requires its disclosure decision."
+    },
+    {
+      "id": "GAP-039",
+      "originalRow": 39,
+      "category": "Owner-dependent meaning",
+      "title": "Programme ready counts",
+      "evidenceAndBoundary": "Current room counts invitations/registrations; days/run/report remain notTracked (`programme-room.ts:65`; test `ux-programme-room.test.ts:118`). Capacity/attendance are implemented, but no agreed ready condition may be invented."
+    },
+    {
+      "id": "GAP-040",
+      "originalRow": 40,
+      "category": "Owner-dependent presentation/access",
+      "title": "Helper Next task spotlight",
+      "evidenceAndBoundary": "`contributor/page.tsx:109` already mounts TaskBoard, which reads authorised tasks and provides actions/history. The separate new spotlight/projection is unbuilt; contributor tasks themselves are not missing."
+    },
+    {
+      "id": "GAP-041",
+      "originalRow": 41,
+      "category": "Owner-dependent, proposed",
+      "title": "Decision-card sharing and emailed status link",
+      "evidenceAndBoundary": "`owner-switches.ts:499`/`:506` reserve planned settings. ADR070/058 require approved disclosure scope. Existing private decisions/report links are separate implementations."
+    },
+    {
+      "id": "GAP-042",
+      "originalRow": 42,
+      "category": "Owner-dependent permitted linkage",
+      "title": "Qualified-meeting roll-up across customer programme participants",
+      "evidenceAndBoundary": "Current ADR054 retains this narrow boundary. Pricing SQL exposes per-currency series revenue/exports without joining participants' private meeting/opportunity data. Existing coordination feedback/outcome reporting is not missing. Group this with the company/agenda disclosure decision, not generic absent organiser economics."
+    },
+    {
+      "id": "GAP-043",
+      "originalRow": 43,
+      "category": "WAITING OWNER",
+      "title": "Saved-request recovery from another device with longer retention",
+      "evidenceAndBoundary": "Existing SQL `0001_verified_guest_handoff.sql:40` caps 24 hours; claim `:113` requires possession hash from this browser. Proposed three-day cross-device claim is not built and requires privacy/retention approval. Same-device recovery already works."
+    },
+    {
+      "id": "GAP-044",
+      "originalRow": 44,
+      "category": "WAITING OWNER, dependent on phase 2",
+      "title": "Saved-request reminder email",
+      "evidenceAndBoundary": "No scheduler/emitter in the current pending-request flow. Proposed delay, limits and suppression are not accepted configuration. Do not confuse this with built mission/Pulse messages."
+    },
+    {
+      "id": "GAP-045",
+      "originalRow": 45,
+      "category": "Owner-dependent, partial",
+      "title": "Fuller-fidelity view-as and additional roles",
+      "evidenceAndBoundary": "Later `operator/view-as/[role]/sample-screens.tsx:8` already reuses MoveCard/HolderBadge/Road; tests prove inert samples. Full real customer-frame/body reuse and extra-role preview are not complete. `packages/auth/src/view-as.ts:8` allows customer only. Stage 2 must not be called wholly absent."
+    },
+    {
+      "id": "GAP-046",
+      "originalRow": 46,
+      "category": "Owner-dependent, later rehearsal pieces",
+      "title": "Rehearsal-specific banner, sample-login holder and customer rehearsal provisioning",
+      "evidenceAndBoundary": "Real/sample exclusion tests already exist at `sample-journey-exclusion.test.ts:112`. The proposal retains later banner/provisioning decisions with the owner. Existing ordinary sample labels and view-as samples are not the proposed full rehearsal account."
+    },
+    {
+      "id": "GAP-047",
+      "originalRow": 47,
+      "category": "Conditional future scope",
+      "title": "Real payment processor",
+      "evidenceAndBoundary": "Only Corridra Pay (madeup) exists: `customer-payments-simulated.ts:6` explicitly has no network/money movement. No real checkout/webhook/processor adapter in the current API inventory. A separate ADR/provider decision is required if requested; current managed service can use manual invoicing."
+    },
+    {
+      "id": "GAP-048",
+      "originalRow": 48,
+      "category": "Owner permission decision, V-02",
+      "title": "Whether admins may send team invitations",
+      "evidenceAndBoundary": "Owner invite implementation exists. The current domain/RLS permits owner only; admin listing does not grant sending. Expanding it needs a decision and ADR, not a permission bypass."
+    },
+    {
+      "id": "GAP-049",
+      "originalRow": 49,
+      "category": "Current if-asked audit queue, specific defects not established",
+      "title": "Remaining organiser AC1-06 presentation review",
+      "evidenceAndBoundary": "Programme room/controls and five functional panels exist and changed again on 31 Oct. Old first-slice language does not prove current pages are unstyled or over budget. A current rendered review must identify specific failures before any such claim."
+    },
+    {
+      "id": "GAP-050",
+      "originalRow": 50,
+      "category": "Current if-asked audit queue, specific defects not established",
+      "title": "Remaining signed-in busy/state adoption sweep",
+      "evidenceAndBoundary": "Current programme pricing already has aria-busy, loading/unavailable/status and disabled busy actions. The queue is a request for a sweep, not evidence all busy states are missing. No additional concrete defect was established here."
+    },
+    {
+      "id": "GAP-051",
+      "originalRow": 51,
+      "category": "Deferred by owner, D01",
+      "title": "Upload malware scanner activation",
+      "evidenceAndBoundary": "Small-scale launch explicitly defers this control. Type/size/access protections remain; bypassed scanning must never be represented as clean. No scanner activation attempted."
+    },
+    {
+      "id": "GAP-052",
+      "originalRow": 52,
+      "category": "Deferred by owner, D02–D04",
+      "title": "Branch protection, secret-scanning and CodeQL enforcement",
+      "evidenceAndBoundary": "CodeQL and CI ran successfully; provider enforcement is a distinct deferred control. Green jobs do not establish branch-protection policy."
+    },
+    {
+      "id": "GAP-053",
+      "originalRow": 53,
+      "category": "Deferred by owner, D05",
+      "title": "EU production object-storage target",
+      "evidenceAndBoundary": "Explicit deferred infrastructure choice; region of the Vercel application does not prove object-storage region. No migration performed or regional readiness asserted."
+    },
+    {
+      "id": "GAP-054",
+      "originalRow": 54,
+      "category": "Deferred by owner, D06",
+      "title": "Retention/cleanup hardening",
+      "evidenceAndBoundary": "No production data was deleted. Optional QA cleanup dry-runs are not a claim this broader control is closed."
+    },
+    {
+      "id": "GAP-055",
+      "originalRow": 55,
+      "category": "Deferred by owner, D08",
+      "title": "Legal/privacy agreements and formal DSAR assurance",
+      "evidenceAndBoundary": "Manual DSAR runbook exists. Independent legal/processing-agreement controls remain deferred; do not describe the existing manual process as absent or imply legal approval."
+    },
+    {
+      "id": "GAP-056",
+      "originalRow": 56,
+      "category": "Deferred by owner, V-51",
+      "title": "Actual restore drill",
+      "evidenceAndBoundary": "Backup/PITR runbook exists. The drill remains postponed; a runbook or unit test is not a completed restoration."
+    },
+    {
+      "id": "GAP-057",
+      "originalRow": 57,
+      "category": "Deferred/closed",
+      "title": "Automated outreach",
+      "evidenceAndBoundary": "Current communication restrictions remain; no provider send or expansion was authorized by the audit. This is not a missing prerequisite for the approved managed launch."
+    },
+    {
+      "id": "GAP-058",
+      "originalRow": 58,
+      "category": "Deferred/closed",
+      "title": "Production AI inference",
+      "evidenceAndBoundary": "No inference activation or claim of live AI was made. Future activation retains its separate implementation/provider approval."
+    },
+    {
+      "id": "GAP-059",
+      "originalRow": 59,
+      "category": "Deferred by owner",
+      "title": "External penetration test",
+      "evidenceAndBoundary": "No external test was run or represented as passed. Existing automated checks are not a substitute for the deferred external assessment."
+    },
+    {
+      "id": "GAP-060",
+      "originalRow": 60,
+      "category": "Deferred by owner",
+      "title": "Additional WAF/rate-limit hardening",
+      "evidenceAndBoundary": "Existing rate controls must remain. The deferred expansion is not a reason to claim rate limiting is altogether absent."
+    }
+  ]
+}

@@ -1,0 +1,462 @@
+{
+  "observedAt": "2026-11-01T14:20:53.345Z",
+  "revision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "runs": [
+    {
+      "id": 41312344726,
+      "name": "CI",
+      "number": 752,
+      "sha": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T13:39:52Z",
+      "updated": "2026-11-01T14:03:24Z"
+    },
+    {
+      "id": 41312344646,
+      "name": "CodeQL Advanced",
+      "number": 505,
+      "sha": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T13:39:51Z",
+      "updated": "2026-11-01T13:43:23Z"
+    },
+    {
+      "id": 41312015990,
+      "name": "CodeQL Advanced",
+      "number": 504,
+      "sha": "82754b7d447d9a5be01c9e75eb30ec1bfa280422",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T13:35:40Z",
+      "updated": "2026-11-01T13:37:11Z"
+    },
+    {
+      "id": 41312015966,
+      "name": "CI",
+      "number": 751,
+      "sha": "82754b7d447d9a5be01c9e75eb30ec1bfa280422",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T13:35:40Z",
+      "updated": "2026-11-01T13:37:57Z"
+    },
+    {
+      "id": 41278009265,
+      "name": "Install customer modules",
+      "number": 49,
+      "sha": "31ccecfaf7f33951cce63a13e8b10e456a3ca9f7",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T05:43:15Z",
+      "updated": "2026-11-01T06:39:05Z"
+    },
+    {
+      "id": 41275932834,
+      "name": "Install customer modules",
+      "number": 48,
+      "sha": "31ccecfaf7f33951cce63a13e8b10e456a3ca9f7",
+      "status": "completed",
+      "conclusion": "failure",
+      "created": "2026-11-01T05:11:03Z",
+      "updated": "2026-11-01T05:16:22Z"
+    },
+    {
+      "id": 41275365584,
+      "name": "CodeQL Advanced",
+      "number": 503,
+      "sha": "31ccecfaf7f33951cce63a13e8b10e456a3ca9f7",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T05:02:37Z",
+      "updated": "2026-11-01T05:06:04Z"
+    },
+    {
+      "id": 41275365583,
+      "name": "CI",
+      "number": 750,
+      "sha": "31ccecfaf7f33951cce63a13e8b10e456a3ca9f7",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T05:02:37Z",
+      "updated": "2026-11-01T05:28:32Z"
+    },
+    {
+      "id": 41273737158,
+      "name": "CodeQL Advanced",
+      "number": 502,
+      "sha": "6a325fae929da55d9ddc470db87e0c4dbdfe4ed9",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T04:36:14Z",
+      "updated": "2026-11-01T04:37:39Z"
+    },
+    {
+      "id": 41273737136,
+      "name": "CI",
+      "number": 749,
+      "sha": "6a325fae929da55d9ddc470db87e0c4dbdfe4ed9",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T04:36:14Z",
+      "updated": "2026-11-01T05:02:06Z"
+    },
+    {
+      "id": 41272670223,
+      "name": "CI",
+      "number": 748,
+      "sha": "037c8b27fd7b904b54e87c4b9e54389ec9df7245",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created": "2026-11-01T04:19:54Z",
+      "updated": "2026-11-01T04:36:32Z"
+    },
+    {
+      "id": 41272670195,
+      "name": "CodeQL Advanced",
+      "number": 501,
+      "sha": "037c8b27fd7b904b54e87c4b9e54389ec9df7245",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T04:19:54Z",
+      "updated": "2026-11-01T04:21:12Z"
+    },
+    {
+      "id": 41272580494,
+      "name": "Install customer modules",
+      "number": 47,
+      "sha": "37d9e0efc3a6d88d9592ad625b01414a620625b8",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T04:18:29Z",
+      "updated": "2026-11-01T04:25:05Z"
+    },
+    {
+      "id": 41272249723,
+      "name": "CodeQL Advanced",
+      "number": 500,
+      "sha": "8a19d1a8cfeb127d7267777f5e4a4ae21d597d93",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T04:13:40Z",
+      "updated": "2026-11-01T04:15:20Z"
+    },
+    {
+      "id": 41272249699,
+      "name": "CI",
+      "number": 747,
+      "sha": "8a19d1a8cfeb127d7267777f5e4a4ae21d597d93",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created": "2026-11-01T04:13:40Z",
+      "updated": "2026-11-01T04:20:13Z"
+    },
+    {
+      "id": 41271120135,
+      "name": "Install customer modules",
+      "number": 46,
+      "sha": "37d9e0efc3a6d88d9592ad625b01414a620625b8",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-11-01T03:56:37Z",
+      "updated": "2026-11-01T04:01:46Z"
+    },
+    {
+      "id": 41249999508,
+      "name": "CI",
+      "number": 746,
+      "sha": "37d9e0efc3a6d88d9592ad625b01414a620625b8",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-10-31T22:51:04Z",
+      "updated": "2026-10-31T23:17:02Z"
+    },
+    {
+      "id": 41249999471,
+      "name": "CodeQL Advanced",
+      "number": 499,
+      "sha": "37d9e0efc3a6d88d9592ad625b01414a620625b8",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-10-31T22:51:04Z",
+      "updated": "2026-10-31T22:54:40Z"
+    },
+    {
+      "id": 41249702638,
+      "name": "CI",
+      "number": 745,
+      "sha": "b009e52249135009b349b9be4735e21e3955b8e5",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-10-31T22:46:57Z",
+      "updated": "2026-10-31T22:49:59Z"
+    },
+    {
+      "id": 41249702598,
+      "name": "CodeQL Advanced",
+      "number": 498,
+      "sha": "b009e52249135009b349b9be4735e21e3955b8e5",
+      "status": "completed",
+      "conclusion": "success",
+      "created": "2026-10-31T22:46:57Z",
+      "updated": "2026-10-31T22:48:23Z"
+    }
+  ],
+  "ciJobs": [
+    {
+      "id": 124865171056,
+      "name": "checks",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:39:54Z",
+      "completed": "2026-11-01T13:42:57Z"
+    },
+    {
+      "id": 124865171413,
+      "name": "changes",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:39:54Z",
+      "completed": "2026-11-01T13:40:03Z"
+    },
+    {
+      "id": 124865213820,
+      "name": "verification",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:15Z"
+    },
+    {
+      "id": 124865213826,
+      "name": "operator (3)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:44:03Z"
+    },
+    {
+      "id": 124865213840,
+      "name": "browser",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:52:52Z"
+    },
+    {
+      "id": 124865213850,
+      "name": "ux (3)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:49Z"
+    },
+    {
+      "id": 124865213856,
+      "name": "operator (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:56:45Z"
+    },
+    {
+      "id": 124865213861,
+      "name": "operator (1)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:33Z"
+    },
+    {
+      "id": 124865213879,
+      "name": "ux (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:06Z",
+      "completed": "2026-11-01T13:43:53Z"
+    },
+    {
+      "id": 124865213887,
+      "name": "ux (1)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:13Z"
+    },
+    {
+      "id": 124865213896,
+      "name": "operator (4)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:35Z"
+    },
+    {
+      "id": 124865213914,
+      "name": "operator (5)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T13:43:38Z"
+    },
+    {
+      "id": 124865214081,
+      "name": "operator (6)",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T13:40:05Z",
+      "completed": "2026-11-01T14:03:19Z"
+    },
+    {
+      "id": 124870802709,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "success",
+      "started": "2026-11-01T14:03:21Z",
+      "completed": "2026-11-01T14:03:23Z"
+    }
+  ],
+  "deployment": {
+    "id": "dpl_2TawxEeZDi67WdJRZ5JcwmX5fBiE",
+    "sha": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+    "state": "READY",
+    "created": "2026-11-01T13:39:53.705Z",
+    "ready": "2026-11-01T13:40:38.774Z",
+    "aliases": [
+      "corridra.vercel.app",
+      "c.obsidianglobal.studio",
+      "corridra-sadat-os.vercel.app"
+    ],
+    "regions": [
+      "fra1"
+    ]
+  },
+  "sanitizedLogEvidence": {
+    "ci_checks": [],
+    "verification": [
+      "2026-11-01T13:43:02.4116867Z   2 skipped",
+      "2026-11-01T13:43:02.4117026Z   133 passed (1.8m)",
+      "2026-11-01T13:43:02.4140057Z ##[notice]  2 skipped",
+      "  133 passed (1.8m)"
+    ],
+    "operator6": [
+      "2026-11-01T14:03:13.5970563Z   131 passed (21.8m)",
+      "2026-11-01T14:03:13.5982187Z ##[notice]  131 passed (21.8m)"
+    ],
+    "install46": [
+      "2026-11-01T03:57:30.3151999Z commercial_readiness_migrations: not installed",
+      "2026-11-01T04:01:42.6048569Z commercial_readiness_migrations: 1 applied"
+    ],
+    "browser": [
+      "2026-11-01T13:41:11.7228621Z  ✓ tests/integration/customer-programme-pricing.test.ts (27 tests) 5163ms",
+      "2026-11-01T13:41:24.2124915Z  ✓ tests/integration/customer-programme-terms.test.ts (22 tests) 8519ms",
+      "2026-11-01T13:41:47.5800771Z  ✓ tests/integration/notification-database.test.ts (53 tests) 17109ms",
+      "2026-11-01T13:42:03.3468702Z  ✓ tests/integration/customer-organisation-links.test.ts (24 tests) 14692ms",
+      "2026-11-01T13:42:43.1211389Z  ✓ tests/integration/customer-invoicing-real.test.ts (20 tests) 4862ms",
+      "2026-11-01T13:42:45.1167236Z  ✓ tests/integration/customer-programme-templates.test.ts (16 tests) 1802ms",
+      "2026-11-01T13:44:43.5328481Z  ✓ tests/integration/customer-programme-coordination.test.ts (19 tests) 3093ms",
+      "2026-11-01T13:45:25.3166127Z  ✓ tests/integration/customer-programme-economics.test.ts (20 tests) 1505ms",
+      "2026-11-01T13:47:29.5706056Z  ✓ tests/integration/customer-programme-context.test.ts (11 tests) 2543ms",
+      "2026-11-01T13:47:58.0690237Z  ✓ tests/integration/ux-kit.test.ts (21 tests) 75ms",
+      "2026-11-01T13:48:19.7877748Z  ✓ tests/integration/ws-d-team-control.test.ts (8 tests) 819ms",
+      "2026-11-01T13:48:35.4984950Z  ✓ tests/integration/real-programme-operations.test.ts (5 tests) 1821ms",
+      "2026-11-01T13:48:45.9621884Z  ✓ tests/integration/ux-programme-room.test.ts (21 tests) 12ms",
+      "2026-11-01T13:48:46.5704688Z  ✓ tests/integration/commercial-readiness-contracts.test.ts (15 tests) 86ms",
+      "2026-11-01T13:48:48.2226127Z  ✓ tests/integration/ws-c-team-work.test.ts (11 tests) 631ms",
+      "2026-11-01T13:49:10.4394625Z  ✓ tests/integration/real-programme-series.test.ts (4 tests) 1573ms",
+      "2026-11-01T13:49:15.7718250Z  ✓ tests/integration/notification-upgrade.test.ts (6 tests) 2651ms",
+      "2026-11-01T13:49:28.4336913Z  ✓ tests/integration/commercial-readiness-database.test.ts (6 tests) 680ms",
+      "2026-11-01T13:49:38.8668103Z  ✓ tests/integration/notification-upgrade-third.test.ts (3 tests) 2194ms",
+      "2026-11-01T13:49:44.5385000Z  ✓ tests/integration/customer-invoicing-real-workspace.test.ts (2 tests) 1466ms",
+      "2026-11-01T13:50:00.1883635Z  ✓ tests/integration/customer-billing-with-real-module.test.ts (29 tests | 1 skipped) 4151ms",
+      "2026-11-01T13:50:00.1955150Z  Test Files  132 passed (132)",
+      "2026-11-01T13:50:00.1966207Z       Tests  1863 passed | 1 skipped (1864)",
+      "2026-11-01T13:52:49.3384960Z   196 passed (2.3m)",
+      "2026-11-01T13:52:49.3392920Z ##[notice]  196 passed (2.3m)"
+    ],
+    "install49": [
+      "2026-11-01T06:31:33.3567062Z Exact main revision: CI jobs and three uploaded CodeQL analyses passed.",
+      "2026-11-01T06:32:03.4418255Z customer_migrations: 3 applied",
+      "2026-11-01T06:32:03.4418782Z customer_commercial_migrations: 1 applied",
+      "2026-11-01T06:32:03.4419151Z customer_company_migrations: 1 applied",
+      "2026-11-01T06:32:03.4419573Z customer_decision_migrations: 1 applied",
+      "2026-11-01T06:32:03.4420005Z customer_specification_confirmation_migrations: 1 applied",
+      "2026-11-01T06:32:03.4420517Z customer_commercial_arrangement_migrations: 1 applied",
+      "2026-11-01T06:32:03.4420931Z customer_delivery_migrations: 1 applied",
+      "2026-11-01T06:32:03.4421386Z customer_detail_migrations: 1 applied",
+      "2026-11-01T06:32:03.4421823Z customer_organisation_profile_migrations: 1 applied",
+      "2026-11-01T06:32:03.4422282Z customer_mission_draft_migrations: 1 applied",
+      "2026-11-01T06:32:03.4422702Z customer_programme_migrations: 1 applied",
+      "2026-11-01T06:32:03.4423092Z customer_participant_migrations: 1 applied",
+      "2026-11-01T06:32:03.4423545Z customer_programme_context_migrations: 1 applied",
+      "2026-11-01T06:32:03.4424043Z customer_programme_economics_migrations: 1 applied",
+      "2026-11-01T06:32:03.4424514Z customer_programme_coordination_migrations: 1 applied",
+      "2026-11-01T06:32:03.4424978Z customer_programme_templates_migrations: 1 applied",
+      "2026-11-01T06:32:03.4425451Z customer_programme_pricing_migrations: 1 applied",
+      "2026-11-01T06:32:03.4425906Z customer_mission_share_migrations: 1 applied",
+      "2026-11-01T06:32:03.4426316Z customer_admission_migrations: 1 applied",
+      "2026-11-01T06:32:03.4427363Z customer_member_role_migrations: 1 applied",
+      "2026-11-01T06:32:03.4427876Z customer_organisation_link_migrations: 1 applied",
+      "2026-11-01T06:32:03.4428566Z customer_request_admission_migrations: 1 applied",
+      "2026-11-01T06:32:03.4429045Z customer_programme_terms_migrations: 1 applied",
+      "2026-11-01T06:32:03.4429523Z customer_service_request_migrations: 1 applied",
+      "2026-11-01T06:32:03.4429961Z customer_billing_migrations: 1 applied",
+      "2026-11-01T06:32:03.4430378Z customer_invoicing_migrations: 1 applied",
+      "2026-11-01T06:32:03.4430804Z customer_real_use_migrations: 10 applied",
+      "2026-11-01T06:32:03.4431231Z network_real_use_migrations: 2 applied",
+      "2026-11-01T06:32:03.4431663Z customer_billing_real_migrations: 1 applied",
+      "2026-11-01T06:32:03.4432123Z customer_invoicing_real_migrations: 1 applied",
+      "2026-11-01T06:32:03.4432625Z customer_payments_simulated_migrations: 1 applied",
+      "2026-11-01T06:32:03.4433108Z customer_mission_mail_migrations: 1 applied",
+      "2026-11-01T06:32:03.4433514Z customer_move_migrations: 1 applied",
+      "2026-11-01T06:32:03.4433945Z customer_notification_migrations: 3 applied",
+      "2026-11-01T06:32:03.4434617Z recipient_reply_review_migrations: 1 applied",
+      "2026-11-01T06:32:03.4435087Z view_as_migrations: 1 applied",
+      "2026-11-01T06:32:03.4435472Z commercial_readiness_migrations: 1 applied",
+      "2026-11-01T06:38:53.8527918Z Real invoices: control open; second approver not required; control changed=false; supplier changed=true",
+      "2026-11-01T06:39:02.5419865Z customer_migrations: 3 applied",
+      "2026-11-01T06:39:02.5420217Z customer_commercial_migrations: 1 applied",
+      "2026-11-01T06:39:02.5420642Z customer_company_migrations: 1 applied",
+      "2026-11-01T06:39:02.5421032Z customer_decision_migrations: 1 applied",
+      "2026-11-01T06:39:02.5421504Z customer_specification_confirmation_migrations: 1 applied",
+      "2026-11-01T06:39:02.5422051Z customer_commercial_arrangement_migrations: 1 applied",
+      "2026-11-01T06:39:02.5423160Z customer_delivery_migrations: 1 applied",
+      "2026-11-01T06:39:02.5423443Z customer_detail_migrations: 1 applied",
+      "2026-11-01T06:39:02.5423739Z customer_organisation_profile_migrations: 1 applied",
+      "2026-11-01T06:39:02.5424070Z customer_mission_draft_migrations: 1 applied",
+      "2026-11-01T06:39:02.5424352Z customer_programme_migrations: 1 applied",
+      "2026-11-01T06:39:02.5424628Z customer_participant_migrations: 1 applied",
+      "2026-11-01T06:39:02.5424930Z customer_programme_context_migrations: 1 applied",
+      "2026-11-01T06:39:02.5425249Z customer_programme_economics_migrations: 1 applied",
+      "2026-11-01T06:39:02.5425578Z customer_programme_coordination_migrations: 1 applied",
+      "2026-11-01T06:39:02.5425902Z customer_programme_templates_migrations: 1 applied",
+      "2026-11-01T06:39:02.5426207Z customer_programme_pricing_migrations: 1 applied",
+      "2026-11-01T06:39:02.5426504Z customer_mission_share_migrations: 1 applied",
+      "2026-11-01T06:39:02.5426787Z customer_admission_migrations: 1 applied",
+      "2026-11-01T06:39:02.5427070Z customer_member_role_migrations: 1 applied",
+      "2026-11-01T06:39:02.5427412Z customer_organisation_link_migrations: 1 applied",
+      "2026-11-01T06:39:02.5427937Z customer_request_admission_migrations: 1 applied",
+      "2026-11-01T06:39:02.5428248Z customer_programme_terms_migrations: 1 applied",
+      "2026-11-01T06:39:02.5428753Z customer_service_request_migrations: 1 applied",
+      "2026-11-01T06:39:02.5429037Z customer_billing_migrations: 1 applied",
+      "2026-11-01T06:39:02.5429303Z customer_invoicing_migrations: 1 applied",
+      "2026-11-01T06:39:02.5429577Z customer_real_use_migrations: 10 applied",
+      "2026-11-01T06:39:02.5429839Z network_real_use_migrations: 2 applied",
+      "2026-11-01T06:39:02.5430109Z customer_billing_real_migrations: 1 applied",
+      "2026-11-01T06:39:02.5430398Z customer_invoicing_real_migrations: 1 applied",
+      "2026-11-01T06:39:02.5430699Z customer_payments_simulated_migrations: 1 applied",
+      "2026-11-01T06:39:02.5430994Z customer_mission_mail_migrations: 1 applied",
+      "2026-11-01T06:39:02.5431269Z customer_move_migrations: 1 applied",
+      "2026-11-01T06:39:02.5431543Z customer_notification_migrations: 3 applied",
+      "2026-11-01T06:39:02.5431826Z recipient_reply_review_migrations: 1 applied",
+      "2026-11-01T06:39:02.5432089Z view_as_migrations: 1 applied",
+      "2026-11-01T06:39:02.5432366Z commercial_readiness_migrations: 1 applied"
+    ]
+  },
+  "limitations": [
+    "Public site GET probes failed at cloud proxy CONNECT with403 before application; no application HTTP status observed.",
+    "Production settings not decrypted/read, owner-reported flag settings only.",
+    "No production database connection or provider send performed."
+  ]
+}

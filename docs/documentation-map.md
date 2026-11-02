@@ -138,6 +138,8 @@ Immutable sources/working copies and frozen evidence were intentionally not rewr
 
 ## V3 execution documents
 
+The [current-plan gap register](qa/current-plan-gaps/README.md) preserves all 60 audit records with stable IDs and separate current evidence states. [Maintenance and comparison](qa/current-plan-gaps/UPDATE.md) defines append-only history and the Git workflow. The [immutable 1 November baseline](qa/current-plan-gaps/baselines/2026-11-01/README.md) includes the [portable report](qa/current-plan-gaps/baselines/2026-11-01/REPORT.md), original byte-exact artifacts and all receipt/log dependencies. These are evidence records; the ledger remains live-state authority and REMAINING remains the A–G work order.
+
 Use [bounded context](v3/CONTEXT.md) for current-state and requirement queries. The [historical ledger](v3/history/ledger-through-109.md) is preserved byte-for-byte, with identity hashes in `v3/history/manifest.json`; it is not current acceptance.
 
 | Document                                                                                                       | Classification                  | Use                                                                                                                                      |

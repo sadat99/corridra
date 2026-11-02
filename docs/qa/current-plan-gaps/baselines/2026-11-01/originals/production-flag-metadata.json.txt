@@ -1,0 +1,155 @@
+{
+  "observedAt": "2026-11-01T14:23:25.402Z",
+  "project": "prj_0Hv40kOQqnIxc6YEifxTknbEfSny",
+  "decrypt": false,
+  "flags": [
+    {
+      "key": "CORRIDRA_UX_SHELLS_V2",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_UX_MISSIONS_V2",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_NOTIFICATIONS_V2",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_TEAM_INVITES",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_ROUTE_PACK_FORM",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793506140937,
+      "updatedAt": 1793506140937,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_LANGUAGES_FORM",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793368135747,
+      "updatedAt": 1793368135747,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_PULSE_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1793241925202,
+      "updatedAt": 1793241925202,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_LANGUAGES_PAGES",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792931896556,
+      "updatedAt": 1792931896556,
+      "value": "true"
+    },
+    {
+      "key": "CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792851188292,
+      "updatedAt": 1792851188292,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_CUSTOMER_REAL_BILLING_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792851188292,
+      "updatedAt": 1792851188292,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792844670258,
+      "updatedAt": 1792844670258,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_LANGUAGES_REVIEWED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792830468789,
+      "updatedAt": 1792911172357,
+      "value": "not decrypted"
+    },
+    {
+      "key": "CORRIDRA_MISSION_EMAIL_ENABLED",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "createdAt": 1792765509134,
+      "updatedAt": 1792765509134,
+      "value": "not decrypted"
+    }
+  ],
+  "limitation": "Response truncates at 100 entries. Missing from this subset does not prove absent. Only plain values shown; encrypted presence does not prove true or active build binding.",
+  "notObservedInReturnedSubset": [
+    "CORRIDRA_CUSTOMER_SERVICE_REQUESTS_ENABLED",
+    "CORRIDRA_CUSTOMER_CODE_SIGNIN"
+  ],
+  "responseTruncated": true,
+  "returnedEntries": 100,
+  "omittedEntries": 10
+}

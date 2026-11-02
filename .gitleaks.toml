@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Two public feature identifiers in the preserved production metadata"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(?:CORRIDRA_UX_MISSIONS_V2|CORRIDRA_NOTIFICATIONS_V2)$''']
+paths = ['''^docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata\.json\.txt$''']

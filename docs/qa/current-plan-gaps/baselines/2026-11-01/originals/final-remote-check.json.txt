@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-11-01T14:48:49.239Z",
+  "sha": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "commitTime": "2026-11-01T13:39:49Z",
+  "title": "Takeover records: remaining work order, ledger, plan register, results (#228)",
+  "openPullRequests": []
+}
