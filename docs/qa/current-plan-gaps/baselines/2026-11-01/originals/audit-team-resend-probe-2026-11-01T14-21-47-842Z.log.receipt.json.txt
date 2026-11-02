@@ -1,0 +1,12 @@
+{
+  "name": "audit-team-resend-probe",
+  "command": "node_modules/.bin/vitest run --config work/current-plan-audit/probe.vitest.config.mts",
+  "exit": 0,
+  "signal": null,
+  "seconds": 0.7,
+  "logBytes": 180,
+  "logSha256": "2b944621317bbb1325876349d97e77a982e36cef309f82e6715ab4bd3bfe4439",
+  "head": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "changedPaths": 0,
+  "log": "work/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log"
+}

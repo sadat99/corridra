@@ -1,3 +1,7 @@
 * text=auto eol=lf
 *.md whitespace=-blank-at-eol
 docs/source/* -text
+# Preserve the original CRLF and terminal blank lines in dated raw audit evidence.
+docs/qa/current-plan-gaps/baselines/*/originals/* -text
+docs/qa/current-plan-gaps/baselines/*/originals/source-history.tsv.txt whitespace=cr-at-eol
+docs/qa/current-plan-gaps/baselines/*/originals/*.log.txt whitespace=-blank-at-eof

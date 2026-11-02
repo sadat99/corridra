@@ -1,0 +1,9 @@
+
+ RUN  v5.0.5 /workspace/corridra
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed | 4 skipped (11)
+   Start at  14:20:19
+   Duration  329ms (import 48%, transform 44%, tests 6%, worker 2%)
+

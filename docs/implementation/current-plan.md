@@ -4,6 +4,8 @@
 
 Use [V3_LEDGER.md](../V3_LEDGER.md) for current source, deployment, PRs, flags, blockers, results and next action. This file records the stable order without release metadata.
 
+See [gap register](../qa/current-plan-gaps/README.md).
+
 ## Requirements and scope
 
 The [V3 contract](../V3_CONTRACT.md) governs the three-product experience and preservation change. The [product vision v2.1](../product/corridra-product-vision-v2.1.md) and applicable ADR/security/privacy/money contracts remain binding. All 507 requirements are in the [V3 register](../v3/phase-0/requirements.json); inspect affected IDs and actual code/tests before deciding status.

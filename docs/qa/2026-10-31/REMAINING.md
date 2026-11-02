@@ -2,6 +2,8 @@
 
 Document status: CURRENT.
 
+The [current-plan gap register](../current-plan-gaps/README.md) preserves the 60-entry evidence audit and later progress history, including discrepancies found outside A–G. Use it for review and comparison; this file remains the authorised engineering sequence. Registering a discrepancy, owner question or deferral does not approve a new task.
+
 Written 1 Nov 2026 against `main` at `31ccecf`. This file is the work order for whatever is still open from the [commercial readiness program](../../../CORRIDRA_COMMERCIAL_READINESS_PROGRAM.md). Item-by-item evidence is in [RESULTS.md](RESULTS.md); live state and the next action are in the [ledger](../../V3_LEDGER.md), which wins on anything live.
 
 ## 1. Where things stand

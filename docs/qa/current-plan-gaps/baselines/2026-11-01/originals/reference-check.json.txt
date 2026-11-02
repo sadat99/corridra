@@ -1,0 +1,541 @@
+[
+  {
+    "reference": "REMAINING.md",
+    "matches": [
+      "docs/qa/2026-10-31/REMAINING.md"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-billing-with-real-module.test.ts",
+    "matches": [
+      "tests/integration/customer-billing-with-real-module.test.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "apps/web/app/api/intake/route.ts:41",
+    "matches": [
+      "apps/web/app/api/intake/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/auth/src/customer-requests.ts:158",
+    "matches": [
+      "packages/auth/src/customer-requests.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "apps/web/app/api/customer-service-requests/route.ts:63",
+    "matches": [
+      "apps/web/app/api/customer-service-requests/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "apps/web/app/api/workspace/customer-mission-delivery/route.ts:38",
+    "matches": [
+      "apps/web/app/api/workspace/customer-mission-delivery/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "api/notifications/route.ts:23",
+    "matches": [
+      "apps/web/app/api/notifications/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/ux/app-header.tsx:108",
+    "matches": [
+      "apps/web/components/ux/app-header.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/communications/src/inbox.ts:67",
+    "matches": [
+      "packages/communications/src/inbox.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "commercial-readiness-migrations/0001_inbox_and_links.sql:27",
+    "matches": [
+      "packages/db/commercial-readiness-migrations/0001_inbox_and_links.sql"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "lib/ux/shells.ts:22",
+    "matches": [
+      "apps/web/lib/ux/shells.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/ux/shell-header.tsx:27",
+    "matches": [
+      "apps/web/components/ux/shell-header.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "0003_real_customer_modules.sql:1357",
+    "matches": [
+      "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/auth/src/customer-session.ts:162",
+    "matches": [
+      "packages/auth/src/customer-session.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "account/delegations/customer-programmes.tsx:107",
+    "matches": [
+      "apps/web/app/account/delegations/customer-programmes.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "programme-pricing.tsx:245",
+    "matches": [
+      "apps/web/app/account/delegations/programme-pricing.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "operator/commercial-mission.tsx:162",
+    "matches": [
+      "apps/web/app/operator/commercial-mission.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "lib/ux/use-form-draft.ts:18",
+    "matches": [
+      "apps/web/lib/ux/use-form-draft.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "operator/delivery.tsx:104",
+    "matches": [
+      "apps/web/app/operator/delivery.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "programme-participants.tsx:315",
+    "matches": [
+      "apps/web/app/account/delegations/programme-participants.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-participants.ts:21",
+    "matches": [
+      "packages/auth/src/customer-participants.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/domain/src/notifications.ts:7",
+    "matches": [
+      "packages/domain/src/notifications.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "operator/missions.tsx:239",
+    "matches": [
+      "apps/web/app/operator/missions.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "operator/opportunities.tsx:129",
+    "matches": [
+      "apps/web/app/operator/opportunities.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/ux/date-time-input.tsx:64",
+    "matches": [
+      "apps/web/components/ux/date-time-input.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "app/plan/intake.tsx:1130",
+    "matches": [
+      "apps/web/app/plan/intake.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/customer-nav.tsx:40",
+    "matches": [
+      "apps/web/components/customer-nav.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/mr/quote-card.css:35",
+    "matches": [
+      "apps/web/components/mr/quote-card.css"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "mode-label.css:13",
+    "matches": [
+      "apps/web/components/mr/mode-label.css"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "tests/design-system.test.mjs:296",
+    "matches": [
+      "tests/design-system.test.mjs"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/language-provider.tsx:74",
+    "matches": [
+      "apps/web/components/language-provider.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "app/layout.tsx:99",
+    "matches": [
+      "apps/web/app/layout.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "app/how-it-works/page.tsx:1",
+    "matches": [
+      "apps/web/app/how-it-works/page.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "content/public-pages.ts:229",
+    "matches": [
+      "apps/web/content/public-pages.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "components/public-page.tsx:98",
+    "matches": [
+      "apps/web/components/public-page.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "lib/i18n/pages.ts:8",
+    "matches": [
+      "apps/web/lib/i18n/pages.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "api/team-control/[action]/route.ts:72",
+    "matches": [
+      "apps/web/app/api/team-control/[action]/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/auth/src/team-control.ts:180",
+    "matches": [
+      "packages/auth/src/team-control.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "workspace-controls.tsx:143",
+    "matches": [
+      "apps/web/app/operator/workspace-controls.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "team-control.ts:235",
+    "matches": [
+      "packages/auth/src/team-control.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "migrations/0005_integrity_versions.sql:48",
+    "matches": [
+      "packages/db/migrations/0005_integrity_versions.sql"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "ws-d-team-control.test.ts:193",
+    "matches": [
+      "tests/integration/ws-d-team-control.test.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "api/workspace/[action]/route.ts:246",
+    "matches": [
+      "apps/web/app/api/workspace/[action]/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "api/workspace/customer-service-requests/route.ts:54",
+    "matches": [
+      "apps/web/app/api/workspace/customer-service-requests/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "api/workspace/[action]/route.ts:272",
+    "matches": [
+      "apps/web/app/api/workspace/[action]/route.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "account/notifications/page.tsx:57",
+    "matches": [
+      "apps/web/app/account/notifications/page.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-requests.ts:158",
+    "matches": [
+      "packages/auth/src/customer-requests.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "playwright.verification.config.ts:22",
+    "matches": [
+      "playwright.verification.config.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-invoicing-real-staff.ts",
+    "matches": [
+      "packages/delivery/src/customer-invoicing-real-staff.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "v3-code-signin.spec.ts:9",
+    "matches": [
+      "tests/operator/v3-code-signin.spec.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "ux-pulse.spec.ts:8",
+    "matches": [
+      "tests/operator/ux-pulse.spec.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "lib/notify.ts:47",
+    "matches": [
+      "apps/web/lib/notify.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "language-review-record.md:49",
+    "matches": [
+      "docs/product/language-review-record.md"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "docs/qa/2026-10-31/i18n-review.md:3",
+    "matches": [
+      "docs/qa/2026-10-31/i18n-review.md"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "pulse-email-review-pack.md:7",
+    "matches": [
+      "docs/product/pulse-email-review-pack.md"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "tests/operator/v3-code-signin.spec.ts:9",
+    "matches": [
+      "tests/operator/v3-code-signin.spec.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-notifications.ts:167",
+    "matches": [
+      "packages/auth/src/customer-notifications.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "saved-commercial-report.tsx:443",
+    "matches": [
+      "apps/web/app/account/missions/saved-commercial-report.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "owner-switches.ts:471",
+    "matches": [
+      "apps/web/lib/owner-switches.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "domain/src/reply-review.ts:49",
+    "matches": [
+      "packages/domain/src/reply-review.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "lib/programme-room.ts:99",
+    "matches": [
+      "apps/web/lib/programme-room.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "ux-programme-room.test.ts:194",
+    "matches": [
+      "tests/integration/ux-programme-room.test.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-programme-coordination.ts:46",
+    "matches": [
+      "packages/auth/src/customer-programme-coordination.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "programme-room.ts:65",
+    "matches": [
+      "apps/web/lib/programme-room.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "ux-programme-room.test.ts:118",
+    "matches": [
+      "tests/integration/ux-programme-room.test.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "contributor/page.tsx:109",
+    "matches": [
+      "apps/web/app/contributor/page.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "owner-switches.ts:499",
+    "matches": [
+      "apps/web/lib/owner-switches.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "0001_verified_guest_handoff.sql:40",
+    "matches": [
+      "packages/db/customer-real-use-migrations/0001_verified_guest_handoff.sql"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "operator/view-as/[role]/sample-screens.tsx:8",
+    "matches": [
+      "apps/web/app/operator/view-as/[role]/sample-screens.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "packages/auth/src/view-as.ts:8",
+    "matches": [
+      "packages/auth/src/view-as.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "sample-journey-exclusion.test.ts:112",
+    "matches": [
+      "tests/integration/sample-journey-exclusion.test.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-payments-simulated.ts:6",
+    "matches": [
+      "packages/auth/src/customer-payments-simulated.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "customer-workspaces.tsx:368",
+    "matches": [
+      "apps/web/app/account/customer-workspaces.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "service-request-new.tsx:279",
+    "matches": [
+      "apps/web/app/account/service-requests/service-request-new.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "account-return.ts:3",
+    "matches": [
+      "apps/web/lib/account-return.ts"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "corner-dock.tsx:7",
+    "matches": [
+      "apps/web/components/corner-dock.tsx"
+    ],
+    "lineInRange": true
+  },
+  {
+    "reference": "ux-home-languages.spec.ts:197",
+    "matches": [
+      "tests/operator/ux-home-languages.spec.ts"
+    ],
+    "lineInRange": true
+  }
+]

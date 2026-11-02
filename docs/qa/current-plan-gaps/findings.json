@@ -1,0 +1,3626 @@
+{
+  "schemaVersion": 1,
+  "registerId": "current-plan-gaps",
+  "lastRecordedOn": "2026-11-02",
+  "baseline": {
+    "id": "2026-11-01",
+    "path": "baselines/2026-11-01/findings.json",
+    "auditedRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+    "manifest": "baselines/2026-11-01/manifest.json"
+  },
+  "authority": {
+    "liveState": "docs/V3_LEDGER.md",
+    "executionQueue": "docs/qa/2026-10-31/REMAINING.md",
+    "maintenance": "docs/qa/current-plan-gaps/UPDATE.md"
+  },
+  "limits": [
+    "60 audit records are not 60 missing software features.",
+    "No exhaustive all-507-requirement or current live acceptance is claimed.",
+    "Latest applicable owner decisions win; this register does not authorize work or activation.",
+    "UNKNOWN means not established for this finding; a deployment or overall CI pass does not fill every stage."
+  ],
+  "findings": [
+    {
+      "id": "GAP-001",
+      "title": "Unified request-received inbox/notification hand-off",
+      "baseline": {
+        "id": "GAP-001",
+        "originalRow": 1,
+        "category": "Partial, A, code-traced",
+        "title": "Unified request-received inbox/notification hand-off",
+        "evidenceAndBoundary": "`apps/web/app/api/intake/route.ts:41` and private request submission lack the new `notify(REQUEST_RECEIVED)` producer. Existing receipt mail **does** enqueue at `packages/auth/src/customer-requests.ts:158`; do not call all receipt email missing."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`apps/web/app/api/intake/route.ts:41` and private request submission lack the new `notify(REQUEST_RECEIVED)` producer. Existing receipt mail **does** enqueue at `packages/auth/src/customer-requests.ts:158`; do not call all receipt email missing.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-001"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Trace submitted public and private requests to the permitted recipient and one idempotent inbox/notification hand-off; preserve existing receipt mail.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-001-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-002",
+      "title": "Quote-accepted notification and recipient lookup",
+      "baseline": {
+        "id": "GAP-002",
+        "originalRow": 2,
+        "category": "Partial, A, code-traced",
+        "title": "Quote-accepted notification and recipient lookup",
+        "evidenceAndBoundary": "`apps/web/app/api/customer-service-requests/route.ts:63` returns the acceptance command without unified notification. Resolve only the permitted staff recipient; acceptance itself exists."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`apps/web/app/api/customer-service-requests/route.ts:63` returns the acceptance command without unified notification. Resolve only the permitted staff recipient; acceptance itself exists.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-002"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove accepted quotes notify only the permitted staff recipient, with positive, denied and exact-retry tests.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-002-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-003",
+      "title": "Report-published notification and recipient lookup",
+      "baseline": {
+        "id": "GAP-003",
+        "originalRow": 3,
+        "category": "Partial, A, code-traced",
+        "title": "Report-published notification and recipient lookup",
+        "evidenceAndBoundary": "`apps/web/app/api/workspace/customer-mission-delivery/route.ts:38` assigns delivery without notifying the customer principal. Delivery and delivered-report reads exist."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`apps/web/app/api/workspace/customer-mission-delivery/route.ts:38` assigns delivery without notifying the customer principal. Delivery and delivered-report reads exist.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-003"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove a published report notifies its customer recipient without exposing private ownership records to staff.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-003-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-004",
+      "title": "Customer inbox API/account-shell wiring and contributor-shell inbox presentation",
+      "baseline": {
+        "id": "GAP-004",
+        "originalRow": 4,
+        "category": "Partial, A plus a newly found shell omission, code-traced",
+        "title": "Customer inbox API/account-shell wiring and contributor-shell inbox presentation",
+        "evidenceAndBoundary": "`api/notifications/route.ts:23` authenticates staff only; `components/ux/app-header.tsx:108` mounts the inbox only for team. Customer proof support already exists in `packages/communications/src/inbox.ts:67`, and customer RLS exists in `commercial-readiness-migrations/0001_inbox_and_links.sql:27`. `/contributor` uses staff identity; `lib/ux/shells.ts:22` and `components/ux/shell-header.tsx:27` select its excluded shell. Contributor presentation/context integration is missing; a missing contributor backend is not established, and its runtime inbox access remains unverified."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`api/notifications/route.ts:23` authenticates staff only; `components/ux/app-header.tsx:108` mounts the inbox only for team. Customer proof support already exists in `packages/communications/src/inbox.ts:67`, and customer RLS exists in `commercial-readiness-migrations/0001_inbox_and_links.sql:27`. `/contributor` uses staff identity; `lib/ux/shells.ts:22` and `components/ux/shell-header.tsx:27` select its excluded shell. Contributor presentation/context integration is missing; a missing contributor backend is not established, and its runtime inbox access remains unverified.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-004"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove customer and contributor inbox presentation, authentication, workspace context and isolation through their actual shells.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-004-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-005",
+      "title": "Sliding 30-minute private view window",
+      "baseline": {
+        "id": "GAP-005",
+        "originalRow": 5,
+        "category": "Partial, B, code-traced",
+        "title": "Sliding 30-minute private view window",
+        "evidenceAndBoundary": "Real-use SQL `0003_real_customer_modules.sql:1357`, `:1373`, `:1464` still returns 60-second windows; `packages/auth/src/customer-session.ts:162` caps proofs at 25 seconds. Current retries/step-up exist. Helper tests do not establish a sliding server window."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "Real-use SQL `0003_real_customer_modules.sql:1357`, `:1373`, `:1464` still returns 60-second windows; `packages/auth/src/customer-session.ts:162` caps proofs at 25 seconds. Current retries/step-up exist. Helper tests do not establish a sliding server window.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-005"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove a sliding 30-minute idle window in reviewed additive SQL, preserving revocation, expiry and step-up denials.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-005-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-006",
+      "title": "Programme and commercial text drafts surviving reload",
+      "baseline": {
+        "id": "GAP-006",
+        "originalRow": 6,
+        "category": "Partial, C, code-traced",
+        "title": "Programme and commercial text drafts surviving reload",
+        "evidenceAndBoundary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-006"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Reload representative programme and commercial forms and recover permitted typed text without persisting server-owned money or identifiers.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-006-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-007",
+      "title": "Participant invitation email collection, storage and send action",
+      "baseline": {
+        "id": "GAP-007",
+        "originalRow": 7,
+        "category": "Partial, D, code-traced",
+        "title": "Participant invitation email collection, storage and send action",
+        "evidenceAndBoundary": "`programme-participants.tsx:315` sends label only; `:352` says it is not sent; `customer-participants.ts:21` has no address input. `recipient_email` exists only as the additive nullable column. Invitation codes, replacement and acceptance already work."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`programme-participants.tsx:315` sends label only; `:352` says it is not sent; `customer-participants.ts:21` has no address input. `recipient_email` exists only as the additive nullable column. Invitation codes, replacement and acceptance already work.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-007"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove participant email collection, permitted storage and invitation send/retry paths while preserving code-based acceptance.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-007-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-008",
+      "title": "Email locale support including French and German",
+      "baseline": {
+        "id": "GAP-008",
+        "originalRow": 8,
+        "category": "Partial, E, code-traced",
+        "title": "Email locale support including French and German",
+        "evidenceAndBoundary": "`packages/domain/src/notifications.ts:7` accepts en/bn/zh/es/ar, not fr/de. Both mission-mail and Pulse catalogues currently contain English only with fallback. Adding fr/de to a picker alone would not provide translated mail. Existing preference tests are not delivered-language proof."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`packages/domain/src/notifications.ts:7` accepts en/bn/zh/es/ar, not fr/de. Both mission-mail and Pulse catalogues currently contain English only with fallback. Adding fr/de to a picker alone would not provide translated mail. Existing preference tests are not delivered-language proof.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-008"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove supported locale selection reaches reviewed actual mission/Pulse email words, including French and German; document fallback.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-008-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-009",
+      "title": "Timezone-aware date input adoption on remaining mission/meeting/commercial forms",
+      "baseline": {
+        "id": "GAP-009",
+        "originalRow": 9,
+        "category": "Partial, F, code-traced",
+        "title": "Timezone-aware date input adoption on remaining mission/meeting/commercial forms",
+        "evidenceAndBoundary": "Native controls remain at `operator/missions.tsx:239` and `operator/opportunities.tsx:129`, `:154`, `:339`. The shared conversion component already exists at `components/ux/date-time-input.tsx:64`; report/link use is not missing."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "Native controls remain at `operator/missions.tsx:239` and `operator/opportunities.tsx:129`, `:154`, `:339`. The shared conversion component already exists at `components/ux/date-time-input.tsx:64`; report/link use is not missing.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-009"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Exercise mission, meeting and commercial date inputs across time zones and verify the exact persisted instant.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-009-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-010",
+      "title": "Searchable country picker on the request form",
+      "baseline": {
+        "id": "GAP-010",
+        "originalRow": 10,
+        "category": "Partial, G/CQ-15, code-traced",
+        "title": "Searchable country picker on the request form",
+        "evidenceAndBoundary": "`app/plan/intake.tsx:1130` still uses native selects. Readable/ordered country names are already implemented. Existing select-driven tests do not prove search adoption."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`app/plan/intake.tsx:1130` still uses native selects. Readable/ordered country names are already implemented. Existing select-driven tests do not prove search adoption.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-010"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove searchable request-country selection with keyboard, touch and all supported existing options.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-010-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-011",
+      "title": "Customer tab-label reconciliation",
+      "baseline": {
+        "id": "GAP-011",
+        "originalRow": 11,
+        "category": "Partial, G/CQ-26, code-traced",
+        "title": "Customer tab-label reconciliation",
+        "evidenceAndBoundary": "`components/customer-nav.tsx:40` still names Your Move/Missions/Companies/Library/More; current remainder retains the requested Home/Requests/Companies/Reports/Account reconciliation. Existing headings are not proof those tab labels match."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`components/customer-nav.tsx:40` still names Your Move/Missions/Companies/Library/More; current remainder retains the requested Home/Requests/Companies/Reports/Account reconciliation. Existing headings are not proof those tab labels match.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-011"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Compare the actual customer navigation labels with the latest accepted vocabulary and preserve all destinations.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-011-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-012",
+      "title": "Warning text on caution-tinted components",
+      "baseline": {
+        "id": "GAP-012",
+        "originalRow": 12,
+        "category": "Partial, G/CQ-46, code-traced",
+        "title": "Warning text on caution-tinted components",
+        "evidenceAndBoundary": "`components/mr/quote-card.css:35`, `:104` and `mode-label.css:13` use caution text on caution surface. `tests/design-system.test.mjs:296` checks only globals/operator-overview for the Ink-text rule, so these files escape that assertion."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`components/mr/quote-card.css:35`, `:104` and `mode-label.css:13` use caution text on caution surface. `tests/design-system.test.mjs:296` checks only globals/operator-overview for the Ink-text rule, so these files escape that assertion.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-012"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove readable warning text on each identified caution-tinted component at the supported contrast settings.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-012-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-013",
+      "title": "Selected-language page words before first paint",
+      "baseline": {
+        "id": "GAP-013",
+        "originalRow": 13,
+        "category": "Partial, G/CQ-48, code-traced",
+        "title": "Selected-language page words before first paint",
+        "evidenceAndBoundary": "`components/language-provider.tsx:74`, `:93` uses default locale for the server snapshot, then browser locale. `app/layout.tsx:99` bootstraps lang/dir, not translated server text. After-load Arabic tests do not prove initial translated text."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "A_G_REMAINDER",
+        "summary": "`components/language-provider.tsx:74`, `:93` uses default locale for the server snapshot, then browser locale. `app/layout.tsx:99` bootstraps lang/dir, not translated server text. After-load Arabic tests do not prove initial translated text.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-013"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Observe the selected page language before first paint rather than only after hydration.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-013-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-014",
+      "title": "How-it-works body message migration",
+      "baseline": {
+        "id": "GAP-014",
+        "originalRow": 14,
+        "category": "Missing current open language phase, code-traced",
+        "title": "How-it-works body message migration",
+        "evidenceAndBoundary": "`app/how-it-works/page.tsx:1` loads literal English from `content/public-pages.ts:229`; `components/public-page.tsx:98` renders it. `lib/i18n/pages.ts:8` recognises only home-page keys. The language-switcher proposal explicitly leaves this phase open. Translated navigation exists."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "CURRENT_LANGUAGE_PHASE",
+        "summary": "`app/how-it-works/page.tsx:1` loads literal English from `content/public-pages.ts:229`; `components/public-page.tsx:98` renders it. `lib/i18n/pages.ts:8` recognises only home-page keys. The language-switcher proposal explicitly leaves this phase open. Translated navigation exists.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-014"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove how-it-works body messages follow each released page language while legal text retains its approved boundary.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-014-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-015",
+      "title": "Team invite Resend renews the code but sends no notification",
+      "baseline": {
+        "id": "GAP-015",
+        "originalRow": 15,
+        "category": "Existing-flow defect, reproduced",
+        "title": "Team invite Resend renews the code but sends no notification",
+        "evidenceAndBoundary": "The real handler at `api/team-control/[action]/route.ts:72` returns after `team.resend`; initial invite calls notify at `:54`. `packages/auth/src/team-control.ts:180` rotates the record only. UI `workspace-controls.tsx:143` says sent again. Fresh probe observed initial invite HTTP201/notify=1 versus resend HTTP201/notify=0. No provider mail was sent in the probe."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "The real handler at `api/team-control/[action]/route.ts:72` returns after `team.resend`; initial invite calls notify at `:54`. `packages/auth/src/team-control.ts:180` rotates the record only. UI `workspace-controls.tsx:143` says sent again. Fresh probe observed initial invite HTTP201/notify=1 versus resend HTTP201/notify=0. No provider mail was sent in the probe.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "DEFECT_REPRODUCED",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-015"]
+          },
+          "verification": {
+            "state": "DEFECT_REPRODUCED",
+            "evidence": [
+              "baselines/2026-11-01/originals/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.receipt.json.txt"
+            ]
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Reproduce a resend through the real handler and prove a new idempotent notification plus honest failure wording.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-015-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-016",
+      "title": "Initiating-owner attribution for invitation resend and authenticator reset",
+      "baseline": {
+        "id": "GAP-016",
+        "originalRow": 16,
+        "category": "Partial audit, code-traced; omitted from A–G",
+        "title": "Initiating-owner attribution for invitation resend and authenticator reset",
+        "evidenceAndBoundary": "`team-control.ts:235` authorizes the owner but resets in the auth transaction without recording that owner. `migrations/0005_integrity_versions.sql:48` records target identity changes. Tests `ws-d-team-control.test.ts:193` check target MFA/session events, not the initiating owner's attribution. Reset itself and denial controls exist."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "`team-control.ts:235` authorizes the owner but resets in the auth transaction without recording that owner. `migrations/0005_integrity_versions.sql:48` records target identity changes. Tests `ws-d-team-control.test.ts:193` check target MFA/session events, not the initiating owner's attribution. Reset itself and denial controls exist.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-016"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove an immutable audit trail attributes resend and authenticator reset to the initiating owner without weakening target-account controls.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-016-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-017",
+      "title": "Task-assigned unified notification/inbox producer",
+      "baseline": {
+        "id": "GAP-017",
+        "originalRow": 17,
+        "category": "Missing hand-off integration; newly found worklist discrepancy",
+        "title": "Task-assigned unified notification/inbox producer",
+        "evidenceAndBoundary": "`api/workspace/[action]/route.ts:246` calls the task service directly. Type, template and inbox label exist, but no corresponding production notify call. The database test manually inserts TASK_ASSIGNED, which does not test the producer. Current D7 includes this hand-off."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "`api/workspace/[action]/route.ts:246` calls the task service directly. Type, template and inbox label exist, but no corresponding production notify call. The database test manually inserts TASK_ASSIGNED, which does not test the producer. Current D7 includes this hand-off.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-017"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Exercise the actual task-assignment producer and prove the permitted recipient receives one inbox/notification event.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-017-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-018",
+      "title": "Quote-sent unified notification/inbox producer",
+      "baseline": {
+        "id": "GAP-018",
+        "originalRow": 18,
+        "category": "Missing hand-off integration; newly found worklist discrepancy",
+        "title": "Quote-sent unified notification/inbox producer",
+        "evidenceAndBoundary": "`api/workspace/customer-service-requests/route.ts:54` runs the staff command and returns. The type/template alone does not send or write an inbox row. This is distinct from A's quote-accepted event."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "`api/workspace/customer-service-requests/route.ts:54` runs the staff command and returns. The type/template alone does not send or write an inbox row. This is distinct from A's quote-accepted event.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-018"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Exercise the staff quote-send producer and prove the permitted customer receives one inbox/notification event.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-018-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-019",
+      "title": "Reply-posted unified notification/inbox producer",
+      "baseline": {
+        "id": "GAP-019",
+        "originalRow": 19,
+        "category": "Missing hand-off integration; newly found worklist discrepancy",
+        "title": "Reply-posted unified notification/inbox producer",
+        "evidenceAndBoundary": "`api/workspace/[action]/route.ts:272` directly calls the reply command. Existing supplier review and separate Pulse/receipt kinds do not implement this generic hand-off."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "`api/workspace/[action]/route.ts:272` directly calls the reply command. Existing supplier review and separate Pulse/receipt kinds do not implement this generic hand-off.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-019"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Exercise the reply-posted producer and prove the permitted recipient receives one inbox/notification event.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-019-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-020",
+      "title": "Email-off wording overpromises across separate email systems",
+      "baseline": {
+        "id": "GAP-020",
+        "originalRow": 20,
+        "category": "Conditional wording defect, independently refuted then retained narrowly",
+        "title": "Email-off wording overpromises across separate email systems",
+        "evidenceAndBoundary": "`account/notifications/page.tsx:57` says Choose what we email you; form `:177`/`:183` says nothing is sent while Pulse is off. Transactional request receipts independently enqueue in `customer-requests.ts:158` and mission-mail SQL `:113`, without Pulse preferences. This can conflict when that independent mail service is enabled. No actual delivery or consent violation is claimed."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
+        "summary": "`account/notifications/page.tsx:57` says Choose what we email you; form `:177`/`:183` says nothing is sent while Pulse is off. Transactional request receipts independently enqueue in `customer-requests.ts:158` and mission-mail SQL `:113`, without Pulse preferences. This can conflict when that independent mail service is enabled. No actual delivery or consent violation is claimed.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-020"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Prove email-off copy accurately describes separate Pulse and transactional email controls in every supported switch combination.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-020-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-021",
+      "title": "Complete separate browser journeys per locale",
+      "baseline": {
+        "id": "GAP-021",
+        "originalRow": 21,
+        "category": "Verification infrastructure incomplete",
+        "title": "Complete separate browser journeys per locale",
+        "evidenceAndBoundary": "`playwright.verification.config.ts:22` defines only w1280/w768/w390. Arabic fixtures and width coverage exist, but do not implement complete projects for every released locale. V-52–V-60 are not closed by a viewport-only test total."
+      },
+      "current": {
+        "disposition": "OPEN",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "`playwright.verification.config.ts:22` defines only w1280/w768/w390. Arabic fixtures and width coverage exist, but do not implement complete projects for every released locale. V-52–V-60 are not closed by a viewport-only test total.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-021"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Run complete separate browser journeys for every released locale, including Arabic direction, instead of substituting viewport projects.",
+        "prerequisites": [
+          "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-021-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OPEN",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-022",
+      "title": "Confirm real GST registration status/number, bank/payment details and finance label",
+      "baseline": {
+        "id": "GAP-022",
+        "originalRow": 22,
+        "category": "Supplier-data blocker, not missing invoice software",
+        "title": "Confirm real GST registration status/number, bank/payment details and finance label",
+        "evidenceAndBoundary": "Run49 fixes the real UEN. The remaining four marked fields are `gst_registration_no`, `gst_registered`, `payment_instructions` and `finance_label`; they still trigger D3. `customer-invoicing-real-staff.ts` refuses prepare/credit/approve in production real data. Fresh guard tests returned `409 MADEUP_SUPPLIER_DETAILS`. Tax, numbering, concurrency and invoice records are already implemented/tested."
+      },
+      "current": {
+        "disposition": "DATA_BLOCKED",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Run49 fixes the real UEN. The remaining four marked fields are `gst_registration_no`, `gst_registered`, `payment_instructions` and `finance_label`; they still trigger D3. `customer-invoicing-real-staff.ts` refuses prepare/credit/approve in production real data. Fresh guard tests returned `409 MADEUP_SUPPLIER_DETAILS`. Tax, numbering, concurrency and invoice records are already implemented/tested.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner-confirmed real supplier fields and the approved supplier update; prove D3 permits only genuine configuration without recording sensitive banking values here.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-022-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DATA_BLOCKED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-023",
+      "title": "Genuine updated customer provider-to-data journeys",
+      "baseline": {
+        "id": "GAP-023",
+        "originalRow": 23,
+        "category": "Current live proof missing",
+        "title": "Genuine updated customer provider-to-data journeys",
+        "evidenceAndBoundary": "Current isolated SQL tests and fixture/operator journeys do not establish real signup/verification/sign-in/reload/sign-out/revocation or customer service/report/participant journeys at this revision. `v3-code-signin.spec.ts:9` and `ux-pulse.spec.ts:8` explicitly describe stub/fixture boundaries. Historical identity activation is not denied."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Current isolated SQL tests and fixture/operator journeys do not establish real signup/verification/sign-in/reload/sign-out/revocation or customer service/report/participant journeys at this revision. `v3-code-signin.spec.ts:9` and `ux-pulse.spec.ts:8` explicitly describe stub/fixture boundaries. Historical identity activation is not denied.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record controlled genuine customer identity-to-data journeys at an identified revision, including recovery, revocation and tenant denials.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-023-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-024",
+      "title": "Fresh signed-out live report link",
+      "baseline": {
+        "id": "GAP-024",
+        "originalRow": 24,
+        "category": "Current live proof missing, CQ-78",
+        "title": "Fresh signed-out live report link",
+        "evidenceAndBoundary": "Owner reports the switch enabled; Vercel metadata confirms its entry exists. A newly issued real-workspace link still needs actual signed-out/revocation/expiry observation. Do not retain the old claim that the switch is simply off."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Owner reports the switch enabled; Vercel metadata confirms its entry exists. A newly issued real-workspace link still needs actual signed-out/revocation/expiry observation. Do not retain the old claim that the switch is simply off.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Observe a fresh real-workspace report link signed out, then observe expiry and revocation denial; preserve access scope.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-024-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-025",
+      "title": "Actual hand-off/mission/Pulse email delivery",
+      "baseline": {
+        "id": "GAP-025",
+        "originalRow": 25,
+        "category": "Current live proof missing",
+        "title": "Actual hand-off/mission/Pulse email delivery",
+        "evidenceAndBoundary": "Unified notification service is additionally gated by mail config and switches, and catches send failures at `lib/notify.ts:47`. Pure rendering and isolated database tests send no real mail. Provider acceptance/delivery and recipient-visible results remain unestablished here."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Unified notification service is additionally gated by mail config and switches, and catches send failures at `lib/notify.ts:47`. Pure rendering and isolated database tests send no real mail. Provider acceptance/delivery and recipient-visible results remain unestablished here.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record provider acceptance, actual recipient delivery and permitted inbox behavior for each relevant email hand-off.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-025-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-026",
+      "title": "Actual values and behavior of encrypted switches",
+      "baseline": {
+        "id": "GAP-026",
+        "originalRow": 26,
+        "category": "Runtime configuration proof incomplete",
+        "title": "Actual values and behavior of encrypted switches",
+        "evidenceAndBoundary": "The six program/public-link entries and other settings were observed present, not decrypted. Their true values and intended live behavior were not proved by metadata. Some earlier unset claims are contradicted by later entry creation. This row is an observation limit, not a claim the features are off."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "The six program/public-link entries and other settings were observed present, not decrypted. Their true values and intended live behavior were not proved by metadata. Some earlier unset claims are contradicted by later entry creation. This row is an observation limit, not a claim the features are off.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record actual effective switch behavior using a permitted observation; encrypted entry presence alone cannot close this finding.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-026-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-027",
+      "title": "Home-page translated words",
+      "baseline": {
+        "id": "GAP-027",
+        "originalRow": 27,
+        "category": "Review record missing",
+        "title": "Home-page translated words",
+        "evidenceAndBoundary": "`language-review-record.md:49` still separates home-word review from accepted shared/form words. The plain production page-language flag is now observed true. Do not call the implementation or page-language setting absent."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "`language-review-record.md:49` still separates home-word review from accepted shared/form words. The plain production page-language flag is now observed true. Do not call the implementation or page-language setting absent.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Link the owner review record for the released home-page translations and its exact content revision.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-027-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-028",
+      "title": "New 31 October programme language additions",
+      "baseline": {
+        "id": "GAP-028",
+        "originalRow": 28,
+        "category": "Review record missing for later additions",
+        "title": "New 31 October programme language additions",
+        "evidenceAndBoundary": "`docs/qa/2026-10-31/i18n-review.md:3` lists new A/B/E keys and changed home/form words as drafts after the 30 Oct approval. Earlier approval is not blanket evidence of a review of later text. The six original /plan drafts remain owner-approved; native review was explicitly not a release blocker for them."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "`docs/qa/2026-10-31/i18n-review.md:3` lists new A/B/E keys and changed home/form words as drafts after the 30 Oct approval. Earlier approval is not blanket evidence of a review of later text. The six original /plan drafts remain owner-approved; native review was explicitly not a release blocker for them.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Link the review of the later 31 October language additions, distinguishing it from the earlier six-language approval.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-028-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-029",
+      "title": "Remaining Pulse email-text/privacy, watched mailbox and retention answers",
+      "baseline": {
+        "id": "GAP-029",
+        "originalRow": 29,
+        "category": "Owner evidence/decision missing",
+        "title": "Remaining Pulse email-text/privacy, watched mailbox and retention answers",
+        "evidenceAndBoundary": "`pulse-email-review-pack.md:7` records remaining mailbox, provider retention/location and indefinite queue-record questions. Database opening in run45 is completed, not a missing install. No conclusion is drawn about the owner's unrecorded private decisions."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "`pulse-email-review-pack.md:7` records remaining mailbox, provider retention/location and indefinite queue-record questions. Database opening in run45 is completed, not a missing install. No conclusion is drawn about the owner's unrecorded private decisions.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record the outstanding owner Pulse review, watched-mailbox and provider-retention decisions with their scope and date.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-029-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-030",
+      "title": "Actual code-sign-in behavior for an unknown address",
+      "baseline": {
+        "id": "GAP-030",
+        "originalRow": 30,
+        "category": "Provider acceptance missing, V-48",
+        "title": "Actual code-sign-in behavior for an unknown address",
+        "evidenceAndBoundary": "Current runbook asks whether a real provider code creates/verifies a new account and how notice/admission work. `tests/operator/v3-code-signin.spec.ts:9` uses stubbed transport. The sign-in implementation exists; real-provider behavior remains unverified."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Current runbook asks whether a real provider code creates/verifies a new account and how notice/admission work. `tests/operator/v3-code-signin.spec.ts:9` uses stubbed transport. The sign-in implementation exists; real-provider behavior remains unverified.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Complete the controlled actual-provider unknown-address code-sign-in check before any owner activation.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-030-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-031",
+      "title": "Actual production speed measurement",
+      "baseline": {
+        "id": "GAP-031",
+        "originalRow": 31,
+        "category": "Production measurement missing, V-55",
+        "title": "Actual production speed measurement",
+        "evidenceAndBoundary": "Local/CI production-build measurements are not a current production measurement. Direct public probes were stopped by the cloud proxy before the application responded. No production performance defect is inferred."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Local/CI production-build measurements are not a current production measurement. Direct public probes were stopped by the cloud proxy before the application responded. No production performance defect is inferred.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Measure the actual production deployment with dated environment, device/network and metric evidence.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-031-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-032",
+      "title": "Complete current role/action/recovery and journey-to-requirement proof",
+      "baseline": {
+        "id": "GAP-032",
+        "originalRow": 32,
+        "category": "Acceptance reconciliation incomplete",
+        "title": "Complete current role/action/recovery and journey-to-requirement proof",
+        "evidenceAndBoundary": "Passing exact-head suites establish their assertions, not one-to-one runtime acceptance of all 507 requirements or every original control. Legacy counts/labels cannot fill that gap. No current missing-feature count is derived from the old requirement statuses."
+      },
+      "current": {
+        "disposition": "EVIDENCE_MISSING",
+        "scope": "ACCEPTANCE_OR_OWNER_EVIDENCE",
+        "summary": "Passing exact-head suites establish their assertions, not one-to-one runtime acceptance of all 507 requirements or every original control. Legacy counts/labels cannot fill that gap. No current missing-feature count is derived from the old requirement statuses.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Reconcile current role/action/recovery and journey requirements to executed positive and denial evidence without claiming inherited totals prove coverage.",
+        "prerequisites": [
+          "Obtain the specific permitted owner/provider/runtime observation; do not infer it from code or metadata."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-032-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "EVIDENCE_MISSING",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-033",
+      "title": "Additional Pulse emitters for moved/date-coming-up/complete",
+      "baseline": {
+        "id": "GAP-033",
+        "originalRow": 33,
+        "category": "Owner-dependent, partly built",
+        "title": "Additional Pulse emitters for moved/date-coming-up/complete",
+        "evidenceAndBoundary": "Templates/preferences accept update/countdown/complete, but `customer-notifications.ts:167` calls SQL that enqueues only `your-move` at notification migration `:266`/`:299`. Current register retains interview/trigger decisions before more emitters. This is distinct from unified D7 hand-offs above."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Templates/preferences accept update/countdown/complete, but `customer-notifications.ts:167` calls SQL that enqueues only `your-move` at notification migration `:266`/`:299`. Current register retains interview/trigger decisions before more emitters. This is distinct from unified D7 hand-offs above.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-033"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the owner trigger/interview decision, then prove the approved additional Pulse emitters through their real callers.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-033-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-034",
+      "title": "Trip lens over an existing readable itinerary",
+      "baseline": {
+        "id": "GAP-034",
+        "originalRow": 34,
+        "category": "Owner-dependent, reserved",
+        "title": "Trip lens over an existing readable itinerary",
+        "evidenceAndBoundary": "`saved-commercial-report.tsx:443` already renders itinerary. `owner-switches.ts:471` reserves Trip as planned; no consuming lens was found. Reopening requires the owner; do not say itinerary data is absent."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "`saved-commercial-report.tsx:443` already renders itinerary. `owner-switches.ts:471` reserves Trip as planned; no consuming lens was found. Reopening requires the owner; do not say itinerary data is absent.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-034"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the bounded Trip-lens decision, then prove the new lens uses the already permitted itinerary without booking or disclosure expansion.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-034-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-035",
+      "title": "Trip Book and Supplier Book exports",
+      "baseline": {
+        "id": "GAP-035",
+        "originalRow": 35,
+        "category": "Owner-dependent, reserved",
+        "title": "Trip Book and Supplier Book exports",
+        "evidenceAndBoundary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission. Books need their own allowed contents/disclosure decision."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission. Books need their own allowed contents/disclosure decision.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-035"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain a separate book-export disclosure contract and prove only permitted content can be exported.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-035-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-036",
+      "title": "Staff entering a supplier reply on the supplier's behalf",
+      "baseline": {
+        "id": "GAP-036",
+        "originalRow": 36,
+        "category": "Owner-dependent provenance",
+        "title": "Staff entering a supplier reply on the supplier's behalf",
+        "evidenceAndBoundary": "Current staff schema permits PUBLISH/ASK/REJECT of an existing reply (`domain/src/reply-review.ts:49`), not on-behalf authorship. Supplier submission and staff review exist; new provenance remains undecided."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Current staff schema permits PUBLISH/ASK/REJECT of an existing reply (`domain/src/reply-review.ts:49`), not on-behalf authorship. Supplier submission and staff review exist; new provenance remains undecided.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-036"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain approved on-behalf provenance rules and prove staff-entered content cannot masquerade as supplier-authored content.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-036-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-037",
+      "title": "Programme company lane",
+      "baseline": {
+        "id": "GAP-037",
+        "originalRow": 37,
+        "category": "Owner-dependent disclosure",
+        "title": "Programme company lane",
+        "evidenceAndBoundary": "`lib/programme-room.ts:99` defines the five existing views. Consented labels do not create a permitted company-to-participant canonical projection. `ux-programme-room.test.ts:194` intentionally excludes participant-written labels."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "`lib/programme-room.ts:99` defines the five existing views. Consented labels do not create a permitted company-to-participant canonical projection. `ux-programme-room.test.ts:194` intentionally excludes participant-written labels.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-037"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the private company-to-participant disclosure decision and prove a scoped Programme company lane.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-037-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-038",
+      "title": "Organiser timed agenda/conflict projection",
+      "baseline": {
+        "id": "GAP-038",
+        "originalRow": 38,
+        "category": "Owner-dependent disclosure",
+        "title": "Organiser timed agenda/conflict projection",
+        "evidenceAndBoundary": "Programme date windows and staff agenda exist. Coordination tasks have dueOn, not permitted per-item start/end intervals (`customer-programme-coordination.ts:46`). A new bounded organiser view requires its disclosure decision."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Programme date windows and staff agenda exist. Coordination tasks have dueOn, not permitted per-item start/end intervals (`customer-programme-coordination.ts:46`). A new bounded organiser view requires its disclosure decision.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-038"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the permitted timed agenda projection and prove organiser conflict handling without leaking private participant missions.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-038-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-039",
+      "title": "Programme ready counts",
+      "baseline": {
+        "id": "GAP-039",
+        "originalRow": 39,
+        "category": "Owner-dependent meaning",
+        "title": "Programme ready counts",
+        "evidenceAndBoundary": "Current room counts invitations/registrations; days/run/report remain notTracked (`programme-room.ts:65`; test `ux-programme-room.test.ts:118`). Capacity/attendance are implemented, but no agreed ready condition may be invented."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Current room counts invitations/registrations; days/run/report remain notTracked (`programme-room.ts:65`; test `ux-programme-room.test.ts:118`). Capacity/attendance are implemented, but no agreed ready condition may be invented.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain a recorded definition of ready and prove counts derive only from records satisfying that definition.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-039-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-040",
+      "title": "Helper Next task spotlight",
+      "baseline": {
+        "id": "GAP-040",
+        "originalRow": 40,
+        "category": "Owner-dependent presentation/access",
+        "title": "Helper Next task spotlight",
+        "evidenceAndBoundary": "`contributor/page.tsx:109` already mounts TaskBoard, which reads authorised tasks and provides actions/history. The separate new spotlight/projection is unbuilt; contributor tasks themselves are not missing."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "`contributor/page.tsx:109` already mounts TaskBoard, which reads authorised tasks and provides actions/history. The separate new spotlight/projection is unbuilt; contributor tasks themselves are not missing.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-040"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the helper spotlight data/access decision and prove the approved presentation without replacing the existing assigned-task board.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-040-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-041",
+      "title": "Decision-card sharing and emailed status link",
+      "baseline": {
+        "id": "GAP-041",
+        "originalRow": 41,
+        "category": "Owner-dependent, proposed",
+        "title": "Decision-card sharing and emailed status link",
+        "evidenceAndBoundary": "`owner-switches.ts:499`/`:506` reserve planned settings. ADR070/058 require approved disclosure scope. Existing private decisions/report links are separate implementations."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "`owner-switches.ts:499`/`:506` reserve planned settings. ADR070/058 require approved disclosure scope. Existing private decisions/report links are separate implementations.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-041"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain approved decision-card/status-link disclosure contracts and prove scope, expiry, revocation and recipient access.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-041-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-042",
+      "title": "Qualified-meeting roll-up across customer programme participants",
+      "baseline": {
+        "id": "GAP-042",
+        "originalRow": 42,
+        "category": "Owner-dependent permitted linkage",
+        "title": "Qualified-meeting roll-up across customer programme participants",
+        "evidenceAndBoundary": "Current ADR054 retains this narrow boundary. Pricing SQL exposes per-currency series revenue/exports without joining participants' private meeting/opportunity data. Existing coordination feedback/outcome reporting is not missing. Group this with the company/agenda disclosure decision, not generic absent organiser economics."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Current ADR054 retains this narrow boundary. Pricing SQL exposes per-currency series revenue/exports without joining participants' private meeting/opportunity data. Existing coordination feedback/outcome reporting is not missing. Group this with the company/agenda disclosure decision, not generic absent organiser economics.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-042"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain a safe participant-mission linkage and prove qualified-meeting roll-up without inferring qualification from self-reported outcomes.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-042-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-043",
+      "title": "Saved-request recovery from another device with longer retention",
+      "baseline": {
+        "id": "GAP-043",
+        "originalRow": 43,
+        "category": "WAITING OWNER",
+        "title": "Saved-request recovery from another device with longer retention",
+        "evidenceAndBoundary": "Existing SQL `0001_verified_guest_handoff.sql:40` caps 24 hours; claim `:113` requires possession hash from this browser. Proposed three-day cross-device claim is not built and requires privacy/retention approval. Same-device recovery already works."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Existing SQL `0001_verified_guest_handoff.sql:40` caps 24 hours; claim `:113` requires possession hash from this browser. Proposed three-day cross-device claim is not built and requires privacy/retention approval. Same-device recovery already works.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-043"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain retention/privacy approval, then prove verified-owner cross-device claim, three-day expiry and abuse limits.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-043-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-044",
+      "title": "Saved-request reminder email",
+      "baseline": {
+        "id": "GAP-044",
+        "originalRow": 44,
+        "category": "WAITING OWNER, dependent on phase 2",
+        "title": "Saved-request reminder email",
+        "evidenceAndBoundary": "No scheduler/emitter in the current pending-request flow. Proposed delay, limits and suppression are not accepted configuration. Do not confuse this with built mission/Pulse messages."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "No scheduler/emitter in the current pending-request flow. Proposed delay, limits and suppression are not accepted configuration. Do not confuse this with built mission/Pulse messages.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-044"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "After approved phase 2, obtain reminder timing/consent approval and prove at most one limited reminder with mute and abuse controls.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-044-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-045",
+      "title": "Fuller-fidelity view-as and additional roles",
+      "baseline": {
+        "id": "GAP-045",
+        "originalRow": 45,
+        "category": "Owner-dependent, partial",
+        "title": "Fuller-fidelity view-as and additional roles",
+        "evidenceAndBoundary": "Later `operator/view-as/[role]/sample-screens.tsx:8` already reuses MoveCard/HolderBadge/Road; tests prove inert samples. Full real customer-frame/body reuse and extra-role preview are not complete. `packages/auth/src/view-as.ts:8` allows customer only. Stage 2 must not be called wholly absent."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Later `operator/view-as/[role]/sample-screens.tsx:8` already reuses MoveCard/HolderBadge/Road; tests prove inert samples. Full real customer-frame/body reuse and extra-role preview are not complete. `packages/auth/src/view-as.ts:8` allows customer only. Stage 2 must not be called wholly absent.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-045"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the next view-as scope, then prove fuller real-frame fidelity and any approved extra roles retain zero writes and no impersonation.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-045-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-046",
+      "title": "Rehearsal-specific banner, sample-login holder and customer rehearsal provisioning",
+      "baseline": {
+        "id": "GAP-046",
+        "originalRow": 46,
+        "category": "Owner-dependent, later rehearsal pieces",
+        "title": "Rehearsal-specific banner, sample-login holder and customer rehearsal provisioning",
+        "evidenceAndBoundary": "Real/sample exclusion tests already exist at `sample-journey-exclusion.test.ts:112`. The proposal retains later banner/provisioning decisions with the owner. Existing ordinary sample labels and view-as samples are not the proposed full rehearsal account."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Real/sample exclusion tests already exist at `sample-journey-exclusion.test.ts:112`. The proposal retains later banner/provisioning decisions with the owner. Existing ordinary sample labels and view-as samples are not the proposed full rehearsal account.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "PARTIAL",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-046"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain the remaining rehearsal presentation/account decisions and prove sample-only rehearsal stays excluded from real activity.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-046-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-047",
+      "title": "Real payment processor",
+      "baseline": {
+        "id": "GAP-047",
+        "originalRow": 47,
+        "category": "Conditional future scope",
+        "title": "Real payment processor",
+        "evidenceAndBoundary": "Only Corridra Pay (madeup) exists: `customer-payments-simulated.ts:6` explicitly has no network/money movement. No real checkout/webhook/processor adapter in the current API inventory. A separate ADR/provider decision is required if requested; current managed service can use manual invoicing."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Only Corridra Pay (madeup) exists: `customer-payments-simulated.ts:6` explicitly has no network/money movement. No real checkout/webhook/processor adapter in the current API inventory. A separate ADR/provider decision is required if requested; current managed service can use manual invoicing.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "MISSING",
+            "evidence": ["baselines/2026-11-01/REPORT.md#gap-047"]
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Obtain its own provider ADR, contract and review, then prove real payment reconciliation and denial/retry behavior without counting simulated payment as real.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-047-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-048",
+      "title": "Whether admins may send team invitations",
+      "baseline": {
+        "id": "GAP-048",
+        "originalRow": 48,
+        "category": "Owner permission decision, V-02",
+        "title": "Whether admins may send team invitations",
+        "evidenceAndBoundary": "Owner invite implementation exists. The current domain/RLS permits owner only; admin listing does not grant sending. Expanding it needs a decision and ADR, not a permission bypass."
+      },
+      "current": {
+        "disposition": "OWNER_DEPENDENT",
+        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
+        "summary": "Owner invite implementation exists. The current domain/RLS permits owner only; admin listing does not grant sending. Expanding it needs a decision and ADR, not a permission bypass.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record the owner permission decision and any required ADR before implementing admin-sent team invitations.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-048-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "OWNER_DEPENDENT",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-049",
+      "title": "Remaining organiser AC1-06 presentation review",
+      "baseline": {
+        "id": "GAP-049",
+        "originalRow": 49,
+        "category": "Current if-asked audit queue, specific defects not established",
+        "title": "Remaining organiser AC1-06 presentation review",
+        "evidenceAndBoundary": "Programme room/controls and five functional panels exist and changed again on 31 Oct. Old first-slice language does not prove current pages are unstyled or over budget. A current rendered review must identify specific failures before any such claim."
+      },
+      "current": {
+        "disposition": "REVIEW_REQUIRED",
+        "scope": "IF_ASKED_REVIEW_QUEUE",
+        "summary": "Programme room/controls and five functional panels exist and changed again on 31 Oct. Old first-slice language does not prove current pages are unstyled or over budget. A current rendered review must identify specific failures before any such claim.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Perform a fresh rendered organiser review and record specific current defects or a bounded clean result; a queue label is not proof of a defect.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-049-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "REVIEW_REQUIRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-050",
+      "title": "Remaining signed-in busy/state adoption sweep",
+      "baseline": {
+        "id": "GAP-050",
+        "originalRow": 50,
+        "category": "Current if-asked audit queue, specific defects not established",
+        "title": "Remaining signed-in busy/state adoption sweep",
+        "evidenceAndBoundary": "Current programme pricing already has aria-busy, loading/unavailable/status and disabled busy actions. The queue is a request for a sweep, not evidence all busy states are missing. No additional concrete defect was established here."
+      },
+      "current": {
+        "disposition": "REVIEW_REQUIRED",
+        "scope": "IF_ASKED_REVIEW_QUEUE",
+        "summary": "Current programme pricing already has aria-busy, loading/unavailable/status and disabled busy actions. The queue is a request for a sweep, not evidence all busy states are missing. No additional concrete defect was established here.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Perform a fresh flow-by-flow busy/state review and record specific defects or a bounded clean result; do not infer absence from an old queue.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-050-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "REVIEW_REQUIRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-051",
+      "title": "Upload malware scanner activation",
+      "baseline": {
+        "id": "GAP-051",
+        "originalRow": 51,
+        "category": "Deferred by owner, D01",
+        "title": "Upload malware scanner activation",
+        "evidenceAndBoundary": "Small-scale launch explicitly defers this control. Type/size/access protections remain; bypassed scanning must never be represented as clean. No scanner activation attempted."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Small-scale launch explicitly defers this control. Type/size/access protections remain; bypassed scanning must never be represented as clean. No scanner activation attempted.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and actual scanner activation evidence, including quarantine and failure behavior; preserve the historical deferral.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-051-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-052",
+      "title": "Branch protection, secret-scanning and CodeQL enforcement",
+      "baseline": {
+        "id": "GAP-052",
+        "originalRow": 52,
+        "category": "Deferred by owner, D02–D04",
+        "title": "Branch protection, secret-scanning and CodeQL enforcement",
+        "evidenceAndBoundary": "CodeQL and CI ran successfully; provider enforcement is a distinct deferred control. Green jobs do not establish branch-protection policy."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "CodeQL and CI ran successfully; provider enforcement is a distinct deferred control. Green jobs do not establish branch-protection policy.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and direct enforcement evidence for each named repository/security control.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-052-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-053",
+      "title": "EU production object-storage target",
+      "baseline": {
+        "id": "GAP-053",
+        "originalRow": 53,
+        "category": "Deferred by owner, D05",
+        "title": "EU production object-storage target",
+        "evidenceAndBoundary": "Explicit deferred infrastructure choice; region of the Vercel application does not prove object-storage region. No migration performed or regional readiness asserted."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Explicit deferred infrastructure choice; region of the Vercel application does not prove object-storage region. No migration performed or regional readiness asserted.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and the actual approved production object-storage location and protected-object behavior.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-053-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-054",
+      "title": "Retention/cleanup hardening",
+      "baseline": {
+        "id": "GAP-054",
+        "originalRow": 54,
+        "category": "Deferred by owner, D06",
+        "title": "Retention/cleanup hardening",
+        "evidenceAndBoundary": "No production data was deleted. Optional QA cleanup dry-runs are not a claim this broader control is closed."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "No production data was deleted. Optional QA cleanup dry-runs are not a claim this broader control is closed.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and permitted retention/cleanup assurance while preserving legal holds and protected history.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-054-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-055",
+      "title": "Legal/privacy agreements and formal DSAR assurance",
+      "baseline": {
+        "id": "GAP-055",
+        "originalRow": 55,
+        "category": "Deferred by owner, D08",
+        "title": "Legal/privacy agreements and formal DSAR assurance",
+        "evidenceAndBoundary": "Manual DSAR runbook exists. Independent legal/processing-agreement controls remain deferred; do not describe the existing manual process as absent or imply legal approval."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Manual DSAR runbook exists. Independent legal/processing-agreement controls remain deferred; do not describe the existing manual process as absent or imply legal approval.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and the required legal/privacy agreements and formal DSAR assurance without substituting engineering opinion for legal review.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-055-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-056",
+      "title": "Actual restore drill",
+      "baseline": {
+        "id": "GAP-056",
+        "originalRow": 56,
+        "category": "Deferred by owner, V-51",
+        "title": "Actual restore drill",
+        "evidenceAndBoundary": "Backup/PITR runbook exists. The drill remains postponed; a runbook or unit test is not a completed restoration."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Backup/PITR runbook exists. The drill remains postponed; a runbook or unit test is not a completed restoration.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and an actual restore drill with recovery and preservation evidence, not only the runbook.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-056-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-057",
+      "title": "Automated outreach",
+      "baseline": {
+        "id": "GAP-057",
+        "originalRow": 57,
+        "category": "Deferred/closed",
+        "title": "Automated outreach",
+        "evidenceAndBoundary": "Current communication restrictions remain; no provider send or expansion was authorized by the audit. This is not a missing prerequisite for the approved managed launch."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Current communication restrictions remain; no provider send or expansion was authorized by the audit. This is not a missing prerequisite for the approved managed launch.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record separate owner authorization and applicable communication/provider controls before any automated outreach activation.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-057-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-058",
+      "title": "Production AI inference",
+      "baseline": {
+        "id": "GAP-058",
+        "originalRow": 58,
+        "category": "Deferred/closed",
+        "title": "Production AI inference",
+        "evidenceAndBoundary": "No inference activation or claim of live AI was made. Future activation retains its separate implementation/provider approval."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "No inference activation or claim of live AI was made. Future activation retains its separate implementation/provider approval.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record separate owner authorization, provider/privacy review and bounded inference acceptance before production AI activation.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-058-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-059",
+      "title": "External penetration test",
+      "baseline": {
+        "id": "GAP-059",
+        "originalRow": 59,
+        "category": "Deferred by owner",
+        "title": "External penetration test",
+        "evidenceAndBoundary": "No external test was run or represented as passed. Existing automated checks are not a substitute for the deferred external assessment."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "No external test was run or represented as passed. Existing automated checks are not a substitute for the deferred external assessment.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and the scoped independent penetration-test evidence plus disposition of findings.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-059-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    },
+    {
+      "id": "GAP-060",
+      "title": "Additional WAF/rate-limit hardening",
+      "baseline": {
+        "id": "GAP-060",
+        "originalRow": 60,
+        "category": "Deferred by owner",
+        "title": "Additional WAF/rate-limit hardening",
+        "evidenceAndBoundary": "Existing rate controls must remain. The deferred expansion is not a reason to claim rate limiting is altogether absent."
+      },
+      "current": {
+        "disposition": "DEFERRED",
+        "scope": "OWNER_DEFERRED",
+        "summary": "Existing rate controls must remain. The deferred expansion is not a reason to claim rate limiting is altogether absent.",
+        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+        "evidenceObservedOn": "2026-11-01",
+        "lastRecordedOn": "2026-11-02",
+        "states": {
+          "implementation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "verification": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "deployment": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "activation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "approval": {
+            "state": "UNKNOWN",
+            "evidence": []
+          },
+          "commercialOperation": {
+            "state": "UNKNOWN",
+            "evidence": []
+          }
+        },
+        "closureAcceptance": "Record owner reopening and the scoped additional WAF/rate-limit hardening evidence; preserve existing controls.",
+        "prerequisites": [
+          "New explicit owner scope/approval before reopening; retain the original boundary."
+        ],
+        "closureEvidence": []
+      },
+      "history": [
+        {
+          "eventId": "GAP-060-H001",
+          "recordedOn": "2026-11-02",
+          "type": "BASELINE_IMPORTED",
+          "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+          "disposition": "DEFERRED",
+          "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        }
+      ]
+    }
+  ]
+}
