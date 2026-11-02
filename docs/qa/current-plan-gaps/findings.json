@@ -413,7 +413,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "PR238 merged after successful CI/CodeQL and19 completed checks with no failures. Exact production revision is READY. Protected real-use0011 installation remains pending; old schema retains its strict window until then. Genuine live provider acceptance remains unverified.",
+        "summary": "PR238 code is deployed. Exact-main CI/CodeQL passed and installer41505093037 for real-use0011 is waiting for owner review; activation inputs unchanged. Strict old-schema expiry remains until installation.",
         "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
@@ -438,8 +438,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PENDING_OWNER_REVIEW",
+            "evidence": ["verification/2026-11-02-gap005-install-request.json"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -478,6 +478,15 @@
           "disposition": "OPEN",
           "note": "PR238 merged after successful CI/CodeQL and19 completed checks with no failures. Exact production revision is READY. Protected real-use0011 installation remains pending; old schema retains its strict window until then. Genuine live provider acceptance remains unverified.",
           "evidence": ["verification/2026-11-02-gap005-release.json"]
+        },
+        {
+          "eventId": "GAP-005-H004",
+          "recordedOn": "2026-11-02",
+          "type": "INSTALLATION_REQUESTED",
+          "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+          "disposition": "OPEN",
+          "note": "PR238 code is deployed. Exact-main CI/CodeQL passed and installer41505093037 for real-use0011 is waiting for owner review; activation inputs unchanged. Strict old-schema expiry remains until installation.",
+          "evidence": ["verification/2026-11-02-gap005-install-request.json"]
         }
       ]
     },
@@ -494,22 +503,28 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Existing session draft helper now restores permitted text on programme planning, fee schedule and commercial mission forms. 41 browser protocol regression cases, full typecheck and focused lint passed locally; frozen CI and deployment pending. Money, selectors and untouched server records are excluded.",
-        "evidenceRevision": "18199e741bd583862f0219d5316899298bc47078",
+        "summary": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
+        "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap006-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap006-local.json",
+              "verification/2026-11-02-gap006-text-completion-local.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap006-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap006-local.json",
+              "verification/2026-11-02-gap006-text-completion-local.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-02-gap006-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -547,6 +562,27 @@
           "disposition": "OPEN",
           "note": "Existing session draft helper now restores permitted text on programme planning, fee schedule and commercial mission forms. 41 browser protocol regression cases, full typecheck and focused lint passed locally; frozen CI and deployment pending. Money, selectors and untouched server records are excluded.",
           "evidence": ["verification/2026-11-02-gap006-local.json"]
+        },
+        {
+          "eventId": "GAP-006-H003",
+          "recordedOn": "2026-11-02",
+          "type": "DEPLOYED",
+          "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+          "disposition": "OPEN",
+          "note": "PR239 merged after successful CI/CodeQL and19 completed checks. Exact production alias is READY. Later local checks reproduced additional text omissions; initial release is partial.",
+          "evidence": [
+            "verification/2026-11-02-gap006-release.json",
+            "verification/2026-11-02-gap006-text-completion-local.json"
+          ]
+        },
+        {
+          "eventId": "GAP-006-H004",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+          "disposition": "OPEN",
+          "note": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
+          "evidence": ["verification/2026-11-02-gap006-text-completion-local.json"]
         }
       ]
     },

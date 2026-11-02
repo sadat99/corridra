@@ -121,6 +121,14 @@ const draftTextFields = new Set([
   'product',
   'category',
   'specifications',
+  'quantity',
+  'moq',
+  'travelDates',
+  'decisionCriteria',
+  'responsiblePersons',
+  'targetMarkets',
+  'unknowns',
+  'gaps',
   'unit',
   'orderFrequency',
   'materials',
@@ -154,6 +162,7 @@ const draftTextFields = new Set([
   'nextAction',
   'label',
   'location',
+  'timezone',
   'note',
   'summary',
   'reason',
@@ -164,6 +173,8 @@ const draftTextFields = new Set([
     key + '.basis',
   ]),
 ]);
+const draftTextAllowed = (name: string) =>
+  draftTextFields.has(name) || (name.length <= 240 && /\.(requirement|basis)$/.test(name));
 const CommercialTextDraft = createContext<Record<string, string>>({});
 function Field({
   name,
@@ -223,8 +234,7 @@ export function CommercialMission({
   );
   const typedText = Object.fromEntries(
     Object.entries(formDraft.draft ?? {}).filter(
-      ([key, value]) =>
-        draftTextFields.has(key) && typeof value === 'string' && value.length <= 2000,
+      ([key, value]) => draftTextAllowed(key) && typeof value === 'string' && value.length <= 2000,
     ),
   );
   // A save refused for a stale authenticator check re-verifies in place and retries once with the same
@@ -826,7 +836,7 @@ export function CommercialMission({
                   const field = event.target;
                   if (
                     (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) &&
-                    draftTextFields.has(field.name)
+                    draftTextAllowed(field.name)
                   )
                     formDraft.save({ ...typedText, [field.name]: field.value });
                 }}

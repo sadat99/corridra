@@ -688,6 +688,7 @@ test('GAP-006 commercial reload restores typed text without persisting loaded de
   await page
     .getByRole('textbox', { name: 'Target budget, original currency', exact: true })
     .fill('1234.56');
+  await page.locator('textarea[name="decisionCriteria"]').fill('Customer-stated quality criteria');
   page.on('dialog', (dialog) => dialog.accept());
   await page.reload();
   await open();
@@ -698,10 +699,44 @@ test('GAP-006 commercial reload restores typed text without persisting loaded de
   await expect(
     page.getByRole('textbox', { name: 'Target budget, original currency', exact: true }),
   ).toHaveValue('');
+  await expect(page.locator('textarea[name="decisionCriteria"]')).toHaveValue(
+    'Customer-stated quality criteria',
+  );
   const stored = await page.evaluate(() =>
     Object.keys(sessionStorage)
       .filter((key) => key.startsWith('corridra.draft.commercial-mission:'))
       .map((key) => JSON.parse(sessionStorage.getItem(key)!)),
   );
-  expect(stored).toEqual([{ objective: 'Unsent customer objective' }]);
+  expect(stored).toEqual([
+    {
+      objective: 'Unsent customer objective',
+      decisionCriteria: 'Customer-stated quality criteria',
+    },
+  ]);
+  await page.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('assessment');
+  await page
+    .locator('input[name="evidence_completeness.requirement"]')
+    .fill('Current evidence requirement');
+  await page
+    .locator('input[name="evidence_completeness.basis"]')
+    .fill('Operator-stated assessment basis');
+  await page.locator('textarea[name="unknowns"]').fill('Unsent unknown conditions');
+  await page.reload();
+  await open();
+  await page.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('assessment');
+  await expect(page.locator('input[name="evidence_completeness.requirement"]')).toHaveValue(
+    'Current evidence requirement',
+  );
+  await expect(page.locator('input[name="evidence_completeness.basis"]')).toHaveValue(
+    'Operator-stated assessment basis',
+  );
+  await expect(page.locator('textarea[name="unknowns"]')).toHaveValue('Unsent unknown conditions');
+  await page.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('schedule');
+  await page.locator('input[name="timezone"]').fill('Europe/Madrid');
+  await page.locator('input[name="note"]').fill('Unsent logistics note');
+  await page.reload();
+  await open();
+  await page.getByRole('combobox', { name: 'Next task', exact: true }).selectOption('schedule');
+  await expect(page.locator('input[name="timezone"]')).toHaveValue('Europe/Madrid');
+  await expect(page.locator('input[name="note"]')).toHaveValue('Unsent logistics note');
 });
