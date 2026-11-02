@@ -113,22 +113,28 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Transactional accepted-quote inbox lookup, stable email hand-off after commit and retry recovery implemented locally. 32 PostgreSQL tests passed; CI, release and protected installation pending.",
-        "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+        "summary": "PR234 deployed at0fd21d9 after19 passing checks. Real-mode verification then reproduced a recipient-purpose mismatch. Additive0004 corrects it locally;40 PostgreSQL tests across real/synthetic paths passed. Corrective CI/deployment and schema installation pending.",
+        "evidenceRevision": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap002-local.json"]
+            "evidence": ["verification/2026-11-02-gap002-real-purpose.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap002-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap002-real-purpose.json",
+              "verification/2026-11-02-gap002-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": [
+              "verification/2026-11-02-gap002-release.json",
+              "verification/2026-11-02-gap002-real-purpose.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -166,6 +172,18 @@
           "disposition": "OPEN",
           "note": "Transactional accepted-quote inbox lookup, stable email hand-off after commit and retry recovery implemented locally. 32 PostgreSQL tests passed; CI, release and protected installation pending.",
           "evidence": ["verification/2026-11-02-gap002-local.json"]
+        },
+        {
+          "eventId": "GAP-002-H003",
+          "recordedOn": "2026-11-02",
+          "type": "RELEASE_AND_CORRECTION",
+          "evidenceRevision": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+          "disposition": "OPEN",
+          "note": "PR234 deployed at0fd21d9 after19 passing checks. Real-mode verification then reproduced a recipient-purpose mismatch. Additive0004 corrects it locally;40 PostgreSQL tests across real/synthetic paths passed. Corrective CI/deployment and schema installation pending.",
+          "evidence": [
+            "verification/2026-11-02-gap002-release.json",
+            "verification/2026-11-02-gap002-real-purpose.json"
+          ]
         }
       ]
     },

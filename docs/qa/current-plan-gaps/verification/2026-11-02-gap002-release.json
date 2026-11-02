@@ -1,0 +1,20 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-002",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/234",
+  "testedHead": "6343a3bd1165a7d010b552b03bfcd2d79b753de8",
+  "ciRun": 41420452753,
+  "ciConclusion": "success",
+  "checks": 19,
+  "unpassedChecks": [],
+  "mergedRevision": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+  "productionDeployment": {
+    "id": "dpl_HTiciaXx3cFzjxxLu3AyRh72tucH",
+    "state": "READY",
+    "githubCommitSha": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2"
+  },
+  "limits": [
+    "Code deployment is proved; protected schema installation is not.",
+    "A subsequent real-workspace test reproduced a recipient-purpose mismatch; correction and new CI/release are required before acceptance."
+  ]
+}

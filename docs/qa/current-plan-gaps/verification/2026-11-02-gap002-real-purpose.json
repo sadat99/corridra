@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-002",
+  "baseRevision": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+  "testedWorkingTree": true,
+  "reproduction": {
+    "head": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+    "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/real-customer-modules.test.ts --maxWorkers=1 --no-file-parallelism",
+    "exit": 1,
+    "logSha256": "cdeed3a3e9355a9e1a5ac4c07db1ecaa9dd7fa8b96a6f0d362a9bda1f8e20c8a"
+  },
+  "defect": "Real intake memberships allow commercial_qualification only; migration0003 incorrectly required synthetic_validation. Acceptance commits but receipt lookup fails.",
+  "correction": "Additive migration0004 selects the tenant processing purpose without altering installed migration0003, memberships or other authorization checks.",
+  "verification": {
+    "head": "0fd21d9dc043192ec1782fd8bbdaabee00e6d6e2",
+    "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/real-customer-modules.test.ts tests/integration/customer-service-requests.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-pa",
+    "exit": 0,
+    "logSha256": "f63bc2c474de343840548a823d6650737f96d8ef165be9b9a6818d3fef451d76"
+  },
+  "testsPassed": 40,
+  "testFilesPassed": 3,
+  "scope": [
+    "Real acceptance and exact replay create one receipt for the real issuer",
+    "Real membership has commercial_qualification only",
+    "Original exact money and no-payment assertions retained",
+    "All synthetic authorization, role, revocation, recovery and rollback tests retained",
+    "Migration history/idempotency tested through0004"
+  ],
+  "limits": [
+    "No production database accessed or provider messages sent.",
+    "Frozen-head CI, corrective deployment and protected schema installation pending."
+  ]
+}
