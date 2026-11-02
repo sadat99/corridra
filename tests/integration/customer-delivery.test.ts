@@ -21,16 +21,9 @@ import { DeliveryService } from '../../packages/delivery/src/index';
 import { CustomerDeliveryService } from '../../packages/delivery/src/customer-delivery';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { InboxService } from '../../packages/communications/src/inbox';
+import { CustomerInboxService } from '../../apps/web/lib/customer-inbox';
 const reportReceipts: string[] = [];
-class DeliveryInboxReader extends CustomerAssignedMissionService {
-  items(id: string) {
-    return this.transaction(
-      async (db) =>
-        (await db.query('SELECT id,type,payload FROM app.inbox_notification WHERE id=$1', [id]))
-          .rows,
-    );
-  }
-}
+
 const issuer =
     'https://ep-account-delivery-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
   options = { enabled: true, synthetic: true, production: false, issuer };
@@ -582,11 +575,17 @@ test('expired customer proof during original save lock wait creates no bookmark 
 });
 test('report notifications are requester-only and other publishers cannot resolve the private recipient', async () => {
   const reader = (person: string) =>
-    new DeliveryInboxReader(f.runtime, f.auth, options, async () => session(person));
-  expect(await reader('alice').items(reportReceipts[0])).toMatchObject([
-    { type: 'REPORT_PUBLISHED' },
-  ]);
-  expect(await reader('bob').items(reportReceipts[0])).toEqual([]);
+    new CustomerInboxService(
+      f.runtime,
+      f.auth,
+      options,
+      async () => session(person),
+      new InboxService(f.runtime),
+    );
+  expect(
+    (await reader('alice').list()).filter((item) => item.id === reportReceipts[0]),
+  ).toMatchObject([{ type: 'REPORT_PUBLISHED' }]);
+  expect((await reader('bob').list()).filter((item) => item.id === reportReceipts[0])).toEqual([]);
   for (const role of ['operator', 'reviewer', 'viewer', 'other', 'outsider']) {
     await expect(
       rawContext(f.runtime, f.users[role].ctx, 'SELECT app.record_report_published($1)', [
@@ -604,6 +603,45 @@ test('report notifications are requester-only and other publishers cannot resolv
     ]),
   ).rejects.toMatchObject({ code: '42501' });
 });
+test('customer inbox marks only the recipient item and rejects changed, missing or unverified identity', async () => {
+  const inbox = new InboxService(f.runtime);
+  const customer = new CustomerInboxService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('alice'),
+    inbox,
+  );
+  const other = new CustomerInboxService(
+    f.runtime,
+    f.auth,
+    options,
+    async () => session('bob'),
+    inbox,
+  );
+  expect(await other.markRead(reportReceipts[0])).toBe(false);
+  expect(await customer.markRead(reportReceipts[0])).toBe(true);
+  expect(await customer.markRead(reportReceipts[0])).toBe(false);
+  expect((await customer.list()).find((item) => item.id === reportReceipts[0])?.readAt).toEqual(
+    expect.any(String),
+  );
+  await expect(customer.list(session('bob').subject, issuer)).rejects.toMatchObject({
+    status: 409,
+  });
+  await expect(
+    new CustomerInboxService(f.runtime, f.auth, options, async () => null, inbox).list(),
+  ).rejects.toMatchObject({ status: 401 });
+  await expect(
+    new CustomerInboxService(
+      f.runtime,
+      f.auth,
+      options,
+      async () => ({ ...session(), emailVerified: false }),
+      inbox,
+    ).list(),
+  ).rejects.toMatchObject({ status: 403 });
+});
+
 test('notification SQL failure preserves delivery and exact replay recovers its receipt; email failure preserves it too', async () => {
   const l = await share();
   const value = { ...input(), linkId: l.id };

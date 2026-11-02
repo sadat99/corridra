@@ -1,0 +1,18 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-003",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/236",
+  "testedHead": "41f0ab55ee3dc0bdf63355e98bda366b0f1f4cc3",
+  "ciRun": 41431528790,
+  "ciConclusion": "success",
+  "checks": 19,
+  "unpassedChecks": [],
+  "mergedRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+  "productionDeployment": {
+    "id": "dpl_JBFk4BXdSYTu7cHidKdxs38kKLCD",
+    "state": "READY",
+    "githubCommitSha": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+    "alias": "corridra.vercel.app"
+  },
+  "limits": ["Migration0005 installation, runtime activation and live acceptance remain pending."]
+}

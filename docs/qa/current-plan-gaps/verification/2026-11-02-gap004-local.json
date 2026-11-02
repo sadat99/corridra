@@ -1,0 +1,56 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-004",
+  "baseRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+  "testedWorkingTree": true,
+  "accessVerification": {
+    "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-delivery.test.ts tests/integration/real-assigned-missions.test.ts tests/integration/commercial-readiness-database.test.ts tests/integration/inbox-routes.tes",
+    "exit": 0,
+    "logSha256": "f02def45f05d5a8a685d81eb0b5673a1ad8894a176e9b26ef19b013ff52accf2"
+  },
+  "testsPassed": 41,
+  "testFilesPassed": 4,
+  "typecheck": {
+    "command": "pnpm typecheck",
+    "exit": 0,
+    "logSha256": "fcc3065a6cd6ebca5f6ea469a0b9c6a4259dd41efed89739669d777660a05aa4"
+  },
+  "scope": [
+    "Fresh verified customer boundary reuses recipient RLS within one transaction",
+    "Real and synthetic requester-only list/mark-read; changed/missing/unverified accounts denied",
+    "Nonmember contributor reads its own account-wide inbox without a selected team workspace",
+    "Separate HTTP boundaries, strict body/query, origin, size, JSON and closed-switch handling",
+    "Customer/contributor AppHeader endpoint separation and mark-read protocol",
+    "Customer private items cleared on session-denial refresh",
+    "Compiled inaccessible customer-inbox response has no-store, no-referrer and nosniff",
+    "Actual contributor route and account-wide inbox using the seeded local staff identity at1280px"
+  ],
+  "limits": [
+    "Frozen-head CI and production deployment pending.",
+    "Customer UI browser cases are component protocol fixtures. Customer service isolation is separately proved with real database roles and provider-session fixtures; no genuine live provider journey is claimed.",
+    "Actual contributor route uses the seeded local QA identity; nonmember identity isolation is separately proved in PostgreSQL.",
+    "Pinned CI browser/runtime must pass the final-head release gates.",
+    "The interrupted first build and failed standalone fixture runs are not counted as passed."
+  ],
+  "build": {
+    "head": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+    "command": "pnpm build",
+    "exit": 0,
+    "logSha256": "0e264af53e1ca599dd605a0edde687a5c84762487aa01bf70d7dc52aecbc7642"
+  },
+  "browserProtocol": {
+    "head": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+    "command": "node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-saved-commercial-ui.spec.ts --grep GAP-004 --output test-results/gap004-inbox-protocol-final",
+    "exit": 0,
+    "logSha256": "ed0579107a52ce891d2f4ba7ace676eb31837e20ce40a4d8a4cdfe8e8a783a3e"
+  },
+  "actualContributorRoute": {
+    "head": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+    "command": "node_modules/.bin/playwright test --config playwright.verification.config.ts tests/e2e/verification/ws-e/team-shell.spec.ts --project w1280 --output test-results/gap004-actual-shell",
+    "exit": 0,
+    "logSha256": "99821b149acaff4ad3cc715fa731b429bf4a41f4ede98e4801a83c86250bf823"
+  },
+  "browserProtocolTestsPassed": 4,
+  "actualRouteTestsPassed": 2,
+  "browserRuntime": "System Chromium151.0.7922.173; Playwright1.64.1. Restart removed the prior runtime and the pinned CDN download returned403 Domain forbidden; existing /usr/bin/chromium was used."
+}

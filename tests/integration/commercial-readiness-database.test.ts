@@ -152,4 +152,28 @@ describe('inbox privacy', () => {
       ),
     ).rejects.toMatchObject({ code: '23514' });
   });
+  test('a contributor identity needs no staff membership or selected team workspace to read its own inbox', async () => {
+    const { owner, outsider, operator } = f.users;
+    const id = (
+      await rawContext(
+        f.runtime,
+        owner.ctx,
+        "SELECT app.inbox_record('staff',$1,$2,'CONTRIBUTOR_INVITE','{\"title\":\"Assigned work invitation\"}'::jsonb) id",
+        [outsider.id, f.tenantA],
+      )
+    ).rows[0].id;
+    const { InboxService } = await import('../../packages/communications/src/inbox');
+    const inbox = new InboxService(f.runtime);
+    expect(
+      (await inbox.list({ kind: 'staff', ctx: { ...outsider.ctx, tenantId: '' } })).filter(
+        (item) => item.id === id,
+      ),
+    ).toMatchObject([{ type: 'CONTRIBUTOR_INVITE' }]);
+    expect(
+      await inbox.markRead({ kind: 'staff', ctx: { ...operator.ctx, tenantId: '' } }, id),
+    ).toBe(false);
+    expect(
+      await inbox.markRead({ kind: 'staff', ctx: { ...outsider.ctx, tenantId: '' } }, id),
+    ).toBe(true);
+  });
 });

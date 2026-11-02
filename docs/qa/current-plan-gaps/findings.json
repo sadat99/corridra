@@ -33,7 +33,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Implementation merged in PR233; exact-head CI passed and production revision 289abc7 is READY. Protected schema installation and live activation acceptance remain pending.",
+        "summary": "Code merged and deployed; owner-approved protected installer applied migrations0002–0004. Runtime switch values, private live acceptance and provider delivery remain unverified.",
         "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
@@ -54,12 +54,12 @@
             "evidence": ["verification/2026-11-02-gap001-release.json"]
           },
           "activation": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -97,6 +97,15 @@
           "disposition": "OPEN",
           "note": "Implementation merged in PR233; exact-head CI passed and production revision 289abc7 is READY. Protected schema installation and live activation acceptance remain pending.",
           "evidence": ["verification/2026-11-02-gap001-release.json"]
+        },
+        {
+          "eventId": "GAP-001-H004",
+          "recordedOn": "2026-11-02",
+          "type": "SCHEMA_INSTALLED",
+          "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+          "disposition": "OPEN",
+          "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
+          "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
         }
       ]
     },
@@ -113,7 +122,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Request-owner and real-purpose corrections merged in PR235 after19 passing checks; exact production revision9647b61 is READY.40 real/synthetic PostgreSQL tests passed. Protected schema installation and live acceptance remain pending.",
+        "summary": "Code merged and deployed; owner-approved protected installer applied migrations0002–0004. Runtime switch values, private live acceptance and provider delivery remain unverified.",
         "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
@@ -134,12 +143,12 @@
             "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
           },
           "activation": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -199,6 +208,15 @@
           "disposition": "OPEN",
           "note": "Request-owner and real-purpose corrections merged in PR235 after19 passing checks; exact production revision9647b61 is READY.40 real/synthetic PostgreSQL tests passed. Protected schema installation and live acceptance remain pending.",
           "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
+        },
+        {
+          "eventId": "GAP-002-H006",
+          "recordedOn": "2026-11-02",
+          "type": "SCHEMA_INSTALLED",
+          "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+          "disposition": "OPEN",
+          "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
+          "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
         }
       ]
     },
@@ -215,30 +233,33 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Transactional report-published inbox hand-off implemented with current reviewed-delivery authorization and recipient-only lookup.34 real/synthetic PostgreSQL tests pass. CI, deployment, schema installation and live acceptance pending.",
-        "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+        "summary": "PR236 merged/deployed at9bfac1b after19 passing checks. Owner-approved protected installer subsequently applied migration0005. Runtime switch values and private live acceptance remain unverified.",
+        "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap003-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-02-gap003-release.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap003-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap003-local.json",
+              "verification/2026-11-02-gap003-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "READY",
+            "evidence": ["verification/2026-11-02-gap003-release.json"]
           },
           "activation": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -268,6 +289,24 @@
           "disposition": "OPEN",
           "note": "Transactional report-published inbox hand-off implemented with current reviewed-delivery authorization and recipient-only lookup.34 real/synthetic PostgreSQL tests pass. CI, deployment, schema installation and live acceptance pending.",
           "evidence": ["verification/2026-11-02-gap003-local.json"]
+        },
+        {
+          "eventId": "GAP-003-H003",
+          "recordedOn": "2026-11-02",
+          "type": "MERGED_DEPLOYED",
+          "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+          "disposition": "OPEN",
+          "note": "PR236 merged after19 passing checks; exact production revision9bfac1b is READY. Migration0005 installation, runtime activation and live acceptance pending.",
+          "evidence": ["verification/2026-11-02-gap003-release.json"]
+        },
+        {
+          "eventId": "GAP-003-H004",
+          "recordedOn": "2026-11-02",
+          "type": "SCHEMA_INSTALLED",
+          "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+          "disposition": "OPEN",
+          "note": "Owner-approved protected installer advanced the commercial readiness registry from4 to5. Runtime/live acceptance remains unverified.",
+          "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
         }
       ]
     },
@@ -284,18 +323,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`api/notifications/route.ts:23` authenticates staff only; `components/ux/app-header.tsx:108` mounts the inbox only for team. Customer proof support already exists in `packages/communications/src/inbox.ts:67`, and customer RLS exists in `commercial-readiness-migrations/0001_inbox_and_links.sql:27`. `/contributor` uses staff identity; `lib/ux/shells.ts:22` and `components/ux/shell-header.tsx:27` select its excluded shell. Contributor presentation/context integration is missing; a missing contributor backend is not established, and its runtime inbox access remains unverified.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Customer proof-backed inbox API and customer/contributor header wiring implemented;41 access tests, four browser protocol cases, two actual-route verification cases, production build and type checks passed locally. Frozen CI and deployment pending.",
+        "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-004"]
+            "evidence": ["verification/2026-11-02-gap004-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap004-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -328,6 +367,24 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-004-H002",
+          "recordedOn": "2026-11-02",
+          "type": "WORK_STARTED",
+          "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+          "disposition": "OPEN",
+          "note": "Customer proof-backed inbox API and customer/contributor header wiring implemented locally;41 real/synthetic database and HTTP-boundary tests passed. Build/browser checks, frozen CI and deployment pending.",
+          "evidence": ["verification/2026-11-02-gap004-local.json"]
+        },
+        {
+          "eventId": "GAP-004-H003",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+          "disposition": "OPEN",
+          "note": "Customer proof-backed inbox API and customer/contributor header wiring implemented;41 access tests, four browser protocol cases, two actual-route verification cases, production build and type checks passed locally. Frozen CI and deployment pending.",
+          "evidence": ["verification/2026-11-02-gap004-local.json"]
         }
       ]
     },

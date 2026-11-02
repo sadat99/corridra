@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 
 // The signed-in team member's own inbox (commercial readiness program, D7). GET lists items; POST
-// marks one as read. Off (404) until CORRIDRA_NOTIFICATIONS_V2 is on. Customer inbox reads are added
-// by WS-E through the customer proof. Owner after Wave 0: WS-E.
+// marks one as read. Contributors use the same staff identity and recipient RLS, without a team workspace.
+// Off (404) until CORRIDRA_NOTIFICATIONS_V2 is on. Customers use /api/customer-inbox.
 async function handle(request: Request) {
   try {
     if (!notificationsOn()) throw new DomainError('Not found', 404);
@@ -22,7 +22,9 @@ async function handle(request: Request) {
       throw new DomainError('Request origin is not allowed');
     const identity = await s.provider.getSession(request.headers);
     if (!identity) throw new DomainError('Sign in to continue', 401);
-    const tenantId = z.uuid().parse(new URL(request.url).searchParams.get('tenant'));
+    const selected = new URL(request.url).searchParams.get('tenant');
+    // An inbox is account-wide. Empty means no selected workspace, never an invented tenant.
+    const tenantId = selected === null ? '' : z.uuid().parse(selected);
     const who = {
       kind: 'staff' as const,
       ctx: { token: identity.token, tenantId, purpose: 'synthetic_validation' },
