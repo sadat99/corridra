@@ -240,12 +240,15 @@ test('decline, cancellation, no-show and deliberate rescheduling preserve prior 
       ...next(),
     }),
   );
+  const nextStart = new Date(Date.now() + 86400000);
+  nextStart.setUTCSeconds(0, 0);
+  const nextEnd = new Date(nextStart.getTime() + 1800000);
   const nextSchedule = {
-    startsAt: '2026-11-02T10:00:00+01:00',
-    endsAt: '2026-11-02T10:30:00+01:00',
+    startsAt: nextStart.toISOString(),
+    endsAt: nextEnd.toISOString(),
     timezone: 'Europe/Madrid',
-    localStart: '2026-11-02T10:00',
-    localEnd: '2026-11-02T10:30',
+    localStart: localWallTime(nextStart, 'Europe/Madrid'),
+    localEnd: localWallTime(nextEnd, 'Europe/Madrid'),
     location: 'Rescheduled synthetic room',
   };
   await f.meetings.command(
