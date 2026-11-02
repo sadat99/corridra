@@ -1175,6 +1175,26 @@ test('accepted quote hand-off resolves only its active issuer, deduplicates retr
   await rawContext(
     f.owner,
     staffCtx(),
+    'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+    [f.tenantA, f.users.owner.id, 'viewer'],
+  );
+  try {
+    expect(
+      await rawProof((db) =>
+        db.query('SELECT customer.record_quote_accepted($1)', [command.commandId]),
+      ),
+    ).toMatchObject({ code: '42501' });
+  } finally {
+    await rawContext(
+      f.owner,
+      staffCtx(),
+      'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, f.users.owner.id, 'owner'],
+    );
+  }
+  await rawContext(
+    f.owner,
+    staffCtx(),
     'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2',
     [f.tenantA, f.users.owner.id],
   );

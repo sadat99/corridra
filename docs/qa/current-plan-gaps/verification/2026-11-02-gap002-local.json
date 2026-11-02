@@ -1,18 +1,18 @@
 {
   "recordedOn": "2026-11-02",
   "finding": "GAP-002",
-  "baseRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+  "baseRevision": "329a7322a283e9998f1504499919b7e39f2abfc8",
   "testedWorkingTree": true,
   "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-service-requests.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-parallelism",
   "exit": 0,
   "testsPassed": 32,
   "testFilesPassed": 2,
-  "logSha256": "f731402bf4601a53f445fef0d4298d8aa2b51b937fd55f23f712181215080568",
+  "logSha256": "4b6a08a79ddb43692c848b6a6631c44f458a677a696fd9c42fb6d2e6424b3492",
   "scope": [
     "Accepted-quote issuer lookup with active membership",
     "Concurrent and exact retry deduplication",
     "Denied unauthenticated, auth-role, other-customer and revoked-recipient lookups",
-    "Recipient-only inbox reads",
+    "Recipient role, country, purpose and classification checked; revoked/demoted recipients denied; recipient rows locked until commit",
     "SQL failure preserves acceptance and replay recovers receipt",
     "Email failure preserves acceptance",
     "Deferred commit failure leaves no receipt or dispatch"
@@ -20,5 +20,23 @@
   "limits": [
     "No provider messages sent.",
     "Frozen-head CI, protected schema installation and production acceptance pending."
+  ],
+  "runs": [
+    {
+      "baseRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-service-requests.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exit": 0,
+      "testsPassed": 32,
+      "testFilesPassed": 2,
+      "logSha256": "f731402bf4601a53f445fef0d4298d8aa2b51b937fd55f23f712181215080568"
+    },
+    {
+      "baseRevision": "329a7322a283e9998f1504499919b7e39f2abfc8",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/customer-service-requests.test.ts tests/integration/commercial-readiness-database.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exit": 0,
+      "testsPassed": 32,
+      "testFilesPassed": 2,
+      "logSha256": "4b6a08a79ddb43692c848b6a6631c44f458a677a696fd9c42fb6d2e6424b3492"
+    }
   ]
 }

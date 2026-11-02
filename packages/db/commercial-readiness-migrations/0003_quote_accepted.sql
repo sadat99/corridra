@@ -16,7 +16,10 @@ BEGIN
  JOIN identity."user" u ON u.id=p.identity_id
  JOIN app.membership m ON m.user_id=p.id AND m.tenant_id=q.staff_tenant_id AND m.revoked_at IS NULL
  WHERE c.actor_id=actor AND c.command_id=command AND c.operation='accept'
- AND customer_private.service_request_role(r.tenant_id,actor)='writer';
+ AND customer_private.service_request_role(r.tenant_id,actor)='writer'
+ AND m.role IN ('owner','admin') AND p.operating_country=ANY(m.allowed_countries)
+ AND 'INTERNAL'=ANY(m.allowed_classifications) AND 'synthetic_validation'=ANY(m.allowed_purposes)
+ FOR SHARE OF p,u,m;
  IF NOT FOUND THEN RAISE EXCEPTION 'Accepted quote recipient unavailable' USING ERRCODE='42501'; END IF;
  body:=jsonb_build_object('title','Your quote was accepted','href','/operator?workspace='||accepted.tenant::text);
  INSERT INTO app.inbox_notification(tenant_id,recipient_kind,recipient_account_id,type,event_key,payload)
