@@ -1,0 +1,23 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-006",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/240",
+  "testedHead": "bc3d4e61520216b89ef1e056b7fa920b61abb729",
+  "ciRun": 41509736910,
+  "codeqlRun": 41509737060,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
+  "productionDeployment": {
+    "id": "dpl_4nDRahq7YxCy7RJbGqRYnE7D8v6E",
+    "state": "READY",
+    "githubCommitSha": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
+    "alias": "corridra.vercel.app"
+  },
+  "closureAcceptance": "Representative programme and commercial text recover after reload without persisted money or server-owned record payloads. Row/version isolation and fresh-access denial are retained.",
+  "limits": [
+    "Resolution covers the selected text-draft engineering criterion. Genuine provider/commercial activation and cross-device recovery are separate findings, not inferred here.",
+    "The initial partial release and two reproduced omissions remain preserved in earlier evidence/history."
+  ]
+}

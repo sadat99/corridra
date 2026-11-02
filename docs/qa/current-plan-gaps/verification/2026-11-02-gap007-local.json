@@ -1,0 +1,125 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-007",
+  "testedHead": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+  "testedWorkingTree": true,
+  "sourceSha256": {
+    "packages/db/customer-real-use-migrations/0012_participant_invitation_email.sql": "8b6c0e44158397910f93576cdee2d2074ad1e510bc656b419a673943ec55bd73",
+    "packages/auth/src/customer-participants.ts": "bd195e50e1b43a2d18091603f9b02bfb9c234a811bf01cea12a3f2cb9fc78923",
+    "apps/web/lib/notify.ts": "5cb98e7dc6a1a028a7c47a1e5c2974bb8c605a65c08e05949e7d1ff42162f70c",
+    "apps/web/lib/foundations.ts": "6d182855f7c36cbc5cc9188af649ebcfe68e45bc2b06577ae155f1b46b8dddf8",
+    "apps/web/app/account/delegations/programme-participants.tsx": "dce37043ac24156e6f6838d5e650dd6692f1f086240430f320f58c3b2c19cd1e",
+    "apps/web/app/account/delegations/participant-client.ts": "a814ded5e3ffe9d839fe62445bc7e323ceacd4a3ac0af6d9e576d9f04a179b81",
+    "tests/integration/real-customer-modules.test.ts": "bfe5a6eb88755b39fc24139ad84a0d30f434923c215260619a16dec663bfd521",
+    "tests/integration/participant-invitation-mail.test.ts": "90720e12fec9ec80e4e1df5f48f9815f6d2c35d246ce1d1ac44ac7856284ecea",
+    "tests/operator/v3-customer-participants-ui.spec.ts": "2aa615ca6b7aa48421ef2cc093d3ed7be32528fd3394b39513d5f9164a454b86"
+  },
+  "receipts": {
+    "db-mail-confirmed": {
+      "name": "gap007-db-mail-confirmed",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/real-customer-modules.test.ts tests/integration/customer-participants.test.ts tests/integration/participant-invitation-mail.test.ts tests/integration/real-use-preser",
+      "exit": 0,
+      "signal": null,
+      "seconds": 12.1,
+      "logBytes": 170,
+      "logSha256": "77d0ad84d75ef45a7975fa8292532ef3db0b72886caf616f748488714d789c1d",
+      "head": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+      "changedPaths": 10,
+      "log": "work/gap007-db-mail-confirmed-2026-11-02T18-43-44-130Z.log"
+    },
+    "final-real-db": {
+      "name": "gap007-final-real-db",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/vitest run tests/integration/real-customer-modules.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 4.8,
+      "logBytes": 169,
+      "logSha256": "28f536baec09526e97bfcbe4f3df0597a9d4103c213bb5dee07dbe4324615d02",
+      "head": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+      "changedPaths": 10,
+      "log": "work/gap007-final-real-db-2026-11-02T18-45-40-091Z.log"
+    },
+    "invitation-ui-final": {
+      "name": "gap007-invitation-ui-final",
+      "command": "node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-customer-participants-ui.spec.ts --output test-results/gap007-invitation-ui-final",
+      "exit": 0,
+      "signal": null,
+      "seconds": 30,
+      "logBytes": 3374,
+      "logSha256": "4b872bb8fc540b5332bb2c7662868907199b41363de88f5b184a0a31a8046620",
+      "head": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+      "changedPaths": 10,
+      "log": "work/gap007-invitation-ui-final-2026-11-02T18-42-37-521Z.log"
+    },
+    "types": {
+      "name": "gap007-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 19.4,
+      "logBytes": 219,
+      "logSha256": "a959b2658e4f09b47b8a6f04db5f3ce90cd3d98079210fc46016f828f7a50dc4",
+      "head": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+      "changedPaths": 10,
+      "log": "work/gap007-types-2026-11-02T18-44-15-699Z.log"
+    },
+    "format": {
+      "name": "gap007-format",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "signal": null,
+      "seconds": 31.9,
+      "logBytes": 87,
+      "logSha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+      "head": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+      "changedPaths": 14,
+      "log": "work/gap007-format-2026-11-02T18-48-30-796Z.log"
+    }
+  },
+  "databaseMailVerification": {
+    "passed": 36,
+    "files": 4,
+    "finalRealModuleSubsetPassed": 13,
+    "scope": [
+      "Real and synthetic recipient storage; digest-only canonical request; exact retry never creates or recovers a code",
+      "No automatic mail; explicit failure/retry preserves invitation and stable provider key",
+      "Fresh manager/scope/code required; foreign account, wrong scope/code, unacknowledged input, expired provider/invitation, accepted/revoked invitations and missing address denied",
+      "Runtime private-table read and auth-role lookup denied",
+      "Code/address absent from public list/email response/logs; no fabricated inbox account",
+      "Existing acceptance and real-use preservation retained"
+    ]
+  },
+  "browserVerification": {
+    "passed": 13,
+    "files": 1,
+    "runtime": "System Chromium 151.0.7922.173; Playwright 1.64.1",
+    "scope": [
+      "Optional address submitted on creation only",
+      "Explicit email uses original visible code and no browser-selected recipient",
+      "Retry does not reissue invitation",
+      "Code/address absent from browser storage; code clears when hidden",
+      "All12 existing participant protocol/accessibility cases retained"
+    ]
+  },
+  "focusedLint": {
+    "exit": 0,
+    "maxWarnings": 0,
+    "paths": [
+      "packages/auth/src/customer-participants.ts",
+      "apps/web/lib/notify.ts",
+      "apps/web/lib/foundations.ts",
+      "apps/web/app/account/delegations/programme-participants.tsx",
+      "apps/web/app/account/delegations/participant-client.ts",
+      "tests/integration/real-customer-modules.test.ts",
+      "tests/integration/participant-invitation-mail.test.ts",
+      "tests/operator/v3-customer-participants-ui.spec.ts"
+    ]
+  },
+  "blastRadius": "Additive real-use0012 validates/stores optional invitation address and adds a narrowly scoped recipient function. Canonical request stores its digest. Acceptance/revocation, proof/MFA, RLS, money and event meaning remain unchanged. Existing mail transport runs after explicit user action and fresh authorization.",
+  "limits": [
+    "Frozen-head CI, deployment and protected0012 installation pending.",
+    "Provider is stubbed; actual delivery remains unverified.",
+    "Earlier retry UI failure and refused immutable-row fixture update are not passing evidence; final corrected checks passed.",
+    "Address is optional; existing code-only invitations remain valid. Lost codes still require replacement."
+  ]
+}

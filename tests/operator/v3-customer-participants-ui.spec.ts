@@ -615,3 +615,76 @@ test('unsent participant input has an actual interrupted-navigation warning rath
     token,
   );
 });
+
+test('GAP-007 stores an optional address, explicitly emails the visible code and retries without reissuing', async ({
+  page,
+}) => {
+  const posts: Record<string, unknown>[] = [];
+  let issued = false,
+    emails = 0;
+  await page.route('**/api/customer-programme-participants*', (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: manage(issued ? [invitation()] : []) });
+    const input = route.request().postDataJSON();
+    posts.push(input);
+    if (input.action === 'emailInvitation') {
+      emails++;
+      return route.fulfill({
+        json: {
+          id: invitationId,
+          programmeId,
+          synthetic: true,
+          email: emails === 1 ? 'not_sent' : 'sent',
+        },
+      });
+    }
+    issued = true;
+    return route.fulfill({
+      json: {
+        id: invitationId,
+        programmeId,
+        synthetic: true,
+        issued: true,
+        token,
+        expiresAt: expires(),
+        canEmail: true,
+      },
+    });
+  });
+  await page.goto(origin + '?mode=owner');
+  await page
+    .getByRole('textbox', { name: 'Participant email (optional)', exact: true })
+    .fill('participant@example.test');
+  await page.getByRole('checkbox', { name: /share this sample code/ }).check();
+  await page.getByRole('button', { name: 'Create sample invitation code', exact: true }).click();
+  await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
+    token,
+  );
+  expect(posts).toHaveLength(1);
+  expect(posts[0].recipientEmail).toBe('participant@example.test');
+  await page.getByRole('button', { name: 'Email invitation', exact: true }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'The email was not sent.' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
+    token,
+  );
+  await page.getByRole('button', { name: 'Email invitation', exact: true }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Invitation email sent.' }),
+  ).toBeVisible();
+  expect(posts.filter((p) => p.action === 'invite')).toHaveLength(1);
+  for (const p of posts.filter((p) => p.action === 'emailInvitation')) {
+    expect(p.token).toBe(token);
+    expect(p.invitationId).toBe(invitationId);
+    expect(p.recipientEmail).toBeUndefined();
+  }
+  const storage = await page.evaluate(() =>
+    JSON.stringify({ session: { ...sessionStorage }, local: { ...localStorage } }),
+  );
+  expect(storage).not.toContain(token);
+  expect(storage).not.toContain('participant@example.test');
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Email invitation', exact: true })).toHaveCount(0);
+});

@@ -149,6 +149,19 @@ export function parseParticipantResult(value: unknown, payload: ParticipantComma
     };
   }
   if (!isUuid(value.id)) throw Error('Unconfirmed participant response');
+  if (payload.action === 'emailInvitation') {
+    if (
+      value.id !== payload.invitationId ||
+      !['sent', 'not_sent', 'off'].includes(String(value.email))
+    )
+      throw Error('Unconfirmed invitation email');
+    return {
+      action: 'emailInvitation',
+      id: value.id,
+      programmeId: value.programmeId,
+      email: value.email,
+    };
+  }
   if (payload.action === 'invite') {
     if (
       !date(value.expiresAt) ||
@@ -167,6 +180,7 @@ export function parseParticipantResult(value: unknown, payload: ParticipantComma
       expiresAt: value.expiresAt,
       issued: value.issued,
       token: value.issued ? value.token : null,
+      canEmail: value.canEmail === true,
     };
   }
   const expected =
@@ -370,7 +384,7 @@ export function useParticipantView(
       writing.current = true;
       setBusy(true);
       setNotice('');
-      setResult(null);
+      if (command.action !== 'emailInvitation') setResult(null);
       const task = new AbortController();
       post.current = task;
       try {
@@ -423,27 +437,37 @@ export function useParticipantView(
         }
         if (command.action === 'preview')
           previewName.current = typeof value.name === 'string' ? value.name : null;
-        setResult({
-          ...value,
-          ...(command.action === 'preview' ? { requestToken: command.token } : {}),
-        });
+        setResult((old) =>
+          command.action === 'emailInvitation'
+            ? old?.action === 'invite' && old.id === value.id
+              ? { ...old, email: value.email }
+              : null
+            : {
+                ...value,
+                ...(command.action === 'preview' ? { requestToken: command.token } : {}),
+              },
+        );
         if (command.action !== 'preview') {
           onOutcome?.(command);
           intent.current = null;
           setPending(null);
           writing.current = false;
           setNotice(
-            command.action === 'invite'
-              ? value.issued
-                ? realCustomerInput()
-                  ? 'The invitation code is ready. Copy it and send it to the participant yourself.'
-                  : 'The sample invitation code is ready. No message was sent.'
-                : 'The invitation already exists. Its code cannot be shown again; create a replacement code.'
-              : command.action === 'accept'
-                ? previewName.current
-                  ? `You’re registered for ${previewName.current}.`
-                  : 'You’re registered for this programme.'
-                : 'The programme access change is saved. Check the updated list.',
+            command.action === 'emailInvitation'
+              ? value.email === 'sent'
+                ? 'Invitation email sent.'
+                : 'The email was not sent. Retry the email or copy the code and share it yourself.'
+              : command.action === 'invite'
+                ? value.issued
+                  ? realCustomerInput()
+                    ? 'The invitation code is ready. Copy it and send it to the participant yourself.'
+                    : 'The sample invitation code is ready. No message was sent.'
+                  : 'The invitation already exists. Its code cannot be shown again; create a replacement code.'
+                : command.action === 'accept'
+                  ? previewName.current
+                    ? `You’re registered for ${previewName.current}.`
+                    : 'You’re registered for this programme.'
+                  : 'The programme access change is saved. Check the updated list.',
           );
           await load(undefined, undefined, true);
         }

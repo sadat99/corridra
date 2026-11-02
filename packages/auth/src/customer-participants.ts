@@ -1,8 +1,12 @@
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { sessionHash } from '@corridra/db';
-import { CustomerSessionBoundary } from './customer-session';
+import { sessionHash, type DatabasePool } from '@corridra/db';
+import {
+  CustomerSessionBoundary,
+  type CustomerWorkspaceOptions,
+  type CustomerSession,
+} from './customer-session';
 import { customerProgrammesEnabled } from './customer-programmes';
 export function customerParticipantsEnabled(env: NodeJS.ProcessEnv = process.env) {
   return customerProgrammesEnabled(env) && env.CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED === 'true';
@@ -25,6 +29,21 @@ export const customerParticipantInput = z.discriminatedUnion('action', [
       ...scope,
       action: z.literal('invite'),
       label,
+      recipientEmail: z
+        .email()
+        .max(254)
+        .transform((value) => value.trim().toLowerCase())
+        .optional(),
+      acknowledged: z.literal(true),
+    })
+    .strict(),
+  z
+    .object({
+      ...command,
+      ...scope,
+      action: z.literal('emailInvitation'),
+      invitationId: z.uuid(),
+      token,
       acknowledged: z.literal(true),
     })
     .strict(),
@@ -73,7 +92,22 @@ const ownPage = z
     pageSize: z.coerce.number().int().min(1).max(25).default(25),
   })
   .strict();
+export type ParticipantInvitationMail = (input: {
+  id: string;
+  recipientEmail: string;
+  token: string;
+}) => Promise<'sent' | 'not_sent' | 'off'>;
 export class CustomerParticipantService extends CustomerSessionBoundary {
+  constructor(
+    runtime: DatabasePool,
+    auth: DatabasePool,
+    options: CustomerWorkspaceOptions,
+    readSession: () => Promise<CustomerSession | null>,
+    private invitationMail?: ParticipantInvitationMail,
+  ) {
+    super(runtime, auth, options, readSession);
+  }
+
   async preview(input: unknown, subject?: string, issuer?: string) {
     const value = z.object({ token }).strict().parse(input);
     return this.transaction(
@@ -89,6 +123,39 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
   }
   async command(input: unknown, subject?: string, issuer?: string) {
     const value = customerParticipantInput.parse(input);
+    if (value.action === 'emailInvitation') {
+      const receipt = await this.transaction(
+        async (db) =>
+          (
+            await db.query('SELECT customer.programme_invitation_email($1,$2,$3,$4) AS result', [
+              value.invitationId,
+              value.workspaceId,
+              value.programmeId,
+              sessionHash(value.token),
+            ])
+          ).rows[0].result,
+        subject,
+        issuer,
+      );
+      // The private code exists only in the visible request and provider message, never in stored events/inbox.
+      let email: 'sent' | 'not_sent' | 'off' = 'not_sent';
+      try {
+        email =
+          (await this.invitationMail?.({
+            id: receipt.id,
+            recipientEmail: receipt.recipientEmail,
+            token: value.token,
+          })) ?? 'not_sent';
+      } catch {
+        /* A failed email leaves the invitation usable. */
+      }
+      return {
+        id: receipt.id,
+        programmeId: receipt.programmeId,
+        synthetic: receipt.synthetic,
+        email,
+      };
+    }
     return this.transaction(
       async (db) => {
         const secret = value.action === 'invite' ? randomBytes(32).toString('base64url') : null;
@@ -107,7 +174,11 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
           ])
         ).rows[0].result;
         return action === 'invite'
-          ? { ...result, token: result.issued === true ? secret : null }
+          ? {
+              ...result,
+              token: result.issued === true ? secret : null,
+              canEmail: !!value.recipientEmail,
+            }
           : result;
       },
       subject,

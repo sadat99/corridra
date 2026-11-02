@@ -59,6 +59,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Mount effects start external work; update React state from settled async callbacks or user events, not synchronous mount helpers.
 - Discover read paths with `rg --files` before passing them to `sed` or `rg`; stop a read batch at a missing path instead of continuing with guessed names.
 - Use `set -euo pipefail` in batched commands with pipelines so a failed search producer cannot be concealed by a successful filter.
+- In discovery batches, treat rg exit 1 as a valid empty result (`rg ... || test "$?" -eq 1`); keep path/read errors fatal so an empty search does not discard unrelated reads.
 - Distinguish inventory entries from unique source files; compare against the stated baseline and inspect changed paths before claiming file preservation.
 - Do not count connector/share-link authentication errors as application permission-denial evidence; verify the actual application response separately.
 - Under pipefail, bound output with sed -n rather than head so SIGPIPE cannot abort a verification batch.

@@ -40,7 +40,9 @@
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
-            "evidence": ["verification/2026-11-02-gap001-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-release.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
@@ -51,15 +53,21 @@
           },
           "deployment": {
             "state": "READY",
-            "evidence": ["verification/2026-11-02-gap001-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-release.json"
+            ]
           },
           "activation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-002-schema-install.json"
+            ]
           },
           "approval": {
             "state": "APPROVED",
-            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-002-schema-install.json"
+            ]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -96,7 +104,9 @@
           "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
           "disposition": "OPEN",
           "note": "Implementation merged in PR233; exact-head CI passed and production revision 289abc7 is READY. Protected schema installation and live activation acceptance remain pending.",
-          "evidence": ["verification/2026-11-02-gap001-release.json"]
+          "evidence": [
+            "verification/2026-11-02-gap001-release.json"
+          ]
         },
         {
           "eventId": "GAP-001-H004",
@@ -105,7 +115,9 @@
           "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
           "disposition": "OPEN",
           "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
-          "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+          "evidence": [
+            "verification/2026-11-02-gap001-002-schema-install.json"
+          ]
         }
       ]
     },
@@ -129,7 +141,9 @@
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
-            "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap002-corrective-release.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
@@ -140,15 +154,21 @@
           },
           "deployment": {
             "state": "READY",
-            "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap002-corrective-release.json"
+            ]
           },
           "activation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-002-schema-install.json"
+            ]
           },
           "approval": {
             "state": "APPROVED",
-            "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap001-002-schema-install.json"
+            ]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -177,7 +197,9 @@
           "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
           "disposition": "OPEN",
           "note": "Transactional accepted-quote inbox lookup, stable email hand-off after commit and retry recovery implemented locally. 32 PostgreSQL tests passed; CI, release and protected installation pending.",
-          "evidence": ["verification/2026-11-02-gap002-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap002-local.json"
+          ]
         },
         {
           "eventId": "GAP-002-H003",
@@ -198,7 +220,9 @@
           "evidenceRevision": "0368c12aed502724089c128f72935649a6b7eb00",
           "disposition": "OPEN",
           "note": "PR234 is deployed. PR235 corrects real-workspace purpose and resolves the request staff owner across quote revisions; customer SQL returns no email.40 real/synthetic database tests pass. Corrective CI/deployment and protected installation pending.",
-          "evidence": ["verification/2026-11-02-gap002-real-purpose.json"]
+          "evidence": [
+            "verification/2026-11-02-gap002-real-purpose.json"
+          ]
         },
         {
           "eventId": "GAP-002-H005",
@@ -207,7 +231,9 @@
           "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
           "disposition": "OPEN",
           "note": "Request-owner and real-purpose corrections merged in PR235 after19 passing checks; exact production revision9647b61 is READY.40 real/synthetic PostgreSQL tests passed. Protected schema installation and live acceptance remain pending.",
-          "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
+          "evidence": [
+            "verification/2026-11-02-gap002-corrective-release.json"
+          ]
         },
         {
           "eventId": "GAP-002-H006",
@@ -216,7 +242,9 @@
           "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
           "disposition": "OPEN",
           "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
-          "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+          "evidence": [
+            "verification/2026-11-02-gap001-002-schema-install.json"
+          ]
         }
       ]
     },
@@ -240,7 +268,9 @@
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
-            "evidence": ["verification/2026-11-02-gap003-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap003-release.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
@@ -251,15 +281,21 @@
           },
           "deployment": {
             "state": "READY",
-            "evidence": ["verification/2026-11-02-gap003-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap003-release.json"
+            ]
           },
           "activation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap003-schema-install.json"
+            ]
           },
           "approval": {
             "state": "APPROVED",
-            "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
+            "evidence": [
+              "verification/2026-11-02-gap003-schema-install.json"
+            ]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -288,7 +324,9 @@
           "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
           "disposition": "OPEN",
           "note": "Transactional report-published inbox hand-off implemented with current reviewed-delivery authorization and recipient-only lookup.34 real/synthetic PostgreSQL tests pass. CI, deployment, schema installation and live acceptance pending.",
-          "evidence": ["verification/2026-11-02-gap003-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap003-local.json"
+          ]
         },
         {
           "eventId": "GAP-003-H003",
@@ -297,7 +335,9 @@
           "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
           "disposition": "OPEN",
           "note": "PR236 merged after19 passing checks; exact production revision9bfac1b is READY. Migration0005 installation, runtime activation and live acceptance pending.",
-          "evidence": ["verification/2026-11-02-gap003-release.json"]
+          "evidence": [
+            "verification/2026-11-02-gap003-release.json"
+          ]
         },
         {
           "eventId": "GAP-003-H004",
@@ -306,7 +346,9 @@
           "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
           "disposition": "OPEN",
           "note": "Owner-approved protected installer advanced the commercial readiness registry from4 to5. Runtime/live acceptance remains unverified.",
-          "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
+          "evidence": [
+            "verification/2026-11-02-gap003-schema-install.json"
+          ]
         }
       ]
     },
@@ -330,7 +372,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap004-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap004-local.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
@@ -341,7 +385,9 @@
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap004-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap004-release.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -378,7 +424,9 @@
           "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
           "disposition": "OPEN",
           "note": "Customer proof-backed inbox API and customer/contributor header wiring implemented locally;41 real/synthetic database and HTTP-boundary tests passed. Build/browser checks, frozen CI and deployment pending.",
-          "evidence": ["verification/2026-11-02-gap004-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap004-local.json"
+          ]
         },
         {
           "eventId": "GAP-004-H003",
@@ -387,7 +435,9 @@
           "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
           "disposition": "OPEN",
           "note": "Customer proof-backed inbox API and customer/contributor header wiring implemented;41 access tests, four browser protocol cases, two actual-route verification cases, production build and type checks passed locally. Frozen CI and deployment pending.",
-          "evidence": ["verification/2026-11-02-gap004-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap004-local.json"
+          ]
         },
         {
           "eventId": "GAP-004-H004",
@@ -396,7 +446,9 @@
           "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
           "disposition": "OPEN",
           "note": "PR237 merged and exact production revision is READY after successful CI and 19 completed checks. Live unauthenticated inbox returns application 401 with private headers; genuine provider-backed shell acceptance remains unverified.",
-          "evidence": ["verification/2026-11-02-gap004-release.json"]
+          "evidence": [
+            "verification/2026-11-02-gap004-release.json"
+          ]
         }
       ]
     },
@@ -420,7 +472,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap005-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap005-local.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
@@ -431,7 +485,9 @@
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap005-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap005-release.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -439,7 +495,9 @@
           },
           "approval": {
             "state": "PENDING_OWNER_REVIEW",
-            "evidence": ["verification/2026-11-02-gap005-install-request.json"]
+            "evidence": [
+              "verification/2026-11-02-gap005-install-request.json"
+            ]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -468,7 +526,9 @@
           "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
           "disposition": "OPEN",
           "note": "Additive real-use migration0011 implements provider-bounded sliding 30-minute display leases while preserving 25-second auth proof and existing resource/MFA checks. 44 database/security tests, typecheck and a browser expiry case passed locally; frozen CI, deployment and protected installation pending.",
-          "evidence": ["verification/2026-11-02-gap005-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap005-local.json"
+          ]
         },
         {
           "eventId": "GAP-005-H003",
@@ -477,7 +537,9 @@
           "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
           "disposition": "OPEN",
           "note": "PR238 merged after successful CI/CodeQL and19 completed checks with no failures. Exact production revision is READY. Protected real-use0011 installation remains pending; old schema retains its strict window until then. Genuine live provider acceptance remains unverified.",
-          "evidence": ["verification/2026-11-02-gap005-release.json"]
+          "evidence": [
+            "verification/2026-11-02-gap005-release.json"
+          ]
         },
         {
           "eventId": "GAP-005-H004",
@@ -486,7 +548,9 @@
           "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
           "disposition": "OPEN",
           "note": "PR238 code is deployed. Exact-main CI/CodeQL passed and installer41505093037 for real-use0011 is waiting for owner review; activation inputs unchanged. Strict old-schema expiry remains until installation.",
-          "evidence": ["verification/2026-11-02-gap005-install-request.json"]
+          "evidence": [
+            "verification/2026-11-02-gap005-install-request.json"
+          ]
         }
       ]
     },
@@ -501,30 +565,32 @@
         "evidenceAndBoundary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "A_G_REMAINDER",
-        "summary": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
-        "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
+        "summary": "Corrective PR240 passed frozen CI/CodeQL and19 completed checks, then reached the exact READY production revision. Programme/fee/commercial text survives reload; amounts/server records stay out of drafts, with row/version and access isolation proved. Selected text-draft closure criteria met.",
+        "evidenceRevision": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
+            "state": "IMPLEMENTED",
             "evidence": [
-              "verification/2026-11-02-gap006-local.json",
-              "verification/2026-11-02-gap006-text-completion-local.json"
+              "verification/2026-11-02-gap006-text-completion-local.json",
+              "verification/2026-11-02-gap006-completion-release.json"
             ]
           },
           "verification": {
-            "state": "PARTIAL",
+            "state": "VERIFIED",
             "evidence": [
-              "verification/2026-11-02-gap006-local.json",
-              "verification/2026-11-02-gap006-text-completion-local.json"
+              "verification/2026-11-02-gap006-text-completion-local.json",
+              "verification/2026-11-02-gap006-completion-release.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap006-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap006-completion-release.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -543,7 +609,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-02-gap006-text-completion-local.json",
+          "verification/2026-11-02-gap006-completion-release.json"
+        ]
       },
       "history": [
         {
@@ -561,7 +630,9 @@
           "evidenceRevision": "18199e741bd583862f0219d5316899298bc47078",
           "disposition": "OPEN",
           "note": "Existing session draft helper now restores permitted text on programme planning, fee schedule and commercial mission forms. 41 browser protocol regression cases, full typecheck and focused lint passed locally; frozen CI and deployment pending. Money, selectors and untouched server records are excluded.",
-          "evidence": ["verification/2026-11-02-gap006-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap006-local.json"
+          ]
         },
         {
           "eventId": "GAP-006-H003",
@@ -582,7 +653,22 @@
           "evidenceRevision": "0b6792a3e7a5a483118a3edb42dc3966386851c5",
           "disposition": "OPEN",
           "note": "PR239 is deployed, but additional tests reproduced omitted fee labels and commercial criteria. Local completion now covers row labels/date/count text and remaining commercial notes;41 earlier regressions and three final focused cases passed. Corrective release CI/deployment pending.",
-          "evidence": ["verification/2026-11-02-gap006-text-completion-local.json"]
+          "evidence": [
+            "verification/2026-11-02-gap006-text-completion-local.json"
+          ]
+        },
+        {
+          "eventId": "GAP-006-H005",
+          "recordedOn": "2026-11-02",
+          "type": "RESOLVED",
+          "evidenceRevision": "532b19ce004f67ee7632bbae0a75faa6af0eb392",
+          "priorDisposition": "OPEN",
+          "disposition": "RESOLVED",
+          "note": "Corrective PR240 passed frozen CI/CodeQL and19 completed checks, then reached the exact READY production revision. Programme/fee/commercial text survives reload; amounts/server records stay out of drafts, with row/version and access isolation proved. Selected text-draft closure criteria met.",
+          "evidence": [
+            "verification/2026-11-02-gap006-text-completion-local.json",
+            "verification/2026-11-02-gap006-completion-release.json"
+          ]
         }
       ]
     },
@@ -599,18 +685,22 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`programme-participants.tsx:315` sends label only; `:352` says it is not sent; `customer-participants.ts:21` has no address input. `recipient_email` exists only as the additive nullable column. Invitation codes, replacement and acceptance already work.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
+        "evidenceRevision": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-007"]
+            "evidence": [
+              "verification/2026-11-02-gap007-local.json"
+            ]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": [
+              "verification/2026-11-02-gap007-local.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -643,6 +733,17 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-007-H002",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+          "disposition": "OPEN",
+          "note": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
+          "evidence": [
+            "verification/2026-11-02-gap007-local.json"
+          ]
         }
       ]
     },
@@ -666,7 +767,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-008"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-008"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -726,7 +829,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-009"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-009"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -786,7 +891,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-010"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-010"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -846,7 +953,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-011"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-011"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -906,7 +1015,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-012"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-012"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -966,7 +1077,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-013"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-013"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1026,7 +1139,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-014"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-014"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1086,7 +1201,9 @@
         "states": {
           "implementation": {
             "state": "DEFECT_REPRODUCED",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-015"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-015"
+            ]
           },
           "verification": {
             "state": "DEFECT_REPRODUCED",
@@ -1148,7 +1265,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-016"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-016"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1208,7 +1327,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-017"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-017"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1268,7 +1389,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-018"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-018"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1328,7 +1451,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-019"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-019"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1388,7 +1513,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-020"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-020"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -1448,7 +1575,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-021"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-021"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2168,7 +2297,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-033"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-033"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2228,7 +2359,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-034"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-034"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2288,7 +2421,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-035"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-035"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2348,7 +2483,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-036"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-036"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2408,7 +2545,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-037"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-037"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2468,7 +2607,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-038"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-038"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2588,7 +2729,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-040"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-040"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2648,7 +2791,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-041"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-041"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2708,7 +2853,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-042"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-042"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2768,7 +2915,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-043"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-043"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2828,7 +2977,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-044"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-044"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2888,7 +3039,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-045"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-045"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -2948,7 +3101,9 @@
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-046"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-046"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
@@ -3008,7 +3163,9 @@
         "states": {
           "implementation": {
             "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-047"]
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-047"
+            ]
           },
           "verification": {
             "state": "UNKNOWN",
