@@ -1,0 +1,73 @@
+STAMP: auth-280eb7e75bae
+
+BASE: `work` at `1e9104a4`; origin/main `1e9104a4`; authority files differ from main: no. Clean checkout. `v3-context verify` passed: unchanged contract/vision, 31 exact additional archives, 507 unique requirement identities/text, ledger within 12 KiB.
+
+TASK CLASSES: Review only; evidence and current-scope reconciliation. No implementation or activation.
+
+OWNER DIRECTIONS IN FORCE:
+- Latest session: “list all of them together what's misssing ,impartialc incomplete as per updated plan, not legacy”; “u must not make any claim from just reading”; “latest is always prioritized when conflict arises.”
+- Ledger, 25 Oct: “in a conflict the latest decision always wins; only sources that can decide count”.
+- Program owner override, 31 Oct: “Keep committing, merging, deploying directly to production, no preview required in Vercel.” Only applicable to program PRs after green `validate`.
+- Ledger, 1 Nov: “UEN `202612345X` is real”; “u do the installation, i will review and approve”.
+- REMAINING, 1 Nov: “Never connect to the production database, never change production settings, never weaken or skip a test, no new runtime dependencies, copy without em dashes, made-up data marked ‘(madeup)’.”
+
+FOLLOW:
+- `docs/PLAN_STATUS.md` | CURRENT | Determines applicability. Latest 1 Nov PR228. DONE/HISTORICAL/WAITING OWNER documents cannot create current work.
+- `docs/V3_LEDGER.md` | CURRENT | Live-state index; fresh remote observations supersede its older release snapshot.
+- `docs/qa/2026-10-31/REMAINING.md` | CURRENT, 1 Nov | Authorized commercial-readiness remainder: A notification recipients/customer inbox; B sliding window; C reload drafts; D participant email; E French/German mission email; F timezone date input; G named polish. Then live customer/locale verification and its owner-only list.
+- `docs/V3_CONTRACT.md`, `docs/product/corridra-product-vision-v2.1.md`, `docs/agents/product-vision.md` | CURRENT | Product meaning and preserved invariants. Not evidence that any feature is absent.
+- `docs/implementation/current-plan.md` | CURRENT, 31 Oct | Broader audit scope, not trustworthy current missing-feature inventory. Broad “unfinished” statements require tracing newer code/ADRs.
+- `docs/product/ux-update-handoff-2026-10-25.md`, `docs/product/phase2-install.md` | CURRENT | Remaining owner install/review steps, checked against later runs.
+- `docs/product/language-review-record.md` | CURRENT | Accepted language reviews.
+- `docs/agents/ui-direction.md`, `docs/adr/README.md`, root/nested instructions | CURRENT | Applicable quality, authority and procedure.
+
+FOLLOW OPEN PHASES ONLY:
+- `CORRIDRA_COMMERCIAL_READINESS_PROGRAM.md` | PARTLY BUILT, 1 Nov: “Only the work listed in … REMAINING.md is open; follow that file, not the wave plan below.”
+- `docs/product/language-switcher-proposal.md` | PARTLY BUILT | Register says how-it-works message migration remains; signed-in screens require later release.
+- `docs/product/lane11-languages.md` | PARTLY BUILT | Register explicitly says “no phase in it is open now”; signed-in screens need their own release decision.
+
+EVIDENCE ONLY:
+- `docs/qa/2026-10-31/RESULTS.md` | CURRENT, DATED | Recheck every row against code/latest runs; totals are program totals.
+- `docs/product/real-use-audit-2026-10-24.md`, `docs/product/corridra-product-brief.md` | CURRENT, DATED | Not current capability inventories.
+- V3 requirement register and old phase reports | Identity/history/evidence leads only. Known stale example: V3-06-013 says tax/legal numbering absent, contradicted by later ADR064 implementation.
+
+IGNORE:
+- V1 twelve-part plan/Parts 9–12 | HISTORICAL/invalid sequence | Replaced by V2/V3 and current work order.
+- V2 five-part plan | DONE | Do not restart.
+- UX10X | HISTORICAL | No current coverage inference.
+- V3 phase bounded plans | DONE | Source slices merged; cannot revive their old “remaining” sections as new tasks.
+- Corrected UX update plan/lane plans except above | DONE | Context only.
+- UX verification planning record | HISTORICAL | Replaced by corrected plan.
+- Commercial readiness wave plan | Closed by 1 Nov header | REMAINING alone names its open engineering.
+
+REQUIREMENTS:
+- CQ/V/UX IDs in REMAINING are the current program identifiers.
+- V3-06-002 | PARTIAL register label | ADR052 canonical links already exist; old “no canonical linking” claim invalid without tracing.
+- V3-06-007 | PARTIAL register label | ADR053/054 terms, places/waitlist, reporting, bulk fees, series and exports already exist; not categorically missing.
+- V3-06-013 | PARTIAL register label | Later ADR064 supersedes stale register tax/numbering absence. Trace code/activation separately.
+
+ADRS IN FORCE:
+- ADR032–055 | Merged decisions; optional-module activation is separate.
+- ADR052 | Canonical organisation link claims and staff review.
+- ADR053 | Terms, eligibility, places/waitlist and reminders.
+- ADR054 | Pricing templates, bulk fees, series/repeat revenue, exports.
+- ADR056 | Real admission with scanning deferred, replacing old synthetic-only posture.
+- ADR060–065 | Distinct sample/real billing/invoicing and simulated payment slices; no real processor inferred.
+- ADR074 | Accepted 30 Oct; per-page `/plan` release amends ADR066; language release prerequisites recorded completed.
+
+CLOSED GATES AND OWNER-ONLY STEPS touching this task:
+- Ledger: “Gates D01 to D06 and D08 stay closed.”
+- Program §9 defers scanning, enforcement, EU storage/cleanup, legal/DSAR/DPAs, restore drill, outreach/live AI/pen test/WAF expansion. Report as deferred, not ordinary unfinished engineering.
+- REMAINING: owner real GST/bank/finance details; admin-invite permission decision/ADR; code sign-in check; restore/speed checks; fresh live report-link check.
+
+UNRESOLVED:
+- No register drift across 77 governed documents.
+- “Only REMAINING open” scopes this program; it does not repeal still-CURRENT V3 contract. Broad older gap claims are audit questions, not findings.
+- Register lines 140–148 retain owner-dependent, not reopened candidates: extra Pulse emitters, Trip lens, Trip/Supplier Books, on-behalf supplier replies, Programme company lane, timed agenda projection, readiness definition, helper task board, decision sharing/status link. Trace code and label owner-dependent separately.
+- ADR058/070, supplier-provenance proposal, interviews and Pulse review pack are WAITING OWNER, not required approved features. Pulse opening does not prove its unanswered review items.
+- Owner-only checks lacking direct evidence stay unverified.
+
+MANDATORY READS FOR LATER STAGES:
+- Carry this full brief; verify stamp before work.
+- Current REMAINING, relevant latest decisions, discovered code/tests/migrations, exact-head CI/install logs, and chronological commits.
+- Test each finding against later implementations; never treat stale absence prose or fixture-only tests as production proof.

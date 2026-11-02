@@ -1,0 +1,51 @@
+{
+  "verifiedAt": "2026-11-01T14:51:00.269485+00:00",
+  "revision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "sourcePaths": 70,
+  "references": 77,
+  "allReferencesResolvedAndInRange": true,
+  "receiptsExitAndLogHashesVerified": [
+    "work/audit-contracts-2026-11-01T14-19-57-165Z.log.receipt.json",
+    "work/audit-invoice-guard-2026-11-01T14-20-19-119Z.log.receipt.json",
+    "work/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.receipt.json"
+  ],
+  "trackedStatus": "",
+  "artifacts": {
+    "REPORT.md": {
+      "bytes": 30112,
+      "sha256": "103586fc7558dcb4eb857c011f6f0babaa5de06c617734fcd244b57c88681695"
+    },
+    "authority.md": {
+      "bytes": 6953,
+      "sha256": "1d9aa0b7f4b164faf580a210fa0be43a0c07557d3148464f8fe1aefd949cc14a"
+    },
+    "final-remote-check.json": {
+      "bytes": 258,
+      "sha256": "94b3bf798958b12d2f7ff63faa0fb0ebbb5f86d3e746a6798bc2fe5119e5f0fc"
+    },
+    "probe.vitest.config.mts": {
+      "bytes": 191,
+      "sha256": "8bb9163cbd87f16f832a68ff3c824c5b808d9450fbd0703223ae82bf1abf8c2b"
+    },
+    "production-flag-metadata.json": {
+      "bytes": 3774,
+      "sha256": "8953e697e1f34b5609df78f51a7e915573577e97fbb7a835d7aa79e80d894f1f"
+    },
+    "reference-check.json": {
+      "bytes": 12229,
+      "sha256": "6937be4d16f39644cbfb80d1be82817fba22f2327dcb9c2cf3d3a2358101a9b1"
+    },
+    "runtime-evidence.json": {
+      "bytes": 19130,
+      "sha256": "ed9bba139fdaf32281c7cdc851cf601de2b14e7a16ce1da207a5eebdef91dd41"
+    },
+    "source-history.tsv": {
+      "bytes": 14900,
+      "sha256": "17cc05401e41a1aa4e8e809219f49b92d94ca1e4a84d9c5e23440150e839ae62"
+    },
+    "team-resend.probe.test.ts": {
+      "bytes": 2661,
+      "sha256": "9656c33a110bcf4dc7a7ad74ab7f0f74d02ae07b944827010069c313c64832ab"
+    }
+  }
+}

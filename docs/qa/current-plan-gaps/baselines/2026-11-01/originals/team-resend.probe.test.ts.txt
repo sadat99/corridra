@@ -1,0 +1,61 @@
+import { beforeEach, expect, test, vi } from 'vitest';
+
+// Read-only observation of the real HTTP handler with its external boundaries replaced.
+// This records current behavior; it is not an acceptance test for the desired resend feature.
+const spies = vi.hoisted(() => ({
+  invite: vi.fn(),
+  resend: vi.fn(),
+  notify: vi.fn(),
+}));
+
+vi.mock('../../apps/web/lib/foundations', () => ({
+  foundations: () => ({
+    ready: Promise.resolve(),
+    config: { APP_ORIGIN: 'http://localhost:3300' },
+    provider: { getSession: async () => ({ token: 'isolated-observation' }) },
+    access: { team: () => ({ invite: spies.invite, resend: spies.resend }) },
+  }),
+}));
+vi.mock('../../apps/web/lib/notify', () => ({ notify: spies.notify }));
+vi.mock('../../apps/web/lib/ux-switches', () => ({ uxSwitchOn: () => true }));
+
+import { POST } from '../../apps/web/app/api/team-control/[action]/route';
+
+const tenant = 'f09a1db0-31bf-46b9-b9df-90fe8218132e';
+const invitationId = '3c242d85-d0a6-43d3-9cfb-4b1fbdb71dfd';
+const principalId = 'cd322ac8-71dd-4cf8-bac4-e683f25f343f';
+const send = (body: object) => POST(
+  new Request(`http://localhost:3300/api/team-control/invites?tenant=${tenant}`, {
+    method: 'POST',
+    headers: { origin: 'http://localhost:3300', 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  }),
+  { params: Promise.resolve({ action: 'invites' }) },
+);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  spies.invite.mockResolvedValue({ id: invitationId, principalId, expiresInDays: 7 });
+  spies.resend.mockResolvedValue({ id: invitationId, principalId, expiresInDays: 7 });
+  spies.notify.mockResolvedValue({ inbox: true, email: 'sent' });
+});
+
+test('initial invite enters the notification boundary', async () => {
+  const response = await send({
+    action: 'invite',
+    invite: { email: 'member@example.invalid', name: 'Isolated observation', role: 'operator' },
+  });
+  expect(response.status).toBe(201);
+  expect(spies.invite).toHaveBeenCalledOnce();
+  expect(spies.notify).toHaveBeenCalledOnce();
+  expect(spies.notify.mock.calls[0]?.[0]).toMatchObject({ type: 'TEAM_INVITE', recipientAccountId: principalId });
+  expect(await response.json()).toMatchObject({ notification: { inbox: true, email: 'sent' } });
+});
+
+test('resend returns 201 after extending the invitation without entering the notification boundary', async () => {
+  const response = await send({ action: 'resend', invitationId });
+  expect(response.status).toBe(201);
+  expect(spies.resend).toHaveBeenCalledOnce();
+  expect(spies.notify).not.toHaveBeenCalled();
+  expect(await response.json()).toEqual({ id: invitationId, principalId, expiresInDays: 7 });
+});

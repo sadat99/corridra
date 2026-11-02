@@ -30,6 +30,9 @@ Source of truth: [contract](V3_CONTRACT.md) and this current-state index. Read t
 
 ## Requirements, history and evidence
 
+- [60-entry gap register](qa/current-plan-gaps/README.md), recorded 2 Nov: immutable audit evidence and progress IDs; later code refutes old broad absence claims. Owner/deferred rows are not tasks; A–G remains the work order.
+- [PR229](https://github.com/sadat99/corridra/pull/229): draft.
+
 - [Before the owner checklist records](v3/history/ledger-before-owner-checklist-records-2026-11-01.md) and [before the PR225 merge records](v3/history/ledger-before-pr225-merge-records-2026-10-31.md) keep every line later refreshes shortened; each one links the snapshot before it. Older snapshots (the CI speedup records back to the Phase 0 owner tools) are listed with their hashes in [the manifest](v3/history/manifest.json) and the documentation map.
 - [Complete current register: 507 requirements](v3/phase-0/requirements.json). EXISTING is inspected implementation; PARTIAL incomplete capability; MISSING absent; GATED needs an independent prerequisite; DEFERRED explicit contract priority; NOT VERIFIED lacks proof. Even EXISTING needs current runtime acceptance.
 - [Exact historical ledger through chunk109](v3/history/ledger-through-109.md), [archive and requirement identity manifest](v3/history/manifest.json), [bounded context workflow](v3/CONTEXT.md). Use `node scripts/v3-context.mjs requirement V3-02-046` and `chunk 109`; do not load the whole archive.

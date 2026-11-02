@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-11-02",
+  "evidenceKind": "BUILDER_PRECOMMIT_OBSERVATION",
+  "testedHead": "dc4eecfe9d94f35da723820ab2fa0a0e1499bb03",
+  "configurationWasUncommitted": true,
+  "configurationPath": ".gitleaks.toml",
+  "configSha256": "bc396a6d31cf95d52b4369b409bede96c91c9c714a63a5642bce1f30378c4a25",
+  "scannerVersion": "8.30.1",
+  "scannerArchiveSha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+  "syntaxSource": "https://github.com/gitleaks/gitleaks/blob/v8.30.1/README.md",
+  "publicFeatureNames": ["CORRIDRA_UX_MISSIONS_V2", "CORRIDRA_NOTIFICATIONS_V2"],
+  "originalFindingRule": "generic-api-key",
+  "originalFindingPath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+  "exceptionBoundary": "Only the two exact extracted public identifiers AND this exact archived path, for generic-api-key. Built-in defaults remain enabled; no global or whole-file ignore.",
+  "controls": [
+    {
+      "name": "default-original-positive",
+      "configured": false,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 2,
+      "findingRuleCounts": {
+        "generic-api-key": 2
+      },
+      "assertion": "PASS"
+    },
+    {
+      "name": "exact-original-cleared",
+      "configured": true,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 0,
+      "actualScannerExit": 0,
+      "findingCount": 0,
+      "findingRuleCounts": {},
+      "assertion": "PASS"
+    },
+    {
+      "name": "credential-same-path",
+      "configured": true,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 1,
+      "findingRuleCounts": {
+        "generic-api-key": 1
+      },
+      "assertion": "PASS"
+    },
+    {
+      "name": "credential-same-line",
+      "configured": true,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 1,
+      "findingRuleCounts": {
+        "generic-api-key": 1
+      },
+      "assertion": "PASS"
+    },
+    {
+      "name": "same-identifiers-other-path",
+      "configured": true,
+      "fixturePath": "other/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 2,
+      "findingRuleCounts": {
+        "generic-api-key": 2
+      },
+      "assertion": "PASS"
+    },
+    {
+      "name": "changed-identifier-same-path",
+      "configured": true,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 1,
+      "findingRuleCounts": {
+        "generic-api-key": 1
+      },
+      "assertion": "PASS"
+    },
+    {
+      "name": "other-default-rule-same-path",
+      "configured": true,
+      "fixturePath": "docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata.json.txt",
+      "expectedScannerExit": 1,
+      "actualScannerExit": 1,
+      "findingCount": 1,
+      "findingRuleCounts": {
+        "aws-access-token": 1
+      },
+      "assertion": "PASS"
+    }
+  ],
+  "actualInvocationReceipts": [
+    {
+      "receiptPathAtObservation": "work/builder-gitleaks-boundaries-2026-11-02T01-57-23-400Z.log.receipt.json",
+      "name": "builder-gitleaks-boundaries",
+      "exit": 0,
+      "seconds": 3.1,
+      "testedHead": "dc4eecfe9d94f35da723820ab2fa0a0e1499bb03",
+      "logSha256": "921caace3532b4a386d3d600799f514647f4619562995ee6d4c2aea583524a44",
+      "command": "python work/current-plan-audit/gitleaks-builder-proof.py"
+    },
+    {
+      "receiptPathAtObservation": "work/builder-gitleaks-branch-2026-11-02T01-57-26-590Z.log.receipt.json",
+      "name": "builder-gitleaks-branch",
+      "exit": 0,
+      "seconds": 0.5,
+      "testedHead": "dc4eecfe9d94f35da723820ab2fa0a0e1499bb03",
+      "logSha256": "4804f93c93f8e020e05881753253d68d15c316d145af25b8c29c7325f2eec4a8",
+      "command": ".cache/security/gitleaks git . --redact=100 --no-banner --report-format=json --report-path=work/current-plan-audit/gitleaks-builder-proof/branch.redacted.json --log-opts=origin/main..HEAD"
+    },
+    {
+      "receiptPathAtObservation": "work/builder-gitleaks-history-2026-11-02T01-57-51-980Z.log.receipt.json",
+      "name": "builder-gitleaks-history",
+      "exit": 0,
+      "seconds": 4.8,
+      "testedHead": "dc4eecfe9d94f35da723820ab2fa0a0e1499bb03",
+      "logSha256": "71f42270bda0a7a6f9021acd14fbec5fff61a0429f10575bf632cda479794c4d",
+      "command": "node scripts/security-scan.mjs"
+    }
+  ],
+  "preservedBaselineFiles": {
+    "raw": 16,
+    "derived": 3,
+    "total": 19
+  },
+  "limits": [
+    "This records builder controls and working-configuration scans, not final frozen-commit acceptance.",
+    "Synthetic control values and raw scanner finding payloads are deliberately not included.",
+    "No real credentials or provider access were used.",
+    "All original and derived baseline artifacts and their manifest hashes remained unchanged.",
+    "Recorded work paths are historical receipt/command provenance, not portable dependencies or a claim that a fixture runner is included; this summary preserves sanitized outcomes and digests."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "audit-contracts",
+  "command": "node_modules/.bin/vitest run tests/integration/commercial-readiness-contracts.test.ts tests/integration/ux-kit.test.ts tests/integration/ws-b-customer-words.test.ts",
+  "exit": 0,
+  "signal": null,
+  "seconds": 2.5,
+  "logBytes": 381,
+  "logSha256": "d9b66caeda08b6860a265fa7abac951e85de86b25dbf601bd9c3ca57eed449d2",
+  "head": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
+  "changedPaths": 0,
+  "log": "work/audit-contracts-2026-11-01T14-19-57-165Z.log"
+}

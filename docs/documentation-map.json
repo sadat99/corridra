@@ -1332,6 +1332,26 @@
       "path": "docs/v3/history/ledger-before-owner-checklist-records-2026-11-01.md",
       "classification": "Historical ledger snapshot",
       "use": "Exact ledger before the owner checklist records of 1 Nov 2026; history only"
+    },
+    {
+      "path": "docs/qa/current-plan-gaps/README.md",
+      "classification": "Current evidence/progress register",
+      "use": "Review all 60 stable findings; keep live state in the ledger and execution in the A–G remainder."
+    },
+    {
+      "path": "docs/qa/current-plan-gaps/UPDATE.md",
+      "classification": "Current evidence maintenance procedure",
+      "use": "Append evidenced progress and compare stable IDs with Git; preserve the immutable baseline."
+    },
+    {
+      "path": "docs/qa/current-plan-gaps/baselines/2026-11-01/README.md",
+      "classification": "Immutable dated audit evidence",
+      "use": "Resolve preserved original dependencies and hashes; not a new plan or current live acceptance."
+    },
+    {
+      "path": "docs/qa/current-plan-gaps/baselines/2026-11-01/REPORT.md",
+      "classification": "Immutable dated audit derivative",
+      "use": "Read the original 60-row conclusions with stable IDs and portable links; raw original bytes remain separately preserved."
     }
   ]
 }
