@@ -112,7 +112,7 @@ const list = (programmes: unknown[] = [], nextAfter: string | null = null) => ({
 async function fill(page: import('@playwright/test').Page) {
   await page.getByLabel('Programme name', { exact: true }).fill(programme.name);
   await page
-    .getByLabel('Purpose and intended outcomes', { exact: true })
+    .getByRole('textbox', { name: /^Purpose and intended outcomes/ })
     .fill(programme.reportingPurpose);
   await page.getByRole('checkbox').check();
 }
@@ -380,4 +380,38 @@ test('planning entry stays contextual to current owner/admin workspace cards and
   await page.goto(origin + '/?mode=workspaces&enabled=false');
   await expect(page.getByText('Synthetic owner workspace', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Plan delegations' })).toHaveCount(0);
+});
+
+test('GAP-006 reload restores only typed planning text and denial clears the saved draft', async ({
+  page,
+}) => {
+  let allowed = true;
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill(allowed ? { json: list([]) } : { status: 403, json: { error: 'denied' } }),
+  );
+  await page.goto(origin);
+  await fill(page);
+  const name = await page.getByLabel('Programme name', { exact: true }).inputValue();
+  const purpose = await page
+    .getByRole('textbox', { name: /^Purpose and intended outcomes/ })
+    .inputValue();
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.reload();
+  await expect(page.getByLabel('Programme name', { exact: true })).toHaveValue(name);
+  await expect(page.getByRole('textbox', { name: /^Purpose and intended outcomes/ })).toHaveValue(
+    purpose,
+  );
+  await expect(page.getByRole('checkbox')).not.toBeChecked();
+  const stored = await page.evaluate(() =>
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('corridra.draft.programme-planning:'))
+      .map((key) => JSON.parse(sessionStorage.getItem(key)!)),
+  );
+  expect(stored).toEqual([{ name, purpose }]);
+  allowed = false;
+  await page.reload();
+  await expect(page.getByRole('alert')).toContainText('could not be confirmed');
+  allowed = true;
+  await page.reload();
+  await expect(page.getByLabel('Programme name', { exact: true })).toHaveValue('');
 });

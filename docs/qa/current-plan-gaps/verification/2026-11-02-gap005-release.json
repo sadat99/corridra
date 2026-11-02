@@ -1,0 +1,22 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-005",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/238",
+  "testedHead": "18199e741bd583862f0219d5316899298bc47078",
+  "ciRun": 41496071391,
+  "codeqlRun": 41496071358,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+  "productionDeployment": {
+    "id": "dpl_EAcRdPPCkFUJdrHVoLDBWtwf11tZ",
+    "state": "READY",
+    "githubCommitSha": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+    "alias": "corridra.vercel.app"
+  },
+  "limits": [
+    "Real-use0011 protected installation pending: current schema retains its strict expiry until installation.",
+    "Genuine live provider acceptance remains unverified."
+  ]
+}

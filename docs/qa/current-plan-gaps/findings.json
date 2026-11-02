@@ -413,8 +413,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Additive real-use migration0011 implements provider-bounded sliding 30-minute display leases while preserving 25-second auth proof and existing resource/MFA checks. 44 database/security tests, typecheck and a browser expiry case passed locally; frozen CI, deployment and protected installation pending.",
-        "evidenceRevision": "244def3abc75cd1e53c0fbb31ad02e16dd20f5ec",
+        "summary": "PR238 merged after successful CI/CodeQL and19 completed checks with no failures. Exact production revision is READY. Protected real-use0011 installation remains pending; old schema retains its strict window until then. Genuine live provider acceptance remains unverified.",
+        "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
@@ -424,11 +424,14 @@
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap005-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap005-local.json",
+              "verification/2026-11-02-gap005-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-02-gap005-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -466,6 +469,15 @@
           "disposition": "OPEN",
           "note": "Additive real-use migration0011 implements provider-bounded sliding 30-minute display leases while preserving 25-second auth proof and existing resource/MFA checks. 44 database/security tests, typecheck and a browser expiry case passed locally; frozen CI, deployment and protected installation pending.",
           "evidence": ["verification/2026-11-02-gap005-local.json"]
+        },
+        {
+          "eventId": "GAP-005-H003",
+          "recordedOn": "2026-11-02",
+          "type": "DEPLOYED",
+          "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+          "disposition": "OPEN",
+          "note": "PR238 merged after successful CI/CodeQL and19 completed checks with no failures. Exact production revision is READY. Protected real-use0011 installation remains pending; old schema retains its strict window until then. Genuine live provider acceptance remains unverified.",
+          "evidence": ["verification/2026-11-02-gap005-release.json"]
         }
       ]
     },
@@ -482,18 +494,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
+        "summary": "Existing session draft helper now restores permitted text on programme planning, fee schedule and commercial mission forms. 41 browser protocol regression cases, full typecheck and focused lint passed locally; frozen CI and deployment pending. Money, selectors and untouched server records are excluded.",
+        "evidenceRevision": "18199e741bd583862f0219d5316899298bc47078",
+        "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-006"]
+            "evidence": ["verification/2026-11-02-gap006-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap006-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -526,6 +538,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-006-H002",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "18199e741bd583862f0219d5316899298bc47078",
+          "disposition": "OPEN",
+          "note": "Existing session draft helper now restores permitted text on programme planning, fee schedule and commercial mission forms. 41 browser protocol regression cases, full typecheck and focused lint passed locally; frozen CI and deployment pending. Money, selectors and untouched server records are excluded.",
+          "evidence": ["verification/2026-11-02-gap006-local.json"]
         }
       ]
     },

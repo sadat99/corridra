@@ -13,6 +13,7 @@ test.beforeAll(async () => {
       contents: `import { createRoot } from 'react-dom/client';
         import { SavedMissions } from ${JSON.stringify(resolve('apps/web/app/account/saved-missions.tsx'))};
         import { SavedCommercialReport } from ${JSON.stringify(resolve('apps/web/app/account/missions/saved-commercial-report.tsx'))};
+        import { CommercialMission } from ${JSON.stringify(resolve('apps/web/app/operator/commercial-mission.tsx'))};
         import { AppHeader } from ${JSON.stringify(resolve('apps/web/components/ux/app-header.tsx'))};
         import { LanguageProvider } from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
         import { publishTeamContext } from ${JSON.stringify(resolve('apps/web/lib/ux/team-context.ts'))};
@@ -22,7 +23,7 @@ test.beforeAll(async () => {
         
         const root=createRoot(document.getElementById('fixture'));
         publishTeamContext({tenant:'00000000-0000-4000-8000-000000000099',role:'owner'});
-        const render=(subject,issuer)=>query.get('mode')?.startsWith('inbox-')?<LanguageProvider offered={[{code:'en',draft:false}]}><AppHeader kind={query.get('mode')==='inbox-customer'?'customer':'contributor'} live={false} notifications={!query.has('off')}/></LanguageProvider>:query.get('mode')==='report'?<SavedCommercialReport subject={subject} issuer={issuer} resourceId="00000000-0000-4000-8000-000000000001"/>:<SavedMissions subject={subject} issuer={issuer}/>;root.render(query.has('before')?null:render(subject,issuer));
+        const render=(subject,issuer)=>query.get('mode')==='commercial-draft'?<CommercialMission tenant="00000000-0000-4000-8000-000000000099" missionId="00000000-0000-4000-8000-000000000001"/>:query.get('mode')?.startsWith('inbox-')?<LanguageProvider offered={[{code:'en',draft:false}]}><AppHeader kind={query.get('mode')==='inbox-customer'?'customer':'contributor'} live={false} notifications={!query.has('off')}/></LanguageProvider>:query.get('mode')==='report'?<SavedCommercialReport subject={subject} issuer={issuer} resourceId="00000000-0000-4000-8000-000000000001"/>:<SavedMissions subject={subject} issuer={issuer}/>;root.render(query.has('before')?null:render(subject,issuer));
         window.addEventListener('fixture-customer-change',event=>root.render(render(event.detail.subject,event.detail.issuer)));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -648,4 +649,59 @@ test('GAP-004 compiled customer inbox applies private headers to an inaccessible
   expect(response.headers()['cache-control']).toContain('no-store');
   expect(response.headers()['referrer-policy']).toBe('no-referrer');
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
+});
+
+test('GAP-006 commercial reload restores typed text without persisting loaded declaration, money or identifiers', async ({
+  page,
+}) => {
+  await page.route('**/api/workspace/**', (route) => {
+    const action = new URL(route.request().url()).pathname.split('/').at(-1);
+    if (action === 'mission-catalogue')
+      return route.fulfill({ json: { packs: [], types: [], requirements: [], assessments: [] } });
+    if (action === 'workspace') return route.fulfill({ json: { sources: [], claims: [] } });
+    return route.fulfill({
+      json: {
+        role: 'owner',
+        mission: { brief: { offer: 'Server-owned declaration' } },
+        assignments: [],
+        requirements: [],
+        assessments: [],
+        rfqs: [],
+        quotations: [],
+        decisions: [],
+        schedules: [],
+        meetings: [],
+        targets: [],
+        owners: [],
+        comparison: [],
+      },
+    });
+  });
+  await page.goto(origin + '/?mode=commercial-draft');
+  const open = () =>
+    page.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+  await open();
+  await page
+    .getByRole('textbox', { name: 'Commercial objective', exact: true })
+    .fill('Unsent customer objective');
+  await page.getByText('Add specifications, budget or evidence needs', { exact: true }).click();
+  await page
+    .getByRole('textbox', { name: 'Target budget, original currency', exact: true })
+    .fill('1234.56');
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.reload();
+  await open();
+  await expect(
+    page.getByRole('textbox', { name: 'Commercial objective', exact: true }),
+  ).toHaveValue('Unsent customer objective');
+  await page.getByText('Add specifications, budget or evidence needs', { exact: true }).click();
+  await expect(
+    page.getByRole('textbox', { name: 'Target budget, original currency', exact: true }),
+  ).toHaveValue('');
+  const stored = await page.evaluate(() =>
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('corridra.draft.commercial-mission:'))
+      .map((key) => JSON.parse(sessionStorage.getItem(key)!)),
+  );
+  expect(stored).toEqual([{ objective: 'Unsent customer objective' }]);
 });

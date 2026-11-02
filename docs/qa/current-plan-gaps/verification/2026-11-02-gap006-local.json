@@ -1,0 +1,96 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-006",
+  "testedHead": "18199e741bd583862f0219d5316899298bc47078",
+  "testedWorkingTree": true,
+  "sourceSha256": {
+    "apps/web/lib/ux/use-form-draft.ts": "d2fb623f8b4e267c4d3e82376c42a5a5e1ac5b5af8770f4fe58b593dddcc28b5",
+    "apps/web/app/account/delegations/customer-programmes.tsx": "68fc9d80020bfcf8c033294d9e21f8e016e97b4ecace0168c2ef3a2cf67c88ed",
+    "apps/web/app/account/delegations/programme-pricing.tsx": "bba57acfdc82dc34b34c18c020631a8cd7648e8430e06aff98ffb791a7f041df",
+    "apps/web/app/operator/commercial-mission.tsx": "876b36c8c3d8a37572f814311e394aa2d261c4668d21d096f59e433dc4f990ae",
+    "tests/operator/v3-customer-programmes-ui.spec.ts": "0ac094fc19926fc1116f2b21b73e702f837e5a989bc6e453764e51acaead4e50",
+    "tests/operator/v3-programme-pricing-ui.spec.ts": "05681c443f5893af23e97602047aaa62b93c5083893ded6cda3c6f28d9dd8549",
+    "tests/operator/v3-saved-commercial-ui.spec.ts": "a1f7554859ace0a331c3518b8b25819493c139497bd667cc9c4376e4a839ad2e"
+  },
+  "receipts": {
+    "form-regressions": {
+      "name": "gap006-form-regressions",
+      "command": "node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-customer-programmes-ui.spec.ts tests/operator/v3-programme-pricing-ui.spec.ts tests/operator/v3-saved-commercial-ui.spec.ts --output test-results/gap",
+      "exit": 0,
+      "signal": null,
+      "seconds": 92.9,
+      "logBytes": 7494,
+      "logSha256": "8a0952cc6926ca193e88705f5f2976faea94c5636d42aee08bd52744c1cc6b4c",
+      "head": "18199e741bd583862f0219d5316899298bc47078",
+      "changedPaths": 8,
+      "log": "work/gap006-form-regressions-2026-11-02T18-05-29-512Z.log"
+    },
+    "types": {
+      "name": "gap006-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 30.2,
+      "logBytes": 219,
+      "logSha256": "bc7c7356284903ecfd2f41b1b3c4a8fe1efff9aa43c026031e12a7692f6891f2",
+      "head": "18199e741bd583862f0219d5316899298bc47078",
+      "changedPaths": 8,
+      "log": "work/gap006-types-2026-11-02T18-05-18-410Z.log"
+    },
+    "pricing-scope": {
+      "name": "gap006-pricing-scope",
+      "command": "node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-programme-pricing-ui.spec.ts --grep GAP-006 --output test-results/gap006-pricing-scope",
+      "exit": 0,
+      "signal": null,
+      "seconds": 9.4,
+      "logBytes": 1126,
+      "logSha256": "538cde6f08bc75071730d7144fdf3fff74e7b06f710eb9e1b4ce3ce7efce780e",
+      "head": "18199e741bd583862f0219d5316899298bc47078",
+      "changedPaths": 11,
+      "log": "work/gap006-pricing-scope-2026-11-02T18-12-40-251Z.log"
+    },
+    "format": {
+      "name": "gap006-format",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "signal": null,
+      "seconds": 32.8,
+      "logBytes": 87,
+      "logSha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+      "head": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+      "changedPaths": 11,
+      "log": "work/gap006-format-2026-11-02T18-30-07-070Z.log"
+    }
+  },
+  "browserVerification": {
+    "passed": 41,
+    "files": 3,
+    "runtime": "System Chromium 151.0.7922.173; Playwright 1.64.1",
+    "scope": [
+      "Programme name/purpose survive reload; acknowledgement does not",
+      "Planning denial clears stored text; account/workspace remounts hide old scope",
+      "Fee schedule name/description survive reload; amounts/server rows are not stored",
+      "Commercial text survives reload; untouched loaded declaration, prices and selectors are not stored",
+      "Existing programme/pricing/saved-mission/inbox protocol cases preserved",
+      "Additional final pricing case: new draft remains separate from an existing saved schedule when switching editors"
+    ]
+  },
+  "focusedLint": {
+    "exit": 0,
+    "paths": [
+      "apps/web/lib/ux/use-form-draft.ts",
+      "apps/web/app/account/delegations/customer-programmes.tsx",
+      "apps/web/app/account/delegations/programme-pricing.tsx",
+      "apps/web/app/operator/commercial-mission.tsx",
+      "tests/operator/v3-customer-programmes-ui.spec.ts",
+      "tests/operator/v3-programme-pricing-ui.spec.ts",
+      "tests/operator/v3-saved-commercial-ui.spec.ts"
+    ]
+  },
+  "scope": "Reuse existing session-scoped draft helper; key changes expose no prior-key draft while restoration is pending. New persistence contains only user-edited text, with defensive type/field/length checks. Confirmed saves clear the corresponding draft. No schema, money calculation, API authorization, canonical command or provider change.",
+  "limits": [
+    "Frozen-head release CI and deployment pending.",
+    "Browser cases use real components with controlled protocol responses; no genuine live provider journey is claimed.",
+    "Session storage belongs to the current tab; no cross-device recovery or reminder service is added."
+  ]
+}
