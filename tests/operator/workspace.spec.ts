@@ -1075,8 +1075,8 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Local meeting start', { exact: true })
     .fill(start.toISOString().slice(0, 16));
   await card.getByLabel('Local meeting end', { exact: true }).fill(end.toISOString().slice(0, 16));
-  await card.getByLabel('Meeting start with UTC offset').fill(start.toISOString());
-  await card.getByLabel('Meeting end with UTC offset').fill(end.toISOString());
+  await card.locator('[data-date-field="startsAt"]').fill(start.toISOString().slice(0, 16));
+  await card.locator('[data-date-field="endsAt"]').fill(end.toISOString().slice(0, 16));
   await card.getByLabel('Meeting location').fill('Synthetic meeting room');
   await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
@@ -1241,7 +1241,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     await record
       .getByRole('combobox', { name: 'Observation source', exact: true })
       .selectOption(source.id);
-    await record.getByLabel('Observed date (UTC)').fill(date);
+    await record.getByLabel('Observed date').fill(date);
     await record
       .getByLabel('Commercial observation')
       .fill('Observed invented ' + kind.toLowerCase().replaceAll('_', ' '));

@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import {
   OperatorWorkbench,
   useFormChangeGuard,
@@ -193,6 +194,15 @@ function Field({
 }) {
   const draft = useContext(CommercialTextDraft);
   const initial = draft[name] ?? defaultValue;
+  if (['dueAt', 'observedAt', 'startsAt', 'endsAt', 'validUntil'].includes(name))
+    return (
+      <DateTimeField
+        label={label.replace(/, with UTC offset$/, '')}
+        name={name}
+        initial={initial || null}
+        required={required}
+      />
+    );
   return (
     <label className="field">
       {label}

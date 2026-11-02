@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { SpecificationRequests } from './specification-requests';
@@ -58,7 +59,7 @@ type Props = {
 const fields = (f: HTMLFormElement) => new FormData(f);
 const list = (d: FormData, key: string) => d.getAll(key).map(String);
 const value = (d: FormData, k: string) => String(d.get(k) ?? '');
-const instant = (d: FormData, k: string) => new Date(`${value(d, k)}Z`).toISOString();
+const instant = (d: FormData, k: string) => new Date(value(d, k)).toISOString();
 export function DeliveryExperience(props: Props) {
   const { tenant, programme, mission, participants, publications, owners } = props;
   const [data, setData] = useState<Experience | null>(null),
@@ -206,14 +207,8 @@ export function DeliveryExperience(props: Props) {
                   ))}
                 </select>
               </label>
-              <label className="field">
-                Start (UTC)
-                <input name="startsAt" type="datetime-local" required />
-              </label>
-              <label className="field">
-                End (UTC)
-                <input name="endsAt" type="datetime-local" required />
-              </label>
+              <DateTimeField label="Start" name="startsAt" required />
+              <DateTimeField label="End" name="endsAt" required />
               <label className="field">
                 Display timezone
                 <input name="timezone" placeholder="Asia/Shanghai" required />
@@ -292,10 +287,7 @@ export function DeliveryExperience(props: Props) {
                 Next action
                 <input name="nextAction" minLength={3} maxLength={1000} required />
               </label>
-              <label className="field">
-                Action due (UTC)
-                <input name="dueAt" type="datetime-local" required />
-              </label>
+              <DateTimeField label="Action due" name="dueAt" required />
               {reason}
               <p>
                 Confirmation requires an actual scheduled or held meeting for every selected

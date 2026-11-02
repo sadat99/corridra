@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -94,10 +95,9 @@ type Meetings = {
     details: { command: { reason: string }; previous?: { startsAt: string; timezone: string } };
   }[];
 };
-const utcField = (v = new Date(Date.now() + 86400000).toISOString()) =>
-  new Date(v).toISOString().slice(0, 16);
+const utcField = (v = new Date(Date.now() + 86400000).toISOString()) => new Date(v).toISOString();
 const field = (f: FormData, name: string) => String(f.get(name) ?? '');
-const timestamp = (f: FormData, name: string) => new Date(field(f, name) + 'Z').toISOString();
+const timestamp = (f: FormData, name: string) => new Date(field(f, name)).toISOString();
 function PurposeSelect() {
   return (
     <label className="field">
@@ -136,15 +136,13 @@ function Ownership({ owners, meeting }: { owners: Owner[]; meeting?: Meeting }) 
           defaultValue={meeting?.next_action}
         />
       </label>
-      <label className="field">
-        Meeting next-action deadline (UTC)
-        <input
-          name="dueAt"
-          type="datetime-local"
-          required
-          defaultValue={meeting?.due_at ? utcField(meeting.due_at) : defaultDue}
-        />
-      </label>
+      <DateTimeField
+        label="Meeting next-action deadline"
+        name="dueAt"
+
+        required
+        initial={meeting?.due_at ? utcField(meeting.due_at) : defaultDue}
+      />
       <label className="field">
         Meeting command reason
         <textarea name="reason" required minLength={3} maxLength={500} />
@@ -356,15 +354,13 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 Policy basis
                 <textarea name="basis" required minLength={3} maxLength={1000} />
               </label>
-              <label className="field">
-                Policy validity deadline (UTC)
-                <input
-                  name="validUntil"
-                  type="datetime-local"
-                  required
-                  defaultValue={defaults.week}
-                />
-              </label>
+              <DateTimeField
+                label="Policy validity deadline"
+                name="validUntil"
+
+                required
+                initial={defaults.week}
+              />
               <label className="check-field">
                 <input type="checkbox" name="enabled" defaultChecked />
                 Enable this policy version
@@ -519,15 +515,13 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <textarea name={name} required minLength={3} maxLength={max} />
               </label>
             ))}
-            <label className="field">
-              Private link expiry (UTC)
-              <input
-                name="expiresAt"
-                type="datetime-local"
-                required
-                defaultValue={defaults.tomorrow}
-              />
-            </label>
+            <DateTimeField
+              label="Private link expiry"
+              name="expiresAt"
+
+              required
+              initial={defaults.tomorrow}
+            />
             <label className="check-field">
               <input type="checkbox" required />I reviewed this introduction and approve the
               displayed context for this recipient.
@@ -937,24 +931,8 @@ function MeetingCard({
                   defaultValue={m.local_end ?? ''}
                 />
               </label>
-              <label className="field">
-                Meeting start with UTC offset
-                <input
-                  name="startsAt"
-                  required
-                  placeholder="2026-11-01T10:00:00+01:00"
-                  defaultValue={m.starts_at ?? ''}
-                />
-              </label>
-              <label className="field">
-                Meeting end with UTC offset
-                <input
-                  name="endsAt"
-                  required
-                  placeholder="2026-11-01T10:30:00+01:00"
-                  defaultValue={m.ends_at ?? ''}
-                />
-              </label>
+              <DateTimeField label="Meeting start" name="startsAt" initial={m.starts_at} required />
+              <DateTimeField label="Meeting end" name="endsAt" initial={m.ends_at} required />
               <label className="field">
                 Meeting location
                 <input
