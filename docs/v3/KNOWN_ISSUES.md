@@ -200,3 +200,8 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Observed:** PR241 CI41516407408, operator job125522118971, lost the edited second fee label after row removal/reload. A paused-timer browser case reproduces enabled fields before the new editor storage key finishes restoring, even though title controls already waited.
 - **Fix:** expose the fee form only when both its keyed draft and initial row restoration have settled. Track the restored editor in state so the readiness transition renders atomically with its restored rows. Preserve the original row-removal/version/money assertions and add the delayed-restoration regression; do not hide the race with test sleeps.
+
+### KI-33 Shared field grid overflow needs the preceding workspace state
+
+- **Observed:** PR242 CI41546518647/operator125623398842 failed UX-01 page width (139 other shard cases passed). Bootstrap plus the isolated mission case passed locally. Adding the existing preceding SDK scenario reproduced a320px viewport with330px document width: a shared field's label/row/input occupied a256px implicit grid column.
+- **Fix:** constrain the existing field grid to `minmax(0, 1fr)`; keep the original viewport/axe/permission assertions and add bounded geometry to failure messages. The identical4-case sequence now passes all six widths after a fresh build. Do not hide overflow or substitute the isolated passing case for this reproduction. Evidence: [layout verification](../qa/current-plan-gaps/verification/2026-11-03-gap009-layout-local.json).

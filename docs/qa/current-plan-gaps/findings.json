@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "registerId": "current-plan-gaps",
-  "lastRecordedOn": "2026-11-02",
+  "lastRecordedOn": "2026-11-03",
   "baseline": {
     "id": "2026-11-01",
     "path": "baselines/2026-11-01/findings.json",
@@ -780,10 +780,10 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Timezone-aware shared inputs now cover remaining mission/meeting/commercial instant fields. Four actual mission form/service/RLS/PostgreSQL cases preserve unchanged milliseconds and selected instants in UTC/Dhaka/Kathmandu/Madrid;30 backend and8 operator/bootstrap regressions, types, lint, formatting and preparation build passed. Exact-head CI and deployment pending.",
+        "summary": "CI41546518647 found global page overflow after prior workspace state. The same preceding SDK scenario reproduces320px viewport/330px document width; bootstrap plus the case alone passed. One shared-grid column constraint fixes the intrinsic child overflow. Fresh build and the identical4-case sequence pass, including six viewport widths, axe and denial assertions. Final-head CI/deployment remain pending.",
         "evidenceRevision": "938413f203e5ee94555b8f29828ee1a7f948eec3",
-        "evidenceObservedOn": "2026-11-02",
-        "lastRecordedOn": "2026-11-02",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
@@ -793,7 +793,8 @@
             "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-02-gap009-local.json",
-              "verification/2026-11-02-gap009-security-controls.json"
+              "verification/2026-11-02-gap009-security-controls.json",
+              "verification/2026-11-03-gap009-layout-local.json"
             ]
           },
           "deployment": {
@@ -847,6 +848,16 @@
           "disposition": "OPEN",
           "note": "Initial PR242 checks flagged the exact public SHA-256 recorded for operator/access.tsx, not a credential. Local file bytes verify that hash. A generic-api-key exception matches only that exact hash AND evidence path;7 isolated boundary controls and the unchanged full-history scanner pass. Feature source hashes and prior behavior checks are unchanged; final-head CI/deployment remain pending.",
           "evidence": ["verification/2026-11-02-gap009-security-controls.json"]
+        },
+        {
+          "eventId": "GAP-009-H004",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "CI41546518647 found global page overflow after prior workspace state. The same preceding SDK scenario reproduces320px viewport/330px document width; bootstrap plus the case alone passed. One shared-grid column constraint fixes the intrinsic child overflow. Fresh build and the identical4-case sequence pass, including six viewport widths, axe and denial assertions. Final-head CI/deployment remain pending.",
+          "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
         }
       ]
     },

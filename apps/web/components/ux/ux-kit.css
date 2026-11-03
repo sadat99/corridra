@@ -1,6 +1,7 @@
 /* Shared form and feedback kit (commercial readiness program, 5.2). Brand tokens only (D18). Owner: WS-E. */
 .ux-kit-field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.35rem;
   min-width: 0;
 }

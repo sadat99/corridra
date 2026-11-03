@@ -3298,9 +3298,21 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     await page
       .locator('#workspace-missions')
       .evaluate((section) => section.scrollIntoView({ block: 'start', behavior: 'instant' }));
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
+    const layout = await page.evaluate(() => ({
+      viewport: innerWidth,
+      width: document.documentElement.scrollWidth,
+      overflowing: [...document.querySelectorAll('body *')]
+        .map((element) => ({
+          tag: element.tagName,
+          className: String(element.className),
+          right: Math.round(element.getBoundingClientRect().right),
+          width: Math.round(element.getBoundingClientRect().width),
+        }))
+        .filter((element) => element.right > innerWidth + 1)
+        .sort((a, b) => b.right - a.right)
+        .slice(0, 20),
+    }));
+    expect(layout.width <= layout.viewport, JSON.stringify(layout)).toBe(true);
     await page.screenshot({ path: `.cache/ux10x/after/operator-missions-${width}.png` });
     await card.locator('.ux-mission-passport').screenshot({
       path: `.cache/ux10x/after/operator-mission-passport-${width}.png`,
