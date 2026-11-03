@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-018",
+  "snapshotStash": "c07f8f8512e69a0a279852e00a1c63a9090792a3",
+  "testedWorkingTreeReceipt": {
+    "name": "gap018-quote-sent-db",
+    "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-service-requests.test.ts",
+    "exit": 0,
+    "signal": null,
+    "seconds": 10.2,
+    "logBytes": 169,
+    "logSha256": "c0bca2ac0324f4b79fe19a22e525fd056a12a5fee701df9a56aa749d2ee1792d",
+    "head": "07a96cd4055bce696e45e31496f8feb92f75082e",
+    "changedPaths": 6,
+    "log": "work/gap018-quote-sent-db-2026-11-03T01-54-08-734Z.log"
+  },
+  "databaseCasesPassed": 29,
+  "status": "PARTIAL_PREPARATION",
+  "limits": [
+    "The receipt predates the preserved partial snapshot; a frozen source/hash match is not claimed.",
+    "Types, lint, old-schema compatibility, dependency/inventory review and affected combined tests remain before release.",
+    "Apply source changes by three-way merge after017; retain0006\u20130008 in the migration inventory.",
+    "No code deployment, production installation or genuine provider delivery is claimed."
+  ]
+}

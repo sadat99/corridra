@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-011",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/244",
+  "testedHead": "df549d7893c0716bd1715cdef1893c027f848e24",
+  "ciRun": 41582013386,
+  "codeqlRun": 41582013451,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+  "productionDeployment": {
+    "id": "dpl_9CdvdxfCafKton4mt5tfjqU5ZFee",
+    "state": "READY",
+    "githubCommitSha": "8aae590ee5db38d7b84094ab44289f009281da69",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-02-gap011-local.json"],
+  "limits": [
+    "English vocabulary is reconciled while hrefs/tab keys/actions remain unchanged. Foreign catalogue bytes and language acceptance remain separate.",
+    "Production revision is verified through the alias; no signed-in live customer journey is inferred from the proxy-blocked public probe."
+  ]
+}
