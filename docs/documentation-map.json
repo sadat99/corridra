@@ -1362,6 +1362,11 @@
       "path": "docs/v3/history/ledger-through-gap012-2026-11-03.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger through GAP012 release evidence; preserve prior recovery references and use the current ledger for live state."
+    },
+    {
+      "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
+      "classification": "Architecture decision",
+      "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
     }
   ]
 }

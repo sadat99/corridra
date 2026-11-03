@@ -224,6 +224,13 @@ export const switchRegistry: SwitchEntry[] = [
   },
   // Money and pricing
   {
+    name: 'CORRIDRA_CUSTOMER_PROGRAMME_PROJECTIONS_ENABLED',
+    label: 'Programme companies, agenda and readiness',
+    line: 'Adds explicit participant company and meeting-count sharing, readiness and timed task conflicts. Requires the existing programme modules and reviewed schema.',
+    group: 'Programmes and delegations',
+    kind: 'module',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_PROGRAMME_ECONOMICS_ENABLED',
     label: 'Organiser programme economics',
     line: 'Lets an organiser track fees, costs and margin. No payment is taken.',

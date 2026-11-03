@@ -2578,3 +2578,33 @@ PR251 passed19 exact-head checks atabd973e and reached the exact READY productio
 All17 selected code repairs and required additive SQL are released/installed. Eleven selected engineering findings are RESOLVED;001–005/007 retain their private runtime/provider acceptance gaps. No language work, provider activation or real outreach was performed. Final records are documentation only; reuse unchanged product proofs and the verified READY release.
 
 Final comparison normalized the first3 deployment labels from READY to DEPLOYED using their unchanged release proof; existing histories remain intact. Machine-readable selected totals are17 deployed,11 engineering-resolved and6 private/runtime/provider acceptance findings OPEN.
+
+### 3 November 2026: batched acceptance and retained-scope planning
+
+Owner requested a fast, bounded batch plan for001–005/007 and023–050. Mainb389d9c is unchanged; first17 selected code repairs and required SQL remain released/installed. The existing gap README now groups all28 later IDs exactly once across nine proposed packets, including a held real-payments packet. One controlled identity/access/delivery campaign shares actors and records across the early six findings; rendered/performance/reconciliation and language reviews are separate reusable evidence work. Programme, disclosure, Pulse/recovery, staff-authority and helper/rehearsal extensions retain their explicit owner decisions.
+
+Planning alone changes no finding disposition or product acceptance. Each closure uses its actual criterion, preserving independent activation/provider limits and all existing proof. Provider sends, switch changes and unknown-address experiments require the controlled scope described in the plan; no external operation occurred. Branch docs/gap-batch-plan is documentation only. Use focused document/context/format/security checks and a draft PR, not another product test campaign.
+
+### 3 November 2026: Batch D authorized; concrete contract proposed
+
+Owner requested starting D (037/038/039/042). Reused the existing draft branch/PR253 to respect the8-branch limit. Source trace found reusable current eligibility/terms/place and profile/mission-share records; existing commercial opportunity creation requires a held meeting, so scheduled and qualified-held metrics must be distinct. These are source-model observations, not new runtime acceptance.
+
+ADR075 proposes explicit owner/admin field disclosure, pinned participant consent, operational readiness criteria, attendee/time conflicts and separately consented aggregate meeting counts. The one pending owner question asks for these business definitions; no approval is inferred from elapsed time. No dependent implementation, migration, provider operation or activation has occurred. Next action and proposed blast radius are in the ledger/ADR.
+
+### 3 November 2026: Batch D defaults accepted
+
+Owner answered “approved recommended options” to the bundled Batch D question. ADR075 is accepted for implementation. Proceed with explicit company and separate meeting-count consent, the agreed active/eligible/placed/current-terms/shared-profile readiness checklist and attendee/time conflicts. Default-off application exposure and existing production/release controls remain.
+
+### 3 November 2026: Batch D implementation checkpoint
+
+Same branch/PR253 over55cfb38. New optional programme-projections registry, append-only consent/schedule/receipt objects, restricted customer service/API and programme/participant views are implemented in the working tree. Reuses current enrolment profiles, terms/readiness, mission source guards, coordination tasks, date/time input and event writer. Founder/owner switch inventories are included; default off. No historical migration, staff identity, money or evidence record changes.
+
+Initial10 restricted PostgreSQL cases passed. Expanded run passed76/77 across five files; the sole failure was a new fixture query using the wrong membership column, corrected by retaining the service-returned member ID. The four existing/real-mode suites passed. Lint identified React ref/render and effect issues; corrected without disabling rules. Browser review also binds consent to the displayed profile version and preserves exact uncertain-command retries. Corrected DB/types/build and browser execution are next. None of this is merged, deployed, installed or activated.
+
+Batch D local checkpoint complete:13 new restricted PostgreSQL cases passed (including first populated installation, repeat/hash mismatch, current consent, disabled/expired identities, self-reported outcome exclusion and current canonical qualification).65 existing/real-mode SQL cases passed.16 new compiled component cases and12 existing room cases passed;2 compiled API gates confirmed default-off503/private headers. Full types/lint, production build, documents and infrastructure passed. The build ran during edits; exact frozen-head CI remains necessary. Previous failures and corrections are retained in qa/current-plan-gaps/verification/2026-11-03-batch-d-local.json with actual receipt/log hashes and current source hashes. Current findings037/038/039/042 are OPEN with approved scope and partial verification, not closed/live. Next: publish the combined PR253 implementation and run full frozen CI/CodeQL. Production installation and activation remain untouched.
+
+### 3 November 2026: Batch D exact-profile consent correction
+
+Final source trace found that cancellation/reapplication can change the enrolled company workspace and different workspaces can have the same profile version. After correcting an unsupported fixture cancel field, a restricted PostgreSQL regression reproduced the actual defect on ee136a5: the stale version-only share resolved instead of rejecting. The uninstalled new migration/service now require the exact reviewed profile revision ID and version and reject a source switch during ordered lock acquisition. Browser consent is keyed to that revision identity. The ID is returned only to the participant own view; organiser fields stay unchanged. This is within ADR075 pinned consent, with no change to existing installed migrations or production.
+
+Corrected proof:14 new DB cases and6 real-mode regression cases passed,17 compiled component cases passed, full types and focused lint passed. Earlier65 existing SQL cases and12 room cases remain bounded regression evidence. The local evidence JSON includes both the genuine failing reproduction and corrected receipts/current source hashes. Only latest-head PR253 CI counts for release; ee136a5 is superseded. Production remains unchanged.

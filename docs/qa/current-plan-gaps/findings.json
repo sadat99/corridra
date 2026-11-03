@@ -2969,20 +2969,20 @@
         "evidenceAndBoundary": "`lib/programme-room.ts:99` defines the five existing views. Consented labels do not create a permitted company-to-participant canonical projection. `ux-programme-room.test.ts:194` intentionally excludes participant-written labels."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "`lib/programme-room.ts:99` defines the five existing views. Consented labels do not create a permitted company-to-participant canonical projection. `ux-programme-room.test.ts:194` intentionally excludes participant-written labels.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_D",
+        "summary": "Owner approved ADR075. Optional company view and explicit pinned-profile sharing are implemented; only permitted company fields reach owners/admins. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-037"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -2993,8 +2993,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0075-programme-projections-and-consented-meeting-counts.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -3003,7 +3003,8 @@
         },
         "closureAcceptance": "Obtain the private company-to-participant disclosure decision and prove a scoped Programme company lane.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "ADR075 owner defaults approved on 3 November 2026.",
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
         ],
         "closureEvidence": []
       },
@@ -3015,6 +3016,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-037-H002",
+          "recordedOn": "2026-11-03",
+          "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
+          "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+          "disposition": "OPEN",
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3029,20 +3038,20 @@
         "evidenceAndBoundary": "Programme date windows and staff agenda exist. Coordination tasks have dueOn, not permitted per-item start/end intervals (`customer-programme-coordination.ts:46`). A new bounded organiser view requires its disclosure decision."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "Programme date windows and staff agenda exist. Coordination tasks have dueOn, not permitted per-item start/end intervals (`customer-programme-coordination.ts:46`). A new bounded organiser view requires its disclosure decision.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_D",
+        "summary": "Owner approved ADR075. Optional timed agenda extends existing coordination tasks with programme-zone intervals and attendee-based conflicts; cancelled and adjacent intervals are excluded. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-038"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -3053,8 +3062,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0075-programme-projections-and-consented-meeting-counts.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -3063,7 +3072,8 @@
         },
         "closureAcceptance": "Obtain the permitted timed agenda projection and prove organiser conflict handling without leaking private participant missions.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "ADR075 owner defaults approved on 3 November 2026.",
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
         ],
         "closureEvidence": []
       },
@@ -3075,6 +3085,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-038-H002",
+          "recordedOn": "2026-11-03",
+          "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
+          "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+          "disposition": "OPEN",
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3089,20 +3107,20 @@
         "evidenceAndBoundary": "Current room counts invitations/registrations; days/run/report remain notTracked (`programme-room.ts:65`; test `ux-programme-room.test.ts:118`). Capacity/attendance are implemented, but no agreed ready condition may be invented."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "Current room counts invitations/registrations; days/run/report remain notTracked (`programme-room.ts:65`; test `ux-programme-room.test.ts:118`). Capacity/attendance are implemented, but no agreed ready condition may be invented.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_D",
+        "summary": "Owner approved the active, eligible, placed, current-terms and current-shared-company readiness definition. Server totals cover all active registrations independently of the loaded page. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -3113,8 +3131,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0075-programme-projections-and-consented-meeting-counts.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -3123,7 +3141,8 @@
         },
         "closureAcceptance": "Obtain a recorded definition of ready and prove counts derive only from records satisfying that definition.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "ADR075 owner defaults approved on 3 November 2026.",
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
         ],
         "closureEvidence": []
       },
@@ -3135,6 +3154,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-039-H002",
+          "recordedOn": "2026-11-03",
+          "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
+          "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+          "disposition": "OPEN",
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3269,20 +3296,20 @@
         "evidenceAndBoundary": "Current ADR054 retains this narrow boundary. Pricing SQL exposes per-currency series revenue/exports without joining participants' private meeting/opportunity data. Existing coordination feedback/outcome reporting is not missing. Group this with the company/agenda disclosure decision, not generic absent organiser economics."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "Current ADR054 retains this narrow boundary. Pricing SQL exposes per-currency series revenue/exports without joining participants' private meeting/opportunity data. Existing coordination feedback/outcome reporting is not missing. Group this with the company/agenda disclosure decision, not generic absent organiser economics.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_D",
+        "summary": "Owner approved separate explicit aggregate-count consent for owned shared missions. Canonical scheduled and qualified-held counts remain separate; self-reported outcomes do not qualify. Restricted source checks and withdrawal remain authoritative. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-042"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-d-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -3293,8 +3320,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0075-programme-projections-and-consented-meeting-counts.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -3303,7 +3330,8 @@
         },
         "closureAcceptance": "Obtain a safe participant-mission linkage and prove qualified-meeting roll-up without inferring qualification from self-reported outcomes.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "ADR075 owner defaults approved on 3 November 2026.",
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
         ],
         "closureEvidence": []
       },
@@ -3315,6 +3343,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-042-H002",
+          "recordedOn": "2026-11-03",
+          "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
+          "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+          "disposition": "OPEN",
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
