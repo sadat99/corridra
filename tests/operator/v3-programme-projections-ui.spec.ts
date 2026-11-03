@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -162,7 +162,7 @@ function own() {
     expiresAt: expiry(),
     sendsMessages: false,
     active: true,
-    company: { version: 0, shared: false, objective: null },
+    company: { version: 0, shared: false, sourceChanged: false, objective: null },
     profile: {
       id: '00000000-0000-4000-8000-000000000009',
       version: 2,
@@ -390,4 +390,171 @@ test('another company with the same version also requires fresh consent', async 
   await expect(
     page.getByRole('button', { name: 'Share company profile', exact: true }),
   ).toBeDisabled();
+});
+
+// A programme server that keeps one activity and answers the way the database does: a save made against an
+// older version than the current one is refused with the existing "Activity changed; reload" message.
+async function activityServer(page: Page) {
+  const server = {
+    version: 1,
+    startsAt: '2030-07-15T04:00:00Z',
+    endsAt: '2030-07-15T05:00:00Z',
+    posts: [] as Record<string, unknown>[],
+    change(startsAt: string, endsAt: string) {
+      server.version += 1;
+      server.startsAt = startsAt;
+      server.endsAt = endsAt;
+    },
+  };
+  await page.route('**/api/customer-programme-projections**', (r) => {
+    if (r.request().method() === 'GET') {
+      const view = owner();
+      view.agenda[0] = {
+        ...view.agenda[0]!,
+        version: server.version,
+        startsAt: server.startsAt,
+        endsAt: server.endsAt,
+      };
+      return r.fulfill({ json: view });
+    }
+    const body = r.request().postDataJSON();
+    server.posts.push(body);
+    if (body.expectedVersion !== server.version)
+      return r.fulfill({ status: 409, json: { error: 'Activity changed; reload' } });
+    server.version += 1;
+    return r.fulfill({ json: receipt(body) });
+  });
+  return server;
+}
+const changedNotice = (page: Page) =>
+  page.getByRole('status').filter({ hasText: 'Someone else changed this activity' });
+
+test('an activity changed by someone else after it was opened cannot be overwritten', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  const starts = page.getByLabel(/Activity starts/);
+  await expect(starts).toHaveValue('2030-07-15T10:00');
+  await starts.fill('2030-07-15T14:00');
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await expect(changedNotice(page)).toContainText('replaces the entries currently typed');
+  await expect(page.getByRole('button', { name: 'Save activity schedule' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Remove schedule' })).toBeDisabled();
+  // Nothing is re-seeded without consent: the typed value is still there and nothing was sent.
+  await expect(starts).toHaveValue('2030-07-15T14:00');
+  expect(server.posts).toHaveLength(0);
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await expect(changedNotice(page)).toHaveCount(0);
+  await expect(starts).toHaveValue('2030-07-15T12:00');
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  expect(server.posts[0]).toMatchObject({ expectedVersion: 2, startsAt: '2030-07-15T06:00:00Z' });
+});
+test('a save made before the page noticed another change is refused and recovers after reload', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Activity changed; reload');
+  expect(server.posts).toHaveLength(1);
+  expect(server.posts[0]).toMatchObject({ expectedVersion: 1 });
+  await expect(page.getByText('Synthetic activity', { exact: false })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect.poll(() => server.posts.length).toBe(2);
+  expect(server.posts[1]).toMatchObject({ expectedVersion: 2, startsAt: '2030-07-15T06:00:00Z' });
+});
+test('saving twice in a row shows no false change notice and uses the next version', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  const save = page.getByRole('button', { name: 'Save activity schedule' });
+  await save.click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  await expect(save).toBeEnabled();
+  await expect(changedNotice(page)).toHaveCount(0);
+  await save.click();
+  await expect.poll(() => server.posts.length).toBe(2);
+  expect(server.posts.map((post) => post.expectedVersion)).toEqual([1, 2]);
+});
+test('removing a schedule needs the version the organiser saw', async ({ page }) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  const remove = page.getByRole('button', { name: 'Remove schedule' });
+  await expect(remove).toBeDisabled();
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await expect(remove).toBeEnabled();
+  await remove.click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  expect(server.posts[0]).toMatchObject({ scheduled: false, expectedVersion: 2 });
+});
+test('a company that changed after sharing is not shared until the participant shares again', async ({
+  page,
+}) => {
+  const commands: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-projections**', (r) => {
+    if (r.request().method() === 'GET')
+      return r.fulfill({
+        json: {
+          ...own(),
+          company: {
+            version: 2,
+            shared: false,
+            sourceChanged: true,
+            objective: 'Synthetic earlier objective',
+          },
+        },
+      });
+    const body = r.request().postDataJSON();
+    commands.push(body);
+    return r.fulfill({ json: receipt(body) });
+  });
+  await page.goto(origin + '/?view=own');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'company for this place changed' }),
+  ).toHaveText(
+    'Your company for this place changed after you shared. Programme organisers do not see a company until you review it below and share again.',
+  );
+  await expect(page.getByText('Company sharing is on')).toHaveCount(0);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.getByRole('button', { name: 'Clear earlier company permission' }).click();
+  await expect.poll(() => commands.length).toBe(1);
+  expect(commands[0]).toMatchObject({
+    action: 'company',
+    registrationId,
+    expectedVersion: 2,
+    shared: false,
+  });
+  expect(commands[0]).not.toHaveProperty('profileId');
+  await page.getByRole('textbox', { name: /Short objective/ }).fill('Synthetic fresh objective');
+  await page.getByRole('checkbox', { name: /I agree to share/ }).check();
+  await page.getByRole('button', { name: 'Share company profile', exact: true }).click();
+  await expect.poll(() => commands.length).toBe(2);
+  expect(commands[1]).toMatchObject({
+    action: 'company',
+    expectedVersion: 2,
+    shared: true,
+    profileVersion: 2,
+    objective: 'Synthetic fresh objective',
+  });
 });

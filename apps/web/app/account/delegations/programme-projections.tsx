@@ -25,7 +25,11 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     [visible, setVisible] = useState(false);
   const request = useRef<AbortController | null>(null),
     sequence = useRef(0),
-    pending = useRef<{ signature: string; body: Record<string, unknown> } | null>(null),
+    pending = useRef<{
+      signature: string;
+      body: Record<string, unknown>;
+      onSaved?: () => void;
+    } | null>(null),
     mounted = useRef(true);
   const queryText = new URLSearchParams(query).toString();
   const host = useCallback((node: HTMLElement | null) => {
@@ -125,13 +129,14 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       clearTimeout(renew);
     };
   }, [data, visible, load]);
-  async function send(input: Record<string, unknown>) {
+  async function send(input: Record<string, unknown>, onSaved?: () => void) {
     if (busy) return false;
     const signature = JSON.stringify(input);
     if (pending.current?.signature !== signature)
       pending.current = {
         signature,
         body: { ...input, commandId: crypto.randomUUID(), acknowledged: true },
+        onSaved,
       };
     setBusy(true);
     setNotice('');
@@ -161,6 +166,7 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       )
         throw Error('Save could not be confirmed. Retry the same change.');
       if (!mounted.current) return false;
+      pending.current.onSaved?.();
       pending.current = null;
       setCanRetry(false);
       await load();
@@ -186,7 +192,7 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     const input = { ...body };
     delete input.commandId;
     delete input.acknowledged;
-    await send(input);
+    await send(input, pending.current?.onSaved);
   }
   return { data, notice, busy, load, send, host, retry, canRetry };
 }
@@ -209,7 +215,9 @@ function OwnerPanel(
     [start, setStart] = useState<string | null>(null),
     [end, setEnd] = useState<string | null>(null),
     [audience, setAudience] = useState<'ALL' | 'SELECTED'>('ALL'),
-    [attendees, setAttendees] = useState<string[]>([]);
+    [attendees, setAttendees] = useState<string[]>([]),
+    // The activity version the organiser saw when the form was filled; saves are checked against it.
+    [seenVersion, setSeenVersion] = useState<number | null>(null);
   const { host, ...view } = useProjection<ProgrammeProjection>(props, {
     view: 'owner',
     workspaceId: props.workspaceId,
@@ -219,15 +227,19 @@ function OwnerPanel(
   const d = view.data;
   const task = d?.agenda.find((t) => t.taskId === taskId),
     zone = d?.context?.timezone;
+  const stale = !view.busy && !!task && seenVersion !== null && task.version !== seenVersion;
   function edit(id: string) {
     const row = d?.agenda.find((t) => t.taskId === id);
     if (!row) return;
     setTaskId(id);
+    setSeenVersion(row.version);
     setStart(row.startsAt);
     setEnd(row.endsAt);
     setAudience(row.audience);
     setAttendees(row.attendees);
   }
+  const savedByThisForm = () =>
+    setSeenVersion((version) => (version === null ? version : version + 1));
   const paging =
     d && (after || d.nextAfter) ? (
       <div className="button-row">
@@ -388,19 +400,22 @@ function OwnerPanel(
               className="operator-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!task || !start || !end) return;
-                void view.send({
-                  action: 'schedule',
-                  workspaceId: props.workspaceId,
-                  programmeId: props.programmeId,
-                  taskId,
-                  expectedVersion: task.version,
-                  scheduled: true,
-                  startsAt: start,
-                  endsAt: end,
-                  audience,
-                  attendees: audience === 'ALL' ? [] : attendees,
-                });
+                if (!task || !start || !end || seenVersion === null || stale) return;
+                void view.send(
+                  {
+                    action: 'schedule',
+                    workspaceId: props.workspaceId,
+                    programmeId: props.programmeId,
+                    taskId,
+                    expectedVersion: seenVersion,
+                    scheduled: true,
+                    startsAt: start,
+                    endsAt: end,
+                    audience,
+                    attendees: audience === 'ALL' ? [] : attendees,
+                  },
+                  savedByThisForm,
+                );
               }}
             >
               <label className="field">
@@ -472,10 +487,22 @@ function OwnerPanel(
                   {paging}
                 </fieldset>
               )}
+              {stale && (
+                <>
+                  <p role="status">
+                    Someone else changed this activity since it was opened. Reloading replaces the
+                    entries currently typed with the latest saved schedule.
+                  </p>
+                  <button type="button" onClick={() => edit(taskId)}>
+                    Reload this activity
+                  </button>
+                </>
+              )}
               <button
                 type="submit"
                 disabled={
                   view.busy ||
+                  stale ||
                   !zone ||
                   !task ||
                   task.status === 'CANCELLED' ||
@@ -487,16 +514,19 @@ function OwnerPanel(
               {task?.scheduled && (
                 <button
                   type="button"
-                  disabled={view.busy}
+                  disabled={view.busy || stale || seenVersion === null}
                   onClick={() =>
-                    void view.send({
-                      action: 'schedule',
-                      workspaceId: props.workspaceId,
-                      programmeId: props.programmeId,
-                      taskId,
-                      expectedVersion: task.version,
-                      scheduled: false,
-                    })
+                    void view.send(
+                      {
+                        action: 'schedule',
+                        workspaceId: props.workspaceId,
+                        programmeId: props.programmeId,
+                        taskId,
+                        expectedVersion: seenVersion,
+                        scheduled: false,
+                      },
+                      savedByThisForm,
+                    )
                   }
                 >
                   Remove schedule
@@ -607,6 +637,28 @@ function OwnSharing(props: Identity & { registrationId: string }) {
               Apply for a place using your company profile in Your place first. Sharing also
               requires an active registration and current company authority.
             </p>
+          )}
+          {d.company.sourceChanged && (
+            <>
+              <p role="status">
+                Your company for this place changed after you shared. Programme organisers do not
+                see a company until you review it below and share again.
+              </p>
+              <button
+                type="button"
+                disabled={view.busy}
+                onClick={() =>
+                  void view.send({
+                    action: 'company',
+                    registrationId: props.registrationId,
+                    expectedVersion: d.company.version,
+                    shared: false,
+                  })
+                }
+              >
+                Clear earlier company permission
+              </button>
+            </>
           )}
           {d.company.shared && (
             <>
