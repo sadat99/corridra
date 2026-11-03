@@ -27,8 +27,8 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // label; the request bodies are unchanged). It now names the commit with that form (WS-A, then the folded receipt check for V-57). After the program
 // merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
 // GAP-010 changes the English country controls. Keep this fixed source snapshot reachable
-// through baseline/gap-010-request-countries-2026-11-03 after the PR is squash-merged.
-const baseline = 'cf17c4c69b4cd21fbcd2461b34bf720f3450fad4';
+// through baseline/gap-010-request-countries-groups-2026-11-03 after the PR is squash-merged.
+const baseline = '039cd7d5040022dc14157a22e33507a9c1f8e25f';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -670,7 +670,8 @@ test.describe('with the form released', () => {
     await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
     await expect(page.locator('.ux-draft-notice')).toHaveText(de['form.message.draftResumed']);
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
-    await expect(form.locator('select').first()).toHaveValue('DE');
+    await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
+    await expect(form.getByRole('combobox').first()).toHaveValue('Deutschland');
   });
 
   test('a draft that cannot be restored, resumed or saved says so in the chosen language', async ({
@@ -1487,6 +1488,9 @@ test('GAP-010 request country search keeps every supported country and EU market
   await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
   const form = page.locator('form.intake-form');
   await form.locator('.guide-actions .primary-link').click();
+  await form.locator('#brief-companyCountry').click();
+  for (const heading of ['Most requested', 'EU countries', 'Other countries'])
+    await expect(form.getByRole('listbox').getByText(heading, { exact: true })).toBeVisible();
   for (const name of ['companyCountry', 'marketCode']) {
     const input = form.locator('#brief-' + name);
     for (const code of countryCodes) {

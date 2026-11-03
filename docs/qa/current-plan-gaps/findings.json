@@ -902,8 +902,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Existing SearchSelect now replaces the two request-country controls without changing canonical values or request bodies.20 earlier local cases and7 current-base country/fixed-English-baseline cases pass, with final build/types/lint. Product hashes match the original tested preparation. The fixed source snapshot is retained through a baseline tag for squash-merge durability. Final-head CI/deployment pending.",
-        "evidenceRevision": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "summary": "Searchable request-country controls preserve canonical values, required errors and existing translated group headings. Latest source039cd7d passes3 country/keyboard/touch cases,4 fixed-English comparisons,3 focus-width cases,54 catalogue checks, build/types/lint. Failed prior CI and corrections remain in evidence. New immutable baseline tag retains the grouped source. Fresh final-head CI/deployment pending.",
+        "evidenceRevision": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -955,6 +955,16 @@
           "priorDisposition": "OPEN",
           "disposition": "OPEN",
           "note": "Existing SearchSelect now replaces the two request-country controls without changing canonical values or request bodies.20 earlier local cases and7 current-base country/fixed-English-baseline cases pass, with final build/types/lint. Product hashes match the original tested preparation. The fixed source snapshot is retained through a baseline tag for squash-merge durability. Final-head CI/deployment pending.",
+          "evidence": ["verification/2026-11-02-gap010-local.json"]
+        },
+        {
+          "eventId": "GAP-010-H003",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFICATION_CORRECTED",
+          "evidenceRevision": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "Searchable request-country controls preserve canonical values, required errors and existing translated group headings. Latest source039cd7d passes3 country/keyboard/touch cases,4 fixed-English comparisons,3 focus-width cases,54 catalogue checks, build/types/lint. Failed prior CI and corrections remain in evidence. New immutable baseline tag retains the grouped source. Fresh final-head CI/deployment pending.",
           "evidence": ["verification/2026-11-02-gap010-local.json"]
         }
       ]
