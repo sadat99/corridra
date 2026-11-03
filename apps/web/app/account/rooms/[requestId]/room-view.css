@@ -108,3 +108,56 @@
   align-items: center;
   min-height: 2.75rem;
 }
+.room-trip-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.room-trip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.room .room-trip-list .room-trip-head h4 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.room-trip-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+.room-trip-facts > div {
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+.room .room-trip-list .room-trip-facts :is(dt, dd) {
+  margin: 0;
+  line-height: 1.4;
+}
+.room .room-trip-list .room-trip-facts dt {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.room .room-trip-list .room-trip-facts dd {
+  overflow-wrap: anywhere;
+}
+/* The customer kit stacks a list margin on the grid gap and sets a reply date's small grey type on every
+   time inside a card. The cards sit one token gap apart, and a time here is the main fact. */
+.room .room-trip-list > li.room-strip {
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+.room .room-trip-list .room-trip-facts time {
+  font-size: inherit;
+  color: inherit;
+}
+.room .room-trip-list .room-trip-facts > div:last-child {
+  flex-basis: 14rem;
+  flex-grow: 2;
+}

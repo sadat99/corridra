@@ -1,7 +1,7 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
 import { MissionExperienceView } from '../../mission-experience-view';
@@ -13,7 +13,7 @@ import { requirementFields, offerTerms } from '@corridra/domain/commercial-missi
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
 import { SpecificationConfirmation } from './specification-confirmation';
-export type ReportSection = 'all' | 'compare' | 'evidence';
+export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip';
 type Scope = SavedMissionScope & {
   resourceId: string;
   decisionsEnabled?: boolean;
@@ -22,6 +22,8 @@ type Scope = SavedMissionScope & {
   lenses?: boolean;
   /** The Room shows the report in two lenses. `all` is the whole page, as it has always been. */
   section?: ReportSection;
+  /** The Room's Trip lens draws the reviewed itinerary itself, so this file imports no Room code. */
+  renderTrip?: (itinerary: DeliveryReport['missions'][number]['itinerary']) => ReactNode;
 };
 function date(value: unknown): value is string {
   return typeof value === 'string' && Number.isFinite(Date.parse(value));
@@ -202,6 +204,7 @@ function PrivateReport({
   specificationConfirmationsEnabled = false,
   lenses = false,
   section = 'all',
+  renderTrip,
 }: Scope) {
   const responsePrefix = useId();
   const [data, setData] = useState<DeliveryReport | null>(null),
@@ -364,6 +367,7 @@ function PrivateReport({
   const showCompare = section === 'all' || section === 'compare';
   const showEvidence = section === 'all' || section === 'evidence';
   const showRest = section === 'all';
+  const showTrip = section === 'trip';
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
@@ -427,6 +431,7 @@ function PrivateReport({
                   )}
                 </>
               )}
+              {showTrip && renderTrip && renderTrip(m.itinerary)}
               {showEvidence && decisionsEnabled && (
                 <DecisionHistory subject={subject} issuer={issuer} resourceId={resourceId} />
               )}

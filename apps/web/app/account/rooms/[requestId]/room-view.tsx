@@ -14,13 +14,15 @@ import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import { emblemFor, roadRecords, type RoomLink } from '../../../../lib/room';
 import { SavedCommercialReport } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
+import { TripList } from './trip-list';
 import './room-view.css';
 
-type Lens = 'overview' | 'compare' | 'evidence';
+type Lens = 'overview' | 'compare' | 'evidence' | 'trip';
 const lensKey: Record<Lens, MessageKey> = {
   overview: 'room.lens.overview',
   compare: 'room.lens.compare',
   evidence: 'room.lens.evidence',
+  trip: 'room.lens.trip',
 };
 
 /**
@@ -37,6 +39,7 @@ export function RoomView({
   decisionsEnabled = false,
   specificationConfirmationsEnabled = false,
   lenses = false,
+  trip = false,
 }: {
   requestId: string;
   subject: string;
@@ -46,6 +49,8 @@ export function RoomView({
   decisionsEnabled?: boolean;
   specificationConfirmationsEnabled?: boolean;
   lenses?: boolean;
+  /** Batch E (`CORRIDRA_UX_TRIP`, read on the server): a fourth lens with the reviewed meetings and visits. */
+  trip?: boolean;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -131,7 +136,10 @@ export function RoomView({
 
           {lenses && (
             <div className="room-lenses" role="group" aria-label={say('room.lens.overview')}>
-              {(['overview', 'compare', 'evidence'] as const).map((item) => (
+              {(trip
+                ? (['overview', 'compare', 'evidence', 'trip'] as const)
+                : (['overview', 'compare', 'evidence'] as const)
+              ).map((item) => (
                 <button
                   key={item}
                   type="button"
@@ -139,7 +147,12 @@ export function RoomView({
                   aria-pressed={lens === item}
                   onClick={() => setLens(item)}
                 >
-                  {say(lensKey[item])}
+                  {item === 'trip' && locale !== 'en' ? (
+                    // An English placeholder until native review (D16), marked so it is read as English.
+                    <span lang="en">{say(lensKey[item])}</span>
+                  ) : (
+                    say(lensKey[item])
+                  )}
                 </button>
               ))}
             </div>
@@ -171,10 +184,11 @@ export function RoomView({
                   specificationConfirmationsEnabled={specificationConfirmationsEnabled}
                   lenses
                   section={lens}
+                  renderTrip={(itinerary) => <TripList itinerary={itinerary} locale={locale} />}
                 />
               ) : (
                 <p className="ux-empty" role="status">
-                  {say('room.lens.none')}
+                  {say(lens === 'trip' ? 'room.trip.noReport' : 'room.lens.none')}
                 </p>
               )}
             </div>

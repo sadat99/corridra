@@ -10,6 +10,41 @@ import { wsC, wsCEn } from './ws/ws-c';
 import { wsD, wsDEn } from './ws/ws-d';
 import { wsE, wsEEn } from './ws/ws-e';
 
+/**
+ * Trip view words (Room, GAP-034). English placeholder until native review (D16): every catalog carries
+ * these English words, so no unreviewed translation is shown. The review replaces them one language at a time.
+ */
+const tripWords = {
+  'room.lens.trip': 'Trip',
+  'room.trip.heading': 'Your meetings and visits',
+  'room.trip.line':
+    'These are the meetings and visits the Corridra team has reviewed for this request. Times are shown in the time zone of each place. Nothing is booked from this page.',
+  'room.trip.count.one': '1 meeting or visit',
+  'room.trip.count.other': '{count} meetings or visits',
+  'room.trip.starts': 'Starts',
+  'room.trip.ends': 'Ends',
+  'room.trip.place': 'Place',
+  'room.trip.noTime': 'No confirmed time yet.',
+  'room.trip.noPlace': 'Not shared yet',
+  'room.trip.changedBadge': 'Date changed',
+  'room.trip.changed':
+    'The date or time has changed. We do not show the old time. Ask the Corridra team for the new one.',
+  'room.trip.empty':
+    'No meetings or visits are ready to show yet. They appear here after the Corridra team reviews them.',
+  'room.trip.noReport':
+    'Your meetings and visits appear here once the Corridra team delivers a report for this request and you save it.',
+  'room.trip.all': 'Show all {count} meetings and visits',
+  'room.trip.fewer': 'Show fewer',
+  'room.trip.status.proposed': 'Suggested',
+  'room.trip.status.accepted': 'Accepted',
+  'room.trip.status.scheduled': 'Time confirmed',
+  'room.trip.status.held': 'Done',
+  'room.trip.status.declined': 'Declined',
+  'room.trip.status.cancelled': 'Cancelled',
+  'room.trip.status.noShow': 'Missed',
+  'room.trip.status.rescheduleRequired': 'New time needed',
+} as const;
+
 export const en = {
   ...homeEn,
   // Commercial readiness stream blocks (one file per stream, so streams never edit the same lines).
@@ -137,6 +172,8 @@ export const en = {
   'room.replies.heading': 'Replies from the Corridra team',
   'room.replies.none': 'No replies yet.',
   'room.replies.all': 'Read every reply',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -300,6 +337,8 @@ const bn: Catalog = {
   'room.replies.heading': 'Corridra টিমের উত্তর',
   'room.replies.none': 'এখনও কোনো উত্তর নেই।',
   'room.replies.all': 'সব উত্তর পড়ুন',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -450,6 +489,8 @@ const zh: Catalog = {
   'room.replies.heading': 'Corridra 团队的回复',
   'room.replies.none': '暂无回复。',
   'room.replies.all': '阅读全部回复',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -605,6 +646,8 @@ const es: Catalog = {
   'room.replies.heading': 'Respuestas del equipo de Corridra',
   'room.replies.none': 'Aún no hay respuestas.',
   'room.replies.all': 'Leer todas las respuestas',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -759,6 +802,8 @@ const ar: Catalog = {
   'room.replies.heading': 'ردود فريق Corridra',
   'room.replies.none': 'لا توجد ردود بعد.',
   'room.replies.all': 'اقرأ كل الردود',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -915,6 +960,8 @@ const fr: Catalog = {
   'room.replies.heading': "Réponses de l'équipe Corridra",
   'room.replies.none': 'Aucune réponse pour le moment.',
   'room.replies.all': 'Lire toutes les réponses',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1075,6 +1122,8 @@ const de: Catalog = {
   'room.replies.heading': 'Antworten des Corridra-Teams',
   'room.replies.none': 'Noch keine Antworten.',
   'room.replies.all': 'Alle Antworten lesen',
+  // English placeholder until native review (D16)
+  ...tripWords,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',

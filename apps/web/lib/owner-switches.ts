@@ -477,9 +477,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_TRIP',
     label: 'Trip view',
-    line: 'Shows the commercial itinerary of a request: meetings and visits. Never books anything.',
+    line: "Adds a Trip view to a request's Room: the meetings and visits the Corridra team has reviewed, with their time and place. Needs the Road on a request and the Compare and Evidence views on. Never books anything.",
     group: 'Accounts and requests',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_MOVE_RECORDS',
