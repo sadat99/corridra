@@ -851,6 +851,12 @@ function IntakeForm({
   const chosenJob = missionCatalogue.find((item) => item.key === draft.job);
   // Countries by name in the shown language (CQ-15): the three route countries first, then the EU, then the rest.
   const countries = countryOptions(tag);
+  const countryGroupLabel = (option: (typeof countries)[number]) =>
+    option.value === 'EU' || (pinnedCountries as readonly string[]).includes(option.value)
+      ? wsa('wsa.plan.countries.pinned')
+      : option.hint === 'EU'
+        ? wsa('wsa.plan.countries.eu')
+        : wsa('wsa.plan.countries.other');
   const delegation = draft.job === 'delegations';
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
@@ -1106,6 +1112,7 @@ function IntakeForm({
                     label={say('form.where.company')}
                     options={countries}
                     pinned={pinnedCountries}
+                    groupLabel={countryGroupLabel}
                     value={draft.companyCountry || null}
                     onChange={(value) => change('companyCountry', value ?? '')}
                     placeholder={say('form.where.chooseCountry')}
@@ -1120,6 +1127,7 @@ function IntakeForm({
                     label={say('form.where.market')}
                     options={[{ value: 'EU', label: say('form.where.eu') }, ...countries]}
                     pinned={['EU', ...pinnedCountries]}
+                    groupLabel={countryGroupLabel}
                     value={draft.marketCode || null}
                     onChange={(value) => change('marketCode', value ?? '')}
                     placeholder={say('form.where.chooseMarket')}
