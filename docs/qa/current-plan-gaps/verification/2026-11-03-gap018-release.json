@@ -1,0 +1,26 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-018",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/249",
+  "testedHead": "f9bfccc1df435dddd21a47a2b7747b416f1eba9b",
+  "ciRun": 41606986240,
+  "codeqlRun": 41606986091,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "e184781cba511223f64e53fd73a70d42e7a14975",
+  "productionDeployment": {
+    "id": "dpl_GyDhZ6L1DCeLv4tm6Zy5yduM3jJh",
+    "state": "READY",
+    "githubCommitSha": "e184781cba511223f64e53fd73a70d42e7a14975",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap018-isolated-local.json"],
+  "limits": [
+    "Protected commercial0008 was not installed at release; quote notices remain unavailable until installation.",
+    "The initial37-case incomplete extraction is preserved and not used as completion evidence. The complete40-case proof covers all6 source files.",
+    "Genuine private production/provider acceptance is unverified."
+  ]
+}

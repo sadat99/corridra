@@ -1,6 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   withTenant,
+  type DatabaseClient,
   type DatabasePool,
   type RequestContext,
   type TenantTransaction,
@@ -39,7 +40,25 @@ export class MissionService {
     private pool: DatabasePool,
     private secret: string,
     private intakeMode: 'synthetic' | 'real' = 'synthetic',
+    private replyPosted?: (
+      db: DatabaseClient,
+      replyId: string,
+    ) => Promise<(() => Promise<unknown>) | undefined>,
   ) {}
+  private async recordReply(db: DatabaseClient, replyId: string) {
+    if (!this.replyPosted) return undefined;
+    await db.query('SAVEPOINT reply_posted');
+    try {
+      const dispatch = await this.replyPosted(db, replyId);
+      await db.query('RELEASE SAVEPOINT reply_posted');
+      return dispatch;
+    } catch {
+      await db.query('ROLLBACK TO SAVEPOINT reply_posted');
+      await db.query('RELEASE SAVEPOINT reply_posted');
+      console.error(JSON.stringify({ event: 'reply_posted_notification_failed' }));
+      return undefined;
+    }
+  }
   private hash(value: string) {
     return createHmac('sha256', this.secret).update(value).digest('hex');
   }
@@ -435,8 +454,9 @@ export class MissionService {
       return { version: m.version + 1 };
     });
   }
-  reply(ctx: RequestContext, id: string, body: string, replyId: string) {
-    return withTenant(this.pool, ctx, 'missions.manage', async ({ db, actorId }) => {
+  async reply(ctx: RequestContext, id: string, body: string, replyId: string) {
+    let send: (() => Promise<unknown>) | undefined;
+    const result = await withTenant(this.pool, ctx, 'missions.manage', async ({ db, actorId }) => {
       await db.query('SELECT id FROM app.mission WHERE tenant_id=$1 AND id=$2 FOR UPDATE', [
         ctx.tenantId,
         id,
@@ -447,13 +467,24 @@ export class MissionService {
       if (old) {
         if (old.mission_id !== id || old.body !== body || old.created_by !== actorId)
           throw new DomainError('Reply key reused', 409);
+        send = await this.recordReply(db, old.id);
         return { id: old.id };
       }
       const r = await db.query(
         'INSERT INTO app.mission_reply(id,tenant_id,mission_id,body,created_by) VALUES($1,$2,$3,$4,$5) RETURNING id',
         [replyId, ctx.tenantId, id, body, actorId],
       );
+      send = await this.recordReply(db, replyId);
       return r.rows[0];
     });
+    if (send) {
+      try {
+        await send();
+      } catch {
+        // The confirmed reply/inbox transaction survives a transport failure; retry keeps its key.
+        console.error(JSON.stringify({ event: 'reply_posted_email_failed' }));
+      }
+    }
+    return result;
   }
 }

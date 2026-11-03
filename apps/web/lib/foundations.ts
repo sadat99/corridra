@@ -741,6 +741,19 @@ function createServices() {
       runtimePool,
       config.AUTH_SECRET,
       realUseEnabled() ? 'real' : 'synthetic',
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? async (db, replyId) => {
+            const receipt = await inbox.recordReplyPosted(db, replyId);
+            if (!receipt) return undefined;
+            return async () => {
+              const { notifyRecorded } = await import('./notify');
+              return notifyRecorded(
+                { ...receipt, recipientKind: 'customer', type: 'REPLY_POSTED', locale: 'en' },
+                receipt.id,
+              );
+            };
+          }
+        : undefined,
     ),
     delivery: new DeliveryService(
       runtimePool,

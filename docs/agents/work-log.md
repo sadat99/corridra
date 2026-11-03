@@ -2546,3 +2546,9 @@ GAP017 retains assignment semantics and adds a restricted event-derived notice r
 PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation. Exact production alias READY at dpl_6QoEfX1cciXeQMmQ3MsgA6oxDHBp, merge 2dd274f7d5c83865d78c6e751b1f4762e12ed9cb; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
 
 All6 isolated quote source hashes match the complete40-case DB proof, preserving assignment notices and inventory0006–0008. The initial37-case incomplete extraction is explicitly limited. Canonical SQL selects the customer; optional notice failure preserves the quote. Frozen CI/deployment and protected0008 installation pending; genuine provider delivery unverified.
+
+### 3 November 2026: GAP-018 code released; GAP-019 next
+
+PR249 passed19 exact-head checks atf9bfccc and reached the exact READY production alias ate184781. Complete40-case proof covers the canonical customer quote notice and failure isolation. GAP018 stays OPEN pending protected0008 installation. Exact production alias READY at dpl_GyDhZ6L1DCeLv4tm6Zy5yduM3jJh, merge e184781cba511223f64e53fd73a70d42e7a14975; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
+
+All15 combined source hashes and saved log hashes match62 DB cases/full types/lint. Reply notices use the explicit owned-request bridge and canonical staff authority; anonymous/revoked ownership sends nothing. Corrected SAVEPOINT isolates notice failure while retaining the reply. Frozen CI/deployment and protected0009 installation pending; genuine provider delivery unverified.

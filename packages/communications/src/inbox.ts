@@ -88,6 +88,16 @@ export class InboxService {
     return result.rows[0].receipt;
   }
 
+  async recordReplyPosted(
+    db: DatabaseClient,
+    replyId: string,
+  ): Promise<RecordedNotification | null> {
+    const result = await db.query('SELECT app.record_reply_posted($1) receipt', [
+      z.uuid().parse(replyId),
+    ]);
+    return result.rows[0].receipt;
+  }
+
   async recordReportPublished(
     db: DatabaseClient,
     commandId: string,
