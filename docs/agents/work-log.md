@@ -2578,3 +2578,9 @@ PR251 passed19 exact-head checks atabd973e and reached the exact READY productio
 All17 selected code repairs and required additive SQL are released/installed. Eleven selected engineering findings are RESOLVED;001–005/007 retain their private runtime/provider acceptance gaps. No language work, provider activation or real outreach was performed. Final records are documentation only; reuse unchanged product proofs and the verified READY release.
 
 Final comparison normalized the first3 deployment labels from READY to DEPLOYED using their unchanged release proof; existing histories remain intact. Machine-readable selected totals are17 deployed,11 engineering-resolved and6 private/runtime/provider acceptance findings OPEN.
+
+### 3 November 2026: batched acceptance and retained-scope planning
+
+Owner requested a fast, bounded batch plan for001–005/007 and023–050. Mainb389d9c is unchanged; first17 selected code repairs and required SQL remain released/installed. The existing gap README now groups all28 later IDs exactly once across nine proposed packets, including a held real-payments packet. One controlled identity/access/delivery campaign shares actors and records across the early six findings; rendered/performance/reconciliation and language reviews are separate reusable evidence work. Programme, disclosure, Pulse/recovery, staff-authority and helper/rehearsal extensions retain their explicit owner decisions.
+
+Planning alone changes no finding disposition or product acceptance. Each closure uses its actual criterion, preserving independent activation/provider limits and all existing proof. Provider sends, switch changes and unknown-address experiments require the controlled scope described in the plan; no external operation occurred. Branch docs/gap-batch-plan is documentation only. Use focused document/context/format/security checks and a draft PR, not another product test campaign.
