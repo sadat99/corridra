@@ -324,11 +324,13 @@ test('notes validation keeps its context hint and exposes the error on the texta
   await expect(next).toBeEnabled();
   await next.click();
   await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .selectOption('BD');
+    .getByRole('combobox', { name: 'Where is the company based? (required)', exact: true })
+    .fill('BD');
+  await page.locator('[role="option"][data-value="BD"]').click();
   await page
-    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
-    .selectOption('CN');
+    .getByRole('combobox', { name: 'Which market is involved? (required)', exact: true })
+    .fill('CN');
+  await page.locator('[role="option"][data-value="CN"]').click();
   await next.click();
   await page
     .getByLabel('Your offer or requirement', { exact: true })

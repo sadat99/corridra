@@ -4,7 +4,15 @@
 // Labels are names, never codes. A hidden input carries the value for plain form posts.
 // Owner after Wave 0: WS-E (internals only; props are fixed).
 import './ux-kit.css';
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  Fragment,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import type { PickerOption } from '../../lib/ux/options';
 
 export type SearchSelectProps = {
@@ -14,10 +22,12 @@ export type SearchSelectProps = {
   onChange: (value: string | null) => void;
   /** Values shown first, above a divider, when the search box is empty. */
   pinned?: readonly string[];
+  /** Optional headings for the existing ordered options, hidden while searching. */
+  groupLabel?: (option: PickerOption) => string;
   name?: string;
   id?: string;
   hint?: string;
-  error?: string;
+  error?: ReactNode;
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -39,6 +49,7 @@ export function SearchSelect({
   value,
   onChange,
   pinned = [],
+  groupLabel,
   name,
   id,
   hint,
@@ -166,24 +177,33 @@ export function SearchSelect({
               </li>
             ) : (
               visible.items.slice(0, 200).map((option, index) => (
-                <li
-                  key={option.value}
-                  id={`${listId}-${index}`}
-                  role="option"
-                  className="ux-kit-option"
-                  aria-selected={option.value === value}
-                  data-active={index === active}
-                  style={
-                    visible.split && index === visible.split
-                      ? { borderTop: '1px solid var(--ac-border)' }
-                      : undefined
-                  }
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => choose(option)}
-                >
-                  <span>{option.label}</span>
-                  {option.hint ? <span className="ux-kit-option-hint">{option.hint}</span> : null}
-                </li>
+                <Fragment key={option.value}>
+                  {groupLabel &&
+                  !query?.trim() &&
+                  (index === 0 || groupLabel(visible.items[index - 1]) !== groupLabel(option)) ? (
+                    <li role="presentation" className="ux-kit-option-hint">
+                      {groupLabel(option)}
+                    </li>
+                  ) : null}
+                  <li
+                    id={`${listId}-${index}`}
+                    role="option"
+                    className="ux-kit-option"
+                    aria-selected={option.value === value}
+                    data-active={index === active}
+                    data-value={option.value}
+                    style={
+                      visible.split && index === visible.split
+                        ? { borderTop: '1px solid var(--ac-border)' }
+                        : undefined
+                    }
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => choose(option)}
+                  >
+                    <span>{option.label}</span>
+                    {option.hint ? <span className="ux-kit-option-hint">{option.hint}</span> : null}
+                  </li>
+                </Fragment>
               ))
             )}
           </ul>

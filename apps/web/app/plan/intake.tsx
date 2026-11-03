@@ -15,7 +15,8 @@ import { useFormWords } from './form-words';
 import { rememberSentRequest } from '../../lib/private-request-storage';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
-import { countryOptions, euCountries, pinnedCountries } from '../../lib/ux/options';
+import { countryOptions, pinnedCountries } from '../../lib/ux/options';
+import { SearchSelect } from '../../components/ux/search-select';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -850,32 +851,12 @@ function IntakeForm({
   const chosenJob = missionCatalogue.find((item) => item.key === draft.job);
   // Countries by name in the shown language (CQ-15): the three route countries first, then the EU, then the rest.
   const countries = countryOptions(tag);
-  const countryGroups = [
-    { label: wsa('wsa.plan.countries.pinned'), codes: [...pinnedCountries] as string[] },
-    {
-      label: wsa('wsa.plan.countries.eu'),
-      codes: countries.filter((c) => c.hint === 'EU').map((c) => c.value),
-    },
-    {
-      label: wsa('wsa.plan.countries.other'),
-      codes: countries
-        .filter(
-          (c) =>
-            !(pinnedCountries as readonly string[]).includes(c.value) &&
-            !(euCountries as readonly string[]).includes(c.value),
-        )
-        .map((c) => c.value),
-    },
-  ];
-  const countryChoices = countryGroups.map((group) => (
-    <optgroup key={group.label} label={group.label}>
-      {group.codes.map((code) => (
-        <option key={code} value={code}>
-          {countries.find((c) => c.value === code)?.label ?? regionNames.of(code)}
-        </option>
-      ))}
-    </optgroup>
-  ));
+  const countryGroupLabel = (option: (typeof countries)[number]) =>
+    option.value === 'EU' || (pinnedCountries as readonly string[]).includes(option.value)
+      ? wsa('wsa.plan.countries.pinned')
+      : option.hint === 'EU'
+        ? wsa('wsa.plan.countries.eu')
+        : wsa('wsa.plan.countries.other');
   const delegation = draft.job === 'delegations';
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
@@ -1125,31 +1106,34 @@ function IntakeForm({
               )}
               {step === 1 && (
                 <>
-                  <label className="field">
-                    {say('form.where.company')}
-                    <select
-                      value={draft.companyCountry}
-                      onChange={(e) => change('companyCountry', e.target.value)}
-                      required
-                    >
-                      <option value="">{say('form.where.chooseCountry')}</option>
-                      {countryChoices}
-                    </select>
-                  </label>
-                  {error('companyCountry')}
-                  <label className="field">
-                    {say('form.where.market')}
-                    <select
-                      value={draft.marketCode}
-                      onChange={(e) => change('marketCode', e.target.value)}
-                      required
-                    >
-                      <option value="">{say('form.where.chooseMarket')}</option>
-                      <option value="EU">{say('form.where.eu')}</option>
-                      {countryChoices}
-                    </select>
-                  </label>
-                  {error('marketCode')}
+                  <SearchSelect
+                    id="brief-companyCountry"
+                    name="companyCountry"
+                    label={say('form.where.company')}
+                    options={countries}
+                    pinned={pinnedCountries}
+                    groupLabel={countryGroupLabel}
+                    value={draft.companyCountry || null}
+                    onChange={(value) => change('companyCountry', value ?? '')}
+                    placeholder={say('form.where.chooseCountry')}
+                    required
+                    error={
+                      errors.companyCountry?.[0] ? showMessage(errors.companyCountry[0]) : undefined
+                    }
+                  />
+                  <SearchSelect
+                    id="brief-marketCode"
+                    name="marketCode"
+                    label={say('form.where.market')}
+                    options={[{ value: 'EU', label: say('form.where.eu') }, ...countries]}
+                    pinned={['EU', ...pinnedCountries]}
+                    groupLabel={countryGroupLabel}
+                    value={draft.marketCode || null}
+                    onChange={(value) => change('marketCode', value ?? '')}
+                    placeholder={say('form.where.chooseMarket')}
+                    required
+                    error={errors.marketCode?.[0] ? showMessage(errors.marketCode[0]) : undefined}
+                  />
                   <p className="guide-hint">
                     {say('form.where.hint')}{' '}
                     {draft.companyCountry &&

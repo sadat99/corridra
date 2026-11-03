@@ -53,7 +53,7 @@ test('CQ-01: on /plan, typing in a field with errors keeps the focus in that fie
   await page.goto('/plan');
   const textField = page
     .locator(
-      'main input[type="text"]:visible, main input[type="email"]:visible, main textarea:visible',
+      'main input[type="text"]:visible, main input[type="email"]:visible, main input[role="combobox"]:visible, main textarea:visible',
     )
     .first();
   // The first steps are choices. Answer each choice step (first option) until a step with a text

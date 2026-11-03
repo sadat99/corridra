@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page, type Locator } from '@playwright/test';
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
@@ -16,6 +16,7 @@ import { words as es } from '../../apps/web/lib/i18n/form-words/es';
 import { words as fr } from '../../apps/web/lib/i18n/form-words/fr';
 import { words as zh } from '../../apps/web/lib/i18n/form-words/zh';
 import { customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
+import { countryCodes } from '../../packages/domain/src/countries';
 
 // The request form in the chosen language (Lane 11), mounted in the real frame: the real header, the real /plan
 // page (its main region, heading and form) and the built stylesheets. The page is compared with the request page
@@ -25,7 +26,9 @@ import { customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
 // (WS-A: plain errors on their field, required groups, country names, autocomplete, receipt hint and status
 // label; the request bodies are unchanged). It now names the commit with that form (WS-A, then the folded receipt check for V-57). After the program
 // merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
-const baseline = '16141dbff716829a22f38d8b5ab5d83dc4cc1b30';
+// GAP-010 changes the English country controls. Keep this fixed source snapshot reachable
+// through baseline/gap-010-request-countries-groups-2026-11-03 after the PR is squash-merged.
+const baseline = '039cd7d5040022dc14157a22e33507a9c1f8e25f';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -244,6 +247,17 @@ async function open(page: Page, language: string, query: string) {
   await expect(page.locator('form.intake-form .guide-actions .primary-link')).toBeEnabled();
 }
 
+async function chooseCountry(form: Locator, index: number, code: string) {
+  const field = form.getByRole('combobox').nth(index);
+  // Historical baseline controls remain native; exercise either control through its real UI.
+  if (await field.evaluate((element) => element.tagName === 'SELECT')) {
+    await field.selectOption(code);
+  } else {
+    await field.fill(code);
+    await form.locator('[role="option"][data-value="' + code + '"]').click();
+  }
+}
+
 /** What a comparison reads at one state: the main region's markup and its accessibility tree. */
 async function capture(page: Page, name: string) {
   const main = page.locator('#main');
@@ -282,8 +296,8 @@ async function walk(
   await next.click();
   await expect(page.locator('.ux-error-summary')).toBeVisible();
   states.push(await look('step 2 errors'));
-  await form.locator('select').nth(0).selectOption('DE');
-  await form.locator('select').nth(1).selectOption('US');
+  await chooseCountry(form, 0, 'DE');
+  await chooseCountry(form, 1, 'US');
   await form.locator('input[name="attendance"]').first().check();
   await form.locator('#brief-startDate').fill('2026-12-01');
   await form.locator('#brief-endDate').fill('2026-12-03');
@@ -651,12 +665,13 @@ test.describe('with the form released', () => {
     await form.locator('select').first().selectOption('machinery_procurement');
     await form.locator('.guide-actions .primary-link').click();
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
-    await form.locator('select').first().selectOption('DE');
+    await chooseCountry(form, 0, 'DE');
     await page.reload();
     await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
     await expect(page.locator('.ux-draft-notice')).toHaveText(de['form.message.draftResumed']);
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
-    await expect(form.locator('select').first()).toHaveValue('DE');
+    await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
+    await expect(form.getByRole('combobox').first()).toHaveValue('Deutschland');
   });
 
   test('a draft that cannot be restored, resumed or saved says so in the chosen language', async ({
@@ -762,8 +777,8 @@ test.describe('with the form released', () => {
       if (index === 0) {
         await expect(form.locator('h2')).toBeFocused();
         await expect(form.locator('h2')).toHaveText(de[key]);
-        await form.locator('select').nth(0).selectOption('DE');
-        await form.locator('select').nth(1).selectOption('US');
+        await chooseCountry(form, 0, 'DE');
+        await chooseCountry(form, 1, 'US');
       } else {
         await expect(form.locator('h2')).toBeFocused();
         await expect(form.locator('h2')).toHaveText(de[key]);
@@ -801,8 +816,8 @@ test.describe('with the form released', () => {
     // Step 3 with a sourcing budget, so the summary shows an amount, which breaks anywhere in English too.
     await form.locator('select').first().selectOption('sourcing');
     await form.locator('.guide-actions .primary-link').click();
-    await form.locator('select').nth(0).selectOption('BD');
-    await form.locator('select').nth(1).selectOption('CN');
+    await chooseCountry(form, 0, 'BD');
+    await chooseCountry(form, 1, 'CN');
     await form.locator('.guide-actions .primary-link').click();
     await form.locator('details summary').click();
     await form.locator('#brief-budgetAmount').fill('12.30');
@@ -873,8 +888,8 @@ test.describe('with the form released', () => {
         const answers = [
           () => form.locator('select').first().selectOption('sourcing'),
           async () => {
-            await form.locator('select').nth(0).selectOption('BD');
-            await form.locator('select').nth(1).selectOption('CN');
+            await chooseCountry(form, 0, 'BD');
+            await chooseCountry(form, 1, 'CN');
           },
           () => form.locator('textarea').first().fill('Cotton fabric for shirts.'),
           () => form.locator('input[type="checkbox"]').first().check(),
@@ -1081,8 +1096,8 @@ test.describe('the page-length budget', () => {
         const answers = [
           () => form.locator('select').first().selectOption('sourcing'),
           async () => {
-            await form.locator('select').nth(0).selectOption('BD');
-            await form.locator('select').nth(1).selectOption('CN');
+            await chooseCountry(form, 0, 'BD');
+            await chooseCountry(form, 1, 'CN');
           },
           () => form.locator('textarea').first().fill('Cotton fabric for shirts, 2000 metres.'),
           () => form.locator('input[type="checkbox"]').first().check(),
@@ -1166,8 +1181,8 @@ async function complete(page: Page, mode: 'sample' | 'real' = 'sample') {
   };
   await form.locator('select').first().selectOption('buyers');
   await step();
-  await form.locator('select').nth(0).selectOption('BD');
-  await form.locator('select').nth(1).selectOption('CN');
+  await chooseCountry(form, 0, 'BD');
+  await chooseCountry(form, 1, 'CN');
   await step();
   await form.locator('textarea').first().fill('Hotel towels for hospitality distributors.');
   await step();
@@ -1221,11 +1236,11 @@ test.describe('messages in the chosen language', () => {
       await form.locator('select').first().selectOption('machinery_procurement');
       await step();
       await next.click();
-      await expect(page.locator('#companyCountry-error')).toHaveText(
-        words['form.message.chooseCountry'],
-      );
-      await form.locator('select').nth(0).selectOption('DE');
-      await form.locator('select').nth(1).selectOption('US');
+      await expect(
+        form.getByRole('alert').filter({ hasText: words['form.message.chooseCountry'] }),
+      ).toHaveText(words['form.message.chooseCountry']);
+      await chooseCountry(form, 0, 'DE');
+      await chooseCountry(form, 1, 'US');
       await form.locator('input[name="attendance"]').first().check();
       await form.locator('#brief-startDate').fill('2026-12-03');
       await form.locator('#brief-endDate').fill('2026-12-01');
@@ -1309,8 +1324,8 @@ test.describe('messages in the chosen language', () => {
       await form.locator('select').first().selectOption('sourcing');
       await next.click();
       await expect(form.locator('h2')).toHaveText(drafts[code]['form.step.titleWhere']);
-      await form.locator('select').nth(0).selectOption('BD');
-      await form.locator('select').nth(1).selectOption('CN');
+      await chooseCountry(form, 0, 'BD');
+      await chooseCountry(form, 1, 'CN');
       await next.click();
       await expect(form.locator('h2')).toHaveText(drafts[code]['form.step.titleDetails']);
       await form.locator('textarea').first().fill('Cotton fabric for shirts, 2000 metres.');
@@ -1344,8 +1359,8 @@ test.describe('messages in the chosen language', () => {
       [
         'form.step.titleWhere',
         async () => {
-          await form.locator('select').nth(0).selectOption('BD');
-          await form.locator('select').nth(1).selectOption('CN');
+          await chooseCountry(form, 0, 'BD');
+          await chooseCountry(form, 1, 'CN');
         },
       ],
       [
@@ -1463,5 +1478,72 @@ test.describe('the request sent is the same in every language', () => {
     expect(english).toContain('"market":"United States"');
     expect(await sent('de')).toBe(english);
     expect(await sent('ar')).toBe(english);
+  });
+});
+
+test('GAP-010 request country search keeps every supported country and EU market option', async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
+  const form = page.locator('form.intake-form');
+  await form.locator('.guide-actions .primary-link').click();
+  await form.locator('#brief-companyCountry').click();
+  for (const heading of ['Most requested', 'EU countries', 'Other countries'])
+    await expect(form.getByRole('listbox').getByText(heading, { exact: true })).toBeVisible();
+  for (const name of ['companyCountry', 'marketCode']) {
+    const input = form.locator('#brief-' + name);
+    for (const code of countryCodes) {
+      await input.fill(code);
+      await expect(form.locator('[role="option"][data-value="' + code + '"]')).toBeVisible();
+    }
+  }
+  await form.locator('#brief-marketCode').fill('European Union');
+  await expect(form.locator('[role="option"][data-value="EU"]')).toBeVisible();
+  // Searching alone never changes the canonical submitted country values.
+  await expect(form.locator('input[name="companyCountry"]')).toHaveValue('BD');
+  await expect(form.locator('input[name="marketCode"]')).toHaveValue('CN');
+});
+
+test('GAP-010 request country search supports keyboard choice, clearing and required validation', async ({
+  page,
+}) => {
+  await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
+  const form = page.locator('form.intake-form');
+  await form.locator('.guide-actions .primary-link').click();
+  const input = form.locator('#brief-companyCountry');
+  await input.fill('Germany');
+  await input.press('Enter');
+  await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
+  await input.fill('');
+  await form.locator('.guide-actions .primary-link').click();
+  await expect(input).toHaveAttribute('aria-invalid', 'true');
+  await expect(
+    form.getByRole('alert').filter({ hasText: 'Choose the company country' }),
+  ).toBeVisible();
+  await input.fill('Zimbabwe');
+  await input.press('Enter');
+  await expect(form.locator('input[name="companyCountry"]')).toHaveValue('ZW');
+  await form.locator('.guide-actions .primary-link').click();
+  await expect(form.locator('#brief-companyCountry')).toHaveCount(0);
+});
+
+test.describe('GAP-010 request country search with touch', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+  test('touch selects country and EU market without sideways overflow', async ({ page }) => {
+    await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
+    const form = page.locator('form.intake-form');
+    await form.locator('.guide-actions .primary-link').tap();
+    await form.locator('#brief-companyCountry').tap();
+    await expect(form.getByRole('option').first()).toHaveText('Bangladesh');
+    await form.locator('[role="option"][data-value="ES"]').tap();
+    await form.locator('#brief-marketCode').fill('European Union');
+    await form.locator('[role="option"][data-value="EU"]').tap();
+    await expect(form.locator('input[name="companyCountry"]')).toHaveValue('ES');
+    await expect(form.locator('input[name="marketCode"]')).toHaveValue('EU');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      390,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });

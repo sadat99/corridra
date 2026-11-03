@@ -42,11 +42,13 @@ test('global selector retains an unsupported operating direction and opens the a
     .selectOption('machinery_procurement');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-  ).toHaveValue('JP');
+    page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
+  ).toHaveValue('Japan');
+  await expect(page.locator('form.intake-form input[name="companyCountry"]')).toHaveValue('JP');
   await expect(
-    page.getByRole('combobox', { name: 'Which market is involved?', exact: true }),
-  ).toHaveValue('KE');
+    page.getByRole('combobox', { name: 'Which market is involved? (required)', exact: true }),
+  ).toHaveValue('Kenya');
+  await expect(page.locator('form.intake-form input[name="marketCode"]')).toHaveValue('KE');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Your offer or requirement').fill('原始机械部件采购要求，保留供应商原文。');
   await page

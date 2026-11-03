@@ -1,0 +1,409 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-010",
+  "baseRevision": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "apps/web/app/plan/intake.tsx",
+      "sha256": "fabaebefb10494f7539427268dde20aaeb27acaa9bbdbf52da660e5eea1e7f27"
+    },
+    {
+      "path": "apps/web/components/ux/search-select.tsx",
+      "sha256": "e2be783d36cbcad394405d53713648728e260105aec56925b95126e69869db98"
+    },
+    {
+      "path": "tests/browser/product-experience.spec.ts",
+      "sha256": "8a9b45d3a1dac998ac0204428abd75fa3f42a83ff4ed8c77ae12a917af8eccfb"
+    },
+    {
+      "path": "tests/browser/ux02-discovery.spec.ts",
+      "sha256": "49e4f02785dacf30c39bfc8a0e7bb229cd539cd24bae7068b8aa5696ada6d6bc"
+    },
+    {
+      "path": "tests/e2e/verification/ws-a/plan.spec.ts",
+      "sha256": "c008874845414aeb567e35b5688a1bee07bbf6173a292fff0987ad98bf1d188d"
+    },
+    {
+      "path": "tests/operator/real-use-intake.spec.ts",
+      "sha256": "1147ae686b11631d2239834e3900fc27df9b47fba38f42e2a39f8d5b8dcf31b8"
+    },
+    {
+      "path": "tests/operator/ux-first-question.spec.ts",
+      "sha256": "b710cf69f5561ca38026bc4f66bfbc96785d06211bad31dc4a44a32600b7e345"
+    },
+    {
+      "path": "tests/operator/ux-plan-languages.spec.ts",
+      "sha256": "066a2b01df0e8b81a74aed5dce477de0573fd057ad3e87946cadbe30d2453ff8"
+    },
+    {
+      "path": "tests/operator/v3-private-request-intake.spec.ts",
+      "sha256": "3b987d179d8da64bb06b948e43b3963a0e732a2197f6e646c585d44f971a5edd"
+    },
+    {
+      "path": "tests/operator/workspace.spec.ts",
+      "sha256": "dc17c82019cceeb8da8a6b742f60e2f609c05eac7809ed6d31334c8b09c63143"
+    },
+    {
+      "path": "tests/operator/z-ux02-intake.spec.ts",
+      "sha256": "a4297671e94c586ba23a73b68d01621da73a5cff06aef83e1e34e752748f09d5"
+    }
+  ],
+  "receipts": {
+    "gap010-request-body-preservation": {
+      "name": "gap010-request-body-preservation",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts --grep the request body equals|signed-in form sends the same request --outpu",
+      "exit": 0,
+      "signal": null,
+      "seconds": 54,
+      "logBytes": 1566,
+      "logSha256": "865a08f5dbe9570380eb6d1be70bbdad911d10b0a813648e2f6c410aabf1f292",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 5,
+      "log": "work/gap010-request-body-preservation-2026-11-02T23-35-43-805Z.log"
+    },
+    "gap010-form-regressions": {
+      "name": "gap010-form-regressions",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts tests/operator/z-ux02-intake.spec.ts tests/operator/real-use-intake.spec.ts ",
+      "exit": 0,
+      "signal": null,
+      "seconds": 70.1,
+      "logBytes": 2085,
+      "logSha256": "8cb635f9162cd48af0239653c858dc445c6ac0c7097862997fbfa8d501341676",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-form-regressions-2026-11-02T23-40-10-753Z.log"
+    },
+    "gap010-public-routes": {
+      "name": "gap010-public-routes",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.config.ts tests/browser/ux02-discovery.spec.ts tests/browser/product-experience.spec.ts --grep saved draft choices survive|global select",
+      "exit": 0,
+      "signal": null,
+      "seconds": 24.5,
+      "logBytes": 1493,
+      "logSha256": "402e496d7497aa7963e1d9ab08b9921da4318b2d173e9707b51b9ecd8009f4b5",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-public-routes-2026-11-02T23-41-56-725Z.log"
+    },
+    "gap010-verified-plan-routes": {
+      "name": "gap010-verified-plan-routes",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.verification.config.ts tests/e2e/verification/ws-a/plan.spec.ts --grep A-2 focus|A-3 a link --output work/gap010-verified-plan-routes",
+      "exit": 0,
+      "signal": null,
+      "seconds": 29.9,
+      "logBytes": 2334,
+      "logSha256": "80676a18f317154d58c63688956f918c17c566bb90f798b7299090c68e769be4",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-verified-plan-routes-2026-11-02T23-43-29-698Z.log"
+    },
+    "gap010-build-final": {
+      "name": "gap010-build-final",
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 20.3,
+      "logBytes": 4940,
+      "logSha256": "c5f02310d0faa3411348374ae2aec5b93ca506cd38a2a90194e32cfd61a59106",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-build-final-2026-11-02T23-39-22-329Z.log"
+    },
+    "gap010-types": {
+      "name": "gap010-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 25.9,
+      "logBytes": 218,
+      "logSha256": "e596d6cb0b81da2f4d3d18e6c178f5e6d18f670be8b4bfda671e41e4fc52b177",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-types-2026-11-02T23-44-20-356Z.log"
+    },
+    "gap010-lint-ci-scope": {
+      "name": "gap010-lint-ci-scope",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/plan/intake.tsx apps/web/components/ux/search-select.tsx tests/operator/real-use-intake.spec.ts tests/operator/ux-first-question.spec.ts tests/operator/ux-plan-languages.spec.ts tests",
+      "exit": 0,
+      "signal": null,
+      "seconds": 4,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 12,
+      "log": "work/gap010-lint-ci-scope-2026-11-02T23-46-09-950Z.log"
+    }
+  },
+  "verification": {
+    "finalFocusedCasesPassed": 20,
+    "cases": {
+      "requestBodyAndPrivateFormComparisons": 3,
+      "formAndDatabaseRegressions": 7,
+      "compiledPublicDesktopMobile": 4,
+      "compiledVerificationAtThreeWidths": 6
+    },
+    "buildExit": 0,
+    "typesExit": 0,
+    "changedFilesWithinRepositoryLintScopeExit": 0
+  },
+  "implementation": [
+    "Existing SearchSelect replaces only the two request-country selects; all country codes and EU as a market remain supported in the existing order.",
+    "Canonical values still enter the original change/validation/submit handlers; search text alone does not change the submitted country.",
+    "Keyboard choice, clearing/required errors, touch choice and mobile overflow/accessibility are covered.",
+    "The existing error prop accepts ReactNode so the form retains its existing language-marked error content; no language catalogue was changed.",
+    "Existing control drivers retain canonical-code assertions and also assert the displayed country names; native baseline interactions remain supported in the comparison helper."
+  ],
+  "limits": [
+    "The approved country-search change intentionally changes the English form. Before frozen release CI, point its off-language-switch comparison baseline at the committed GAP-010 product source and run the affected comparisons.",
+    "An expanded lint invocation outside the repository lint directories reported an unchanged unused isMobile fixture parameter; no unrelated edit or lint suppression was made. The changed files within the repository CI lint scope pass with zero warnings.",
+    "Full frozen-head CI/CodeQL and sequential merge/deployment remain pending.",
+    "No schema, authorization, money/event or provider change; no live customer submission or translation acceptance is claimed."
+  ],
+  "currentBaseVerification": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "787484d4d745c9b5cfb3039dbc4be15c3be82099",
+    "productSourceRevision": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+    "fixedEnglishBaseline": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+    "retentionTag": "baseline/gap-010-request-countries-2026-11-03",
+    "productFileHashesUnchanged": true,
+    "sourceHashDeltas": [
+      {
+        "path": "tests/operator/ux-plan-languages.spec.ts",
+        "sha256": "a0a9defc8b1df06ec224a5c8e0551cb59532ee074694bf5c195f2426013bd0fa"
+      },
+      {
+        "path": "tests/operator/workspace.spec.ts",
+        "sha256": "206333a5302c0bdbd2d517f0208609f4ace0c59b87be571e2fa7fd4d9e0a2cd7"
+      }
+    ],
+    "reasonForTestDeltas": "Inherited GAP-009 Array.from diagnostics retained; intentional fixed English-form baseline updated for the requested country-control change.",
+    "receipts": {
+      "gap010-current-base-build": {
+        "name": "gap010-current-base-build",
+        "command": "pnpm --filter @corridra/web build",
+        "exit": 0,
+        "signal": null,
+        "seconds": 78.8,
+        "logBytes": 4940,
+        "logSha256": "64f231408389643276fd888a556b9131db3e2d77348865f318cf47acec79f756",
+        "head": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "changedPaths": 10,
+        "log": "work/gap010-current-base-build-2026-11-03T01-14-33-373Z.log"
+      },
+      "gap010-fixed-baseline-and-countries": {
+        "name": "gap010-fixed-baseline-and-countries",
+        "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts --grep GAP-010|en, page words unset:|en, fq=1&pages=true:|en, mode=real&code",
+        "exit": 0,
+        "signal": null,
+        "seconds": 69.4,
+        "logBytes": 2185,
+        "logSha256": "23123801813193dfa095b2756c7743f20efa15d6a94063be8e8b9e28591c9a65",
+        "head": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "changedPaths": 14,
+        "log": "work/gap010-fixed-baseline-and-countries-2026-11-03T01-17-28-768Z.log"
+      },
+      "gap010-current-base-types": {
+        "name": "gap010-current-base-types",
+        "command": "pnpm typecheck",
+        "exit": 0,
+        "signal": null,
+        "seconds": 25.1,
+        "logBytes": 218,
+        "logSha256": "e84ad1f962d0ed6ad87c762d83e24b35df6c743e41e6cae1a12a6ac0b4f54899",
+        "head": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "changedPaths": 14,
+        "log": "work/gap010-current-base-types-2026-11-03T01-21-54-600Z.log"
+      },
+      "gap010-current-base-lint": {
+        "name": "gap010-current-base-lint",
+        "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/plan/intake.tsx apps/web/components/ux/search-select.tsx tests/operator/real-use-intake.spec.ts tests/operator/ux-first-question.spec.ts tests/operator/ux-plan-languages.spec.ts tests",
+        "exit": 0,
+        "signal": null,
+        "seconds": 6.6,
+        "logBytes": 0,
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "head": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "changedPaths": 14,
+        "log": "work/gap010-current-base-lint-2026-11-03T01-21-54-604Z.log"
+      }
+    },
+    "casesPassed": 7,
+    "scope": "4 fixed-baseline public/first-question/real/private comparisons plus3 all-country/keyboard/touch cases.",
+    "currentLimit": "The older baseline-reference limit is now satisfied. Exact-head full CI/CodeQL and production verification remain pending.",
+    "formatReceipt": {
+      "name": "gap010-final-format",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "signal": null,
+      "seconds": 31.5,
+      "logBytes": 87,
+      "logSha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+      "head": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+      "changedPaths": 15,
+      "log": "work/gap010-final-format-2026-11-03T01-28-02-805Z.log"
+    }
+  },
+  "groupHeadingCorrection": {
+    "recordedOn": "2026-11-03",
+    "productSourceRevision": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+    "retentionTag": "baseline/gap-010-request-countries-groups-2026-11-03",
+    "supersedesFixedBaseline": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+    "previousTagRetained": true,
+    "sourceFiles": [
+      {
+        "path": "apps/web/app/plan/intake.tsx",
+        "sha256": "4dd08d6347a622b4be43d6f5551bff3b2569742c27298ce2a6fe324583641f9c"
+      },
+      {
+        "path": "apps/web/components/ux/search-select.tsx",
+        "sha256": "bbf0cb18e98caec5dd9c6227ca21c8998425d47b0581cfd7c283899bff0adb2f"
+      },
+      {
+        "path": "tests/operator/ux-plan-languages.spec.ts",
+        "sha256": "fbb03f9dd1778407b0a42a284706df8836a5151c6208c77da3f51c171628989b"
+      },
+      {
+        "path": "tests/e2e/verification/integration/ux-measures.spec.ts",
+        "sha256": "2f638015feea81b23a5c36d968c879e060a12600a1107c485b5a0cef196703ef"
+      }
+    ],
+    "receipts": {
+      "gap010-catalog-groups": {
+        "name": "gap010-catalog-groups",
+        "command": "pnpm exec vitest run tests/integration/language-catalog.test.ts",
+        "exit": 0,
+        "signal": null,
+        "seconds": 1.2,
+        "logBytes": 181,
+        "logSha256": "be827537b70d16b9399f3884f82d4b1a58a383ee041be04e7e9c2a55270804db",
+        "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+        "changedPaths": 4,
+        "log": "work/gap010-catalog-groups-2026-11-03T01-44-22-041Z.log"
+      },
+      "gap010-preserved-groups-build": {
+        "name": "gap010-preserved-groups-build",
+        "command": "pnpm --filter @corridra/web build",
+        "exit": 0,
+        "signal": null,
+        "seconds": 32.9,
+        "logBytes": 4942,
+        "logSha256": "4ee951be7fc0aa3fa75ae66e6eed51f54c61ebff6eac59894ac61ec4ec733bd5",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-preserved-groups-build-2026-11-03T01-44-52-528Z.log"
+      },
+      "gap010-preserved-groups-types": {
+        "name": "gap010-preserved-groups-types",
+        "command": "pnpm typecheck",
+        "exit": 0,
+        "signal": null,
+        "seconds": 41.4,
+        "logBytes": 218,
+        "logSha256": "0276fe82b6e5458d8e284dedd71447d5db0bbdf9b2d0ee3e87a8e5ad71d271ce",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-preserved-groups-types-2026-11-03T01-44-59-634Z.log"
+      },
+      "gap010-preserved-groups-countries": {
+        "name": "gap010-preserved-groups-countries",
+        "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts --grep GAP-010|English.*off|English.*unchanged|the off switch|language switc",
+        "exit": 0,
+        "signal": null,
+        "seconds": 24.7,
+        "logBytes": 1453,
+        "logSha256": "9218244c5642d31ed4d8808c8d71f73043e9511c91e3351e0c20e46f73ff0be6",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-preserved-groups-countries-2026-11-03T01-45-25-493Z.log"
+      },
+      "gap010-grouped-fixed-baseline": {
+        "name": "gap010-grouped-fixed-baseline",
+        "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts --grep with the form switch off.*en, (page words unset|fq=|mode=) --output w",
+        "exit": 0,
+        "signal": null,
+        "seconds": 59.3,
+        "logBytes": 1702,
+        "logSha256": "b82f7c71deaac7b940329d5702223a43629a099ff1e86cbbc9c78b743920cdbd",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-grouped-fixed-baseline-2026-11-03T01-46-04-705Z.log"
+      },
+      "gap010-grouped-focus": {
+        "name": "gap010-grouped-focus",
+        "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.verification.config.ts tests/e2e/verification/integration/ux-measures.spec.ts --grep CQ-01 --output work/gap010-grouped-focus",
+        "exit": 0,
+        "signal": null,
+        "seconds": 16.2,
+        "logBytes": 1802,
+        "logSha256": "84bc375f64ed5ac7c91b79229a8683060b9e420b2f3388b953522bee3b7d4953",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-grouped-focus-2026-11-03T01-47-04-035Z.log"
+      },
+      "gap010-grouped-lint": {
+        "name": "gap010-grouped-lint",
+        "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/plan/intake.tsx apps/web/components/ux/search-select.tsx tests/operator/ux-plan-languages.spec.ts --max-warnings 0",
+        "exit": 0,
+        "signal": null,
+        "seconds": 5.1,
+        "logBytes": 0,
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 3,
+        "log": "work/gap010-grouped-lint-2026-11-03T01-46-06-153Z.log"
+      },
+      "gap010-country-draft-reload": {
+        "name": "gap010-country-draft-reload",
+        "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts --grep a reload resumes the draft in the chosen language --output work/gap01",
+        "exit": 0,
+        "signal": null,
+        "seconds": 8.7,
+        "logBytes": 1111,
+        "logSha256": "4c151f5e3da3adebb5ee08ffcfa69cb40ffaf2d0943f5738933ce76826828345",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 6,
+        "log": "work/gap010-country-draft-reload-2026-11-03T01-49-54-567Z.log"
+      },
+      "gap010-corrected-format": {
+        "name": "gap010-corrected-format",
+        "command": "pnpm format:check",
+        "exit": 0,
+        "signal": null,
+        "seconds": 31.3,
+        "logBytes": 87,
+        "logSha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+        "head": "039cd7d5040022dc14157a22e33507a9c1f8e25f",
+        "changedPaths": 6,
+        "log": "work/gap010-corrected-format-2026-11-03T01-48-32-098Z.log"
+      }
+    },
+    "verification": {
+      "countryCasesPassed": 3,
+      "fixedEnglishComparisonsPassed": 4,
+      "focusAtThreeWidthsPassed": 3,
+      "catalogueCasesPassed": 54,
+      "draftReloadCasesPassed": 1
+    },
+    "failedCI": {
+      "run": 41560398595,
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "verificationJob": 125669436167,
+      "verificationFailed": 3,
+      "verificationPassed": 130,
+      "browserJob": 125669436037,
+      "cause": [
+        "Focus driver excluded ARIA combobox inputs; selector updated while retaining focus assertions.",
+        "Existing country group headings had been removed, leaving three translated keys unused; headings restored in the existing picker with no catalogue edits.",
+        "Draft-reload assertion still targeted a native select; hidden canonical code and displayed country-name assertions now both pass."
+      ],
+      "operatorJob": 125669436144,
+      "operatorFailed": 1,
+      "operatorPassed": 139
+    },
+    "limits": [
+      "Fresh exact-head CI/CodeQL and deployment remain pending.",
+      "Existing language acceptance/release scope unchanged."
+    ]
+  }
+}
