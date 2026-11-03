@@ -3301,7 +3301,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     const layout = await page.evaluate(() => ({
       viewport: innerWidth,
       width: document.documentElement.scrollWidth,
-      overflowing: [...document.querySelectorAll('body *')]
+      overflowing: Array.from(document.querySelectorAll('body *'))
         .map((element) => ({
           tag: element.tagName,
           className: String(element.className),

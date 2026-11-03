@@ -205,3 +205,5 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Observed:** PR242 CI41546518647/operator125623398842 failed UX-01 page width (139 other shard cases passed). Bootstrap plus the isolated mission case passed locally. Adding the existing preceding SDK scenario reproduced a320px viewport with330px document width: a shared field's label/row/input occupied a256px implicit grid column.
 - **Fix:** constrain the existing field grid to `minmax(0, 1fr)`; keep the original viewport/axe/permission assertions and add bounded geometry to failure messages. The identical4-case sequence now passes all six widths after a fresh build. Do not hide overflow or substitute the isolated passing case for this reproduction. Evidence: [layout verification](../qa/current-plan-gaps/verification/2026-11-03-gap009-layout-local.json).
+
+- KI-33 diagnostic follow-up: use `Array.from` for DOM node lists under the repository test TypeScript library. The app-only build does not typecheck operator test sources; full root `pnpm typecheck` verifies this path.

@@ -780,8 +780,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "CI41546518647 found global page overflow after prior workspace state. The same preceding SDK scenario reproduces320px viewport/330px document width; bootstrap plus the case alone passed. One shared-grid column constraint fixes the intrinsic child overflow. Fresh build and the identical4-case sequence pass, including six viewport widths, axe and denial assertions. Final-head CI/deployment remain pending.",
-        "evidenceRevision": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+        "summary": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
+        "evidenceRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -857,6 +857,16 @@
           "priorDisposition": "OPEN",
           "disposition": "OPEN",
           "note": "CI41546518647 found global page overflow after prior workspace state. The same preceding SDK scenario reproduces320px viewport/330px document width; bootstrap plus the case alone passed. One shared-grid column constraint fixes the intrinsic child overflow. Fresh build and the identical4-case sequence pass, including six viewport widths, axe and denial assertions. Final-head CI/deployment remain pending.",
+          "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
+        },
+        {
+          "eventId": "GAP-009-H005",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
           "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
         }
       ]

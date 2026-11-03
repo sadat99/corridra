@@ -80,5 +80,32 @@
     "Local Chromium151; CI uses pinned revision1248. Final frozen CI remains mandatory.",
     "Only shared CSS layout and failure diagnostics changed; timestamp conversion, schemas, authorization, money/events and provider settings remain unchanged.",
     "Earlier4 timezone/database,30 backend and8 operator acceptance receipts remain preserved; no live private/customer-provider acceptance is inferred."
-  ]
+  ],
+  "diagnosticTypeCompatibility": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+    "sourceFile": {
+      "path": "tests/operator/workspace.spec.ts",
+      "sha256": "2f2957382e4ca201a94404dfe0a577f33f41f8200d3ef76fa456b22ffbf84b3a"
+    },
+    "ciFailure": {
+      "run": 41552683023,
+      "job": 125643906212,
+      "error": "TS2488: repository test DOM library does not support spreading NodeList"
+    },
+    "correction": "Use Array.from for the same bounded failure-only geometry collection. Assertion and CSS fix unchanged.",
+    "fullRepositoryTypecheck": {
+      "name": "gap009-layout-full-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 22.5,
+      "logBytes": 219,
+      "logSha256": "363bc96bc7014958d7a8d1dd68634eb3cc7e4857ca20233f1f8c0e71d0c2a284",
+      "head": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+      "changedPaths": 1,
+      "log": "work/gap009-layout-full-types-2026-11-03T00-33-25-350Z.log"
+    },
+    "limits": "Prior4-case browser receipt proves the unchanged CSS fix; the diagnostic collection API is the only follow-up code change. Fresh frozen CI remains required."
+  }
 }
