@@ -1,3 +1,7 @@
+import {
+  CustomerProgrammeProjectionsService,
+  customerProgrammeProjectionsEnabled,
+} from '@corridra/auth/customer-programme-projections';
 import { CustomerDeliveredReportService } from '@corridra/auth/customer-delivered-reports';
 import { listDeliveredPublications } from '@corridra/delivery/delivered-publications';
 import { InboxService } from '@corridra/communications/inbox';
@@ -407,6 +411,19 @@ function createServices() {
       authPool,
       {
         enabled: customerProgrammeTermsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerProgrammeProjections: new CustomerProgrammeProjectionsService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammeProjectionsEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),

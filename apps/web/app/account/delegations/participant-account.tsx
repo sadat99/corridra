@@ -1,4 +1,5 @@
 'use client';
+import { ParticipantProjectionSharing } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
@@ -13,6 +14,7 @@ export function ParticipantAccount(
     contextEnabled?: boolean;
     coordinationEnabled?: boolean;
     termsEnabled?: boolean;
+    projectionsEnabled?: boolean;
   },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
@@ -23,6 +25,7 @@ function ScopedAccount(
     contextEnabled?: boolean;
     coordinationEnabled?: boolean;
     termsEnabled?: boolean;
+    projectionsEnabled?: boolean;
   },
 ) {
   const [token, setToken] = useState(''),
@@ -213,6 +216,13 @@ function ScopedAccount(
                       )}
                       {props.termsEnabled && (
                         <ParticipantPlace
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          registrationId={r.id}
+                        />
+                      )}
+                      {props.projectionsEnabled && (
+                        <ParticipantProjectionSharing
                           subject={props.subject}
                           issuer={props.issuer}
                           registrationId={r.id}

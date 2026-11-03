@@ -4,6 +4,8 @@ import { realStaffFixture } from './real-staff-fixture';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerProgrammeService } from '../../packages/auth/src/customer-programmes';
 import { CustomerParticipantService } from '../../packages/auth/src/customer-participants';
+import { CustomerProgrammeProjectionsService } from '../../packages/auth/src/customer-programme-projections';
+import { migrateCustomerProgrammeProjections } from '../../packages/db/src/customer-programme-projection-migrate';
 import { CustomerProgrammeContextService } from '../../packages/auth/src/customer-programme-context';
 import { CustomerProgrammeEconomicsService } from '../../packages/auth/src/customer-programme-economics';
 import { CustomerProgrammeCoordinationService } from '../../packages/auth/src/customer-programme-coordination';
@@ -49,6 +51,7 @@ const coordination = (who = organiser) =>
 
 beforeAll(async () => {
   s = await realStaffFixture(issuer, 'real-ops-fixture-secret');
+  await migrateCustomerProgrammeProjections(s.f.owner);
   workspaceId = (
     await workspaces(organiser).provision({
       commandId: randomUUID(),
@@ -271,6 +274,37 @@ test('tasks, places and attendance are kept with versions; the delegate adds the
   await expect(coordination(outsider).report({ workspaceId, programmeId })).rejects.toMatchObject({
     code: '42501',
   });
+});
+
+test('real-mode programme projections retain restricted authority and exact timetable instants', async () => {
+  const service = (who = organiser) =>
+    new CustomerProgrammeProjectionsService(...runtime(), sessionFor(who));
+  let view = await service().owner({ workspaceId, programmeId });
+  expect(view.readiness.activeParticipants).toBe(1);
+  expect(view.readiness.readyParticipants).toBe(0);
+  expect(view.companies[0]?.company).toBeNull();
+  expect(view.meetings.state).toBe('NOT_SHARED');
+  const activity = view.agenda[0]!;
+  await service().command({
+    action: 'schedule',
+    commandId: randomUUID(),
+    workspaceId,
+    programmeId,
+    taskId: activity.taskId,
+    expectedVersion: 0,
+    scheduled: true,
+    startsAt: '2026-11-10T02:00:00Z',
+    endsAt: '2026-11-10T03:00:00Z',
+    audience: 'ALL',
+    attendees: [],
+    acknowledged: true,
+  });
+  view = await service().owner({ workspaceId, programmeId });
+  expect(view.agenda[0]?.timezone).toBe('Asia/Shanghai');
+  expect(Date.parse(view.agenda[0]!.startsAt!)).toBe(Date.parse('2026-11-10T02:00:00Z'));
+  await expect(service(delegate).owner({ workspaceId, programmeId })).rejects.toThrow();
+  await expect(service(outsider).own({ registrationId })).rejects.toThrow();
+  expect((await service(delegate).own({ registrationId })).registrationId).toBe(registrationId);
 });
 
 test('a delegate can withdraw, and the organiser then sees them as withdrawn', async () => {

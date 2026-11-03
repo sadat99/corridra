@@ -9,6 +9,7 @@ import {
   programmeRoadStates,
   programmeRoadSteps,
   roomLenses,
+  programmeProjectionLenses,
   type BoardingCounts,
   type RoomLensKey,
 } from '../../../lib/programme-room';
@@ -21,7 +22,8 @@ import { useParticipantView, type ParticipantScope } from './participant-client'
 // the first time it is opened and keeps it mounted afterwards, so anything typed in a panel is still
 // there when the person comes back to it. The room reads nothing the participants panel does not
 // already read, and shows only counts and states, never a participant's own answers.
-export type RoomPanels = Partial<Record<RoomLensKey, ReactNode>>;
+type LensKey = RoomLensKey | 'companies' | 'agenda';
+export type RoomPanels = Partial<Record<LensKey, ReactNode>>;
 
 const noop = () => {};
 
@@ -169,15 +171,19 @@ export function ProgrammeRoom({
   /** True where fee schedules, pricing templates or series are on: they sit below the programme list. */
   sharedMoneyNote?: boolean;
 }) {
-  const [lens, setLens] = useState<RoomLensKey>('overview');
-  const [opened, setOpened] = useState<ReadonlySet<RoomLensKey>>(new Set(['overview']));
+  const [lens, setLens] = useState<LensKey>('overview');
+  const [opened, setOpened] = useState<ReadonlySet<LensKey>>(new Set(['overview']));
   const [reads, setReads] = useState(0);
   const [onScreen, watch] = useOnScreen();
-  const available = roomLenses.filter((item) => item.key === 'overview' || panels[item.key]);
+  const lenses =
+    panels.companies || panels.agenda
+      ? [...roomLenses.slice(0, 2), ...programmeProjectionLenses, ...roomLenses.slice(2)]
+      : roomLenses;
+  const available = lenses.filter((item) => item.key === 'overview' || panels[item.key]);
   const emblem = emblemFor(name);
   const refresh = () => setReads((count) => count + 1);
   const onInvite = panels.people ? () => choose('people') : undefined;
-  function choose(key: RoomLensKey) {
+  function choose(key: LensKey) {
     if (key !== lens) refresh();
     setLens(key);
     setOpened((current) => (current.has(key) ? current : new Set(current).add(key)));

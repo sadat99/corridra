@@ -104,3 +104,9 @@ export const roomLenses = [
   { key: 'money', label: 'Money' },
 ] as const;
 export type RoomLensKey = (typeof roomLenses)[number]['key'];
+
+/** Optional ADR075 views; the original five views and off path stay unchanged. */
+export const programmeProjectionLenses = [
+  { key: 'companies', label: 'Companies' },
+  { key: 'agenda', label: 'Agenda' },
+] as const;

@@ -1,0 +1,278 @@
+{
+  "recordedOn": "2026-11-03",
+  "batch": "D",
+  "findings": ["GAP-037", "GAP-038", "GAP-039", "GAP-042"],
+  "workingTreeBase": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+  "approval": "Owner: approved recommended options; ADR075 accepted.",
+  "status": "IMPLEMENTED; focused local verification passed; frozen-head CI/release/schema/activation remain separate.",
+  "limits": [
+    "Native PostgreSQL tests use genuine restricted roles and invented identities.",
+    "Browser protocol fixtures use the actual compiled React components with intercepted API snapshots; these do not establish genuine IdP/customer journeys.",
+    "Local build ran during implementation; exact frozen-head CI remains required.",
+    "Original migrations and dated audit baseline are unchanged.",
+    "No production switch, schema, provider delivery or commercial-operation observation is established."
+  ],
+  "receipts": [
+    {
+      "receiptPath": "work/batch-d-db-expanded-2026-11-03T13-17-25-676Z.log.receipt.json",
+      "name": "batch-d-db-expanded",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-programme-projections.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 10.6,
+      "logBytes": 169,
+      "logSha256": "b1fb41b1a7c2343e44963b7c6793637622ac3d6bb692f3eea38ff503b18a67e1",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 21,
+      "log": "work/batch-d-db-expanded-2026-11-03T13-17-25-676Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-db-final-2026-11-03T13-23-37-956Z.log.receipt.json",
+      "name": "batch-d-db-final",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/real-programme-operations.test.ts tests/integration/customer-programme-terms.test.ts tests/integration/customer-miss",
+      "exit": 1,
+      "signal": null,
+      "seconds": 69.2,
+      "logBytes": 853,
+      "logSha256": "696c704e0aab8d21001fb5167818c845da8a1cb90a387363d8ed30cfbbb36bb7",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 25,
+      "log": "work/batch-d-db-final-2026-11-03T13-23-37-956Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-db-corrected-2026-11-03T13-27-05-041Z.log.receipt.json",
+      "name": "batch-d-db-corrected",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-programme-projections.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 18,
+      "logBytes": 170,
+      "logSha256": "ff1de54a5b0981afeab1d96dc3cb0d84ca53a4b122213af24e6191bc7c94aa8c",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 25,
+      "log": "work/batch-d-db-corrected-2026-11-03T13-27-05-041Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-types-corrected-2026-11-03T13-27-37-952Z.log.receipt.json",
+      "name": "batch-d-types-corrected",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 44.1,
+      "logBytes": 218,
+      "logSha256": "04a3eea7a1542d8d99bfa874edcadcd3253dd587c3bdb1816058aba716d2a890",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 27,
+      "log": "work/batch-d-types-corrected-2026-11-03T13-27-37-952Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-component-lint-2026-11-03T13-28-57-855Z.log.receipt.json",
+      "name": "batch-d-component-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/account/delegations/programme-projections.tsx --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.5,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 27,
+      "log": "work/batch-d-component-lint-2026-11-03T13-28-57-855Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-build-2026-11-03T13-23-44-572Z.log.receipt.json",
+      "name": "batch-d-build",
+      "command": "pnpm build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 290.4,
+      "logBytes": 5068,
+      "logSha256": "952e1fc0540f2756136674ac5fb925acb8a314e04b41fd1ddffbb81b19ad4178",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 27,
+      "log": "work/batch-d-build-2026-11-03T13-23-44-572Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-compiled-api-2026-11-03T13-29-32-153Z.log.receipt.json",
+      "name": "batch-d-compiled-api",
+      "command": "pnpm exec playwright test tests/browser/v3-programme-projections-gate.spec.ts --output=test-results/batch-d-public",
+      "exit": 0,
+      "signal": null,
+      "seconds": 11.8,
+      "logBytes": 1151,
+      "logSha256": "ff0ebc9e6c854f53ec6fe224b2205f93d5464461d98372049ba0037b6b032046",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 27,
+      "log": "work/batch-d-compiled-api-2026-11-03T13-29-32-153Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-browser-corrected-2026-11-03T13-31-54-243Z.log.receipt.json",
+      "name": "batch-d-browser-corrected",
+      "command": "flock /tmp/corridra-db.lock pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-projections-ui.spec.ts --output=test-results/batch-d-operator-corrected",
+      "exit": 0,
+      "signal": null,
+      "seconds": 41.7,
+      "logBytes": 3027,
+      "logSha256": "c49b95c4c344f0187250c55c951b47aba9445a79619bff2a068c9092059ca6fd",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 29,
+      "log": "work/batch-d-browser-corrected-2026-11-03T13-31-54-243Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-browser-corrected-2026-11-03T13-31-54-243Z.log.receipt.json",
+      "name": "batch-d-browser-corrected",
+      "command": "flock /tmp/corridra-db.lock pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-projections-ui.spec.ts --output=test-results/batch-d-operator-corrected",
+      "exit": 0,
+      "signal": null,
+      "seconds": 41.7,
+      "logBytes": 3027,
+      "logSha256": "c49b95c4c344f0187250c55c951b47aba9445a79619bff2a068c9092059ca6fd",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 29,
+      "log": "work/batch-d-browser-corrected-2026-11-03T13-31-54-243Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-final-local-db-2026-11-03T13-32-01-996Z.log.receipt.json",
+      "name": "batch-d-final-local-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-programme-projections.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 54.2,
+      "logBytes": 170,
+      "logSha256": "1c18be8c7e10b31b3403242a4eccbd648d752435a22456796d8c6ae72d159157",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 31,
+      "log": "work/batch-d-final-local-db-2026-11-03T13-32-01-996Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-final-lint-2026-11-03T13-32-02-020Z.log.receipt.json",
+      "name": "batch-d-final-lint",
+      "command": "pnpm lint",
+      "exit": 0,
+      "signal": null,
+      "seconds": 74.2,
+      "logBytes": 117,
+      "logSha256": "07e7542d4d1ab3fa3db1cbf4e86a79e6fa0a80eb1d21063692b4d4e99d88c6d1",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 32,
+      "log": "work/batch-d-final-lint-2026-11-03T13-32-02-020Z.log"
+    },
+    {
+      "receiptPath": "work/batch-d-document-checks-2026-11-03T13-32-02-017Z.log.receipt.json",
+      "name": "batch-d-document-checks",
+      "command": "pnpm test",
+      "exit": 0,
+      "signal": null,
+      "seconds": 55,
+      "logBytes": 6667,
+      "logSha256": "a053056c385abd95f07348c2df0111358fe39fbec7a16ad45ac667d6ada0c1ac",
+      "head": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+      "changedPaths": 31,
+      "log": "work/batch-d-document-checks-2026-11-03T13-32-02-017Z.log"
+    }
+  ],
+  "pending": [
+    "Full frozen-head CI/CodeQL and owner merge command",
+    "Protected schema installation and explicit activation",
+    "Fresh production customer journeys through actual IdP/application data; no synthetic fixture is claimed as that proof"
+  ],
+  "results": {
+    "newRestrictedDatabaseCases": 13,
+    "existingAndRealModeDatabaseCasesPassed": 65,
+    "newCompiledComponentCases": 16,
+    "existingProgrammeRoomCasesPassed": 12,
+    "compiledPrivateApiClosedCases": 2,
+    "typecheck": "passed",
+    "lint": "passed",
+    "productionBuild": "passed during implementation",
+    "documentsAndInfrastructure": "passed"
+  },
+  "corrections": [
+    "Initial SQL alias and source-role vocabulary corrections preceded the first 10-case pass.",
+    "Expanded DB fixture used a non-existent membership column; it now retains the ID returned by the actual workspace service.",
+    "React lint was corrected by separating the ref callback from the render-state object, using asynchronous effect callbacks and state for retry visibility; no rule was disabled.",
+    "Checkbox command tests now use a user click rather than requiring the checkbox to remain checked before a server-confirmed response; all consent, command, error and privacy assertions remain.",
+    "Sharing consent is bound to the currently displayed profile version and requires a new check after that version changes."
+  ],
+  "sources": [
+    {
+      "path": "apps/web/app/account/delegations/[workspaceId]/page.tsx",
+      "sha256": "9448dfccf1daf0758df5e0ca020a052d255ad4ac2a39b7496252065201405481"
+    },
+    {
+      "path": "apps/web/app/account/delegations/customer-programmes.tsx",
+      "sha256": "71404f9da65a6d4a5ac7390070b0fbb1c09300e5d3990597026f4d2a48662aa3"
+    },
+    {
+      "path": "apps/web/app/account/delegations/page.tsx",
+      "sha256": "7b7bc417623fadbfcff48d9def31fcf365eed636f26da8fb85c54e8ec4ab5228"
+    },
+    {
+      "path": "apps/web/app/account/delegations/participant-account.tsx",
+      "sha256": "b312c6de74a0c6390750a912ebfb8e59e5d6e3862a946e6b93fd72f220cad6db"
+    },
+    {
+      "path": "apps/web/app/account/delegations/programme-projections.tsx",
+      "sha256": "f210b2ae3afa38e04d3f6ef2bd4ecdcaad847a70ef9597d8d998ab81bb2066dc"
+    },
+    {
+      "path": "apps/web/app/account/delegations/programme-room.tsx",
+      "sha256": "e5e4304403f88dfaaf7036bf8221131751d320d3e4b6082d828ef4ab58441130"
+    },
+    {
+      "path": "apps/web/app/api/customer-programme-projections/route.ts",
+      "sha256": "f5157e95f20f9669e8fdec924108a90be2c581b02745324084c1d0a8d7699745"
+    },
+    {
+      "path": "apps/web/lib/foundations.ts",
+      "sha256": "d96f2c397e7a57327d7d572955a0c0ba8e972d48f940b31d7b5b8e7344b7c585"
+    },
+    {
+      "path": "apps/web/lib/owner-switches.ts",
+      "sha256": "9115ad5b5139b8d3bac4f731f4b2ca7d8beb9510d1a697a0419ed916276346d6"
+    },
+    {
+      "path": "apps/web/lib/programme-room.ts",
+      "sha256": "a79f0e6344469e0570bf4e62ec1b2728eab5c5d48fa56e3bc324935c554c4dc8"
+    },
+    {
+      "path": "apps/web/next.config.ts",
+      "sha256": "61296b2f0c7eeb115358c5f542fab76e0c9cc4e2d9dfcc401ab42ebd169be31e"
+    },
+    {
+      "path": "packages/auth/src/customer-programme-projections.ts",
+      "sha256": "e3b3f04f4d60c0c3ce445f979c17cb5421c895675142aefb91de2ee5c06ead16"
+    },
+    {
+      "path": "packages/auth/src/founder-activation.ts",
+      "sha256": "f30b1aa9acfb59e3c0554b4a5b8c26e57e437f7c67e2c97ec0c90bb3152931eb"
+    },
+    {
+      "path": "packages/db/customer-programme-projection-migrations/0001_consented_programme_projections.sql",
+      "sha256": "7bde872d8ebd40ea1670ef43a6a93abfe914813b4181519d8f98b59b6b90d484"
+    },
+    {
+      "path": "packages/db/src/customer-programme-projection-migrate.ts",
+      "sha256": "b70ec37062fd626a62f3eb5691479687bd2e45a704c59fbcfceedcf057be2368"
+    },
+    {
+      "path": "scripts/install-customer-modules.ts",
+      "sha256": "63d22b7cd3d5e79a97da0eeebeead9086d7cbe3b6a5b1a6fb03455cc82223b8a"
+    },
+    {
+      "path": "tests/browser/v3-programme-projections-gate.spec.ts",
+      "sha256": "386068afe5b488082cc1f23b5c343065cfc438ff6223c33f9c9704496f749f95"
+    },
+    {
+      "path": "tests/integration/customer-programme-projections.test.ts",
+      "sha256": "1281e3c4b43cc0d69ffba129f4b129707512ec36ff2a8a2d12a6efdff8556c2a"
+    },
+    {
+      "path": "tests/integration/real-programme-operations.test.ts",
+      "sha256": "f14d0151532e1de27a41a07842ec141ca8b1ce0304de2ba2b99f7a6a31772165"
+    },
+    {
+      "path": "tests/operator/v3-programme-projections-ui.spec.ts",
+      "sha256": "2f7feca245147eca0e8342828b5f6bfe1d6c349970ba50dc4d62a5f8b6852a0f"
+    }
+  ]
+}

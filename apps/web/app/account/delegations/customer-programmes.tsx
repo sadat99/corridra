@@ -1,4 +1,5 @@
 'use client';
+import { ProgrammeProjectionPanel } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
@@ -52,6 +53,7 @@ type Props = {
   pricingEnabled?: boolean;
   serviceRequestsEnabled?: boolean;
   roomEnabled?: boolean;
+  projectionsEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -95,6 +97,7 @@ function ScopedProgrammes({
   pricingEnabled = false,
   serviceRequestsEnabled = false,
   roomEnabled = false,
+  projectionsEnabled = false,
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
@@ -419,6 +422,24 @@ function ScopedProgrammes({
                       participantsEnabled={participantsEnabled}
                       sharedMoneyNote={templatesEnabled && pricingEnabled}
                       panels={{
+                        companies: projectionsEnabled ? (
+                          <ProgrammeProjectionPanel
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                            view="companies"
+                          />
+                        ) : null,
+                        agenda: projectionsEnabled ? (
+                          <ProgrammeProjectionPanel
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                            view="agenda"
+                          />
+                        ) : null,
                         overview: contextEnabled ? (
                           <ProgrammeContext
                             subject={subject}
@@ -669,6 +690,24 @@ function ScopedProgrammes({
                           )}
                         </>
                       )}
+                    </>
+                  )}
+                  {!roomEnabled && projectionsEnabled && (
+                    <>
+                      <ProgrammeProjectionPanel
+                        subject={subject}
+                        issuer={issuer}
+                        workspaceId={workspaceId}
+                        programmeId={p.id}
+                        view="companies"
+                      />
+                      <ProgrammeProjectionPanel
+                        subject={subject}
+                        issuer={issuer}
+                        workspaceId={workspaceId}
+                        programmeId={p.id}
+                        view="agenda"
+                      />
                     </>
                   )}
                 </li>

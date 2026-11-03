@@ -7,6 +7,7 @@ import { customerMissionSharesEnabled } from './customer-mission-shares';
 import { customerOrganisationLinksEnabled } from './customer-organisation-links';
 import { customerOrganisationProfilesEnabled } from './customer-organisation-profiles';
 import { customerParticipantsEnabled } from './customer-participants';
+import { customerProgrammeProjectionsEnabled } from './customer-programme-projections';
 import { customerProgrammeContextEnabled } from './customer-programme-context';
 import { customerProgrammeCoordinationEnabled } from './customer-programme-coordination';
 import { customerProgrammeEconomicsEnabled } from './customer-programme-economics';
@@ -142,6 +143,12 @@ const modules: {
     label: 'Participant invitations and registrations',
     flag: 'CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED',
     enabled: customerParticipantsEnabled,
+  },
+  {
+    key: 'programme-projections',
+    label: 'Programme companies, agenda and readiness',
+    flag: 'CORRIDRA_CUSTOMER_PROGRAMME_PROJECTIONS_ENABLED',
+    enabled: customerProgrammeProjectionsEnabled,
   },
   {
     key: 'programme-context',
