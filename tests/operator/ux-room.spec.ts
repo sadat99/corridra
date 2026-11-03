@@ -259,13 +259,17 @@ async function open(page: Page, options: Options = {}, answer: Answer = {}, repo
       body: JSON.stringify(answer.body ?? detail()),
     }),
   );
-  await page.route('**/api/customer-saved-missions', (route) =>
-    route.fulfill({
+  // REPORT_DELAY_MS slows the report answer, as a busy CI runner does, so a test that measures the page
+  // before the report has rendered fails here and not only on a slow machine.
+  const delay = Number(process.env.REPORT_DELAY_MS ?? 0);
+  await page.route('**/api/customer-saved-missions', async (route) => {
+    if (delay > 0) await new Promise((done) => setTimeout(done, delay));
+    await route.fulfill({
       status: report.status ?? 200,
       contentType: 'application/json',
       body: JSON.stringify(report.body ?? reportBody()),
-    }),
-  );
+    });
+  });
   await page.goto(
     `${origin}/?props=${encodeURIComponent(JSON.stringify(props(options)))}&offered=${options.offered ?? 'en'}`,
   );
@@ -650,6 +654,9 @@ const items = (page: Page) => page.locator('.room-trip-list > li');
  * events are tied to the old container, so do this last, after every click.
  */
 async function toCustomerFrame(page: Page) {
+  // Name the nodes the rebuild needs, so a page that is not ready fails here with a clear message.
+  await expect(page.locator('#fixture > main > .ux-page-heading')).toHaveCount(1);
+  await expect(page.locator('#fixture > main')).toHaveCount(1);
   await page.evaluate(() => {
     const main = document.querySelector('main')!;
     main.classList.add('ux-customer');
@@ -985,6 +992,8 @@ test('shows nothing but the meetings: no money, offers, contacts, outcomes, evid
     },
   });
   await openTrip(page, [], {}, { body });
+  // Wait for the list to be drawn, or every absence below would pass while the report is loading.
+  await expect(items(page)).toHaveCount(1);
   const main = page.locator('main');
   for (const absent of [
     'Commercial objective',
@@ -1100,9 +1109,13 @@ for (const [width, framed] of [320, 390, 768, 1440].flatMap((w) => [
     });
     for (const expanded of [false, true]) {
       await openTrip(page, crowded);
-      if (expanded) await page.getByRole('button', { name: /Show all 7/ }).click();
+      // Measure the rendered list, not the page while the report is still loading.
+      await expect(items(page)).toHaveCount(5);
+      if (expanded) {
+        await page.getByRole('button', { name: /Show all 7/ }).click();
+        await expect(items(page)).toHaveCount(7);
+      }
       if (framed) await toCustomerFrame(page);
-      await page.waitForTimeout(150);
       const label = `Trip ${expanded ? 'expanded' : 'first five'} at ${width}${framed ? ' framed' : ''}`;
       const wide = await page.evaluate((limit) => {
         const out: string[] = [];
@@ -1256,32 +1269,30 @@ test('in the real customer frame the cards sit one token gap apart and the first
       location: 'Dhaka',
     }),
   ]);
+  // Wait for the rendered list before anything is measured (the report arrives after the lens opens).
+  await expect(items(page)).toHaveCount(2);
   await toCustomerFrame(page);
-  const measured = await page.evaluate(() => {
-    const [a, b] = Array.from(document.querySelectorAll('.room-trip-list > li'));
-    const list = document.querySelector('.room-trip-list')!;
-    const place = Array.from(a!.querySelectorAll('dd')).at(-1)!;
-    const time = a!.querySelector('time')!;
-    const style = (el: Element) => getComputedStyle(el);
-    return {
-      gap: b!.getBoundingClientRect().top - a!.getBoundingClientRect().bottom,
-      rowGap: parseFloat(style(list).rowGap),
-      marginTop: style(b!).marginTop,
-      marginBottom: style(a!).marginBottom,
-      timeSize: style(time).fontSize,
-      timeColour: style(time).color,
-      placeSize: style(place).fontSize,
-      placeColour: style(place).color,
-    };
-  });
+  const first = items(page).nth(0);
+  const second = items(page).nth(1);
+  const list = page.locator('.room-trip-list');
+  const place = first.locator('dd').last();
+  const time = first.locator('time').first();
+  await expect(time).toBeVisible();
+  const top = (el: Element) => el.getBoundingClientRect().top;
+  const bottom = (el: Element) => el.getBoundingClientRect().bottom;
+  const gap = (await second.evaluate(top)) - (await first.evaluate(bottom));
+  const rowGap = await list.evaluate((el) => parseFloat(getComputedStyle(el).rowGap));
   // Spacing is the grid gap (the space-3 token, 12 px) and nothing stacked on top of it.
-  expect(measured.rowGap).toBe(12);
-  expect(measured.gap).toBe(measured.rowGap);
-  expect(measured.marginTop).toBe('0px');
-  expect(measured.marginBottom).toBe('0px');
+  expect(rowGap).toBe(12);
+  expect(gap).toBe(rowGap);
+  expect(await second.evaluate((el) => getComputedStyle(el).marginTop)).toBe('0px');
+  expect(await first.evaluate((el) => getComputedStyle(el).marginBottom)).toBe('0px');
   // A time is the main fact, so it is not the small grey type of a reply date.
-  expect(measured.timeSize).toBe(measured.placeSize);
-  expect(measured.timeColour).toBe(measured.placeColour);
+  const type = (el: Element) => {
+    const style = getComputedStyle(el);
+    return { size: style.fontSize, colour: style.color };
+  };
+  expect(await time.evaluate(type)).toEqual(await place.evaluate(type));
 });
 
 test('marks Chinese names and places as Chinese for a screen reader and leaves other text unmarked', async ({
