@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type {
   ProgrammeProjection,
   OwnProgrammeProjection,
@@ -8,6 +8,8 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { DateTimeInput } from '../../../components/ux/date-time-input';
 
 type Identity = { subject: string; issuer: string };
+// What a confirmed save reports back to the form that sent it.
+type SavedReceipt = { resourceId: unknown; version: number };
 type Query =
   | { view: 'owner'; workspaceId: string; programmeId: string; after?: string }
   | { view: 'own'; registrationId: string; after?: string };
@@ -28,7 +30,7 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     pending = useRef<{
       signature: string;
       body: Record<string, unknown>;
-      onSaved?: () => void;
+      onSaved?: (receipt: SavedReceipt) => void;
     } | null>(null),
     mounted = useRef(true);
   const queryText = new URLSearchParams(query).toString();
@@ -129,7 +131,7 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       clearTimeout(renew);
     };
   }, [data, visible, load]);
-  async function send(input: Record<string, unknown>, onSaved?: () => void) {
+  async function send(input: Record<string, unknown>, onSaved?: (receipt: SavedReceipt) => void) {
     if (busy) return false;
     const signature = JSON.stringify(input);
     if (pending.current?.signature !== signature)
@@ -166,7 +168,10 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       )
         throw Error('Save could not be confirmed. Retry the same change.');
       if (!mounted.current) return false;
-      pending.current.onSaved?.();
+      pending.current.onSaved?.({
+        resourceId: receipt.resourceId,
+        version: Number(receipt.version),
+      });
       pending.current = null;
       setCanRetry(false);
       await load();
@@ -194,7 +199,14 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     delete input.acknowledged;
     await send(input, pending.current?.onSaved);
   }
-  return { data, notice, busy, load, send, host, retry, canRetry };
+  // Forget an unconfirmed change, for a form that moves on to something else.
+  function discard() {
+    if (!pending.current) return;
+    pending.current = null;
+    setCanRetry(false);
+    setNotice('');
+  }
+  return { data, notice, busy, load, send, host, retry, canRetry, discard };
 }
 
 export function ProgrammeProjectionPanel(
@@ -218,6 +230,9 @@ function OwnerPanel(
     [attendees, setAttendees] = useState<string[]>([]),
     // The activity version the organiser saw when the form was filled; saves are checked against it.
     [seenVersion, setSeenVersion] = useState<number | null>(null);
+  const shownTask = useRef(''),
+    activitySelect = useRef<HTMLSelectElement>(null),
+    staleNotice = useId();
   const { host, ...view } = useProjection<ProgrammeProjection>(props, {
     view: 'owner',
     workspaceId: props.workspaceId,
@@ -231,6 +246,9 @@ function OwnerPanel(
   function edit(id: string) {
     const row = d?.agenda.find((t) => t.taskId === id);
     if (!row) return;
+    // A change left unconfirmed for another activity must not be retried against this one.
+    view.discard();
+    shownTask.current = id;
     setTaskId(id);
     setSeenVersion(row.version);
     setStart(row.startsAt);
@@ -238,8 +256,10 @@ function OwnerPanel(
     setAudience(row.audience);
     setAttendees(row.attendees);
   }
-  const savedByThisForm = () =>
-    setSeenVersion((version) => (version === null ? version : version + 1));
+  // Only a save of the activity the form shows moves the version the form is checked against.
+  const savedByThisForm = (saved: SavedReceipt) => {
+    if (saved.resourceId === shownTask.current) setSeenVersion(saved.version);
+  };
   const paging =
     d && (after || d.nextAfter) ? (
       <div className="button-row">
@@ -421,6 +441,7 @@ function OwnerPanel(
               <label className="field">
                 Activity
                 <select
+                  ref={activitySelect}
                   value={taskId}
                   disabled={view.busy}
                   required
@@ -489,17 +510,25 @@ function OwnerPanel(
               )}
               {stale && (
                 <>
-                  <p role="status">
-                    Someone else changed this activity since it was opened. Reloading replaces the
+                  <p role="status" id={staleNotice}>
+                    This activity changed after you opened it. That can be another organiser, or
+                    your own earlier save that could not be confirmed. Reloading replaces the
                     entries currently typed with the latest saved schedule.
                   </p>
-                  <button type="button" onClick={() => edit(taskId)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      edit(taskId);
+                      activitySelect.current?.focus();
+                    }}
+                  >
                     Reload this activity
                   </button>
                 </>
               )}
               <button
                 type="submit"
+                aria-describedby={stale ? staleNotice : undefined}
                 disabled={
                   view.busy ||
                   stale ||
@@ -514,6 +543,7 @@ function OwnerPanel(
               {task?.scheduled && (
                 <button
                   type="button"
+                  aria-describedby={stale ? staleNotice : undefined}
                   disabled={view.busy || stale || seenVersion === null}
                   onClick={() =>
                     void view.send(
@@ -549,6 +579,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
   const [objective, setObjective] = useState(''),
     [consentProfileId, setConsentProfileId] = useState<string | null>(null),
     [after, setAfter] = useState<string | undefined>();
+  const heading = useRef<HTMLHeadingElement>(null);
   const { host, ...view } = useProjection<OwnProgrammeProjection>(props, {
       view: 'own',
       registrationId: props.registrationId,
@@ -557,7 +588,9 @@ function OwnSharing(props: Identity & { registrationId: string }) {
     d = view.data;
   return (
     <section ref={host} aria-label="Programme company and meeting sharing" aria-busy={view.busy}>
-      <h4>Company and meeting sharing</h4>
+      <h4 ref={heading} tabIndex={-1}>
+        Company and meeting sharing
+      </h4>
       <p>
         The programme owner and admins can see only the fields you explicitly share here.
         Meeting-count permission is separate from sharing an objective.
@@ -641,19 +674,25 @@ function OwnSharing(props: Identity & { registrationId: string }) {
           {d.company.sourceChanged && (
             <>
               <p role="status">
-                Your company for this place changed after you shared. Programme organisers do not
-                see a company until you review it below and share again.
+                {d.profile && d.active
+                  ? 'Your company for this place changed after you shared. Programme organisers do not see a company until you review it below and share again.'
+                  : 'Your company for this place changed after you shared. Programme organisers do not see a company until you share again.'}
               </p>
               <button
                 type="button"
                 disabled={view.busy}
                 onClick={() =>
-                  void view.send({
-                    action: 'company',
-                    registrationId: props.registrationId,
-                    expectedVersion: d.company.version,
-                    shared: false,
-                  })
+                  void view
+                    .send({
+                      action: 'company',
+                      registrationId: props.registrationId,
+                      expectedVersion: d.company.version,
+                      shared: false,
+                    })
+                    .then((ok) => {
+                      // The button leaves the page once cleared; keep keyboard focus inside this section.
+                      if (ok) heading.current?.focus();
+                    })
                 }
               >
                 Clear earlier company permission
