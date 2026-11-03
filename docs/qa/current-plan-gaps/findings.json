@@ -36,7 +36,7 @@
         "summary": "Code merged and deployed; owner-approved protected installer applied migrations0002–0004. Runtime switch values, private live acceptance and provider delivery remain unverified.",
         "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
         "evidenceObservedOn": "2026-11-02",
-        "lastRecordedOn": "2026-11-02",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
@@ -50,7 +50,7 @@
             ]
           },
           "deployment": {
-            "state": "READY",
+            "state": "DEPLOYED",
             "evidence": ["verification/2026-11-02-gap001-release.json"]
           },
           "activation": {
@@ -106,6 +106,15 @@
           "disposition": "OPEN",
           "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
           "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+        },
+        {
+          "eventId": "GAP-001-H005",
+          "recordedOn": "2026-11-03",
+          "type": "STATUS_NORMALIZED",
+          "evidenceRevision": "289abc715ae9464f3fdeda4d19d723ab4158c340",
+          "disposition": "OPEN",
+          "note": "Normalize the earlier READY deployment label to DEPLOYED, matching later findings and retaining its existing verified exact-revision release evidence. No new activation, private runtime or provider acceptance is inferred.",
+          "evidence": ["verification/2026-11-02-gap001-release.json"]
         }
       ]
     },
@@ -125,7 +134,7 @@
         "summary": "Code merged and deployed; owner-approved protected installer applied migrations0002–0004. Runtime switch values, private live acceptance and provider delivery remain unverified.",
         "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
         "evidenceObservedOn": "2026-11-02",
-        "lastRecordedOn": "2026-11-02",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
@@ -139,7 +148,7 @@
             ]
           },
           "deployment": {
-            "state": "READY",
+            "state": "DEPLOYED",
             "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
           },
           "activation": {
@@ -217,6 +226,15 @@
           "disposition": "OPEN",
           "note": "Owner-approved protected installer succeeded; commercial readiness registry advanced from1 to4. Runtime/private live acceptance remains unverified.",
           "evidence": ["verification/2026-11-02-gap001-002-schema-install.json"]
+        },
+        {
+          "eventId": "GAP-002-H007",
+          "recordedOn": "2026-11-03",
+          "type": "STATUS_NORMALIZED",
+          "evidenceRevision": "9647b616e7fa2cbcbd93a618e2692a75e05aa5d0",
+          "disposition": "OPEN",
+          "note": "Normalize the earlier READY deployment label to DEPLOYED, matching later findings and retaining its existing verified exact-revision release evidence. No new activation, private runtime or provider acceptance is inferred.",
+          "evidence": ["verification/2026-11-02-gap002-corrective-release.json"]
         }
       ]
     },
@@ -236,7 +254,7 @@
         "summary": "PR236 merged/deployed at9bfac1b after19 passing checks. Owner-approved protected installer subsequently applied migration0005. Runtime switch values and private live acceptance remain unverified.",
         "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
         "evidenceObservedOn": "2026-11-02",
-        "lastRecordedOn": "2026-11-02",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
@@ -250,7 +268,7 @@
             ]
           },
           "deployment": {
-            "state": "READY",
+            "state": "DEPLOYED",
             "evidence": ["verification/2026-11-02-gap003-release.json"]
           },
           "activation": {
@@ -307,6 +325,15 @@
           "disposition": "OPEN",
           "note": "Owner-approved protected installer advanced the commercial readiness registry from4 to5. Runtime/live acceptance remains unverified.",
           "evidence": ["verification/2026-11-02-gap003-schema-install.json"]
+        },
+        {
+          "eventId": "GAP-003-H005",
+          "recordedOn": "2026-11-03",
+          "type": "STATUS_NORMALIZED",
+          "evidenceRevision": "9bfac1bf974e37cdc229ae75cde6c5c0055fdb9f",
+          "disposition": "OPEN",
+          "note": "Normalize the earlier READY deployment label to DEPLOYED, matching later findings and retaining its existing verified exact-revision release evidence. No new activation, private runtime or provider acceptance is inferred.",
+          "evidence": ["verification/2026-11-02-gap003-release.json"]
         }
       ]
     },
@@ -1403,20 +1430,27 @@
         "evidenceAndBoundary": "`team-control.ts:235` authorizes the owner but resets in the auth transaction without recording that owner. `migrations/0005_integrity_versions.sql:48` records target identity changes. Tests `ws-d-team-control.test.ts:193` check target MFA/session events, not the initiating owner's attribution. Reset itself and denial controls exist."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "PR247 passed19 exact-head checks at33d5b41 and reached the exact READY production alias ata93d467. Owner attribution is locally verified; protected0006 installation remains, so GAP016 stays OPEN. Missing schema reports audit unavailable without disabling existing actions.",
-        "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
+        "summary": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap016-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-03-gap016-local.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap016-local.json"]
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-03-gap016-local.json",
+              "verification/2026-11-03-gap016-release.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "deployment": {
             "state": "DEPLOYED",
@@ -1439,7 +1473,11 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap016-local.json",
+          "verification/2026-11-03-gap016-release.json",
+          "verification/2026-11-03-gap016-019-schema-install.json"
+        ]
       },
       "history": [
         {
@@ -1467,6 +1505,28 @@
           "disposition": "OPEN",
           "note": "PR247 passed19 exact-head checks at33d5b41 and reached the exact READY production alias ata93d467. Owner attribution is locally verified; protected0006 installation remains, so GAP016 stays OPEN. Missing schema reports audit unavailable without disabling existing actions.",
           "evidence": ["verification/2026-11-03-gap016-release.json"]
+        },
+        {
+          "eventId": "GAP-016-H004",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALL_REQUESTED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "Commercial-only installer41615462932 was queued at the owner request from reviewed maincc07f17 (tree identical to fully tested PR250). Owner reports approved; actual run is in_progress. Optional activation actions unchanged. Registry advancement remains unverified.",
+          "evidence": ["verification/2026-11-03-gap016-019-install-request.json"]
+        },
+        {
+          "eventId": "GAP-016-H005",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "RESOLVED",
+          "note": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+          "evidence": [
+            "verification/2026-11-03-gap016-local.json",
+            "verification/2026-11-03-gap016-release.json",
+            "verification/2026-11-03-gap016-019-schema-install.json"
+          ]
         }
       ]
     },
@@ -1481,20 +1541,27 @@
         "evidenceAndBoundary": "`api/workspace/[action]/route.ts:246` calls the task service directly. Type, template and inbox label exist, but no corresponding production notify call. The database test manually inserts TASK_ASSIGNED, which does not test the producer. Current D7 includes this hand-off."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation.",
-        "evidenceRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
+        "summary": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-03-gap017-local.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-local.json"]
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-03-gap017-local.json",
+              "verification/2026-11-03-gap017-release.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "deployment": {
             "state": "DEPLOYED",
@@ -1517,7 +1584,11 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap017-local.json",
+          "verification/2026-11-03-gap017-release.json",
+          "verification/2026-11-03-gap016-019-schema-install.json"
+        ]
       },
       "history": [
         {
@@ -1554,6 +1625,28 @@
           "disposition": "OPEN",
           "note": "PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation.",
           "evidence": ["verification/2026-11-03-gap017-release.json"]
+        },
+        {
+          "eventId": "GAP-017-H005",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALL_REQUESTED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "Commercial-only installer41615462932 was queued at the owner request from reviewed maincc07f17 (tree identical to fully tested PR250). Owner reports approved; actual run is in_progress. Optional activation actions unchanged. Registry advancement remains unverified.",
+          "evidence": ["verification/2026-11-03-gap016-019-install-request.json"]
+        },
+        {
+          "eventId": "GAP-017-H006",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "RESOLVED",
+          "note": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+          "evidence": [
+            "verification/2026-11-03-gap017-local.json",
+            "verification/2026-11-03-gap017-release.json",
+            "verification/2026-11-03-gap016-019-schema-install.json"
+          ]
         }
       ]
     },
@@ -1568,20 +1661,27 @@
         "evidenceAndBoundary": "`api/workspace/customer-service-requests/route.ts:54` runs the staff command and returns. The type/template alone does not send or write an inbox row. This is distinct from A's quote-accepted event."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "PR249 passed19 exact-head checks atf9bfccc and reached the exact READY production alias ate184781. Complete40-case proof covers the canonical customer quote notice and failure isolation. GAP018 stays OPEN pending protected0008 installation.",
-        "evidenceRevision": "e184781cba511223f64e53fd73a70d42e7a14975",
+        "summary": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap018-isolated-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-03-gap018-isolated-local.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap018-isolated-local.json"]
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-03-gap018-isolated-local.json",
+              "verification/2026-11-03-gap018-release.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "deployment": {
             "state": "DEPLOYED",
@@ -1604,7 +1704,11 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap018-isolated-local.json",
+          "verification/2026-11-03-gap018-release.json",
+          "verification/2026-11-03-gap016-019-schema-install.json"
+        ]
       },
       "history": [
         {
@@ -1650,6 +1754,28 @@
           "disposition": "OPEN",
           "note": "PR249 passed19 exact-head checks atf9bfccc and reached the exact READY production alias ate184781. Complete40-case proof covers the canonical customer quote notice and failure isolation. GAP018 stays OPEN pending protected0008 installation.",
           "evidence": ["verification/2026-11-03-gap018-release.json"]
+        },
+        {
+          "eventId": "GAP-018-H006",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALL_REQUESTED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "Commercial-only installer41615462932 was queued at the owner request from reviewed maincc07f17 (tree identical to fully tested PR250). Owner reports approved; actual run is in_progress. Optional activation actions unchanged. Registry advancement remains unverified.",
+          "evidence": ["verification/2026-11-03-gap016-019-install-request.json"]
+        },
+        {
+          "eventId": "GAP-018-H007",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "RESOLVED",
+          "note": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+          "evidence": [
+            "verification/2026-11-03-gap018-isolated-local.json",
+            "verification/2026-11-03-gap018-release.json",
+            "verification/2026-11-03-gap016-019-schema-install.json"
+          ]
         }
       ]
     },
@@ -1664,20 +1790,27 @@
         "evidenceAndBoundary": "`api/workspace/[action]/route.ts:272` directly calls the reply command. Existing supplier review and separate Pulse/receipt kinds do not implement this generic hand-off."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "PR250 passed19 exact-head checks atddc1b55 and reached the exact READY production alias atcc07f17. All15 combined source hashes match62 DB cases/full types/lint, including corrected reply persistence on notification failure. GAP019 stays OPEN pending protected0009 installation.",
+        "summary": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
         "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap019-isolated-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-03-gap019-isolated-local.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap019-isolated-local.json"]
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-03-gap019-isolated-local.json",
+              "verification/2026-11-03-gap019-release.json",
+              "verification/2026-11-03-gap016-019-schema-install.json"
+            ]
           },
           "deployment": {
             "state": "DEPLOYED",
@@ -1700,7 +1833,11 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap019-isolated-local.json",
+          "verification/2026-11-03-gap019-release.json",
+          "verification/2026-11-03-gap016-019-schema-install.json"
+        ]
       },
       "history": [
         {
@@ -1746,6 +1883,28 @@
           "disposition": "OPEN",
           "note": "PR250 passed19 exact-head checks atddc1b55 and reached the exact READY production alias atcc07f17. All15 combined source hashes match62 DB cases/full types/lint, including corrected reply persistence on notification failure. GAP019 stays OPEN pending protected0009 installation.",
           "evidence": ["verification/2026-11-03-gap019-release.json"]
+        },
+        {
+          "eventId": "GAP-019-H006",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALL_REQUESTED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "Commercial-only installer41615462932 was queued at the owner request from reviewed maincc07f17 (tree identical to fully tested PR250). Owner reports approved; actual run is in_progress. Optional activation actions unchanged. Registry advancement remains unverified.",
+          "evidence": ["verification/2026-11-03-gap016-019-install-request.json"]
+        },
+        {
+          "eventId": "GAP-019-H007",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "RESOLVED",
+          "note": "Selected engineering criteria RESOLVED after code release and protected installer41615462932. Actual job125847710866 advanced commercial registry5→9 at10:05:30 UTC,3 Nov, installing reviewed0006–0009; real-use stayed12 and optional actions unchanged. Existing synthetic DB/handler/source-hash and exact READY release proof is preserved. Genuine private production/provider acceptance remains unverified.",
+          "evidence": [
+            "verification/2026-11-03-gap019-isolated-local.json",
+            "verification/2026-11-03-gap019-release.json",
+            "verification/2026-11-03-gap016-019-schema-install.json"
+          ]
         }
       ]
     },
@@ -1760,24 +1919,24 @@
         "evidenceAndBoundary": "`account/notifications/page.tsx:57` says Choose what we email you; form `:177`/`:183` says nothing is sent while Pulse is off. Transactional request receipts independently enqueue in `customer-requests.ts:158` and mission-mail SQL `:113`, without Pulse preferences. This can conflict when that independent mail service is enabled. No actual delivery or consent violation is claimed."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Behavior source remains unchanged from85 integration/16 browser-case preparation. Saved operator test formatting corrected; semantic TypeScript AST is identical. Original hashes/receipts and current3-file hashes retained. Frozen CI/deployment pending; mail policy/settings unchanged.",
-        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+        "summary": "PR251 passed19 exact-head checks atabd973e and reached the exact READY production alias ate6d34cf. Scoped email-off wording is verified by85 integration checks,16 compiled browser cases and full frozen CI. GAP020 engineering criteria RESOLVED; genuine provider delivery is not claimed.",
+        "evidenceRevision": "e6d34cfd08103de90fec80df8c3041e39906029f",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap020-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-gap020-release.json"]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap020-local.json"]
+            "state": "VERIFIED",
+            "evidence": ["verification/2026-11-03-gap020-release.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap020-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1796,7 +1955,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap020-local.json",
+          "verification/2026-11-03-gap020-release.json"
+        ]
       },
       "history": [
         {
@@ -1824,6 +1986,15 @@
           "disposition": "OPEN",
           "note": "Behavior source remains unchanged from85 integration/16 browser-case preparation. Saved operator test formatting corrected; semantic TypeScript AST is identical. Original hashes/receipts and current3-file hashes retained. Frozen CI/deployment pending; mail policy/settings unchanged.",
           "evidence": ["verification/2026-11-03-gap020-local.json"]
+        },
+        {
+          "eventId": "GAP-020-H004",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "e6d34cfd08103de90fec80df8c3041e39906029f",
+          "disposition": "RESOLVED",
+          "note": "PR251 passed19 exact-head checks atabd973e and reached the exact READY production alias ate6d34cf. Scoped email-off wording is verified by85 integration checks,16 compiled browser cases and full frozen CI. GAP020 engineering criteria RESOLVED; genuine provider delivery is not claimed.",
+          "evidence": ["verification/2026-11-03-gap020-release.json"]
         }
       ]
     },
