@@ -4,7 +4,7 @@
 // Labels are names, never codes. A hidden input carries the value for plain form posts.
 // Owner after Wave 0: WS-E (internals only; props are fixed).
 import './ux-kit.css';
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { PickerOption } from '../../lib/ux/options';
 
 export type SearchSelectProps = {
@@ -17,7 +17,7 @@ export type SearchSelectProps = {
   name?: string;
   id?: string;
   hint?: string;
-  error?: string;
+  error?: ReactNode;
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -173,6 +173,7 @@ export function SearchSelect({
                   className="ux-kit-option"
                   aria-selected={option.value === value}
                   data-active={index === active}
+                  data-value={option.value}
                   style={
                     visible.split && index === visible.split
                       ? { borderTop: '1px solid var(--ac-border)' }
