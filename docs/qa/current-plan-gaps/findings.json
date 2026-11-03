@@ -778,28 +778,32 @@
         "evidenceAndBoundary": "Native controls remain at `operator/missions.tsx:239` and `operator/opportunities.tsx:129`, `:154`, `:339`. The shared conversion component already exists at `components/ux/date-time-input.tsx:64`; report/link use is not missing."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "A_G_REMAINDER",
-        "summary": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
-        "evidenceRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+        "summary": "PR242 passed19 exact-head checks after the source-hash scanner and shared-grid/diagnostic corrections, then reached the exact READY production alias at787484d. Shared timezone-aware input adoption, exact instant/millisecond preservation and six-width responsive engineering criteria are resolved; private/provider stages remain separate.",
+        "evidenceRevision": "787484d4d745c9b5cfb3039dbc4be15c3be82099",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap009-local.json"]
-          },
-          "verification": {
-            "state": "PARTIAL",
+            "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-02-gap009-local.json",
-              "verification/2026-11-02-gap009-security-controls.json",
-              "verification/2026-11-03-gap009-layout-local.json"
+              "verification/2026-11-03-gap009-layout-local.json",
+              "verification/2026-11-03-gap009-release.json"
+            ]
+          },
+          "verification": {
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-02-gap009-local.json",
+              "verification/2026-11-03-gap009-layout-local.json",
+              "verification/2026-11-03-gap009-release.json"
             ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap009-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -818,7 +822,11 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-02-gap009-local.json",
+          "verification/2026-11-03-gap009-layout-local.json",
+          "verification/2026-11-03-gap009-release.json"
+        ]
       },
       "history": [
         {
@@ -868,6 +876,16 @@
           "disposition": "OPEN",
           "note": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
           "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
+        },
+        {
+          "eventId": "GAP-009-H006",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "787484d4d745c9b5cfb3039dbc4be15c3be82099",
+          "priorDisposition": "OPEN",
+          "disposition": "RESOLVED",
+          "note": "PR242 passed19 exact-head checks after the source-hash scanner and shared-grid/diagnostic corrections, then reached the exact READY production alias at787484d. Shared timezone-aware input adoption, exact instant/millisecond preservation and six-width responsive engineering criteria are resolved; private/provider stages remain separate.",
+          "evidence": ["verification/2026-11-03-gap009-release.json"]
         }
       ]
     },
@@ -884,18 +902,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`app/plan/intake.tsx:1130` still uses native selects. Readable/ordered country names are already implemented. Existing select-driven tests do not prove search adoption.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Existing SearchSelect now replaces the two request-country controls without changing canonical values or request bodies.20 earlier local cases and7 current-base country/fixed-English-baseline cases pass, with final build/types/lint. Product hashes match the original tested preparation. The fixed source snapshot is retained through a baseline tag for squash-merge durability. Final-head CI/deployment pending.",
+        "evidenceRevision": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-010"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-02-gap010-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-02-gap010-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -928,6 +946,16 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-010-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "cf17c4c69b4cd21fbcd2461b34bf720f3450fad4",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "Existing SearchSelect now replaces the two request-country controls without changing canonical values or request bodies.20 earlier local cases and7 current-base country/fixed-English-baseline cases pass, with final build/types/lint. Product hashes match the original tested preparation. The fixed source snapshot is retained through a baseline tag for squash-merge durability. Final-head CI/deployment pending.",
+          "evidence": ["verification/2026-11-02-gap010-local.json"]
         }
       ]
     },

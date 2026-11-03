@@ -49,11 +49,13 @@ test('UX-02 saved draft choices survive reload and take precedence over entry su
     .selectOption('machinery_procurement');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .selectOption('JP');
+    .getByRole('combobox', { name: 'Where is the company based? (required)', exact: true })
+    .fill('JP');
+  await page.locator('[role="option"][data-value="JP"]').click();
   await page
-    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
-    .selectOption('KE');
+    .getByRole('combobox', { name: 'Which market is involved? (required)', exact: true })
+    .fill('KE');
+  await page.locator('[role="option"][data-value="KE"]').click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
     .getByLabel('Your offer or requirement')
@@ -72,8 +74,9 @@ test('UX-02 saved draft choices survive reload and take precedence over entry su
   await expect(summary).toContainText('1.234 BHD');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-  ).toHaveValue('JP');
+    page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
+  ).toHaveValue('Japan');
+  await expect(page.locator('form.intake-form input[name="companyCountry"]')).toHaveValue('JP');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'machinery_procurement',

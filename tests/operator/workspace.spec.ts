@@ -32,12 +32,10 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await expect(page.getByText('Choose what you want to do', { exact: true })).toBeVisible();
   await page.getByLabel('Sell in a new market', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .selectOption('BD');
-  await page
-    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
-    .selectOption('ES');
+  await page.locator('#brief-companyCountry').fill('Bangladesh');
+  await page.getByRole('option', { name: 'Bangladesh', exact: true }).click();
+  await page.locator('#brief-marketCode').fill('Spain');
+  await page.getByRole('option', { name: 'Spain', exact: true }).click();
   await page.getByLabel('Yes', { exact: true }).check();
   await page.getByLabel('From', { exact: true }).fill('2026-11-01');
   await page.getByLabel('To', { exact: true }).fill('2026-10-01');

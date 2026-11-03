@@ -1,0 +1,29 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-009",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/242",
+  "testedHead": "2670e4411d8d959f84368c65035ebc7038cb6580",
+  "ciRun": 41554266377,
+  "codeqlRun": 41554266409,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "787484d4d745c9b5cfb3039dbc4be15c3be82099",
+  "productionDeployment": {
+    "id": "dpl_9a6njdJKKcKfDLjE7hsEUynJMiKU",
+    "state": "READY",
+    "githubCommitSha": "787484d4d745c9b5cfb3039dbc4be15c3be82099",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": [
+    "verification/2026-11-02-gap009-local.json",
+    "verification/2026-11-03-gap009-layout-local.json"
+  ],
+  "limits": [
+    "Cross-zone persisted-instant testing mounts the actual mission form/service/RLS; other operator categories have UTC UI regression coverage plus backend timezone contracts.",
+    "The reproduced shared-field overflow and diagnostic type correction remain preserved in history.",
+    "No schema/provider/activation or genuine private customer acceptance inferred."
+  ]
+}

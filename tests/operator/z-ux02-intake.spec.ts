@@ -48,11 +48,13 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     );
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(
-      page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-    ).toHaveValue('BD');
+      page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
+    ).toHaveValue('Bangladesh');
+    await expect(page.locator('form.intake-form input[name="companyCountry"]')).toHaveValue('BD');
     await expect(
-      page.getByRole('combobox', { name: 'Which market is involved?', exact: true }),
-    ).toHaveValue('CN');
+      page.getByRole('combobox', { name: 'Which market is involved? (required)', exact: true }),
+    ).toHaveValue('China');
+    await expect(page.locator('form.intake-form input[name="marketCode"]')).toHaveValue('CN');
     await page.getByLabel('Yes', { exact: true }).check();
     await page.getByLabel('From', { exact: true }).fill('2026-11-10');
     await page.getByLabel('To', { exact: true }).fill('2026-11-01');
@@ -265,8 +267,10 @@ test('the sample form completes in German and Arabic against the real intake and
       };
       await step(() => form.locator('select').first().selectOption('machinery_procurement'));
       await step(async () => {
-        await form.locator('select').nth(0).selectOption('BD');
-        await form.locator('select').nth(1).selectOption('CN');
+        await form.locator('#brief-companyCountry').fill('BD');
+        await form.locator('[role="option"][data-value="BD"]').click();
+        await form.locator('#brief-marketCode').fill('CN');
+        await form.locator('[role="option"][data-value="CN"]').click();
         await form.locator('input[name="attendance"]').first().check();
         await form.locator('#brief-startDate').fill('2026-11-10');
         await form.locator('#brief-endDate').fill('2026-11-15');

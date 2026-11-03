@@ -15,8 +15,9 @@ async function toDetails(page: Page, path = '/plan?job=sourcing&companyCountry=B
   await expect(job(page)).toHaveValue(/.+/);
   await next(page).click();
   await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-  ).toHaveValue('BD');
+    page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
+  ).toHaveValue('Bangladesh');
+  await expect(page.locator('form.intake-form input[name="companyCountry"]')).toHaveValue('BD');
   await next(page).click();
 }
 
@@ -77,12 +78,10 @@ test('A-3 a link naming another job asks before replacing a saved draft, and Cle
   await expect(job(page)).toHaveValue('delegations');
   // Group trips get trip-leader wording (CQ-16).
   await next(page).click();
-  await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .selectOption('BD');
-  await page
-    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
-    .selectOption('CN');
+  await page.locator('#brief-companyCountry').fill('Bangladesh');
+  await page.getByRole('option', { name: 'Bangladesh', exact: true }).click();
+  await page.locator('#brief-marketCode').fill('China');
+  await page.getByRole('option', { name: 'China', exact: true }).click();
   await next(page).click();
   const offer = page.getByLabel('What should the trip achieve?', { exact: true });
   await expect(offer).toBeVisible();
@@ -95,10 +94,10 @@ test('A-3 a link naming another job asks before replacing a saved draft, and Cle
   await expect(job(page)).toHaveValue('sourcing');
   // Countries are listed by name with the route countries first (CQ-15).
   await next(page).click();
+  await page.locator('#brief-companyCountry').focus();
   const first = await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .locator('option')
-    .evaluateAll((options) => options.slice(1, 4).map((o) => o.textContent));
+    .getByRole('option')
+    .evaluateAll((options) => options.slice(0, 3).map((option) => option.textContent));
   expect(first).toEqual(['Bangladesh', 'China', 'Spain']);
 });
 

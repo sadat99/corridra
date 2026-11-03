@@ -372,11 +372,13 @@ async function fillRequest(page: Page, email: string) {
     .selectOption('sourcing');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
-    .getByRole('combobox', { name: 'Where is the company based?', exact: true })
-    .selectOption('BD');
+    .getByRole('combobox', { name: 'Where is the company based? (required)', exact: true })
+    .fill('BD');
+  await page.locator('[role="option"][data-value="BD"]').click();
   await page
-    .getByRole('combobox', { name: 'Which market is involved?', exact: true })
-    .selectOption('CN');
+    .getByRole('combobox', { name: 'Which market is involved? (required)', exact: true })
+    .fill('CN');
+  await page.locator('[role="option"][data-value="CN"]').click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
     .getByLabel('Your offer or requirement')
@@ -496,8 +498,10 @@ async function fillRequestInAnyLanguage(page: Page, email: string, password?: st
   };
   await form.locator('select').first().selectOption('sourcing');
   await step();
-  await form.locator('select').nth(0).selectOption('BD');
-  await form.locator('select').nth(1).selectOption('CN');
+  await form.locator('#brief-companyCountry').fill('BD');
+  await form.locator('[role="option"][data-value="BD"]').click();
+  await form.locator('#brief-marketCode').fill('CN');
+  await form.locator('[role="option"][data-value="CN"]').click();
   await step();
   await form
     .locator('textarea')

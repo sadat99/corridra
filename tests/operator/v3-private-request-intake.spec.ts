@@ -144,11 +144,13 @@ async function complete(page: Page) {
   );
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
-  ).toHaveValue('BD');
+    page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
+  ).toHaveValue('Bangladesh');
+  await expect(page.locator('form.intake-form input[name="companyCountry"]')).toHaveValue('BD');
   await expect(
-    page.getByRole('combobox', { name: 'Which market is involved?', exact: true }),
-  ).toHaveValue('CN');
+    page.getByRole('combobox', { name: 'Which market is involved? (required)', exact: true }),
+  ).toHaveValue('China');
+  await expect(page.locator('form.intake-form input[name="marketCode"]')).toHaveValue('CN');
   await page.getByLabel('No', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Your offer or requirement').fill(original);
@@ -405,7 +407,7 @@ test('private sample request fields retain accessible responsive layouts and nat
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(
-    page.getByRole('combobox', { name: 'Where is the company based?', exact: true }),
+    page.getByRole('combobox', { name: 'Where is the company based? (required)', exact: true }),
   ).toBeVisible();
 });
 
