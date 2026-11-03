@@ -2560,3 +2560,21 @@ PR250 passed19 exact-head checks atddc1b55 and reached the exact READY productio
 All3 source hashes and saved logs match85 integration checks,16 compiled browser cases and focused lint. Email-off wording scopes request-update preferences and explicitly distinguishes account-security messages and request receipts. Mail policy/settings are unchanged. Frozen CI and deployment pending; no genuine provider delivery claimed.
 
 GAP020 pre-push format check caught the saved operator test. Formatting correction preserves its semantic TypeScript AST; original proof and current3 source hashes retained. Frozen CI will verify the formatted candidate.
+
+### 3 November 2026: owner requested immediate commercial schema review
+
+Installer41615462932 was dispatched atcc07f17 with apply=yes and optional actions unchanged. Its tree da1d1934e96305214d598e3b4d4247b3da8d377b exactly matches fully tested PR250, so the commercial-only run followed the existing workflow without editing or bypassing gates; its optional-install preflight condition does not apply. Owner reports approved, and the actual run is in_progress. Registry advancement is not yet claimed. This checkpoint will join final records after PR251, preserving its existing frozen CI run.
+
+### 3 November 2026: commercial0006–0009 installation verified
+
+Protected installer41615462932 succeeded atcc07f17. Actual job125847710866 log advances commercial_readiness_migrations5→9 at10:05:30 UTC while customer_real_use_migrations stays12; optional actions unchanged. Reviewed source hashes and decoded log SHA256 are preserved in verification/2026-11-03-gap016-019-schema-install.json. Selected016–019 engineering criteria are RESOLVED using existing synthetic handler/DB/source-hash and exact READY release proofs. Genuine private production/provider acceptance remains unverified.
+
+PR251 remains frozen atabd973e with CI41615533233/CodeQL41615533357 running. These documentation updates are retained for the final records PR, so no code CI restart is needed.
+
+### 3 November 2026: GAP-020 code released
+
+PR251 passed19 exact-head checks atabd973e and reached the exact READY production alias ate6d34cf. Scoped email-off wording is verified by85 integration checks,16 compiled browser cases and full frozen CI. GAP020 engineering criteria RESOLVED; genuine provider delivery is not claimed. Exact production alias READY at dpl_6cD7jkWkpJoUm7FFFRVTk4WWNh78, merge e6d34cfd08103de90fec80df8c3041e39906029f; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
+
+All17 selected code repairs and required additive SQL are released/installed. Eleven selected engineering findings are RESOLVED;001–005/007 retain their private runtime/provider acceptance gaps. No language work, provider activation or real outreach was performed. Final records are documentation only; reuse unchanged product proofs and the verified READY release.
+
+Final comparison normalized the first3 deployment labels from READY to DEPLOYED using their unchanged release proof; existing histories remain intact. Machine-readable selected totals are17 deployed,11 engineering-resolved and6 private/runtime/provider acceptance findings OPEN.

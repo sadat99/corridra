@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-020",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/251",
+  "testedHead": "abd973ebecd65732a99fc2b30a206aa299141183",
+  "ciRun": 41615533233,
+  "codeqlRun": 41615533357,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "e6d34cfd08103de90fec80df8c3041e39906029f",
+  "productionDeployment": {
+    "id": "dpl_6cD7jkWkpJoUm7FFFRVTk4WWNh78",
+    "state": "READY",
+    "githubCommitSha": "e6d34cfd08103de90fec80df8c3041e39906029f",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap020-local.json"],
+  "limits": [
+    "Email policy/settings are unchanged; this closes the scoped copy criteria, not genuine provider-delivery acceptance.",
+    "The browser-test formatting correction preserves its semantic TypeScript AST; current full frozen-head CI passed."
+  ]
+}

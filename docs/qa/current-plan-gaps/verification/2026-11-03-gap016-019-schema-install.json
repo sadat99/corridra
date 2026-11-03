@@ -1,0 +1,53 @@
+{
+  "recordedOn": "2026-11-03",
+  "runId": 41615462932,
+  "jobId": 125847710866,
+  "sourceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+  "testedPullRequest": 250,
+  "testedHead": "ddc1b559387670df441ea58448d4dc8c7f08fffb",
+  "identicalReviewedTree": "da1d1934e96305214d598e3b4d4247b3da8d377b",
+  "conclusion": "success",
+  "jobStartedAt": "2026-11-03T10:00:31Z",
+  "jobCompletedAt": "2026-11-03T10:05:33Z",
+  "jobLogSha256": "5c26cc620c7a39dae973810cb66894f57583da01d035183975743c8c1932a784",
+  "registryBefore": {
+    "commercial_readiness_migrations": 5,
+    "customer_real_use_migrations": 12
+  },
+  "registryAfter": {
+    "commercial_readiness_migrations": 9,
+    "customer_real_use_migrations": 12
+  },
+  "optionalActions": "unchanged",
+  "actualLogLines": [
+    "2026-11-03T10:00:59.1127638Z   REAL_USE_ACTION: unchanged",
+    "2026-11-03T10:00:59.1128314Z   NETWORK_USE_ACTION: unchanged",
+    "2026-11-03T10:00:59.1130999Z   NOTIFICATIONS_ACTION: unchanged",
+    "2026-11-03T10:01:11.7613105Z customer_real_use_migrations: 12 applied",
+    "2026-11-03T10:01:11.7617263Z commercial_readiness_migrations: 5 applied",
+    "2026-11-03T10:05:30.6850515Z customer_real_use_migrations: 12 applied",
+    "2026-11-03T10:05:30.6854222Z commercial_readiness_migrations: 9 applied"
+  ],
+  "sourceFiles": [
+    {
+      "path": "packages/db/commercial-readiness-migrations/0006_team_control_owner_audit.sql",
+      "sha256": "cc99189b1c11e6116eb3ff2af7a0fc22e1e64392a5f791294224cf9901fe8549"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0007_task_assigned_notification.sql",
+      "sha256": "635beab7119b893310f895ade19ed4ad8e4d85b63d7496a5f728757eb2adb8b5"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0008_quote_sent_notification.sql",
+      "sha256": "ae60f672d0a83ee9c91a3c4d22d8f6e55c9e2645236d0bd4a06ebdba1ab53e17"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0009_reply_posted_notification.sql",
+      "sha256": "bc28f558eb5a858078377c9b4d9f63fed08b8cc5f7a23d984cf8c96e003f892a"
+    }
+  ],
+  "limits": [
+    "Code plus reviewed additive SQL and synthetic handler/database proof establishes the selected engineering criteria. Genuine private production/provider acceptance is unverified.",
+    "No provider activation or historical data backfill was requested."
+  ]
+}
