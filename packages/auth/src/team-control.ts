@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { z } from 'zod';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import { sessionHash, withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { DomainError, role } from '@corridra/domain';
 import { setupIdentifier, setupInvitation } from './operator-setup';
 
@@ -20,9 +20,9 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // Audit: the restricted auth role cannot write the security log directly (migration 0029), so the
 // record comes from the existing database triggers. Invite and cancel change app.membership, which
 // app.record_change writes to the workspace audit log (app.domain_event) with the owner as actor.
-// An authenticator reset sets twoFactorEnabled=false, which identity.record_mfa_change writes as
-// 'mfa.disabled', and ending the sessions writes 'session.delete'. Writing the acting owner next to
-// the reset and the resend needs a reviewed database function (lead integration note).
+// Existing MFA/session triggers keep recording target changes. The optional, narrow owner-audit
+// function records resend/reset in the same auth transaction, deriving the owner from the bearer
+// session. Until its reviewed migration is installed, results explicitly say audit is unavailable.
 
 export const teamInviteInput = z
   .object({
@@ -52,6 +52,7 @@ async function authorize(runtime: DatabasePool, ctx: RequestContext) {
   return withTenant(runtime, ctx, 'members.manage', async (t) => ({
     actorId: t.actorId,
     tenantId: t.tenantId,
+    purpose: t.purpose,
   }));
 }
 
@@ -71,6 +72,27 @@ async function inAuth<T>(
   } finally {
     db.release();
   }
+}
+
+async function recordOwnerAction(
+  q: DatabasePool['query'],
+  ctx: RequestContext,
+  purpose: string,
+  operation: 'team.invitation.resent' | 'team.authenticator.reset',
+  target: string,
+  reference: string | null,
+): Promise<'recorded' | 'unavailable'> {
+  // Do not disable existing controls before the protected additive installer has run.
+  const available = await q(
+    "SELECT to_regprocedure('identity.record_team_control(text,uuid,uuid)') IS NOT NULL AS ready",
+  );
+  if (!available.rows[0].ready) return 'unavailable';
+  await q(
+    "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose',$3,true)",
+    [sessionHash(ctx.token), ctx.tenantId, purpose],
+  );
+  await q('SELECT identity.record_team_control($1,$2,$3)', [operation, target, reference]);
+  return 'recorded';
 }
 
 export class TeamControl {
@@ -179,7 +201,7 @@ export class TeamControl {
   /** A new 7-day window for a pending or expired invitation. Owner only, fresh check. */
   async resend(ctx: RequestContext, input: unknown) {
     const { invitationId } = inviteRef.parse(input);
-    const { tenantId } = await authorize(this.runtime, ctx);
+    const { tenantId, purpose } = await authorize(this.runtime, ctx);
     return inAuth(this.auth, async (q) => {
       const row = (
         await q(
@@ -205,8 +227,17 @@ export class TeamControl {
         'INSERT INTO identity.verification(id,identifier,value,"expiresAt") VALUES($1,$2,$3,now()+interval \'7 days\')',
         [next, row.identifier, JSON.stringify(invite)],
       );
+      const audit = await recordOwnerAction(
+        q,
+        ctx,
+        purpose,
+        'team.invitation.resent',
+        invite.principalId,
+        next,
+      );
       return {
         id: next,
+        audit,
         principalId: invite.principalId,
         expiresInDays: 7,
         notificationRecipient: {
@@ -247,7 +278,7 @@ export class TeamControl {
    */
   async resetAuthenticator(ctx: RequestContext, input: unknown) {
     const { userId } = resetInput.parse(input);
-    await withTenant(this.runtime, ctx, 'members.manage', async (t) => {
+    const purpose = await withTenant(this.runtime, ctx, 'members.manage', async (t) => {
       if (userId === t.actorId)
         throw new DomainError(
           'You cannot reset your own authenticator here. Ask another owner, or use the recovery steps.',
@@ -258,6 +289,7 @@ export class TeamControl {
         [t.tenantId, userId],
       );
       if (!member.rowCount) throw new DomainError('Member not found in this workspace', 404);
+      return t.purpose;
     });
     return inAuth(this.auth, async (q) => {
       const target = (
@@ -272,7 +304,15 @@ export class TeamControl {
         target.identity_id,
       ]);
       const ended = await q('DELETE FROM identity.session WHERE "userId"=$1', [target.identity_id]);
-      return { reset: true, sessionsEnded: ended.rowCount ?? 0, reEnrolAtNextSignIn: true };
+      const audit = await recordOwnerAction(
+        q,
+        ctx,
+        purpose,
+        'team.authenticator.reset',
+        userId,
+        null,
+      );
+      return { reset: true, sessionsEnded: ended.rowCount ?? 0, reEnrolAtNextSignIn: true, audit };
     });
   }
 }

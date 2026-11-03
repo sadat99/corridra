@@ -1,0 +1,145 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-016",
+  "baseRevision": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+  "prerequisite": "GAP-015 TeamControl source from stash1f57e4a525633b67d531e2447e9af22553346da5",
+  "sourceFiles": [
+    {
+      "path": "packages/auth/src/team-control.ts",
+      "sha256": "cca3c3921dc2e8f0fe27232ce624f9958da63820ab5f052d7d85bfbefb37cffd"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0006_team_control_owner_audit.sql",
+      "sha256": "cc99189b1c11e6116eb3ff2af7a0fc22e1e64392a5f791294224cf9901fe8549"
+    },
+    {
+      "path": "tests/integration/team-owner-audit.test.ts",
+      "sha256": "0ce274f2e709548fb22ba8c5069475b9287c60135e989ea33c9bad5f991add5d"
+    }
+  ],
+  "receipts": {
+    "gap016-owner-audit-db": {
+      "name": "gap016-owner-audit-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/team-owner-audit.test.ts tests/integration/ws-d-team-control.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 3.7,
+      "logBytes": 170,
+      "logSha256": "0f68faeab0262a5c863f4a079edf57a2ee76b286983667248d12fb1423f8d28c",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 4,
+      "log": "work/gap016-owner-audit-db-2026-11-03T01-37-25-031Z.log"
+    },
+    "gap016-owner-audit-types": {
+      "name": "gap016-owner-audit-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 21.4,
+      "logBytes": 218,
+      "logSha256": "55a452c7eeaa32e5cfb8326639f98a6bfcee97bff98790ca6908ff56a4ebbe3a",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 4,
+      "log": "work/gap016-owner-audit-types-2026-11-03T01-37-37-398Z.log"
+    },
+    "gap016-owner-audit-lint": {
+      "name": "gap016-owner-audit-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs packages/auth/src/team-control.ts tests/integration/team-owner-audit.test.ts --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.3,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 4,
+      "log": "work/gap016-owner-audit-lint-2026-11-03T01-37-37-411Z.log"
+    }
+  },
+  "verification": {
+    "databaseCasesPassed": 15,
+    "newOwnerAttributionCases": 7
+  },
+  "implementation": [
+    "Additive commercial0006 appends initiating actor, tenant, target and reference metadata to existing immutable security events. Old events unchanged.",
+    "Narrow auth-only SECURITY DEFINER writer derives the owner from bearer session, verifies fresh MFA and same-workspace member, accepts only completed reset/renewed invitation. No direct log write grant.",
+    "Audit and action share the auth transaction; injected audit failure rolls both back. Replay produces one renewal/audit.",
+    "Before installation, existing controls keep working and explicitly report audit unavailable."
+  ],
+  "limits": [
+    "Protected production schema installation and live private acceptance pending; not resolved.",
+    "No auth policy, identity merge, MFA window, notification policy or money change.",
+    "Prepared TeamControl includes the separately prepared GAP-015 prerequisite; restore after its release."
+  ],
+  "currentCombinedVerification": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "a83f792a026dca309a5da28faa2fcb03c88a5d1d",
+    "resolvedOverlap": "Resend result retains both stored-recipient metadata and owner audit status. All3 original owner-audit source hashes still match.",
+    "sourceFiles": [
+      {
+        "path": "apps/web/app/api/team-control/[action]/route.ts",
+        "sha256": "70f5ea2571bed09a2589cd255d77a9b2341cce7435db61c9ebecc6dcf8a36212"
+      },
+      {
+        "path": "apps/web/app/operator/workspace-controls.tsx",
+        "sha256": "9f38e99baa932f3ce7e49e6910ca0151be0af24cc0d129b75a79d51888328a36"
+      },
+      {
+        "path": "packages/auth/src/team-control.ts",
+        "sha256": "cca3c3921dc2e8f0fe27232ce624f9958da63820ab5f052d7d85bfbefb37cffd"
+      },
+      {
+        "path": "tests/e2e/verification/ws-d/team-control.spec.ts",
+        "sha256": "79d191d22446bbeabbca6895cbcb833399dae8d3211dc06d3ed23143aae6c937"
+      },
+      {
+        "path": "tests/integration/team-invitation-notification.test.ts",
+        "sha256": "b7257606e24eb6f7dcbfc5854c8988b003f7c0e331cd73cd17adaa5ae7e805d4"
+      },
+      {
+        "path": "tests/integration/team-owner-audit.test.ts",
+        "sha256": "0ce274f2e709548fb22ba8c5069475b9287c60135e989ea33c9bad5f991add5d"
+      },
+      {
+        "path": "tests/integration/commercial-readiness-database.test.ts",
+        "sha256": "e93c65a673306d5cd64c60f3a58e86b91b203646b069436f25b7bd768101bd9a"
+      },
+      {
+        "path": "packages/db/commercial-readiness-migrations/0006_team_control_owner_audit.sql",
+        "sha256": "cc99189b1c11e6116eb3ff2af7a0fc22e1e64392a5f791294224cf9901fe8549"
+      }
+    ],
+    "receipts": {
+      "gap015-016-combined-db": {
+        "name": "gap015-016-combined-db",
+        "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/team-invitation-notification.test.ts tests/integration/team-owner-audit.test.ts tests/integration/ws-d-team-control.test.ts tests/integration/commercial-readiness-database.t",
+        "exit": 0,
+        "signal": null,
+        "seconds": 5.9,
+        "logBytes": 367,
+        "logSha256": "470dbb2b8f1add3069330b5890a49f88aeeeff30dee174e50b0b750ec1de4022",
+        "head": "a83f792a026dca309a5da28faa2fcb03c88a5d1d",
+        "changedPaths": 10,
+        "log": "work/gap015-016-combined-db-2026-11-03T06-11-16-934Z.log"
+      },
+      "gap015-016-combined-types": {
+        "name": "gap015-016-combined-types",
+        "command": "pnpm typecheck",
+        "exit": 0,
+        "signal": null,
+        "seconds": 21,
+        "logBytes": 219,
+        "logSha256": "f485f8391baca91852162183f5b91f101394389c3b7f0643cc4634b47f84580d",
+        "head": "a83f792a026dca309a5da28faa2fcb03c88a5d1d",
+        "changedPaths": 13,
+        "log": "work/gap015-016-combined-types-2026-11-03T06-16-30-808Z.log"
+      }
+    },
+    "combinedDatabaseCasesPassed": 29,
+    "fullTypecheckExit": 0,
+    "migrationInventoryIncludes0006": true,
+    "limits": [
+      "Prototype inventory omission is resolved here; protected0006 installation and frozen release gates remain.",
+      "Use a three-way application after015; do not overwrite newer service code."
+    ]
+  }
+}

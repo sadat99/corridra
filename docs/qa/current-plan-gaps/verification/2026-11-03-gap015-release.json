@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-015",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/246",
+  "testedHead": "24001a31f9d89dc076e7277d99eaa47c19b09803",
+  "ciRun": 41595381327,
+  "codeqlRun": 41595381331,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "e5d3fc62b99121c40cfc1a8d8e359872a66b5b5a",
+  "productionDeployment": {
+    "id": "dpl_Hkp5oYqXwu9jxqtjJRZkG79iQh4q",
+    "state": "READY",
+    "githubCommitSha": "e5d3fc62b99121c40cfc1a8d8e359872a66b5b5a",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap015-local.json"],
+  "limits": [
+    "Actual-handler/database proof and compiled owner journey use synthetic identities and substituted transport. Genuine provider delivery is not claimed.",
+    "No SQL/auth-policy change. Owner audit attribution remains GAP016."
+  ]
+}

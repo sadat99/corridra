@@ -2528,3 +2528,9 @@ GAP-015/016 combined preparation is now in stash9af267ac1ede0cbddef4039b9794056f
 PR245 passed19 checks atf224827, merged as060f73a2fda2a9c875e7355f7d7e5b68f147c20f, and reached exact READY alias dpl_A3UeVHxGR71asASxDs1xFmVtMoCk. Owner/zero branch binding were verified before cleanup. The reader-budget failure/correction remains in history; warning CSS stayed unchanged. GAP-012 engineering criteria are resolved.
 
 GAP-015's5 source and6 log hashes match the original15-case/compiled-owner-journey/build/types/lint preparation after clean three-way application. No later audit/producer code is restored into its packet. The combined016 source is preserved in stash9af267ac1ede0cbddef4039b9794056f0ca06e21.017/018/019 combined work is retained in stash758c56a57f0555427817d9d8c45fd90c6d623ce2 with62 DB cases/types/lint passed and inventory0006–0009. The unpublished reply prototype's notice-failure rollback was reproduced, then aligned with existing task/quote isolation: preserve the action, discard the failed notice, send after commit. Evidence includes that failed reproduction; separate sequential extraction/installation is still required.
+
+### 3 November 2026: GAP-015 released; GAP-016 owner attribution next
+
+PR246 passed19 frozen-head checks at24001a3 and merged ase5d3fc6. Exact production alias READY at dpl_Hkp5oYqXwu9jxqtjJRZkG79iQh4q; owner identity and zero branch bindings verified before retirement. GAP015 engineering criteria RESOLVED; real provider delivery unverified.
+
+GAP016 appends owner/tenant/target/reference attribution through restricted SQL0006; existing permissions/MFA/events preserved. Eight combined source hashes match29 saved DB/handler cases and full types. Frozen release and protected schema installation remain. The prior12161-byte ledger is preserved exactly in the hashed history manifest; the active index has headroom.

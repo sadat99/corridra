@@ -269,6 +269,14 @@
       "bytes": 12263,
       "sha256": "b558dcb0751f9ebe42d71df763314013d643d6cf1616289620d673bc20bbf463",
       "meaning": "Exact ledger before the owner-authorized 2 November gap repairs; historical observations, not current work authorization."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "24001a31f9d89dc076e7277d99eaa47c19b09803",
+      "archive": "docs/v3/history/ledger-through-gap012-2026-11-03.md",
+      "bytes": 12161,
+      "sha256": "a3f3eac5e98c213b56ee8d02651b1fc43dd8c19d8eb6981706eb6fe4404193cb",
+      "meaning": "Exact active ledger after GAP012 production verification, while GAP015 PR246 checks were pending. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
