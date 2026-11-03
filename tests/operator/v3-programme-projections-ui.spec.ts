@@ -560,7 +560,7 @@ test('a company that changed after sharing is not shared until the participant s
   await expect(
     page.getByRole('status').filter({ hasText: 'company for this place changed' }),
   ).toHaveText(
-    'Your company for this place changed after you shared. Programme organisers do not see a company until you review it below and share again.',
+    'Your company for this place changed after you shared. Programme organisers do not see a company until you review it and share again.',
   );
   await expect(page.getByText('Company sharing is on')).toHaveCount(0);
   expect(
@@ -693,4 +693,29 @@ test('the changed-company notice does not point at a review form that is not sho
   await expect(
     page.getByRole('button', { name: 'Clear earlier company permission' }),
   ).toBeVisible();
+});
+test('moving to another activity after an unconfirmed save says that the earlier change may or may not be saved', async ({
+  page,
+}) => {
+  const server = await activityServer(page, [taskId, secondTaskId]);
+  const warning = page.getByRole('status').filter({ hasText: 'could not be confirmed' });
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  // Nothing was pending, so there is nothing to warn about.
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic second activity' }).click();
+  await expect(warning).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.loseNextReply = true;
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Save could not be confirmed');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  const other = page.getByRole('button', { name: 'Edit schedule for Synthetic second activity' });
+  await other.click();
+  await expect(warning).toHaveText(
+    'An earlier change to Synthetic activity could not be confirmed and may or may not have been saved. Check its schedule in the list before changing it again.',
+  );
+  // The message does not take focus from what the organiser just used.
+  await expect(other).toBeFocused();
+  expect((await axeResults(page)).violations).toEqual([]);
+  expect(server.posts).toHaveLength(1);
 });

@@ -199,12 +199,14 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     delete input.acknowledged;
     await send(input, pending.current?.onSaved);
   }
-  // Forget an unconfirmed change, for a form that moves on to something else.
+  // Forget an unconfirmed change, for a form that moves on to something else. Returns what was dropped, if anything.
   function discard() {
-    if (!pending.current) return;
+    const dropped = pending.current?.body ?? null;
+    if (!dropped) return null;
     pending.current = null;
     setCanRetry(false);
     setNotice('');
+    return dropped;
   }
   return { data, notice, busy, load, send, host, retry, canRetry, discard };
 }
@@ -229,7 +231,9 @@ function OwnerPanel(
     [audience, setAudience] = useState<'ALL' | 'SELECTED'>('ALL'),
     [attendees, setAttendees] = useState<string[]>([]),
     // The activity version the organiser saw when the form was filled; saves are checked against it.
-    [seenVersion, setSeenVersion] = useState<number | null>(null);
+    [seenVersion, setSeenVersion] = useState<number | null>(null),
+    // Title of the activity whose last change could not be confirmed when the form moved away from it.
+    [unconfirmedTitle, setUnconfirmedTitle] = useState<string | null>(null);
   const shownTask = useRef(''),
     activitySelect = useRef<HTMLSelectElement>(null),
     staleNotice = useId();
@@ -246,8 +250,12 @@ function OwnerPanel(
   function edit(id: string) {
     const row = d?.agenda.find((t) => t.taskId === id);
     if (!row) return;
-    // A change left unconfirmed for another activity must not be retried against this one.
-    view.discard();
+    // A change left unconfirmed for another activity must not be retried against this one, and the
+    // organiser is told it may or may not have been saved.
+    const dropped = view.discard();
+    setUnconfirmedTitle(
+      dropped ? (d?.agenda.find((t) => t.taskId === dropped.taskId)?.title ?? 'an activity') : null,
+    );
     shownTask.current = id;
     setTaskId(id);
     setSeenVersion(row.version);
@@ -384,6 +392,12 @@ function OwnerPanel(
             </div>
           ) : (
             <p>No attendee overlaps recorded.</p>
+          )}
+          {unconfirmedTitle && (
+            <p role="status">
+              An earlier change to {unconfirmedTitle} could not be confirmed and may or may not have
+              been saved. Check its schedule in the list before changing it again.
+            </p>
           )}
           <ul>
             {d.agenda.map((row) => (
@@ -675,7 +689,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
             <>
               <p role="status">
                 {d.profile && d.active
-                  ? 'Your company for this place changed after you shared. Programme organisers do not see a company until you review it below and share again.'
+                  ? 'Your company for this place changed after you shared. Programme organisers do not see a company until you review it and share again.'
                   : 'Your company for this place changed after you shared. Programme organisers do not see a company until you share again.'}
               </p>
               <button
