@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { readdirSync } from 'node:fs';
 import { commercialFixture } from './commercial-fixture';
 import { CustomerMemberRoleService } from '../../packages/auth/src/customer-member-roles';
 import { CustomerMissionShareService } from '../../packages/auth/src/customer-mission-shares';
@@ -18,6 +19,9 @@ import { CustomerProgrammeTermsService } from '../../packages/auth/src/customer-
 import { CustomerProgrammeCoordinationService } from '../../packages/auth/src/customer-programme-coordination';
 import { CustomerProgrammeContextService } from '../../packages/auth/src/customer-programme-context';
 import { CustomerProgrammeProjectionsService } from '../../packages/auth/src/customer-programme-projections';
+const directoryFiles = readdirSync('packages/db/customer-programme-projection-migrations')
+  .filter((name) => name.endsWith('.sql'))
+  .sort();
 const issuer =
   'https://ep-projections-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const options = { enabled: true, synthetic: true, production: false, issuer };
@@ -797,19 +801,48 @@ test('optional installer repeats on populated data, preserves existing records, 
   const before = await snapshot();
   await migrateCustomerProgrammeProjections(f.owner);
   expect(await snapshot()).toEqual(before);
-  const registry = (
-    await f.owner.query('SELECT sha256 FROM customer_programme_projection_migrations.applied')
-  ).rows[0].sha256;
+  const registry = async () =>
+    (
+      await f.owner.query<{ name: string; sha256: string }>(
+        'SELECT name,sha256 FROM customer_programme_projection_migrations.applied ORDER BY name',
+      )
+    ).rows;
+  const applied = await registry();
+  expect(applied.map((row) => row.name)).toEqual(directoryFiles);
+  const restore = async () => {
+    for (const row of applied)
+      await f.owner.query(
+        'UPDATE customer_programme_projection_migrations.applied SET sha256=$2 WHERE name=$1',
+        [row.name, row.sha256],
+      );
+  };
+  // Drift in any one applied file, not only the first, stops the installer and leaves everything unchanged.
+  for (const row of applied) {
+    try {
+      await f.owner.query(
+        "UPDATE customer_programme_projection_migrations.applied SET sha256=repeat('0',64) WHERE name=$1",
+        [row.name],
+      );
+      await expect(migrateCustomerProgrammeProjections(f.owner)).rejects.toThrow(
+        /history mismatch/,
+      );
+    } finally {
+      await restore();
+    }
+    expect(await registry()).toEqual(applied);
+  }
+  // An applied row whose file no longer exists also stops it.
   try {
     await f.owner.query(
-      "UPDATE customer_programme_projection_migrations.applied SET sha256=repeat('0',64)",
+      "INSERT INTO customer_programme_projection_migrations.applied(name,sha256) VALUES('9999_missing.sql',repeat('f',64))",
     );
     await expect(migrateCustomerProgrammeProjections(f.owner)).rejects.toThrow(/history mismatch/);
   } finally {
-    await f.owner.query('UPDATE customer_programme_projection_migrations.applied SET sha256=$1', [
-      registry,
-    ]);
+    await f.owner.query(
+      "DELETE FROM customer_programme_projection_migrations.applied WHERE name='9999_missing.sql'",
+    );
   }
+  expect(await registry()).toEqual(applied);
   expect(await snapshot()).toEqual(before);
 });
 test('removed organisers and disabled participants cannot reuse retained sharing', async () => {
