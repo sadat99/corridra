@@ -2789,20 +2789,20 @@
         "evidenceAndBoundary": "`saved-commercial-report.tsx:443` already renders itinerary. `owner-switches.ts:471` reserves Trip as planned; no consuming lens was found. Reopening requires the owner; do not say itinerary data is absent."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "`saved-commercial-report.tsx:443` already renders itinerary. `owner-switches.ts:471` reserves Trip as planned; no consuming lens was found. Reopening requires the owner; do not say itinerary data is absent.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_E",
+        "summary": "Batch E E1 builds the Trip view as a fourth Room lens over the existing reviewed itinerary, behind the default-off CORRIDRA_UX_TRIP switch (which needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES), in draft PR 255 at 18dff8c (unmerged). It adds no query, schema, export, price, offer or contact and shows only the schedule-changed notice when a schedule changed. Local receipts: Trip tests failed before the code (14 and 26 failures) and pass after (287 integration, 44 fixture browser, 60 real-configuration browser), plus types, lint, format, build, delivery (3) and docs (70). Frozen-head CI, CodeQL and the two independent review passes are pending; not merged, not deployed, never enabled by agents. The baseline statement that no consuming lens existed described 1 November main and is preserved in baseline and history.",
+        "evidenceRevision": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-034"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-batch-e1-trip-view.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-e1-trip-view.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -2813,8 +2813,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0076-trip-books-and-decision-sharing.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -2823,7 +2823,9 @@
         },
         "closureAcceptance": "Obtain the bounded Trip-lens decision, then prove the new lens uses the already permitted itinerary without booking or disclosure expansion.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "New explicit owner scope/approval before reopening; retain the original boundary.",
+          "ADR076 Trip view accepted on 3 November 2026 under the owner direction to take over Batch E and ADR-076; enabling CORRIDRA_UX_TRIP stays an owner action.",
+          "PR 255 needs green exact-head CI and CodeQL, two independent review passes and the owner merge command; automatic deployment must then be verified; activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -2835,6 +2837,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-034-H002",
+          "recordedOn": "2026-11-03",
+          "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
+          "evidenceRevision": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+          "disposition": "OPEN",
+          "note": "Owner directed the conductor to take over Batch E and ADR-076; ADR076 accepted the Trip view (commit 617a692). The Trip lens was built behind default-off CORRIDRA_UX_TRIP in draft PR 255 (commits 15fd4ab tests first, 27edfd6 lens, 18dff8c draft words and ui-direction note). Local receipts only: types, lint, format, build, delivery and docs checks, 287 integration and 44 fixture plus 60 real-configuration browser tests passed; failing-before runs kept. Frozen-head CI/CodeQL and the two independent reviews are pending, the PR is unmerged and nothing is deployed or activated. Deployment and activation remain UNKNOWN; verification stays PARTIAL. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e1-trip-view.json."
         }
       ]
     },
@@ -3320,12 +3330,12 @@
         "evidenceAndBoundary": "`owner-switches.ts:499`/`:506` reserve planned settings. ADR070/058 require approved disclosure scope. Existing private decisions/report links are separate implementations."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "`owner-switches.ts:499`/`:506` reserve planned settings. ADR070/058 require approved disclosure scope. Existing private decisions/report links are separate implementations.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_E_PARTIAL",
+        "summary": "ADR076 (3 November 2026, commit 617a692) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. The decision card (CORRIDRA_SHARE_CARD) stays PROPOSED and unapproved. Nothing for this finding is built: E3a (the signed-in status link) is planned next in a separate PR; E3b (decision card) needs migration, installer and owner acceptance of its field map. The baseline statement that planned settings were reserved is preserved in baseline and history.",
+        "evidenceRevision": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "MISSING",
@@ -3344,8 +3354,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["../../adr/0076-trip-books-and-decision-sharing.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -3354,7 +3364,9 @@
         },
         "closureAcceptance": "Obtain approved decision-card/status-link disclosure contracts and prove scope, expiry, revocation and recipient access.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "New explicit owner scope/approval before reopening; retain the original boundary.",
+          "Signed-in emailed status link accepted in ADR076 item 5; build it in its own PR (E3a) with the switch default off.",
+          "Decision card remains PROPOSED: the owner must accept its field map and expiry before E3b; it also needs a migration and the protected installer."
         ],
         "closureEvidence": []
       },
@@ -3366,6 +3378,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-041-H002",
+          "recordedOn": "2026-11-03",
+          "type": "SCOPE_PARTLY_APPROVED",
+          "evidenceRevision": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+          "disposition": "OPEN",
+          "note": "ADR076 accepted the signed-in emailed status link (item 5) and kept the decision card proposed; ADR058 is narrowed by one line. Approval is PARTIAL because only the status link part is accepted. Implementation stays MISSING and nothing is verified, deployed or activated. This is a scope change from OWNER_DEPENDENT to OPEN for the accepted part only; the decision card remains an owner decision. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e1-trip-view.json and ../../adr/0076-trip-books-and-decision-sharing.md."
         }
       ]
     },

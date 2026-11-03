@@ -1,0 +1,261 @@
+{
+  "recordedOn": "2026-11-03",
+  "batch": "E",
+  "kind": "E1 Trip view (draft PR 255, unmerged) and post-merge record of PR 254",
+  "findings": ["GAP-034", "GAP-041"],
+  "status": "PR 255 is an open draft at 18dff8c31e572d83dfd3b4037eb9da8e635467a4. The Trip view is implemented behind the default-off CORRIDRA_UX_TRIP switch and locally verified; frozen-head CI, CodeQL and the two independent review passes on that head are pending and are not claimed. Nothing is merged, deployed or activated for Batch E. GAP-041 is untouched in code.",
+  "pullRequests": {
+    "e1": {
+      "number": 255,
+      "url": "https://github.com/sadat99/corridra/pull/255",
+      "state": "open draft",
+      "branch": "claude/zen-hopper-1iqtdn",
+      "head": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+      "baseRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+      "commits": [
+        {
+          "sha": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+          "subject": "docs: accept the Trip view and signed-in status link in ADR-076",
+          "paths": [
+            "docs/adr/0058-emailed-request-status-link.md",
+            "docs/adr/0076-trip-books-and-decision-sharing.md",
+            "docs/adr/README.md"
+          ]
+        },
+        {
+          "sha": "15fd4abd174164d4c2300c8df39dea13bed31950",
+          "subject": "test: pin the Trip view contract and make CORRIDRA_UX_TRIP a described owner switch",
+          "paths": [
+            "apps/web/lib/owner-switches.ts",
+            "tests/integration/ux-trip.test.ts",
+            "tests/operator/golden/saved-report-all.golden",
+            "tests/operator/ux-room.spec.ts"
+          ]
+        },
+        {
+          "sha": "27edfd6e0337805fdffe1dd577583ee43aab8a4b",
+          "subject": "feat: add the Trip lens to the Room behind CORRIDRA_UX_TRIP",
+          "paths": [
+            "apps/web/lib/trip.ts",
+            "apps/web/app/account/rooms/[requestId]/trip-list.tsx",
+            "apps/web/app/account/rooms/[requestId]/room-view.tsx",
+            "apps/web/app/account/rooms/[requestId]/page.tsx",
+            "apps/web/app/account/rooms/[requestId]/room-view.css",
+            "apps/web/app/account/missions/saved-commercial-report.tsx",
+            "apps/web/lib/i18n/messages.ts"
+          ]
+        },
+        {
+          "sha": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+          "subject": "docs: record the Trip view words as draft and document its three classes",
+          "paths": [
+            "docs/agents/ui-direction.md",
+            "docs/product/language-review-record.md",
+            "docs/qa/2026-10-31/i18n-review.md"
+          ]
+        }
+      ]
+    },
+    "repairMerged": {
+      "number": 254,
+      "url": "https://github.com/sadat99/corridra/pull/254",
+      "mergedRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+      "mergedAt": "2026-11-03T19:41:03Z",
+      "head": "6f49b32aaef80f853cdae43206a6b205deb69518",
+      "checks": "19 checks: 18 success and the CodeQL aggregate neutral. One operator (6) shard failed on workspace.spec.ts:1691 with ECONNRESET and passed on a single re-run; it is unrelated to the diff. Codex review of 6f49b32 completed with no findings (as reported by the conductor).",
+      "postMergeMainCi": {
+        "run": 41705549794,
+        "conclusion": "success",
+        "completedAt": "2026-11-03T20:08Z"
+      },
+      "postMergeCodeql": {
+        "run": 41705549812,
+        "conclusion": "success"
+      }
+    }
+  },
+  "postMergeOfPr254": {
+    "verifiedByScribeThroughGitHubRestApi": "PR 254 merged=true at 2026-11-03T19:41:03Z with merge commit 76d9d03b866ce03fe13c3988f8e25ae6dabe4e78 and head 6f49b32aaef80f853cdae43206a6b205deb69518; main CI run 41705549794 completed success (updated 20:08:01Z); CodeQL run 41705549812 completed success; install run 41705868221 is event workflow_dispatch on headSha 76d9d03b866ce03fe13c3988f8e25ae6dabe4e78 with status waiting. The 19-check breakdown, the single ECONNRESET re-run and the Codex review were relayed by the conductor and not re-read here.",
+    "productionDeployment": "NOT VERIFIED from this environment. The connected Vercel account does not contain the Corridra project and the production host redirects to c.obsidianglobal.studio, which the proxy blocks. 76d9d03 is not recorded as deployed and verified.",
+    "protectedInstall": {
+      "workflow": "Install customer modules",
+      "run": 41705868221,
+      "trigger": "workflow_dispatch by the conductor under the owner pre-approval; inputs apply=yes and every optional action unchanged",
+      "environment": "customer-modules-install",
+      "status": "waiting at the environment approval gate (observed through the REST API)",
+      "sourceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+      "effect": "Migration 0002 is NOT installed. Expected log after approval: customer_programme_projection_migrations: 1 applied before, then 2 applied.",
+      "note": "Only an owner approval of this run installs 0002 in production."
+    },
+    "applicationSwitch": "The programme-projection application switch remains default off; its production state is UNKNOWN. Nothing is activated."
+  },
+  "tripViewDecision": {
+    "source": "docs/adr/0076-trip-books-and-decision-sharing.md at 617a692: owner direction \"take over batch E and ADR-076, and correctly complete them\"",
+    "accepted": [
+      "Trip view (CORRIDRA_UX_TRIP), shown only when CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES are also on",
+      "signed-in emailed status link, ADR-076 item 5 (CORRIDRA_STATUS_LINK), narrower than the anonymous 90-day link of ADR-058"
+    ],
+    "stillProposed": [
+      "Trip Book and Supplier Book (CORRIDRA_UX_BOOKS)",
+      "decision card (CORRIDRA_SHARE_CARD)",
+      "the export and share field map and seven-day expiry"
+    ],
+    "adr058": "ADR-058 gained one line saying the anonymous 90-day link is not adopted; only the signed-in Room link is planned."
+  },
+  "tripViewBehaviour": {
+    "summary": "Trip is a fourth Room lens over the reviewed itinerary block of the saved commercial report. It adds no query, schema, export, price, offer or contact, does not fetch the report again when lenses switch, and shows only the \"schedule changed\" notice (no old details) when a schedule changed or RESCHEDULE_REQUIRED applies.",
+    "switch": "CORRIDRA_UX_TRIP, default off, described in apps/web/lib/owner-switches.ts; needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES.",
+    "words": "room.lens.trip and 23 room.trip.* keys, English placeholders in all seven catalogs, recorded as D16 draft in the language review records; no translation review is claimed."
+  },
+  "receipts": [
+    {
+      "name": "trip-red2",
+      "receiptPath": "work/trip-red2-2026-11-03T19-47-24-921Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/ux-trip.test.ts",
+      "exit": 1,
+      "seconds": 2.2,
+      "logSha256": "d1dada51b1c3337a4185a8758083133716c6782a0a430305531dd499d7df7b47",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 2,
+      "role": "failing-before reproduction",
+      "result": "14 failed | 5 passed (19) in tests/integration/ux-trip.test.ts before the Trip lens existed"
+    },
+    {
+      "name": "trip-browser-red2",
+      "receiptPath": "work/trip-browser-red2-2026-11-03T20-06-27-559Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config pw-tmp.config.ts tests/operator/ux-room.spec.ts --timeout 9000 --reporter=line",
+      "exit": 1,
+      "seconds": 297.7,
+      "logSha256": "4cae1fb833d265dc910412feb4ba8f87e3e95dadf8b0b2d7632280740f4d68b6",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 8,
+      "role": "failing-before reproduction",
+      "result": "26 failed | 18 passed in tests/operator/ux-room.spec.ts (fixture config) before the Trip lens existed"
+    },
+    {
+      "name": "trip-unit",
+      "receiptPath": "work/trip-unit-2026-11-03T20-19-40-664Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/ux-trip.test.ts tests/integration/language-catalog.test.ts tests/integration/ux-room.test.ts tests/integration/ux-fairs.test.ts tests/integration/owner-page.test.ts tests/integration/privacy-notice.tes",
+      "exit": 0,
+      "seconds": 6.2,
+      "logSha256": "5096b10062b5126cbbe472ebeab90246da5297096c4bed8c7cb0a1637746c5a8",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 15,
+      "role": "passing",
+      "result": "287 passed in 9 files (ux-trip, language-catalog, ux-room and related integration files)"
+    },
+    {
+      "name": "trip-browser-green",
+      "receiptPath": "work/trip-browser-green-2026-11-03T20-15-47-760Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config pw-tmp.config.ts tests/operator/ux-room.spec.ts --timeout 20000 --reporter=line",
+      "exit": 0,
+      "seconds": 56.8,
+      "logSha256": "2a856606bc5feb709efd7ab0fc46a77e06485644450c268f3c5f0f9209e50f51",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 14,
+      "role": "passing",
+      "result": "44 passed in tests/operator/ux-room.spec.ts (fixture config)"
+    },
+    {
+      "name": "trip-browser",
+      "receiptPath": "work/trip-browser-2026-11-03T20-23-55-795Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-room.spec.ts tests/operator/v3-saved-commercial-ui.spec.ts --reporter=line",
+      "exit": 0,
+      "seconds": 83.7,
+      "logSha256": "d949d5b0aa8466ff24aa23d34db9f6d8fd3f39c1a28bdda35ce20b9502e75ce9",
+      "head": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+      "changedPaths": 1,
+      "role": "passing",
+      "result": "60 passed: tests/operator/ux-room.spec.ts and tests/operator/v3-saved-commercial-ui.spec.ts with the real operator configuration on the local PostgreSQL described in KNOWN_ISSUES KI-15"
+    },
+    {
+      "name": "typecheck",
+      "receiptPath": "work/typecheck-2026-11-03T20-18-00-090Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 32.2,
+      "logSha256": "2e69057a98735df7359c3eaeb679517ae1ee256dba243d9299388757518342a6",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 15,
+      "role": "passing (second run)",
+      "result": "exit 0; the first run exited 2 on three type errors in the new test file, fixed before this run"
+    },
+    {
+      "name": "lint",
+      "receiptPath": "work/lint-2026-11-03T20-18-35-139Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 65.5,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 15,
+      "role": "passing",
+      "result": "exit 0"
+    },
+    {
+      "name": "format",
+      "receiptPath": "work/format-2026-11-03T20-21-15-106Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 42.7,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 15,
+      "role": "passing (second run)",
+      "result": "exit 0; the first run exited 1 on tests/operator/saved-report-all.html golden formatting, fixed before this run"
+    },
+    {
+      "name": "build",
+      "receiptPath": "work/build-2026-11-03T20-22-13-930Z.log.receipt.json",
+      "command": "pnpm build",
+      "exit": 0,
+      "seconds": 83.1,
+      "logSha256": "f9cf68e436d13627479c260cd08be71fd84ce74949b0691b29cc1dc96d109775",
+      "head": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+      "changedPaths": 1,
+      "role": "passing",
+      "result": "exit 0"
+    },
+    {
+      "name": "delivery",
+      "receiptPath": "work/delivery-2026-11-03T20-25-23-959Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/delivery-commercial.test.ts",
+      "exit": 0,
+      "seconds": 22.9,
+      "logSha256": "a4e6c70f524a533cde1a7261b8f7a6c132da7f4e9bc58f632fb6861996dfc935",
+      "head": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+      "changedPaths": 1,
+      "role": "passing",
+      "result": "3 passed in tests/integration/delivery-commercial.test.ts"
+    },
+    {
+      "name": "docs",
+      "receiptPath": "work/docs-2026-11-03T20-20-52-580Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 18.4,
+      "logSha256": "e00fb6751d80f2e014b8784c5db848129f52a9e7ac1d1105da3e6b3390f1057c",
+      "head": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+      "changedPaths": 15,
+      "role": "passing",
+      "result": "pnpm test:docs: 70 passed"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries their names, commands (the gate runner may truncate long commands), exits, log hashes and the head each receipt reports. The typecheck, lint, format, docs and unit receipts report head 617a692 with 15 changed paths because they ran on the working tree before commits 15fd4ab, 27edfd6 and 18dff8c were created; build, delivery and trip-browser report head 18dff8c. Earlier failing runs of trip-unit, trip-browser-green, typecheck and format exist (the Trip code was still being written or formatted) and are kept in work/ but are not listed as proof.",
+  "measurements": {
+    "scrollBudget": "Builder measurement in the real customer frame with five full items and details closed: 3.82 screens at 390x844 (limit 4) and 2.41 screens at 1440x900 (limit 2.5, thin margin). An 80 px bottom padding stands in for the fixed phone tab navigation; the real header and footer were not measured. No receipt file is attached to this measurement."
+  },
+  "notRun": [
+    "pnpm test:ux was not run locally.",
+    "The full operator suite was not run locally (only tests/operator/ux-room.spec.ts and tests/operator/v3-saved-commercial-ui.spec.ts).",
+    "The full pnpm test was not run locally.",
+    "Frozen-head CI and CodeQL on 18dff8c and the two independent review passes on PR 255 are pending."
+  ],
+  "limits": [
+    "No production, signed-in, provider or genuine customer acceptance is claimed for the Trip view; it is off by default and agents never enable it.",
+    "Deployment of 76d9d03 to production is not verified from this environment.",
+    "Migration 0002 is not installed until the owner approves install run 41705868221.",
+    "GAP-034 and GAP-041 are not resolved. E3a (the signed-in status link) is planned next; E2 (Trip Book and Supplier Book) and E3b (decision card) stay proposed and need migration plus installer.",
+    "Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP/mailbox/production observation and native language review stay closed or owner-only."
+  ]
+}
