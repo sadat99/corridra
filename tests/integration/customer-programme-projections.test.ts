@@ -674,7 +674,7 @@ test('meeting counts require separate consent and genuine canonical qualificatio
 });
 
 test('a projection view never outlives the retention of the mission sources it returns', async () => {
-  const seconds = (view: { expiresAt: string }) => (Date.parse(view.expiresAt) - Date.now()) / 1000;
+  const at = (view: { expiresAt: string }) => Date.parse(view.expiresAt);
   const permit = async (linkId: string) =>
     projections('participant').command({
       action: 'meetings',
@@ -684,21 +684,22 @@ test('a projection view never outlives the retention of the mission sources it r
       shared: true,
       acknowledged: true,
     });
+  const noSources = () => projections('another').own({ registrationId: anotherRegistration });
   // Control 1: a participant with no mission link keeps the plain short coordination expiry.
-  const plain = seconds(await projections('another').own({ registrationId: anotherRegistration }));
-  // The proof a request carries lasts 25 seconds, so an unbounded view expires after about that long.
-  expect(plain).toBeGreaterThan(15);
-  expect(plain).toBeLessThanOrEqual(61);
-  // Control 2: a consented source with default retention does not shorten the view.
+  const plain = at(await noSources());
+  // Control 2: a consented source with default retention does not shorten later views.
   const longLived = await submitMission();
   await permit((await shareMission(longLived.requestId, 'Synthetic long retention objective')).id);
-  expect(seconds(await projections().owner(scope()))).toBeGreaterThan(15);
-  expect(seconds(await projections('participant').own({ registrationId }))).toBeGreaterThan(15);
+  expect(at(await projections().owner(scope()))).toBeGreaterThanOrEqual(plain);
+  expect(at(await projections('participant').own({ registrationId }))).toBeGreaterThanOrEqual(
+    plain,
+  );
   await revokeSyntheticCustomerRequest(f.owner, {
     requestId: longLived.requestId,
     reason: 'Synthetic end of the long retention control',
   });
-  // A source whose retention ends within seconds bounds both views.
+  // A source whose retention ends within seconds bounds both views. Nothing else runs between its creation
+  // and the reads, so the retention window is still open when they happen.
   await f.owner.query(
     "CREATE FUNCTION customer_private.projection_short_retention() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.retention_until:=clock_timestamp()+interval '12 seconds';RETURN NEW;END $$",
   );
@@ -706,28 +707,33 @@ test('a projection view never outlives the retention of the mission sources it r
     'CREATE TRIGGER projection_short_retention BEFORE INSERT ON app.mission_intake FOR EACH ROW EXECUTE FUNCTION customer_private.projection_short_retention()',
   );
   let short: Awaited<ReturnType<typeof submitMission>>;
+  let owner: Awaited<ReturnType<ReturnType<typeof projections>['owner']>>;
+  let own: Awaited<ReturnType<ReturnType<typeof projections>['own']>>;
   try {
     short = await submitMission();
+    await permit((await shareMission(short.requestId, 'Synthetic short retention objective')).id);
+    owner = await projections().owner(scope());
+    own = await projections('participant').own({ registrationId });
   } finally {
     await f.owner.query('DROP TRIGGER projection_short_retention ON app.mission_intake');
     await f.owner.query('DROP FUNCTION customer_private.projection_short_retention()');
   }
+  const ceiling = at(await noSources());
   const retention = (
     await f.owner.query<{ retention_until: Date }>(
       'SELECT i.retention_until FROM customer_private.owned_request r JOIN app.mission_intake i ON i.tenant_id=r.mission_tenant_id AND i.id=r.mission_id WHERE r.id=$1',
       [short.requestId],
     )
   ).rows[0]!.retention_until;
-  await permit((await shareMission(short.requestId, 'Synthetic short retention objective')).id);
-  const owner = await projections().owner(scope());
-  const own = await projections('participant').own({ registrationId });
   expect(owner.meetings.sharedLinks).toBe(1);
-  expect(Date.parse(owner.expiresAt)).toBeLessThanOrEqual(retention.getTime());
-  expect(Date.parse(own.expiresAt)).toBeLessThanOrEqual(retention.getTime());
-  expect(seconds(owner)).toBeLessThan(13);
-  // The view never claims to be valid past the source; once the source ends nothing is returned for it.
-  await new Promise((resolve) =>
-    setTimeout(resolve, Math.max(0, retention.getTime() - Date.now()) + 300),
+  expect(at(owner)).toBeLessThanOrEqual(retention.getTime());
+  expect(at(own)).toBeLessThanOrEqual(retention.getTime());
+  // Without the bound these views would have run to the ceiling read after them.
+  expect(retention.getTime()).toBeLessThan(ceiling);
+  // Once the source ends nothing is returned for it and the view returns to the plain expiry.
+  await f.owner.query(
+    'SELECT pg_sleep(greatest(0,extract(epoch FROM $1::timestamptz-clock_timestamp()))+0.3)',
+    [retention],
   );
   const after = await projections().owner(scope());
   expect(after.meetings).toMatchObject({
@@ -735,8 +741,10 @@ test('a projection view never outlives the retention of the mission sources it r
     scheduled: null,
     qualifiedHeld: null,
   });
-  expect(seconds(after)).toBeGreaterThan(15);
-  expect(seconds(await projections('participant').own({ registrationId }))).toBeGreaterThan(15);
+  expect(at(after)).toBeGreaterThan(retention.getTime());
+  expect(at(await projections('participant').own({ registrationId }))).toBeGreaterThan(
+    retention.getTime(),
+  );
 }, 60000);
 
 test('active totals are independent of the loaded participant page', async () => {

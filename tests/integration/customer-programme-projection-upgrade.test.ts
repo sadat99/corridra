@@ -82,7 +82,7 @@ describe('upgrading from installed 0001 to the source and retention file', () =>
     );
   });
 
-  test('0002 refuses to run when a function it replaces differs from the released definition', async () => {
+  test('0002 refuses to run when a function it replaces has a changed body or security setting', async () => {
     const released = before[0].definition as string;
     await f.owner.query(
       released.replace('SELECT r.id,r.display_label,', 'SELECT r.id,r.display_label, /* drift */'),
@@ -97,10 +97,26 @@ describe('upgrading from installed 0001 to the source and retention file', () =>
       await f.owner.query(released);
     }
     expect(await Promise.all(replaced.map(functionState))).toEqual(before);
+    await f.owner.query(`ALTER FUNCTION ${replaced[2]} SECURITY INVOKER`);
+    try {
+      await expect(migrateCustomerProgrammeProjections(f.owner)).rejects.toThrow(
+        'Programme projection prerequisite function differs: customer.programme_projection_own',
+      );
+      expect((await registry()).map((row) => row.name)).toEqual([first]);
+    } finally {
+      await f.owner.query(`ALTER FUNCTION ${replaced[2]} SECURITY DEFINER`);
+    }
+    expect(await Promise.all(replaced.map(functionState))).toEqual(before);
   });
 
-  test('the installer applies 0002 alone, with no history mismatch, and again does nothing', async () => {
+  test('the installer applies 0002 alone, whatever the server renders for the replaced definitions, and again does nothing', async () => {
     const earlier = (await registry())[0]!;
+    // A setting that changes how the server prints a definition but not its stored body must not stop the install:
+    // servers of different major versions print definitions differently, so the guard compares stored bodies.
+    for (const signature of replaced) await f.owner.query(`ALTER FUNCTION ${signature} COST 77`);
+    expect(
+      (await Promise.all(replaced.map(functionState))).map((state) => state.definition),
+    ).not.toEqual(before.map((state) => state.definition));
     await migrateCustomerProgrammeProjections(f.owner);
     const applied = await registry();
     expect(applied.map((row) => row.name)).toEqual([first, second]);
@@ -125,14 +141,22 @@ describe('upgrading from installed 0001 to the source and retention file', () =>
       await f.owner.query(
         `SELECT p.oid::regprocedure::text signature,has_function_privilege('corridra_runtime',p.oid,'EXECUTE') runtime,
          has_function_privilege('corridra_auth',p.oid,'EXECUTE') auth,has_function_privilege('public',p.oid,'EXECUTE') pub
-         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE p.proname LIKE 'programme_projection_%' ORDER BY 1`,
+         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE p.proname LIKE 'programme_projection_%'`,
       )
     ).rows;
-    expect(grants.filter((row) => row.runtime).map((row) => row.signature)).toEqual([
-      'customer.programme_projection_command(uuid,text,jsonb)',
-      'customer.programme_projection_own(uuid,uuid)',
-      'customer.programme_projection_owner(uuid,uuid,uuid,integer)',
-    ]);
+    // Compare as sorted sets: the database orders text by its own collation, which differs between servers.
+    expect(
+      grants
+        .filter((row) => row.runtime)
+        .map((row) => row.signature)
+        .sort(),
+    ).toEqual(
+      [
+        'customer.programme_projection_command(uuid,text,jsonb)',
+        'customer.programme_projection_own(uuid,uuid)',
+        'customer.programme_projection_owner(uuid,uuid,uuid,integer)',
+      ].sort(),
+    );
     expect(grants.some((row) => row.auth || row.pub)).toBe(false);
     const tables = (
       await f.owner.query(

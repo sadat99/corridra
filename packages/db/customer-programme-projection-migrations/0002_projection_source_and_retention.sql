@@ -4,11 +4,22 @@
 --    is dormant and the participant's own view reports sharing off with sourceChanged.
 -- 2. A view never outlives its sources. expiresAt is the earlier of the short coordination expiry and the earliest
 --    retention of the shared mission links whose data the view returns (the rule programme_mission_summaries uses).
--- The guards below hold the SHA-256 of pg_get_functiondef for the released 0001 bodies, computed by applying 0001
--- alone; this file refuses to replace a function that differs from what 0001 created.
-DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('customer_private.programme_projection_rows(uuid,uuid)'::regprocedure),'UTF8')),'hex')<>'3c4bda1e91f57d6a96873b5a0e7dd8055ef719388bd06a04d340e403ace6c54a' THEN RAISE EXCEPTION 'Programme projection prerequisite function differs: customer_private.programme_projection_rows';END IF;END $guard$;
-DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('customer.programme_projection_owner(uuid,uuid,uuid,integer)'::regprocedure),'UTF8')),'hex')<>'f2ee6680288ca4f565fb7090fcca20cb9a40a53b4753d1649b4f39be6d50feb1' THEN RAISE EXCEPTION 'Programme projection prerequisite function differs: customer.programme_projection_owner';END IF;END $guard$;
-DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('customer.programme_projection_own(uuid,uuid)'::regprocedure),'UTF8')),'hex')<>'0ca60c11222edb6b82e925b51694db497b030304fdc1878bec69e876c0f2e5f9' THEN RAISE EXCEPTION 'Programme projection prerequisite function differs: customer.programme_projection_own';END IF;END $guard$;
+-- The guard below refuses to replace a function that differs from what 0001 created. It compares the stored body
+-- (pg_proc.prosrc, identical on every PostgreSQL major version; pg_get_functiondef is not) by SHA-256, computed by
+-- applying 0001 alone, and checks the security and signature settings that matter. COST, ownership and the like
+-- may differ.
+DO $guard$ DECLARE f record; BEGIN
+ FOR f IN SELECT * FROM (VALUES
+  ('customer_private.programme_projection_rows(uuid,uuid)','a89938e1f2bf559a1a6b54430c3ae0e515c0389e552c1389178d205c94ca3fd9','record',2),
+  ('customer.programme_projection_owner(uuid,uuid,uuid,integer)','9e91dc338808e63dbeda7312865dab4c683698c53f0a73ff963ea20330db8edf','jsonb',4),
+  ('customer.programme_projection_own(uuid,uuid)','1fe3c3c54c269b5f0ca9d14bc83f874661d5b9ed967f6a8e7f9282615d8028d2','jsonb',2)
+ ) v(signature,body_hash,returns,arguments) LOOP
+  IF NOT EXISTS(SELECT FROM pg_proc WHERE oid=f.signature::regprocedure AND prosecdef AND 'search_path=pg_catalog'=ANY(proconfig)
+   AND prorettype=f.returns::regtype AND pronargs=f.arguments AND encode(sha256(convert_to(prosrc,'UTF8')),'hex')=f.body_hash) THEN
+   RAISE EXCEPTION 'Programme projection prerequisite function differs: %',split_part(f.signature,'(',1);
+  END IF;
+ END LOOP;
+END $guard$;
 
 -- Return only the accepted company field map. This helper has no runtime/auth grant.
 CREATE OR REPLACE FUNCTION customer_private.programme_projection_rows(target uuid,programme uuid)
