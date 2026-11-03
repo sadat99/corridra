@@ -148,5 +148,25 @@
     "baseRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
     "globalThemeCssUnchanged": true,
     "globalThemeSha256": "01fb7f4db56afec9d63b34e804ebab5fd346970417a5e93c7bf0e4a663d25127"
+  },
+  "docBudgetCorrection": {
+    "recordedOn": "2026-11-03",
+    "failedCiRun": 41587335077,
+    "failedJob": 125755774926,
+    "failure": "Raw ledger size passed but the context-reader status wrapper exceeded its output limit.",
+    "correction": "Shorten handoff wording, retain every ID/evidence reference, and verify document tests. Product/helper limits and tests are unchanged.",
+    "productSourceHashesUnchanged": true,
+    "receipt": {
+      "name": "gap012-corrected-docs",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 18.3,
+      "logBytes": 6426,
+      "logSha256": "964c02d6c1f1ce511cd9d961a4414b1d03029646a53be424b71ab89a342124fe",
+      "head": "a83f792a026dca309a5da28faa2fcb03c88a5d1d",
+      "changedPaths": 3,
+      "log": "work/gap012-corrected-docs-2026-11-03T06-19-22-397Z.log"
+    }
   }
 }
