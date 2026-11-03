@@ -547,9 +547,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_BOOKS',
     label: 'Trip and Supplier books',
-    line: 'Printable books with the commercial itinerary and the supplier shortlist.',
+    line: 'Lets a signed-in customer download two PDF books of what the Corridra team has reviewed for one saved mission: the meetings and visits, and the shortlisted companies. No prices, offers or contact details. Needs its database module installed first. A downloaded file cannot be recalled.',
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_SHELLS_V2',

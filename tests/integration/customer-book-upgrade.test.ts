@@ -8,6 +8,7 @@ import { migrateCustomerSavedMissions } from '../../packages/db/src/customer-com
 import { migrateCustomerBooks } from '../../packages/db/src/customer-book-migrate';
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { CustomerSavedMissionService } from '../../packages/auth/src/customer-saved-missions';
+import { CustomerBookService } from '../../packages/auth/src/customer-books';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 
 // The Trip Book and Supplier Book module (ADR-076) is optional and additive: it adds one function and nothing
@@ -83,6 +84,9 @@ const registry = async () =>
     )
   ).rows;
 let before: Awaited<ReturnType<typeof snapshot>>;
+// What the application asks before it shows a book control: is the database function there?
+const installedByService = () =>
+  new CustomerBookService(f.runtime, f.auth, options, async () => null).installed();
 
 beforeAll(async () => {
   f = await commercialFixture();
@@ -141,10 +145,12 @@ describe('installing the book module on a populated environment', () => {
       )
     ).rows[0];
     expect(state).toEqual({ function: false, registry: false, commands: 1 });
+    expect(await installedByService()).toBe(false);
   });
 
   test('the installer applies the one file, records its hash, and adds exactly one function', async () => {
     await migrateCustomerBooks(f.owner);
+    expect(await installedByService()).toBe(true);
     const applied = await registry();
     expect(applied.map((row) => row.name)).toEqual([file]);
     expect(applied[0]!.sha256).toBe(sha(readFileSync(`${directory}/${file}`, 'utf8')));

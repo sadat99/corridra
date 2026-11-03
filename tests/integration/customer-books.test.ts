@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { migrateCustomerBooks } from '../../packages/db/src/customer-book-migrate';
@@ -10,6 +10,7 @@ import { DeliveryService } from '../../packages/delivery/src/index';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 import { bookLines } from '../../packages/delivery/src/report';
 import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
+import { CustomerBookService, customerBooksEnabled } from '../../packages/auth/src/customer-books';
 import { CustomerSavedMissionService } from '../../packages/auth/src/customer-saved-missions';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { bookProjection, bookResult, type BookRecord } from '../../packages/domain/src/books';
@@ -866,5 +867,90 @@ describe('roles, immutability and limits', () => {
     await caller().book(resourceId, 'TRIP', randomUUID());
     expect(await link()).toEqual(before);
     expect(before.allow_export).toBe(false);
+  });
+});
+
+describe('the service', () => {
+  const on = {
+    CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED: 'true',
+    CORRIDRA_DELIVERY_ENABLED: 'true',
+    DATA_ENVIRONMENT: 'synthetic',
+    CORRIDRA_UX_BOOKS: 'true',
+  };
+  const service = (who = 'alice', over: Partial<typeof options> & { dataMode?: 'real' } = {}) =>
+    new CustomerBookService(f.runtime, f.auth, { ...options, ...over }, async () => session(who));
+  const request = (over: Record<string, unknown> = {}) => ({
+    resourceId,
+    commandId: randomUUID(),
+    kind: 'TRIP',
+    acknowledged: true,
+    ...over,
+  });
+
+  test('is on only when the books switch is exactly "true" and saved missions are on', () => {
+    expect(customerBooksEnabled({})).toBe(false);
+    expect(customerBooksEnabled(on)).toBe(true);
+    for (const value of ['TRUE', '1', 'yes', 'false', ''])
+      expect(customerBooksEnabled({ ...on, CORRIDRA_UX_BOOKS: value })).toBe(false);
+    expect(customerBooksEnabled({ ...on, CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED: 'false' })).toBe(
+      false,
+    );
+    expect(customerBooksEnabled({ ...on, CORRIDRA_DELIVERY_ENABLED: 'false' })).toBe(false);
+    expect(customerBooksEnabled({ ...on, VERCEL_ENV: 'production' })).toBe(false);
+  });
+  test('reports the database module as installed once the installer has run', async () => {
+    expect(await service().installed()).toBe(true);
+  });
+  test('returns a validated record, and a retry is the same record marked as a replay', async () => {
+    const body = request();
+    const first = await service().generate(body);
+    expect(first).toMatchObject({ resourceId, kind: 'TRIP', replayed: false });
+    expect(await service().generate(body)).toEqual({ ...first, replayed: true });
+  });
+  test('answers 422 for an empty book, 401 signed out and 429 past the hourly limit', async () => {
+    await expect(
+      service().generate(request({ resourceId: emptyResourceId })),
+    ).rejects.toMatchObject({
+      status: 422,
+    });
+    const signedOut = new CustomerBookService(f.runtime, f.auth, options, async () => null);
+    await expect(signedOut.generate(request())).rejects.toMatchObject({ status: 401 });
+    const mission = await save((await share(publicationId)).token);
+    for (let index = 0; index < 30; index++)
+      await service().generate(request({ resourceId: mission }));
+    await expect(service().generate(request({ resourceId: mission }))).rejects.toMatchObject({
+      status: 429,
+    });
+  });
+  test('refuses input that is not exactly a book request before it reaches the database', async () => {
+    const before = await bookCount();
+    for (const bad of [
+      request({ acknowledged: false }),
+      request({ kind: 'CSV' }),
+      request({ tenantId: randomUUID() }),
+      {},
+    ])
+      await expect(service().generate(bad)).rejects.toThrow();
+    expect(await bookCount()).toBe(before);
+  });
+  test('a browser that still shows another account is refused as access, never as a conflict', async () => {
+    await expect(service().generate(request(), 'someone-else', issuer)).rejects.toMatchObject({
+      status: 403,
+    });
+  });
+  test('a real-data session is told plainly when shared reports are switched off, before the database', async () => {
+    vi.stubEnv('CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED', 'false');
+    try {
+      const before = await bookCount();
+      await expect(
+        service('alice', { dataMode: 'real' }).generate(request()),
+      ).rejects.toMatchObject({
+        status: 503,
+      });
+      expect(await bookCount()).toBe(before);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
