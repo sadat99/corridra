@@ -123,12 +123,16 @@ function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName:
       feedback.success(
         email === 'sent'
           ? `Invitation sent to ${invite.email}. It works for 7 days.`
-          : `Invitation sent to their Corridra inbox. Email is not sent from this deployment yet, so tell ${invite.email} to open ${window.location.origin}/operator/setup within 7 days.`,
+          : `Invitation created. Email delivery was not confirmed, so tell ${invite.email} to open ${window.location.origin}/operator/setup within 7 days.`,
       );
       form.reset();
       await load();
     } catch (error) {
-      feedback.error(error instanceof Error ? error.message : 'The invitation was not sent.');
+      feedback.error(
+        error instanceof Error
+          ? error.message
+          : 'The result could not be confirmed. Refresh the invitation list before trying again.',
+      );
     } finally {
       setBusy(false);
     }
@@ -138,15 +142,24 @@ function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName:
     setBusy(true);
     listFeedback.clear();
     try {
-      await withStepUp(() => teamControl(tenant, 'invites', { action, invitationId: item.id }));
+      const result = await withStepUp(() =>
+        teamControl(tenant, 'invites', { action, invitationId: item.id }),
+      );
+      const email = (result.notification as { email?: string } | undefined)?.email;
       listFeedback.success(
         action === 'resend'
-          ? `Invitation for ${item.email} sent again. It works for 7 more days.`
+          ? email === 'sent'
+            ? 'Invitation email sent again. It works for 7 days.'
+            : `Invitation renewed for 7 days. Email delivery was not confirmed. Tell ${item.email} to open ${window.location.origin}/operator/setup.`
           : `Invitation for ${item.email} cancelled.`,
       );
       await load();
     } catch (error) {
-      listFeedback.error(error instanceof Error ? error.message : 'The change was not saved.');
+      listFeedback.error(
+        error instanceof Error
+          ? error.message
+          : 'The result could not be confirmed. Refresh the invitation list before trying again.',
+      );
     } finally {
       setBusy(false);
     }

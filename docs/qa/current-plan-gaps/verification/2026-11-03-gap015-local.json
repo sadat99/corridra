@@ -1,0 +1,122 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-015",
+  "baseRevision": "2670e4411d8d959f84368c65035ebc7038cb6580",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "packages/auth/src/team-control.ts",
+      "sha256": "3a5cffbc45743aa58034340e5ba3ea7da83849eb969cbfce10dda9c1ba571991"
+    },
+    {
+      "path": "apps/web/app/api/team-control/[action]/route.ts",
+      "sha256": "70f5ea2571bed09a2589cd255d77a9b2341cce7435db61c9ebecc6dcf8a36212"
+    },
+    {
+      "path": "apps/web/app/operator/workspace-controls.tsx",
+      "sha256": "9f38e99baa932f3ce7e49e6910ca0151be0af24cc0d129b75a79d51888328a36"
+    },
+    {
+      "path": "tests/integration/team-invitation-notification.test.ts",
+      "sha256": "b7257606e24eb6f7dcbfc5854c8988b003f7c0e331cd73cd17adaa5ae7e805d4"
+    },
+    {
+      "path": "tests/e2e/verification/ws-d/team-control.spec.ts",
+      "sha256": "79d191d22446bbeabbca6895cbcb833399dae8d3211dc06d3ed23143aae6c937"
+    }
+  ],
+  "receipts": {
+    "gap015-handler-reproduction": {
+      "name": "gap015-handler-reproduction",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/team-invitation-notification.test.ts",
+      "exit": 1,
+      "signal": null,
+      "seconds": 2.7,
+      "logBytes": 4729,
+      "logSha256": "d2b7a7580611b66edef8f2cdc8c8d79df056652c22417572ec0f64f46f74a594",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 1,
+      "log": "work/gap015-handler-reproduction-2026-11-03T00-53-10-875Z.log"
+    },
+    "gap015-handler-and-service": {
+      "name": "gap015-handler-and-service",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/team-invitation-notification.test.ts tests/integration/ws-d-team-control.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 4,
+      "logBytes": 169,
+      "logSha256": "5788002528e784839579465eeb9c99241736d8f6b43151597787b53d97d54c70",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 5,
+      "log": "work/gap015-handler-and-service-2026-11-03T00-54-41-788Z.log"
+    },
+    "gap015-build": {
+      "name": "gap015-build",
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 77.3,
+      "logBytes": 4938,
+      "logSha256": "2426967e0e7cb96aa2f4f2a9399eb21d9214cc4fbd966ee41f15256fbd08e0d5",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 5,
+      "log": "work/gap015-build-2026-11-03T00-57-16-515Z.log"
+    },
+    "gap015-owner-ui": {
+      "name": "gap015-owner-ui",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.verification.config.ts tests/e2e/verification/ws-d/team-control.spec.ts --project w1280 --grep WS-D actions --output work/gap015-owner-u",
+      "exit": 0,
+      "signal": null,
+      "seconds": 17.3,
+      "logBytes": 1145,
+      "logSha256": "88ab249ecf20324b0e2af77b1f1377a082cc2a477d7f27c8c5ab31bf1b32ccd2",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 5,
+      "log": "work/gap015-owner-ui-2026-11-03T01-00-06-439Z.log"
+    },
+    "gap015-types": {
+      "name": "gap015-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 22.9,
+      "logBytes": 218,
+      "logSha256": "8c086bf97e1f171a043be7d74dcbb1e16f69be9c489fb4db5bc4b49faa572680",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 5,
+      "log": "work/gap015-types-2026-11-03T01-02-47-527Z.log"
+    },
+    "gap015-lint": {
+      "name": "gap015-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs packages/auth/src/team-control.ts apps/web/app/api/team-control/[action]/route.ts apps/web/app/operator/workspace-controls.tsx tests/integration/team-invitation-notification.test.ts tests/e2e/veri",
+      "exit": 0,
+      "signal": null,
+      "seconds": 3.2,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "2670e4411d8d959f84368c65035ebc7038cb6580",
+      "changedPaths": 5,
+      "log": "work/gap015-lint-2026-11-03T01-02-47-543Z.log"
+    }
+  },
+  "verification": {
+    "reproducedDesiredCasesFailed": 5,
+    "handlerAndServiceCasesPassed": 15,
+    "compiledOwnerJourneyCasesPassed": 1,
+    "recipientInboxNoticesAfterInviteAndResend": 2,
+    "buildExit": 0,
+    "fullTypecheckExit": 0,
+    "lintExit": 0
+  },
+  "implementation": [
+    "Resend renews the existing verified invitation under its unchanged owner/fresh-MFA/tenant checks, then uses the stored identity recipient for TEAM_INVITE.",
+    "Private notificationRecipient metadata is removed from the HTTP response. Existing invite and resend notices contain the real /operator/setup destination.",
+    "Duplicate/concurrent use of the consumed invitation reference produces one renewal/notification; replay returns404. Each explicit later resend uses the current reference.",
+    "Notification failure preserves the committed renewal and reports off/not_sent, with honest UI wording and manual setup destination. No false inbox/delivery claim."
+  ],
+  "limits": [
+    "Transport is replaced in the real-handler/database tests; no genuine provider delivery is claimed.",
+    "GAP-016 initiating-owner audit attribution is separate and unchanged. No schema, RLS, MFA policy, money/event or provider-setting change.",
+    "Release follows GAP-012, with matching-head full CI/CodeQL and production verification pending."
+  ]
+}

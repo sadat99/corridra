@@ -190,6 +190,10 @@ export class TeamControl {
       const invite = row ? setupInvitation.parse(JSON.parse(row.value)) : null;
       if (!row || !invite || invite.tenantId !== tenantId || invite.role === 'contributor')
         throw new DomainError('Invitation not found', 404);
+      const recipient = (
+        await q('SELECT name,email FROM identity."user" WHERE id=$1', [invite.userId])
+      ).rows[0];
+      if (!recipient) throw new DomainError('Invitation not found', 404);
       const next = randomUUID();
       // OperatorSetup.complete ties the principal's disabled time to the invitation row.
       await q(
@@ -201,7 +205,16 @@ export class TeamControl {
         'INSERT INTO identity.verification(id,identifier,value,"expiresAt") VALUES($1,$2,$3,now()+interval \'7 days\')',
         [next, row.identifier, JSON.stringify(invite)],
       );
-      return { id: next, principalId: invite.principalId, expiresInDays: 7 };
+      return {
+        id: next,
+        principalId: invite.principalId,
+        expiresInDays: 7,
+        notificationRecipient: {
+          name: recipient.name as string,
+          email: recipient.email as string,
+          role: invite.role,
+        },
+      };
     });
   }
 

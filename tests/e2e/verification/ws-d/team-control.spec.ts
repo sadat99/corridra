@@ -60,9 +60,12 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
       (r) => r.url().includes('/api/team-control/invites') && r.request().method() === 'POST',
     );
     await controls.getByRole('button', { name: 'Send invitation', exact: true }).click();
-    expect((await sent).status()).toBe(201);
+    const invitationResponse = await sent;
+    expect(invitationResponse.status()).toBe(201);
+    const invitationResult = await invitationResponse.json();
+    expect(invitationResult.notification.inbox).toBe('recorded');
     await expect(controls.locator('[data-feedback-scope="team-invite"]')).toContainText(
-      'Invitation sent',
+      invitationResult.notification.email === 'sent' ? 'Invitation sent' : 'Invitation created',
     );
     const item = controls
       .getByRole('listitem')
@@ -70,15 +73,22 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     await expect(item).toContainText('Works until');
     await evidence(page, 'V-01-team-invite');
     const pending = await db.query(
-      `SELECT v.id,("expiresAt"-"createdAt") AS window FROM identity.verification v
+      `SELECT v.id,v.value::jsonb->>'principalId' AS principal_id,("expiresAt"-"createdAt") AS window FROM identity.verification v
        WHERE v.value::jsonb->>'tenantId'=$1 AND v.value::jsonb->>'role'='operator'`,
       [tenant],
     );
     expect(pending.rowCount).toBe(1);
     expect(pending.rows[0].window).toMatchObject({ days: 7 });
+    const resent = page.waitForResponse(
+      (r) => r.url().includes('/api/team-control/invites') && r.request().method() === 'POST',
+    );
     await item.getByRole('button', { name: 'Resend', exact: true }).click();
+    const resendResponse = await resent;
+    expect(resendResponse.status()).toBe(201);
+    const resendResult = await resendResponse.json();
+    expect(resendResult.notification.inbox).toBe('recorded');
     await expect(controls.locator('[data-feedback-scope="team-invite-list"]')).toContainText(
-      'sent again',
+      resendResult.notification.email === 'sent' ? 'email sent again' : 'Invitation renewed',
     );
     page.once('dialog', (dialog) => void dialog.accept());
     await item.getByRole('button', { name: 'Cancel invitation', exact: true }).click();
@@ -89,10 +99,10 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
 
     // V-45 (TEAM_INVITE): the invited person got an inbox item.
     const inbox = await db.query(
-      "SELECT count(*)::int n FROM app.inbox_notification WHERE type='TEAM_INVITE' AND tenant_id=$1",
-      [tenant],
+      "SELECT count(*)::int n FROM app.inbox_notification WHERE type='TEAM_INVITE' AND tenant_id=$1 AND recipient_kind='staff' AND recipient_account_id=$2",
+      [tenant, pending.rows[0].principal_id],
     );
-    expect(inbox.rows[0].n).toBeGreaterThan(0);
+    expect(inbox.rows[0].n).toBe(2);
 
     // V-02: roles. Another workspace is refused; the API never answers for it.
     const foreign = await page.request.get(

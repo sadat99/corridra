@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-012",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/245",
+  "testedHead": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+  "ciRun": 41589775213,
+  "codeqlRun": 41589775303,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+  "productionDeployment": {
+    "id": "dpl_A3UeVHxGR71asASxDs1xFmVtMoCk",
+    "state": "READY",
+    "githubCommitSha": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap012-local.json"],
+  "limits": [
+    "Three warning declarations changed;9 component contrast cases passed. No general accessibility audit is inferred.",
+    "The earlier reader-budget failure and documentation-only correction remain preserved."
+  ]
+}
