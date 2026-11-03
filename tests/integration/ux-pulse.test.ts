@@ -546,7 +546,8 @@ describe('email is off until a person switches it on (owner decision of 25 Octob
   it('the Email choices page leads with a clear on and off switch and says email is off until it is on', () => {
     const form = read('apps/web/app/account/notifications/notifications-form.tsx');
     expect(form).toContain('Email me when something needs me');
-    expect(form).toContain('We do not email you unless you switch this on.');
+    expect(form).toContain('Request-update emails stay off until you switch this on.');
+    expect(form).toMatch(/Account security messages and request receipts are\s+separate/);
     expect(form).toContain('Pick at least one message, or leave email off.');
     expect(form).toContain("'Switch email on'");
     expect(form).toContain("'Switch email off'");

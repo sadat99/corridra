@@ -158,7 +158,12 @@ test.describe('email choices', () => {
     await expect(
       page.getByRole('heading', { name: /Email about your requests is off\./ }),
     ).toBeVisible();
-    await expect(page.getByText('We do not email you unless you switch this on.')).toBeVisible();
+    await expect(
+      page.getByText('Request-update emails stay off until you switch this on.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Account security messages and request receipts are separate/),
+    ).toBeVisible();
     await expect(
       page.getByRole('checkbox', { name: /Email me when something needs me/ }),
     ).not.toBeChecked();
@@ -197,13 +202,18 @@ test.describe('email choices', () => {
     ).toBeVisible();
   });
 
-  test('switching off sends no messages at all and says so', async ({ page }) => {
+  test('switching off request updates keeps account security and receipt messages separate', async ({
+    page,
+  }) => {
     const sent = await openChoices(page);
     await page.getByRole('checkbox', { name: /Email me when something needs me/ }).uncheck();
     await expect(page.getByRole('checkbox', { name: /One thing needs you/ })).toHaveCount(0);
     await page.getByRole('button', { name: 'Switch email off' }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+      page.getByRole('status').filter({
+        hasText:
+          'Request-update emails are off. Account security messages and request receipts can still be sent.',
+      }),
     ).toBeVisible();
     expect(sent[0]).toMatchObject({ kinds: [] });
     await expect(
@@ -227,7 +237,10 @@ test.describe('email choices', () => {
     await page.getByRole('checkbox', { name: /Email me when something needs me/ }).uncheck();
     await page.getByRole('button', { name: 'Switch email off' }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+      page.getByRole('status').filter({
+        hasText:
+          'Request-update emails are off. Account security messages and request receipts can still be sent.',
+      }),
     ).toBeVisible();
     expect(sent).toEqual([
       {
@@ -337,7 +350,10 @@ test.describe('email choices', () => {
     await expect(master).not.toBeChecked();
     await page.getByRole('button', { name: 'Switch email off' }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: 'Email is off. We will not email you.' }),
+      page.getByRole('status').filter({
+        hasText:
+          'Request-update emails are off. Account security messages and request receipts can still be sent.',
+      }),
     ).toBeVisible();
     expect(sent[0]).toMatchObject({ kinds: [] });
   });
