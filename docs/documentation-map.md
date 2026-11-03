@@ -167,3 +167,5 @@ Use [bounded context](v3/CONTEXT.md) for current-state and requirement queries. 
 - [ADR042](adr/0042-participant-commercial-mission-summary-grants.md) and [objective-sharing plan](v3/phase-3/participant-commercial-missions/bounded-plan.md): participant-controlled commercial intentions,independent original private source authority and bounded acceptance.
 
 The [ledger before gap repairs](v3/history/ledger-before-gap-repairs-2026-11-02.md) is an exact hashed historical snapshot.
+
+The [ledger through GAP012](v3/history/ledger-through-gap012-2026-11-03.md) preserves the exact prior release index and recovery references. The current ledger records subsequent work.

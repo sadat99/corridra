@@ -1357,6 +1357,11 @@
       "path": "docs/v3/history/ledger-before-gap-repairs-2026-11-02.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger before 2 November gap repairs; use current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-through-gap012-2026-11-03.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger through GAP012 release evidence; preserve prior recovery references and use the current ledger for live state."
     }
   ]
 }

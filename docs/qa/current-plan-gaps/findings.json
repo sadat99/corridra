@@ -1322,24 +1322,24 @@
         "evidenceAndBoundary": "The real handler at `api/team-control/[action]/route.ts:72` returns after `team.resend`; initial invite calls notify at `:54`. `packages/auth/src/team-control.ts:180` rotates the record only. UI `workspace-controls.tsx:143` says sent again. Fresh probe observed initial invite HTTP201/notify=1 versus resend HTTP201/notify=0. No provider mail was sent in the probe."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Stored-recipient resend notification, single-use reference protection and truthful result/setup-link copy are prepared. All5 source and6 recorded log hashes match the saved15 handler/DB cases,1 compiled owner journey (2 notices), build/types/lint evidence. No schema or authorization-policy change. Frozen release gates pending; initiating-owner audit remains016.",
-        "evidenceRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+        "summary": "PR246 passed19 exact-head checks at24001a3 and reached the exact READY production alias ate5d3fc6. Handler/DB and compiled owner-journey proof establishes stored-recipient resend, idempotent notice, private metadata filtering and honest failure feedback. Engineering criteria RESOLVED; genuine provider delivery unverified.",
+        "evidenceRevision": "e5d3fc62b99121c40cfc1a8d8e359872a66b5b5a",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap015-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-gap015-release.json"]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap015-local.json"]
+            "state": "VERIFIED",
+            "evidence": ["verification/2026-11-03-gap015-release.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap015-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1358,7 +1358,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap015-local.json",
+          "verification/2026-11-03-gap015-release.json"
+        ]
       },
       "history": [
         {
@@ -1377,6 +1380,15 @@
           "disposition": "OPEN",
           "note": "Stored-recipient resend notification, single-use reference protection and truthful result/setup-link copy are prepared. All5 source and6 recorded log hashes match the saved15 handler/DB cases,1 compiled owner journey (2 notices), build/types/lint evidence. No schema or authorization-policy change. Frozen release gates pending; initiating-owner audit remains016.",
           "evidence": ["verification/2026-11-03-gap015-local.json"]
+        },
+        {
+          "eventId": "GAP-015-H003",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "e5d3fc62b99121c40cfc1a8d8e359872a66b5b5a",
+          "disposition": "RESOLVED",
+          "note": "PR246 passed19 exact-head checks at24001a3 and reached the exact READY production alias ate5d3fc6. Handler/DB and compiled owner-journey proof establishes stored-recipient resend, idempotent notice, private metadata filtering and honest failure feedback. Engineering criteria RESOLVED; genuine provider delivery unverified.",
+          "evidence": ["verification/2026-11-03-gap015-release.json"]
         }
       ]
     },
@@ -1393,18 +1405,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "`team-control.ts:235` authorizes the owner but resets in the auth transaction without recording that owner. `migrations/0005_integrity_versions.sql:48` records target identity changes. Tests `ws-d-team-control.test.ts:193` check target MFA/session events, not the initiating owner's attribution. Reset itself and denial controls exist.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Owner-attributed resend/reset audit is prepared through an additive, restricted SQL writer. All8 combined source hashes and2 saved logs match29 handler/DB/regression cases and full typecheck. Existing MFA/session audit remains; missing optional schema reports unavailable. Frozen release and protected0006 installation pending.",
+        "evidenceRevision": "24001a31f9d89dc076e7277d99eaa47c19b09803",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-016"]
+            "evidence": ["verification/2026-11-03-gap016-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap016-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1437,6 +1449,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-016-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "24001a31f9d89dc076e7277d99eaa47c19b09803",
+          "disposition": "OPEN",
+          "note": "Owner-attributed resend/reset audit is prepared through an additive, restricted SQL writer. All8 combined source hashes and2 saved logs match29 handler/DB/regression cases and full typecheck. Existing MFA/session audit remains; missing optional schema reports unavailable. Frozen release and protected0006 installation pending.",
+          "evidence": ["verification/2026-11-03-gap016-local.json"]
         }
       ]
     },
