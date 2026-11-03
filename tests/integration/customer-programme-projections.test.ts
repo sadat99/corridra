@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { readdirSync } from 'node:fs';
 import { commercialFixture } from './commercial-fixture';
 import { CustomerMemberRoleService } from '../../packages/auth/src/customer-member-roles';
 import { CustomerMissionShareService } from '../../packages/auth/src/customer-mission-shares';
@@ -19,9 +18,6 @@ import { CustomerProgrammeTermsService } from '../../packages/auth/src/customer-
 import { CustomerProgrammeCoordinationService } from '../../packages/auth/src/customer-programme-coordination';
 import { CustomerProgrammeContextService } from '../../packages/auth/src/customer-programme-context';
 import { CustomerProgrammeProjectionsService } from '../../packages/auth/src/customer-programme-projections';
-const directoryFiles = readdirSync('packages/db/customer-programme-projection-migrations')
-  .filter((name) => name.endsWith('.sql'))
-  .sort();
 const issuer =
   'https://ep-projections-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const options = { enabled: true, synthetic: true, production: false, issuer };
@@ -92,6 +88,42 @@ async function company(shared: boolean) {
         }
       : {}),
     acknowledged: true,
+  });
+}
+
+// Reuse the commercial fixture's genuine workflow, substituting its intake with the real
+// restricted customer submission. No ownership/meeting/qualification rows are fabricated.
+async function submitMission() {
+  let requestId = '';
+  const submit = vi.spyOn(f.mission, 'submit').mockImplementation(async (commandId, brief) => {
+    const result = await requests('participant').submit(
+      { commandId, workspaceId: profileWorkspace, brief },
+      (c, b) => f.mission.prepareCustomerIntake(c, b),
+    );
+    requestId = result.id;
+    const row = (
+      await f.owner.query('SELECT mission_id FROM customer_private.owned_request WHERE id=$1', [
+        requestId,
+      ])
+    ).rows[0];
+    return { id: row.mission_id, receipt: undefined, duplicate: result.duplicate };
+  });
+  try {
+    const lead = await f.lead();
+    return { requestId, lead };
+  } finally {
+    submit.mockRestore();
+  }
+}
+function shareMission(requestId: string, summary: string) {
+  return shares('participant').command({
+    action: 'share',
+    commandId: randomUUID(),
+    registrationId,
+    requestId,
+    expectedVersion: 0,
+    summary,
+    consented: true,
   });
 }
 
@@ -574,37 +606,8 @@ test('meeting counts require separate consent and genuine canonical qualificatio
     principalId: principal,
     reason: 'Synthetic explicit source admission for meeting roll-up',
   });
-  let requestId = '';
-  // Reuse the commercial fixture's genuine workflow, substituting its intake with the real
-  // restricted customer submission. No ownership/meeting/qualification rows are fabricated.
-  const submit = vi.spyOn(f.mission, 'submit').mockImplementation(async (commandId, brief) => {
-    const result = await requests('participant').submit(
-      { commandId, workspaceId: profileWorkspace, brief },
-      (c, b) => f.mission.prepareCustomerIntake(c, b),
-    );
-    requestId = result.id;
-    const row = (
-      await f.owner.query('SELECT mission_id FROM customer_private.owned_request WHERE id=$1', [
-        requestId,
-      ])
-    ).rows[0];
-    return { id: row.mission_id, receipt: undefined, duplicate: result.duplicate };
-  });
-  let lead: Awaited<ReturnType<typeof f.lead>>;
-  try {
-    lead = await f.lead();
-  } finally {
-    submit.mockRestore();
-  }
-  const link = await shares('participant').command({
-    action: 'share',
-    commandId: randomUUID(),
-    registrationId,
-    requestId,
-    expectedVersion: 0,
-    summary: 'Synthetic shared objective only',
-    consented: true,
-  });
+  const { requestId, lead } = await submitMission();
+  const link = await shareMission(requestId, 'Synthetic shared objective only');
   expect((await projections().owner(scope())).meetings.state).toBe('NOT_SHARED');
   const permit = {
     action: 'meetings',
@@ -669,6 +672,72 @@ test('meeting counts require separate consent and genuine canonical qualificatio
     qualifiedHeld: null,
   });
 });
+
+test('a projection view never outlives the retention of the mission sources it returns', async () => {
+  const seconds = (view: { expiresAt: string }) => (Date.parse(view.expiresAt) - Date.now()) / 1000;
+  const permit = async (linkId: string) =>
+    projections('participant').command({
+      action: 'meetings',
+      commandId: randomUUID(),
+      linkId,
+      expectedVersion: 0,
+      shared: true,
+      acknowledged: true,
+    });
+  // Control 1: a participant with no mission link keeps the plain short coordination expiry.
+  const plain = seconds(await projections('another').own({ registrationId: anotherRegistration }));
+  // The proof a request carries lasts 25 seconds, so an unbounded view expires after about that long.
+  expect(plain).toBeGreaterThan(15);
+  expect(plain).toBeLessThanOrEqual(61);
+  // Control 2: a consented source with default retention does not shorten the view.
+  const longLived = await submitMission();
+  await permit((await shareMission(longLived.requestId, 'Synthetic long retention objective')).id);
+  expect(seconds(await projections().owner(scope()))).toBeGreaterThan(15);
+  expect(seconds(await projections('participant').own({ registrationId }))).toBeGreaterThan(15);
+  await revokeSyntheticCustomerRequest(f.owner, {
+    requestId: longLived.requestId,
+    reason: 'Synthetic end of the long retention control',
+  });
+  // A source whose retention ends within seconds bounds both views.
+  await f.owner.query(
+    "CREATE FUNCTION customer_private.projection_short_retention() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.retention_until:=clock_timestamp()+interval '12 seconds';RETURN NEW;END $$",
+  );
+  await f.owner.query(
+    'CREATE TRIGGER projection_short_retention BEFORE INSERT ON app.mission_intake FOR EACH ROW EXECUTE FUNCTION customer_private.projection_short_retention()',
+  );
+  let short: Awaited<ReturnType<typeof submitMission>>;
+  try {
+    short = await submitMission();
+  } finally {
+    await f.owner.query('DROP TRIGGER projection_short_retention ON app.mission_intake');
+    await f.owner.query('DROP FUNCTION customer_private.projection_short_retention()');
+  }
+  const retention = (
+    await f.owner.query<{ retention_until: Date }>(
+      'SELECT i.retention_until FROM customer_private.owned_request r JOIN app.mission_intake i ON i.tenant_id=r.mission_tenant_id AND i.id=r.mission_id WHERE r.id=$1',
+      [short.requestId],
+    )
+  ).rows[0]!.retention_until;
+  await permit((await shareMission(short.requestId, 'Synthetic short retention objective')).id);
+  const owner = await projections().owner(scope());
+  const own = await projections('participant').own({ registrationId });
+  expect(owner.meetings.sharedLinks).toBe(1);
+  expect(Date.parse(owner.expiresAt)).toBeLessThanOrEqual(retention.getTime());
+  expect(Date.parse(own.expiresAt)).toBeLessThanOrEqual(retention.getTime());
+  expect(seconds(owner)).toBeLessThan(13);
+  // The view never claims to be valid past the source; once the source ends nothing is returned for it.
+  await new Promise((resolve) =>
+    setTimeout(resolve, Math.max(0, retention.getTime() - Date.now()) + 300),
+  );
+  const after = await projections().owner(scope());
+  expect(after.meetings).toMatchObject({
+    state: 'UNAVAILABLE',
+    scheduled: null,
+    qualifiedHeld: null,
+  });
+  expect(seconds(after)).toBeGreaterThan(15);
+  expect(seconds(await projections('participant').own({ registrationId }))).toBeGreaterThan(15);
+}, 60000);
 
 test('active totals are independent of the loaded participant page', async () => {
   const before = (await projections().owner(scope())).readiness.activeParticipants;
@@ -769,10 +838,35 @@ test('a replacement profile with the same version cannot reuse prior reviewed co
   const current = await projections('participant').own({ registrationId });
   expect(current.profile!.version).toBe(reviewed.profile!.version);
   expect(current.profile!.id).not.toBe(reviewed.profile!.id);
-  await company(true);
+  // The earlier consent names the old company. Until the participant reviews and shares again it is dormant:
+  // organisers receive nothing from it and the participant is told sharing is off.
+  const dormant = await projections().owner({ ...scope(), pageSize: 50 });
+  const dormantRow = dormant.companies.find((x) => x.registrationId === registrationId)!;
+  expect(dormantRow.company).toBeNull();
+  expect(dormantRow.ready).toBe(false);
+  expect(dormantRow.missing).toContain('currentSharedCompany');
+  expect(JSON.stringify(dormant)).not.toContain('Synthetic participant company');
+  expect(JSON.stringify(dormant)).not.toContain('Synthetic replacement private company');
+  expect(dormant.readiness.readyParticipants).toBe(0);
+  expect(current.company).toMatchObject({ shared: false, sourceChanged: true });
+  // Withdrawing the dormant permission is allowed and clears the indicator; nothing is shared by doing so.
+  await company(false);
+  const cleared = await projections('participant').own({ registrationId });
+  expect(cleared.company).toMatchObject({ shared: false, sourceChanged: false });
   expect(
-    (await projections().owner(scope())).companies.find((x) => x.registrationId === registrationId)
-      ?.company?.name,
+    (await projections().owner({ ...scope(), pageSize: 50 })).companies.find(
+      (x) => x.registrationId === registrationId,
+    )?.company,
+  ).toBeNull();
+  await company(true);
+  expect((await projections('participant').own({ registrationId })).company).toMatchObject({
+    shared: true,
+    sourceChanged: false,
+  });
+  expect(
+    (await projections().owner({ ...scope(), pageSize: 50 })).companies.find(
+      (x) => x.registrationId === registrationId,
+    )?.company?.name,
   ).toBe('Synthetic replacement private company');
 });
 
@@ -808,7 +902,10 @@ test('optional installer repeats on populated data, preserves existing records, 
       )
     ).rows;
   const applied = await registry();
-  expect(applied.map((row) => row.name)).toEqual(directoryFiles);
+  expect(applied.map((row) => row.name)).toEqual([
+    '0001_consented_programme_projections.sql',
+    '0002_projection_source_and_retention.sql',
+  ]);
   const restore = async () => {
     for (const row of applied)
       await f.owner.query(
