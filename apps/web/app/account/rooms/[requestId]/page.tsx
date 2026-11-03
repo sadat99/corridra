@@ -35,7 +35,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         </a>
       </WorkspaceShell>
     );
-  const session = await customerPageSession();
+  const session = await customerPageSession(`/account/rooms/${parsed.data}`);
   if (!session.ok)
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your request" compact>

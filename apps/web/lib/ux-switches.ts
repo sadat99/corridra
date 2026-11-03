@@ -33,3 +33,11 @@ export type UxSwitchName = (typeof uxSwitchNames)[number];
 export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.env): boolean {
   return env[name] === 'true';
 }
+
+/**
+ * Whether sign-in keeps the short list of email destinations (ADR-067): while Pulse is on, or while the
+ * emailed status link is on, so a link in an email brings the person back to the page it named.
+ */
+export function emailReturnPagesOn(env: NodeJS.ProcessEnv = process.env): boolean {
+  return uxSwitchOn('CORRIDRA_PULSE_ENABLED', env) || uxSwitchOn('CORRIDRA_STATUS_LINK', env);
+}

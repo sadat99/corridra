@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { emailReturnPagesOn } from '../../lib/ux-switches';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { AccessState } from '../../components/access-state';
 import { AccountForm } from '../../components/account-form';
@@ -28,10 +29,7 @@ export function SignupAccess() {
         {config ? (
           <>
             <Suspense fallback={<p>Loading account access…</p>}>
-              <AccountForm
-                mode="signup"
-                returnToEmailPages={process.env.CORRIDRA_PULSE_ENABLED === 'true'}
-              />
+              <AccountForm mode="signup" returnToEmailPages={emailReturnPagesOn()} />
             </Suspense>
             <p>
               Your name and email are used for account access, verification and recovery. Read the{' '}

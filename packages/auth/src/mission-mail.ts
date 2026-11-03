@@ -49,6 +49,15 @@ export function jobPhrase(objective: unknown) {
   return typeof objective === 'string' ? (objectivePhrases[objective] ?? '') : '';
 }
 
+/**
+ * The page the button in the first email opens. The Room only while both its switches are exactly on,
+ * otherwise the saved request page, exactly as before. Either way the page itself asks who is signed in.
+ */
+export function requestEmailPath(requestId: string, env: NodeJS.ProcessEnv = process.env) {
+  const room = env.CORRIDRA_STATUS_LINK === 'true' && env.CORRIDRA_UX_ROAD === 'true';
+  return room ? `/account/rooms/${requestId}` : `/account/requests/${requestId}`;
+}
+
 export type MissionMailPort = {
   /** Runs inside the request transaction. Never throws for a mail problem. */
   enqueue(
@@ -155,7 +164,7 @@ export class MissionMailService {
         job: claim.job,
         codeSignIn: env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true',
         founderLine: readFounderLine(env),
-        link: `${origin}/account/requests/${job.requestId}`,
+        link: `${origin}${requestEmailPath(job.requestId, env)}`,
         muteLink: `${origin}/mute/${job.requestId}#t=${signMissionMailMute(this.secret, job.requestId)}`,
         manageLink: `${origin}/account`,
       });

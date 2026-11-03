@@ -6,6 +6,7 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { AccountForm, type AccountFormMode } from './account-form';
 import { PendingRequestNotice } from './pending-request-notice';
 import { realUseEnabled } from '@corridra/auth/customer-production';
+import { emailReturnPagesOn } from '../lib/ux-switches';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
   return (
@@ -25,7 +26,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
               key={mode}
               mode={mode}
               codeSignIn={mode === 'signin' && process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
-              returnToEmailPages={process.env.CORRIDRA_PULSE_ENABLED === 'true'}
+              returnToEmailPages={emailReturnPagesOn()}
             />
           </Suspense>
         ) : (
