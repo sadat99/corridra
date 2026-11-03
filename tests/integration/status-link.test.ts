@@ -87,8 +87,9 @@ describe('the signed-out visitor of the Room', () => {
   });
 
   it('is wired: the Room passes its own path, the verify-email step is unchanged', () => {
+    // The path is passed only while the status link is on, so with it off the redirect is plain /signin.
     expect(source('apps/web/app/account/rooms/[requestId]/page.tsx')).toContain(
-      'customerPageSession(`/account/rooms/${parsed.data}`)',
+      "customerPageSession(\n    uxSwitchOn('CORRIDRA_STATUS_LINK') ? `/account/rooms/${parsed.data}` : undefined,\n  )",
     );
     const session = source('apps/web/lib/customer-page-session.ts');
     expect(session).toContain('redirect(signInPath(next))');
@@ -119,6 +120,23 @@ describe('the signed-out visitor of the Room', () => {
     `/account/rooms/${request}#t`,
     `/account/rooms/${request}/extra`,
     `/account/rooms/${request.toUpperCase()}`,
+    `/account\\rooms\\${request}`,
+    `\\account\\move`,
+    `/\\evil.example`,
+    `/account%2Frooms%2F${request}`,
+    `/account%2frooms%2f${request}`,
+    `/account%252Frooms%252F${request}`,
+    `/account/rooms/${request}\t`,
+    `/account/rooms/${request}\n`,
+    `/account/rooms/${request}/`,
+    'javascript:alert(1)',
+    `/account\u2215rooms\u2215${request}`,
+    `/account\u2215move`,
+    '/account/rooms/../move',
+    '/plan/',
+    '/plan?x=1',
+    '/account/rooms/00000000-0000-0000-0000-000000000000',
+    '/ACCOUNT/move',
   ])('is never sent to %j, and lands on the account', (next) => {
     const kept = accountReturnTo(next, true);
     expect(kept).toBe('/account');
