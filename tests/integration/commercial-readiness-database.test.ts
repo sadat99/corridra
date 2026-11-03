@@ -25,6 +25,7 @@ describe('installation', () => {
       '0004_quote_accepted_processing_purpose.sql',
       '0005_report_published.sql',
       '0006_team_control_owner_audit.sql',
+      '0007_task_assigned_notification.sql',
     ]);
     await migrateCommercialReadiness(f.owner);
     expect(

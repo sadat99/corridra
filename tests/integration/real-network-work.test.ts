@@ -1,15 +1,29 @@
 import { prepareRealNetworkTask } from './real-network-scenario';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
+import { rawContext } from './support';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { realNetworkFixture, newInvitation } from './real-network-fixture';
 import { NetworkService } from '../../packages/network/src/index';
 import { withTenant, type RequestContext } from '../../packages/db/src/index';
 let f: Awaited<ReturnType<typeof realNetworkFixture>>;
 const reason = 'Reviewed real-work fixture; no external legal approval or payment asserted';
-beforeAll(async () => {
+beforeEach(async () => {
   f = await realNetworkFixture();
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
+  f.network = new NetworkService(f.runtime, true, async (db, commandId) => {
+    const receipt = await inbox.recordTaskAssigned(db, commandId);
+    return async () => {
+      expect(
+        (await f.owner.query('SELECT id FROM app.inbox_notification WHERE id=$1', [receipt.id]))
+          .rowCount,
+      ).toBe(1);
+    };
+  });
 });
-afterAll(async () => {
+afterEach(async () => {
   vi.unstubAllEnvs();
   await f?.close();
 });
@@ -198,4 +212,102 @@ test('real invited non-member completes scoped work with independent review and 
       ])
     ).rows[0].n,
   ).toBe(0);
+});
+
+test('GAP-017 actual assignment produces only its non-member contributor inbox and replay keeps one row', async () => {
+  const t = await prepareRealNetworkTask(f, contributor);
+  const e = (
+    await f.owner.query(
+      "SELECT id,reason,details FROM app.network_event WHERE task_id=$1 AND action='ASSIGN'",
+      [t.id],
+    )
+  ).rows[0];
+  const receipt = (
+    await rawContext(f.runtime, f.ctx(), 'SELECT app.record_task_assigned($1) receipt', [e.id])
+  ).rows[0].receipt;
+  expect(receipt.recipientAccountId).toBe(t.worker.principalId);
+  expect(receipt.payload).toEqual({
+    title: 'A task was assigned to you',
+    href: '/contributor?workspace=' + f.realTenant,
+  });
+  await expect(
+    f.network.event(f.ctx(), {
+      commandId: e.id,
+      taskId: t.id,
+      version: 0,
+      action: 'ASSIGN',
+      reason: e.reason,
+      details: e.details,
+    }),
+  ).resolves.toMatchObject({ duplicate: true });
+  const rows = (
+    await f.owner.query(
+      "SELECT id,recipient_account_id,payload FROM app.inbox_notification WHERE event_key=$1 AND type='TASK_ASSIGNED'",
+      ['assignment:' + e.id],
+    )
+  ).rows;
+  expect(rows).toHaveLength(1);
+  expect(rows[0].id).toBe(receipt.id);
+  expect(rows[0].recipient_account_id).toBe(t.worker.principalId);
+  expect(JSON.stringify(rows)).not.toContain(t.profile.id);
+  const inbox = new InboxService(f.runtime);
+  expect(
+    (await inbox.list({ kind: 'staff', ctx: t.worker.ctx })).some((item) => item.id === receipt.id),
+  ).toBe(true);
+  expect(
+    (await inbox.list({ kind: 'staff', ctx: f.users.other.ctx })).some(
+      (item) => item.id === receipt.id,
+    ),
+  ).toBe(false);
+  for (const ctx of [f.users.other.ctx, f.ctx('operator'), t.worker.ctx])
+    await expect(
+      rawContext(f.runtime, ctx, 'SELECT app.record_task_assigned($1)', [e.id]),
+    ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('GAP-017 notification failures keep the authorized assignment and do not dispatch a missing receipt', async () => {
+  const original = f.network;
+  const dispatch = vi.fn();
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  f.network = new NetworkService(f.runtime, true, async (db) => {
+    await db.query('SELECT gap017_missing_notification_function()');
+    return dispatch;
+  });
+  try {
+    const t = await prepareRealNetworkTask(f, contributor);
+    expect(
+      (await f.network.mine(t.worker.ctx)).some((task: { id: string }) => task.id === t.id),
+    ).toBe(true);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'task_assigned_notification_failed' }),
+    );
+  } finally {
+    f.network = original;
+    log.mockRestore();
+  }
+});
+
+test('GAP-017 transport failure does not roll back the assignment or its inbox receipt', async () => {
+  const original = f.network;
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const inbox = new InboxService(f.runtime);
+  f.network = new NetworkService(f.runtime, true, async (db, commandId) => {
+    await inbox.recordTaskAssigned(db, commandId);
+    return async () => {
+      throw new Error('Local transport failure');
+    };
+  });
+  try {
+    const t = await prepareRealNetworkTask(f, contributor);
+    expect(
+      (await inbox.list({ kind: 'staff', ctx: t.worker.ctx })).some(
+        (item) => item.type === 'TASK_ASSIGNED',
+      ),
+    ).toBe(true);
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: 'task_assigned_email_failed' }));
+  } finally {
+    f.network = original;
+    log.mockRestore();
+  }
 });

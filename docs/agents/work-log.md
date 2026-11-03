@@ -2534,3 +2534,9 @@ GAP-015's5 source and6 log hashes match the original15-case/compiled-owner-journ
 PR246 passed19 frozen-head checks at24001a3 and merged ase5d3fc6. Exact production alias READY at dpl_Hkp5oYqXwu9jxqtjJRZkG79iQh4q; owner identity and zero branch bindings verified before retirement. GAP015 engineering criteria RESOLVED; real provider delivery unverified.
 
 GAP016 appends owner/tenant/target/reference attribution through restricted SQL0006; existing permissions/MFA/events preserved. Eight combined source hashes match29 saved DB/handler cases and full types. Frozen release and protected schema installation remain. The prior12161-byte ledger is preserved exactly in the hashed history manifest; the active index has headroom.
+
+### 3 November 2026: GAP-016 code deployed; GAP-017 isolated
+
+PR247 passed19 exact-head checks at33d5b41, merged asa93d467 and reached READY alias deployment dpl_HMW4nKdcRiux8PMXY17rPkaJx4uJ. Owner identity and zero branch binding verified; completed branch retired. SQL0006 is not installed, so attribution remains OPEN.
+
+GAP017 retains assignment semantics and adds a restricted event-derived notice recorder. Seven isolated source hashes match16 focused DB cases including inventory0006–0007; original types/lint proof retained.18 extraction now includes all6 source files and40 passing focused cases; its earlier37-case incomplete-extraction result is explicitly limited.19 matches all15 hashes and logs of62-case/full-type/lint proof;20 matches original85 checks/16 browser/lint. Latest stashes and minimal patches are in the ledger. No duplicate broader test runs or provider calls were needed.

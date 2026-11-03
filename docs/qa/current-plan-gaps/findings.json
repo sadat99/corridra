@@ -1405,8 +1405,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Owner-attributed resend/reset audit is prepared through an additive, restricted SQL writer. All8 combined source hashes and2 saved logs match29 handler/DB/regression cases and full typecheck. Existing MFA/session audit remains; missing optional schema reports unavailable. Frozen release and protected0006 installation pending.",
-        "evidenceRevision": "24001a31f9d89dc076e7277d99eaa47c19b09803",
+        "summary": "PR247 passed19 exact-head checks at33d5b41 and reached the exact READY production alias ata93d467. Owner attribution is locally verified; protected0006 installation remains, so GAP016 stays OPEN. Missing schema reports audit unavailable without disabling existing actions.",
+        "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -1419,8 +1419,8 @@
             "evidence": ["verification/2026-11-03-gap016-local.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap016-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1458,6 +1458,15 @@
           "disposition": "OPEN",
           "note": "Owner-attributed resend/reset audit is prepared through an additive, restricted SQL writer. All8 combined source hashes and2 saved logs match29 handler/DB/regression cases and full typecheck. Existing MFA/session audit remains; missing optional schema reports unavailable. Frozen release and protected0006 installation pending.",
           "evidence": ["verification/2026-11-03-gap016-local.json"]
+        },
+        {
+          "eventId": "GAP-016-H003",
+          "recordedOn": "2026-11-03",
+          "type": "DEPLOYED",
+          "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
+          "disposition": "OPEN",
+          "note": "PR247 passed19 exact-head checks at33d5b41 and reached the exact READY production alias ata93d467. Owner attribution is locally verified; protected0006 installation remains, so GAP016 stays OPEN. Missing schema reports audit unavailable without disabling existing actions.",
+          "evidence": ["verification/2026-11-03-gap016-release.json"]
         }
       ]
     },
@@ -1474,18 +1483,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
-        "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+        "summary": "Isolated assignment producer restored atop released016. All7 source hashes match the focused16-case DB/inventory proof; original product sources and type/lint receipts remain unchanged. Frozen CI/deployment and protected0007 installation pending. No genuine provider delivery claim.",
+        "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+            "evidence": ["verification/2026-11-03-gap017-local.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+            "evidence": ["verification/2026-11-03-gap017-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1527,6 +1536,15 @@
           "disposition": "OPEN",
           "note": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
           "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+        },
+        {
+          "eventId": "GAP-017-H003",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
+          "disposition": "OPEN",
+          "note": "Isolated assignment producer restored atop released016. All7 source hashes match the focused16-case DB/inventory proof; original product sources and type/lint receipts remain unchanged. Frozen CI/deployment and protected0007 installation pending. No genuine provider delivery claim.",
+          "evidence": ["verification/2026-11-03-gap017-local.json"]
         }
       ]
     },

@@ -1,0 +1,142 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-017",
+  "baseRevision": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+  "sourceFiles": [
+    {
+      "path": "apps/web/lib/foundations.ts",
+      "sha256": "773ca18f58d05ee60d4ab81b10b9f1ce3941e56ae031ad6cf923b5b0fefd7742"
+    },
+    {
+      "path": "packages/communications/src/inbox.ts",
+      "sha256": "aa2b0472f311fb4ebb8229a5fe93a390516ccaad77cf75e7445c42ca437d7f17"
+    },
+    {
+      "path": "packages/network/src/index.ts",
+      "sha256": "c18da917d2a7c38538478ca38ee23a867d9e1282124f8eab86a82799a3435456"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0007_task_assigned_notification.sql",
+      "sha256": "635beab7119b893310f895ade19ed4ad8e4d85b63d7496a5f728757eb2adb8b5"
+    },
+    {
+      "path": "tests/integration/intelligence-network.test.ts",
+      "sha256": "e7135ac199b35217e87739300e780d7075cd9c8fe25aad7a1b4703f229abca6c"
+    },
+    {
+      "path": "tests/integration/real-network-work.test.ts",
+      "sha256": "76d8764ea0f1d5882fa310a09eba7465eaba1d5e77f45928dbb6c783d5898e4f"
+    },
+    {
+      "path": "tests/integration/commercial-readiness-database.test.ts",
+      "sha256": "1bb171962784a93ab9007e04529c914a08bc71b497fb041332e42c16e024c2ba"
+    }
+  ],
+  "receipts": {
+    "gap017-assignment-notifications-isolated": {
+      "name": "gap017-assignment-notifications-isolated",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/intelligence-network.test.ts tests/integration/real-network-work.test.ts tests/integration/commercial-readiness-database.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 30.2,
+      "logBytes": 170,
+      "logSha256": "72d37901736ae1a457f8995ded60c3c0fb000e7585d239635ca9bfba0437dc28",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 9,
+      "log": "work/gap017-assignment-notifications-isolated-2026-11-03T01-41-56-673Z.log"
+    },
+    "gap017-types-final": {
+      "name": "gap017-types-final",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 16.6,
+      "logBytes": 219,
+      "logSha256": "481b6c7ab2e7cbfc35b89e844e3b942f5a668c87dc1350ec05778917e1bdd305",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 9,
+      "log": "work/gap017-types-final-2026-11-03T01-42-37-660Z.log"
+    },
+    "gap017-lint": {
+      "name": "gap017-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs packages/network/src/index.ts packages/communications/src/inbox.ts apps/web/lib/foundations.ts tests/integration/intelligence-network.test.ts tests/integration/real-network-work.test.ts tests/inte",
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.7,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 9,
+      "log": "work/gap017-lint-2026-11-03T01-42-27-248Z.log"
+    }
+  },
+  "verification": {
+    "databaseCasesPassed": 16,
+    "files": 3
+  },
+  "implementation": [
+    "Actual ASSIGN event selects its existing profile principal; unassigned task creation has no recipient or notification.",
+    "Additive commercial0007 records one inbox receipt per assignment and recipient under real or synthetic processing context. Recipient-only RLS retained.",
+    "Existing composition calls notifyRecorded after commit with stored staff email and stable receipt ID; transport/provider switches and consent rules unchanged.",
+    "Replay keeps one inbox row; notification savepoint failure keeps assignment without false receipt, transport failure keeps committed inbox/action."
+  ],
+  "limits": [
+    "Before release after GAP-016, add its0006 to the exact migration-inventory assertion; preserve latest foundations/Inbox changes from intervening releases.",
+    "Production protected schema installation, full frozen CI/build and actual mail/private live acceptance pending.",
+    "New real-work cases need independent database fixtures because the existing scenario deliberately reuses fixed routes and brief. Each now starts with a fresh isolated DB.",
+    "No new notification framework or new assignment semantics."
+  ],
+  "currentIsolatedVerification": {
+    "baseRevision": "33d5b41e96bb2f195ac3219667aca833126245bb",
+    "sourceFiles": [
+      {
+        "path": "apps/web/lib/foundations.ts",
+        "sha256": "773ca18f58d05ee60d4ab81b10b9f1ce3941e56ae031ad6cf923b5b0fefd7742"
+      },
+      {
+        "path": "packages/communications/src/inbox.ts",
+        "sha256": "aa2b0472f311fb4ebb8229a5fe93a390516ccaad77cf75e7445c42ca437d7f17"
+      },
+      {
+        "path": "packages/network/src/index.ts",
+        "sha256": "c18da917d2a7c38538478ca38ee23a867d9e1282124f8eab86a82799a3435456"
+      },
+      {
+        "path": "packages/db/commercial-readiness-migrations/0007_task_assigned_notification.sql",
+        "sha256": "635beab7119b893310f895ade19ed4ad8e4d85b63d7496a5f728757eb2adb8b5"
+      },
+      {
+        "path": "tests/integration/intelligence-network.test.ts",
+        "sha256": "e7135ac199b35217e87739300e780d7075cd9c8fe25aad7a1b4703f229abca6c"
+      },
+      {
+        "path": "tests/integration/real-network-work.test.ts",
+        "sha256": "76d8764ea0f1d5882fa310a09eba7465eaba1d5e77f45928dbb6c783d5898e4f"
+      },
+      {
+        "path": "tests/integration/commercial-readiness-database.test.ts",
+        "sha256": "b5c194f3a701a4f5e3ea487ae63af8457695bf0a473d607de2ec339a72943687"
+      }
+    ],
+    "receipt": {
+      "name": "gap017-isolated-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/intelligence-network.test.ts tests/integration/real-network-work.test.ts tests/integration/commercial-readiness-database.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 19.1,
+      "logBytes": 170,
+      "logSha256": "5d3ca43e66b4a4fb1a37e5e6144cbddeb1b3a31f9a9f0468c62b6a19dafa71cd",
+      "head": "33d5b41e96bb2f195ac3219667aca833126245bb",
+      "changedPaths": 8,
+      "log": "work/gap017-isolated-db-2026-11-03T07-50-52-381Z.log"
+    },
+    "databaseCasesPassed": 16,
+    "migrationInventoryIncludes": [
+      "0006_team_control_owner_audit.sql",
+      "0007_task_assigned_notification.sql"
+    ],
+    "limits": [
+      "Prepared separately atop GAP016; frozen release and protected schema installation pending. Genuine provider delivery unverified."
+    ]
+  }
+}
