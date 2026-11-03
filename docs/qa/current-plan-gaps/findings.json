@@ -413,25 +413,32 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Code is deployed, but installer41546213580 did not install real-use0011/0012: its input was unchanged and actual registry count stayed10. Earlier unapproved41505093037 was canceled. Correct install-only dispatch awaits exact-main gates and protected owner review; activation/private live acceptance remains separate.",
-        "evidenceRevision": "69a348d692ee416d4a0364c4ccf9a40ccfe91c2f",
+        "summary": "Sliding-view code and real-use0011 are installed. Corrected protected run41583942337 used install and advanced the registry10→12 after exact-main gates. Activation unchanged; genuine private runtime/provider acceptance remains unverified.",
+        "evidenceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap005-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-02-gap005-local.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-02-gap005-local.json",
-              "verification/2026-11-02-gap005-release.json"
+              "verification/2026-11-02-gap005-release.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap005-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap005-release.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -496,6 +503,15 @@
           "disposition": "OPEN",
           "note": "Code is deployed, but installer41546213580 did not install real-use0011/0012: its input was unchanged and actual registry count stayed10. Earlier unapproved41505093037 was canceled. Correct install-only dispatch awaits exact-main gates and protected owner review; activation/private live acceptance remains separate.",
           "evidence": ["verification/2026-11-03-gap005-007-installer-noop.json"]
+        },
+        {
+          "eventId": "GAP-005-H006",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALLED",
+          "evidenceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+          "disposition": "OPEN",
+          "note": "Sliding-view code and real-use0011 are installed. Corrected protected run41583942337 used install and advanced the registry10→12 after exact-main gates. Activation unchanged; genuine private runtime/provider acceptance remains unverified.",
+          "evidence": ["verification/2026-11-03-gap005-007-schema-install.json"]
         }
       ]
     },
@@ -644,28 +660,33 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Code is deployed, but installer41546213580 did not install real-use0011/0012: its input was unchanged and actual registry count stayed10. Earlier unapproved41505093037 was canceled. Correct install-only dispatch awaits exact-main gates and protected owner review; activation/private live acceptance remains separate.",
-        "evidenceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+        "summary": "Participant invitation email code and real-use0012 are installed. Corrected protected run41583942337 used install and advanced the registry10→12 after exact-main gates. Activation unchanged; genuine private runtime/provider acceptance remains unverified.",
+        "evidenceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
+            "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-02-gap007-local.json",
-              "verification/2026-11-02-gap007-release.json"
+              "verification/2026-11-02-gap007-release.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
             ]
           },
           "verification": {
             "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-02-gap007-local.json",
-              "verification/2026-11-02-gap007-release.json"
+              "verification/2026-11-02-gap007-release.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap007-release.json"]
+            "evidence": [
+              "verification/2026-11-02-gap007-release.json",
+              "verification/2026-11-03-gap005-007-schema-install.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -722,6 +743,15 @@
           "disposition": "OPEN",
           "note": "Code is deployed, but installer41546213580 did not install real-use0011/0012: its input was unchanged and actual registry count stayed10. Earlier unapproved41505093037 was canceled. Correct install-only dispatch awaits exact-main gates and protected owner review; activation/private live acceptance remains separate.",
           "evidence": ["verification/2026-11-03-gap005-007-installer-noop.json"]
+        },
+        {
+          "eventId": "GAP-007-H005",
+          "recordedOn": "2026-11-03",
+          "type": "SCHEMA_INSTALLED",
+          "evidenceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+          "disposition": "OPEN",
+          "note": "Participant invitation email code and real-use0012 are installed. Corrected protected run41583942337 used install and advanced the registry10→12 after exact-main gates. Activation unchanged; genuine private runtime/provider acceptance remains unverified.",
+          "evidence": ["verification/2026-11-03-gap005-007-schema-install.json"]
         }
       ]
     },
@@ -1010,24 +1040,24 @@
         "evidenceAndBoundary": "`components/customer-nav.tsx:40` still names Your Move/Missions/Companies/Library/More; current remainder retains the requested Home/Requests/Companies/Reports/Account reconciliation. Existing headings are not proof those tab labels match."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "A_G_REMAINDER",
-        "summary": "Existing navigation now uses Home/Requests/Companies/Reports/Account while preserving tab keys, hrefs, flags and actions.5 navigation cases,1 browser case and lint passed on the byte-identical preparation;4 source and3 log hashes matched on current base, with54 catalogue checks passed. Frozen CI and release pending; foreign language bytes unchanged.",
-        "evidenceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+        "summary": "PR244 passed19 exact-head checks atdf549d7 and reached the exact READY production alias at8aae590. Home/Requests/Companies/Reports/Account preserve destinations, tab keys and actions. English navigation engineering criteria are resolved; foreign language acceptance and live private journeys remain separate.",
+        "evidenceRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap011-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-gap011-release.json"]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap011-local.json"]
+            "state": "VERIFIED",
+            "evidence": ["verification/2026-11-03-gap011-release.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap011-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1046,7 +1076,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-02-gap011-local.json",
+          "verification/2026-11-03-gap011-release.json"
+        ]
       },
       "history": [
         {
@@ -1065,6 +1098,15 @@
           "disposition": "OPEN",
           "note": "Existing navigation now uses Home/Requests/Companies/Reports/Account while preserving tab keys, hrefs, flags and actions.5 navigation cases,1 browser case and lint passed on the byte-identical preparation;4 source and3 log hashes matched on current base, with54 catalogue checks passed. Frozen CI and release pending; foreign language bytes unchanged.",
           "evidence": ["verification/2026-11-02-gap011-local.json"]
+        },
+        {
+          "eventId": "GAP-011-H003",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+          "disposition": "RESOLVED",
+          "note": "PR244 passed19 exact-head checks atdf549d7 and reached the exact READY production alias at8aae590. Home/Requests/Companies/Reports/Account preserve destinations, tab keys and actions. English navigation engineering criteria are resolved; foreign language acceptance and live private journeys remain separate.",
+          "evidence": ["verification/2026-11-03-gap011-release.json"]
         }
       ]
     },
@@ -1081,18 +1123,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "`components/mr/quote-card.css:35`, `:104` and `mode-label.css:13` use caution text on caution surface. `tests/design-system.test.mjs:296` checks only globals/operator-overview for the Ink-text rule, so these files escape that assertion.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Three caution-tinted warning declarations now use the existing Ink text token. The preserved design guard reproduces the original failure; full design checks and9 normal/increased/forced-contrast checks pass (minimum13.53). All3 source and3 receipt/log hashes match the saved preparation. Frozen CI/deployment pending.",
+        "evidenceRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-012"]
+            "evidence": ["verification/2026-11-03-gap012-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap012-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1125,6 +1167,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-012-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+          "disposition": "OPEN",
+          "note": "Three caution-tinted warning declarations now use the existing Ink text token. The preserved design guard reproduces the original failure; full design checks and9 normal/increased/forced-contrast checks pass (minimum13.53). All3 source and3 receipt/log hashes match the saved preparation. Frozen CI/deployment pending.",
+          "evidence": ["verification/2026-11-03-gap012-local.json"]
         }
       ]
     },
@@ -1443,18 +1494,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "`api/workspace/customer-service-requests/route.ts:54` runs the staff command and returns. The type/template alone does not send or write an inbox row. This is distinct from A's quote-accepted event.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Partial quote-sent producer is preserved in stashc07f8f8.29 database cases passed on the earlier unfrozen working tree; source/hash equivalence is not claimed. Types/lint, old-schema compatibility, inventory/dependency review and combined checks remain before release.",
+        "evidenceRevision": "07a96cd4055bce696e45e31496f8feb92f75082e",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-018"]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap018-preparation.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap018-preparation.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1487,6 +1538,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-018-H002",
+          "recordedOn": "2026-11-03",
+          "type": "PREPARATION_RECORDED",
+          "evidenceRevision": "07a96cd4055bce696e45e31496f8feb92f75082e",
+          "disposition": "OPEN",
+          "note": "Partial quote-sent producer is preserved in stashc07f8f8.29 database cases passed on the earlier unfrozen working tree; source/hash equivalence is not claimed. Types/lint, old-schema compatibility, inventory/dependency review and combined checks remain before release.",
+          "evidence": ["verification/2026-11-03-gap018-preparation.json"]
         }
       ]
     },
@@ -1503,18 +1563,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "`api/workspace/[action]/route.ts:272` directly calls the reply command. Existing supplier review and separate Pulse/receipt kinds do not implement this generic hand-off.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Reply producer prototype is locally verified:17 database/regression cases, full types and lint pass. It uses explicit private-request ownership, recipient RLS, atomic inbox writes and after-commit delivery; anonymous/revoked/missing-schema cases preserve existing behavior. Stash18f2b52 remains unpublished; merge dependencies/inventory and combined proofs after018.",
+        "evidenceRevision": "df549d7893c0716bd1715cdef1893c027f848e24",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-019"]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap019-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap019-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1547,6 +1607,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-019-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "df549d7893c0716bd1715cdef1893c027f848e24",
+          "disposition": "OPEN",
+          "note": "Reply producer prototype is locally verified:17 database/regression cases, full types and lint pass. It uses explicit private-request ownership, recipient RLS, atomic inbox writes and after-commit delivery; anonymous/revoked/missing-schema cases preserve existing behavior. Stash18f2b52 remains unpublished; merge dependencies/inventory and combined proofs after018.",
+          "evidence": ["verification/2026-11-03-gap019-local.json"]
         }
       ]
     },

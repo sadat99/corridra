@@ -1,0 +1,40 @@
+{
+  "recordedOn": "2026-11-03",
+  "findings": ["GAP-005", "GAP-007"],
+  "workflowRun": 41583942337,
+  "job": 125744924754,
+  "sourceRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+  "conclusion": "success",
+  "inputs": {
+    "apply": "yes",
+    "real_use_action": "install"
+  },
+  "exactSourceGate": "All required main-CI jobs and three uploaded CodeQL analyses passed; confirmed by the job at2026-11-03T05:43:48.1240698Z.",
+  "before": {
+    "registry": "customer_real_use_migrations",
+    "applied": 10,
+    "utc": "2026-11-03T05:44:18.6590021Z"
+  },
+  "after": {
+    "registry": "customer_real_use_migrations",
+    "applied": 12,
+    "utc": "2026-11-03T05:52:05.3683047Z"
+  },
+  "commercialReadinessAppliedBeforeAndAfter": 5,
+  "sourceFiles": [
+    {
+      "path": "packages/db/customer-real-use-migrations/0011_private_view_window.sql",
+      "sha256": "cb63c7be909715433d6d5527daa339634d0cdead47e704174777ce402cd2a67a"
+    },
+    {
+      "path": "packages/db/customer-real-use-migrations/0012_participant_invitation_email.sql",
+      "sha256": "8b6c0e44158397910f93576cdee2d2074ad1e510bc656b419a673943ec55bd73"
+    }
+  ],
+  "activation": "Install action skips configureCustomerRealUse; activation settings unchanged.",
+  "limits": [
+    "Actual protected-job logs confirm registry advancement; no direct production database query or customer-data read was used.",
+    "Private live view-window and provider-delivery journeys remain unverified.",
+    "Earlier successful-but-skipped run41546213580 remains preserved separately."
+  ]
+}

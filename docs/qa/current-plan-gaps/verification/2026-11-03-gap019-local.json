@@ -1,0 +1,84 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-019",
+  "baseRevision": "df549d7893c0716bd1715cdef1893c027f848e24",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "packages/missions/src/index.ts",
+      "sha256": "ecedbd2817645251fbd4bc6b9fb487a69b216901f6b2dea5801d06352ac80b94"
+    },
+    {
+      "path": "packages/communications/src/inbox.ts",
+      "sha256": "5205459c4f1e10abe4fb058c181b29440f49f00e037d6b84639ed97cb8618bda"
+    },
+    {
+      "path": "apps/web/lib/foundations.ts",
+      "sha256": "2df9225a1fc3e4b0681f3d5bfb88a04e7423f13011190e5dc1ce4834837e6a60"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0009_reply_posted_notification.sql",
+      "sha256": "bc28f558eb5a858078377c9b4d9f63fed08b8cc5f7a23d984cf8c96e003f892a"
+    },
+    {
+      "path": "tests/integration/reply-posted.test.ts",
+      "sha256": "3d2e53b95c7cf74679654deccc27d9f6a60cdb02632692a1ebf6d8e351407456"
+    }
+  ],
+  "receipts": {
+    "gap019-reply-producer-final-db": {
+      "name": "gap019-reply-producer-final-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/reply-posted.test.ts tests/integration/missions.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 9.2,
+      "logBytes": 169,
+      "logSha256": "804046b03a6fc8a9c5e0b2409c24d722e635e1447b62a2c80fb36a07823bfad6",
+      "head": "df549d7893c0716bd1715cdef1893c027f848e24",
+      "changedPaths": 7,
+      "log": "work/gap019-reply-producer-final-db-2026-11-03T05-37-49-647Z.log"
+    },
+    "gap019-reply-producer-types": {
+      "name": "gap019-reply-producer-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 22.5,
+      "logBytes": 219,
+      "logSha256": "aeeef7a943bc2cc98feabcb3d513e4113735368ade3ab905bf93d24d4056a13b",
+      "head": "df549d7893c0716bd1715cdef1893c027f848e24",
+      "changedPaths": 7,
+      "log": "work/gap019-reply-producer-types-2026-11-03T05-37-58-924Z.log"
+    },
+    "gap019-reply-producer-lint": {
+      "name": "gap019-reply-producer-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs packages/missions/src/index.ts packages/communications/src/inbox.ts apps/web/lib/foundations.ts tests/integration/reply-posted.test.ts --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.8,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "df549d7893c0716bd1715cdef1893c027f848e24",
+      "changedPaths": 7,
+      "log": "work/gap019-reply-producer-lint-2026-11-03T05-38-21-499Z.log"
+    }
+  },
+  "verification": {
+    "databaseAndRegressionCasesPassed": 17,
+    "newProducerCases": 8,
+    "existingMissionCases": 9,
+    "typesExit": 0,
+    "lintExit": 0
+  },
+  "implementation": [
+    "Existing mission-reply action records a scoped inbox receipt in its own transaction and calls the existing unified notifier after commit.",
+    "Additive0009 selects only the explicit owned_request principal, with active principal/admission, live retention, unrevoked request, current staff scope and original reply-author checks.",
+    "Anonymous receipts get no invented account. Missing optional schema preserves the existing reply action. Event key and transport receipt remain stable across retry."
+  ],
+  "limits": [
+    "Local synthetic fixtures exercise actual services, recipient inbox RLS and PostgreSQL; no genuine provider delivery or production private journey is claimed.",
+    "Release after016/017/018. Apply overlapping service/composition patches with a three-way merge; never overwrite their newer changes with these full prototype files.",
+    "Add0009 to the then-current migration inventory while retaining0006\u20130008, and rerun affected combined proofs before frozen CI.",
+    "Protected commercial schema installation is still required after the code release."
+  ]
+}

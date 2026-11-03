@@ -1,0 +1,172 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-012",
+  "baseRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "apps/web/components/mr/quote-card.css",
+      "sha256": "9fecfcdd43bc20645bb9fa08e4dffb0a0494b7c286c99b3debf01458420ceabc"
+    },
+    {
+      "path": "apps/web/components/mr/mode-label.css",
+      "sha256": "e2b0ff3e3143c3504c30ad4432279aa9a835103dad7fd7b51ee504127ef9aae6"
+    },
+    {
+      "path": "tests/design-system.test.mjs",
+      "sha256": "26a10e2977f642df56a328a4b43bce2a19010dc65074ba59c77763f4f4856f48"
+    }
+  ],
+  "receipts": {
+    "gap012-warning-reproduction": {
+      "name": "gap012-warning-reproduction",
+      "command": "node --test --test-name-pattern warning text tests/design-system.test.mjs",
+      "exit": 1,
+      "signal": null,
+      "seconds": 0.1,
+      "logBytes": 6921,
+      "logSha256": "189a25e723e24b92fada076ce27044ae40fe8eacaf6675a10f22abe70f5635bd",
+      "head": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+      "changedPaths": 1,
+      "log": "work/gap012-warning-reproduction-2026-11-03T00-29-25-317Z.log"
+    },
+    "gap012-design-contract": {
+      "name": "gap012-design-contract",
+      "command": "node --test tests/design-system.test.mjs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 3.6,
+      "logBytes": 1155,
+      "logSha256": "36b98b70d5b330640d6e88897589a26b0d6355f7774ac90fa08f21fa8de3d2d9",
+      "head": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+      "changedPaths": 3,
+      "log": "work/gap012-design-contract-2026-11-03T00-29-35-325Z.log"
+    },
+    "gap012-computed-contrast": {
+      "name": "gap012-computed-contrast",
+      "command": "node work/gap012-colour-probe.mjs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.9,
+      "logBytes": 79,
+      "logSha256": "dbc9c9f365d3bba44f7baa6f6fefd75613e7ee058b4b24c48ac4e9c5b1376a3e",
+      "head": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+      "changedPaths": 3,
+      "log": "work/gap012-computed-contrast-2026-11-03T00-30-51-573Z.log"
+    },
+    "current-base-design-guard": {
+      "name": "gap012-current-design-guard",
+      "command": "node --test tests/design-system.test.mjs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.8,
+      "logBytes": 1156,
+      "logSha256": "b24a95311148b4b0dd50595e7d2f801a6c5f6c67744d35450d1640c30edf08d2",
+      "head": "8aae590ee5db38d7b84094ab44289f009281da69",
+      "changedPaths": 12,
+      "log": "work/gap012-current-design-guard-2026-11-03T05-58-27-031Z.log"
+    }
+  },
+  "computedColours": [
+    {
+      "state": "normal",
+      "selector": "verdict",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "normal",
+      "selector": "missing",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "normal",
+      "selector": "mode",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "more",
+      "selector": "verdict",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "more",
+      "selector": "missing",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "more",
+      "selector": "mode",
+      "colour": "rgb(24, 40, 60)",
+      "background": "rgb(255, 242, 226)",
+      "ratio": 13.53
+    },
+    {
+      "state": "forced",
+      "selector": "verdict",
+      "colour": "rgb(0, 0, 0)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 21
+    },
+    {
+      "state": "forced",
+      "selector": "missing",
+      "colour": "rgb(0, 0, 0)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 21
+    },
+    {
+      "state": "forced",
+      "selector": "mode",
+      "colour": "rgb(0, 0, 0)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 21
+    }
+  ],
+  "verification": {
+    "existingWarningGuardReproducedFailure": true,
+    "fullDesignContractExit": 0,
+    "runtimeColourChecksPassed": 9,
+    "minimumContrast": 13.53
+  },
+  "limits": [
+    "Colour probe applies the actual component stylesheets/selectors against compiled application tokens, in normal/increased/forced contrast; it is not a live private quote/provider journey.",
+    "Only three warning text declarations and the existing guard file coverage change; positive states/backgrounds and behavior remain.",
+    "Sequential release follows GAP-011; exact-head CI/production verification pending."
+  ],
+  "currentBaseVerification": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+    "globalThemeCssUnchanged": true,
+    "globalThemeSha256": "01fb7f4db56afec9d63b34e804ebab5fd346970417a5e93c7bf0e4a663d25127"
+  },
+  "docBudgetCorrection": {
+    "recordedOn": "2026-11-03",
+    "failedCiRun": 41587335077,
+    "failedJob": 125755774926,
+    "failure": "Raw ledger size passed but the context-reader status wrapper exceeded its output limit.",
+    "correction": "Shorten handoff wording, retain every ID/evidence reference, and verify document tests. Product/helper limits and tests are unchanged.",
+    "productSourceHashesUnchanged": true,
+    "receipt": {
+      "name": "gap012-corrected-docs",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "signal": null,
+      "seconds": 18.3,
+      "logBytes": 6426,
+      "logSha256": "964c02d6c1f1ce511cd9d961a4414b1d03029646a53be424b71ab89a342124fe",
+      "head": "a83f792a026dca309a5da28faa2fcb03c88a5d1d",
+      "changedPaths": 3,
+      "log": "work/gap012-corrected-docs-2026-11-03T06-19-22-397Z.log"
+    }
+  }
+}

@@ -10,7 +10,7 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   border-radius: 999px;
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .mr-mode[data-mode='real'] {

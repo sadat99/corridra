@@ -299,7 +299,12 @@ test('warning text is Ink on the warning tint, never the brown (D18)', async () 
     new URL('../apps/web/app/operator/operator-overview.css', import.meta.url),
     'utf8',
   );
-  for (const source of [css, overview]) {
+  const components = await Promise.all(
+    ['quote-card.css', 'mode-label.css'].map((name) =>
+      readFile(new URL('../apps/web/components/mr/' + name, import.meta.url), 'utf8'),
+    ),
+  );
+  for (const source of [css, overview, ...components]) {
     assert.doesNotMatch(source, /(?:^|[\s;{])color:\s*var\(--(?:caution|ac-warning)\)/m);
   }
   assert.ok(contrast('--caution-text', '--caution-surface') >= 4.5);

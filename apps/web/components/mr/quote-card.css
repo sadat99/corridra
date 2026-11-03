@@ -32,7 +32,7 @@
   font-weight: 600;
   line-height: 1.35;
   border-radius: var(--radius-sm);
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
 }
 .mr-quote[data-comparable='true'] .mr-quote-verdict {
@@ -101,7 +101,7 @@
 .mr-quote-terms [data-missing='true'] dd {
   padding-inline: var(--space-2);
   font-weight: 600;
-  color: var(--caution);
+  color: var(--caution-text);
   background: var(--caution-surface);
   border-radius: 4px;
 }
