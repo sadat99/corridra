@@ -57,6 +57,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         decisionsEnabled={customerDecisionsEnabled()}
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
+        trip={uxSwitchOn('CORRIDRA_UX_TRIP')}
       />
     </CustomerShell>
   );
