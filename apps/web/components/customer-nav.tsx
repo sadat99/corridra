@@ -16,7 +16,7 @@ const icons: Record<CustomerTab, string> = {
 };
 
 /**
- * The locked customer navigation: Home, My Work, Companies, Results, More.
+ * The customer navigation: Home, Requests, Companies, Reports, Account.
  * A top row on wide screens and a bottom tab bar on phones. Every item is a real destination;
  * Companies appears only where the approved-companies module is on.
  */
@@ -32,31 +32,31 @@ export function CustomerNav({
   current: CustomerTab;
   /** True where the approved-companies module is on. */
   companies?: boolean;
-  /** UX update (`CORRIDRA_UX_NAV`): Your Move, Missions, Companies, Library, More. Off renders exactly as before. */
+  /** `CORRIDRA_UX_NAV` retains its route/icon behavior; labels use the current vocabulary. */
   plainNames?: boolean;
-  /** UX update (`CORRIDRA_UX_MOVE`): the first tab is Your Move. Needs `plainNames`; otherwise it keeps the word Home. */
+  /** `CORRIDRA_UX_MOVE` links Home to the Move page when `plainNames` is on. */
   move?: boolean;
 }) {
   const items: { tab: CustomerTab; label: string; href: string }[] = plainNames
     ? [
         move
-          ? { tab: 'move', label: 'Your Move', href: '/account/move' }
+          ? { tab: 'move', label: 'Home', href: '/account/move' }
           : { tab: 'home', label: 'Home', href: '/account' },
-        { tab: 'work', label: 'Missions', href: '/account?view=work' },
+        { tab: 'work', label: 'Requests', href: '/account?view=work' },
         ...(companies
           ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
           : []),
-        { tab: 'results', label: 'Library', href: '/account?view=results' },
-        { tab: 'more', label: 'More', href: '/account?view=more' },
+        { tab: 'results', label: 'Reports', href: '/account?view=results' },
+        { tab: 'more', label: 'Account', href: '/account?view=more' },
       ]
     : [
         { tab: 'home', label: 'Home', href: '/account' },
-        { tab: 'work', label: 'My Work', href: '/account?view=work' },
+        { tab: 'work', label: 'Requests', href: '/account?view=work' },
         ...(companies
           ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
           : []),
-        { tab: 'results', label: 'Results', href: '/account?view=results' },
-        { tab: 'more', label: 'More', href: '/account?view=more' },
+        { tab: 'results', label: 'Reports', href: '/account?view=results' },
+        { tab: 'more', label: 'Account', href: '/account?view=more' },
       ];
   // With Your Move as the first tab, the older Home view stays reachable by its address and is read as the same place.
   const here = plainNames && move && current === 'home' ? 'move' : current;
@@ -87,11 +87,8 @@ export function CustomerNav({
 
 const labelKeys: Record<string, MessageKey> = {
   Home: 'wse.nav.home',
-  'Your Move': 'wse.nav.move',
-  Missions: 'wse.nav.missions',
-  'My Work': 'wse.nav.work',
+  Requests: 'wse.nav.work',
   Companies: 'wse.nav.companies',
-  Library: 'wse.nav.library',
-  Results: 'wse.nav.results',
-  More: 'wse.nav.more',
+  Reports: 'wse.nav.results',
+  Account: 'wse.nav.more',
 };

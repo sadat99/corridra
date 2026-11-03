@@ -1,0 +1,26 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-010",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/243",
+  "testedHead": "07a96cd4055bce696e45e31496f8feb92f75082e",
+  "ciRun": 41562347587,
+  "codeqlRun": 41562347580,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+  "productionDeployment": {
+    "id": "dpl_6wdjFP18K2y3vnQbk4nPuyaQsnhH",
+    "state": "READY",
+    "githubCommitSha": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-02-gap010-local.json"],
+  "limits": [
+    "English fixed-form baseline intentionally advances for this requested country-control change; immutable tags retain both product snapshots.",
+    "Canonical country/market values, existing headings, required errors and request bodies are preserved. Prior failures/corrections remain in local evidence.",
+    "No schema, provider, activation or language-phase acceptance inferred."
+  ]
+}

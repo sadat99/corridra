@@ -328,10 +328,13 @@ describe('the customer navigation', () => {
   const labels = (html: string) => [...html.matchAll(/<span>([^<]*)<\/span>/g)].map((m) => m[1]);
   const hrefs = (html: string) => [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
 
-  it('with the switch off is exactly the navigation it always was', async () => {
+  it('keeps current vocabulary and original destinations with the switch off', async () => {
     const { CustomerNav } = await load('components/customer-nav');
     const html = render(CustomerNav, { current: 'work', companies: true });
-    expect(labels(html)).toEqual(['Home', 'My Work', 'Companies', 'Results', 'More']);
+    expect(labels(html)).toEqual(['Home', 'Requests', 'Companies', 'Reports', 'Account']);
+    expect(
+      labels(render(CustomerNav, { current: 'work', companies: true, translated: true })),
+    ).toEqual(['Home', 'Requests', 'Companies', 'Reports', 'Account']);
     expect(hrefs(html)).toEqual([
       '/account',
       '/account?view=work',
@@ -346,13 +349,13 @@ describe('the customer navigation', () => {
     ).toBe(html);
     expect(labels(render(CustomerNav, { current: 'home' }))).toEqual([
       'Home',
-      'My Work',
-      'Results',
-      'More',
+      'Requests',
+      'Reports',
+      'Account',
     ]);
   });
 
-  it('with the switch on names the five places in plain words', async () => {
+  it('keeps current vocabulary and the Move destination with the switch on', async () => {
     const { CustomerNav } = await load('components/customer-nav');
     const html = render(CustomerNav, {
       current: 'move',
@@ -360,20 +363,20 @@ describe('the customer navigation', () => {
       plainNames: true,
       move: true,
     });
-    expect(labels(html)).toEqual(['Your Move', 'Missions', 'Companies', 'Library', 'More']);
+    expect(labels(html)).toEqual(['Home', 'Requests', 'Companies', 'Reports', 'Account']);
     expect(hrefs(html)[0]).toBe('/account/move');
     expect(hrefs(html)).toContain('/account?view=results');
     expect(labels(html)).toHaveLength(5);
   });
 
-  it('keeps the word Home until Your Move is on, and never links a page that is not there', async () => {
+  it('keeps the Home label and omits the Move destination while its switch is off', async () => {
     const { CustomerNav } = await load('components/customer-nav');
     const html = render(CustomerNav, { current: 'home', plainNames: true, move: false });
     expect(labels(html)[0]).toBe('Home');
     expect(hrefs(html)).not.toContain('/account/move');
   });
 
-  it('reads the older Home view as Your Move when Your Move is the first tab', async () => {
+  it('marks Home current when its destination is the Move page', async () => {
     const { CustomerNav } = await load('components/customer-nav');
     const html = render(CustomerNav, { current: 'home', plainNames: true, move: true });
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);

@@ -41,6 +41,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Never change auth, RLS, migrations history, money or event records without stating the blast radius first. Migrations are additive only.
 - Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.
 - Same mistake twice: add one line here.
+- For optional schema installs, set the module action to `install` explicitly; `apply=yes` with `unchanged` skips it. Verify registry advancement in the actual job log.
 - Copy each new read path from discovery output; never expand a numbered migration prefix into a guessed filename.
 - Run repository context/lint/type helpers from the repository root; run the Next application build from apps/web.
 - Discover connector names with a bounded result first; shared description boilerplate can match every tool and defeat filtering.
