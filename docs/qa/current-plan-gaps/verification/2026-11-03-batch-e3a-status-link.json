@@ -1,0 +1,269 @@
+{
+  "recordedOn": "2026-11-03",
+  "batch": "E",
+  "kind": "E3a emailed status link (draft PR 256) and post-merge record of PR 255 (E1 Trip view) and PR 254 follow-ups",
+  "findings": ["GAP-034", "GAP-041", "GAP-037", "GAP-038", "GAP-039", "GAP-042"],
+  "status": "PR 255 (Batch E E1 Trip view) is MERGED as 8d9ac67. PR 256 (Batch E E3a, emailed status link) is an open draft; its frozen-head CI, CodeQL and the Codex review are pending and are not claimed. Both features sit behind default-off switches and nothing is deployed-verified, enabled or activated by agents. Migration 0002 is not installed.",
+  "pullRequests": {
+    "e1Merged": {
+      "number": 255,
+      "url": "https://github.com/sadat99/corridra/pull/255",
+      "mergedAt": "2026-11-03T22:09:07Z",
+      "mergedAtSource": "GitHub REST API, re-read by the scribe; the conductor relayed 22:08:5x",
+      "mergeCommit": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "head": "07eba90027304a06d0fb4fa2078cc002f0f60a5e",
+      "checks": "All 19 checks on 07eba90 completed without failure: 18 success and the CodeQL aggregate neutral (CI run 41723993619, CodeQL run 41723993557), as relayed by the conductor and not re-read check by check. Codex review of 07eba90 completed with no findings (relayed).",
+      "reviews": "Two independent review passes and a delta re-review before the final head (relayed by the conductor). Should-fix items fixed: scroll budget with long text now 3.50/3.87 screens at 390 and 2.25 at 1440 (measured on CI too), card gap, lang on Han text, lang=en on the English lens word, date styling.",
+      "ciFailuresInOwnTests": "Two CI failures were in the PR's own new tests: a keyboard race on head 1991da1 and a measure-before-render race on 3cc7fa8 (operator shard 3). Both were root-caused by reproducing with a deliberately slow mocked report (REPORT_DELAY_MS) and fixed in 07eba90 by waiting on the exact rendered state.",
+      "postMergeMainCi": {
+        "run": 41728230272,
+        "status": "in_progress",
+        "conclusion": "not yet available when recorded; scribe re-read through the REST API: status in_progress, head 8d9ac67",
+        "claim": "No success is claimed."
+      },
+      "postMergeCodeql": {
+        "run": 41728230199,
+        "status": "completed",
+        "conclusion": "success"
+      }
+    },
+    "e3a": {
+      "number": 256,
+      "url": "https://github.com/sadat99/corridra/pull/256",
+      "state": "open draft",
+      "branch": "claude/zen-hopper-1iqtdn",
+      "headLocal": "b65cde5",
+      "headOnRemoteWhenRecorded": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094 (the REST API showed this head; b65cde5 was not yet pushed when recorded)",
+      "baseRevision": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "commits": [
+        {
+          "sha": "5861847",
+          "subject": "test: pin the emailed status link and describe its switch (E3a)",
+          "note": "tests first plus the CORRIDRA_STATUS_LINK flag"
+        },
+        {
+          "sha": "7d3bbe0",
+          "subject": "feat: open the Room from the first request email behind CORRIDRA_STATUS_LINK (E3a)",
+          "note": "wiring"
+        },
+        {
+          "sha": "b65cde5",
+          "subject": "fix: keep the Room sign-in redirect plain while the status link is off (E3a)",
+          "note": "Room sign-in return gated on the status-link switch only, so the off path, including Pulse-only, is byte-identical to main; git diff 7d3bbe0 b65cde5 changes exactly apps/web/app/account/rooms/[requestId]/page.tsx and tests/integration/status-link.test.ts"
+        }
+      ],
+      "sourcePaths": [
+        "apps/web/app/account/rooms/[requestId]/page.tsx",
+        "apps/web/app/signin/page.tsx",
+        "apps/web/app/signup/signup-access.tsx",
+        "apps/web/components/account-access.tsx",
+        "apps/web/lib/account-return.ts",
+        "apps/web/lib/customer-page-session.ts",
+        "apps/web/lib/owner-switches.ts",
+        "apps/web/lib/ux-switches.ts",
+        "packages/auth/src/mission-mail.ts",
+        "tests/integration/mission-mail-flow.test.ts",
+        "tests/integration/status-link.test.ts"
+      ]
+    },
+    "repairMerged": {
+      "number": 254,
+      "mergedRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+      "postMergeMainCi": {
+        "run": 41705549794,
+        "conclusion": "success"
+      },
+      "postMergeCodeql": {
+        "conclusion": "success"
+      },
+      "protectedInstall": {
+        "workflow": "Install customer modules",
+        "run": 41705868221,
+        "trigger": "workflow_dispatch by the conductor under the owner pre-approval; apply=yes, optional actions unchanged",
+        "environment": "customer-modules-install",
+        "statusWhenRecorded": "waiting (re-read by the scribe through the REST API at record time)",
+        "effect": "Migration 0002 is NOT installed. Only an owner approval of this run installs it; the log should then show customer_programme_projection_migrations 1 applied then 2 applied. The run has not run and nothing here claims it did."
+      }
+    }
+  },
+  "e1TripViewAfterMerge": {
+    "gap": "GAP-034",
+    "repeatedRuns": "Repeat receipts for the fix tree (work/rep-fixture-0, rep-fixture-600, rep-fixture-600-load, rep-operator-0, rep-operator-600, each exit 0, 170 passed; the load run ran under CPU load) report head 3cc7fa8 with 2 changed paths, because they ran on the working tree before the fix was committed as 07eba90. The slow-report reproduction receipts are work/trip-delay-red (exit 1, 1 failed | 50 passed) and work/trip-delay-green-600 (a first run exit 1, a later run exit 0).",
+    "scrollBudgetWithLongText": "3.87 screens at 390 and 2.25 at 1440 in the local repeat logs; the conductor relays 3.50/3.87 at 390 and 2.25 at 1440 and that CI measured the same.",
+    "limits": [
+      "About 0.1 screen margin at 390 for the longest realistic names (no phone cap on default items).",
+      "hanLang tags kanji as zh because Japanese is not a supported language.",
+      "The 25 Trip words are English placeholders (D16 draft); no language review is claimed."
+    ],
+    "deployment": "Production deployment of 8d9ac67 is NOT verifiable from this environment: the connected Vercel account lacks the Corridra project and the host redirects to c.obsidianglobal.studio, which the proxy blocks.",
+    "activation": "CORRIDRA_UX_TRIP stays off (it also needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES); enabling it is an owner action."
+  },
+  "e3aBehaviour": {
+    "summary": "The first request email (mission mail 'request received') button opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>. The link grants no authority. A signed-out visitor goes to /signin?next=<room path> and returns through the ADR-067 exact-path allowlist, which now also applies when the status-link switch is on (emailReturnPagesOn).",
+    "sideEffectTested": "With the status link on and Pulse off, /account/move and /account/notifications also become valid next= targets. This is navigation only: each page re-checks its own switch and sign-in first.",
+    "unchanged": "Mail words, recipient, transport and idempotency key. No mail is sent by the tests (recorder sender). No migration, no table, no installer run.",
+    "notAdopted": "ADR-058's anonymous 90-day link.",
+    "realServerRedirectCheck": "Reported by the builder, no receipt file exists under work/ and the scribe did not re-run it: with the switch on, a Room request answered 307 to /signin?next=%2Faccount%2Frooms%2F<uuid> then /signin?returnTo=...; with the switch off, with Pulse on or off, plain /signin in one hop; evil, protocol-relative, query, fragment and extra-path next values all fall back to plain /signin.",
+    "review": "Independent security review (as relayed by the conductor): traced no open redirect, no authentication grant, no new state-changing GET, and mail unchanged apart from the path; no blocking or should-fix defects. Two notes were applied: the gating edit (b65cde5) and 17 extra denial pins."
+  },
+  "receipts": [
+    {
+      "name": "status-link-red",
+      "receiptPath": "work/status-link-red-2026-11-03T22-12-07-261Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/status-link.test.ts",
+      "exit": 1,
+      "seconds": 4.4,
+      "logSha256": "59a6da022e8794226e979b0d159aec6f4b7ba9fbe6e249c41632e261bd358cd1",
+      "head": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "changedPaths": 2,
+      "role": "failing-before reproduction (first test set)",
+      "result": "21 failed | 10 passed (31) in tests/integration/status-link.test.ts before the code existed"
+    },
+    {
+      "name": "flow-red",
+      "receiptPath": "work/flow-red-2026-11-03T22-12-33-026Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/mission-mail-flow.test.ts",
+      "exit": 1,
+      "seconds": 9.1,
+      "logSha256": "856b30487f03893c7cea43dd3a3603104ebe00b52f46320110808f69e66f2296",
+      "head": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "changedPaths": 2,
+      "role": "failing-before reproduction",
+      "result": "2 failed | 13 passed (15) in tests/integration/mission-mail-flow.test.ts before the wiring"
+    },
+    {
+      "name": "status-link-green",
+      "receiptPath": "work/status-link-green-2026-11-03T22-13-11-311Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/status-link.test.ts",
+      "exit": 0,
+      "seconds": 2.1,
+      "logSha256": "fec49425b65554b1ecd4d93d701db5f2bfc9a5e620f019ac5e3d24e45dc8f44e",
+      "head": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "changedPaths": 11,
+      "role": "passing (first test set)",
+      "result": "31 passed (31) in tests/integration/status-link.test.ts"
+    },
+    {
+      "name": "mail-flow-green",
+      "receiptPath": "work/mail-flow-green-2026-11-03T22-13-16-379Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/mission-mail-flow.test.ts tests/integration/mission-mail-database.test.ts",
+      "exit": 0,
+      "seconds": 15,
+      "logSha256": "61edde3a6877bf46e4c7e438600c5b5415444384913ea1f7760ab1944c56c947",
+      "head": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+      "changedPaths": 11,
+      "role": "passing",
+      "result": "37 passed (37) in 2 files: mission-mail-flow and mission-mail-database"
+    },
+    {
+      "name": "status-link-red2",
+      "receiptPath": "work/status-link-red2-2026-11-03T22-25-24-786Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/status-link.test.ts",
+      "exit": 1,
+      "seconds": 2.1,
+      "logSha256": "8cb29c6764e2a9a149f820367a7b76ad6fa2e293a7fb82717d824c78580640ee",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 1,
+      "role": "failing-before reproduction (gating)",
+      "result": "1 failed | 47 passed (48): the added test that the Room sign-in return is gated on the status-link switch only failed against 7d3bbe0 before the final gating edit"
+    },
+    {
+      "name": "status-link-green2",
+      "receiptPath": "work/status-link-green2-2026-11-03T22-25-33-780Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/status-link.test.ts",
+      "exit": 0,
+      "seconds": 1.9,
+      "logSha256": "7a2c8175f34f77d3ff8d783958edc810ba4ad4e51048fb42fa048c021c6c31c5",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "48 passed (48) after the gating edit and 17 added denial pins"
+    },
+    {
+      "name": "set2",
+      "receiptPath": "work/set2-2026-11-03T22-25-43-899Z.log.receipt.json",
+      "command": "pnpm exec vitest run tests/integration/status-link.test.ts tests/integration/ux-pulse.test.ts tests/integration/account-return.test.ts tests/integration/mission-mail.test.ts tests/integration/mission-mail-flow.test.ts tests/integration/miss",
+      "exit": 0,
+      "seconds": 17.7,
+      "logSha256": "19432f780d4dd0607faf5c05936f2d63b04752e66d535e55df5fb7435cc5f5e4",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "9 files, 282 passed (282): status-link, ux-pulse, account-return, mission-mail, mission-mail-flow and four more files named in the receipt command"
+    },
+    {
+      "name": "typecheck2",
+      "receiptPath": "work/typecheck2-2026-11-03T22-26-05-159Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 25.7,
+      "logSha256": "7324b34d40ef521c56918ecb6759b3e7230302f1fad5b55e8b5e06470726e010",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint2",
+      "receiptPath": "work/lint2-2026-11-03T22-26-30-897Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 51.5,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "exit 0"
+    },
+    {
+      "name": "format2",
+      "receiptPath": "work/format2-2026-11-03T22-27-22-397Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 48.3,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "exit 0"
+    },
+    {
+      "name": "docs3",
+      "receiptPath": "work/docs3-2026-11-03T22-28-31-105Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 18.1,
+      "logSha256": "2dce53f2acdc901649b657ccf638f0ddb584a93effa60a63a1b65b2c157d983b",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "pnpm test:docs: 70 passed, 0 failed"
+    },
+    {
+      "name": "build3",
+      "receiptPath": "work/build3-2026-11-03T22-28-53-250Z.log.receipt.json",
+      "command": "pnpm build",
+      "exit": 0,
+      "seconds": 22.2,
+      "logSha256": "528a6a8c0f0b217b6355e5b6a0d29959a71ff504e6fdf2996ea35788166abe69",
+      "head": "7d3bbe0f083fe33f8c4c278af2d5ef4315aca094",
+      "changedPaths": 2,
+      "role": "passing",
+      "result": "exit 0"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands (the gate runner may truncate long commands), exits, log hashes and the head each reports. The red and green receipts of the first test set report head 8d9ac67 (the unmodified merged tree plus working changes). The status-link-red2, status-link-green2, set2, typecheck2, lint2, format2, docs3 and build3 receipts report head 7d3bbe0 with 1 or 2 changed paths because they ran on the working tree before the gating edit was committed as b65cde5; the scribe checked that git diff 7d3bbe0 b65cde5 changes exactly two paths but did not hash-compare the working-tree content, so these receipts are consistent with b65cde5, not hash-proof of it. Earlier typecheck, lint, format, docs, build and unit receipts of the first pass also exist in work/ and are not listed as proof.",
+  "notRun": [
+    "pnpm test:ux was not run locally.",
+    "The full operator suite was not run locally; CI is the proof.",
+    "Frozen-head CI, CodeQL and the Codex review on PR 256 are pending and are not claimed.",
+    "Post-merge main CI run 41728230272 for 8d9ac67 was still in progress when recorded."
+  ],
+  "limits": [
+    "No production, signed-in, mailbox, provider or genuine customer acceptance is claimed for the Trip view or the status link; both are off by default and agents never enable them.",
+    "Deployment of 76d9d03 and 8d9ac67 to production is not verified from this environment.",
+    "Migration 0002 is not installed until the owner approves install run 41705868221.",
+    "GAP-034 and GAP-041 are not resolved. GAP-041's decision-card half (E3b) is not built; E2 (Trip Book and Supplier Book) is not built.",
+    "Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP/mailbox/production observation and native language review stay closed or owner-only."
+  ]
+}

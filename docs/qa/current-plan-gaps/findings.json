@@ -2791,18 +2791,24 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E",
-        "summary": "Batch E E1 builds the Trip view as a fourth Room lens over the existing reviewed itinerary, behind the default-off CORRIDRA_UX_TRIP switch (which needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES), in draft PR 255 at 18dff8c (unmerged). It adds no query, schema, export, price, offer or contact and shows only the schedule-changed notice when a schedule changed. Local receipts: Trip tests failed before the code (14 and 26 failures) and pass after (287 integration, 44 fixture browser, 60 real-configuration browser), plus types, lint, format, build, delivery (3) and docs (70). Frozen-head CI, CodeQL and the two independent review passes are pending; not merged, not deployed, never enabled by agents. The baseline statement that no consuming lens existed described 1 November main and is preserved in baseline and history.",
-        "evidenceRevision": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
+        "summary": "Batch E E1 built the Trip view as a fourth Room lens over the existing reviewed itinerary behind the default-off CORRIDRA_UX_TRIP switch (which needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES). PR 255 merged 3 November 2026 as 8d9ac67 (head 07eba90): all 19 checks completed without failure (18 success, CodeQL aggregate neutral; CI run 41723993619, CodeQL run 41723993557) and the Codex review of 07eba90 found nothing; two independent review passes and a delta re-review preceded it. It adds no query, schema, export, price, offer or contact and shows only the schedule-changed notice when a schedule changed. Post-merge main CI run 41728230272 was still in progress when recorded (CodeQL run 41728230199 succeeded): no success is claimed. Production deployment of 8d9ac67 is not verifiable from the recording environment; the switch is off and no signed-in or genuine acceptance is claimed. Recorded limits: about 0.1 screen margin at 390 for the longest realistic names, kanji tagged as zh because Japanese is not a supported language, and the 25 Trip words are English placeholders (D16 draft, no review claimed). The baseline statement that no consuming lens existed described 1 November main and is preserved in baseline and history.",
+        "evidenceRevision": "07eba90027304a06d0fb4fa2078cc002f0f60a5e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
-            "evidence": ["verification/2026-11-03-batch-e1-trip-view.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-e1-trip-view.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-batch-e1-trip-view.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-e1-trip-view.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -2825,7 +2831,7 @@
         "prerequisites": [
           "New explicit owner scope/approval before reopening; retain the original boundary.",
           "ADR076 Trip view accepted on 3 November 2026 under the owner direction to take over Batch E and ADR-076; enabling CORRIDRA_UX_TRIP stays an owner action.",
-          "PR 255 needs green exact-head CI and CodeQL, two independent review passes and the owner merge command; automatic deployment must then be verified; activation and genuine user acceptance remain separate."
+          "PR 255 is merged (8d9ac67); post-merge main CI run 41728230272 must complete, automatic deployment must be verified from an environment that can see the Corridra project, and activation and genuine signed-in user acceptance remain separate owner steps."
         ],
         "closureEvidence": []
       },
@@ -2845,6 +2851,14 @@
           "evidenceRevision": "18dff8c31e572d83dfd3b4037eb9da8e635467a4",
           "disposition": "OPEN",
           "note": "Owner directed the conductor to take over Batch E and ADR-076; ADR076 accepted the Trip view (commit 617a692). The Trip lens was built behind default-off CORRIDRA_UX_TRIP in draft PR 255 (commits 15fd4ab tests first, 27edfd6 lens, 18dff8c draft words and ui-direction note). Local receipts only: types, lint, format, build, delivery and docs checks, 287 integration and 44 fixture plus 60 real-configuration browser tests passed; failing-before runs kept. Frozen-head CI/CodeQL and the two independent reviews are pending, the PR is unmerged and nothing is deployed or activated. Deployment and activation remain UNKNOWN; verification stays PARTIAL. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e1-trip-view.json."
+        },
+        {
+          "eventId": "GAP-034-H003",
+          "recordedOn": "2026-11-03",
+          "type": "MERGED_RELEASE_PENDING",
+          "evidenceRevision": "07eba90027304a06d0fb4fa2078cc002f0f60a5e",
+          "disposition": "OPEN",
+          "note": "PR 255 merged as squash 8d9ac67 (head 07eba90) after 19 checks completed without failure (18 success, CodeQL aggregate neutral) and a Codex review with no findings, preceded by two independent review passes and a delta re-review; should-fix items (scroll budget, card gap, lang on Han text and the English lens word, date styling) were fixed. Two CI failures in the PR's own new tests (keyboard race on 1991da1, measure-before-render race on 3cc7fa8) were root-caused with a deliberately slow mocked report and fixed in 07eba90 by waiting on exact rendered state. Post-merge main CI 41728230272 was in progress when recorded. Implementation stays IMPLEMENTED behind a default-off switch; verification stays PARTIAL (exact-head CI passed on the merged build; live and signed-in acceptance absent); deployment stays UNKNOWN (not verifiable here); activation UNKNOWN and off; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
@@ -2981,8 +2995,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
-        "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -2999,7 +3013,8 @@
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
             ]
           },
           "deployment": {
@@ -3026,7 +3041,7 @@
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
           "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
-          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
+          "PR254 is merged (76d9d03). Migration 0002 reaches production only when the owner approves protected install run 41705868221 (expected log 1 applied before, 2 applied after); deployment of 76d9d03 must be verified from an environment that can see the Corridra project; activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3062,6 +3077,14 @@
           "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
           "disposition": "OPEN",
           "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
+        },
+        {
+          "eventId": "GAP-037-H005",
+          "recordedOn": "2026-11-03",
+          "type": "REPAIRS_MERGED_INSTALL_PENDING",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
@@ -3078,8 +3101,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
-        "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3096,7 +3119,8 @@
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
             ]
           },
           "deployment": {
@@ -3123,7 +3147,7 @@
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
           "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
-          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
+          "PR254 is merged (76d9d03). Migration 0002 reaches production only when the owner approves protected install run 41705868221 (expected log 1 applied before, 2 applied after); deployment of 76d9d03 must be verified from an environment that can see the Corridra project; activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3159,6 +3183,14 @@
           "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
           "disposition": "OPEN",
           "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
+        },
+        {
+          "eventId": "GAP-038-H005",
+          "recordedOn": "2026-11-03",
+          "type": "REPAIRS_MERGED_INSTALL_PENDING",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
@@ -3175,8 +3207,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
-        "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3193,7 +3225,8 @@
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
             ]
           },
           "deployment": {
@@ -3220,7 +3253,7 @@
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
           "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
-          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
+          "PR254 is merged (76d9d03). Migration 0002 reaches production only when the owner approves protected install run 41705868221 (expected log 1 applied before, 2 applied after); deployment of 76d9d03 must be verified from an environment that can see the Corridra project; activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3256,6 +3289,14 @@
           "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
           "disposition": "OPEN",
           "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
+        },
+        {
+          "eventId": "GAP-039-H005",
+          "recordedOn": "2026-11-03",
+          "type": "REPAIRS_MERGED_INSTALL_PENDING",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
@@ -3332,18 +3373,21 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E_PARTIAL",
-        "summary": "ADR076 (3 November 2026, commit 617a692) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. The decision card (CORRIDRA_SHARE_CARD) stays PROPOSED and unapproved. Nothing for this finding is built: E3a (the signed-in status link) is planned next in a separate PR; E3b (decision card) needs migration, installer and owner acceptance of its field map. The baseline statement that planned settings were reserved is preserved in baseline and history.",
-        "evidenceRevision": "617a692aa24fb9bc86558fdb88c0defa20264c27",
+        "summary": "ADR076 (3 November 2026) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. Half of this finding, the status link (E3a), is built in draft PR 256 (local head b65cde5; the remote head was 7d3bbe0 when recorded): the first request email opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>; the link grants no authority; a signed-out visitor returns through the ADR067 exact-path allowlist, which also applies when the status-link switch is on. No migration, table or installer run; mail words, recipient, transport and idempotency key are unchanged. Local receipts only (status-link tests 48/48 after a failing-before run, 282/282 across 9 related files, typecheck, lint, format, docs 70 and build exit 0); frozen-head CI, CodeQL and the Codex review are pending and not claimed. PR 256 is unmerged, nothing is deployed or activated. The decision card (CORRIDRA_SHARE_CARD, E3b) is not built and stays PROPOSED. The baseline statement that planned settings were reserved is preserved in baseline and history.",
+        "evidenceRevision": "b65cde5e1e59fa538b458c3fcfa12c322dc68dff",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-041"]
+            "state": "PARTIAL",
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-041",
+              "verification/2026-11-03-batch-e3a-status-link.json"
+            ]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-batch-e3a-status-link.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -3365,7 +3409,7 @@
         "closureAcceptance": "Obtain approved decision-card/status-link disclosure contracts and prove scope, expiry, revocation and recipient access.",
         "prerequisites": [
           "New explicit owner scope/approval before reopening; retain the original boundary.",
-          "Signed-in emailed status link accepted in ADR076 item 5; build it in its own PR (E3a) with the switch default off.",
+          "Signed-in emailed status link accepted in ADR076 item 5 and built in draft PR 256 (E3a) with the switch default off; it needs green exact-head CI and CodeQL, a clean Codex review and the owner merge command, then verified deployment. Enabling CORRIDRA_STATUS_LINK stays an owner action.",
           "Decision card remains PROPOSED: the owner must accept its field map and expiry before E3b; it also needs a migration and the protected installer."
         ],
         "closureEvidence": []
@@ -3386,6 +3430,14 @@
           "evidenceRevision": "617a692aa24fb9bc86558fdb88c0defa20264c27",
           "disposition": "OPEN",
           "note": "ADR076 accepted the signed-in emailed status link (item 5) and kept the decision card proposed; ADR058 is narrowed by one line. Approval is PARTIAL because only the status link part is accepted. Implementation stays MISSING and nothing is verified, deployed or activated. This is a scope change from OWNER_DEPENDENT to OPEN for the accepted part only; the decision card remains an owner decision. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e1-trip-view.json and ../../adr/0076-trip-books-and-decision-sharing.md."
+        },
+        {
+          "eventId": "GAP-041-H003",
+          "recordedOn": "2026-11-03",
+          "type": "STATUS_LINK_HALF_IMPLEMENTED_PR_OPEN",
+          "evidenceRevision": "b65cde5e1e59fa538b458c3fcfa12c322dc68dff",
+          "disposition": "OPEN",
+          "note": "E3a (the signed-in status link) is implemented in draft PR 256 (commits 5861847 tests first and flag, 7d3bbe0 wiring, b65cde5 Room sign-in return gated on the status-link switch only). Implementation moves from MISSING to PARTIAL because only the status-link half exists; the decision card (E3b) is not built. Verification is PARTIAL on local receipts only (status-link red 21 failed | 10 passed then green 31/31; flow red 2 failed | 13 passed then mail-flow 37/37; gating red 1 failed | 47 passed then green 48/48; 9 files 282/282; typecheck, lint, format, docs 70, build exit 0); the PR is unmerged and frozen-head CI, CodeQL and the Codex review are pending. Side effect tested: with the status link on and Pulse off, /account/move and /account/notifications also become valid next= targets (navigation only; each page re-checks its own switch and sign-in). Not deployed, not activated, nothing RESOLVED; both halves default off. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
@@ -3402,8 +3454,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
-        "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3420,7 +3472,8 @@
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-03-batch-e3a-status-link.json"
             ]
           },
           "deployment": {
@@ -3447,7 +3500,7 @@
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
           "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
-          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
+          "PR254 is merged (76d9d03). Migration 0002 reaches production only when the owner approves protected install run 41705868221 (expected log 1 applied before, 2 applied after); deployment of 76d9d03 must be verified from an environment that can see the Corridra project; activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3483,6 +3536,14 @@
           "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
           "disposition": "OPEN",
           "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
+        },
+        {
+          "eventId": "GAP-042-H005",
+          "recordedOn": "2026-11-03",
+          "type": "REPAIRS_MERGED_INSTALL_PENDING",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },
