@@ -1483,8 +1483,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Isolated assignment producer restored atop released016. All7 source hashes match the focused16-case DB/inventory proof; original product sources and type/lint receipts remain unchanged. Frozen CI/deployment and protected0007 installation pending. No genuine provider delivery claim.",
-        "evidenceRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
+        "summary": "PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation.",
+        "evidenceRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -1497,8 +1497,8 @@
             "evidence": ["verification/2026-11-03-gap017-local.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap017-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1545,6 +1545,15 @@
           "disposition": "OPEN",
           "note": "Isolated assignment producer restored atop released016. All7 source hashes match the focused16-case DB/inventory proof; original product sources and type/lint receipts remain unchanged. Frozen CI/deployment and protected0007 installation pending. No genuine provider delivery claim.",
           "evidence": ["verification/2026-11-03-gap017-local.json"]
+        },
+        {
+          "eventId": "GAP-017-H004",
+          "recordedOn": "2026-11-03",
+          "type": "DEPLOYED",
+          "evidenceRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
+          "disposition": "OPEN",
+          "note": "PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation.",
+          "evidence": ["verification/2026-11-03-gap017-release.json"]
         }
       ]
     },
@@ -1561,18 +1570,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
-        "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+        "summary": "All6 isolated quote source hashes match the complete40-case DB proof, preserving assignment notices and inventory0006–0008. The initial37-case incomplete extraction is explicitly limited. Canonical SQL selects the customer; optional notice failure preserves the quote. Frozen CI/deployment and protected0008 installation pending; genuine provider delivery unverified.",
+        "evidenceRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+            "evidence": ["verification/2026-11-03-gap018-isolated-local.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+            "evidence": ["verification/2026-11-03-gap018-isolated-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1623,6 +1632,15 @@
           "disposition": "OPEN",
           "note": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
           "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
+        },
+        {
+          "eventId": "GAP-018-H004",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
+          "disposition": "OPEN",
+          "note": "All6 isolated quote source hashes match the complete40-case DB proof, preserving assignment notices and inventory0006–0008. The initial37-case incomplete extraction is explicitly limited. Canonical SQL selects the customer; optional notice failure preserves the quote. Frozen CI/deployment and protected0008 installation pending; genuine provider delivery unverified.",
+          "evidence": ["verification/2026-11-03-gap018-isolated-local.json"]
         }
       ]
     },

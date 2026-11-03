@@ -527,7 +527,21 @@ function createServices() {
       readCustomerSession,
     ),
     staffOrganisationLinks: new StaffOrganisationLinkService(runtimePool),
-    customerServiceStaff: new CustomerServiceStaffService(runtimePool),
+    customerServiceStaff: new CustomerServiceStaffService(
+      runtimePool,
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? async (db, commandId) => {
+            const receipt = await inbox.recordQuoteSent(db, commandId);
+            return async () => {
+              const { notifyRecorded } = await import('./notify');
+              return notifyRecorded(
+                { ...receipt, recipientKind: 'customer', type: 'QUOTE_SENT', locale: 'en' },
+                receipt.id,
+              );
+            };
+          }
+        : undefined,
+    ),
     customerBillingStaff: new CustomerBillingStaffService(runtimePool, () =>
       customerRealBillingEnabled(),
     ),

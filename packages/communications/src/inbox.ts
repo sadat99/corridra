@@ -74,6 +74,13 @@ export class InboxService {
     return result.rows[0].receipt;
   }
 
+  async recordQuoteSent(db: DatabaseClient, commandId: string): Promise<RecordedNotification> {
+    const result = await db.query('SELECT app.record_quote_sent($1) receipt', [
+      z.uuid().parse(commandId),
+    ]);
+    return result.rows[0].receipt;
+  }
+
   async recordQuoteAccepted(db: DatabaseClient, commandId: string): Promise<RecordedNotification> {
     const result = await db.query('SELECT customer.record_quote_accepted($1) receipt', [
       z.uuid().parse(commandId),
