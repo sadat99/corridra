@@ -2540,3 +2540,9 @@ GAP016 appends owner/tenant/target/reference attribution through restricted SQL0
 PR247 passed19 exact-head checks at33d5b41, merged asa93d467 and reached READY alias deployment dpl_HMW4nKdcRiux8PMXY17rPkaJx4uJ. Owner identity and zero branch binding verified; completed branch retired. SQL0006 is not installed, so attribution remains OPEN.
 
 GAP017 retains assignment semantics and adds a restricted event-derived notice recorder. Seven isolated source hashes match16 focused DB cases including inventory0006–0007; original types/lint proof retained.18 extraction now includes all6 source files and40 passing focused cases; its earlier37-case incomplete-extraction result is explicitly limited.19 matches all15 hashes and logs of62-case/full-type/lint proof;20 matches original85 checks/16 browser/lint. Latest stashes and minimal patches are in the ledger. No duplicate broader test runs or provider calls were needed.
+
+### 3 November 2026: GAP-017 code released; GAP-018 next
+
+PR248 passed19 exact-head checks at93d8edf and reached the exact READY production alias at2dd274f. Actual assignment/inbox and deduplication proof is recorded. GAP017 stays OPEN pending protected0007 installation. Exact production alias READY at dpl_6QoEfX1cciXeQMmQ3MsgA6oxDHBp, merge 2dd274f7d5c83865d78c6e751b1f4762e12ed9cb; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
+
+All6 isolated quote source hashes match the complete40-case DB proof, preserving assignment notices and inventory0006–0008. The initial37-case incomplete extraction is explicitly limited. Canonical SQL selects the customer; optional notice failure preserves the quote. Frozen CI/deployment and protected0008 installation pending; genuine provider delivery unverified.

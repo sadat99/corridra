@@ -6,7 +6,12 @@ import {
   validateArrangementFees,
 } from '@corridra/domain/commercial-arrangements';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  withTenant,
+  type DatabaseClient,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 
 const control = /[\u0000-\u001f\u007f]/u;
 const synthetic = (max: number) =>
@@ -102,7 +107,24 @@ export const staffListQuery = z
 // Staff side of paid-service requests. Authority is the existing protected staff authority (owner or admin with a
 // fresh authenticator check in an operator workspace); the database repeats the check on the live session.
 export class CustomerServiceStaffService {
-  constructor(private pool: DatabasePool) {}
+  constructor(
+    private pool: DatabasePool,
+    private quoted?: (db: DatabaseClient, commandId: string) => Promise<() => Promise<unknown>>,
+  ) {}
+  private async recordQuoted(db: DatabaseClient, commandId: string) {
+    if (!this.quoted) return undefined;
+    await db.query('SAVEPOINT quote_sent');
+    try {
+      const dispatch = await this.quoted(db, commandId);
+      await db.query('RELEASE SAVEPOINT quote_sent');
+      return dispatch;
+    } catch {
+      await db.query('ROLLBACK TO SAVEPOINT quote_sent');
+      await db.query('RELEASE SAVEPOINT quote_sent');
+      console.error(JSON.stringify({ event: 'quote_sent_notification_failed' }));
+      return undefined;
+    }
+  }
   async list(ctx: RequestContext, input: unknown = {}) {
     const q = staffListQuery.parse(input);
     return withTenant(
@@ -138,7 +160,8 @@ export class CustomerServiceStaffService {
   }
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = staffServiceCommandInput.parse(input);
-    return withTenant(this.pool, ctx, 'delivery.share', async ({ db }) => {
+    let dispatch: (() => Promise<unknown>) | undefined;
+    const result = await withTenant(this.pool, ctx, 'delivery.share', async ({ db }) => {
       if (action === 'quote') {
         const {
           commercialArrangement: terms,
@@ -156,8 +179,8 @@ export class CustomerServiceStaffService {
             "SELECT to_regprocedure('app.service_request_arrangement_quote(uuid,jsonb,jsonb,jsonb)') IS NOT NULL installed",
           )
         ).rows[0].installed;
-        if (installed)
-          return (
+        if (installed) {
+          const quoted = (
             await db.query('SELECT app.service_request_arrangement_quote($1,$2,$3,$4) result', [
               commandId,
               JSON.stringify(quote),
@@ -165,18 +188,23 @@ export class CustomerServiceStaffService {
               internalEconomics ? JSON.stringify(internalEconomics) : null,
             ])
           ).rows[0].result;
+          dispatch = await this.recordQuoted(db, commandId);
+          return quoted;
+        }
         if (terms)
           throw new DomainError(
             'Commercial arrangements are unavailable until the protected module is installed',
             503,
           );
-        return (
+        const quoted = (
           await db.query('SELECT app.service_request_staff_command($1,$2,$3) result', [
             commandId,
             action,
             JSON.stringify(quote),
           ])
         ).rows[0].result;
+        dispatch = await this.recordQuoted(db, commandId);
+        return quoted;
       }
       return (
         await db.query('SELECT app.service_request_staff_command($1,$2,$3) result', [
@@ -186,6 +214,12 @@ export class CustomerServiceStaffService {
         ])
       ).rows[0].result;
     });
+    try {
+      await dispatch?.();
+    } catch {
+      console.error(JSON.stringify({ event: 'quote_sent_email_failed' }));
+    }
+    return result;
   }
   async catalogue(ctx: RequestContext) {
     return withTenant(

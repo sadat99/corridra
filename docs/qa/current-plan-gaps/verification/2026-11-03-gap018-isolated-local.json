@@ -1,0 +1,67 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-018",
+  "baseRevision": "33d5b41e96bb2f195ac3219667aca833126245bb",
+  "preparedPredecessor": "cd953f874ea6e55a153c9d6bb8b5fc5f97841dd7",
+  "sourceFiles": [
+    {
+      "path": "apps/web/lib/foundations.ts",
+      "sha256": "50e765875e06110b0a59947c050c7ebfbf87993f9f75ed598f90132b75591926"
+    },
+    {
+      "path": "packages/communications/src/inbox.ts",
+      "sha256": "0ed96f60efe231ff27c5d9f205fa6694cfd96fb50ca2bb315a16ab853aa9bd26"
+    },
+    {
+      "path": "packages/delivery/src/customer-service-staff.ts",
+      "sha256": "44ba8b6995bd94e220514dbed8d0f89858a746be6ddd9ee32e4b3281493c3e10"
+    },
+    {
+      "path": "tests/integration/customer-service-requests.test.ts",
+      "sha256": "86fb22d7f0fc5b2cc05428c1dc5493ed0ded638d3f7baf40f888ad1d69f5bbc6"
+    },
+    {
+      "path": "tests/integration/commercial-readiness-database.test.ts",
+      "sha256": "17e4777d37fe5aee472358e9af461867371a1948812c426203302a7d3188510b"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0008_quote_sent_notification.sql",
+      "sha256": "ae60f672d0a83ee9c91a3c4d22d8f6e55c9e2645236d0bd4a06ebdba1ab53e17"
+    }
+  ],
+  "receipts": {
+    "incompleteExtraction": {
+      "name": "gap018-isolated-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-service-requests.test.ts tests/integration/real-network-work.test.ts tests/integration/commercial-readiness-database.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 23.8,
+      "logBytes": 170,
+      "logSha256": "228c97852fa88cef515803fc03d61b97f6ec72dd68d4c78d6e33725cd0a0bb5e",
+      "head": "33d5b41e96bb2f195ac3219667aca833126245bb",
+      "changedPaths": 9,
+      "log": "work/gap018-isolated-db-2026-11-03T07-53-02-308Z.log"
+    },
+    "completeExtraction": {
+      "name": "gap018-complete-isolated-db",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/customer-service-requests.test.ts tests/integration/real-network-work.test.ts tests/integration/commercial-readiness-database.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 23.1,
+      "logBytes": 170,
+      "logSha256": "fd927672426a8abce8b21ecc4ef4f70a743aaac6bdb2a9507100b245cda63216",
+      "head": "33d5b41e96bb2f195ac3219667aca833126245bb",
+      "changedPaths": 11,
+      "log": "work/gap018-complete-isolated-db-2026-11-03T07-53-48-899Z.log"
+    }
+  },
+  "verification": {
+    "completeSourceDatabaseCasesPassed": 40,
+    "migrationInventoryIncludes0006Through0008": true
+  },
+  "limits": [
+    "The initial37-case result omitted the quote service/test delta and does not establish the fix. All six source files were then verified in the final40-case run.",
+    "Prepared assignment and quote paths are isolated; frozen-head full CI/CodeQL and protected0008 installation remain.",
+    "Synthetic identities and substituted transport only; genuine provider delivery unverified."
+  ]
+}

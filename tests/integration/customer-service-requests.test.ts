@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, expect, test } from 'vitest';
+import { beforeAll, afterAll, expect, test, vi } from 'vitest';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { accessFixture, future } from './access-fixture';
 import { rawContext } from './support';
@@ -30,6 +30,7 @@ import {
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { InboxService } from '../../packages/communications/src/inbox';
+import { CustomerInboxService } from '../../apps/web/lib/customer-inbox';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 
 // Invented provider-session fixtures exercise the real restricted SQL logins and the real staff session rows.
@@ -1110,6 +1111,156 @@ test('acceptance needs the whole quote to have been shown, the exact version and
     )
   ).rows.map((x) => x.relname);
   expect(objects.some((n) => /payment|invoice|charge|subscription|refund/.test(n))).toBe(false);
+});
+
+test('GAP-018 actual quote command notifies its customer once per quote across retries and revisions', async () => {
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
+  const dispatched: string[] = [];
+  const notified = new CustomerServiceStaffService(f.runtime, async (db, commandId) => {
+    const receipt = await inbox.recordQuoteSent(db, commandId);
+    expect(receipt).not.toHaveProperty('recipientEmail');
+    return async () => {
+      expect(
+        (await f.owner.query('SELECT id FROM app.inbox_notification WHERE id=$1', [receipt.id]))
+          .rowCount,
+      ).toBe(1);
+      dispatched.push(receipt.id);
+    };
+  });
+  const r = await create();
+  const command = {
+    action: 'quote',
+    commandId: randomUUID(),
+    requestId: r.id,
+    expectedSeq: await seq(r.id),
+    ...quoteBody(),
+  };
+  const results = await Promise.all([
+    notified.command(staffCtx(), command),
+    notified.command(staffCtx(), command),
+  ]);
+  expect(results[0]).toEqual(results[1]);
+  await notified.command(staffCtx(), command);
+  expect(dispatched).toHaveLength(3);
+  expect(new Set(dispatched).size).toBe(1);
+  const customerInbox = (person: string) =>
+    new CustomerInboxService(f.runtime, f.auth, options, async () => session(person), inbox);
+  const first = (await customerInbox('alice').list()).find((item) => item.id === dispatched[0]);
+  expect(first).toMatchObject({
+    type: 'QUOTE_SENT',
+    payload: {
+      title: 'You have a new quote',
+      href: '/account/service-requests/' + workspaceId + '/' + r.id,
+    },
+  });
+  expect((await customerInbox('bob').list()).some((item) => item.id === dispatched[0])).toBe(false);
+  expect((await customerInbox('dave').list()).some((item) => item.id === dispatched[0])).toBe(
+    false,
+  );
+  expect(JSON.stringify(first)).not.toContain('amountMinor');
+  expect(JSON.stringify(first)).not.toContain(command.scope);
+  await expect(
+    rawContext(f.runtime, otherStaffCtx(), 'SELECT app.record_quote_sent($1)', [command.commandId]),
+  ).rejects.toThrow();
+  await expect(
+    f.auth.query('SELECT app.record_quote_sent($1)', [command.commandId]),
+  ).rejects.toMatchObject({ code: '42501' });
+  await notified.command(staffCtx(), {
+    ...command,
+    commandId: randomUUID(),
+    expectedSeq: await seq(r.id),
+  });
+  const rows = (
+    await f.owner.query(
+      "SELECT id FROM app.inbox_notification WHERE type='QUOTE_SENT' AND payload->>'href'=$1",
+      ['/account/service-requests/' + workspaceId + '/' + r.id],
+    )
+  ).rows;
+  expect(rows).toHaveLength(2);
+  expect(new Set(dispatched).size).toBe(2);
+});
+
+test('GAP-018 missing notification schema or transport does not lose a committed quote', async () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const r = await create();
+  const dispatch = vi.fn();
+  try {
+    const missing = new CustomerServiceStaffService(f.runtime, async (db) => {
+      await db.query('SELECT gap018_missing_notification_function()');
+      return dispatch;
+    });
+    await missing.command(staffCtx(), {
+      action: 'quote',
+      commandId: randomUUID(),
+      requestId: r.id,
+      expectedSeq: await seq(r.id),
+      ...quoteBody(),
+    });
+    expect((await view(r.id)).request.status).toBe('quoted');
+    expect(dispatch).not.toHaveBeenCalled();
+    const failed = new CustomerServiceStaffService(f.runtime, async (db, commandId) => {
+      await new InboxService(f.runtime).recordQuoteSent(db, commandId);
+      return async () => {
+        throw new Error('Local transport unavailable');
+      };
+    });
+    await failed.command(staffCtx(), {
+      action: 'quote',
+      commandId: randomUUID(),
+      requestId: r.id,
+      expectedSeq: await seq(r.id),
+      ...quoteBody(),
+    });
+    expect((await view(r.id)).request.status).toBe('quoted');
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: 'quote_sent_notification_failed' }));
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: 'quote_sent_email_failed' }));
+  } finally {
+    log.mockRestore();
+  }
+});
+
+test('GAP-018 failed quote commit leaves neither receipt nor transport dispatch', async () => {
+  const r = await create();
+  const dispatch = vi.fn();
+  const notified = new CustomerServiceStaffService(f.runtime, async (db, commandId) => {
+    await new InboxService(f.runtime).recordQuoteSent(db, commandId);
+    return dispatch;
+  });
+  await f.owner
+    .query(`CREATE FUNCTION customer_private.test_quote_commit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced quote commit failure'; END $$;
+    CREATE CONSTRAINT TRIGGER test_quote_commit AFTER INSERT ON customer_private.service_quote DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION customer_private.test_quote_commit()`);
+  try {
+    await expect(
+      notified.command(staffCtx(), {
+        action: 'quote',
+        commandId: randomUUID(),
+        requestId: r.id,
+        expectedSeq: await seq(r.id),
+        ...quoteBody(),
+      }),
+    ).rejects.toThrow('forced quote commit failure');
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(
+      (
+        await f.owner.query('SELECT id FROM customer_private.service_quote WHERE request_id=$1', [
+          r.id,
+        ])
+      ).rowCount,
+    ).toBe(0);
+    expect(
+      (
+        await f.owner.query(
+          "SELECT id FROM app.inbox_notification WHERE type='QUOTE_SENT' AND payload->>'href'=$1",
+          ['/account/service-requests/' + workspaceId + '/' + r.id],
+        )
+      ).rowCount,
+    ).toBe(0);
+  } finally {
+    await f.owner.query(
+      'DROP TRIGGER test_quote_commit ON customer_private.service_quote; DROP FUNCTION customer_private.test_quote_commit()',
+    );
+  }
 });
 
 test('accepted quote hand-off resolves its active request owner across staff quote revisions, deduplicates retries and dispatches after commit', async () => {

@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-017",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/248",
+  "testedHead": "93d8edf43c896a6b00bf7c60e82ce52cf9ca1f65",
+  "ciRun": 41602867746,
+  "codeqlRun": 41602867719,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
+  "productionDeployment": {
+    "id": "dpl_6QoEfX1cciXeQMmQ3MsgA6oxDHBp",
+    "state": "READY",
+    "githubCommitSha": "2dd274f7d5c83865d78c6e751b1f4762e12ed9cb",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap017-local.json"],
+  "limits": [
+    "Protected commercial0007 was not installed at this release; notification recording remains unavailable until installation.",
+    "Actual synthetic assignment/inbox proof is recorded; genuine provider delivery is unverified."
+  ]
+}
