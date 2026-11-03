@@ -31,6 +31,11 @@ export const tripKeys = [
   'room.trip.status.rescheduleRequired',
 ] as const satisfies readonly MessageKey[];
 
+/** The language mark for a name or place inside the English region: Chinese text is read as Chinese. */
+export function hanLang(text: string): 'zh' | undefined {
+  return /\p{Script=Han}/u.test(text) ? 'zh' : undefined;
+}
+
 /** How many meetings show before "Show all": the scroll budget of a report page (ui-direction.md). */
 export const tripFirstShown = 5;
 

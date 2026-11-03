@@ -147,7 +147,12 @@ export function RoomView({
                   aria-pressed={lens === item}
                   onClick={() => setLens(item)}
                 >
-                  {say(lensKey[item])}
+                  {item === 'trip' && locale !== 'en' ? (
+                    // An English placeholder until native review (D16), marked so it is read as English.
+                    <span lang="en">{say(lensKey[item])}</span>
+                  ) : (
+                    say(lensKey[item])
+                  )}
                 </button>
               ))}
             </div>

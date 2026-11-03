@@ -7,6 +7,7 @@ import { fill } from '../../../../lib/i18n/fill';
 import { localeMeta, type Locale } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import {
+  hanLang,
   isChangedMeeting,
   orderTrip,
   tripFirstShown,
@@ -68,11 +69,14 @@ export function TripList({
           <ol className="room-trip-list" aria-labelledby={headingId}>
             {shown.map((item, index) => {
               const changed = isChangedMeeting(item);
+              const place = item.location ?? say('room.trip.noPlace');
               const known = meetingStatus.safeParse(item.status);
               return (
                 <li key={index} className="room-strip">
                   <div className="room-trip-head">
-                    <h4 dir="auto">{item.label}</h4>
+                    <h4 dir="auto" lang={hanLang(item.label)}>
+                      {item.label}
+                    </h4>
                     {changed ? (
                       <StatusBadge tone="caution">{say('room.trip.changedBadge')}</StatusBadge>
                     ) : known.success ? (
@@ -103,7 +107,9 @@ export function TripList({
                         )}
                         <div>
                           <dt>{say('room.trip.place')}</dt>
-                          <dd dir="auto">{item.location ?? say('room.trip.noPlace')}</dd>
+                          <dd dir="auto" lang={hanLang(place)}>
+                            {place}
+                          </dd>
                         </div>
                       </dl>
                     </>
