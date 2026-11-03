@@ -97,3 +97,5 @@ ADR073: [Commercial arrangements on service quotes](0073-commercial-arrangements
 ADR074: [Each translated page has its own release](0074-per-page-language-release.md), accepted 30 October 2026 as the amendment of ADR-066 for the request form's words: `/plan` gets its own release, `CORRIDRA_LANGUAGES_FORM`, unset (off) by default and independent of the home-page `CORRIDRA_LANGUAGES_PAGES`; each language's form words are fetched after load, and the static host seeing that fetch is an owner-accepted exception to ADR-066 for those files only. The switch stays unset until the privacy notice change, the form-words review per language and the owner's setting and redeploy.
 
 ADR075: [Programme projections and consented meeting counts](0075-programme-projections-and-consented-meeting-counts.md), accepted Batch D contract, 3 November; consented company and aggregate meeting disclosure, operational readiness and attendee/time conflict rules.
+
+ADR076: [Trip view, scoped books and decision sharing](0076-trip-books-and-decision-sharing.md), Batch E; existing-data Trip view authorized, minimal export/share defaults proposed for owner acceptance.
