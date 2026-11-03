@@ -22,6 +22,7 @@ export const projectionCommand = z.discriminatedUnion('action', [
       action: z.literal('company'),
       registrationId: z.uuid(),
       shared: z.boolean(),
+      profileId: z.uuid().optional(),
       profileVersion: z.number().int().positive().optional(),
       objective: z
         .string()
@@ -34,7 +35,9 @@ export const projectionCommand = z.discriminatedUnion('action', [
     })
     .strict()
     .refine(
-      (v) => !v.shared || (v.profileVersion !== undefined && v.objective !== undefined),
+      (v) =>
+        !v.shared ||
+        (v.profileId !== undefined && v.profileVersion !== undefined && v.objective !== undefined),
       'Review and confirm the company fields',
     ),
   z
@@ -128,6 +131,7 @@ export type OwnProgrammeProjection = {
   sendsMessages: false;
   company: { version: number; shared: boolean; objective: string | null };
   profile: {
+    id: string;
     version: number;
     name: string;
     countryCode: string;

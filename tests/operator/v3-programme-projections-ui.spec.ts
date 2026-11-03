@@ -164,6 +164,7 @@ function own() {
     active: true,
     company: { version: 0, shared: false, objective: null },
     profile: {
+      id: '00000000-0000-4000-8000-000000000009',
       version: 2,
       name: 'Synthetic company',
       countryCode: 'BD',
@@ -349,7 +350,16 @@ test('refreshed company profile requires consent to the newly displayed version'
 }) => {
   let version = 2;
   await page.route('**/api/customer-programme-projections**', (r) =>
-    r.fulfill({ json: { ...own(), profile: { ...own().profile, version } } }),
+    r.fulfill({
+      json: {
+        ...own(),
+        profile: {
+          ...own().profile,
+          version,
+          id: version === 2 ? own().profile.id : '00000000-0000-4000-8000-000000000010',
+        },
+      },
+    }),
   );
   await page.goto(origin + '/?view=own');
   await page.getByRole('checkbox', { name: /I agree to share/ }).check();
@@ -357,6 +367,24 @@ test('refreshed company profile requires consent to the newly displayed version'
     page.getByRole('button', { name: 'Share company profile', exact: true }),
   ).toBeEnabled();
   version = 3;
+  await page.getByRole('button', { name: 'Refresh sharing', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: /I agree to share/ })).not.toBeChecked();
+  await expect(
+    page.getByRole('button', { name: 'Share company profile', exact: true }),
+  ).toBeDisabled();
+});
+
+test('another company with the same version also requires fresh consent', async ({ page }) => {
+  let id = own().profile.id;
+  await page.route('**/api/customer-programme-projections**', (r) =>
+    r.fulfill({ json: { ...own(), profile: { ...own().profile, id } } }),
+  );
+  await page.goto(origin + '/?view=own');
+  await page.getByRole('checkbox', { name: /I agree to share/ }).check();
+  await expect(
+    page.getByRole('button', { name: 'Share company profile', exact: true }),
+  ).toBeEnabled();
+  id = '00000000-0000-4000-8000-000000000010';
   await page.getByRole('button', { name: 'Refresh sharing', exact: true }).click();
   await expect(page.getByRole('checkbox', { name: /I agree to share/ })).not.toBeChecked();
   await expect(

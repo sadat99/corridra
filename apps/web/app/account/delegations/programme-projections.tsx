@@ -517,7 +517,7 @@ export function ParticipantProjectionSharing(props: Identity & { registrationId:
 }
 function OwnSharing(props: Identity & { registrationId: string }) {
   const [objective, setObjective] = useState(''),
-    [consentVersion, setConsentVersion] = useState<number | null>(null),
+    [consentProfileId, setConsentProfileId] = useState<string | null>(null),
     [after, setAfter] = useState<string | undefined>();
   const { host, ...view } = useProjection<OwnProgrammeProjection>(props, {
       view: 'own',
@@ -550,18 +550,19 @@ function OwnSharing(props: Identity & { registrationId: string }) {
               className="operator-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!d.profile || consentVersion !== d.profile.version) return;
+                if (!d.profile || consentProfileId !== d.profile.id) return;
                 void view
                   .send({
                     action: 'company',
                     registrationId: props.registrationId,
                     expectedVersion: d.company.version,
                     shared: true,
+                    profileId: d.profile.id,
                     profileVersion: d.profile.version,
                     objective,
                   })
                   .then((ok) => {
-                    if (ok) setConsentVersion(null);
+                    if (ok) setConsentProfileId(null);
                   });
               }}
             >
@@ -590,14 +591,14 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                 <input
                   type="checkbox"
                   required
-                  checked={consentVersion === d.profile.version}
+                  checked={consentProfileId === d.profile.id}
                   disabled={view.busy}
-                  onChange={(e) => setConsentVersion(e.target.checked ? d.profile!.version : null)}
+                  onChange={(e) => setConsentProfileId(e.target.checked ? d.profile!.id : null)}
                 />
                 I agree to share these company fields and this objective with the programme owner
                 and admins.
               </label>
-              <button type="submit" disabled={view.busy || consentVersion !== d.profile.version}>
+              <button type="submit" disabled={view.busy || consentProfileId !== d.profile.id}>
                 {d.company.shared ? 'Update company sharing' : 'Share company profile'}
               </button>
             </form>

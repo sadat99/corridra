@@ -78,7 +78,7 @@ CREATE FUNCTION customer.programme_projection_command(command uuid,operation tex
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid:=customer.actor_id();reg customer_private.programme_registration;link customer_private.programme_mission_link;
  task customer_private.programme_task;profile customer_private.organisation_profile_revision;
- work uuid;programme uuid;source_workspace uuid;resource uuid;prior customer_private.programme_projection_command;
+ work uuid;programme uuid;source_workspace uuid;reviewed_workspace uuid;resource uuid;prior customer_private.programme_projection_command;
  expected integer;current_version integer;result jsonb;head record;ctx app.delivery_programme_context;
  start_time timestamptz;end_time timestamptz;selected uuid[]:=ARRAY[]::uuid[];objective text;shared boolean;
 BEGIN
@@ -87,7 +87,7 @@ BEGIN
  expected:=(input->>'expectedVersion')::integer;
  IF expected IS NULL OR expected<0 OR expected>1000000 THEN RAISE EXCEPTION 'Invalid expected version' USING ERRCODE='23514';END IF;
  IF operation='company' THEN
-  IF input-ARRAY['registrationId','expectedVersion','shared','profileVersion','objective','acknowledged']<>'{}'::jsonb OR jsonb_typeof(input->'shared') IS DISTINCT FROM 'boolean' THEN RAISE EXCEPTION 'Invalid company command' USING ERRCODE='23514';END IF;
+  IF input-ARRAY['registrationId','expectedVersion','shared','profileId','profileVersion','objective','acknowledged']<>'{}'::jsonb OR jsonb_typeof(input->'shared') IS DISTINCT FROM 'boolean' THEN RAISE EXCEPTION 'Invalid company command' USING ERRCODE='23514';END IF;
   SELECT * INTO reg FROM customer_private.programme_registration WHERE id=(input->>'registrationId')::uuid AND principal_id=actor;
   IF NOT FOUND THEN RAISE EXCEPTION 'Own registration required' USING ERRCODE='42501';END IF;
   work:=reg.workspace_id;programme:=reg.programme_id;resource:=reg.id;shared:=(input->>'shared')::boolean;
@@ -111,6 +111,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Programme task unavailable' USING ERRCODE='42501';END IF;
   work:=task.workspace_id;programme:=task.programme_id;resource:=task.id;
  ELSE RAISE EXCEPTION 'Unknown projection command' USING ERRCODE='23514';END IF;
+ reviewed_workspace:=source_workspace;
  -- Use the same global workspace lock order as the existing mission sharing path.
  FOR source_workspace IN SELECT DISTINCT x FROM unnest(ARRAY[work,source_workspace])x WHERE x IS NOT NULL ORDER BY x LOOP
   PERFORM customer_private.lock_workspace_access(command,source_workspace);
@@ -119,6 +120,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.programme_coordination:'||programme::text,0));
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.programme_places:'||programme::text,0));
  IF operation='company' THEN SELECT e.profile_workspace_id INTO source_workspace FROM customer_private.programme_enrolment b JOIN customer_private.programme_enrolment_revision e ON e.enrolment_id=b.id WHERE b.registration_id=reg.id ORDER BY e.version DESC LIMIT 1;END IF;
+ IF operation='company' AND source_workspace IS DISTINCT FROM reviewed_workspace THEN RAISE EXCEPTION 'Company source changed; review before sharing' USING ERRCODE='23514';END IF;
  IF operation='company' AND shared AND (NOT customer_private.programme_projection_active(reg.id) OR customer_private.organisation_profile_role(source_workspace,actor) IS NULL
  OR customer_private.organisation_profile_role(source_workspace,actor) <> 'writer') THEN RAISE EXCEPTION 'Current company authority required' USING ERRCODE='42501';END IF;
  SELECT * INTO prior FROM customer_private.programme_projection_command q WHERE q.actor_id=actor AND q.command_id=command;
@@ -131,7 +133,7 @@ BEGIN
   IF shared THEN
    SELECT e.profile_workspace_id INTO source_workspace FROM customer_private.programme_enrolment b JOIN customer_private.programme_enrolment_revision e ON e.enrolment_id=b.id WHERE b.registration_id=reg.id ORDER BY e.version DESC LIMIT 1;
    SELECT * INTO profile FROM customer_private.organisation_profile_revision WHERE tenant_id=source_workspace ORDER BY version DESC LIMIT 1;
-   IF NOT FOUND OR profile.version IS DISTINCT FROM (input->>'profileVersion')::integer THEN RAISE EXCEPTION 'Company profile changed; review before sharing' USING ERRCODE='23514';END IF;
+   IF NOT FOUND OR profile.id IS DISTINCT FROM (input->>'profileId')::uuid OR profile.version IS DISTINCT FROM (input->>'profileVersion')::integer THEN RAISE EXCEPTION 'Company profile changed; review before sharing' USING ERRCODE='23514';END IF;
    objective:=customer_private.coordination_text(input->'objective',11,500,true);
   END IF;
   IF current_version<>expected THEN RAISE EXCEPTION 'Company sharing changed; reload' USING ERRCODE='23514';END IF;
@@ -245,7 +247,7 @@ BEGIN
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Programme access expired' USING ERRCODE='42501';END IF;
  RETURN jsonb_build_object('registrationId',reg.id,'expiresAt',customer_private.coordination_expiry(),'active',customer_private.programme_projection_active(reg.id),
  'company',jsonb_build_object('version',coalesce(company_head.version,0),'shared',coalesce(company_head.shared,false),'objective',company_head.objective),
- 'profile',CASE WHEN profile.id IS NOT NULL THEN jsonb_build_object('version',profile.version,'name',profile.details->>'legalName','countryCode',profile.details->>'countryCode',
+ 'profile',CASE WHEN profile.id IS NOT NULL THEN jsonb_build_object('id',profile.id,'version',profile.version,'name',profile.details->>'legalName','countryCode',profile.details->>'countryCode',
  'roles',profile.details->'commercialRoles','sectors',profile.details->'sectors') END,'missionLinks',links,'nextLinkAfter',CASE WHEN EXISTS(SELECT FROM customer_private.programme_mission_link WHERE registration_id=reg.id AND id>(SELECT max((x->>'id'))::uuid FROM jsonb_array_elements(links)x)) THEN(SELECT max((x->>'id'))::uuid FROM jsonb_array_elements(links)x) END,'sendsMessages',false);
 END $$;
 DO $$ DECLARE f record; BEGIN

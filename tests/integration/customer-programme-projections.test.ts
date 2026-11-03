@@ -81,7 +81,11 @@ async function company(shared: boolean) {
     expectedVersion: own.company.version,
     shared,
     ...(shared
-      ? { profileVersion: own.profile!.version, objective: 'Synthetic explicitly shared objective' }
+      ? {
+          profileId: own.profile!.id,
+          profileVersion: own.profile!.version,
+          objective: 'Synthetic explicitly shared objective',
+        }
       : {}),
     acknowledged: true,
   });
@@ -266,6 +270,7 @@ test('company sharing is explicit, minimal, pinned and ready only with the compl
     registrationId,
     expectedVersion: 0,
     shared: true,
+    profileId: own.profile!.id,
     profileVersion: 1,
     objective: 'Synthetic export objective',
     acknowledged: true,
@@ -524,6 +529,7 @@ test('concurrent retries produce one revision/event and changed payloads conflic
     registrationId,
     expectedVersion: own.company.version,
     shared: true,
+    profileId: own.profile!.id,
     profileVersion: own.profile!.version,
     objective: 'Synthetic atomic company consent',
     acknowledged: true,
@@ -704,6 +710,66 @@ test('disabled source identities and expired sessions cannot retain a projection
     expiresAt: new Date(Date.now() - 1000),
   }));
   await expect(expired.owner(scope())).rejects.toThrow();
+});
+
+test('a replacement profile with the same version cannot reuse prior reviewed company consent', async () => {
+  const reviewed = await projections('participant').own({ registrationId });
+  const replacement = (
+    await workspaces('participant').provision({
+      commandId: randomUUID(),
+      name: 'Synthetic replacement company workspace',
+    })
+  ).id;
+  for (let version = 0; version < reviewed.profile!.version; version++)
+    await profiles('participant').command({
+      commandId: randomUUID(),
+      workspaceId: replacement,
+      expectedVersion: version,
+      legalName: 'Synthetic replacement private company',
+      countryCode: 'BD',
+      website: 'https://replacement.example',
+      commercialRoles: ['SELLER'],
+      sectors: ['Textiles'],
+      sizeBand: '11-50',
+      summary: 'Synthetic unreviewed replacement company profile',
+      reason: 'Synthetic replacement source fixture',
+      acknowledged: true,
+    });
+  await terms('participant').enrol({
+    action: 'cancel',
+    commandId: randomUUID(),
+    registrationId,
+    acknowledged: true,
+  });
+  await terms('participant').enrol({
+    action: 'apply',
+    commandId: randomUUID(),
+    registrationId,
+    termsVersion: 2,
+    profileWorkspaceId: replacement,
+    acknowledged: true,
+  });
+  await expect(
+    projections('participant').command({
+      action: 'company',
+      commandId: randomUUID(),
+      registrationId,
+      expectedVersion: reviewed.company.version,
+      shared: true,
+      profileId: reviewed.profile!.id,
+      profileVersion: reviewed.profile!.version,
+      objective: 'Synthetic objective reviewed for the original company',
+      acknowledged: true,
+    }),
+  ).rejects.toThrow();
+  const current = await projections('participant').own({ registrationId });
+  expect(current.profile!.version).toBe(reviewed.profile!.version);
+  expect(current.profile!.id).not.toBe(reviewed.profile!.id);
+  await company(true);
+  expect(
+    (await projections().owner(scope())).companies.find((x) => x.registrationId === registrationId)
+      ?.company?.name,
+  ).toBe('Synthetic replacement private company');
 });
 
 test('withdrawn registrations disappear from company readiness without deleting history', async () => {

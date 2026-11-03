@@ -2972,7 +2972,7 @@
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
         "summary": "Owner approved ADR075. Optional company view and explicit pinned-profile sharing are implemented; only permitted company fields reach owners/admins. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
-        "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3023,7 +3023,7 @@
           "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
           "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
           "disposition": "OPEN",
-          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved."
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3041,7 +3041,7 @@
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
         "summary": "Owner approved ADR075. Optional timed agenda extends existing coordination tasks with programme-zone intervals and attendee-based conflicts; cancelled and adjacent intervals are excluded. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
-        "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3092,7 +3092,7 @@
           "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
           "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
           "disposition": "OPEN",
-          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved."
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3110,7 +3110,7 @@
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
         "summary": "Owner approved the active, eligible, placed, current-terms and current-shared-company readiness definition. Server totals cover all active registrations independently of the loaded page. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
-        "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3161,7 +3161,7 @@
           "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
           "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
           "disposition": "OPEN",
-          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved."
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
@@ -3299,7 +3299,7 @@
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
         "summary": "Owner approved separate explicit aggregate-count consent for owned shared missions. Canonical scheduled and qualified-held counts remain separate; self-reported outcomes do not qualify. Restricted source checks and withdrawal remain authoritative. Focused local SQL/browser verification passed; frozen-head CI/release remain pending. Not deployed or activated.",
-        "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
+        "evidenceRevision": "ee136a5973b3321cec3a9b07ba2953f130a33218",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -3350,7 +3350,7 @@
           "type": "OWNER_SCOPE_APPROVED_AND_IMPLEMENTED",
           "evidenceRevision": "55cfb385573cc081c4c0d82bbd1a077a29f97328",
           "disposition": "OPEN",
-          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved."
+          "note": "Owner authorized Batch D and approved ADR075 defaults. Implementation passed focused SQL/browser checks; full frozen-head CI/release/schema/activation remain unverified. Baseline/history preserved. Final local reproduction and correction require exact profile identity/version, not version alone; latest source hashes/receipts are in the shared evidence record."
         }
       ]
     },
