@@ -35,7 +35,9 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         </a>
       </WorkspaceShell>
     );
-  const session = await customerPageSession();
+  const session = await customerPageSession(
+    uxSwitchOn('CORRIDRA_STATUS_LINK') ? `/account/rooms/${parsed.data}` : undefined,
+  );
   if (!session.ok)
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Your request" compact>

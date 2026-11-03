@@ -198,6 +198,87 @@ describe('with the control open', () => {
     expect(r.requestId).toBeTruthy();
   });
 
+  describe('the emailed status link', () => {
+    const roomEnv = { ...env, CORRIDRA_STATUS_LINK: 'true', CORRIDRA_UX_ROAD: 'true' };
+    const links = (message: Sent) =>
+      [...(message.text + message.html).matchAll(/https:\/\/[^\s"'<>)]+/g)].map((m) => m[0]);
+
+    test('opens the Room, to the owner only, with the same words, key and no request text', async () => {
+      const r = await submitRequest({ withPort: true });
+      const job = dispatched.at(-1)!;
+      expect(await service.send(job, roomEnv)).toBe('SENT');
+      const mail = sent.at(-1)!;
+      expect(mail.to).toBe(r.email.toLowerCase());
+      expect(mail.key).toBe(`mission-mail:${job.queueId}`);
+      expect(mail.subject).toBe('We have your request');
+      expect(mail.text).toContain(
+        `See your request: https://corridra.test/account/rooms/${r.requestId}`,
+      );
+      expect(mail.text).not.toContain('/account/requests/');
+      expect(mail.html).toContain(`https://corridra.test/account/rooms/${r.requestId}`);
+      expect(mail.html).not.toContain('/account/requests/');
+      for (const body of [mail.text, mail.html])
+        for (const secret of ['Hotel towels', 'business.test', 'Spain', 'Hospitality supplier'])
+          expect(body).not.toContain(secret);
+      // Three links only (button, mute, manage), and no fragment except the existing mute link token.
+      const found = [...new Set(links(mail).map((link) => link.replace(/&amp;/g, '&')))];
+      expect(found).toHaveLength(3);
+      expect(found).toContain(`https://corridra.test/account/rooms/${r.requestId}`);
+      expect(found).toContain('https://corridra.test/account');
+      expect(found.filter((link) => link.includes('#'))).toEqual([
+        expect.stringMatching(
+          new RegExp(`^https://corridra\\.test/mute/${r.requestId}#t=[A-Za-z0-9_-]{43}$`),
+        ),
+      ]);
+    });
+
+    test.each([
+      ['the Room is off', { ...roomEnv, CORRIDRA_UX_ROAD: undefined }],
+      ['the status link is off', { ...roomEnv, CORRIDRA_STATUS_LINK: undefined }],
+      ['the status link is in upper case', { ...roomEnv, CORRIDRA_STATUS_LINK: 'TRUE' }],
+      ['the status link is 1', { ...roomEnv, CORRIDRA_STATUS_LINK: '1' }],
+    ])('still opens the saved request page when %s', async (_name, settings) => {
+      const r = await submitRequest({ withPort: true });
+      expect(await service.send(dispatched.at(-1)!, settings as NodeJS.ProcessEnv)).toBe('SENT');
+      const mail = sent.at(-1)!;
+      expect(mail.text).toContain(
+        `See your request: https://corridra.test/account/requests/${r.requestId}`,
+      );
+      expect(mail.text).not.toContain('/account/rooms/');
+    });
+
+    test('queues and sends nothing for a request with no account, and nothing for sample data', async () => {
+      const anonymous = await submitRequest({ withPort: false });
+      expect(await queueRows(anonymous.requestId)).toHaveLength(0);
+      const before = sent.length;
+      const r = await submitRequest({ withPort: true });
+      expect(
+        await service.send(dispatched.at(-1)!, { ...roomEnv, DATA_ENVIRONMENT: 'synthetic' }),
+      ).toBe('UNAVAILABLE');
+      expect(sent).toHaveLength(before);
+      expect((await queueRows(r.requestId))[0].status).toBe('PENDING');
+    });
+
+    test('a failed first send is retried and the one mail that arrives has the Room link and the same key', async () => {
+      const r = await submitRequest({ withPort: true });
+      const job = dispatched.at(-1)!;
+      const before = sent.length;
+      failNext = 1;
+      expect(await service.send(job, roomEnv)).toBe('RETRY');
+      expect(sent).toHaveLength(before);
+      await f.owner.query(
+        'UPDATE customer_private.mission_mail_queue SET available_at=clock_timestamp() WHERE id=$1',
+        [job.queueId],
+      );
+      expect(await service.send(job, roomEnv)).toBe('SENT');
+      expect(sent).toHaveLength(before + 1);
+      expect(sent.at(-1)!.key).toBe(`mission-mail:${job.queueId}`);
+      expect(sent.at(-1)!.text).toContain(`https://corridra.test/account/rooms/${r.requestId}`);
+      expect(await service.send(job, roomEnv)).toBe('SENT');
+      expect(sent).toHaveLength(before + 1);
+    });
+  });
+
   test('a failing provider is retried with a cap, then ends, and the address is removed', async () => {
     const r = await submitRequest({ withPort: true });
     const job = dispatched.at(-1)!;

@@ -29,6 +29,11 @@ export function accountReturnTo(value: string | null | undefined, extended = fal
   return '/account';
 }
 
+/** Where a page sends a signed-out visitor: sign-in, carrying the path they wanted when there is one. */
+export function signInPath(next?: string) {
+  return next ? `/signin?next=${encodeURIComponent(next)}` : '/signin';
+}
+
 type AccessPage = '/signin' | '/signup' | '/verify-email' | '/forgot-password' | '/reset-password';
 /** `method: 'code'` opens the sign-in page on its code option. It only applies to /signin. */
 export function accountAccessPath(

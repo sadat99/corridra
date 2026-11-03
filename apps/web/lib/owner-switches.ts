@@ -505,9 +505,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_STATUS_LINK',
     label: 'Emailed status link',
-    line: 'A private link in the first email that shows where a request stands.',
+    line: "The first email about a request opens that request's Room after sign-in, or the saved request page while the Room is off. Only the signed-in owner can read it. Needs mission email to be on; it adds no new email.",
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_SHARE_CARD',

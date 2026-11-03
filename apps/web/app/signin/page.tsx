@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountAccess } from '../../components/account-access';
 import { accountAccessPath, accountReturnTo } from '../../lib/account-return';
+import { emailReturnPagesOn } from '../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Sign in | Corridra',
@@ -22,10 +23,15 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
   const query = (await searchParams) ?? {};
   const next = one(query.next);
   if (next !== null && one(query.returnTo) === null) {
-    const pulse = process.env.CORRIDRA_PULSE_ENABLED === 'true';
-    const kept = accountReturnTo(next, pulse);
+    const emailPages = emailReturnPagesOn();
+    const kept = accountReturnTo(next, emailPages);
     redirect(
-      accountAccessPath('/signin', kept, one(query.method) === 'code' ? 'code' : undefined, pulse),
+      accountAccessPath(
+        '/signin',
+        kept,
+        one(query.method) === 'code' ? 'code' : undefined,
+        emailPages,
+      ),
     );
   }
   if (readNeonAuthConfig()) return <AccountAccess title="Sign in to Corridra." mode="signin" />;
