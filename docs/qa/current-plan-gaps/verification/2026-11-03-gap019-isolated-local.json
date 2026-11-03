@@ -1,0 +1,48 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-019",
+  "baseRevision": "33d5b41e96bb2f195ac3219667aca833126245bb",
+  "preparedPredecessor": "4742f5f58631c616eb1cc9a28f3979314ca5604c",
+  "sourceFiles": [
+    {
+      "path": "apps/web/lib/foundations.ts",
+      "sha256": "b911d88a1fd5a8817b90e643df85af88c9708be592a263a97df9ea09eeb2d3bd"
+    },
+    {
+      "path": "packages/communications/src/inbox.ts",
+      "sha256": "33b741724ea4fd744427ab821c33644bbab0d6fe6343f376d64fb2bdad20acd5"
+    },
+    {
+      "path": "packages/missions/src/index.ts",
+      "sha256": "e075b3232cd30463c2cf9141365de64bf8282e1308557f522b2203f107135e10"
+    },
+    {
+      "path": "tests/integration/reply-posted.test.ts",
+      "sha256": "ccc036b140a63b10b3fb67d9341f0944a4961e5f505a1ac26ae70be63619c219"
+    },
+    {
+      "path": "tests/integration/commercial-readiness-database.test.ts",
+      "sha256": "e900449574549eb8e6b18558a1dd44ebd21cfd6aacd2e7b5ed13f16432e9e6ec"
+    },
+    {
+      "path": "packages/db/commercial-readiness-migrations/0009_reply_posted_notification.sql",
+      "sha256": "bc28f558eb5a858078377c9b4d9f63fed08b8cc5f7a23d984cf8c96e003f892a"
+    }
+  ],
+  "reusedVerification": {
+    "evidence": "docs/qa/current-plan-gaps/verification/2026-11-03-gap017-019-combined-local.json",
+    "allSourceHashesMatch": 15,
+    "allReceiptLogHashesMatch": true,
+    "verification": {
+      "databaseCasesPassed": 62,
+      "databaseFilesPassed": 6,
+      "fullTypecheckExit": 0,
+      "lintExit": 0,
+      "inventoryIncludes0006Through0009": true
+    }
+  },
+  "limits": [
+    "Uses the corrected reply-notice SAVEPOINT behavior; original rollback-on-notification-error prototype must not replace it.",
+    "Separate frozen-head release and protected0009 installation remain. No genuine provider delivery claim."
+  ]
+}
