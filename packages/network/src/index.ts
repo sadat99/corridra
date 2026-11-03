@@ -1,7 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
-import { sessionHash, withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  sessionHash,
+  withTenant,
+  type DatabaseClient,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 import { eventInput, profileInput, taskInput } from './schema';
 export { eventInput, profileInput, taskInput } from './schema';
 const reason = z.string().trim().min(3).max(500);
@@ -9,7 +15,23 @@ export class NetworkService {
   constructor(
     private pool: DatabasePool,
     private enabled: boolean,
+    private assigned?: (db: DatabaseClient, commandId: string) => Promise<() => Promise<unknown>>,
   ) {}
+  private async recordAssigned(db: DatabaseClient, commandId: string) {
+    if (!this.assigned) return undefined;
+    await db.query('SAVEPOINT task_assigned');
+    try {
+      const dispatch = await this.assigned(db, commandId);
+      await db.query('RELEASE SAVEPOINT task_assigned');
+      return dispatch;
+    } catch {
+      await db.query('ROLLBACK TO SAVEPOINT task_assigned');
+      await db.query('RELEASE SAVEPOINT task_assigned');
+      console.error(JSON.stringify({ event: 'task_assigned_notification_failed' }));
+      return undefined;
+    }
+  }
+
   private assertEnabled() {
     if (!this.enabled) throw new DomainError('Execution network is disabled', 503);
   }
@@ -122,7 +144,7 @@ export class NetworkService {
       ).rows[0];
     });
   }
-  event(ctx: RequestContext, raw: unknown) {
+  async event(ctx: RequestContext, raw: unknown) {
     this.assertEnabled();
     const v = eventInput.parse(raw);
     if (['ACCEPT', 'SUBMIT', 'DISPUTE'].includes(v.action))
@@ -130,7 +152,8 @@ export class NetworkService {
         ctx.tenantId,
         JSON.stringify(v),
       ]);
-    return withTenant(this.pool, ctx, 'trust.write', async (t) => {
+    let dispatch: (() => Promise<unknown>) | undefined;
+    const result = await withTenant(this.pool, ctx, 'trust.write', async (t) => {
       const hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
       await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
         t.tenantId + ':network:' + v.taskId,
@@ -144,6 +167,7 @@ export class NetworkService {
       if (old) {
         if (old.input_hash !== hash || old.created_by !== t.actorId)
           throw new DomainError('Command key reused', 409);
+        if (v.action === 'ASSIGN') dispatch = await this.recordAssigned(t.db, v.commandId);
         return { version: old.version, duplicate: true };
       }
       const r = await t.db.query(
@@ -160,8 +184,15 @@ export class NetworkService {
           t.actorId,
         ],
       );
+      if (v.action === 'ASSIGN') dispatch = await this.recordAssigned(t.db, v.commandId);
       return r.rows[0];
     });
+    try {
+      await dispatch?.();
+    } catch {
+      console.error(JSON.stringify({ event: 'task_assigned_email_failed' }));
+    }
+    return result;
   }
   async reviewSubmission(ctx: RequestContext, raw: unknown) {
     this.assertEnabled();

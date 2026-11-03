@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-016",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/247",
+  "testedHead": "33d5b41e96bb2f195ac3219667aca833126245bb",
+  "ciRun": 41598989254,
+  "codeqlRun": 41598989150,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "a93d467095c4214d2d1e2e54db45c0c493138325",
+  "productionDeployment": {
+    "id": "dpl_HMW4nKdcRiux8PMXY17rPkaJx4uJ",
+    "state": "READY",
+    "githubCommitSha": "a93d467095c4214d2d1e2e54db45c0c493138325",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": ["verification/2026-11-03-gap016-local.json"],
+  "limits": [
+    "Code deployed; protected commercial migration0006 was not installed at release. GAP016 remains OPEN until schema installation.",
+    "Existing auth/MFA/session audit is preserved; no genuine private production journey is claimed."
+  ]
+}

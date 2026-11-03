@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
+import { InboxService } from '../../packages/communications/src/inbox';
 import { beforeAll, afterAll, test, expect } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { rawContext } from './support';
@@ -22,7 +24,19 @@ const later = (days: number) => new Date(Date.now() + days * 86400000).toISOStri
 beforeAll(async () => {
   f = await commercialFixture();
   routes = new CorridorService(f.runtime);
-  network = new NetworkService(f.runtime, true);
+  await migrateCommercialReadiness(f.owner);
+  const inbox = new InboxService(f.runtime);
+  network = new NetworkService(f.runtime, true, async (db, commandId) => {
+    const receipt = await inbox.recordTaskAssigned(db, commandId);
+    expect(receipt.recipientAccountId).toBe(f.users.outsider.id);
+    return async () => {
+      // A transport hand-off happens only after the row is visible outside its transaction.
+      expect(
+        (await f.owner.query('SELECT id FROM app.inbox_notification WHERE id=$1', [receipt.id]))
+          .rowCount,
+      ).toBe(1);
+    };
+  });
   ai = new IntelligenceService(f.runtime, true, {
     async generate(r) {
       calls++;
@@ -525,6 +539,17 @@ test('Spain and arbitrary Japan Kenya tasks use the same capability engine, susp
         relationshipDisclosure: 'Synthetic institutional referral, disclosed relationship',
       }),
     );
+    const items = await new InboxService(f.runtime).list({
+      kind: 'staff',
+      ctx: f.users.outsider.ctx,
+    });
+    expect(
+      items.some(
+        (item) =>
+          item.type === 'TASK_ASSIGNED' &&
+          item.payload.href === '/contributor?workspace=' + f.tenantA,
+      ),
+    ).toBe(true);
     await network.event(f.users.outsider.ctx, event(id, 1, 'ACCEPT'));
     await network.profile(f.users.owner.ctx, {
       ...p,

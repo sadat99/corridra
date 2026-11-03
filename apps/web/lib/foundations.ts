@@ -700,7 +700,28 @@ function createServices() {
       readCustomerSession,
     ),
     intelligence: new IntelligenceService(runtimePool, aiEnabled, inferenceAdapter),
-    network: new NetworkService(runtimePool, process.env.CORRIDRA_NETWORK_ENABLED === 'true'),
+    network: new NetworkService(
+      runtimePool,
+      process.env.CORRIDRA_NETWORK_ENABLED === 'true',
+      uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')
+        ? async (db, commandId) => {
+            const receipt = await inbox.recordTaskAssigned(db, commandId);
+            return async () => {
+              const { notifyRecorded } = await import('./notify');
+              return notifyRecorded(
+                {
+                  ...receipt,
+                  recipientEmail: await inbox.staffEmail(authPool, receipt),
+                  recipientKind: 'staff',
+                  type: 'TASK_ASSIGNED',
+                  locale: 'en',
+                },
+                receipt.id,
+              );
+            };
+          }
+        : undefined,
+    ),
     counterparties: new CounterpartyService(runtimePool),
     missions: new MissionService(
       runtimePool,
