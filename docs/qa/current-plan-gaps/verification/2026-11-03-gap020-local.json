@@ -1,0 +1,89 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-020",
+  "baseRevision": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "apps/web/app/account/notifications/notifications-form.tsx",
+      "sha256": "7bd975a1af96baf3ab649dc60abb4ab2a2f2d15bf62249b971bfed863695e5f1"
+    },
+    {
+      "path": "tests/operator/ux-pulse.spec.ts",
+      "sha256": "34ef6d4f123a8bbe356808eac9c35e547227806e9a11c90953825685f3ad1827"
+    },
+    {
+      "path": "tests/integration/ux-pulse.test.ts",
+      "sha256": "f727e483c264404a3d9ae1b4e0ad4def0193e668c59b8c8cbc520b7df1842ca0"
+    }
+  ],
+  "receipts": {
+    "gap020-pulse-copy-final": {
+      "name": "gap020-pulse-copy-final",
+      "command": "pnpm exec vitest run tests/integration/ux-pulse.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.1,
+      "logBytes": 182,
+      "logSha256": "e9a35b6a1d22281d2b09c8aa33f4c6f918c7e68969464bb3968e2f881f6419f3",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 3,
+      "log": "work/gap020-pulse-copy-final-2026-11-03T01-33-42-798Z.log"
+    },
+    "gap020-pulse-browser": {
+      "name": "gap020-pulse-browser",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-pulse.spec.ts --grep email choices --output work/gap020-browser",
+      "exit": 0,
+      "signal": null,
+      "seconds": 21.9,
+      "logBytes": 3504,
+      "logSha256": "c7db9d91ca1587e5a87ae29af1838932200ee887298018f8c586940e348aa307",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 5,
+      "log": "work/gap020-pulse-browser-2026-11-03T01-33-43-961Z.log"
+    },
+    "gap020-copy-lint": {
+      "name": "gap020-copy-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/account/notifications/notifications-form.tsx tests/operator/ux-pulse.spec.ts tests/integration/ux-pulse.test.ts --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.3,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "0286f3ebbe6a072f68f3b86720039cc31769385e",
+      "changedPaths": 3,
+      "log": "work/gap020-copy-lint-2026-11-03T01-34-42-873Z.log"
+    }
+  },
+  "verification": {
+    "integrationCasesPassed": 85,
+    "compiledComponentCasesPassed": 16
+  },
+  "implementation": [
+    "Scope off-state and saved confirmation to request-update emails; explain separate account-security and request-receipt messages.",
+    "Existing off, withdrawal, hidden-settings, on and failure assertions remain. Sending, consent, switches and API requests unchanged."
+  ],
+  "limits": [
+    "Provider mail not sent; browser saves use the existing intercepted API fixture.",
+    "Full frozen-head CI and deployment pending."
+  ],
+  "releasePreparation": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+    "correction": "Saved operator test formatting corrected before push. Semantic TypeScript AST is identical; original source hashes and85/16-case receipts retained. Frozen CI will verify the formatted candidate.",
+    "sourceFiles": [
+      {
+        "path": "apps/web/app/account/notifications/notifications-form.tsx",
+        "sha256": "7bd975a1af96baf3ab649dc60abb4ab2a2f2d15bf62249b971bfed863695e5f1"
+      },
+      {
+        "path": "tests/operator/ux-pulse.spec.ts",
+        "sha256": "7836d69ce040b03f9ed5f8f70dd66400e0cd1e14ffa12b7624152baffe5be877"
+      },
+      {
+        "path": "tests/integration/ux-pulse.test.ts",
+        "sha256": "f727e483c264404a3d9ae1b4e0ad4def0193e668c59b8c8cbc520b7df1842ca0"
+      }
+    ]
+  }
+}

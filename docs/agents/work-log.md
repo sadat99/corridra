@@ -2552,3 +2552,11 @@ All6 isolated quote source hashes match the complete40-case DB proof, preserving
 PR249 passed19 exact-head checks atf9bfccc and reached the exact READY production alias ate184781. Complete40-case proof covers the canonical customer quote notice and failure isolation. GAP018 stays OPEN pending protected0008 installation. Exact production alias READY at dpl_GyDhZ6L1DCeLv4tm6Zy5yduM3jJh, merge e184781cba511223f64e53fd73a70d42e7a14975; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
 
 All15 combined source hashes and saved log hashes match62 DB cases/full types/lint. Reply notices use the explicit owned-request bridge and canonical staff authority; anonymous/revoked ownership sends nothing. Corrected SAVEPOINT isolates notice failure while retaining the reply. Frozen CI/deployment and protected0009 installation pending; genuine provider delivery unverified.
+
+### 3 November 2026: GAP-019 code released; GAP-020 next
+
+PR250 passed19 exact-head checks atddc1b55 and reached the exact READY production alias atcc07f17. All15 combined source hashes match62 DB cases/full types/lint, including corrected reply persistence on notification failure. GAP019 stays OPEN pending protected0009 installation. Exact production alias READY at dpl_4qGH5o82emrc9RUfUsuRW3DrFano, merge cc07f17de93b8920ec1a36d15b231653931e369e; all19 frozen-head checks completed without failure. Owner identity/zero branch binding verified; completed branch retired.
+
+All3 source hashes and saved logs match85 integration checks,16 compiled browser cases and focused lint. Email-off wording scopes request-update preferences and explicitly distinguishes account-security messages and request receipts. Mail policy/settings are unchanged. Frozen CI and deployment pending; no genuine provider delivery claimed.
+
+GAP020 pre-push format check caught the saved operator test. Formatting correction preserves its semantic TypeScript AST; original proof and current3 source hashes retained. Frozen CI will verify the formatted candidate.

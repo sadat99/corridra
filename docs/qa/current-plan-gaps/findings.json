@@ -1666,8 +1666,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "All15 combined source hashes and saved log hashes match62 DB cases/full types/lint. Reply notices use the explicit owned-request bridge and canonical staff authority; anonymous/revoked ownership sends nothing. Corrected SAVEPOINT isolates notice failure while retaining the reply. Frozen CI/deployment and protected0009 installation pending; genuine provider delivery unverified.",
-        "evidenceRevision": "e184781cba511223f64e53fd73a70d42e7a14975",
+        "summary": "PR250 passed19 exact-head checks atddc1b55 and reached the exact READY production alias atcc07f17. All15 combined source hashes match62 DB cases/full types/lint, including corrected reply persistence on notification failure. GAP019 stays OPEN pending protected0009 installation.",
+        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
@@ -1680,8 +1680,8 @@
             "evidence": ["verification/2026-11-03-gap019-isolated-local.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap019-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1737,6 +1737,15 @@
           "disposition": "OPEN",
           "note": "All15 combined source hashes and saved log hashes match62 DB cases/full types/lint. Reply notices use the explicit owned-request bridge and canonical staff authority; anonymous/revoked ownership sends nothing. Corrected SAVEPOINT isolates notice failure while retaining the reply. Frozen CI/deployment and protected0009 installation pending; genuine provider delivery unverified.",
           "evidence": ["verification/2026-11-03-gap019-isolated-local.json"]
+        },
+        {
+          "eventId": "GAP-019-H005",
+          "recordedOn": "2026-11-03",
+          "type": "DEPLOYED",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "PR250 passed19 exact-head checks atddc1b55 and reached the exact READY production alias atcc07f17. All15 combined source hashes match62 DB cases/full types/lint, including corrected reply persistence on notification failure. GAP019 stays OPEN pending protected0009 installation.",
+          "evidence": ["verification/2026-11-03-gap019-release.json"]
         }
       ]
     },
@@ -1753,18 +1762,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "`account/notifications/page.tsx:57` says Choose what we email you; form `:177`/`:183` says nothing is sent while Pulse is off. Transactional request receipts independently enqueue in `customer-requests.ts:158` and mission-mail SQL `:113`, without Pulse preferences. This can conflict when that independent mail service is enabled. No actual delivery or consent violation is claimed.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Behavior source remains unchanged from85 integration/16 browser-case preparation. Saved operator test formatting corrected; semantic TypeScript AST is identical. Original hashes/receipts and current3-file hashes retained. Frozen CI/deployment pending; mail policy/settings unchanged.",
+        "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-020"]
+            "evidence": ["verification/2026-11-03-gap020-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap020-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1797,6 +1806,24 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-020-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "All3 source hashes and saved logs match85 integration checks,16 compiled browser cases and focused lint. Email-off wording scopes request-update preferences and explicitly distinguishes account-security messages and request receipts. Mail policy/settings are unchanged. Frozen CI and deployment pending; no genuine provider delivery claimed.",
+          "evidence": ["verification/2026-11-03-gap020-local.json"]
+        },
+        {
+          "eventId": "GAP-020-H003",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFICATION_CORRECTION",
+          "evidenceRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+          "disposition": "OPEN",
+          "note": "Behavior source remains unchanged from85 integration/16 browser-case preparation. Saved operator test formatting corrected; semantic TypeScript AST is identical. Original hashes/receipts and current3-file hashes retained. Frozen CI/deployment pending; mail policy/settings unchanged.",
+          "evidence": ["verification/2026-11-03-gap020-local.json"]
         }
       ]
     },

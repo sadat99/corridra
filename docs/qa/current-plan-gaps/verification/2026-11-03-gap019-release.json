@@ -1,0 +1,28 @@
+{
+  "recordedOn": "2026-11-03",
+  "finding": "GAP-019",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/250",
+  "testedHead": "ddc1b559387670df441ea58448d4dc8c7f08fffb",
+  "ciRun": 41611055047,
+  "codeqlRun": 41611054995,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "cc07f17de93b8920ec1a36d15b231653931e369e",
+  "productionDeployment": {
+    "id": "dpl_4qGH5o82emrc9RUfUsuRW3DrFano",
+    "state": "READY",
+    "githubCommitSha": "cc07f17de93b8920ec1a36d15b231653931e369e",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "branchEnvironmentBindings": 0,
+  "closureEvidence": [
+    "verification/2026-11-03-gap019-isolated-local.json",
+    "verification/2026-11-03-gap017-019-combined-local.json"
+  ],
+  "limits": [
+    "Protected commercial0009 was not installed at release; reply notices remain unavailable until installation.",
+    "Actual source/log hashes match synthetic62-case/full-type/lint proof; genuine private production/provider acceptance remains unverified."
+  ]
+}

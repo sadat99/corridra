@@ -141,7 +141,7 @@ export function NotificationsForm({
         setMessage(
           on
             ? 'Email is on. These choices apply from now on.'
-            : 'Email is off. We will not email you.',
+            : 'Request-update emails are off. Account security messages and request receipts can still be sent.',
         );
       }
     } catch (error) {
@@ -180,7 +180,7 @@ export function NotificationsForm({
         <p>
           {savedOn
             ? 'We email the verified address on your account when something needs you.'
-            : 'We do not email you unless you switch this on. While it is off, nothing is sent to you, so check Your Move to see what is waiting.'}
+            : 'Request-update emails stay off until you switch this on. Check Your Move to see what is waiting.'}
         </p>
         <label className="notifications-check">
           <input
@@ -198,7 +198,9 @@ export function NotificationsForm({
           </span>
         </label>
         <p className="notifications-help">
-          How we handle this is in the <a href="/privacy">privacy notice</a>.
+          These choices cover request updates. Account security messages and request receipts are
+          separate and can still be sent. How we handle this is in the{' '}
+          <a href="/privacy">privacy notice</a>.
         </p>
       </section>
       {on && (
