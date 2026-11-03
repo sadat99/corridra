@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { useEffect, useRef, useState } from 'react';
 import {
   specificationOptions,
@@ -90,7 +91,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
       requirementVersion: data.requirement.requirementVersion,
       requirementDigest: data.requirement.requirementDigest,
       ownerId: String(fields.get('ownerId')),
-      dueAt: new Date(String(fields.get('dueAt')) + 'Z').toISOString(),
+      dueAt: new Date(String(fields.get('dueAt'))).toISOString(),
       approved: true as const,
     };
     inFlight.current = true;
@@ -183,10 +184,12 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
               ))}
             </select>
           </label>
-          <label className="field">
-            Response deadline (UTC)
-            <input name="dueAt" type="datetime-local" required disabled={busy || !!pending} />
-          </label>
+          <DateTimeField
+            label="Response deadline"
+            name="dueAt"
+            required
+            disabled={busy || !!pending}
+          />
           <label>
             <input type="checkbox" required disabled={busy || !!pending} /> I reviewed the exact
             specification and its approved customer scope.

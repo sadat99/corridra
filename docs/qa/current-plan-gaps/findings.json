@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "registerId": "current-plan-gaps",
-  "lastRecordedOn": "2026-11-02",
+  "lastRecordedOn": "2026-11-03",
   "baseline": {
     "id": "2026-11-01",
     "path": "baselines/2026-11-01/findings.json",
@@ -501,24 +501,30 @@
         "evidenceAndBoundary": "`account/delegations/customer-programmes.tsx:107`, `programme-pricing.tsx:245`, `operator/commercial-mission.tsx:162` keep component state. `lib/ux/use-form-draft.ts:18` exists but is adopted only by delivery publication at `operator/delivery.tsx:104`. Same-page retention and publication drafts already work."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "A_G_REMAINDER",
-        "summary": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
-        "evidenceRevision": "909b46992d05ff8acfe4462318f3fd297532d52a",
+        "summary": "PR241 corrects the reproduced fee-draft restoration race: no fee edits are accepted before restoration settles.16 pricing browser cases and frozen CI/CodeQL passed with19 checks complete, then exact production alias reached READY. Text-draft engineering criteria are resolved; prior closures/reopening remain recorded.",
+        "evidenceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": [
+              "verification/2026-11-02-gap006-draft-readiness-local.json",
+              "verification/2026-11-02-gap006-readiness-release.json"
+            ]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
+            "state": "VERIFIED",
+            "evidence": [
+              "verification/2026-11-02-gap006-draft-readiness-local.json",
+              "verification/2026-11-02-gap006-readiness-release.json"
+            ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-02-gap006-completion-release.json"]
+            "evidence": ["verification/2026-11-02-gap006-readiness-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -537,7 +543,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-02-gap006-draft-readiness-local.json",
+          "verification/2026-11-02-gap006-readiness-release.json"
+        ]
       },
       "history": [
         {
@@ -600,6 +609,16 @@
           "disposition": "OPEN",
           "note": "PR240 is deployed, but PR241 CI reproduced intermittent fee-label loss during editor draft restoration. A paused-timer test proves fields accepted edits before restoration. The editor now waits for its own restored draft; local timing/text/row/version checks pass. Corrective frozen CI and deployment pending.",
           "evidence": ["verification/2026-11-02-gap006-draft-readiness-local.json"]
+        },
+        {
+          "eventId": "GAP-006-H007",
+          "recordedOn": "2026-11-02",
+          "type": "RESOLVED",
+          "evidenceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+          "priorDisposition": "OPEN",
+          "disposition": "RESOLVED",
+          "note": "PR241 corrects the reproduced fee-draft restoration race: no fee edits are accepted before restoration settles.16 pricing browser cases and frozen CI/CodeQL passed with19 checks complete, then exact production alias reached READY. Text-draft engineering criteria are resolved; prior closures/reopening remain recorded.",
+          "evidence": ["verification/2026-11-02-gap006-readiness-release.json"]
         }
       ]
     },
@@ -616,22 +635,28 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
-        "evidenceRevision": "1148d009bac062efa8c9ecf5fad1b8103bc7eb04",
+        "summary": "PR241 invitation email code passed19 frozen-head checks and reached the exact READY production alias.36 database/mail tests and13 participant browser cases prove scoped collection, stored-recipient send/retry and code acceptance. Protected real-use0012 installation and private live/provider acceptance remain pending; activation unchanged.",
+        "evidenceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
         "evidenceObservedOn": "2026-11-02",
         "lastRecordedOn": "2026-11-02",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap007-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap007-local.json",
+              "verification/2026-11-02-gap007-release.json"
+            ]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-02-gap007-local.json"]
+            "evidence": [
+              "verification/2026-11-02-gap007-local.json",
+              "verification/2026-11-02-gap007-release.json"
+            ]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-02-gap007-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -669,6 +694,16 @@
           "disposition": "OPEN",
           "note": "Optional invitation email collection/storage and explicit send/retry implemented locally using existing transport. Fresh scoped manager/code checks preserve private code acceptance. 36 database/mail tests,13 browser cases, typecheck and focused lint passed; release CI/deployment and protected0012 installation pending.",
           "evidence": ["verification/2026-11-02-gap007-local.json"]
+        },
+        {
+          "eventId": "GAP-007-H003",
+          "recordedOn": "2026-11-02",
+          "type": "DEPLOYED",
+          "evidenceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "PR241 invitation email code passed19 frozen-head checks and reached the exact READY production alias.36 database/mail tests and13 participant browser cases prove scoped collection, stored-recipient send/retry and code acceptance. Protected real-use0012 installation and private live/provider acceptance remain pending; activation unchanged.",
+          "evidence": ["verification/2026-11-02-gap007-release.json"]
         }
       ]
     },
@@ -745,18 +780,22 @@
       "current": {
         "disposition": "OPEN",
         "scope": "A_G_REMAINDER",
-        "summary": "Native controls remain at `operator/missions.tsx:239` and `operator/opportunities.tsx:129`, `:154`, `:339`. The shared conversion component already exists at `components/ux/date-time-input.tsx:64`; report/link use is not missing.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
+        "evidenceRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-009"]
+            "evidence": ["verification/2026-11-02-gap009-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": [
+              "verification/2026-11-02-gap009-local.json",
+              "verification/2026-11-02-gap009-security-controls.json",
+              "verification/2026-11-03-gap009-layout-local.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -789,6 +828,46 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-009-H002",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "Timezone-aware shared inputs now cover remaining mission/meeting/commercial instant fields. Four actual mission form/service/RLS/PostgreSQL cases preserve unchanged milliseconds and selected instants in UTC/Dhaka/Kathmandu/Madrid;30 backend and8 operator/bootstrap regressions, types, lint, formatting and preparation build passed. Exact-head CI and deployment pending.",
+          "evidence": ["verification/2026-11-02-gap009-local.json"]
+        },
+        {
+          "eventId": "GAP-009-H003",
+          "recordedOn": "2026-11-02",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "e58d24202e1a4029f091838a21f4fe1891e4999a",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "Initial PR242 checks flagged the exact public SHA-256 recorded for operator/access.tsx, not a credential. Local file bytes verify that hash. A generic-api-key exception matches only that exact hash AND evidence path;7 isolated boundary controls and the unchanged full-history scanner pass. Feature source hashes and prior behavior checks are unchanged; final-head CI/deployment remain pending.",
+          "evidence": ["verification/2026-11-02-gap009-security-controls.json"]
+        },
+        {
+          "eventId": "GAP-009-H004",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "CI41546518647 found global page overflow after prior workspace state. The same preceding SDK scenario reproduces320px viewport/330px document width; bootstrap plus the case alone passed. One shared-grid column constraint fixes the intrinsic child overflow. Fresh build and the identical4-case sequence pass, including six viewport widths, axe and denial assertions. Final-head CI/deployment remain pending.",
+          "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
+        },
+        {
+          "eventId": "GAP-009-H005",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "b94e3cf7fe15c0c68738ab1a118c1fefb88f1a4c",
+          "priorDisposition": "OPEN",
+          "disposition": "OPEN",
+          "note": "The layout correction retains its passing4-case/six-width proof. CI41552683023 exposed TS2488 only in the added failure diagnostic; Array.from preserves the collection and assertion while matching the repository DOM library. Full pnpm typecheck now passes, including test sources. Fresh final-head CI/deployment pending.",
+          "evidence": ["verification/2026-11-03-gap009-layout-local.json"]
         }
       ]
     },

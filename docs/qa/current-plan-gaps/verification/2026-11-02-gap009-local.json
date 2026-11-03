@@ -1,0 +1,128 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-009",
+  "baseRevision": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+  "testedWorkingTree": true,
+  "sourceSha256": {
+    "apps/web/components/ux/date-time-input.tsx": "96b602779cf6983b9d9d59d9b1dba4d1b5615773e77116caaf3b7682408c912a",
+    "apps/web/app/operator/access.tsx": "c91dbdfc304cbfba6330a8846eb0f5109285c82b59605abf3a52b33619b3b6cd",
+    "apps/web/app/operator/commercial-mission.tsx": "c062cd1c939497b12287761535ac399cdd257b28999ddd4522e1372df1296b90",
+    "apps/web/app/operator/counterparties.tsx": "b2413398e0c379f76c653383102488e6c1a895def8c6a17fa60c24c6859e001d",
+    "apps/web/app/operator/delivery-experience.tsx": "a8bd434f92d27eaee6d6cb0e3fe922593a1660d08bb42701ab6e9b281bb3fbd0",
+    "apps/web/app/operator/missions.tsx": "d49e54a3d195744d90322e0934908571ab2d5bfb7828bbc93a86df82cb27b44d",
+    "apps/web/app/operator/opportunities.tsx": "c78b60875d885c050b5bd7e9edfc211c4edf607d426a3953acc258221d43f6f3",
+    "apps/web/app/operator/specification-requests.tsx": "d00f4c7b25bfb833e6b1713a3f218c1d969785d41e1da25058c881e9c156b330",
+    "tests/operator/specification-confirmation.spec.ts": "70eaacce3b251c5e7800b8af60fe83846a6b0e3170661d4173abf9011c4357f7",
+    "tests/operator/workspace.spec.ts": "fd0330e0fdb87f2072cef0de189f6743cbb448c36b24401c2dd464c63428a2b9",
+    "tests/operator/v3-timezone-forms.spec.ts": "51abf24e68c208dea8fe4ba0f38361604020bad1704083df79702564d2c6b2f3"
+  },
+  "implementation": [
+    "Reuse DateTimeInput through a small native-form DateTimeField adapter; hidden fields retain exact ISO instants.",
+    "Adopt instant fields on mission, opportunity, delivery-experience, specification, counterparty, commercial mission and controlled-access forms; remove serializers that append Z to an already canonical ISO value.",
+    "Keep explicit meeting localStart/localEnd wall-time fields and their separate selected timezone/server DST checks unchanged.",
+    "Retain original ISO milliseconds when unchanged; do not truncate mission/other initial instant values."
+  ],
+  "receipts": {
+    "gap009-mission-valid-reproduction": {
+      "name": "gap009-mission-valid-reproduction",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-timezone-forms.spec.ts --grep mission Asia/Dhaka --output test-results/gap009-mission-valid-reproduction",
+      "exit": 1,
+      "signal": null,
+      "seconds": 13.4,
+      "logBytes": 2833,
+      "logSha256": "35cb2b7254b185f2ee2043413cdf27f89112fa5739b8c575b09c0e2d88c5b8d7",
+      "head": "bc3d4e61520216b89ef1e056b7fa920b61abb729",
+      "changedPaths": 2,
+      "log": "work/gap009-mission-valid-reproduction-2026-11-02T19-45-07-996Z.log"
+    },
+    "gap009-mission-db-browser-final": {
+      "name": "gap009-mission-db-browser-final",
+      "command": "flock /tmp/corridra-db.lock node_modules/.bin/playwright test --config playwright.operator.config.ts tests/operator/v3-timezone-forms.spec.ts --output test-results/gap009-mission-db-browser-final",
+      "exit": 0,
+      "signal": null,
+      "seconds": 12.8,
+      "logBytes": 1573,
+      "logSha256": "157f6f634ee8dceab417e9ae2db0601d662e4cdcecf65c91e94529bc003ab6f9",
+      "head": "bc3d4e61520216b89ef1e056b7fa920b61abb729",
+      "changedPaths": 11,
+      "log": "work/gap009-mission-db-browser-final-2026-11-02T19-51-01-410Z.log"
+    },
+    "gap009-dates-backend": {
+      "name": "gap009-dates-backend",
+      "command": "flock /tmp/corridra-db.lock pnpm exec vitest run tests/integration/missions.test.ts tests/integration/meetings.test.ts tests/integration/commercial-readiness-contracts.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 20.7,
+      "logBytes": 170,
+      "logSha256": "d90a93af9b75ef428e8bd4765d1010f279fe9ea8f4f1eb283e201dc3c673416d",
+      "head": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+      "changedPaths": 11,
+      "log": "work/gap009-dates-backend-2026-11-02T20-38-25-849Z.log"
+    },
+    "gap009-operator-forms-with-setup": {
+      "name": "gap009-operator-forms-with-setup",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/workspace.spec.ts tests/operator/specification-confirmation.spec.ts --grep anonymous five-step intake|",
+      "exit": 0,
+      "signal": null,
+      "seconds": 114.8,
+      "logBytes": 2133,
+      "logSha256": "20ab017ddd6eeb0cd009a2b3f92ab8a90c74fdeec4194a2a250f7abee8c60ac9",
+      "head": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+      "changedPaths": 16,
+      "log": "work/gap009-operator-forms-with-setup-2026-11-02T20-39-48-246Z.log"
+    },
+    "gap009-final-types": {
+      "name": "gap009-final-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 23.3,
+      "logBytes": 219,
+      "logSha256": "86d1ce31771fa60ada907683129173c43cab7c1acb58b9575f278601dcb64068",
+      "head": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+      "changedPaths": 12,
+      "log": "work/gap009-final-types-2026-11-02T20-39-18-701Z.log"
+    },
+    "gap009-final-lint": {
+      "name": "gap009-final-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/app/operator/access.tsx apps/web/app/operator/commercial-mission.tsx apps/web/app/operator/counterparties.tsx apps/web/app/operator/delivery-experience.tsx apps/web/app/operator/missions.",
+      "exit": 0,
+      "signal": null,
+      "seconds": 10.1,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+      "changedPaths": 16,
+      "log": "work/gap009-final-lint-2026-11-02T20-40-55-042Z.log"
+    },
+    "gap009-current-build": {
+      "name": "gap009-current-build",
+      "command": "pnpm build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 87.9,
+      "logBytes": 4974,
+      "logSha256": "d200b94d12a859fc00867a619d960e612d7be06155ec3cff9b8b5e43029513ed",
+      "head": "909b46992d05ff8acfe4462318f3fd297532d52a",
+      "changedPaths": 12,
+      "log": "work/gap009-current-build-2026-11-02T20-22-36-631Z.log"
+    }
+  },
+  "verification": {
+    "missionCrossTimezoneDatabaseCases": 4,
+    "missionTimeZones": ["UTC", "Asia/Dhaka", "Asia/Kathmandu", "Europe/Madrid"],
+    "unchangedPersistedInstant": "2030-07-15T04:15:30.123Z",
+    "selectedPersistedInstant": "2030-07-15T05:30:00.000Z",
+    "backendCases": 30,
+    "operatorCases": 8,
+    "typesExit": 0,
+    "lintExit": 0,
+    "buildExit": 0
+  },
+  "limits": [
+    "Four timezone cases mount the actual mission form and send its command through the existing service/RLS to local PostgreSQL; other operator form regressions run in UTC.",
+    "The build receipt is from the timezone preparation before the later GAP-006 readiness correction; final combined-revision compilation remains an exact-head CI gate.",
+    "A first focused operator invocation failed fixture setup (CSS loader and missing shared sign-in bootstrap). The final invocation includes the existing bootstrap cases and CSS-loader convention; no behavioral assertion was removed.",
+    "No provider contact, production database operation, canonical event/money change or activation is claimed."
+  ]
+}

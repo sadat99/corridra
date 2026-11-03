@@ -46,6 +46,7 @@ test.beforeAll(async () => {
       resolveDir: resolve('apps/web'),
     },
     nodePaths: [resolve('apps/web/node_modules')],
+    loader: { '.css': 'empty' },
     bundle: true,
     write: false,
     format: 'esm',
@@ -277,7 +278,7 @@ for (const staffWidth of [320, 390, 768, 1440])
     await page.getByText('Request customer specification confirmation', { exact: true }).click();
     await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
     await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
-    await page.getByRole('textbox', { name: 'Response deadline (UTC)' }).fill('2026-12-01T10:00');
+    await page.getByLabel('Response deadline').fill('2026-12-01T10:00');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       staffWidth,
     );

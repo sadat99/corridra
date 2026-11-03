@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
@@ -100,7 +101,7 @@ export function missionCommandBody(
 ) {
   e.preventDefault();
   const f = new FormData(e.currentTarget);
-  const due = new Date(String(f.get('dueAt')) + 'Z');
+  const due = new Date(String(f.get('dueAt')));
   if (Number.isNaN(due.getTime())) {
     fail('Enter a valid due date');
     return null;
@@ -234,10 +235,7 @@ export function MissionActionForm({
           defaultValue={m.next_action}
         />
       </label>
-      <label className="field">
-        Due at (UTC)
-        <input name="dueAt" type="datetime-local" required defaultValue={m.due_at.slice(0, 16)} />
-      </label>
+      <DateTimeField label="Due at" name="dueAt" required initial={m.due_at} />
       <label className="field">
         Structured market
         <select name="marketCode" defaultValue={m.country_code ?? 'OTHER'}>

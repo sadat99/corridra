@@ -1075,8 +1075,8 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .getByLabel('Local meeting start', { exact: true })
     .fill(start.toISOString().slice(0, 16));
   await card.getByLabel('Local meeting end', { exact: true }).fill(end.toISOString().slice(0, 16));
-  await card.getByLabel('Meeting start with UTC offset').fill(start.toISOString());
-  await card.getByLabel('Meeting end with UTC offset').fill(end.toISOString());
+  await card.locator('[data-date-field="startsAt"]').fill(start.toISOString().slice(0, 16));
+  await card.locator('[data-date-field="endsAt"]').fill(end.toISOString().slice(0, 16));
   await card.getByLabel('Meeting location').fill('Synthetic meeting room');
   await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
   await card.getByRole('button', { name: 'Record meeting change' }).click();
@@ -1241,7 +1241,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     await record
       .getByRole('combobox', { name: 'Observation source', exact: true })
       .selectOption(source.id);
-    await record.getByLabel('Observed date (UTC)').fill(date);
+    await record.getByLabel('Observed date').fill(date);
     await record
       .getByLabel('Commercial observation')
       .fill('Observed invented ' + kind.toLowerCase().replaceAll('_', ' '));
@@ -3298,9 +3298,21 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
     await page
       .locator('#workspace-missions')
       .evaluate((section) => section.scrollIntoView({ block: 'start', behavior: 'instant' }));
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
+    const layout = await page.evaluate(() => ({
+      viewport: innerWidth,
+      width: document.documentElement.scrollWidth,
+      overflowing: Array.from(document.querySelectorAll('body *'))
+        .map((element) => ({
+          tag: element.tagName,
+          className: String(element.className),
+          right: Math.round(element.getBoundingClientRect().right),
+          width: Math.round(element.getBoundingClientRect().width),
+        }))
+        .filter((element) => element.right > innerWidth + 1)
+        .sort((a, b) => b.right - a.right)
+        .slice(0, 20),
+    }));
+    expect(layout.width <= layout.viewport, JSON.stringify(layout)).toBe(true);
     await page.screenshot({ path: `.cache/ux10x/after/operator-missions-${width}.png` });
     await card.locator('.ux-mission-passport').screenshot({
       path: `.cache/ux10x/after/operator-mission-passport-${width}.png`,

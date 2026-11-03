@@ -1,0 +1,86 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-009",
+  "testedHead": "e58d24202e1a4029f091838a21f4fe1891e4999a",
+  "configurationWasUncommitted": true,
+  "configurationPath": ".gitleaks.toml",
+  "configSha256": "b988eb0078df2ac0f2aab65beb01e182223d9402fffa6cc02526f0d7f6949772",
+  "scannerVersion": "8.30.1",
+  "exceptionBoundary": "Only this exact verified public source SHA-256 AND this exact evidence path for generic-api-key; built-in defaults and the older exception are unchanged.",
+  "verifiedSourcePath": "apps/web/app/operator/access.tsx",
+  "verifiedSourceSha256": "c91dbdfc304cbfba6330a8846eb0f5109285c82b59605abf3a52b33619b3b6cd",
+  "controls": [
+    {
+      "name": "default-original-positive",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["generic-api-key"],
+      "result": "PASS"
+    },
+    {
+      "name": "exact-public-hash-cleared",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "findings": 0,
+      "rules": [],
+      "result": "PASS"
+    },
+    {
+      "name": "credential-same-path",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["generic-api-key"],
+      "result": "PASS"
+    },
+    {
+      "name": "credential-same-line",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["generic-api-key"],
+      "result": "PASS"
+    },
+    {
+      "name": "same-public-hash-other-path",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["generic-api-key"],
+      "result": "PASS"
+    },
+    {
+      "name": "changed-hash-same-path",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["generic-api-key"],
+      "result": "PASS"
+    },
+    {
+      "name": "other-default-rule-same-path",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "findings": 1,
+      "rules": ["github-pat"],
+      "result": "PASS"
+    }
+  ],
+  "allHistoryReceipt": {
+    "name": "gap009-security-corrected",
+    "command": "env NODE_USE_ENV_PROXY=1 node scripts/security-scan.mjs",
+    "exit": 0,
+    "signal": null,
+    "seconds": 4.9,
+    "logBytes": 178,
+    "logSha256": "71f42270bda0a7a6f9021acd14fbec5fff61a0429f10575bf632cda479794c4d",
+    "head": "e58d24202e1a4029f091838a21f4fe1891e4999a",
+    "changedPaths": 1,
+    "log": "work/gap009-security-corrected-2026-11-02T21-16-10-280Z.log"
+  },
+  "limits": [
+    "Synthetic isolated scanner fixtures only; no provider credentials or calls.",
+    "This exception does not exclude the file, rule, commit, or other values/paths."
+  ]
+}

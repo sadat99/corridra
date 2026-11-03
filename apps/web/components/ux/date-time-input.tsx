@@ -2,7 +2,7 @@
 // Date and time field that always shows its time zone (D9, D11). The value is an exact ISO instant;
 // the person types the wall-clock time in the shown zone. Owner after Wave 0: WS-E.
 import './ux-kit.css';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import {
   isoToZonedWallTime,
   resolveTimeZone,
@@ -65,6 +65,7 @@ export function DateTimeInput({
         <input
           id={inputId}
           type="datetime-local"
+          data-date-field={name}
           className="ux-kit-input"
           disabled={disabled}
           required={required}
@@ -86,4 +87,13 @@ export function DateTimeInput({
       ) : null}
     </div>
   );
+}
+
+/** Native-form adapter: keeps an exact instant while the shared input displays the viewer's zone. */
+export function DateTimeField({
+  initial = null,
+  ...props
+}: Omit<DateTimeInputProps, 'value' | 'onChange'> & { name: string; initial?: string | null }) {
+  const [value, setValue] = useState<string | null>(initial);
+  return <DateTimeInput {...props} value={value} onChange={setValue} />;
 }

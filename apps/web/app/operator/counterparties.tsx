@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
@@ -39,6 +40,15 @@ function Field({
   required?: boolean;
   type?: string;
 }) {
+  if (type === 'datetime-local')
+    return (
+      <DateTimeField
+        label={label.replace(/ \(UTC\)$/, '')}
+        name={name}
+        initial={defaultValue || null}
+        required={required}
+      />
+    );
   return (
     <label className="field">
       {label}
@@ -261,9 +271,7 @@ export function Counterparties({
     review = catalogue && ['owner', 'admin', 'reviewer'].includes(catalogue.role);
   const relations = detail?.relationships ?? [],
     attrs = detail?.attributes ?? [];
-  const [validDefault] = useState(() =>
-    new Date(Date.now() + 29 * 86400000).toISOString().slice(0, 16),
-  );
+  const [validDefault] = useState(() => new Date(Date.now() + 29 * 86400000).toISOString());
   const publicSources = sources.filter(
     (s) => s.classification === 'PUBLIC' && s.kind === 'public_record',
   );
@@ -384,8 +392,8 @@ export function Counterparties({
                     locator: f.get('locator'),
                     classification: f.get('classification'),
                     purpose,
-                    observedAt: new Date(String(f.get('observedAt')) + 'Z').toISOString(),
-                    retentionUntil: new Date(String(f.get('retentionUntil')) + 'Z').toISOString(),
+                    observedAt: new Date(String(f.get('observedAt'))).toISOString(),
+                    retentionUntil: new Date(String(f.get('retentionUntil'))).toISOString(),
                     aiPolicy: 'DENY',
                   }),
                   'source',
@@ -417,7 +425,7 @@ export function Counterparties({
                 label="Observed at (UTC)"
                 name="observedAt"
                 type="datetime-local"
-                defaultValue={new Date().toISOString().slice(0, 16)}
+                defaultValue={new Date().toISOString()}
               />
               <Field
                 label="Retain source until (UTC)"
@@ -582,7 +590,7 @@ export function Counterparties({
                           organisationId: selected,
                           kind: f.get('kind'),
                           claimId: f.get('claimId'),
-                          validUntil: new Date(String(f.get('validUntil')) + 'Z').toISOString(),
+                          validUntil: new Date(String(f.get('validUntil'))).toISOString(),
                         }))
                       }
                     >
@@ -729,7 +737,7 @@ export function Counterparties({
                           name: f.get('name'),
                           jobTitle: f.get('jobTitle'),
                           email: f.get('email'),
-                          validUntil: new Date(String(f.get('validUntil')) + 'Z').toISOString(),
+                          validUntil: new Date(String(f.get('validUntil'))).toISOString(),
                         }))
                       }
                     >
@@ -885,7 +893,7 @@ export function Counterparties({
                         uncertainty: f.get('uncertainty'),
                         gaps: f.get('gaps'),
                         nextAction: f.get('nextAction'),
-                        dueAt: new Date(String(f.get('dueAt')) + 'Z').toISOString(),
+                        dueAt: new Date(String(f.get('dueAt'))).toISOString(),
                       }))
                     }
                   >
@@ -1020,7 +1028,7 @@ export function Counterparties({
                           uncertainty: f.get('uncertainty'),
                           gaps: f.get('gaps'),
                           nextAction: f.get('nextAction'),
-                          dueAt: new Date(String(f.get('dueAt')) + 'Z').toISOString(),
+                          dueAt: new Date(String(f.get('dueAt'))).toISOString(),
                         }))
                       }
                     >
@@ -1110,7 +1118,7 @@ function AssessmentFields({
         label="Target action due (UTC)"
         name="dueAt"
         type="datetime-local"
-        defaultValue={initial ? String(initial.due_at).slice(0, 16) : validDefault}
+        defaultValue={initial ? String(initial.due_at) : validDefault}
       />
     </>
   );

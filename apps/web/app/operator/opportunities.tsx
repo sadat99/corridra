@@ -1,4 +1,5 @@
 'use client';
+import { DateTimeField } from '../../components/ux/date-time-input';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorWorkbench } from '../../components/operator-workbench';
@@ -86,10 +87,10 @@ type Data = {
   overdue: { id: string; title: string; owner_id: string; next_action: string; due_at: string }[];
   meetingFollowups: { id: string; owner_id: string; next_action: string; due_at: string }[];
 };
-const fieldDate = (v: string) => new Date(v).toISOString().slice(0, 16);
+const fieldDate = (v: string) => new Date(v).toISOString();
 const fromField = (v: FormDataEntryValue | null) => {
-  const d = new Date(String(v) + 'Z');
-  if (Number.isNaN(d.getTime())) throw new Error('Enter a valid UTC date');
+  const d = new Date(String(v));
+  if (Number.isNaN(d.getTime())) throw new Error('Choose a valid date and time');
   return d.toISOString();
 };
 function Ownership({
@@ -123,15 +124,13 @@ function Ownership({
           defaultValue={opportunity?.next_action}
         />
       </label>
-      <label className="field">
-        Commercial deadline (UTC)
-        <input
-          type="datetime-local"
-          name="dueAt"
-          required
-          defaultValue={opportunity ? fieldDate(opportunity.due_at) : defaultDue}
-        />
-      </label>
+      <DateTimeField
+        label="Commercial deadline"
+
+        name="dueAt"
+        required
+        initial={opportunity ? fieldDate(opportunity.due_at) : defaultDue}
+      />
     </>
   );
 }
@@ -149,10 +148,7 @@ function Observation({ sources, defaultDate }: { sources: Source[]; defaultDate:
           ))}
         </select>
       </label>
-      <label className="field">
-        Observed date (UTC)
-        <input type="datetime-local" name="occurredAt" required defaultValue={defaultDate} />
-      </label>
+      <DateTimeField label="Observed date" name="occurredAt" required initial={defaultDate} />
     </>
   );
 }
@@ -334,10 +330,7 @@ function RecordForm({
             ))}
         </select>
       </label>
-      <label className="field">
-        Observed date (UTC)
-        <input type="datetime-local" name="occurredAt" required defaultValue={defaultDate} />
-      </label>
+      <DateTimeField label="Observed date" name="occurredAt" required initial={defaultDate} />
       <label className="field">
         Commercial observation
         <textarea name="summary" required minLength={3} maxLength={1000} />

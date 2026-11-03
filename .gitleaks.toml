@@ -10,3 +10,11 @@ condition = "AND"
 regexTarget = "secret"
 regexes = ['''^(?:CORRIDRA_UX_MISSIONS_V2|CORRIDRA_NOTIFICATIONS_V2)$''']
 paths = ['''^docs/qa/current-plan-gaps/baselines/2026-11-01/originals/production-flag-metadata\.json\.txt$''']
+
+
+[[rules.allowlists]]
+description = "Verified public source SHA-256 for the GAP-009 access component"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^c91dbdfc304cbfba6330a8846eb0f5109285c82b59605abf3a52b33619b3b6cd$''']
+paths = ['''^docs/qa/current-plan-gaps/verification/2026-11-02-gap009-local\.json$''']

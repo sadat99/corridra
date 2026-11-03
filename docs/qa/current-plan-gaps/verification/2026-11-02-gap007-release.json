@@ -1,0 +1,27 @@
+{
+  "recordedOn": "2026-11-02",
+  "pullRequest": "https://github.com/sadat99/corridra/pull/241",
+  "testedHead": "938413f203e5ee94555b8f29828ee1a7f948eec3",
+  "ciRun": 41521015108,
+  "codeqlRun": 41521015083,
+  "ciConclusion": "success",
+  "checks": 19,
+  "failedChecks": [],
+  "mergedRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+  "productionDeployment": {
+    "id": "dpl_HF4gsqYWkjvG3o7DS6ykuNoAsmKe",
+    "state": "READY",
+    "githubCommitSha": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+    "alias": "corridra.vercel.app"
+  },
+  "squashAuthor": "Nazmus Sadat",
+  "retiredBranch": "fix/gap-007-participant-invitation-email",
+  "branchEnvironmentBindings": 0,
+  "finding": "GAP-007",
+  "localEvidence": "verification/2026-11-02-gap007-local.json",
+  "limits": [
+    "Code is deployed; additive real-use0012 still requires protected installation.",
+    "Existing0011 installer41505093037 remains owner-review pending; after exact-main gates, supersede it with one reviewed0011/0012 installer if still waiting.",
+    "Optional activation settings remain unchanged. No real provider delivery/private live acceptance claimed."
+  ]
+}
