@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type {
   ProgrammeProjection,
   OwnProgrammeProjection,
@@ -8,6 +8,8 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { DateTimeInput } from '../../../components/ux/date-time-input';
 
 type Identity = { subject: string; issuer: string };
+// What a confirmed save reports back to the form that sent it.
+type SavedReceipt = { resourceId: unknown; version: number };
 type Query =
   | { view: 'owner'; workspaceId: string; programmeId: string; after?: string }
   | { view: 'own'; registrationId: string; after?: string };
@@ -25,7 +27,11 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     [visible, setVisible] = useState(false);
   const request = useRef<AbortController | null>(null),
     sequence = useRef(0),
-    pending = useRef<{ signature: string; body: Record<string, unknown> } | null>(null),
+    pending = useRef<{
+      signature: string;
+      body: Record<string, unknown>;
+      onSaved?: (receipt: SavedReceipt) => void;
+    } | null>(null),
     mounted = useRef(true);
   const queryText = new URLSearchParams(query).toString();
   const host = useCallback((node: HTMLElement | null) => {
@@ -125,13 +131,14 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       clearTimeout(renew);
     };
   }, [data, visible, load]);
-  async function send(input: Record<string, unknown>) {
+  async function send(input: Record<string, unknown>, onSaved?: (receipt: SavedReceipt) => void) {
     if (busy) return false;
     const signature = JSON.stringify(input);
     if (pending.current?.signature !== signature)
       pending.current = {
         signature,
         body: { ...input, commandId: crypto.randomUUID(), acknowledged: true },
+        onSaved,
       };
     setBusy(true);
     setNotice('');
@@ -161,6 +168,10 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
       )
         throw Error('Save could not be confirmed. Retry the same change.');
       if (!mounted.current) return false;
+      pending.current.onSaved?.({
+        resourceId: receipt.resourceId,
+        version: Number(receipt.version),
+      });
       pending.current = null;
       setCanRetry(false);
       await load();
@@ -186,9 +197,18 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     const input = { ...body };
     delete input.commandId;
     delete input.acknowledged;
-    await send(input);
+    await send(input, pending.current?.onSaved);
   }
-  return { data, notice, busy, load, send, host, retry, canRetry };
+  // Forget an unconfirmed change, for a form that moves on to something else. Returns what was dropped, if anything.
+  function discard() {
+    const dropped = pending.current?.body ?? null;
+    if (!dropped) return null;
+    pending.current = null;
+    setCanRetry(false);
+    setNotice('');
+    return dropped;
+  }
+  return { data, notice, busy, load, send, host, retry, canRetry, discard };
 }
 
 export function ProgrammeProjectionPanel(
@@ -209,7 +229,14 @@ function OwnerPanel(
     [start, setStart] = useState<string | null>(null),
     [end, setEnd] = useState<string | null>(null),
     [audience, setAudience] = useState<'ALL' | 'SELECTED'>('ALL'),
-    [attendees, setAttendees] = useState<string[]>([]);
+    [attendees, setAttendees] = useState<string[]>([]),
+    // The activity version the organiser saw when the form was filled; saves are checked against it.
+    [seenVersion, setSeenVersion] = useState<number | null>(null),
+    // Title of the activity whose last change could not be confirmed when the form moved away from it.
+    [unconfirmedTitle, setUnconfirmedTitle] = useState<string | null>(null);
+  const shownTask = useRef(''),
+    activitySelect = useRef<HTMLSelectElement>(null),
+    staleNotice = useId();
   const { host, ...view } = useProjection<ProgrammeProjection>(props, {
     view: 'owner',
     workspaceId: props.workspaceId,
@@ -219,15 +246,28 @@ function OwnerPanel(
   const d = view.data;
   const task = d?.agenda.find((t) => t.taskId === taskId),
     zone = d?.context?.timezone;
+  const stale = !view.busy && !!task && seenVersion !== null && task.version !== seenVersion;
   function edit(id: string) {
     const row = d?.agenda.find((t) => t.taskId === id);
     if (!row) return;
+    // A change left unconfirmed for another activity must not be retried against this one, and the
+    // organiser is told it may or may not have been saved.
+    const dropped = view.discard();
+    setUnconfirmedTitle(
+      dropped ? (d?.agenda.find((t) => t.taskId === dropped.taskId)?.title ?? 'an activity') : null,
+    );
+    shownTask.current = id;
     setTaskId(id);
+    setSeenVersion(row.version);
     setStart(row.startsAt);
     setEnd(row.endsAt);
     setAudience(row.audience);
     setAttendees(row.attendees);
   }
+  // Only a save of the activity the form shows moves the version the form is checked against.
+  const savedByThisForm = (saved: SavedReceipt) => {
+    if (saved.resourceId === shownTask.current) setSeenVersion(saved.version);
+  };
   const paging =
     d && (after || d.nextAfter) ? (
       <div className="button-row">
@@ -353,6 +393,12 @@ function OwnerPanel(
           ) : (
             <p>No attendee overlaps recorded.</p>
           )}
+          {unconfirmedTitle && (
+            <p role="status">
+              An earlier change to {unconfirmedTitle} could not be confirmed and may or may not have
+              been saved. Check its schedule in the list before changing it again.
+            </p>
+          )}
           <ul>
             {d.agenda.map((row) => (
               <li key={row.taskId}>
@@ -388,24 +434,28 @@ function OwnerPanel(
               className="operator-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!task || !start || !end) return;
-                void view.send({
-                  action: 'schedule',
-                  workspaceId: props.workspaceId,
-                  programmeId: props.programmeId,
-                  taskId,
-                  expectedVersion: task.version,
-                  scheduled: true,
-                  startsAt: start,
-                  endsAt: end,
-                  audience,
-                  attendees: audience === 'ALL' ? [] : attendees,
-                });
+                if (!task || !start || !end || seenVersion === null || stale) return;
+                void view.send(
+                  {
+                    action: 'schedule',
+                    workspaceId: props.workspaceId,
+                    programmeId: props.programmeId,
+                    taskId,
+                    expectedVersion: seenVersion,
+                    scheduled: true,
+                    startsAt: start,
+                    endsAt: end,
+                    audience,
+                    attendees: audience === 'ALL' ? [] : attendees,
+                  },
+                  savedByThisForm,
+                );
               }}
             >
               <label className="field">
                 Activity
                 <select
+                  ref={activitySelect}
                   value={taskId}
                   disabled={view.busy}
                   required
@@ -472,10 +522,30 @@ function OwnerPanel(
                   {paging}
                 </fieldset>
               )}
+              {stale && (
+                <>
+                  <p role="status" id={staleNotice}>
+                    This activity changed after you opened it. That can be another organiser, or
+                    your own earlier save that could not be confirmed. Reloading replaces the
+                    entries currently typed with the latest saved schedule.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      edit(taskId);
+                      activitySelect.current?.focus();
+                    }}
+                  >
+                    Reload this activity
+                  </button>
+                </>
+              )}
               <button
                 type="submit"
+                aria-describedby={stale ? staleNotice : undefined}
                 disabled={
                   view.busy ||
+                  stale ||
                   !zone ||
                   !task ||
                   task.status === 'CANCELLED' ||
@@ -487,16 +557,20 @@ function OwnerPanel(
               {task?.scheduled && (
                 <button
                   type="button"
-                  disabled={view.busy}
+                  aria-describedby={stale ? staleNotice : undefined}
+                  disabled={view.busy || stale || seenVersion === null}
                   onClick={() =>
-                    void view.send({
-                      action: 'schedule',
-                      workspaceId: props.workspaceId,
-                      programmeId: props.programmeId,
-                      taskId,
-                      expectedVersion: task.version,
-                      scheduled: false,
-                    })
+                    void view.send(
+                      {
+                        action: 'schedule',
+                        workspaceId: props.workspaceId,
+                        programmeId: props.programmeId,
+                        taskId,
+                        expectedVersion: seenVersion,
+                        scheduled: false,
+                      },
+                      savedByThisForm,
+                    )
                   }
                 >
                   Remove schedule
@@ -519,6 +593,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
   const [objective, setObjective] = useState(''),
     [consentProfileId, setConsentProfileId] = useState<string | null>(null),
     [after, setAfter] = useState<string | undefined>();
+  const heading = useRef<HTMLHeadingElement>(null);
   const { host, ...view } = useProjection<OwnProgrammeProjection>(props, {
       view: 'own',
       registrationId: props.registrationId,
@@ -527,7 +602,9 @@ function OwnSharing(props: Identity & { registrationId: string }) {
     d = view.data;
   return (
     <section ref={host} aria-label="Programme company and meeting sharing" aria-busy={view.busy}>
-      <h4>Company and meeting sharing</h4>
+      <h4 ref={heading} tabIndex={-1}>
+        Company and meeting sharing
+      </h4>
       <p>
         The programme owner and admins can see only the fields you explicitly share here.
         Meeting-count permission is separate from sharing an objective.
@@ -607,6 +684,34 @@ function OwnSharing(props: Identity & { registrationId: string }) {
               Apply for a place using your company profile in Your place first. Sharing also
               requires an active registration and current company authority.
             </p>
+          )}
+          {d.company.sourceChanged && (
+            <>
+              <p role="status">
+                {d.profile && d.active
+                  ? 'Your company for this place changed after you shared. Programme organisers do not see a company until you review it and share again.'
+                  : 'Your company for this place changed after you shared. Programme organisers do not see a company until you share again.'}
+              </p>
+              <button
+                type="button"
+                disabled={view.busy}
+                onClick={() =>
+                  void view
+                    .send({
+                      action: 'company',
+                      registrationId: props.registrationId,
+                      expectedVersion: d.company.version,
+                      shared: false,
+                    })
+                    .then((ok) => {
+                      // The button leaves the page once cleared; keep keyboard focus inside this section.
+                      if (ok) heading.current?.focus();
+                    })
+                }
+              >
+                Clear earlier company permission
+              </button>
+            </>
           )}
           {d.company.shared && (
             <>

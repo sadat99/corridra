@@ -171,3 +171,5 @@ The [ledger before gap repairs](v3/history/ledger-before-gap-repairs-2026-11-02.
 The [ledger through GAP012](v3/history/ledger-through-gap012-2026-11-03.md) preserves the exact prior release index and recovery references. The current ledger records subsequent work.
 
 [ADR075](adr/0075-programme-projections-and-consented-meeting-counts.md) holds the accepted Batch D disclosure/readiness contract; implementation, installation and activation evidence remain separate.
+
+[ADR076](adr/0076-trip-books-and-decision-sharing.md) records Batch E: reuse the permitted itinerary for Trip, with the minimal book/share field map and expiry proposed for owner acceptance.

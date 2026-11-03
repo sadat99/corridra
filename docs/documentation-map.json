@@ -1367,6 +1367,11 @@
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
+    },
+    {
+      "path": "docs/adr/0076-trip-books-and-decision-sharing.md",
+      "classification": "Architecture decision",
+      "use": "Batch E Trip view and proposed minimal book/decision-card disclosure contract; explicit owner acceptance required for export/share defaults"
     }
   ]
 }

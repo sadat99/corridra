@@ -1,0 +1,54 @@
+{
+  "recordedOn": "2026-11-03",
+  "findings": ["GAP-037", "GAP-038", "GAP-039", "GAP-042"],
+  "pullRequest": "https://github.com/sadat99/corridra/pull/253",
+  "testedHead": "19d4acb2ead419ec79cf4897c3506d255ae195b3",
+  "ciRun": 41649358511,
+  "codeqlRun": 41649358481,
+  "completedChecks": 19,
+  "checkConclusions": {
+    "success": 18,
+    "neutralCodeqlAggregate": 1,
+    "failure": 0
+  },
+  "mergeAuthorization": "Keep going with other batches one after another, while ensuring document update after each merge. no unnecessary overengineering allowed",
+  "mergedRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+  "mergeTreeEqualsTestedHead": true,
+  "squashAuthor": "Nazmus Sadat",
+  "productionDeployment": {
+    "id": "dpl_6rmcSh9S7UYB8XAFxDTte7YR54XP",
+    "state": "READY",
+    "githubCommitSha": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+    "target": "production",
+    "regions": ["fra1"],
+    "aliases": ["corridra.vercel.app", "c.obsidianglobal.studio", "corridra-sadat-os.vercel.app"]
+  },
+  "schemaInstaller": {
+    "run": 41657859737,
+    "state": "waiting",
+    "sourceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+    "expectedRegistry": "customer_programme_projection_migrations",
+    "expectedMigration": "0001_consented_programme_projections.sql",
+    "optionalActions": "unchanged"
+  },
+  "branchCleanup": {
+    "oldBranch": "docs/gap-batch-plan",
+    "remoteAutoDeleted": true,
+    "openPullRequests": 0,
+    "vercelEnvironmentBindings": 0,
+    "vercelBranchDeployments": 0,
+    "localBranchDeleted": true
+  },
+  "limits": [
+    "Exact source SHA, READY, fra1 and production aliases are provider-verified. A bounded production API probe confirms the module remains closed with private cache/referrer headers.",
+    "Protected schema installation requires GitHub owner review and actual registry advancement.",
+    "The application switch remains default off; no activation or genuine customer/provider acceptance is claimed."
+  ],
+  "productionProbe": {
+    "path": "/api/customer-programme-projections?view=owner&workspaceId=00000000-0000-4000-8000-000000000006&programmeId=00000000-0000-4000-8000-000000000005",
+    "status": 503,
+    "cacheControl": "no-store",
+    "referrerPolicy": "no-referrer",
+    "meaning": "Default-off application endpoint is closed. This is not a signed-in permission-denial or user-journey proof."
+  }
+}

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -162,7 +162,7 @@ function own() {
     expiresAt: expiry(),
     sendsMessages: false,
     active: true,
-    company: { version: 0, shared: false, objective: null },
+    company: { version: 0, shared: false, sourceChanged: false, objective: null },
     profile: {
       id: '00000000-0000-4000-8000-000000000009',
       version: 2,
@@ -390,4 +390,332 @@ test('another company with the same version also requires fresh consent', async 
   await expect(
     page.getByRole('button', { name: 'Share company profile', exact: true }),
   ).toBeDisabled();
+});
+
+// A programme server that keeps activities and answers the way the database does: a save made against an older
+// version than the current one is refused with the existing "Activity changed; reload" message, and a command
+// sent again with the same id gets its original receipt back.
+const secondTaskId = '00000000-0000-4000-8000-00000000000a';
+async function activityServer(page: Page, ids = [taskId]) {
+  const tasks = new Map(
+    ids.map((id) => [
+      id,
+      { version: 1, startsAt: '2030-07-15T04:00:00Z', endsAt: '2030-07-15T05:00:00Z' },
+    ]),
+  );
+  const receipts = new Map<string, ReturnType<typeof receipt>>();
+  const server = {
+    posts: [] as Record<string, unknown>[],
+    // The next save is committed but its reply does not match the request, as when a response is lost.
+    loseNextReply: false,
+    version: (id = taskId) => tasks.get(id)!.version,
+    change(startsAt: string, endsAt: string, id = taskId) {
+      const task = tasks.get(id)!;
+      task.version += 1;
+      task.startsAt = startsAt;
+      task.endsAt = endsAt;
+    },
+  };
+  await page.route('**/api/customer-programme-projections**', (r) => {
+    if (r.request().method() === 'GET') {
+      const view = owner();
+      view.agenda = ids.map((id, index) => ({
+        ...view.agenda[0]!,
+        taskId: id,
+        title: index === 0 ? 'Synthetic activity' : 'Synthetic second activity',
+        ...tasks.get(id)!,
+      }));
+      return r.fulfill({ json: view });
+    }
+    const body = r.request().postDataJSON();
+    server.posts.push(body);
+    const replay = receipts.get(String(body.commandId));
+    if (replay) return r.fulfill({ json: replay });
+    const task = tasks.get(String(body.taskId))!;
+    if (body.expectedVersion !== task.version)
+      return r.fulfill({ status: 409, json: { error: 'Activity changed; reload' } });
+    task.version += 1;
+    const saved = receipt(body);
+    receipts.set(String(body.commandId), saved);
+    if (server.loseNextReply) {
+      server.loseNextReply = false;
+      return r.fulfill({ json: { ...saved, commandId: 'wrong' } });
+    }
+    return r.fulfill({ json: saved });
+  });
+  return server;
+}
+const changedNotice = (page: Page) =>
+  page.getByRole('status').filter({ hasText: 'This activity changed after you opened it' });
+const axeResults = (page: Page) =>
+  new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
+
+test('an activity changed by someone else after it was opened cannot be overwritten', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  const starts = page.getByLabel(/Activity starts/);
+  await expect(starts).toHaveValue('2030-07-15T10:00');
+  await starts.fill('2030-07-15T14:00');
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await expect(changedNotice(page)).toContainText('replaces the entries currently typed');
+  await expect(page.getByRole('button', { name: 'Save activity schedule' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Remove schedule' })).toBeDisabled();
+  // The disabled buttons point at the notice that explains why.
+  for (const name of ['Save activity schedule', 'Remove schedule']) {
+    const id = await page.getByRole('button', { name }).getAttribute('aria-describedby');
+    expect(id).toBeTruthy();
+    expect(await page.locator(`[id="${id}"]`).textContent()).toContain(
+      'This activity changed after you opened it',
+    );
+  }
+  expect((await axeResults(page)).violations).toEqual([]);
+  // Nothing is re-seeded without consent: the typed value is still there and nothing was sent.
+  await expect(starts).toHaveValue('2030-07-15T14:00');
+  expect(server.posts).toHaveLength(0);
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await expect(changedNotice(page)).toHaveCount(0);
+  // Focus stays in the form instead of falling to the page when the button leaves.
+  await expect(page.getByRole('combobox', { name: /^Activity/ })).toBeFocused();
+  expect((await axeResults(page)).violations).toEqual([]);
+  await expect(starts).toHaveValue('2030-07-15T12:00');
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  expect(server.posts[0]).toMatchObject({ expectedVersion: 2, startsAt: '2030-07-15T06:00:00Z' });
+});
+test('a save made before the page noticed another change is refused and recovers after reload', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Activity changed; reload');
+  expect(server.posts).toHaveLength(1);
+  expect(server.posts[0]).toMatchObject({ expectedVersion: 1 });
+  await expect(page.getByText('Synthetic activity', { exact: false })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect.poll(() => server.posts.length).toBe(2);
+  expect(server.posts[1]).toMatchObject({ expectedVersion: 2, startsAt: '2030-07-15T06:00:00Z' });
+});
+test('saving twice in a row shows no false change notice and uses the next version', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  const save = page.getByRole('button', { name: 'Save activity schedule' });
+  await save.click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  await expect(save).toBeEnabled();
+  await expect(changedNotice(page)).toHaveCount(0);
+  await save.click();
+  await expect.poll(() => server.posts.length).toBe(2);
+  expect(server.posts.map((post) => post.expectedVersion)).toEqual([1, 2]);
+});
+test('removing a schedule needs the version the organiser saw', async ({ page }) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  const remove = page.getByRole('button', { name: 'Remove schedule' });
+  await expect(remove).toBeDisabled();
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await expect(remove).toBeEnabled();
+  await remove.click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  expect(server.posts[0]).toMatchObject({ scheduled: false, expectedVersion: 2 });
+});
+test('a company that changed after sharing is not shared until the participant shares again', async ({
+  page,
+}) => {
+  const commands: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-projections**', (r) => {
+    if (r.request().method() === 'GET')
+      return r.fulfill({
+        json: {
+          ...own(),
+          company: {
+            version: 2,
+            shared: false,
+            sourceChanged: true,
+            objective: 'Synthetic earlier objective',
+          },
+        },
+      });
+    const body = r.request().postDataJSON();
+    commands.push(body);
+    return r.fulfill({ json: receipt(body) });
+  });
+  await page.goto(origin + '/?view=own');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'company for this place changed' }),
+  ).toHaveText(
+    'Your company for this place changed after you shared. Programme organisers do not see a company until you review it and share again.',
+  );
+  await expect(page.getByText('Company sharing is on')).toHaveCount(0);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.getByRole('button', { name: 'Clear earlier company permission' }).click();
+  await expect.poll(() => commands.length).toBe(1);
+  expect(commands[0]).toMatchObject({
+    action: 'company',
+    registrationId,
+    expectedVersion: 2,
+    shared: false,
+  });
+  expect(commands[0]).not.toHaveProperty('profileId');
+  await page.getByRole('textbox', { name: /Short objective/ }).fill('Synthetic fresh objective');
+  await page.getByRole('checkbox', { name: /I agree to share/ }).check();
+  await page.getByRole('button', { name: 'Share company profile', exact: true }).click();
+  await expect.poll(() => commands.length).toBe(2);
+  expect(commands[1]).toMatchObject({
+    action: 'company',
+    expectedVersion: 2,
+    shared: true,
+    profileVersion: 2,
+    objective: 'Synthetic fresh objective',
+  });
+});
+test('a change left unconfirmed for one activity is not retried against another', async ({
+  page,
+}) => {
+  const server = await activityServer(page, [taskId, secondTaskId]);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.loseNextReply = true;
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Save could not be confirmed');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic second activity' }).click();
+  // Moving to the other activity drops the retry, so the first save cannot land on this form.
+  await expect(page.getByRole('button', { name: 'Retry same change' })).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  // Another organiser changes the second activity; it stays blocked until reloaded.
+  server.change('2030-07-15T06:00:00Z', '2030-07-15T07:00:00Z', secondTaskId);
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save activity schedule' })).toBeDisabled();
+  expect(server.posts).toHaveLength(1);
+});
+test('a save whose reply was lost is recognised as the organiser own save when retried', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.loseNextReply = true;
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Save could not be confirmed');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  // The save did commit, so the page says the activity changed and names that possibility.
+  await expect(changedNotice(page)).toContainText(
+    'your own earlier save that could not be confirmed',
+  );
+  await page.getByRole('button', { name: 'Retry same change' }).click();
+  await expect.poll(() => server.posts.length).toBe(2);
+  expect(server.posts[1]).toEqual(server.posts[0]);
+  await expect(changedNotice(page)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save activity schedule' })).toBeEnabled();
+  expect(server.posts).toHaveLength(2);
+});
+test('reloading after a lost reply drops the retry so it cannot loop into a second notice', async ({
+  page,
+}) => {
+  const server = await activityServer(page);
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.loseNextReply = true;
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Save could not be confirmed');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(changedNotice(page)).toBeVisible();
+  await page.getByRole('button', { name: 'Reload this activity' }).click();
+  await expect(page.getByRole('button', { name: 'Retry same change' })).toHaveCount(0);
+  await expect(changedNotice(page)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save activity schedule' })).toBeEnabled();
+  expect(server.posts).toHaveLength(1);
+});
+test('clearing the earlier company permission keeps focus in the sharing section', async ({
+  page,
+}) => {
+  let cleared = false;
+  await page.route('**/api/customer-programme-projections**', (r) => {
+    if (r.request().method() === 'GET')
+      return r.fulfill({
+        json: {
+          ...own(),
+          company: { version: 2, shared: false, sourceChanged: !cleared, objective: null },
+        },
+      });
+    cleared = true;
+    return r.fulfill({ json: receipt(r.request().postDataJSON()) });
+  });
+  await page.goto(origin + '/?view=own');
+  await page.getByRole('button', { name: 'Clear earlier company permission' }).click();
+  await expect(page.getByRole('button', { name: 'Clear earlier company permission' })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('heading', { name: 'Company and meeting sharing' })).toBeFocused();
+});
+test('the changed-company notice does not point at a review form that is not shown', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-programme-projections**', (r) =>
+    r.fulfill({
+      json: {
+        ...own(),
+        active: false,
+        company: { version: 2, shared: false, sourceChanged: true, objective: null },
+      },
+    }),
+  );
+  await page.goto(origin + '/?view=own');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'company for this place changed' }),
+  ).toHaveText(
+    'Your company for this place changed after you shared. Programme organisers do not see a company until you share again.',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Clear earlier company permission' }),
+  ).toBeVisible();
+});
+test('moving to another activity after an unconfirmed save says that the earlier change may or may not be saved', async ({
+  page,
+}) => {
+  const server = await activityServer(page, [taskId, secondTaskId]);
+  const warning = page.getByRole('status').filter({ hasText: 'could not be confirmed' });
+  await page.goto(origin + '/?view=agenda');
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  // Nothing was pending, so there is nothing to warn about.
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic second activity' }).click();
+  await expect(warning).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit schedule for Synthetic activity' }).click();
+  server.loseNextReply = true;
+  await page.getByRole('button', { name: 'Save activity schedule' }).click();
+  await expect(page.getByRole('alert')).toContainText('Save could not be confirmed');
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  const other = page.getByRole('button', { name: 'Edit schedule for Synthetic second activity' });
+  await other.click();
+  await expect(warning).toHaveText(
+    'An earlier change to Synthetic activity could not be confirmed and may or may not have been saved. Check its schedule in the list before changing it again.',
+  );
+  // The message does not take focus from what the organiser just used.
+  await expect(other).toBeFocused();
+  expect((await axeResults(page)).violations).toEqual([]);
+  expect(server.posts).toHaveLength(1);
 });

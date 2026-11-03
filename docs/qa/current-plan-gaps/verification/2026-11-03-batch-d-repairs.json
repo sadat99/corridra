@@ -1,0 +1,293 @@
+{
+  "recordedOn": "2026-11-03",
+  "batch": "D",
+  "kind": "post-merge repairs (PR254, open draft) and 0001 protected install record",
+  "findings": ["GAP-037", "GAP-038", "GAP-039", "GAP-042"],
+  "status": "PR254 is an open draft. Repairs are implemented and locally verified on 39b7541aa95689c2aed8d8171a794d64785234b8; frozen-head CI and CodeQL on that head were pending when recorded. Migration 0002 is NOT installed. Nothing is activated.",
+  "pullRequests": {
+    "merged": {
+      "number": 253,
+      "url": "https://github.com/sadat99/corridra/pull/253",
+      "mergedRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+      "mergedAt": "2026-11-03T14:49:32Z",
+      "testedHead": "19d4acb2ead419ec79cf4897c3506d255ae195b3",
+      "ciRun": 41649358511,
+      "codeqlRun": 41649358481,
+      "checks": "19 completed: 18 success, 1 neutral CodeQL aggregate, 0 failure (see 2026-11-03-batch-d-release.json)",
+      "production": "READY per 2026-11-03-batch-d-release.json (dpl_6rmcSh9S7UYB8XAFxDTte7YR54XP)"
+    },
+    "repair": {
+      "number": 254,
+      "url": "https://github.com/sadat99/corridra/pull/254",
+      "state": "open draft",
+      "branch": "claude/zen-hopper-1iqtdn",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "baseRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a"
+    }
+  },
+  "protectedInstallOfMigration0001": {
+    "workflow": "Install customer modules",
+    "run": 41657859737,
+    "job": 125992900859,
+    "environment": "customer-modules-install",
+    "trigger": "workflow_dispatch by sadat99",
+    "sourceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+    "conclusion": "success",
+    "completedAt": "2026-11-03T15:15:26Z",
+    "logLines": [
+      "customer_programme_projection_migrations: not installed (15:11:45Z, before)",
+      "customer_programme_projection_migrations: 1 applied (15:15:23Z, after)"
+    ],
+    "logReadBy": "The conductor's subagent reported the before and after lines; the scribe then independently read both lines in the job log through the GitHub REST API on 3 November 2026.",
+    "optionalActionInputs": "unchanged",
+    "limits": [
+      "This proves the 0001 registry advanced to 1 applied. It does not show the application programme-projection switch.",
+      "Whether the programme-projection application switch is on is UNKNOWN. No application switch change is inferred from the installer run."
+    ]
+  },
+  "defectsFoundAfterMerge": [
+    {
+      "id": 1,
+      "summary": "A schedule save could overwrite another organiser's change: the client sent the refreshed live version together with stale values.",
+      "repair": "The client now remembers the version seen when editing, binds the post-save callback to its own activity through the server receipt, discards unconfirmed changes when switching or reloading, and shows a stale notice with an explicit Reload."
+    },
+    {
+      "id": 2,
+      "summary": "After a company-workspace switch organisers kept seeing the previous company until the participant shared again.",
+      "repair": "Additive migration 0002 returns the company only when the consented workspace equals the current enrolment source. The participant sees sourceChanged and a 'Clear earlier company permission' button."
+    },
+    {
+      "id": 3,
+      "summary": "Meeting counts and participant mission summaries could display for up to about 60 seconds past source retention.",
+      "repair": "Migration 0002 bounds expiresAt by the earliest included source retention."
+    }
+  ],
+  "migrations": {
+    "0001": {
+      "path": "packages/db/customer-programme-projection-migrations/0001_consented_programme_projections.sql",
+      "sha256": "dc9430eb0ed5e8a5030fbe17f1f1d6c85e4860c96e43e20ac4fc97529024650b",
+      "unchangedFrom": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
+      "checkedBy": "git show of ab9337c piped to sha256sum equals the working file at 39b7541; receipt work/mig-0001-unchanged-2026-11-03T17-44-23-267Z.log.receipt.json (git diff --exit-code ab9337c, exit 0, head a301bfe)"
+    },
+    "0002": {
+      "path": "packages/db/customer-programme-projection-migrations/0002_projection_source_and_retention.sql",
+      "sha256": "bc8944148a4f18bb0b6769649cee20adf9023adf40deab8a9b3dd527a39a3597",
+      "state": "additive; NOT installed in any environment",
+      "installer": "packages/db/src/customer-programme-projection-migrate.ts now applies later files in order, the same loop as the notification module."
+    }
+  },
+  "zeroTwoInstallStillNeeded": {
+    "requires": "The owner's workflow_dispatch and environment approval, or the conductor's dispatch under the owner's 3 November full pre-approval if later performed and observed. Neither has happened.",
+    "expectedLog": "customer_programme_projection_migrations: 1 applied before and 2 applied after for the installed environment; a fresh database goes 0 to 2.",
+    "applicationSwitch": "default off; nothing activated"
+  },
+  "residualAcceptedByOwnerPreApproval": "Returning to the same company at the same profile version reactivates the earlier share. The participant sees it and can clear it.",
+  "ciHistoryOnPr254": [
+    {
+      "head": "a301bfe801bb08b857f70d3b37203ea000b20183",
+      "run": 41686929696,
+      "result": "failure",
+      "detail": "The browser job (integration suite) failed 1 test: customer-programme-projection-upgrade.test.ts, 1 failed of 4 (1 failed, 1934 passed, 1 skipped overall). The caller attributes it to grant list order in the upgrade test, a test bug fixed in 8547c15. The checks and validate jobs also failed on the branch-budget guard because the repository then had 9 distinct branches (batch/e-trip-disclosure still existed).",
+      "fix": "8547c15 made the 0002 guards version independent and the grant and retention tests order and timing safe."
+    },
+    {
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "result": "pending when recorded",
+      "detail": "On 2026-11-03 about 18:31Z the GitHub check-runs list showed 18 runs: 5 completed (CodeQL aggregate neutral, Analyze actions and python success, changes success, CodeQL configuration status success), 13 in progress including checks, browser, operator 1-6, ux 1-3, verification and Analyze javascript-typescript; none failed. This is an in-flight observation, not an exact-head pass."
+    }
+  ],
+  "branchBudget": {
+    "remoteBranches": 8,
+    "listed": [
+      "billing-real-staff-panel",
+      "ccr-998044a6-w7yufu",
+      "claude/vigilant-goldberg-p3uruh",
+      "claude/zen-hopper-1iqtdn",
+      "dependabot/github_actions/actions/cache-6",
+      "dependabot/npm_and_yarn/types/node-26.6.6",
+      "dependabot/npm_and_yarn/workspace-compatible-6a89faa741",
+      "main"
+    ],
+    "observedBy": "git ls-remote --heads origin on 3 November 2026",
+    "note": "The owner deleted batch/e-trip-disclosure. Owner rule: always keep the branch count below 9."
+  },
+  "receipts": [
+    {
+      "receiptPath": "work/final-db1-2026-11-03T18-23-00-240Z.log.receipt.json",
+      "name": "final-db1",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/customer-programme-projection-upgrade.test.ts tests/integration/real-programme-operations.test.ts tests/integration/customer-mission-shares.test",
+      "exit": 0,
+      "seconds": 44.5,
+      "logSha256": "748f4ef2a53669a7a0c24840a7c36841b7a006213b0981846a0ff7b4b0a7c403",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "result": "41 tests passed in 4 files",
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-db2-2026-11-03T18-23-44-755Z.log.receipt.json",
+      "name": "final-db2",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/customer-programme-projection-upgrade.test.ts tests/integration/real-programme-operations.test.ts tests/integration/customer-mission-shares.test",
+      "exit": 0,
+      "seconds": 44.5,
+      "logSha256": "65a782cd0261e2f9cc8411bc72698b9ae02861e54bf88a5a41b36196a04b6856",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "result": "41 tests passed in 4 files (second consecutive run)",
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-op-2026-11-03T18-24-32-875Z.log.receipt.json",
+      "name": "final-op",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-projections-ui.spec.ts",
+      "exit": 0,
+      "seconds": 33.2,
+      "logSha256": "8b7f80550b59e699a3fed81a596e4218ed7f172be590cf327965ae987ac5f50a",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "result": "27 operator-spec tests passed",
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-gate-2026-11-03T18-25-06-119Z.log.receipt.json",
+      "name": "final-gate",
+      "command": "pnpm exec playwright test tests/browser/v3-programme-projections-gate.spec.ts",
+      "exit": 0,
+      "seconds": 7.5,
+      "logSha256": "ff0070f212369ea070f83c05b1761e4382c4fcb7f1304b544298cb1f97dfe2f9",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "result": "2 browser-gate tests passed",
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-types-2026-11-03T18-25-13-623Z.log.receipt.json",
+      "name": "final-types",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 33.7,
+      "logSha256": "9b54d427e337803cc2618a64861915252c623205b436ba8a55620ecdb3088bec",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-lint-2026-11-03T18-25-47-359Z.log.receipt.json",
+      "name": "final-lint",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 57.7,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-format-2026-11-03T18-26-45-159Z.log.receipt.json",
+      "name": "final-format",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 48.6,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/final-docs-2026-11-03T18-27-33-835Z.log.receipt.json",
+      "name": "final-docs",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 19.5,
+      "logSha256": "5146fc5dc2f9f3771cf7b444006d72760007dcd1dd69d854ab8a91b0e81e8758",
+      "head": "39b7541aa95689c2aed8d8171a794d64785234b8",
+      "changedPaths": 2,
+      "result": "70 tests passed",
+      "role": "final local check at 39b7541"
+    },
+    {
+      "receiptPath": "work/db-fail-before-2026-11-03T17-23-33-530Z.log.receipt.json",
+      "name": "db-fail-before",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/customer-programme-projection-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 15.6,
+      "logSha256": "73d4f34f321b8a65d8cf030388c972b62841b1b2fc7e22326b80d08ae7c2ea78",
+      "head": "b1b4963aff00dc0d9ae412ba9b44355553b09f81",
+      "changedPaths": 2,
+      "role": "failing-before reproduction",
+      "result": "failing before the 0002 repair: 6 then 5 then 5 failed tests across the projections and upgrade files (three runs at b1b4963)"
+    },
+    {
+      "receiptPath": "work/db-fail-before-2026-11-03T17-25-02-751Z.log.receipt.json",
+      "name": "db-fail-before",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/customer-programme-projection-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 18.3,
+      "logSha256": "76461d3c17fd49d3716fef43514040eb79338769d8d0b373b9878e70fdac954a",
+      "head": "b1b4963aff00dc0d9ae412ba9b44355553b09f81",
+      "changedPaths": 2,
+      "role": "failing-before reproduction",
+      "result": "failing before the 0002 repair: 6 then 5 then 5 failed tests across the projections and upgrade files (three runs at b1b4963)"
+    },
+    {
+      "receiptPath": "work/db-fail-before-2026-11-03T17-25-30-821Z.log.receipt.json",
+      "name": "db-fail-before",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projections.test.ts tests/integration/customer-programme-projection-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 18,
+      "logSha256": "642e05cef45bd797457d601fe3946e7abe0319942477a4995cd165e1eee24708",
+      "head": "b1b4963aff00dc0d9ae412ba9b44355553b09f81",
+      "changedPaths": 2,
+      "role": "failing-before reproduction",
+      "result": "failing before the 0002 repair: 6 then 5 then 5 failed tests across the projections and upgrade files (three runs at b1b4963)"
+    },
+    {
+      "receiptPath": "work/op-fail-before-2026-11-03T17-34-50-499Z.log.receipt.json",
+      "name": "op-fail-before",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-projections-ui.spec.ts",
+      "exit": 1,
+      "seconds": 52.4,
+      "logSha256": "5317bfa2be385a2e71a31a37a64670243b456268a424503fd49013647354c05b",
+      "head": "9ba7758a799d4d4bc758875fd08989007ed65144",
+      "changedPaths": 1,
+      "role": "failing-before reproduction",
+      "result": "failing before the schedule/consent repair: operator-spec tests failed (9ba7758)"
+    },
+    {
+      "receiptPath": "work/up-fail-before-2026-11-03T18-17-04-967Z.log.receipt.json",
+      "name": "up-fail-before",
+      "command": "pnpm exec vitest run tests/integration/customer-programme-projection-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 4.8,
+      "logSha256": "ae2668927a7496641a14b277c9f6201e6b358b73120d5db7c3caf8c95eebc339",
+      "head": "a301bfe801bb08b857f70d3b37203ea000b20183",
+      "changedPaths": 8,
+      "role": "failing-before reproduction",
+      "result": "failing before the version-independence fix: 1 of 4 upgrade tests failed, the installer-applies-0002-alone case (a301bfe)"
+    },
+    {
+      "receiptPath": "work/op2-fail-before-2026-11-03T18-20-47-539Z.log.receipt.json",
+      "name": "op2-fail-before",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/v3-programme-projections-ui.spec.ts",
+      "exit": 1,
+      "seconds": 75.6,
+      "logSha256": "8eecc03c5080eb4fc081cd027021ab4682a1ec466699c70ada8232af05f7d1d9",
+      "head": "8547c15b74c7c8270b9c13896c938bcfcdf838a7",
+      "changedPaths": 3,
+      "role": "failing-before reproduction",
+      "result": "failing before the post-save binding fix: several operator-spec tests failed (8547c15)"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries their names, commands (the gate runner truncates long commands), exits, log hashes and heads. The final receipts report head 39b7541 and changedPaths 2 (commit 39b7541 itself changed 2 files).",
+  "notRun": [
+    "The full operator suite was not run locally (only tests/operator/v3-programme-projections-ui.spec.ts).",
+    "The full integration suite was not run locally on the final head (only the four named files, twice).",
+    "Frozen-head CI and CodeQL on PR254 were pending."
+  ],
+  "limits": [
+    "No production, signed-in, provider or genuine customer acceptance is claimed.",
+    "Migration 0002 and the PR254 code are not installed or deployed.",
+    "Activation of the application switch is UNKNOWN; nothing is activated.",
+    "Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP/mailbox/production observation and native language review stay closed or owner-only."
+  ]
+}

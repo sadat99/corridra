@@ -129,7 +129,8 @@ export type OwnProgrammeProjection = {
   expiresAt: string;
   active: boolean;
   sendsMessages: false;
-  company: { version: number; shared: boolean; objective: string | null };
+  // sourceChanged is absent until the source-and-retention database file is installed.
+  company: { version: number; shared: boolean; sourceChanged?: boolean; objective: string | null };
   profile: {
     id: string;
     version: number;
