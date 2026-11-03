@@ -1,4 +1,5 @@
 import { migrateCustomerProgrammeProjections } from '../packages/db/src/customer-programme-projection-migrate';
+import { migrateCustomerBooks } from '../packages/db/src/customer-book-migrate';
 import { databasePool } from './database-pool';
 import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
 import { migrateCustomerSavedMissions } from '../packages/db/src/customer-commercial-migrate';
@@ -216,6 +217,7 @@ const registries = [
   'customer_request_admission_migrations',
   'customer_programme_terms_migrations',
   'customer_programme_projection_migrations',
+  'customer_book_migrations',
   'customer_service_request_migrations',
   'customer_billing_migrations',
   'customer_invoicing_migrations',
@@ -259,6 +261,7 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['synthetic invoices, payment records and credit notes', migrateCustomerInvoicing],
   ['inbox and optional source links (commercial readiness)', migrateCommercialReadiness],
   ['consented programme projections', migrateCustomerProgrammeProjections],
+  ['trip and supplier books', migrateCustomerBooks],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);
