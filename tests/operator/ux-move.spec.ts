@@ -187,16 +187,13 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   // The navigation names the five places.
   const tabs = page.getByRole('navigation', { name: 'Customer navigation' });
   await expect(tabs.getByRole('link')).toHaveText([
-    'Your Move',
-    'Missions',
+    'Home',
+    'Requests',
     'Companies',
-    'Library',
-    'More',
+    'Reports',
+    'Account',
   ]);
-  await expect(tabs.getByRole('link', { name: 'Your Move' })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await expect(tabs.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('shows a Move the team set as a card with its real date, and folds the others under waiting', async ({

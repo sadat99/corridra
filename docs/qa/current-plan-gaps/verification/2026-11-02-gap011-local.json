@@ -1,0 +1,96 @@
+{
+  "recordedOn": "2026-11-02",
+  "finding": "GAP-011",
+  "baseRevision": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+  "testedWorkingTree": true,
+  "sourceFiles": [
+    {
+      "path": "apps/web/components/customer-nav.tsx",
+      "sha256": "ffcd7056be8c436f821b501030fa1aaba4ac8c404a1ea0755835743b7c924739"
+    },
+    {
+      "path": "apps/web/lib/i18n/ws/ws-e.ts",
+      "sha256": "2e93e75c6b2ac74a5ab715e238b123c587dd520df318870167c4d3d4b9cb6783"
+    },
+    {
+      "path": "tests/integration/ux-front-door.test.ts",
+      "sha256": "b38e5a23f4bfe3a74b5483a61e2ba1401937141e6816417500805855e42a689a"
+    },
+    {
+      "path": "tests/operator/ux-move.spec.ts",
+      "sha256": "d95c4bb84fe1fa5514e0491c4608d873e22bdb5191020735247c80e8b6827bb5"
+    }
+  ],
+  "requestedEnglishLabels": ["Home", "Requests", "Companies", "Reports", "Account"],
+  "receipts": {
+    "gap011-navigation-flags": {
+      "name": "gap011-navigation-flags",
+      "command": "pnpm exec vitest run tests/integration/ux-front-door.test.ts -t navigation",
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.2,
+      "logBytes": 194,
+      "logSha256": "9aa9a87b11c242636776055a64732531536ca67476a8a5b5e0f5a795744c47e3",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 5,
+      "log": "work/gap011-navigation-flags-2026-11-02T23-55-49-835Z.log"
+    },
+    "gap011-navigation-browser": {
+      "name": "gap011-navigation-browser",
+      "command": "env PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-move.spec.ts --grep cards show what is waiting --output work/gap011-navigation-browser",
+      "exit": 0,
+      "signal": null,
+      "seconds": 6.8,
+      "logBytes": 1094,
+      "logSha256": "0682dfa6a7fc0f050890836ecf551db2aab2ab626e6d2c90299066c3f44d992e",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 5,
+      "log": "work/gap011-navigation-browser-2026-11-02T23-56-03-279Z.log"
+    },
+    "gap011-lint": {
+      "name": "gap011-lint",
+      "command": "pnpm exec eslint --config eslint.config.mjs apps/web/components/customer-nav.tsx apps/web/lib/i18n/ws/ws-e.ts tests/integration/ux-front-door.test.ts tests/operator/ux-move.spec.ts --max-warnings 0",
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.4,
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "head": "8292ae1ba71e412814f590bda6869da7b8b480ae",
+      "changedPaths": 5,
+      "log": "work/gap011-lint-2026-11-02T23-56-38-958Z.log"
+    },
+    "current-base-catalogue": {
+      "name": "gap011-catalogue-reproduction",
+      "command": "pnpm exec vitest run tests/integration/language-catalog.test.ts",
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.3,
+      "logBytes": 180,
+      "logSha256": "4955a0a5508e760c83ef9a17ed9edd81cb635337ef255a019eafd76cf27ea906",
+      "head": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+      "changedPaths": 5,
+      "log": "work/gap011-catalogue-reproduction-2026-11-03T05-02-34-040Z.log"
+    }
+  },
+  "verification": {
+    "existingNavigationUnitCasesPassed": 5,
+    "existingBrowserCasesPassed": 1,
+    "lintExit": 0,
+    "hrefLiteralsPreserved": true,
+    "onlyThreeEnglishMessageValuesChanged": true
+  },
+  "limits": [
+    "English label reconciliation only; foreign language catalogue bytes and their approval remain unchanged.",
+    "Original routes, tab keys, company availability gate, actions and current-page mapping remain.",
+    "Release follows GAP-010; frozen exact-head CI/CodeQL and production alias verification remain pending.",
+    "No schema, authorization, money/event or provider change."
+  ],
+  "currentBaseVerification": {
+    "recordedOn": "2026-11-03",
+    "baseRevision": "d0d1a748a2a323ad5c4220b5be614f9500905545",
+    "sourceHashesMatched": 4,
+    "priorPassingLogHashesMatched": 3,
+    "catalogueCasesPassed": 54,
+    "reuseBoundary": "All4 tested source/test bytes match the restored preparation; current-base catalogue checks pass. Exact-head release gates remain mandatory."
+  }
+}

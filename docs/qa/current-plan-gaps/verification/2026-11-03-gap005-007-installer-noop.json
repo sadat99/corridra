@@ -1,0 +1,25 @@
+{
+  "recordedOn": "2026-11-03",
+  "findings": ["GAP-005", "GAP-007"],
+  "workflowRun": 41546213580,
+  "job": 125622330773,
+  "sourceRevision": "4fe63b505a13b0e1c6a22bae40d7164032c2db30",
+  "workflowConclusion": "success",
+  "observedInput": "REAL_USE_ACTION: unchanged",
+  "registry": "customer_real_use_migrations",
+  "before": {
+    "applied": 10,
+    "utc": "2026-11-03T04:16:30.7651326Z"
+  },
+  "after": {
+    "applied": 10,
+    "utc": "2026-11-03T04:19:47.9416626Z"
+  },
+  "result": "Optional real-use installation was skipped. Workflow success does not prove0011/0012 installed.",
+  "cause": "Dispatch specified apply=yes but left real_use_action at unchanged; installer calls migrateCustomerRealUse only for a non-unchanged action.",
+  "nextAction": "After exact-main CI/CodeQL succeeds, dispatch apply=yes and real_use_action=install; verify registry advances to12 after protected owner review. Install bypasses the activation configuration branch.",
+  "limits": [
+    "No production SQL query was used; evidence comes from actual protected-job logs and its reviewed code.",
+    "Runtime/private live acceptance remains unverified."
+  ]
+}

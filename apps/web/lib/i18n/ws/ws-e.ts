@@ -31,11 +31,11 @@ export const wsEEn = {
   'wse.nav.home': 'Home',
   'wse.nav.move': 'Your Move',
   'wse.nav.missions': 'Missions',
-  'wse.nav.work': 'My Work',
+  'wse.nav.work': 'Requests',
   'wse.nav.companies': 'Companies',
   'wse.nav.library': 'Library',
-  'wse.nav.results': 'Results',
-  'wse.nav.more': 'More',
+  'wse.nav.results': 'Reports',
+  'wse.nav.more': 'Account',
 } as const;
 
 export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, string>> = {
