@@ -2,6 +2,8 @@
 
 Status: proposed on 23 October 2026. The owner has not approved it. No code, no migration and no email setting is part of this ADR. It changes who can see a request, so it touches [ADR-033](0033-private-customer-request-authority.md) and needs explicit owner approval before any work starts.
 
+Narrowed 3 November 2026 by ADR-076 item 5: the anonymous 90-day link is not adopted; only the signed-in Room link is built.
+
 ## Goal
 
 The owner wants a link in the request confirmation email. The link shows the status of the request without sign-in. It works for 90 days. The person can renew it.
