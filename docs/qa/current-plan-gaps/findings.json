@@ -2971,7 +2971,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c after19 exact-head checks completed without failures. Exact READY production revision/aliases/fra1 and default-off private API503 are verified. Protected installer41657859737 waits for owner review. Activation and genuine user acceptance remain unverified.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
@@ -2980,19 +2980,24 @@
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "verification": {
-            "state": "VERIFIED",
+            "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-03-batch-d-release.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -3010,7 +3015,8 @@
         "closureAcceptance": "Obtain the private company-to-participant disclosure decision and prove a scoped Programme company lane.",
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
-          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
+          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3038,6 +3044,14 @@
           "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
           "disposition": "OPEN",
           "note": "Owner authorized continued sequential batch merges and documentation after each merge. PR253 exact-head CI/CodeQL passed and matching tree merged. Production READY/schema install/activation remain separate and unverified."
+        },
+        {
+          "eventId": "GAP-037-H004",
+          "recordedOn": "2026-11-03",
+          "type": "POST_MERGE_DEFECTS_REPAIR_OPEN",
+          "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
+          "disposition": "OPEN",
+          "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
         }
       ]
     },
@@ -3054,7 +3068,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c after19 exact-head checks completed without failures. Exact READY production revision/aliases/fra1 and default-off private API503 are verified. Protected installer41657859737 waits for owner review. Activation and genuine user acceptance remain unverified.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
@@ -3063,19 +3077,24 @@
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "verification": {
-            "state": "VERIFIED",
+            "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-03-batch-d-release.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -3093,7 +3112,8 @@
         "closureAcceptance": "Obtain the permitted timed agenda projection and prove organiser conflict handling without leaking private participant missions.",
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
-          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
+          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3121,6 +3141,14 @@
           "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
           "disposition": "OPEN",
           "note": "Owner authorized continued sequential batch merges and documentation after each merge. PR253 exact-head CI/CodeQL passed and matching tree merged. Production READY/schema install/activation remain separate and unverified."
+        },
+        {
+          "eventId": "GAP-038-H004",
+          "recordedOn": "2026-11-03",
+          "type": "POST_MERGE_DEFECTS_REPAIR_OPEN",
+          "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
+          "disposition": "OPEN",
+          "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
         }
       ]
     },
@@ -3137,7 +3165,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c after19 exact-head checks completed without failures. Exact READY production revision/aliases/fra1 and default-off private API503 are verified. Protected installer41657859737 waits for owner review. Activation and genuine user acceptance remain unverified.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
@@ -3146,19 +3174,24 @@
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "verification": {
-            "state": "VERIFIED",
+            "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-03-batch-d-release.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -3176,7 +3209,8 @@
         "closureAcceptance": "Obtain a recorded definition of ready and prove counts derive only from records satisfying that definition.",
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
-          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
+          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3204,6 +3238,14 @@
           "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
           "disposition": "OPEN",
           "note": "Owner authorized continued sequential batch merges and documentation after each merge. PR253 exact-head CI/CodeQL passed and matching tree merged. Production READY/schema install/activation remain separate and unverified."
+        },
+        {
+          "eventId": "GAP-039-H004",
+          "recordedOn": "2026-11-03",
+          "type": "POST_MERGE_DEFECTS_REPAIR_OPEN",
+          "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
+          "disposition": "OPEN",
+          "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
         }
       ]
     },
@@ -3340,7 +3382,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c after19 exact-head checks completed without failures. Exact READY production revision/aliases/fra1 and default-off private API503 are verified. Protected installer41657859737 waits for owner review. Activation and genuine user acceptance remain unverified.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). Repairs are in draft PR254 at 39b7541 with additive migration 0002: locally verified, frozen-head CI pending, 0002 not installed, not deployed. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
@@ -3349,19 +3391,24 @@
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "verification": {
-            "state": "VERIFIED",
+            "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
-              "verification/2026-11-03-batch-d-release.json"
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
             ]
           },
           "deployment": {
             "state": "DEPLOYED",
-            "evidence": ["verification/2026-11-03-batch-d-release.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-d-release.json",
+              "verification/2026-11-03-batch-d-repairs.json"
+            ]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -3379,7 +3426,8 @@
         "closureAcceptance": "Obtain a safe participant-mission linkage and prove qualified-meeting roll-up without inferring qualification from self-reported outcomes.",
         "prerequisites": [
           "ADR075 owner defaults approved on 3 November 2026.",
-          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate."
+          "Finish bounded local evidence and exact-head release checks; owner merge command, protected schema installation and explicit activation remain separate.",
+          "PR254 repairs and migration 0002 await green exact-head CI, merge, deployment verification and the protected install (expected log 1 applied before, 2 applied after); activation and genuine user acceptance remain separate."
         ],
         "closureEvidence": []
       },
@@ -3407,6 +3455,14 @@
           "evidenceRevision": "ab9337cec41f0490cf7bb54444dd0d5bf085f36a",
           "disposition": "OPEN",
           "note": "Owner authorized continued sequential batch merges and documentation after each merge. PR253 exact-head CI/CodeQL passed and matching tree merged. Production READY/schema install/activation remain separate and unverified."
+        },
+        {
+          "eventId": "GAP-042-H004",
+          "recordedOn": "2026-11-03",
+          "type": "POST_MERGE_DEFECTS_REPAIR_OPEN",
+          "evidenceRevision": "39b7541aa95689c2aed8d8171a794d64785234b8",
+          "disposition": "OPEN",
+          "note": "Post-merge audit of PR253 found 3 defects, repaired in draft PR254 (head 39b7541, additive migration 0002, 0001 byte-identical to ab9337c). PR254 is OPEN with frozen-head CI pending; 0002 is not installed and nothing is deployed from it. Protected installer 41657859737 on ab9337c succeeded and advanced customer_programme_projection_migrations from not installed to 1 applied (0001 only). Application switch state is UNKNOWN. Verification is downgraded from VERIFIED to PARTIAL because the merged build had these defects; the repairs have local receipts but no exact-head CI yet. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json."
         }
       ]
     },
