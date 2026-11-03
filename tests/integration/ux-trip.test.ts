@@ -5,7 +5,7 @@ import { describeSwitches, switchRegistry } from '../../apps/web/lib/owner-switc
 import { uxSwitchOn } from '../../apps/web/lib/ux-switches';
 import { catalogs, en, translate, type MessageKey } from '../../apps/web/lib/i18n/messages';
 import { localeCodes } from '../../apps/web/lib/i18n/locales';
-import { isChangedMeeting, orderTrip, tripKeys } from '../../apps/web/lib/trip';
+import { hanLang, isChangedMeeting, orderTrip, tripKeys } from '../../apps/web/lib/trip';
 
 // The Trip view (Batch E part E1, GAP-034): a fourth lens of the Room that shows only the reviewed
 // itinerary of the saved commercial report. These checks prove the switch, that the off path is the
@@ -125,11 +125,32 @@ describe('what the Trip lens may never show', () => {
     expect(list).toContain('dir="ltr"');
     expect(list).toContain('dir="auto"');
   });
-  it('adds two class rules built from tokens only, with no raw colour and no media query', () => {
+  it('adds three classes, and the overrides that beat the customer kit, from tokens only, with no raw colour and no media query', () => {
     const css = read(`${roomDir}/room-view.css`);
     const rules = css.slice(css.indexOf('.room-trip-list'));
+    expect(rules).toContain('.room-trip-head');
     expect(rules).toContain('.room-trip-facts');
+    // The customer kit adds list margins and small grey time type; the Trip list overrides both.
+    expect(rules).toMatch(/\.room \.room-trip-list > li\.room-strip \{[^}]*margin: 0;/);
+    expect(rules).toMatch(
+      /\.room \.room-trip-list \.room-trip-facts time \{[^}]*font-size: inherit;/,
+    );
     expect(rules).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgb|hsl|@media|font-family/);
+  });
+});
+
+describe('which language a name is read in', () => {
+  it('marks text with Chinese characters as Chinese and leaves any other text unmarked', () => {
+    expect(hanLang('绿野机械有限公司 meeting')).toBe('zh');
+    expect(hanLang('上海市浦东新区')).toBe('zh');
+    expect(hanLang('Dhaka Chamber of Commerce')).toBeUndefined();
+    expect(hanLang('ঢাকা')).toBeUndefined();
+    expect(hanLang('')).toBeUndefined();
+  });
+  it('is used for the name and the place of a meeting', () => {
+    const list = read(`${roomDir}/trip-list.tsx`);
+    expect(list).toContain('lang={hanLang(item.label)}');
+    expect(list).toContain('lang={hanLang(place)}');
   });
 });
 

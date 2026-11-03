@@ -592,6 +592,11 @@ const meeting = (label: string, over: Meeting = {}): Meeting => ({
   scheduleChanged: false,
   ...over,
 });
+/** Long names and places, as real ones are: they wrap, they are never cut. */
+const longLabel = (n: number) =>
+  `Meeting with Bangladesh Garments Manufacturers and Exporters Association number ${n}`;
+const longPlace = (n: number) =>
+  `Hall ${n}, Dhaka Chamber of Commerce, Motijheel Commercial Area, Dhaka 1000`;
 const dhakaVisit = meeting('Meeting with Dhaka Textile Association', {
   startsAt: '2026-11-09T04:00:00Z',
   endsAt: '2026-11-09T06:30:00Z',
@@ -639,6 +644,30 @@ async function openTrip(
 }
 const tripRegion = (page: Page) => page.getByRole('region', { name: 'Your meetings and visits' });
 const items = (page: Page) => page.locator('.room-trip-list > li');
+/**
+ * The real page puts the Room straight under main.ux-customer with the test-mode note and the tabs
+ * above it (KI-16). The fixture is one level deeper, so rebuild that frame for a measurement. React's
+ * events are tied to the old container, so do this last, after every click.
+ */
+async function toCustomerFrame(page: Page) {
+  await page.evaluate(() => {
+    const main = document.querySelector('main')!;
+    main.classList.add('ux-customer');
+    const fixture = document.getElementById('fixture')!;
+    main.style.cssText = '';
+    const note = document.createElement('p');
+    note.className = 'ux-testmode';
+    note.textContent = 'Preview workspace: use made-up names and details here.';
+    const nav = document.createElement('nav');
+    nav.className = 'guide-tabs';
+    nav.innerHTML = ['Home', 'My Work', 'Companies', 'Results', 'More']
+      .map((name) => `<a href="#">${name}</a>`)
+      .join('');
+    main.querySelector('.ux-page-heading')!.after(note, nav);
+    fixture.replaceWith(...Array.from(fixture.childNodes));
+    for (const details of Array.from(document.querySelectorAll('details'))) details.open = false;
+  });
+}
 
 test('without the switch the Room has exactly three lens buttons and no Trip words', async ({
   page,
@@ -665,6 +694,8 @@ test('with the switch Trip is the fourth lens, last, and Overview is still the o
   ]);
   await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
   await expect(lens(page, 'Trip')).toHaveAttribute('aria-pressed', 'false');
+  // In English the lens name needs no language mark.
+  await expect(lens(page, 'Trip').locator('[lang]')).toHaveCount(0);
   await expect(page.locator('.room-trip-list')).toHaveCount(0);
   await lens(page, 'Trip').click();
   await expect(lens(page, 'Trip')).toHaveAttribute('aria-pressed', 'true');
@@ -1028,6 +1059,10 @@ test('keeps the Trip words in English and the data as written when the page is A
     await page.reload();
     await expect(page.locator('.room')).toHaveAttribute('lang', code);
     await expect(page.locator('.room')).toHaveAttribute('dir', code === 'ar' ? 'rtl' : 'ltr');
+    // The lens name is an English placeholder inside a translated region, so it says so.
+    await expect(page.locator('.room-lenses button').nth(3).locator('span[lang="en"]')).toHaveText(
+      'Trip',
+    );
     await page.locator('.room-lenses button').nth(3).click();
     const heading = page.locator('h3', { hasText: 'Your meetings and visits' });
     await expect(heading).toBeVisible();
@@ -1042,8 +1077,11 @@ test('keeps the Trip words in English and the data as written when the page is A
   }
 });
 
-for (const width of [320, 390, 768, 1440]) {
-  test(`the Trip lens fits at ${width} wide: no sideways scroll, 44 pixel targets, no accessibility violation`, async ({
+for (const [width, framed] of [320, 390, 768, 1440].flatMap((w) => [
+  [w, false] as const,
+  [w, true] as const,
+])) {
+  test(`the Trip lens fits at ${width} wide${framed ? ' in the real customer frame' : ''}: no sideways scroll, 44 pixel targets, no accessibility violation`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -1054,11 +1092,18 @@ for (const width of [320, 390, 768, 1440]) {
       timezone: 'America/Argentina/Buenos_Aires',
       location: `Hall ${long}${long}`,
     });
-    await openTrip(page, crowded);
+    crowded[1] = meeting(longLabel(1), {
+      startsAt: '2026-11-14T04:00:00Z',
+      endsAt: '2026-11-14T06:00:00Z',
+      timezone: 'Asia/Dhaka',
+      location: longPlace(1),
+    });
     for (const expanded of [false, true]) {
+      await openTrip(page, crowded);
       if (expanded) await page.getByRole('button', { name: /Show all 7/ }).click();
+      if (framed) await toCustomerFrame(page);
       await page.waitForTimeout(150);
-      const label = `Trip ${expanded ? 'expanded' : 'first five'} at ${width}`;
+      const label = `Trip ${expanded ? 'expanded' : 'first five'} at ${width}${framed ? ' framed' : ''}`;
       const wide = await page.evaluate((limit) => {
         const out: string[] = [];
         for (const el of Array.from(document.querySelectorAll('main *'))) {
@@ -1088,7 +1133,7 @@ for (const width of [320, 390, 768, 1440]) {
       expect((await new AxeBuilder({ page }).analyze()).violations, `axe ${label}`).toEqual([]);
       if (process.env.UX_SHOTS_DIR)
         await page.screenshot({
-          path: `${process.env.UX_SHOTS_DIR}/room-trip-${expanded ? 'all' : 'five'}-${width}.png`,
+          path: `${process.env.UX_SHOTS_DIR}/room-trip-${expanded ? 'all' : 'five'}-${width}${framed ? '-framed' : ''}.png`,
           fullPage: true,
         });
     }
@@ -1098,10 +1143,21 @@ for (const width of [320, 390, 768, 1440]) {
 test('works from the keyboard: lens, show all, show fewer and refresh, with a visible focus ring', async ({
   page,
 }) => {
+  const posts: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('/api/customer-saved-missions'))
+      posts.push(request.url());
+  });
   await openTrip(page, sevenMeetings());
-  await lens(page, 'Trip').focus();
-  await page.keyboard.press('Tab');
+  // The report is fetched after the lens opens. Tab stops depend on what is in the page, so wait
+  // until the list and its toggle are really there before the first key.
   const toggle = page.getByRole('button', { name: 'Show all 7 meetings and visits' });
+  await expect(items(page)).toHaveCount(5);
+  await expect(toggle).toBeVisible();
+  await lens(page, 'Trip').focus();
+  await expect(lens(page, 'Trip')).toBeFocused();
+  // In the page order the Trip button is followed by the toggle, then the refresh button.
+  await page.keyboard.press('Tab');
   await expect(toggle).toBeFocused();
   const ring = await toggle.evaluate((el) => {
     const style = getComputedStyle(el);
@@ -1110,15 +1166,20 @@ test('works from the keyboard: lens, show all, show fewer and refresh, with a vi
   expect(ring).toBe(true);
   await page.keyboard.press('Enter');
   await expect(items(page)).toHaveCount(7);
-  await expect(page.getByRole('button', { name: 'Show fewer' })).toBeFocused();
+  const fewer = page.getByRole('button', { name: 'Show fewer' });
+  await expect(fewer).toBeFocused();
   await page.keyboard.press('Space');
   await expect(items(page)).toHaveCount(5);
+  await expect(toggle).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(
-    page.getByRole('button', { name: 'Refresh approved commercial report' }),
-  ).toBeFocused();
+  const refresh = page.getByRole('button', { name: 'Refresh approved commercial report' });
+  await expect(refresh).toBeFocused();
+  expect(posts).toHaveLength(1);
   await page.keyboard.press('Enter');
+  // The refresh reads the report again and the list comes back.
+  await expect.poll(() => posts.length).toBe(2);
   await expect(items(page)).toHaveCount(5);
+  await expect(toggle).toBeVisible();
 });
 
 test('starts no animation when the person asks for less movement', async ({ page }) => {
@@ -1140,49 +1201,108 @@ test('starts no animation when the person asks for less movement', async ({ page
   expect(slow).toBe(0);
 });
 
-test('scroll budget: five full meetings stay within the report limit in the real customer frame', async ({
+const budgetSets: [string, (n: number) => string, (n: number) => string][] = [
+  [
+    'short text',
+    (n) => `Meeting with company number ${n}`,
+    (n) => `Hall ${n}, Dhaka Chamber of Commerce`,
+  ],
+  ['long text', longLabel, longPlace],
+];
+for (const [setName, labelFor, placeFor] of budgetSets) {
+  test(`scroll budget: five full meetings with ${setName} stay within the report limit in the real customer frame`, async ({
+    page,
+  }, info) => {
+    const five = [0, 1, 2, 3, 4].map((day) =>
+      meeting(labelFor(day), {
+        startsAt: `2026-11-${10 + day}T04:00:00Z`,
+        endsAt: `2026-11-${10 + day}T06:00:00Z`,
+        timezone: 'Asia/Dhaka',
+        location: placeFor(day),
+      }),
+    );
+    const figures: Record<string, number> = {};
+    for (const [width, height, limit] of [
+      [390, 844, 4],
+      [1440, 900, 2.5],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await openTrip(page, five);
+      await expect(items(page)).toHaveCount(5);
+      await toCustomerFrame(page);
+      const total = await page.evaluate(() => document.documentElement.scrollHeight);
+      const screens = total / height;
+      figures[`${width}`] = Math.round(screens * 100) / 100;
+      expect(screens, `${setName}, ${width} wide: ${total} px of ${height} px`).toBeLessThanOrEqual(
+        limit,
+      );
+    }
+    info.annotations.push({ type: 'scroll-budget', description: JSON.stringify(figures) });
+    console.log(
+      `scroll budget (${setName}, five full meetings, Trip lens): ${JSON.stringify(figures)}`,
+    );
+  });
+}
+
+test('in the real customer frame the cards sit one token gap apart and the first fact reads at normal size', async ({
   page,
-}, info) => {
-  const five = [0, 1, 2, 3, 4].map((day) =>
-    meeting(`Meeting with company number ${day}`, {
-      startsAt: `2026-11-${10 + day}T04:00:00Z`,
-      endsAt: `2026-11-${10 + day}T06:00:00Z`,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openTrip(page, [
+    dhakaVisit,
+    meeting('Second', {
+      startsAt: '2026-11-10T04:00:00Z',
       timezone: 'Asia/Dhaka',
-      location: `Hall ${day}, Dhaka Chamber of Commerce`,
+      location: 'Dhaka',
     }),
-  );
-  const figures: Record<string, number> = {};
-  for (const [width, height, limit] of [
-    [390, 844, 4],
-    [1440, 900, 2.5],
-  ] as const) {
-    await page.setViewportSize({ width, height });
-    await openTrip(page, five);
-    await expect(items(page)).toHaveCount(5);
-    // The real page puts the Room straight under main.ux-customer with the test-mode note and the
-    // tabs above it (KI-16). The fixture is one level deeper, so rebuild that frame before measuring.
-    await page.evaluate(() => {
-      const main = document.querySelector('main')!;
-      main.classList.add('ux-customer');
-      const fixture = document.getElementById('fixture')!;
-      main.style.cssText = '';
-      const note = document.createElement('p');
-      note.className = 'ux-testmode';
-      note.textContent = 'Preview workspace: use made-up names and details here.';
-      const nav = document.createElement('nav');
-      nav.className = 'guide-tabs';
-      nav.innerHTML = ['Home', 'My Work', 'Companies', 'Results', 'More']
-        .map((name) => `<a href="#">${name}</a>`)
-        .join('');
-      main.querySelector('.ux-page-heading')!.after(note, nav);
-      fixture.replaceWith(...Array.from(fixture.childNodes));
-      for (const details of Array.from(document.querySelectorAll('details'))) details.open = false;
-    });
-    const total = await page.evaluate(() => document.documentElement.scrollHeight);
-    const screens = total / height;
-    figures[`${width}`] = Math.round(screens * 100) / 100;
-    expect(screens, `${width} wide: ${total} px of ${height} px`).toBeLessThanOrEqual(limit);
-  }
-  info.annotations.push({ type: 'scroll-budget', description: JSON.stringify(figures) });
-  console.log(`scroll budget (screens, five full meetings, Trip lens): ${JSON.stringify(figures)}`);
+  ]);
+  await toCustomerFrame(page);
+  const measured = await page.evaluate(() => {
+    const [a, b] = Array.from(document.querySelectorAll('.room-trip-list > li'));
+    const list = document.querySelector('.room-trip-list')!;
+    const place = Array.from(a!.querySelectorAll('dd')).at(-1)!;
+    const time = a!.querySelector('time')!;
+    const style = (el: Element) => getComputedStyle(el);
+    return {
+      gap: b!.getBoundingClientRect().top - a!.getBoundingClientRect().bottom,
+      rowGap: parseFloat(style(list).rowGap),
+      marginTop: style(b!).marginTop,
+      marginBottom: style(a!).marginBottom,
+      timeSize: style(time).fontSize,
+      timeColour: style(time).color,
+      placeSize: style(place).fontSize,
+      placeColour: style(place).color,
+    };
+  });
+  // Spacing is the grid gap (the space-3 token, 12 px) and nothing stacked on top of it.
+  expect(measured.rowGap).toBe(12);
+  expect(measured.gap).toBe(measured.rowGap);
+  expect(measured.marginTop).toBe('0px');
+  expect(measured.marginBottom).toBe('0px');
+  // A time is the main fact, so it is not the small grey type of a reply date.
+  expect(measured.timeSize).toBe(measured.placeSize);
+  expect(measured.timeColour).toBe(measured.placeColour);
+});
+
+test('marks Chinese names and places as Chinese for a screen reader and leaves other text unmarked', async ({
+  page,
+}) => {
+  await openTrip(page, [
+    meeting('绿野机械有限公司 meeting', {
+      startsAt: '2026-11-09T04:00:00Z',
+      timezone: 'Asia/Shanghai',
+      location: '上海市浦东新区',
+    }),
+    meeting('Visit to Lantern Cutting Works', {
+      startsAt: '2026-11-10T04:00:00Z',
+      location: 'Gazipur factory',
+    }),
+  ]);
+  const han = items(page).nth(0);
+  await expect(han.locator('h4')).toHaveAttribute('lang', 'zh');
+  await expect(han.locator('h4')).toHaveAttribute('dir', 'auto');
+  await expect(han.locator('dd[lang="zh"]')).toHaveText('上海市浦东新区');
+  const latin = items(page).nth(1);
+  await expect(latin.locator('h4')).not.toHaveAttribute('lang', /.*/);
+  await expect(latin.locator('dd[lang]').filter({ hasText: 'Gazipur factory' })).toHaveCount(0);
 });
