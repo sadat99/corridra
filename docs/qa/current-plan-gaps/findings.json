@@ -1121,24 +1121,24 @@
         "evidenceAndBoundary": "`components/mr/quote-card.css:35`, `:104` and `mode-label.css:13` use caution text on caution surface. `tests/design-system.test.mjs:296` checks only globals/operator-overview for the Ink-text rule, so these files escape that assertion."
       },
       "current": {
-        "disposition": "OPEN",
+        "disposition": "RESOLVED",
         "scope": "A_G_REMAINDER",
-        "summary": "Three caution-tinted warning declarations now use the existing Ink text token. The preserved design guard reproduces the original failure; full design checks and9 normal/increased/forced-contrast checks pass (minimum13.53). All3 source and3 receipt/log hashes match the saved preparation. Frozen CI/deployment pending.",
-        "evidenceRevision": "8aae590ee5db38d7b84094ab44289f009281da69",
+        "summary": "PR245 passed19 exact-head checks atf224827 and reached the exact READY production alias at060f73a. The three warning declarations use Ink;9 normal/increased/forced-contrast cases and current design checks prove the selected contrast criteria. Earlier budget failure/correction remains preserved.",
+        "evidenceRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap012-local.json"]
+            "state": "IMPLEMENTED",
+            "evidence": ["verification/2026-11-03-gap012-release.json"]
           },
           "verification": {
-            "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap012-local.json"]
+            "state": "VERIFIED",
+            "evidence": ["verification/2026-11-03-gap012-release.json"]
           },
           "deployment": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "DEPLOYED",
+            "evidence": ["verification/2026-11-03-gap012-release.json"]
           },
           "activation": {
             "state": "UNKNOWN",
@@ -1157,7 +1157,10 @@
         "prerequisites": [
           "Resolve the stated recipient/privacy/scope prerequisites and follow the current A–G work order."
         ],
-        "closureEvidence": []
+        "closureEvidence": [
+          "verification/2026-11-03-gap012-local.json",
+          "verification/2026-11-03-gap012-release.json"
+        ]
       },
       "history": [
         {
@@ -1176,6 +1179,15 @@
           "disposition": "OPEN",
           "note": "Three caution-tinted warning declarations now use the existing Ink text token. The preserved design guard reproduces the original failure; full design checks and9 normal/increased/forced-contrast checks pass (minimum13.53). All3 source and3 receipt/log hashes match the saved preparation. Frozen CI/deployment pending.",
           "evidence": ["verification/2026-11-03-gap012-local.json"]
+        },
+        {
+          "eventId": "GAP-012-H003",
+          "recordedOn": "2026-11-03",
+          "type": "RESOLVED",
+          "evidenceRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+          "disposition": "RESOLVED",
+          "note": "PR245 passed19 exact-head checks atf224827 and reached the exact READY production alias at060f73a. The three warning declarations use Ink;9 normal/increased/forced-contrast cases and current design checks prove the selected contrast criteria. Earlier budget failure/correction remains preserved.",
+          "evidence": ["verification/2026-11-03-gap012-release.json"]
         }
       ]
     },
@@ -1312,20 +1324,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "The real handler at `api/team-control/[action]/route.ts:72` returns after `team.resend`; initial invite calls notify at `:54`. `packages/auth/src/team-control.ts:180` rotates the record only. UI `workspace-controls.tsx:143` says sent again. Fresh probe observed initial invite HTTP201/notify=1 versus resend HTTP201/notify=0. No provider mail was sent in the probe.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "Stored-recipient resend notification, single-use reference protection and truthful result/setup-link copy are prepared. All5 source and6 recorded log hashes match the saved15 handler/DB cases,1 compiled owner journey (2 notices), build/types/lint evidence. No schema or authorization-policy change. Frozen release gates pending; initiating-owner audit remains016.",
+        "evidenceRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "DEFECT_REPRODUCED",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-015"]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap015-local.json"]
           },
           "verification": {
-            "state": "DEFECT_REPRODUCED",
-            "evidence": [
-              "baselines/2026-11-01/originals/audit-team-resend-probe-2026-11-01T14-21-47-842Z.log.receipt.json.txt"
-            ]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap015-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1358,6 +1368,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-015-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "060f73a2fda2a9c875e7355f7d7e5b68f147c20f",
+          "disposition": "OPEN",
+          "note": "Stored-recipient resend notification, single-use reference protection and truthful result/setup-link copy are prepared. All5 source and6 recorded log hashes match the saved15 handler/DB cases,1 compiled owner journey (2 notices), build/types/lint evidence. No schema or authorization-policy change. Frozen release gates pending; initiating-owner audit remains016.",
+          "evidence": ["verification/2026-11-03-gap015-local.json"]
         }
       ]
     },
@@ -1434,18 +1453,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "`api/workspace/[action]/route.ts:246` calls the task service directly. Type, template and inbox label exist, but no corresponding production notify call. The database test manually inserts TASK_ASSIGNED, which does not test the producer. Current D7 includes this hand-off.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "summary": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+        "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+        "evidenceObservedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-017"]
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1478,6 +1497,15 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OPEN",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-017-H002",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+          "disposition": "OPEN",
+          "note": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+          "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
         }
       ]
     },
@@ -1494,18 +1522,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Partial quote-sent producer is preserved in stashc07f8f8.29 database cases passed on the earlier unfrozen working tree; source/hash equivalence is not claimed. Types/lint, old-schema compatibility, inventory/dependency review and combined checks remain before release.",
-        "evidenceRevision": "07a96cd4055bce696e45e31496f8feb92f75082e",
+        "summary": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+        "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap018-preparation.json"]
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap018-preparation.json"]
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1547,6 +1575,15 @@
           "disposition": "OPEN",
           "note": "Partial quote-sent producer is preserved in stashc07f8f8.29 database cases passed on the earlier unfrozen working tree; source/hash equivalence is not claimed. Types/lint, old-schema compatibility, inventory/dependency review and combined checks remain before release.",
           "evidence": ["verification/2026-11-03-gap018-preparation.json"]
+        },
+        {
+          "eventId": "GAP-018-H003",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+          "disposition": "OPEN",
+          "note": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+          "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
         }
       ]
     },
@@ -1563,18 +1600,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "AUDIT_DISCREPANCY_REQUIRES_SCOPE_RECONCILIATION",
-        "summary": "Reply producer prototype is locally verified:17 database/regression cases, full types and lint pass. It uses explicit private-request ownership, recipient RLS, atomic inbox writes and after-commit delivery; anonymous/revoked/missing-schema cases preserve existing behavior. Stash18f2b52 remains unpublished; merge dependencies/inventory and combined proofs after018.",
-        "evidenceRevision": "df549d7893c0716bd1715cdef1893c027f848e24",
+        "summary": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+        "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
         "evidenceObservedOn": "2026-11-03",
         "lastRecordedOn": "2026-11-03",
         "states": {
           "implementation": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap019-local.json"]
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-gap019-local.json"]
+            "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -1616,6 +1653,15 @@
           "disposition": "OPEN",
           "note": "Reply producer prototype is locally verified:17 database/regression cases, full types and lint pass. It uses explicit private-request ownership, recipient RLS, atomic inbox writes and after-commit delivery; anonymous/revoked/missing-schema cases preserve existing behavior. Stash18f2b52 remains unpublished; merge dependencies/inventory and combined proofs after018.",
           "evidence": ["verification/2026-11-03-gap019-local.json"]
+        },
+        {
+          "eventId": "GAP-019-H003",
+          "recordedOn": "2026-11-03",
+          "type": "VERIFIED_LOCALLY",
+          "evidenceRevision": "f2248275c205c6c4a979d03ad9f2564305f9789e",
+          "disposition": "OPEN",
+          "note": "The unpublished017–019 combined snapshot passed62 DB/regression cases, full types and lint with0006–0009 inventory retained. Each producer records a scoped notice and dispatches after commit; optional notice failure preserves the business action. Reply failure isolation was corrected after a failing reproduction. Separate sequential extraction, exact-head CI and protected installation remain.",
+          "evidence": ["verification/2026-11-03-gap017-019-combined-local.json"]
         }
       ]
     },

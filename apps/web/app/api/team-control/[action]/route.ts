@@ -51,29 +51,61 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         return Response.json({ invitations: await s.access.team().list(ctx) }, { headers });
       const v = command.parse(await body());
       const team = s.access.team();
+      const invitationNotice = async (recipient: {
+        principalId: string;
+        email: string;
+        name: string;
+        role: string;
+      }) => {
+        try {
+          return await notify({
+            recipientAccountId: recipient.principalId,
+            recipientKind: 'staff',
+            recipientEmail: recipient.email,
+            type: 'TEAM_INVITE',
+            payload: {
+              name: recipient.name,
+              role: recipient.role,
+              setupPath: '/operator/setup',
+              href: '/operator/setup',
+            },
+            locale: 'en',
+            tenantId,
+            writer: { kind: 'staff', ctx },
+          });
+        } catch {
+          console.error(
+            JSON.stringify({ event: 'team_invitation_notification_failed', correlationId }),
+          );
+          return { inbox: 'failed' as const, email: 'not_sent' as const };
+        }
+      };
       if (v.action === 'invite') {
         const result = await team.invite(ctx, v.invite);
         const input = v.invite as { email: string; name: string; role: string };
-        const notification = await notify({
-          recipientAccountId: result.principalId,
-          recipientKind: 'staff',
-          recipientEmail: input.email,
-          type: 'TEAM_INVITE',
-          payload: { name: input.name, role: input.role, setupPath: '/operator/setup' },
-          locale: 'en',
-          tenantId,
-          writer: { kind: 'staff', ctx },
+        const notification = await invitationNotice({ principalId: result.principalId, ...input });
+        return Response.json(
+          { ...result, notification: { inbox: notification.inbox, email: notification.email } },
+          { status: 201, headers },
+        );
+      }
+      if (v.action === 'resend') {
+        const { notificationRecipient, ...result } = await team.resend(ctx, {
+          invitationId: v.invitationId,
+        });
+        const notification = await invitationNotice({
+          principalId: result.principalId,
+          ...notificationRecipient,
         });
         return Response.json(
           { ...result, notification: { inbox: notification.inbox, email: notification.email } },
           { status: 201, headers },
         );
       }
-      const result =
-        v.action === 'resend'
-          ? await team.resend(ctx, { invitationId: v.invitationId })
-          : await team.cancel(ctx, { invitationId: v.invitationId });
-      return Response.json(result, { status: 201, headers });
+      return Response.json(await team.cancel(ctx, { invitationId: v.invitationId }), {
+        status: 201,
+        headers,
+      });
     }
     if (action === 'authenticator-reset' && request.method === 'POST')
       return Response.json(await s.access.team().resetAuthenticator(ctx, await body()), {
