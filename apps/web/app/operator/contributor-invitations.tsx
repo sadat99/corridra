@@ -46,6 +46,8 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
   const [readError, setReadError] = useState('');
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  // The list is being read: no data yet and no failure to show. A failed read leaves the button usable.
+  const loading = data === null && !readError;
   const submit = useRetainedSubmission();
   useEffect(() => {
     const controller = new AbortController();
@@ -323,8 +325,11 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           <button
             className="text-link"
             type="button"
-            disabled={busy}
+            disabled={busy || loading}
+            aria-busy={loading}
             onClick={() => {
+              if (loading) return;
+              setReadError('');
               setData(null);
               setRevision((n) => n + 1);
             }}
