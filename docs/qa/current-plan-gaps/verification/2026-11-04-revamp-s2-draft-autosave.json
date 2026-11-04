@@ -7,7 +7,7 @@
   "status": "Built on branch revamp/customer over main after PR 277. CI on the exact pushed head is the verifier; see the pull request for its result.",
   "changedFiles": [
     "apps/web/app/account/drafts/guided-request.tsx: debounced autosave (2000 ms quiet period) calling the existing persist(); one save in flight at a time (the shared flight guard); an edit made during a save stays unsaved and is saved next; the version and 409 handling is unchanged; a status line with aria-live polite and lang en.",
-    "tests/operator/v3-guided-request-ui.spec.ts: P-04a to P-04e appended. No existing test changed."
+    "tests/operator/v3-guided-request-ui.spec.ts: P-04a to P-04f appended. No existing test changed."
   ],
   "decisions": {
     "neverOver": "Autosave does not run while the draft is in conflict, closed, or while another request is in flight, and does not run for a form that has validation problems (a blank new draft is not saved until it is valid).",
@@ -15,10 +15,11 @@
     "acknowledgement": "Autosave never touches the send acknowledgement. The tick is local state, starts unticked, and is only read by Send. The save body's literal acknowledged field is the existing draft schema requirement and is sent exactly as before by the manual save.",
     "noSendNoStatusChange": "Autosave only calls the draft save action. P-04e asserts no request is sent and no draft is closed.",
     "focus": "Autosave does not use the busy state, so fields stay enabled and focus is not lost while typing; Save draft, Send and Discard are disabled for the moment a save is in flight.",
+    "leavingDuringSave": "Codex finding (P1), verified: autosave does not set busy, so Back to your drafts stayed enabled during a save and the late answer could write the old draft id and version into a new draft. Back is now disabled while a save is in flight, and every editor session (new draft, opened draft, back to the list, reset) bumps a session counter that persist() checks after the answer, so a response from an earlier session changes nothing. P-04f covers it (red first).",
     "versions": "Each automatic save writes a new draft version, as a manual save does. One version per quiet period; no cap was changed."
   },
   "receipts": {
-    "operator": "tests/operator/v3-guided-request-ui.spec.ts on the real build harness: 28 passed (22 existing unchanged, P-04a to P-04e including 390 and 1440 px). The six P-04 tests failed first, before the change.",
+    "operator": "tests/operator/v3-guided-request-ui.spec.ts on the real build harness: 29 passed (22 existing unchanged, P-04a to P-04f including 390 and 1440 px). The P-04 tests failed first, before the change; P-04f failed first before the Codex fix.",
     "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0."
   },
   "notRun": [

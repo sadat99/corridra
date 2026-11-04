@@ -846,3 +846,24 @@ for (const width of [390, 1440])
       expect(server.log.saves).toHaveLength(1);
     },
   );
+
+test('P-04f the editor cannot be left while an automatic save is in flight, so a late answer never lands in another draft', async ({
+  page,
+}) => {
+  const server = fake([existing()]);
+  await server.install(page);
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((done) => (release = done));
+  await page.route('**/api/customer-mission-drafts**', async (route) => {
+    if (route.request().method() === 'POST') await gate;
+    await route.fallback();
+  });
+  await openExisting(page);
+  await market(page).fill('Italy');
+  await expect.poll(() => page.getByText('Saving…').count(), { timeout: 8000 }).toBe(1);
+  await expect(page.getByRole('button', { name: 'Back to your drafts' })).toBeDisabled();
+  release();
+  await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Back to your drafts' })).toBeEnabled();
+  expect(server.log.saves).toHaveLength(1);
+});

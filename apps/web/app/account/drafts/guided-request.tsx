@@ -181,6 +181,8 @@ function Guided(scope: Scope) {
   const latest = useRef<DraftFormValues | null>(null);
   const autoFailed = useRef<DraftFormValues | null>(null);
   const autosave = useRef<() => void>(() => undefined);
+  // Counts editor sessions. An answer to a save started in an earlier session must not change this one.
+  const session = useRef(0);
 
   const headers = useCallback(
     (json = false): Record<string, string> => ({
@@ -205,6 +207,7 @@ function Guided(scope: Scope) {
     setSent(null);
     setAck(false);
     setAutosaving(false);
+    session.current += 1;
     autoFailed.current = null;
     pendingSave.current = null;
     setMessage(why);
@@ -289,6 +292,7 @@ function Guided(scope: Scope) {
     setDirty(true);
   };
   const startNew = (family: MissionDraftFamily) => {
+    session.current += 1;
     setForm(blank(family));
     setDraftId(null);
     setVersion(0);
@@ -313,6 +317,7 @@ function Guided(scope: Scope) {
       if (denied(r.status)) return;
       if (!r.ok) throw new Error('failed');
       const v = parseView(await r.json(), scope);
+      session.current += 1;
       setForm(v.draft.details);
       setDraftId(v.draft.id);
       setVersion(v.draft.version);
@@ -336,6 +341,7 @@ function Guided(scope: Scope) {
       setMessage('Fix the highlighted details before saving.');
       return null;
     }
+    const mine = session.current;
     const signature = JSON.stringify([draftId, version, form]);
     if (pendingSave.current?.signature !== signature)
       pendingSave.current = { signature, commandId: crypto.randomUUID() };
@@ -356,7 +362,7 @@ function Guided(scope: Scope) {
         },
       }),
     });
-    if (!active.current) return null;
+    if (!active.current || mine !== session.current) return null;
     if (denied(r.status)) return null;
     if (r.status === 409) {
       setConflict(true);
@@ -1314,13 +1320,14 @@ function Guided(scope: Scope) {
         <button
           type="button"
           className="text-link ux-back"
-          disabled={busy}
+          disabled={busy || autosaving}
           onClick={() => {
             if (
               dirty &&
               !window.confirm('Leave without saving? Your unsaved changes will be lost.')
             )
               return;
+            session.current += 1;
             setForm(null);
             setDraftId(null);
             setDirty(false);
