@@ -492,13 +492,17 @@ export function Missions({
           className="text-link"
           type="button"
           disabled={busy}
+          aria-busy={busy}
           onClick={() => {
+            if (busy) return;
+            setBusy(true);
             void Promise.all([request('missions'), request('mission-catalogue')])
               .then(([missions, catalogue]) => {
                 setQueue(missions);
                 setRoutes(routeOptions(catalogue));
               })
-              .catch((e) => setMessage(e.message));
+              .catch((e) => setMessage(e.message))
+              .finally(() => setBusy(false));
           }}
         >
           Refresh missions

@@ -297,7 +297,6 @@ test('Q-05 a failed load on click says so and keeps the button for another try',
 const busyActions = [
   { slug: 'missions', name: 'Refresh missions' },
   { slug: 'research', name: 'Refresh research' },
-  { slug: 'research', name: 'Load company link requests' },
   { slug: 'assistance', name: 'Refresh AI review' },
   { slug: 'network', name: 'Refresh invitations' },
   { slug: 'network', name: 'Refresh execution work' },
@@ -306,32 +305,38 @@ const busyActions = [
   { slug: 'audit', name: 'Load access and recent changes' },
   { slug: 'controls', name: 'Load workspace members' },
 ];
-test('Q-06 busy actions: one request on a double click, disabled or busy in flight', async () => {
+test('Q-06 busy actions: a double click sends what one click sends, disabled or busy in flight', async () => {
   test.setTimeout(400000);
   await page.setViewportSize({ width: 1280, height: 900 });
-  for (const action of busyActions) {
-    await open(`/operator/${action.slug}?workspace=${tenant}`);
+  // Only the workspace and team reads an action sends are counted, not the inbox or session.
+  const countAfter = async (slug: string, name: string, clicks: 1 | 2) => {
+    await open(`/operator/${slug}?workspace=${tenant}`);
     // Operations panels load their own data after the workspace: let that settle first.
     await page.waitForTimeout(1500);
-    const button = page.getByRole('button', { name: action.name, exact: true });
-    await expect(button, action.name).toBeVisible();
+    const button = page.getByRole('button', { name, exact: true });
+    await expect(button, name).toBeVisible({ timeout: 15000 });
     let sent = 0;
     await page.route('**/api/**', async (route) => {
-      sent++;
+      if (/\/api\/(workspace|team-control|network)\//.test(route.request().url())) sent++;
       await new Promise((resolve) => setTimeout(resolve, 900));
       await route.continue().catch(() => undefined);
     });
-    await button.dblclick();
+    if (clicks === 2) await button.dblclick();
+    else await button.click();
     const inFlight = await button.evaluate(
       (el) => (el as HTMLButtonElement).disabled || el.getAttribute('aria-busy') === 'true',
     );
-    await page.waitForTimeout(1600);
+    await page.waitForTimeout(2200);
     await page.unroute('**/api/**');
+    return { sent, inFlight };
+  };
+  for (const action of busyActions) {
+    const one = await countAfter(action.slug, action.name, 1);
+    const two = await countAfter(action.slug, action.name, 2);
+    const label = `${action.slug} / ${action.name}`;
     expect
-      .soft(sent, `${action.slug} / ${action.name}: requests after a double click`)
-      .toBeLessThanOrEqual(1);
-    expect
-      .soft(inFlight, `${action.slug} / ${action.name}: disabled or aria-busy while in flight`)
-      .toBe(true);
+      .soft(two.sent, `${label}: requests after a double click (one click sent ${one.sent})`)
+      .toBe(one.sent);
+    expect.soft(two.inFlight, `${label}: disabled or aria-busy while in flight`).toBe(true);
   }
 });

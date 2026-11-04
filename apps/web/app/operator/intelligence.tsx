@@ -212,11 +212,15 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
         <button
           className="text-link"
           disabled={busy}
-          onClick={() =>
+          aria-busy={busy}
+          onClick={() => {
+            if (busy) return;
+            setBusy(true);
             void refresh()
               .then(() => setMessage('Updated.'))
               .catch((e) => setMessage(e.message))
-          }
+              .finally(() => setBusy(false));
+          }}
         >
           Refresh AI review
         </button>
