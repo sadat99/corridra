@@ -1397,6 +1397,11 @@
       "path": "docs/adr/0076-trip-books-and-decision-sharing.md",
       "classification": "Architecture decision",
       "use": "Batch E Trip view and proposed minimal book/decision-card disclosure contract; explicit owner acceptance required for export/share defaults"
+    },
+    {
+      "path": "docs/revamp/README.md",
+      "classification": "Current guide/contract",
+      "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
     }
   ]
 }

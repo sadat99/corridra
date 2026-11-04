@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-11-04",
+  "purpose": "Corrects the stale claim that Batch D additive migration 0002 (customer programme projections) was not installed.",
+  "observedFrom": "GitHub Actions API, job log read on 4 Nov 2026 from the revamp session at main a1dbbc9",
+  "installRun": {
+    "workflow": "Install customer modules",
+    "runId": 41705868221,
+    "jobId": 126160899778,
+    "headBranch": "main",
+    "headSha": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+    "createdAt": "2026-11-03T19:43:12Z",
+    "startedAt": "2026-11-04T04:33:21Z",
+    "completedAt": "2026-11-04T04:37:31Z",
+    "conclusion": "success",
+    "step7": "Report or install the customer modules: success",
+    "logLines": [
+      "2026-11-04T04:37:29.1121399Z customer_programme_projection_migrations: 2 applied",
+      "2026-11-04T04:37:29.1126780Z Install complete. No secret values were written to output."
+    ]
+  },
+  "otherRegistriesInSameLog": {
+    "customer_real_use_migrations": "12 applied",
+    "commercial_readiness_migrations": "9 applied"
+  },
+  "conclusion": "Migration 0002 of customer_programme_projection_migrations is installed in the environment that run targets (2 applied, previously 1 applied in run 41657859737). This is an install receipt only. It does not show that the CORRIDRA programme projection switch is on, that deployment of 76d9d03 was verified, or that any user accepted the feature.",
+  "notProven": [
+    "Application switch value for programme projections",
+    "Production deployment of 76d9d03 observed from this environment",
+    "Signed-in user acceptance"
+  ]
+}
