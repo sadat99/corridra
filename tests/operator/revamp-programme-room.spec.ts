@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -500,3 +501,145 @@ test('C-08 organiser fees and the Corridra service fee have their own labels, wi
     expect(text, secret).not.toContain(secret);
   expect(await money.innerHTML()).not.toMatch(/Seeded participant/);
 });
+
+// Wave 5 quality pass: the five groups in every state, by keyboard, and under axe. Names are invented.
+const none: Meetings = {
+  state: 'NOT_SHARED',
+  sharedLinks: 0,
+  unavailableLinks: 0,
+  participantsSharing: 0,
+  scheduled: null,
+  qualifiedHeld: null,
+};
+const broken = /\bundefined\b|\bNaN\b|\bnull\b|\[object|\{\{/;
+
+// Opens a group by its button and returns its visible panel text.
+async function groupText(page: Page, name: string) {
+  const room = page.getByRole('article', { name: programme.name });
+  await room.getByRole('button', { name, exact: true }).click();
+  const panel = room.locator('.room-panel:not([hidden]), [role="region"]:not([hidden])').last();
+  await expect(room.getByRole('button', { name, exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  return room
+    .evaluate((node, label) => {
+      const button = Array.from(node.querySelectorAll('.room-lens')).find(
+        (item) => item.textContent?.trim() === label,
+      );
+      const ids = (button?.getAttribute('aria-controls') ?? '').split(' ').filter(Boolean);
+      return ids
+        .map((id) => document.getElementById(id))
+        .filter((item): item is HTMLElement => !!item && !item.hidden)
+        .map((item) => item.innerText)
+        .join('\n');
+    }, name)
+    .then((text) => ({ text, panel }));
+}
+
+for (const [label, setup] of [
+  ['loading (the projection has not answered)', 'loading'],
+  ['an error (503)', 'error'],
+  ['denied (403)', 'denied'],
+] as const) {
+  test(`quality: every group says something plain while ${label}, and Results never shows 0`, async ({
+    page,
+  }) => {
+    await page.route('**/api/customer-programme-*', (route) =>
+      setup === 'loading'
+        ? undefined
+        : route.fulfill({ status: setup === 'denied' ? 403 : 503, json: { error: 'unavailable' } }),
+    );
+    await page.route('**/api/customer-programmes*', (route) =>
+      route.fulfill({
+        json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+      }),
+    );
+    await page.goto(`${origin}/?room=1&proj=1`);
+    await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+    for (const name of groups) {
+      const { text } = await groupText(page, name);
+      expect(text.trim().length, `${name}: something is shown`).toBeGreaterThan(20);
+      expect(text, `${name}: no raw value`).not.toMatch(broken);
+    }
+    const { text } = await groupText(page, 'Results');
+    expect(text).toMatch(/Not measured yet/);
+    expect(text).not.toMatch(/Scheduled meetings|Qualified held|:\s*0\b|\b0 (meetings|of)\b/);
+    // The rendered HTML of the whole room never carries a measured-looking zero in Results.
+    const html = await page.locator(`[id="${section('results')}"]`).innerHTML();
+    expect(html).not.toMatch(/Scheduled meetings|Qualified held/);
+  });
+}
+
+test('quality: an error is announced as an alert, not only shown', async ({ page }) => {
+  await open(page, 'room=1&proj=1');
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(page.locator(`[id="${section('results')}"]`).getByRole('alert')).toContainText(
+    /could not be read/,
+  );
+});
+
+test('quality: empty companies and agenda say they are empty, not blank', async ({ page }) => {
+  await open(page, 'room=1&proj=1', none);
+  const people = await groupText(page, 'Participants and eligibility');
+  expect(people.text).toMatch(/No active participants on this page/);
+  const plan = await groupText(page, 'Programme and meetings');
+  expect(plan.text).toMatch(/Create a coordination task in Plan and report/);
+});
+
+test('quality: the five groups work by keyboard, one at a time', async ({ page }) => {
+  await open(page, 'room=1&proj=1', none);
+  const room = page.getByRole('article', { name: programme.name });
+  const views = room.getByRole('group', { name: 'Programme views' });
+  await views.getByRole('button').first().focus();
+  for (let index = 0; index < groups.length; index++) {
+    const button = views.getByRole('button').nth(index);
+    await expect(button).toBeFocused();
+    await page.keyboard.press(index % 2 ? 'Space' : 'Enter');
+    await expect(button).toHaveAttribute('aria-pressed', 'true');
+    for (let other = 0; other < groups.length; other++)
+      if (other !== index)
+        await expect(views.getByRole('button').nth(other)).toHaveAttribute('aria-pressed', 'false');
+    // Every id the button controls exists, and the group's own panel is the only one showing.
+    const controlled = (await button.getAttribute('aria-controls'))!.split(' ');
+    for (const id of controlled) await expect(page.locator(`[id="${id}"]`)).toHaveCount(1);
+    await expect(page.locator(`[id="${controlled[0]}"]`)).toBeVisible();
+    await page.keyboard.press('Tab');
+    if (index < groups.length - 1) {
+      // Tab moves on inside the open panel before the next button; return to the group row.
+      await views
+        .getByRole('button')
+        .nth(index + 1)
+        .focus();
+    }
+  }
+});
+
+for (const width of [390, 1440]) {
+  test(`quality: axe finds nothing in any of the five groups at ${width}px, with data and without`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    for (const meetings of [
+      undefined,
+      { ...none, state: 'AVAILABLE', ...shared, scheduled: 2, qualifiedHeld: 1 } as Meetings,
+    ]) {
+      await open(page, 'room=1&proj=1', meetings);
+      for (const name of groups) {
+        await groupText(page, name);
+        const result = await new AxeBuilder({ page }).analyze();
+        expect(
+          result.violations.map((v) => `${name} ${v.id}: ${v.nodes[0]?.html}`),
+          `${name} ${meetings ? 'with data' : 'unavailable'}`,
+        ).toEqual([]);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+          ),
+          `${name}: no sideways scroll`,
+        ).toBe(true);
+      }
+    }
+  });
+}

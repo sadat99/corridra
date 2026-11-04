@@ -1,0 +1,18 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Wave 5 organiser room quality",
+  "date": "2026-11-04",
+  "sensitive": false,
+  "changedFiles": ["tests/operator/revamp-programme-room.spec.ts"],
+  "applicationCodeChanged": false,
+  "checks": [
+    "all five groups say something plain while loading, on 503 and on 403, with no raw undefined/NaN/null",
+    "Results never shows Scheduled meetings, Qualified held or a zero while unmeasured, in text and rendered HTML",
+    "an unreadable projection is announced as an alert",
+    "empty companies and empty agenda keep their existing plain copy",
+    "keyboard: Enter and Space switch groups, aria-pressed is exclusive, every aria-controls id exists",
+    "axe: no violations in any of the five groups at 390 and 1440, with data and unavailable, and no sideways scroll"
+  ],
+  "result": "16 of 16 room cases pass; no defect found, so no application change",
+  "closedGatesUntouched": true
+}
