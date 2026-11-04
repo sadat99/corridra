@@ -21,18 +21,39 @@ The kickoff note that came with it names the wave order: Wave 0 (route, action a
 | Branches                  | Fewer than nine, main included.                                                                                                                                                                                           |
 | Preservation              | Every original authorised action, permission, RLS rule, MFA step, original value and currency, private markup, history, consent, link and route stays reachable. AC/1 tokens, type, icons and compositions are mandatory. |
 
-## The contract file is not in the repository
+## The execution contract
 
-The approval names `docs/revamp/CONTRACT.md` and the kickoff names an attached `Corridra_V3_Controlled_Revamp_Execution_Contract_2026-11-04.md`. Neither was in the repository or the session uploads on 4 Nov 2026 at `a1dbbc9`. Until the owner adds it here, waves are executed only as the kickoff note above describes them, and anything the contract would decide beyond that (wave acceptance lists, the session plan, file ownership between sessions) is not assumed.
+[`CONTRACT.md`](CONTRACT.md) is the owner's `Corridra_V3_Controlled_Revamp_Execution_Contract_2026-11-04.md`, attached to this session on 4 Nov 2026 and recorded byte for byte: 36,064 bytes, sha256 `93230e4b05d7d0d52660e5f6944c1c5b98e2af3a2301680b1d00da29ff80d4ea`. It is excluded from formatting and `tests/documents.test.mjs` fails if one byte changes. Never edit it; amend forward here. The kickoff note that came with it is 3,191 bytes, sha256 `ed85e5c2e68cd0a9af09394184bfc6e35cdf4f82df6d607707503d19d0ca6def`, and its wave order is summarised in the section above.
+
+### Later owner decisions that override the contract text
+
+Latest wins only for the conflicting scope. Everything else in the contract stands.
+
+| Contract text                                                                       | Later owner decision (4 Nov 2026)                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Section 7 and the kickoff: one primary Claude Code session, no parallel agents      | The approval above: parallel Claude Code sessions with disjoint file ownership under the session plan, Sonnet track sessions on the lean route, an Opus guardian and a Conductor.                                     |
+| Sections 8.5 and 10: draft PRs until a scope and merge authorization is recorded    | Recorded: the approval above, and the merge line below.                                                                                                                                                               |
+| Section 3 and Wave 5: staff navigation "Today / Work / Companies / Delivery / More" | Not yet decided. The locked UI direction says "Today, Missions, Companies, Delivery, Outcomes" plus "All tools and settings"; see the [specs index](specs/README.md). The locked names stand until the owner chooses. |
+| Section 3: customer navigation "Home / Work / Companies / Results / Account"        | Not yet decided. The locked customer navigation (Home, My Work, Companies, Results, More, or the `CORRIDRA_UX_NAV` set) stands until the owner chooses.                                                               |
+
+### Owner merge line, 4 Nov 2026 (verbatim)
+
+> S1, you are the only session that merges revamp PRs. Build sessions mark PRs Ready for Conductor review. Merge after your review and exact-head green CI, in order; PRs with a migration or installer change wait for me.
+
+S1 is session `session_0187kU9qz8GGVRjUCwT2Mtof` on `claude/vibrant-dirac-8osg5d`, which also holds the Guardian role (Opus) for this revamp.
 
 ## Session plan and file ownership
 
-No shared session plan was supplied. Until one is added here, each session records the files it owns before editing, and never edits a file another open branch owns.
+The session plan is the owner's private page `Corridra Revamp Session Plan` (claude.ai artifact 2J9XwudfoME1742EYEjnFJ, read 4 Nov 2026). Branch names below are as actually pushed or assigned; one branch per track.
 
-| Session branch                | Owns                                                                                                                                                              |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `claude/zen-hopper-1iqtdn`    | E3b decision card (PR 262): `packages/auth/src/customer-decision-cards.ts`, `packages/db/customer-decision-card-migrations/`, its tests. Not part of this revamp. |
-| `claude/vibrant-dirac-8osg5d` | Revamp Waves 0 and 1: `docs/revamp/`, `scripts/revamp-manifest.mjs`, the customer account surfaces each Wave 1 PR names.                                          |
+| Session                          | Branch                        | Owns                                                                                                                                                                                            |
+| -------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1 Conductor and Guardian (Opus) | `claude/vibrant-dirac-8osg5d` | `docs/revamp/**`, the ledger, PLAN_STATUS, START_HERE, the gap register, the work log, history snapshots; reviews and merges. No application code after PR 263.                                 |
+| S2 Customer Work                 | `revamp/customer` (assigned)  | `apps/web/app/account/**` except delegations, `apps/web/lib/move-*`, `apps/web/lib/work-items/**`, customer navigation and shells, workspace chooser, compare lens, `apps/web/components/mr/**` |
+| S3 Public, Intake, Organise      | `revamp/public`               | Public pages, `/plan`, first question, public shell, header and footer; after Wave 3, `apps/web/app/account/delegations/**` and `app/programme`                                                 |
+| S4 Staff, Contributor, Recipient | `revamp/staff`                | `apps/web/app/operator/**`, contributor, network, mute, pulse, team sidebar, operator components, role navigation                                                                               |
+
+Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `packages/**` and middleware. A track that needs one opens a small separate PR titled `[shared]`; any `packages/**` change needs the Guardian's PASS. Track PRs add only their own verification file.
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
@@ -48,3 +69,5 @@ node scripts/revamp-manifest.mjs .cache/revamp-inventory/inventory.json
 At `a1dbbc9` it lists 124 routes (53 customer, 27 staff, 19 public, 12 public intake and identity, 9 recipient or private link, 3 contributor, 1 shared), with each route's access rule, customer navigation home (Home, My Work, Companies, Results, More), control count, permission boundaries in its file and handler branches. Every customer page has a navigation home. The collector found 1,777 controls, 135 handler branches, 313 commands and 310 permission boundaries. Static reachability is not functional verification: every route stays `EXISTING (static); runtime acceptance NOT VERIFIED` until a test proves it.
 
 Cleanup reference check: 19 tracked source files have no importer, CSS import, package script or config reference. 18 are KEEP (tool config files loaded by name, and operator or evidence CLIs run by path). One is REVIEW: `apps/web/components/ux/page-header.tsx` has no importer. **Nothing was deleted.** Deleting it needs an owner-approved PR with this reference check rerun, the file hash recorded and a rollback note. `docs/source`, ADRs, QA records, history and migrations are never cleanup candidates.
+
+The contract (Wave 0 and section 11) names two machine-readable files, `docs/revamp/COVERAGE.json` (route, action, role and per-stage evidence state) and `docs/revamp/CLEANUP-MANIFEST.json` (keep, consolidate, archive or delete decisions with references, recovery and approval). They are derived from this manifest in the next records PR; until then this manifest is the Wave 0 record.

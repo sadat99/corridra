@@ -1407,6 +1407,36 @@
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/specs/README.md",
+      "classification": "Current guide/contract",
+      "use": "Index of revamp specs, PR rules for track sessions and the open staff-navigation naming decision"
+    },
+    {
+      "path": "docs/revamp/specs/work-items.md",
+      "classification": "Current guide/contract",
+      "use": "Work-item adapter contract for the customer Work list: explicit classification only, allowed workspaces, no text joins, required tests W-01 to W-14"
+    },
+    {
+      "path": "docs/revamp/specs/home-work.md",
+      "classification": "Current guide/contract",
+      "use": "Customer Home and Work screen spec inside the locked navigation, seven states at three widths, tests H-01 to H-08"
+    },
+    {
+      "path": "docs/revamp/specs/public-home.md",
+      "classification": "Current guide/contract",
+      "use": "Public home and fast intake spec within the settled Ledger home: parity tests P-01 to P-07 first, then bounded changes"
+    },
+    {
+      "path": "docs/revamp/specs/signal-desk.md",
+      "classification": "Current guide/contract",
+      "use": "Map of the 18 staff section ids into the locked team navigation with unchanged roles, tests S-01 to S-05"
+    },
+    {
+      "path": "docs/revamp/CONTRACT.md",
+      "classification": "Current guide/contract",
+      "use": "Owner's V3 controlled revamp execution contract of 4 Nov 2026, byte for byte (sha256 93230e4b...d4ea); never edit, amend forward in docs/revamp/README.md"
     }
   ]
 }

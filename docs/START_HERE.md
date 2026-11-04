@@ -4,6 +4,8 @@ This is the existing shared entry for Claude Code and Codex. Use the repository 
 
 For traced gaps and later progress comparisons, use the [current-plan gap register](qa/current-plan-gaps/README.md). It preserves 60 stable audit IDs and the immutable 1 November evidence baseline; it does not replace the current A–G execution queue or authorise owner-dependent and deferred work.
 
+Current UX work: the owner-approved [V3 revamp](revamp/README.md) and its [contract](revamp/CONTRACT.md).
+
 ## Start a session
 
 1. Read root/nested agent instructions. Inspect working-tree changes, fetch latest main and inspect open PR metadata before editing. Preserve another agent's work and dependent PRs.
