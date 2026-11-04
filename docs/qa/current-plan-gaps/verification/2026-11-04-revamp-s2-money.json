@@ -1,0 +1,40 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 4, SourceLedger comparison and money confidentiality (M-01 to M-10)",
+  "kind": "Tests that pin how a customer sees quotes, arrangements and money, plus two repairs to the quote cards. No schema, route, export or write is added.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. Two defects against the spec were found in the quote cards and repaired in this PR.",
+  "status": "Built on branch revamp/customer over main 3d78713. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "base": "3d787133c3136204b26b87833a536da19ec4c36b",
+  "authorityStamp": "auth-4041eae60ee6",
+  "newFiles": [
+    "tests/integration/revamp-money-database.test.ts (real PostgreSQL, M-01, M-02, M-08, M-09)",
+    "tests/integration/revamp-money-screens.test.ts (vitest, M-03 to M-07 and M-10)"
+  ],
+  "changedFiles": [
+    "apps/web/lib/quote-cards.ts: every optional term (MOQ, warranty, installation, training, spares) is always listed on a quote card, so an omission shows as 'Not stated'; the reason a card is 'not comparable' now names the engine's differences (a different currency or requirement, or a different specification, quantity, unit, MOQ, delivery, shipping, lead time, payment, warranty, installation, training or spares term) instead of a generic line."
+  ],
+  "defectsFound": {
+    "omissionNotShown": "Spec rule 3 and M-04: on the Compare cards a quote that left out installation, warranty, training, spares or MOQ did not list the term at all, so a low price hid what it left out. Only the table behind the toggle showed it. Red first, then repaired.",
+    "reasonNotGiven": "Spec rule 2 and M-05, M-03: when offers differed in specification or currency the engine said 'not comparable' with a list of differences, but the card said only 'Its terms differ from the other offers.' It now names them. Red first, then repaired."
+  },
+  "decisions": {
+    "m06Words": "The arrangement summary already separates the seller's supply price ('Seller's quoted supply price', belongs to the contracting seller), the fixed service fees, the conditional commission ('Estimated commission ... Not earned, invoiced or collected.') and says no payment is taken. The spec's table uses 'Supply price' and 'Possible commission'; the existing words were kept because they say the same thing and other tests and screens use them. Confirm or ask for the spec's exact words.",
+    "m02Method": "The fingerprint is recomputed inside a rolled-back transaction after the private record is cleared (triggers off, owner only); it is equal. A change to a public term in the same transaction changes it, so the check is not vacuous.",
+    "m08": "A customer of workspace B asking for workspace A's request gets the same message and status as for a request that does not exist; nothing about A appears in the error.",
+    "m09": "The customer view shows the current quote and a timeline that lists each quote version. Earlier version rows are unchanged in the record after acceptance and the accepted quote renders exactly as shown before acceptance; no edit action is offered.",
+    "m10": "Routes that can produce a file are pinned (5 today), and a book record with any money, quote, markup or contact key, at top level or in an item, is refused."
+  },
+  "receipts": {
+    "red": "Before the repair: 3 of 9 screen tests failed (currency reason, omitted terms, specification reason).",
+    "green": "After: 15 passed of 15 (screens 9 + 2, database 4), plus ux-room, ux-teaching-layer and books-pdf unchanged and passing (62).",
+    "database": "Local PostgreSQL 16 on port 54329 (KI-15). The existing commercial-arrangements suite still passes (10).",
+    "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0 each."
+  },
+  "notRun": [
+    "Full integration, operator and Playwright suites locally (CI runs them on the pushed head).",
+    "Browser rendering of the Compare cards at 320, 390, 768 and 1440.",
+    "The Compare lens and the original table in a signed-in browser."
+  ],
+  "sensitive": "Money, quotes, markup and tenant scope. Guardian review requested."
+}
