@@ -101,7 +101,10 @@ const state = (value: string) => value.replaceAll('_', ' ').toLowerCase();
  */
 export function TodayPanel({ tenant, revision }: { tenant: string; revision: number }) {
   const [today, setToday] = useState<Today | null>(null);
-  const [failed, setFailed] = useState(false);
+  // Why the list could not be read: the person's role, too many requests, or anything else (an
+  // unavailable service or no connection). Each gets its own words and a retry where one helps.
+  const [failure, setFailure] = useState<null | 'denied' | 'later' | 'unavailable'>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
@@ -150,14 +153,17 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
             }
           : null;
         setToday({ fresh, overdue, open, team, work, observedAt: new Date(now).toISOString() });
-        setFailed(false);
+        setFailure(null);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        setFailed(true);
+        const status = (error as { status?: number }).status;
+        setFailure(
+          status === 401 || status === 403 ? 'denied' : status === 429 ? 'later' : 'unavailable',
+        );
       });
     return () => controller.abort();
-  }, [tenant, revision]);
+  }, [tenant, revision, attempt]);
   const work = today?.work ?? null;
   const nothing =
     !!today &&
@@ -183,10 +189,30 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
           </time>
         )}
       </header>
-      {failed ? (
-        <p role="status">
-          Today&apos;s list could not be loaded. The mission list below still works.
-        </p>
+      {failure ? (
+        <div role="status">
+          <p>
+            Today&apos;s list could not be loaded.{' '}
+            {failure === 'denied'
+              ? 'Your role is not allowed to read it. Ask your workspace owner to review your access.'
+              : failure === 'later'
+                ? 'There have been too many requests. Try again later.'
+                : 'Check your connection and try again.'}
+          </p>
+          {failure !== 'denied' && (
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => {
+                setFailure(null);
+                setToday(null);
+                setAttempt((n) => n + 1);
+              }}
+            >
+              Retry Today&apos;s list
+            </button>
+          )}
+        </div>
       ) : !today ? (
         <p role="status" aria-live="polite">
           Loading today&apos;s list.

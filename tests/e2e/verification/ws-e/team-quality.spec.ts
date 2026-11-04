@@ -202,6 +202,13 @@ for (const target of targets) {
       expect.soft(shown, label).toMatch(failure.words);
       if (failure.retry) expect.soft(retry, label).toBeGreaterThan(0);
       expect.soft(shown, label + ' (blank area)').not.toBe('');
+      if (failure.name === '503' && target.name.startsWith('Today')) {
+        // The retry works once the read works again, and the list replaces the failure line.
+        await page.unroute(target.pattern);
+        await page.getByRole('button', { name: /retry/i }).first().click();
+        await expect(page.locator('.ux-overview')).toBeVisible({ timeout: 20000 });
+        continue;
+      }
       await page.unroute(target.pattern);
     }
   });
