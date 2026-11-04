@@ -223,7 +223,14 @@ for (const target of targets) {
 test('Q-05 every section says its data could not be loaded when every read fails', async () => {
   test.setTimeout(400000);
   await page.setViewportSize({ width: 1280, height: 900 });
-  const skip = new Set(['workspace-authenticator', 'workspace-controls']);
+  // Audit, members and evidence read nothing on load (a button loads them, or the snapshot holds
+  // them); they are checked by clicking, below.
+  const skip = new Set([
+    'workspace-authenticator',
+    'workspace-controls',
+    'workspace-audit',
+    'workspace-evidence',
+  ]);
   for (const { id, slug } of sections.filter((s) => !skip.has(s.id))) {
     await page.route('**/api/**', (route) => {
       const url = route.request().url();
@@ -244,6 +251,37 @@ test('Q-05 every section says its data could not be loaded when every read fails
     expect
       .soft(text, `${slug} (${id}): an empty or zero state shown as a result`)
       .not.toMatch(/No mission requests yet|Nothing is waiting|None recorded/i);
+    await page.unroute('**/api/**');
+  }
+});
+
+// Q-05: the loads that wait for a click say so in words when the read fails, with the button still
+// there to try again.
+test('Q-05 a failed load on click says so and keeps the button for another try', async () => {
+  test.setTimeout(200000);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const loads = [
+    { slug: 'audit', name: 'Load access and recent changes' },
+    { slug: 'controls', name: 'Load workspace members' },
+    { slug: 'research', name: 'Load company link requests' },
+  ];
+  for (const load of loads) {
+    await open(`/operator/${load.slug}?workspace=${tenant}`);
+    await page.waitForTimeout(1000);
+    await page.route('**/api/**', (route) => {
+      const url = route.request().url();
+      if (!/\/api\/(workspace|team-control)\//.test(url) || /\/(workspace|config)\?/.test(url))
+        return route.continue();
+      return route.fulfill({ status: 503, json: { error: 'Service unavailable' } });
+    });
+    const button = page.getByRole('button', { name: load.name, exact: true });
+    await button.click();
+    await page.waitForTimeout(1500);
+    const text = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
+    expect
+      .soft(text, `${load.slug} / ${load.name}: no failure words after a failed load`)
+      .toMatch(/could not|unavailable|failed|try again|retry|check your connection/i);
+    await expect.soft(button, `${load.slug} / ${load.name}: button kept`).toBeEnabled();
     await page.unroute('**/api/**');
   }
 });
