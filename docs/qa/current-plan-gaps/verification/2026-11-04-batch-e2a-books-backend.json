@@ -1,0 +1,415 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "E",
+  "kind": "E2a Trip Book and Supplier Book backend (draft PR 257) and post-merge record of PR 255 and PR 256",
+  "findings": ["GAP-035", "GAP-034", "GAP-041"],
+  "status": "PR 255 (E1 Trip view, 8d9ac67) and PR 256 (E3a signed-in status link, 4456042) are MERGED with their post-merge main CI and CodeQL succeeded. PR 257 (E2a Trip Book and Supplier Book backend) is an open draft; its frozen-head CI, CodeQL and Codex review are pending and are not claimed. The route and book function sit behind the default-off CORRIDRA_UX_BOOKS switch and an uninstalled database module; nothing is deployed-verified, enabled or activated by agents. Migration 0002 (programme projection) and the books module are not installed in production.",
+  "pullRequests": {
+    "pr254PostMerge": {
+      "number": 254,
+      "mergeCommit": "76d9d03",
+      "mainCiRun": 41705549794,
+      "mainCiConclusion": "success",
+      "codeqlRun": 41705549812,
+      "codeqlConclusion": "success",
+      "readBy": "GitHub REST API, re-read by the scribe on 4 Nov"
+    },
+    "pr255PostMerge": {
+      "number": 255,
+      "mergeCommit": "8d9ac67",
+      "mainCiRun": 41728230272,
+      "mainCiConclusion": "success",
+      "codeqlRun": 41728230199,
+      "codeqlConclusion": "success",
+      "readBy": "GitHub REST API, re-read by the scribe on 4 Nov (the earlier record said the CI run was still in progress)"
+    },
+    "pr256Merged": {
+      "number": 256,
+      "url": "https://github.com/sadat99/corridra/pull/256",
+      "mergedAt": "2026-11-03T23:06:34Z",
+      "mergedAtSource": "GitHub REST API, re-read by the scribe",
+      "mergeCommit": "4456042b62617b6d3bb3151fd8c651c72a164988",
+      "head": "7d304c5",
+      "checks": "19 checks, no failures (18 success and CodeQL neutral), as relayed by the conductor and not re-read check by check. Codex review clean and an independent security review with no blocking or should-fix item (relayed). The final gating commit b65cde5 made the off path, including Pulse-only, byte-identical to main.",
+      "postMergeMainCi": {
+        "run": 41736478595,
+        "status": "completed",
+        "conclusion": "success"
+      },
+      "postMergeCodeql": {
+        "run": 41736478634,
+        "status": "completed",
+        "conclusion": "success"
+      }
+    },
+    "e2aOpenDraft": {
+      "number": 257,
+      "state": "open draft",
+      "branch": "claude/zen-hopper-1iqtdn",
+      "headLocal": "d3b190e",
+      "headOnRemoteWhenRecorded": "941dded24a95fd49cb0db4bd7f959274524a37b7 (REST API; ac32e34, 5a015a6 and d3b190e were not pushed when recorded)",
+      "baseRevision": "4456042b62617b6d3bb3151fd8c651c72a164988",
+      "commits": [
+        {
+          "sha": "bacb384",
+          "note": "domain shapes (packages/domain/src/books.ts) and the Trip Book and Supplier Book PDF writer behind the report writer"
+        },
+        {
+          "sha": "9521e0f",
+          "note": "SQL function customer.saved_mission_book (packages/db/customer-book-migrations/0001_trip_and_supplier_books.sql) and the optional installer step (customer_book_migrations)"
+        },
+        {
+          "sha": "941dded",
+          "note": "service (packages/auth/src/customer-books.ts), POST-only route (apps/web/app/api/customer-books/route.ts), availability helper and the CORRIDRA_UX_BOOKS flag"
+        },
+        {
+          "sha": "5a015a6",
+          "note": "country names in the Supplier Book and the stable UNSUPPORTED_TEXT code"
+        },
+        {
+          "sha": "ac32e34",
+          "note": "the book is rendered inside the transaction before commit; the saved-mission id is kept out of the event; the two 422 reasons named"
+        },
+        {
+          "sha": "d3b190e",
+          "note": "owner-facing switch wording says plainly that only the download route is enabled until the download screen ships"
+        }
+      ]
+    }
+  },
+  "e2aBehaviour": {
+    "summary": "The SQL function customer.saved_mission_book builds a TRIP or SUPPLIER projection key by key from the saved report the signed-in customer can already read, through the same ownership, revocation, expiry and retention gates. The PDF is rendered on the fly inside the database transaction before commit and is never stored (D05 object storage stays closed), so a book that cannot be made leaves no record or event. The generation record is one row in the existing immutable saved_mission_command ledger (kind, resource, publication, schema version, generatedAt, SHA-256 of the projection, no content) plus one delivery.book.generated event whose payload carries no saved-mission id.",
+    "retriesAndLimits": "The same command id returns the same record with no second record or event; a changed source makes the retry fail with 23514 (409); 30 new generations per hour per customer and mission, then 429.",
+    "route": "POST only, with origin, body, rate and header controls and a uniform 403 for every denial; answers 503 while CORRIDRA_UX_BOOKS is off, the module is not installed or the service is unavailable; X-Corridra-Book-Digest, X-Corridra-Book-Replayed and X-Corridra-Book-Generated-At response headers.",
+    "unchanged": "CLIENT_PROGRESS.allow_export is untouched and stays false. reportPdf is byte-identical to main (86460 bytes on a rich fixture and 85288 on a 40-mission fixture): builder-reported, no receipt file records the byte counts; the delivery.test.ts and product-experience.test.ts regression passes (pdf-regress, 23 passed).",
+    "installer": "scripts/install-customer-modules.ts gains customer_book_migrations: the install report moves from 'not installed' to '1 applied' only after an owner-approved protected install run. Until then the route answers 503 even with the switch on. No such run has been dispatched.",
+    "noPanel": "No download panel, copy or browser test exists yet (E2b). CORRIDRA_UX_BOOKS is a real flag but nothing in the UI uses it.",
+    "decisionsRecorded": [
+      "'Owner/admin' in ADR-076 item 1 means the signed-in customer who owns the active saved mission, because a saved mission has no workspace role.",
+      "The Supplier Book carries the mission title as its heading.",
+      "No step-up MFA: customer routes use a fresh provider session and a verified email."
+    ],
+    "reviews": "Two independent reviews (SQL, authority and disclosure; PDF and route content) found no blocking defect (relayed by the conductor). Should-fix items fixed: record-versus-delivery rollback, test gaps, country names, 422 reasons, switch wording and event minimisation.",
+    "mutationChecks": "Reported by the builder and reviewer, no receipt files under work/: a widened allow-list failed 10 of 23 tests in an independent reviewer's copy; moving the render back out of the transaction, restoring the resource id in the event and removing the 422 reason each failed the intended tests."
+  },
+  "receipts": [
+    {
+      "name": "books-pdf-before",
+      "receiptPath": "work/books-pdf-before-2026-11-03T23-13-22-946Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/books-pdf.test.ts",
+      "exit": 1,
+      "seconds": 1.7,
+      "logSha256": "64aecf007ece94b5a9d7e897375412c3fb577c3a9fe25fa626e25f10095e1d73",
+      "head": "4456042b62617b6d3bb3151fd8c651c72a164988",
+      "changedPaths": 2,
+      "role": "failing-before reproduction (PDF writer)",
+      "result": "8 failed | 5 passed (13) in tests/integration/books-pdf.test.ts before the writer existed"
+    },
+    {
+      "name": "books-pdf-after",
+      "receiptPath": "work/books-pdf-after-2026-11-03T23-13-47-513Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/books-pdf.test.ts",
+      "exit": 0,
+      "seconds": 2.6,
+      "logSha256": "83aaf2813d96d0e6baabb92937d4e4b3af3644430700d43daaca4cc4db17cf5c",
+      "head": "4456042b62617b6d3bb3151fd8c651c72a164988",
+      "changedPaths": 3,
+      "role": "passing (PDF writer)",
+      "result": "13 passed (13); an earlier run of the same name exited 1 with 2 failed | 11 passed and is kept"
+    },
+    {
+      "name": "books-sql-before",
+      "receiptPath": "work/books-sql-before-2026-11-03T23-19-53-884Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts",
+      "exit": 1,
+      "seconds": 8.6,
+      "logSha256": "0323bd422329f3a301a5b1e252a7ffaec92a5d263a4d4d6dc341d04f987aa57c",
+      "head": "bacb384fbd8b732ed83ecccf7b13beac30f8e9a9",
+      "changedPaths": 3,
+      "role": "failing-before reproduction (SQL function)",
+      "result": "15 failed | 1 passed (16) in tests/integration/customer-books.test.ts; the function did not exist (SQLSTATE 42883 in the log); two earlier runs of the name exited 1 with 16 skipped"
+    },
+    {
+      "name": "books-sql",
+      "receiptPath": "work/books-sql-2026-11-03T23-21-28-167Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts",
+      "exit": 0,
+      "seconds": 11.7,
+      "logSha256": "07d603aa8ab3c0b63cbb244dd1bd5461509577393d2f2948176e106266c56029",
+      "head": "bacb384fbd8b732ed83ecccf7b13beac30f8e9a9",
+      "changedPaths": 4,
+      "role": "passing (SQL function, first set)",
+      "result": "16 passed (16); two earlier runs of the name exited 1 with 1 failed | 15 passed"
+    },
+    {
+      "name": "books-sql",
+      "receiptPath": "work/books-sql-2026-11-03T23-27-35-959Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts tests/integration/customer-book-route.test.ts",
+      "exit": 0,
+      "seconds": 17.6,
+      "logSha256": "3dd8056f77d36d01c40be842d4b1f03d36ace034a3209d563d8bf84ac7704623",
+      "head": "9521e0fcbe50dcc256c9e2eb03097c220e334744",
+      "changedPaths": 10,
+      "role": "passing (SQL function and installer upgrade)",
+      "result": "32 passed (32) in 2 files at 9521e0f; the preceding run of the name exited 1 with 1 failed | 22 passed (23)"
+    },
+    {
+      "name": "books-route-before",
+      "receiptPath": "work/books-route-before-2026-11-03T23-26-46-268Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-book-route.test.ts",
+      "exit": 1,
+      "seconds": 1.7,
+      "logSha256": "802a7e938c1dedb3e10f01168628ebb544447979c5f3ff7e60334c702f9040db",
+      "head": "9521e0fcbe50dcc256c9e2eb03097c220e334744",
+      "changedPaths": 8,
+      "role": "failing-before reproduction (route)",
+      "result": "exit 1, no tests ran: the route did not exist"
+    },
+    {
+      "name": "books-route",
+      "receiptPath": "work/books-route-2026-11-03T23-26-48-028Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-book-route.test.ts",
+      "exit": 0,
+      "seconds": 5.7,
+      "logSha256": "4bcd37d76a60925edc9c9b179f9cf3dc91056bace536a7501b4b2442b536188e",
+      "head": "9521e0fcbe50dcc256c9e2eb03097c220e334744",
+      "changedPaths": 9,
+      "role": "passing (route)",
+      "result": "9 passed (9) in tests/integration/customer-book-route.test.ts"
+    },
+    {
+      "name": "books-upgrade",
+      "receiptPath": "work/books-upgrade-2026-11-03T23-27-59-765Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-book-upgrade.test.ts",
+      "exit": 0,
+      "seconds": 4.2,
+      "logSha256": "190eb117051e6cb44014805cf81a2c8a03c8b35ff5a98fa11a2a5d1015ddde42",
+      "head": "9521e0fcbe50dcc256c9e2eb03097c220e334744",
+      "changedPaths": 11,
+      "role": "passing (installer upgrade)",
+      "result": "7 passed (7) at 9521e0f; an earlier run at bacb384 exited 1 with 1 failed | 6 passed"
+    },
+    {
+      "name": "books-fix-before",
+      "receiptPath": "work/books-fix-before-2026-11-04T00-09-04-407Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts",
+      "exit": 1,
+      "seconds": 10.9,
+      "logSha256": "40fab02df036db9f1f9ae8100be415879a979a88da3161408491097ac85397fa",
+      "head": "5a015a62ff792c35e12527c88cc0662561e99160",
+      "changedPaths": 1,
+      "role": "failing-before reproduction (should-fix batch: country names, UNSUPPORTED_TEXT)",
+      "result": "5 failed | 19 passed (24)"
+    },
+    {
+      "name": "books-pdf-fix-before",
+      "receiptPath": "work/books-pdf-fix-before-2026-11-04T00-07-53-765Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/books-pdf.test.ts",
+      "exit": 1,
+      "seconds": 2.9,
+      "logSha256": "519565f9a036288976ea6f29328c2ba2043661a8fc1e00a6fedd7b0679aad4c1",
+      "head": "941dded24a95fd49cb0db4bd7f959274524a37b7",
+      "changedPaths": 2,
+      "role": "failing-before reproduction (PDF should-fix)",
+      "result": "3 failed | 15 passed (18)"
+    },
+    {
+      "name": "books-pdf-fix",
+      "receiptPath": "work/books-pdf-fix-2026-11-04T00-08-02-037Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/books-pdf.test.ts",
+      "exit": 0,
+      "seconds": 2.9,
+      "logSha256": "69261aaa5e5f45feb81af0783fb4723918a37a973d2e1d6e17709162832b8224",
+      "head": "941dded24a95fd49cb0db4bd7f959274524a37b7",
+      "changedPaths": 3,
+      "role": "passing (PDF should-fix)",
+      "result": "18 passed (18) in tests/integration/books-pdf.test.ts"
+    },
+    {
+      "name": "books-fix",
+      "receiptPath": "work/books-fix-2026-11-04T00-10-20-603Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts tests/integration/customer-book-route.test.ts tests/integration/customer-book-upgrade.test.ts tests/integration/ux-books.test.ts tests/integration/books-pdf.test.ts",
+      "exit": 0,
+      "seconds": 27.8,
+      "logSha256": "f2a6a2ed9b4e9a1412a82ce81c16ea491c002a5ffecbec056b3ceeb8c05646d2",
+      "head": "5a015a62ff792c35e12527c88cc0662561e99160",
+      "changedPaths": 8,
+      "role": "passing (should-fix batch)",
+      "result": "5 files, 73 passed (73) at 5a015a6"
+    },
+    {
+      "name": "books-final-1",
+      "receiptPath": "work/books-final-1-2026-11-04T00-12-21-440Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts tests/integration/customer-book-route.test.ts tests/integration/customer-book-upgrade.test.ts tests/integration/books-pdf.test.ts tests/integration/ux-books.test.ts",
+      "exit": 0,
+      "seconds": 30.8,
+      "logSha256": "8148138b48437d1fd7349abc39870a324d49ce96e23acb6303226ddf13978e3a",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "final books set, run 1",
+      "result": "5 files, 73 passed (73): customer-books, customer-book-route, customer-book-upgrade, books-pdf, ux-books"
+    },
+    {
+      "name": "books-final-2",
+      "receiptPath": "work/books-final-2-2026-11-04T00-12-52-271Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts tests/integration/customer-book-route.test.ts tests/integration/customer-book-upgrade.test.ts tests/integration/books-pdf.test.ts tests/integration/ux-books.test.ts",
+      "exit": 0,
+      "seconds": 28.8,
+      "logSha256": "21c0843471f059102ca9ef242a1a8bf097ff604e61c806ef839060ec31b7a893",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "final books set, run 2",
+      "result": "5 files, 73 passed (73)"
+    },
+    {
+      "name": "pdf-regress",
+      "receiptPath": "work/pdf-regress-2026-11-04T00-13-21-130Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/delivery.test.ts tests/integration/product-experience.test.ts",
+      "exit": 0,
+      "seconds": 54.1,
+      "logSha256": "2e8a2173f7a76f3e9b9019a4883945dc31227dd2924fd26e5379eaf982d80581",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "PDF regression on the final head (reportPdf unchanged)",
+      "result": "2 files, 23 passed (23): delivery.test.ts and product-experience.test.ts"
+    },
+    {
+      "name": "saved-regress-1",
+      "receiptPath": "work/saved-regress-1-2026-11-04T00-14-17-989Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-saved-missions.test.ts tests/integration/specification-confirmation.test.ts tests/integration/customer-programme-projection-upgrade.test.ts tests/integration/customer-decisions.test.ts tests/integra",
+      "exit": 0,
+      "seconds": 78.8,
+      "logSha256": "f9c0aa83245459ca39b978cca7978ac0b51d9a9b6427c8731b915766b0e6234b",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "saved-mission and related regression, run 1",
+      "result": "8 files, 70 passed (70)"
+    },
+    {
+      "name": "saved-regress-2",
+      "receiptPath": "work/saved-regress-2-2026-11-04T00-15-36-803Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-saved-missions.test.ts tests/integration/specification-confirmation.test.ts tests/integration/customer-programme-projection-upgrade.test.ts tests/integration/customer-decisions.test.ts tests/integra",
+      "exit": 0,
+      "seconds": 81.5,
+      "logSha256": "bd12a978773d72b0068e0191454fcda5975d50f159ae642bbbb22eec2ccb3b7e",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "saved-mission and related regression, run 2",
+      "result": "8 files, 70 passed (70)"
+    },
+    {
+      "name": "books-ux-wide",
+      "receiptPath": "work/books-ux-wide-2026-11-04T00-11-59-868Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts tests/integration/ux-trip.test.ts tests/integration/ux-fairs.test.ts tests/integration/status-link.test.ts tests/integration/ux-pulse.test.ts tests/integration/ux-reply-page.test.ts tests/in",
+      "exit": 0,
+      "seconds": 15.2,
+      "logSha256": "4dc559c5d6f70e7c0f5975c7d6f0b9baa5e21d6f3e2b34c8d3d9b6023a1f4782",
+      "head": "ac32e3457afdc64a9c34e986e29851230b970fc2",
+      "changedPaths": 2,
+      "role": "switch and UX wide set on ac32e34",
+      "result": "20 files, 582 passed (582); the earlier run at 9521e0f had 581 passed"
+    },
+    {
+      "name": "typecheck",
+      "receiptPath": "work/typecheck-2026-11-04T00-17-00-923Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 31.5,
+      "logSha256": "a1b60f3f07c3d02c7509be697f286e202cc3fc32650c47282829749d75385906",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "typecheck on the final head",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint",
+      "receiptPath": "work/lint-2026-11-04T00-17-32-520Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 53.2,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "lint on the final head",
+      "result": "exit 0"
+    },
+    {
+      "name": "format",
+      "receiptPath": "work/format-2026-11-04T00-18-25-806Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 43.5,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "format check on the final head",
+      "result": "exit 0"
+    },
+    {
+      "name": "docs",
+      "receiptPath": "work/docs-2026-11-04T00-19-11-949Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 16.4,
+      "logSha256": "9a0dac288d4916a2c90160572d2785b0d24432e7e47c9e5de8847c7ad646402b",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "pnpm test:docs on the final head",
+      "result": "exit 0 (70 passed)"
+    },
+    {
+      "name": "build",
+      "receiptPath": "work/build-2026-11-04T00-19-28-549Z.log.receipt.json",
+      "command": "pnpm build",
+      "exit": 0,
+      "seconds": 55.9,
+      "logSha256": "2cd223711868ad627aeddc9a5f53c0eb49db27f2c4d75fd10ae098c3f6d82fef",
+      "head": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+      "changedPaths": 0,
+      "role": "build on the final head",
+      "result": "exit 0"
+    },
+    {
+      "name": "integration-full",
+      "receiptPath": "work/integration-full-2026-11-03T23-37-09-558Z.log.receipt.json",
+      "command": "npx vitest run",
+      "exit": 1,
+      "seconds": 1008.4,
+      "logSha256": "658ad2cf2425a81072f5c8b2bd1e133044c392d9ade7b07adf0579f31e114559",
+      "head": "941dded24a95fd49cb0db4bd7f959274524a37b7",
+      "changedPaths": 0,
+      "role": "full integration run on 941dded (not repeated after the last two fix commits)",
+      "result": "4 failed | 2070 passed | 1 skipped (2075): 142 files passed, 4 failed (foundations backup restore, scan-bypass, blob, adapters/ClamAV)"
+    },
+    {
+      "name": "baseline-4",
+      "receiptPath": "work/baseline-4-2026-11-03T23-54-14-759Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/foundations.test.ts tests/integration/scan-bypass.test.ts tests/integration/blob.test.ts tests/integration/adapters.test.ts",
+      "exit": 1,
+      "seconds": 11,
+      "logSha256": "f374c800d830a8c874568b90609ef9d4516dda2545b1297bd2be4b1873ad5144",
+      "head": "4456042b62617b6d3bb3151fd8c651c72a164988",
+      "changedPaths": 0,
+      "role": "the same four files on clean main 4456042",
+      "result": "4 failed | 34 passed (38): the same four tests fail on unmodified main"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands (the gate runner may truncate long commands), exits, log hashes and the head each reports. Receipts that report a head with changed paths ran on the working tree before the change was committed. The final books set, pdf-regress, saved-regress, typecheck, lint, format, docs and build receipts report d3b190e with 0 changed paths. The full integration run reports 941dded. Several earlier red or flaky runs of the same names exist in work/ and are not listed as proof. Gitleaks was reported clean by the builder; no receipt for that run exists under work/ (the earlier security-scan receipts belong to an older head).",
+  "notRun": [
+    "Playwright suites were not run (E2a has no UI).",
+    "The full integration run was not repeated after 5a015a6, ac32e34 and d3b190e.",
+    "Frozen-head CI, CodeQL and the Codex review on PR 257 are pending and are not claimed.",
+    "Post-merge CI on a merge of PR 257 does not exist yet."
+  ],
+  "limits": [
+    "Fonts: the three embedded PDF fonts have no Arabic, Thai, Devanagari or emoji glyphs; a book with such text is refused with an honest 422 (reason UNSUPPORTED_TEXT) and nothing is recorded. Adding a font is a separate owner and asset decision.",
+    "The PDF is untagged; no accessibility claim is made for it.",
+    "The on-screen apps/web/app/account/missions/mission-experience-view.tsx still prints the raw country code (about line 228); the screen is not changed in this PR, only the Supplier Book prints the country name.",
+    "Trip item order follows orderTrip in apps/web/lib/trip.ts; ties keep the server order.",
+    "The integration run on 941dded had 4 failing files (foundations backup restore, scan-bypass, blob, adapters/ClamAV); the same four tests fail on unmodified main 4456042 (baseline-4 receipt). The conductor attributes them to the local environment (KI-15 covers running the protected suite without a Docker daemon); CI is the proof for the exact head.",
+    "No production, signed-in, mailbox, provider or genuine customer acceptance is claimed for the Trip view, the status link or the books. Deployment of 76d9d03, 8d9ac67 and 4456042 to production is not verifiable from this environment (the connected Vercel account lacks the Corridra project and the host redirects to c.obsidianglobal.studio, which the proxy blocks).",
+    "Protected installer run 41705868221 (dispatched by the conductor under the owner's pre-approval, apply=yes) was still waiting at the customer-modules-install environment gate when re-read through the REST API on 4 Nov: migration 0002 is NOT installed and the run has not been claimed to have run.",
+    "GAP-034, GAP-035 and GAP-041 are not resolved. The decision card (E3b) is not built and stays PROPOSED; the books download panel (E2b) is not built.",
+    "Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP/mailbox/production observation and native language review stay closed or owner-only."
+  ]
+}
