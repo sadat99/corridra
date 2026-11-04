@@ -10,8 +10,9 @@ import './book-downloads.css';
 export type BookKind = 'TRIP' | 'SUPPLIER';
 /**
  * The command id of each kind of download that was started and not finished. The parent holds it, so it survives
- * this panel being removed and mounted again; it is forgotten on success, a refusal or a denial, never on a failure
- * that leaves it unknown whether the file was made.
+ * this panel being removed and mounted again. It is forgotten on success, on 409, 429 and an unsupported or empty
+ * 422 (no record can exist for those) and on a denial; never on a failure that leaves it unknown whether the file
+ * was made, which includes a 503 or 404.
  */
 export type PendingBooks = {
   /** The id for this kind, made on the first press and the same on every retry. */
@@ -49,7 +50,7 @@ const names: Record<BookKind, { name: MessageKey; label: MessageKey; empty: Mess
 };
 const kinds: BookKind[] = ['TRIP', 'SUPPLIER'];
 const waitLimitMs = 60_000;
-const revokeAfterMs = 1_000;
+const revokeAfterMs = 10_000;
 
 function count(n: number, one: MessageKey, other: MessageKey) {
   return n === 0 ? say('books.count.none') : n === 1 ? say(one) : fill(say(other), { n });
@@ -196,7 +197,8 @@ export function BookDownloads({
         return;
       }
       if (response.status === 503 || response.status === 404) {
-        forget();
+        // Not forgotten: a platform error can follow a generation that was already committed, and a retry with the
+        // same id can then only get that record, never make a second one.
         finish({ tone: 'alert', text: say('books.unavailable') });
         return;
       }
@@ -254,8 +256,10 @@ export function BookDownloads({
                 key={kind}
                 type="button"
                 className="text-link"
-                disabled={empty || (busy !== null && !working)}
-                aria-disabled={working ? true : undefined}
+                // Marked off, not removed from the tab order, so the focus stays on the button that was pressed when
+                // it becomes empty. Only the other button is natively off while a download runs.
+                disabled={busy !== null && !working}
+                aria-disabled={empty || working ? true : undefined}
                 aria-busy={working ? true : undefined}
                 aria-describedby={empty ? `${noticeId} ${emptyId}-${kind}` : noticeId}
                 onClick={() => void download(kind)}

@@ -140,7 +140,14 @@ describe('the words', () => {
       expect(en[key], key).not.toMatch(/[—–]| - /);
       expect(en[key], key).not.toMatch(/digest|checkbox|tick/i);
     }
-    expect(en['books.success.detail']).toContain('Content code {code}');
+    expect(en['books.success.detail']).toBe(
+      'Created {time}. Content code {code}. Give this code to the Corridra team if you ask about the file.',
+    );
+    expect(en['books.tooMany']).toBe(
+      'Too many downloads for this mission just now. Try again later.',
+    );
+    // In Corridra a quote is a price quote, so the code is never something to "quote".
+    expect(en['books.success.detail']).not.toMatch(/quote/i);
     expect(en['books.notice']).toBe(
       'A downloaded file cannot be recalled. If access is withdrawn later, the file stays on your device and with anyone you send it to.',
     );
@@ -247,14 +254,17 @@ describe('the panel at rest', () => {
   it('disables a book with nothing reviewed and says why in visible text, not a tooltip', async () => {
     const html = await markup({ tripCount: 0, supplierCount: 0 });
     expect(html).toContain('Trip Book: none yet. Supplier Book: none yet.');
-    expect(html.match(/disabled=""/g)).toHaveLength(2);
+    // A book with nothing to download is marked, not removed from the tab order, so the focus can stay on it.
+    expect(html.match(/aria-disabled="true"/g)).toHaveLength(2);
+    expect(html).not.toMatch(/ disabled=/);
     expect(html).toContain(
       'No meetings or visits have been reviewed yet, so there is no Trip Book.',
     );
     expect(html).toContain('No companies have been reviewed yet, so there is no Supplier Book.');
     expect(html).not.toContain('title=');
     const one = await markup({ tripCount: 2, supplierCount: 0 });
-    expect(one.match(/disabled=""/g)).toHaveLength(1);
+    expect(one.match(/aria-disabled="true"/g)).toHaveLength(1);
+    expect(one).not.toMatch(/ disabled=/);
     expect(one).not.toContain('there is no Trip Book');
     expect(one).toContain('there is no Supplier Book');
   });

@@ -249,6 +249,7 @@ function PrivateReport({
         if (!task.signal.aborted) {
           setData(next);
           setStatus('ready');
+          setBookDenial(null);
         }
       })
       .catch((error) => {
@@ -378,6 +379,8 @@ function PrivateReport({
           setData(null);
           setPending(null);
           setDrafts({});
+          pendingBooks.clear();
+          setBookDenial(null);
           setStatus('denied');
           setNotice(
             'Access or request state changed. Local response recovery was cleared for privacy.',

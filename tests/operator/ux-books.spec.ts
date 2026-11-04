@@ -213,6 +213,8 @@ type Rig = {
   replies: Reply[];
   /** Reports to give next, in order; after that the first one again. */
   nextReports: Shape[];
+  /** Book requests the test has finished answering (or could not, because the page had already left). */
+  answered: { count: number };
 };
 const pdfReply = (over: Reply = {}): Reply => ({
   status: 200,
@@ -237,6 +239,10 @@ type OpenOptions = {
   replies?: Reply[];
   /** The first reports to give, in order, so a test does not race the first read. */
   reports?: Shape[];
+  /** The status the report interface gives to a response to an evidence request. */
+  respondStatus?: number;
+  /** Fake page timers, so a 60 second wait can be skipped without waiting. */
+  clock?: boolean;
 };
 async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
   const rig: Rig = {
@@ -244,7 +250,9 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     reports: { count: 0 },
     replies: [...(options.replies ?? [])],
     nextReports: [...(options.reports ?? [])],
+    answered: { count: 0 },
   };
+  if (options.clock) await page.clock.install();
   await page.unrouteAll({ behavior: 'ignoreErrors' });
   // Record what the browser is asked to do: fetch options, object URLs made and given back, and downloads started.
   await page.addInitScript(() => {
@@ -282,6 +290,15 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     };
   });
   await page.route('**/api/customer-saved-missions', async (route) => {
+    const action = (JSON.parse(route.request().postData() ?? '{}') as { action?: string }).action;
+    if (action === 'respond') {
+      await route.fulfill({
+        status: options.respondStatus ?? 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'no' }),
+      });
+      return;
+    }
     if (reportDelay > 0) await new Promise((done) => setTimeout(done, reportDelay));
     rig.reports.count++;
     const shape = rig.nextReports.shift() ?? options.shape ?? {};
@@ -299,18 +316,24 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     if (bookDelay > 0) await new Promise((done) => setTimeout(done, bookDelay));
     const reply = rig.replies.shift() ?? pdfReply();
     if (reply.gate) await reply.gate;
-    if (reply.fail) {
-      await route.abort('failed');
-      return;
+    try {
+      if (reply.fail) {
+        await route.abort('failed');
+        return;
+      }
+      await route.fulfill({
+        status: reply.status ?? 200,
+        headers: reply.headers,
+        body:
+          typeof reply.body === 'string' || reply.body === undefined
+            ? (reply.body as string | undefined)
+            : JSON.stringify(reply.body),
+      });
+    } catch {
+      // The page left before the answer was given; that is the case some tests make.
+    } finally {
+      rig.answered.count++;
     }
-    await route.fulfill({
-      status: reply.status ?? 200,
-      headers: reply.headers,
-      body:
-        typeof reply.body === 'string' || reply.body === undefined
-          ? (reply.body as string | undefined)
-          : JSON.stringify(reply.body),
-    });
   });
   await page.goto(`${origin}/?books=${options.books ?? '1'}`);
   return rig;
@@ -332,7 +355,7 @@ async function openPanel(page: Page) {
 const status = (page: Page) => panel(page).getByRole('status');
 const alert = (page: Page) => page.getByRole('alert');
 const created = (book: string, time = '3 Nov 2026, 14:05 UTC') =>
-  `Your ${book} was created. Your browser should now save the file. Keep it private. Created ${time}. Content code ${code}. Quote this code if you ask the Corridra team about the file.`;
+  `Your ${book} was created. Your browser should now save the file. Keep it private. Created ${time}. Content code ${code}. Give this code to the Corridra team if you ask about the file.`;
 const retryText =
   'We could not confirm the download. Try again. It will not create a second record.';
 const browserState = (page: Page) =>
@@ -435,12 +458,30 @@ test('a Trip Book downloads once with the exact request, is named from the day, 
   });
   expect(state.created).toHaveLength(1);
   // The address of the file is given back once the browser has it.
-  await expect.poll(async () => (await browserState(page)).revoked).toEqual(state.created);
+  // It is given back well after the click, so a slow device has started the save first.
+  await expect
+    .poll(async () => (await browserState(page)).revoked, { timeout: 15_000 })
+    .toEqual(state.created);
   // A Supplier Book is named for its kind.
   const [second] = await Promise.all([page.waitForEvent('download'), supplier(page).click()]);
   expect(second.suggestedFilename()).toBe('corridra-supplier-book-20261103.pdf');
   await expect(status(page)).toHaveText(created('Supplier Book'));
   expect(rig.posts[1]!.body.kind).toBe('SUPPLIER');
+});
+
+test('the address of the file is given back ten seconds after the save starts, not before', async ({
+  page,
+}) => {
+  await openPage(page, { clock: true });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  const made = (await browserState(page)).created;
+  expect(made).toHaveLength(1);
+  await page.clock.fastForward(9_000);
+  expect((await browserState(page)).revoked).toEqual([]);
+  await page.clock.fastForward(2_000);
+  await expect.poll(async () => (await browserState(page)).revoked).toEqual(made);
 });
 
 test('while a book is being made the button is busy, the other is off, and a second press sends nothing', async ({
@@ -590,30 +631,36 @@ test('409 keeps the panel open, reads the report again, and the next press is a 
   expect(rig.posts[1]!.body.commandId).not.toBe(rig.posts[0]!.body.commandId);
 });
 
-const refusals: [string, Reply, string][] = [
+// A command id is forgotten only when no record can exist for it: 429 and the two 422 reasons. A 503 or 404 may come
+// from the platform after a generation was committed, so the retry carries the same id and can only get that record.
+const refusals: [string, Reply, string, boolean][] = [
   [
     '429',
     json(429, { error: 'Too many downloads' }),
-    'Too many downloads for this mission just now. Try again in a while.',
+    'Too many downloads for this mission just now. Try again later.',
+    false,
   ],
   [
     '503',
     json(503, { error: 'unavailable' }),
     'Downloads are not available right now. Nothing was downloaded. Try again later.',
+    true,
   ],
   [
     '404',
     json(404, { error: 'not found' }),
     'Downloads are not available right now. Nothing was downloaded. Try again later.',
+    true,
   ],
   [
     '422 text the PDF cannot show',
     json(422, { error: 'x', reason: 'UNSUPPORTED_TEXT' }),
     'This book cannot be made because it has text the PDF cannot show. Ask the Corridra team for help.',
+    false,
   ],
 ];
-for (const [name, reply, text] of refusals) {
-  test(`${name}: says exactly what happened, forgets the command and the next press is a new one`, async ({
+for (const [name, reply, text, keeps] of refusals) {
+  test(`${name}: says exactly what happened and ${keeps ? 'keeps the command id for the retry' : 'forgets the command, so the next press is a new one'}`, async ({
     page,
   }) => {
     const rig = await openPage(page, { replies: [reply] });
@@ -625,7 +672,8 @@ for (const [name, reply, text] of refusals) {
     expect((await browserState(page)).downloads).toBe(0);
     await trip(page).click();
     await expect(status(page)).toHaveText(created('Trip Book'));
-    expect(rig.posts[1]!.body.commandId).not.toBe(rig.posts[0]!.body.commandId);
+    const same = rig.posts[1]!.body.commandId === rig.posts[0]!.body.commandId;
+    expect(same).toBe(keeps);
   });
 }
 
@@ -645,6 +693,31 @@ test('422 for a book with nothing reviewed says so and reads the report again', 
   await expect(panel(page)).toContainText('Trip Book: none yet.');
   await expect(trip(page)).toBeDisabled();
   await expect(page.locator('details.book-downloads[open]')).toHaveCount(1);
+  // The button that was pressed is now off, but it keeps the focus: the person is not thrown to the top of the page.
+  await expect(trip(page)).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.textContent)).toBe(
+    'Download Trip Book (PDF)',
+  );
+});
+
+test('a 409 that leaves a book with nothing reviewed keeps the focus on the button that was pressed', async ({
+  page,
+}) => {
+  await openPage(page, {
+    replies: [json(409, { error: 'changed' })],
+    reports: [
+      { trip: 3, suppliers: 2 },
+      { trip: 3, suppliers: 0 },
+    ],
+  });
+  await openPanel(page);
+  await supplier(page).click();
+  await expect(alert(page)).toHaveText(
+    'The reviewed content changed since you started. This page now shows the latest version. Download again to get it.',
+  );
+  await expect(panel(page)).toContainText('Supplier Book: none yet.');
+  await expect(supplier(page)).toBeDisabled();
+  await expect(supplier(page)).toBeFocused();
 });
 
 test('a reply that is not the file is not a confirmed download and keeps the command id', async ({
@@ -697,6 +770,17 @@ for (const [name, shape, tripOff, supplierOff] of empties) {
       await trip(page).click({ force: true });
     }
     if (supplierOff) await supplier(page).click({ force: true });
+    // A book that cannot be made is marked off but can still be reached and read by keyboard and screen reader.
+    for (const [off, button] of [
+      [tripOff, trip(page)],
+      [supplierOff, supplier(page)],
+    ] as const)
+      if (off) {
+        await expect(button).not.toHaveAttribute('disabled', /.*/);
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await button.focus();
+        await expect(button).toBeFocused();
+      }
     if (tripOff && supplierOff)
       await expect(panel(page)).toContainText('Trip Book: none yet. Supplier Book: none yet.');
     expect(rig.posts).toHaveLength(0);
@@ -750,6 +834,126 @@ test('starts no animation when the person asks for less movement', async ({ page
       }).length,
   );
   expect(slow).toBe(0);
+});
+
+test('hiding the page while a book is being made stops it: nothing is saved, and the retry after showing uses the same command id', async ({
+  page,
+}) => {
+  let release!: () => void;
+  const gate = new Promise<void>((done) => (release = done));
+  const rig = await openPage(page, { replies: [pdfReply({ gate })] });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(trip(page)).toHaveAttribute('aria-busy', 'true');
+  await expect(status(page)).toHaveText('Preparing your Trip Book…');
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  await expect(panel(page)).toHaveCount(0);
+  // The file is only now answered, to a page that has left. Wait until the answer was given before looking.
+  release();
+  await expect.poll(() => rig.answered.count).toBe(1);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(summary(page)).toBeVisible();
+  await openPanel(page);
+  const state = await browserState(page);
+  expect(state.downloads).toBe(0);
+  expect(state.created).toHaveLength(0);
+  expect(state.revoked).toHaveLength(0);
+  await expect(status(page)).toHaveText('');
+  await expect(alert(page)).toHaveText(retryText);
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  expect(rig.posts).toHaveLength(2);
+  expect(rig.posts[1]!.body.commandId).toBe(rig.posts[0]!.body.commandId);
+});
+
+test('after 60 seconds without an answer the download is not confirmed, the button is free and the retry uses the same command id', async ({
+  page,
+}) => {
+  const never = new Promise<void>(() => {});
+  const rig = await openPage(page, { clock: true, replies: [pdfReply({ gate: never })] });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(trip(page)).toHaveAttribute('aria-busy', 'true');
+  // Just under the limit nothing has changed.
+  await page.clock.fastForward(59_000);
+  await expect(trip(page)).toHaveAttribute('aria-busy', 'true');
+  await page.clock.fastForward(2_000);
+  await expect(alert(page)).toHaveText(retryText);
+  await expect(trip(page)).not.toHaveAttribute('aria-busy', /.*/);
+  await expect(trip(page)).toBeEnabled();
+  await expect(supplier(page)).toBeEnabled();
+  expect((await browserState(page)).downloads).toBe(0);
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  expect(rig.posts).toHaveLength(2);
+  expect(rig.posts[1]!.body.commandId).toBe(rig.posts[0]!.body.commandId);
+});
+
+test('a denial clears the commands that were waiting, so a panel that comes back is clean and starts a new command', async ({
+  page,
+}) => {
+  const rig = await openPage(page, {
+    replies: [{ fail: true }, json(403, { error: 'no' })],
+  });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(alert(page)).toHaveText(retryText);
+  await supplier(page).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'This mission is unavailable or access has changed. Nothing was downloaded.',
+  );
+  await expect(panel(page)).toHaveCount(0);
+  await refresh(page).click();
+  await openPanel(page);
+  // Nothing from before is waiting: no stale "could not confirm", and the next press is a new command.
+  await expect(alert(page)).toHaveCount(0);
+  await expect(page.getByText('This mission is unavailable or access has changed')).toHaveCount(0);
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  expect(rig.posts).toHaveLength(3);
+  expect(rig.posts[2]!.body.commandId).not.toBe(rig.posts[0]!.body.commandId);
+});
+
+test('a book denial is forgotten once the report is read again, so a later denial of an evidence response is the usual one', async ({
+  page,
+}) => {
+  const rig = await openPage(page, {
+    respondStatus: 403,
+    replies: [json(401, { error: 'no' }), { fail: true }],
+  });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Your sign-in has ended. Nothing was downloaded.',
+  );
+  await expect(page.getByRole('link', { name: 'Sign in again' })).toBeVisible();
+  // Away and back: the report is read again and the page is whole.
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(summary(page)).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  // A download waits for a retry, then a response to an evidence request is refused.
+  await openPanel(page);
+  await trip(page).click();
+  await expect(alert(page)).toHaveText(retryText);
+  await page.getByLabel('Your response').fill('Our licence number is 12345.');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Send response' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'This saved mission is unavailable or access could not be confirmed. No commercial report content is shown.',
+  );
+  await expect(page.getByRole('alert')).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'Sign in again' })).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'Local response recovery' })).toHaveText(
+    'Access or request state changed. Local response recovery was cleared for privacy.',
+  );
+  // The waiting download was forgotten with the rest: after the page is read again the next press is a new command.
+  await refresh(page).click();
+  await openPanel(page);
+  await expect(alert(page)).toHaveCount(0);
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  expect(rig.posts).toHaveLength(3);
+  expect(rig.posts[2]!.body.commandId).not.toBe(rig.posts[1]!.body.commandId);
 });
 
 /**
@@ -881,34 +1085,45 @@ for (const width of widths) {
   });
 }
 
-test('at 320 wide and 200 percent text nothing overflows and the notice and buttons are not clipped', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 320, height: 900 });
-  await openPage(page);
-  await openPanel(page);
-  await page.addStyleTag({ content: 'html { font-size: 200%; }' });
-  await expect
-    .poll(() =>
-      page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize)),
-    )
-    .toBe(32);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  const clipped = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('.book-downloads-body p, .book-downloads button'))
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        return (
-          el.scrollWidth > el.clientWidth + 1 ||
-          el.scrollHeight > el.clientHeight + 1 ||
-          r.right > 320 + 1 ||
-          r.left < -1
-        );
-      })
-      .map((el) => `${el.tagName.toLowerCase()}:${(el.textContent || '').slice(0, 30)}`),
-  );
-  expect(clipped).toEqual([]);
-});
+for (const state of ['idle', 'error', 'empty'] as const)
+  test(`at 320 wide and 200 percent text nothing overflows and the notice and buttons are not clipped (${state})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await openPage(page, {
+      shape: state === 'empty' ? { trip: 0, suppliers: 0 } : undefined,
+      replies: state === 'error' ? [{ fail: true }] : [],
+    });
+    await openPanel(page);
+    if (state === 'error') {
+      await trip(page).click();
+      await expect(alert(page)).toHaveText(retryText);
+    }
+    if (state === 'empty') await expect(trip(page)).toBeDisabled();
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+    await expect
+      .poll(() =>
+        page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize)),
+      )
+      .toBe(32);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      320,
+    );
+    const clipped = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.book-downloads-body p, .book-downloads button'))
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return (
+            el.scrollWidth > el.clientWidth + 1 ||
+            el.scrollHeight > el.clientHeight + 1 ||
+            r.right > 320 + 1 ||
+            r.left < -1
+          );
+        })
+        .map((el) => `${el.tagName.toLowerCase()}:${(el.textContent || '').slice(0, 30)}`),
+    );
+    expect(clipped).toEqual([]);
+  });
 
 const budgets = [
   [390, 844, 4],

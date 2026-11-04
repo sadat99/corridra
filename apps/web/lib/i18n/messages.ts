@@ -72,13 +72,13 @@ const bookWords = {
   'books.success':
     'Your {book} was created. Your browser should now save the file. Keep it private.',
   'books.success.detail':
-    'Created {time}. Content code {code}. Quote this code if you ask the Corridra team about the file.',
+    'Created {time}. Content code {code}. Give this code to the Corridra team if you ask about the file.',
   'books.retry':
     'We could not confirm the download. Try again. It will not create a second record.',
   'books.denied': 'This mission is unavailable or access has changed. Nothing was downloaded.',
   'books.signedOut': 'Your sign-in has ended. Nothing was downloaded.',
   'books.signInAgain': 'Sign in again',
-  'books.tooMany': 'Too many downloads for this mission just now. Try again in a while.',
+  'books.tooMany': 'Too many downloads for this mission just now. Try again later.',
   'books.changed':
     'The reviewed content changed since you started. This page now shows the latest version. Download again to get it.',
   'books.unavailable':
