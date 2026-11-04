@@ -1,0 +1,47 @@
+{
+  "recordedOn": "2026-11-04",
+  "track": "Revamp S4 Staff, Contributor, Recipient (branch revamp/staff)",
+  "kind": "Wave 1 slice A (team sidebar role display, PR 264, merged) and Wave 5 step B1 (staff parity test, this PR). Written by S4; the Conductor folds it into the ledger.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. Presentation only; no server authorization, MFA, tenant, audit or AI/outreach gate was touched.",
+  "sliceA": {
+    "pr": 264,
+    "mergedAs": "f5e945f",
+    "sensitive": "yes (role display)",
+    "reproduced": "Before the fix the first render with an unknown role (role null) contained /operator/owner and every owner or admin Settings section; sectionAllowedFor(id, null) returned true.",
+    "changed": [
+      "apps/web/components/ux/team-sidebar.tsx: with an unknown role only sections that include the viewer role are listed; the Owner link needs owner or admin.",
+      "apps/web/components/ux/team-context-publisher.tsx (new): client component that publishes the server-resolved tenant and role. Mounted on /operator/owner (tenant.id, tenant.role) and on the mission page (chosen membership from s.access.tenants). Review finding 2: the Owner page and mission page never published the role, so owner and admin would have lost their links there.",
+      "tests/integration/team-sidebar-role.test.ts (7 tests)."
+    ],
+    "heads": {
+      "e8f8919": "CI failed only the typecheck: a literal-path import of a TSX file in the new test (no --jsx setting). Fixed by loading by a path variable.",
+      "7cfa459": "CI green on all jobs (18 success, CodeQL neutral).",
+      "65961ff": "Added the role-unknown section assertions (Guardian finding 1); red against the old settingsItems line (controls listed), green after.",
+      "633c370": "Added the publisher and its tests (Guardian finding 2). The Conductor PASS and merge are recorded by the Conductor."
+    },
+    "mutationChecks": [
+      "publisher that does not publish: owner and admin chain test fails",
+      "owner page without the mount: source check fails"
+    ],
+    "notRun": "Playwright operator and e2e suites locally (CI runs them). No real-browser or screen reader check of the first-paint change."
+  },
+  "stepB1": {
+    "file": "tests/integration/staff-parity.test.ts (vitest, no database, 33 tests)",
+    "pins": [
+      "the 18 section ids with address word, label and permitted roles",
+      "the six reserved pages under /operator, each a real page",
+      "every address form per section: /operator/<word>, the #workspace link, the workspace query, the sign-in return",
+      "per role (owner, admin, operator, reviewer, viewer) the sections reachable through the sidebar equal the sections the role table allows",
+      "every #workspace-* and #ops-* literal and every /operator/<word> literal in apps/web resolves to a section or reserved page",
+      "gate strings: section page not found with the address switch off or an unknown word; mission page needs the missions word, CORRIDRA_UX_MISSIONS_V2 and a well-formed id; the workspace opens a section only for an allowed role and controls only for owner; the team frame keeps the step-up dialog"
+    ],
+    "mutationChecks": [
+      "renaming the ops-health address word: 2 tests fail",
+      "widening workspace-controls roles to admin: 2 tests fail"
+    ],
+    "localReceipts": "staff-parity and team-sidebar-role: 40 of 40 pass on main f5e945f. prettier, eslint and tsc -p tsconfig.packages.json clean.",
+    "limits": "Gate checks are source-string checks and do not prove runtime behaviour; the operator Playwright suites in CI carry that. The test is in tests/integration because it needs no database; that folder is outside the S4 file list.",
+    "next": "B2: regroup the navigation to docs/revamp/specs/signal-desk.md (locked names) with this test still green."
+  }
+}
