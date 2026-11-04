@@ -367,3 +367,46 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
   page.setDefaultTimeout(30000);
   expect(problems).toEqual([]);
 });
+
+// Q-04: where the team shell already renders translated words (the sidebar), Arabic mirrors the
+// layout: the sidebar moves to the right on wide screens, nothing overlaps or leaves the screen, and
+// there is no sideways scroll. No new translated string is added.
+test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', async () => {
+  test.setTimeout(120000);
+  await page.evaluate(() => localStorage.setItem('corridra.language', 'ar'));
+  try {
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await open(`/operator?workspace=${tenant}`);
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      const sections = page.getByRole('button', { name: 'الأقسام' });
+      if (await sections.count()) await sections.first().click();
+      const nav = page.locator('#workspace-navigation');
+      await expect(nav).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const items = [
+          ...document.querySelectorAll<HTMLElement>(
+            '#workspace-navigation a, #workspace-navigation summary',
+          ),
+        ]
+          .map((el) => el.getBoundingClientRect())
+          .filter((r) => r.width > 0 && r.height > 0);
+        const navBox = document.querySelector('#workspace-navigation')!.getBoundingClientRect();
+        const main = document.querySelector('main')!.getBoundingClientRect();
+        return {
+          outside: items.filter((r) => r.left < -1 || r.right > innerWidth + 1).length,
+          overlaps: items.filter((r, i) => i > 0 && r.top < items[i - 1]!.bottom - 1).length,
+          sidebarOnRight: navBox.left + navBox.width / 2 > main.left + main.width / 2,
+          overflow: document.documentElement.scrollWidth - innerWidth,
+        };
+      });
+      expect.soft(geometry.outside, `${width}: sidebar controls outside the screen`).toBe(0);
+      expect.soft(geometry.overlaps, `${width}: overlapping sidebar controls`).toBe(0);
+      expect.soft(geometry.overflow, `${width}: sideways scroll`).toBeLessThanOrEqual(1);
+      if (width >= 1000)
+        expect.soft(geometry.sidebarOnRight, `${width}: sidebar mirrored to the right`).toBe(true);
+    }
+  } finally {
+    await page.evaluate(() => localStorage.removeItem('corridra.language'));
+  }
+});
