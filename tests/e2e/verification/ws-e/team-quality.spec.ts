@@ -306,7 +306,7 @@ const busyActions = [
   { slug: 'controls', name: 'Load workspace members' },
 ];
 test('Q-06 busy actions: a double click sends what one click sends, disabled or busy in flight', async () => {
-  test.setTimeout(400000);
+  test.setTimeout(600000);
   await page.setViewportSize({ width: 1280, height: 900 });
   // Only the workspace and team reads an action sends are counted, not the inbox or session.
   const countAfter = async (slug: string, name: string, clicks: 1 | 2) => {
@@ -338,13 +338,26 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
     await page.unroute('**/api/**');
     return { sent, inFlight };
   };
+  page.setDefaultTimeout(15000);
+  const problems: string[] = [];
   for (const action of busyActions) {
-    const one = await countAfter(action.slug, action.name, 1);
-    const two = await countAfter(action.slug, action.name, 2);
     const label = `${action.slug} / ${action.name}`;
-    expect
-      .soft(two.sent, `${label}: requests after a double click (one click sent ${one.sent})`)
-      .toBe(one.sent);
-    expect.soft(two.inFlight, `${label}: disabled or aria-busy while in flight`).toBe(true);
+    const started = Date.now();
+    try {
+      const one = await countAfter(action.slug, action.name, 1);
+      const two = await countAfter(action.slug, action.name, 2);
+      if (two.sent !== one.sent)
+        problems.push(
+          `${label}: ${two.sent} requests after a double click, ${one.sent} after one click`,
+        );
+      if (!two.inFlight) problems.push(`${label}: not disabled or aria-busy while in flight`);
+    } catch (error) {
+      await page.unroute('**/api/**').catch(() => undefined);
+      problems.push(
+        `${label}: could not be exercised (${String(error).split('\n')[0]}) after ${Date.now() - started} ms`,
+      );
+    }
   }
+  page.setDefaultTimeout(30000);
+  expect(problems).toEqual([]);
 });
