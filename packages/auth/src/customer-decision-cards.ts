@@ -29,7 +29,8 @@ export function cardToken(secret: string, issuer: string, subject: string, comma
 }
 export const cardTokenDigest = (token: string) => createHash('sha256').update(token).digest('hex');
 
-const id = z.uuid();
+// Any UUID-shaped value, not only RFC 4122 versions: ids made by the database must never turn into a server error.
+const id = z.guid();
 const hexDigest = z.string().regex(/^[a-f0-9]{64}$/);
 const stateRequest = z.strictObject({ action: z.literal('state'), resourceId: id });
 const previewRequest = z.strictObject({
@@ -216,10 +217,23 @@ export class CustomerDecisionCardService extends CustomerSessionBoundary {
   }
   // Makes one card. The link secret is derived from the fresh session and the command, only its SHA-256 goes to
   // the database, and the secret is returned only while the card is active.
-  async create(input: unknown, subject?: string, issuer?: string): Promise<CreatedDecisionCard> {
+  // `beforeCreate` is the caller's rate limit. It runs inside the transaction, after the fresh session has been
+  // verified, and receives the VERIFIED issuer and subject, so an unauthenticated request can never spend or
+  // exhaust a customer's allowance. A refusal from it stops the create.
+  // Two behaviours worth knowing. (1) The secret depends on AUTH_SECRET: after that secret is rotated an exact retry
+  // of an earlier command derives a different secret, and the database answers CHANGED. That is safe (no second
+  // card, no wrong link) but misleading, and the owner then makes a new card. (2) `acknowledged: true` is enforced
+  // here, at the HTTP layer, only; the digest already binds the fields the owner previewed.
+  async create(
+    input: unknown,
+    subject?: string,
+    issuer?: string,
+    beforeCreate?: (customer: { issuer: string; subject: string }) => Promise<void>,
+  ): Promise<CreatedDecisionCard> {
     const v = createRequest.parse(input);
     return this.run(
       async (db, proof) => {
+        await beforeCreate?.({ issuer: proof.issuer, subject: proof.subject });
         const token = cardToken(this.secret, proof.issuer, proof.subject, v.commandId);
         const card = this.shaped(
           createResult,

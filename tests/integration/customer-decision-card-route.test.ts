@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { DomainError } from '../../packages/domain/src/index';
 import { DeliveryService } from '../../packages/delivery/src/index';
@@ -56,21 +56,24 @@ const services = (over: Record<string, unknown> = {}) => {
   };
 };
 
+// A header given as null is left out, so a request with no subject header can be made.
 const owner = (
   body: unknown,
-  headers: Record<string, string> = {},
+  headers: Record<string, string | null> = {},
   raw = typeof body === 'string' ? body : JSON.stringify(body),
 ) =>
   ownerRoute.POST(
     new Request(origin + '/api/customer-decision-cards', {
       method: 'POST',
-      headers: {
-        Origin: origin,
-        'Content-Type': 'application/json',
-        'x-corridra-customer-subject': cardSession(account.who).subject,
-        'x-corridra-customer-issuer': cardIssuer,
-        ...headers,
-      },
+      headers: Object.fromEntries(
+        Object.entries({
+          Origin: origin,
+          'Content-Type': 'application/json',
+          'x-corridra-customer-subject': cardSession(account.who).subject,
+          'x-corridra-customer-issuer': cardIssuer,
+          ...headers,
+        }).filter((entry): entry is [string, string] => entry[1] !== null),
+      ),
       body: raw,
     }),
   );
@@ -126,6 +129,36 @@ const opens = async (cardId: string) =>
     ).rows[0].n,
   );
 
+// The limiter is real in the cases below. Each case gets a client address of its own (random in all four octets),
+// so the hourly counts of one case, or of an earlier run on a persistent database, never reach another.
+const realDelivery = () => new DeliveryService(world.f.runtime, world.f.mission, cardSecret);
+const clientHeaders = () => {
+  const address = [1, 2, 3, 4].map(() => randomInt(1, 255)).join('.');
+  return { address, headers: { 'x-vercel-forwarded-for': `${address}, 10.0.0.1` } };
+};
+const limiterRows = async () =>
+  (
+    await world.f.owner.query(
+      'SELECT count(*)::int n, coalesce(sum(count),0)::int total FROM app.intake_rate_limit',
+    )
+  ).rows[0] as { n: number; total: number };
+const signedOut = () =>
+  new CustomerDecisionCardService(
+    world.f.runtime,
+    world.f.auth,
+    cardOptions,
+    async () => null,
+    cardSecret,
+  );
+const signedIn = (who: string) =>
+  new CustomerDecisionCardService(
+    world.f.runtime,
+    world.f.auth,
+    cardOptions,
+    async () => cardSession(who),
+    cardSecret,
+  );
+
 const privateHeaders = (response: Response) => {
   expect(response.headers.get('cache-control')).toBe('no-store');
   expect(response.headers.get('referrer-policy')).toBe('no-referrer');
@@ -160,6 +193,8 @@ afterEach(async () => {
   vi.unstubAllEnvs();
   account.who = 'alice';
   await retireCards(world.f.owner, world.main.resourceId);
+  // Hourly counts are per customer and per address, and persist for the hour: clear them so no case sees another's.
+  await world.f.owner.query('DELETE FROM app.intake_rate_limit');
 });
 
 describe('the owner route', () => {
@@ -376,30 +411,6 @@ describe('the owner route', () => {
       expect((await owner(bad)).status).toBe(400);
     expect((await owner('{not json')).status).toBe(400);
     expect(await count()).toBe(before);
-  });
-
-  test('spends the limiter before it calls the service on create and withdraw, keyed to the customer', async () => {
-    switchOn();
-    const budget = vi.fn<(client: string, key: string) => Promise<void>>(async () => {
-      throw new DomainError('Too many requests. Try again in an hour.', 429);
-    });
-    const create = vi.fn();
-    const withdraw = vi.fn();
-    services({ delivery: { budget }, customerDecisionCards: { create, withdraw } });
-    const created = await owner(
-      createBody({ digest: '0'.repeat(64), expiresAt: new Date().toISOString() }),
-    );
-    const withdrawn = await owner({
-      action: 'withdraw',
-      commandId: randomUUID(),
-      cardId: randomUUID(),
-    });
-    expect(created.status).toBe(429);
-    expect(withdrawn.status).toBe(429);
-    expect(budget).toHaveBeenCalledTimes(2);
-    expect(String(budget.mock.calls[0]![1])).toContain(cardSession('alice').subject);
-    expect(create).not.toHaveBeenCalled();
-    expect(withdraw).not.toHaveBeenCalled();
   });
 
   test('does not spend the limiter on the read-only state and preview', async () => {
@@ -699,9 +710,7 @@ describe('the public route', () => {
     switchOn();
     vi.stubEnv('VERCEL', '1');
     services({ delivery: new DeliveryService(world.f.runtime, world.f.mission, cardSecret) });
-    const headers = {
-      'x-vercel-forwarded-for': `203.0.113.${Math.floor(Math.random() * 250)}, 10.0.0.1`,
-    };
+    const { headers } = clientHeaders();
     const token = newToken();
     const answers: number[] = [];
     for (let i = 0; i < 63; i++) answers.push((await open({ token }, headers)).status);
@@ -754,4 +763,465 @@ describe('the public route', () => {
     expect(String(log.mock.calls[0]![0])).toContain('XX000');
     expect(String(log.mock.calls[0]![0])).not.toContain('secret detail');
   });
+});
+
+describe('the owner limiter (review fix 1)', () => {
+  const victimHeader = () => ({ 'x-corridra-customer-subject': cardSession('alice').subject });
+
+  test('a forged or missing subject header from a signed-out caller touches no limiter row', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery(), customerDecisionCards: signedOut() });
+    const { headers } = clientHeaders();
+    const p = { digest: '0'.repeat(64), expiresAt: new Date(Date.now() + 3600000).toISOString() };
+    const before = await limiterRows();
+    const subjects: Record<string, string | null>[] = [
+      victimHeader(),
+      { 'x-corridra-customer-subject': null },
+      {},
+    ];
+    for (const subject of subjects) {
+      const created = await owner(createBody(p), { ...subject, ...headers });
+      const withdrawn = await owner(
+        { action: 'withdraw', commandId: randomUUID(), cardId: randomUUID() },
+        { ...subject, ...headers },
+      );
+      expect(created.status).toBe(401);
+      expect(withdrawn.status).toBe(401);
+    }
+    expect(await limiterRows()).toEqual(before);
+  });
+
+  test('a signed-in caller whose header names someone else is refused before any limiter row is touched', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const { headers } = clientHeaders();
+    const p = await preview();
+    const before = await limiterRows();
+    account.who = 'bob';
+    const response = await owner(createBody(p), { ...victimHeader(), ...headers });
+    expect(response.status).toBe(403);
+    expect(await limiterRows()).toEqual(before);
+  });
+
+  test('a signed-out forged flood cannot lock the victim out of creating or withdrawing', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    const { headers } = clientHeaders();
+    const p = await preview();
+    services({ delivery: realDelivery(), customerDecisionCards: signedOut() });
+    for (let i = 0; i < 70; i++)
+      expect((await owner(createBody(p), { ...victimHeader(), ...headers })).status).toBe(401);
+    services({ delivery: realDelivery(), customerDecisionCards: signedIn('alice') });
+    const made = await owner(createBody(p), headers);
+    expect(made.status).toBe(200);
+    const card = (await made.json()) as Made;
+    const withdrawn = await owner(
+      { action: 'withdraw', commandId: randomUUID(), cardId: card.cardId },
+      headers,
+    );
+    expect(withdrawn.status).toBe(200);
+  });
+
+  test('create is limited per verified customer: sixty exact retries pass and the next is 429', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const { headers } = clientHeaders();
+    const body = createBody(await preview());
+    const answers: number[] = [];
+    for (let i = 0; i < 62; i++) answers.push((await owner(body, headers)).status);
+    expect(answers.filter((status) => status === 200)).toHaveLength(60);
+    expect(answers.slice(60)).toEqual([429, 429]);
+    // Retries made one card, not sixty.
+    expect(
+      await count(
+        `SELECT count(*)::int n FROM customer_private.decision_card WHERE command_id='${body.commandId}'`,
+      ),
+    ).toBe(1);
+  });
+
+  test('the allowance is the verified customer, kept apart from every other customer, under the owner prefix', async () => {
+    switchOn();
+    const calls: string[][] = [];
+    const budget = vi.fn(async (client: string, key: string) => {
+      calls.push([client, key]);
+      if (key.includes(cardSession('alice').subject))
+        throw new DomainError('Too many requests. Try again in an hour.', 429);
+    });
+    services({ delivery: { budget } });
+    const p = await preview();
+    const alice = await owner(createBody(p));
+    expect(alice.status).toBe(429);
+    account.who = 'bob';
+    const bob = await owner(
+      createBody(p, { resourceId: world.memberResource, decisionId: world.main.decisionId }),
+    );
+    // Bob was not held back by Alice's exhausted allowance: he reached the service and was refused there.
+    expect(bob.status).toBe(403);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]![0]).toMatch(/^decision-card-owner:/);
+    expect(calls[0]![1]).toContain(cardIssuer);
+    expect(calls[0]![1]).toContain(cardSession('alice').subject);
+    expect(calls[1]![1]).toContain(cardSession('bob').subject);
+    expect(calls[1]![1]).not.toBe(calls[0]![1]);
+  });
+
+  test('withdraw is never limited, however much create traffic has used the allowance', async () => {
+    switchOn();
+    services();
+    const card = await share();
+    const budget = vi.fn(async () => {
+      throw new DomainError('Too many requests. Try again in an hour.', 429);
+    });
+    services({ delivery: { budget } });
+    expect((await owner(createBody(await preview()))).status).toBe(429);
+    const withdrawn = await owner({
+      action: 'withdraw',
+      commandId: randomUUID(),
+      cardId: card.cardId,
+    });
+    expect(withdrawn.status).toBe(200);
+    expect(budget).toHaveBeenCalledTimes(1);
+  });
+
+  test('the limiter is spent only once the session is verified and not for a refused create', async () => {
+    switchOn();
+    const budget = vi.fn(async () => {});
+    services({ delivery: { budget }, customerDecisionCards: signedOut() });
+    expect(
+      (await owner(createBody({ digest: '0'.repeat(64), expiresAt: new Date().toISOString() })))
+        .status,
+    ).toBe(401);
+    expect(budget).not.toHaveBeenCalled();
+  });
+});
+
+describe('the public limiter keys (review fixes 2 and 3)', () => {
+  test('uses the public prefix, and a malformed request is keyed to its own client, never to a global key', async () => {
+    switchOn();
+    const calls: string[][] = [];
+    services({
+      delivery: { budget: async (client: string, key: string) => void calls.push([client, key]) },
+    });
+    const token = newToken();
+    await open({ token });
+    await open(undefined, {}, '{nope');
+    expect(calls[0]).toEqual(['decision-card-public:local', sha256(token)]);
+    expect(calls[1]![0]).toBe('decision-card-public:local');
+    expect(calls[1]![1]).toContain('local');
+    expect(calls[1]![1]).not.toBe('decision-card-malformed');
+  });
+
+  test('recipients opening links cannot use up the owner allowance of the same address', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const { headers } = clientHeaders();
+    const answers: number[] = [];
+    for (let i = 0; i < 62; i++) answers.push((await open({ token: newToken() }, headers)).status);
+    expect(answers.filter((status) => status === 200)).toHaveLength(60);
+    expect(answers.slice(60)).toEqual([429, 429]);
+    // The owner, from the same address, is unaffected.
+    expect(
+      (await owner({ action: 'state', resourceId: world.main.resourceId }, headers)).status,
+    ).toBe(200);
+    expect((await owner(createBody(await preview()), headers)).status).toBe(200);
+  });
+
+  test('the owner using up an address does not stop a recipient behind the same address', async () => {
+    switchOn();
+    services();
+    const { headers } = clientHeaders();
+    const card = await share();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const body = createBody(await preview());
+    for (let i = 0; i < 62; i++) await owner(body, headers);
+    expect((await owner(body, headers)).status).toBe(429);
+    expect((await (await open({ token: card.token }, headers)).json()).state).toBe('OPEN');
+  });
+
+  test('sixty malformed requests from one client end in 429 for that client only', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const noisy = clientHeaders();
+    const quiet = clientHeaders();
+    const answers: number[] = [];
+    for (let i = 0; i < 62; i++)
+      answers.push((await open(undefined, noisy.headers, '{nope')).status);
+    expect(answers.filter((status) => status === 200)).toHaveLength(60);
+    expect(answers.slice(60)).toEqual([429, 429]);
+    const other = await open(undefined, quiet.headers, '{nope');
+    expect(other.status).toBe(200);
+    expect(await other.json()).toEqual({ state: 'unknown' });
+    const card = await share();
+    expect((await (await open({ token: card.token }, quiet.headers)).json()).state).toBe('OPEN');
+  });
+});
+
+describe('transport checks come first, so the switch cannot be told from outside (review fix 4)', () => {
+  const nonConforming = async () => {
+    const good = JSON.stringify({ token: newToken() });
+    return [
+      await wire(await open(undefined, { Origin: 'https://elsewhere.invalid' }, good)),
+      await wire(await open(undefined, { 'Content-Type': 'text/plain' }, good)),
+      await wire(await open(undefined, {}, ' '.repeat(513))),
+    ];
+  };
+
+  test('a request that is not well formed gets the same answer with the switch on or off', async () => {
+    switchOn();
+    services();
+    const on = await nonConforming();
+    expect(on.map((answer) => JSON.parse(answer).status)).toEqual([403, 415, 413]);
+    vi.stubEnv('CORRIDRA_SHARE_CARD', '');
+    expect(await nonConforming()).toEqual(on);
+    vi.stubEnv('CORRIDRA_SHARE_CARD', 'TRUE');
+    expect(await nonConforming()).toEqual(on);
+  });
+
+  test('a well formed request with the switch off still gets the one unknown answer', async () => {
+    switchOn();
+    services();
+    const baseline = await wire(await open({ token: newToken() }));
+    vi.stubEnv('CORRIDRA_SHARE_CARD', '');
+    expect(await wire(await open({ token: newToken() }))).toBe(baseline);
+    expect(JSON.parse(baseline)).toMatchObject({ status: 200 });
+  });
+
+  test('switching the card off spends no limiter row for a request the transport checks refuse', async () => {
+    switchOn();
+    vi.stubEnv('VERCEL', '1');
+    services({ delivery: realDelivery() });
+    const before = await limiterRows();
+    await open(
+      undefined,
+      { Origin: 'https://elsewhere.invalid', ...clientHeaders().headers },
+      '{}',
+    );
+    expect(await limiterRows()).toEqual(before);
+  });
+});
+
+describe('the public route at its edges (review fix 6)', () => {
+  test('a body of exactly 512 bytes is read and one byte more is refused with 413', async () => {
+    switchOn();
+    services();
+    const card = await share();
+    const padded = (size: number) => {
+      const json = JSON.stringify({ token: card.token });
+      return json + ' '.repeat(size - Buffer.byteLength(json));
+    };
+    const exact = await open(undefined, {}, padded(512));
+    expect(exact.status).toBe(200);
+    expect((await exact.json()).state).toBe('OPEN');
+    const over = await open(undefined, {}, padded(513));
+    expect(over.status).toBe(413);
+  });
+
+  test('a token in the query string or in a header is ignored, and nothing is counted', async () => {
+    switchOn();
+    services();
+    const baseline = await wire(await open({ token: newToken() }));
+    const card = await share();
+    const before = await opens(card.cardId);
+    const sneaky = await publicRoute.POST(
+      new Request(`${origin}/api/decision-card?token=${card.token}&t=${card.token}`, {
+        method: 'POST',
+        headers: {
+          Origin: origin,
+          'Content-Type': 'application/json',
+          'x-token': card.token!,
+          Authorization: `Bearer ${card.token}`,
+        },
+        body: '{}',
+      }),
+    );
+    expect(await wire(sneaky)).toBe(baseline);
+    expect(await opens(card.cardId)).toBe(before);
+  });
+
+  test('a POST with no body is the same unknown answer', async () => {
+    switchOn();
+    services();
+    const baseline = await wire(await open({ token: newToken() }));
+    const bodyless = await publicRoute.POST(
+      new Request(origin + '/api/decision-card', {
+        method: 'POST',
+        headers: { Origin: origin, 'Content-Type': 'application/json' },
+      }),
+    );
+    expect(await wire(bodyless)).toBe(baseline);
+  });
+
+  test('answers no method but POST, GET and HEAD itself: OPTIONS, PUT, PATCH and DELETE are left to the framework', () => {
+    expect(Object.keys(publicRoute).sort()).toEqual(['GET', 'HEAD', 'POST', 'dynamic', 'runtime']);
+  });
+});
+
+describe('every authority edge ends the card at the route, in the one unknown answer (review fix 6)', () => {
+  async function dies(
+    s: Awaited<ReturnType<CardWorld['spare']>>,
+    kill: () => Promise<unknown>,
+    who = 'alice',
+    restore?: () => Promise<unknown>,
+  ) {
+    account.who = who;
+    switchOn();
+    services();
+    const baseline = await wire(await open({ token: newToken() }));
+    const card = await share(s);
+    expect((await (await open({ token: card.token })).json()).state).toBe('OPEN');
+    const before = await opens(card.cardId);
+    await kill();
+    try {
+      expect(await wire(await open({ token: card.token }))).toBe(baseline);
+      expect(await opens(card.cardId)).toBe(before);
+    } finally {
+      if (restore) await restore();
+    }
+    if (restore) expect((await (await open({ token: card.token })).json()).state).toBe('OPEN');
+  }
+
+  test('a creator demoted from admin to member, and back again when promoted', async () => {
+    await world.setBobRole('admin', 'member');
+    try {
+      const s = await world.build('bob', world.workspaceId);
+      await dies(
+        s,
+        () => world.setBobRole('member', 'admin'),
+        'bob',
+        () => world.setBobRole('admin', 'member'),
+      );
+    } finally {
+      await world.setBobRole('member', 'admin');
+    }
+  });
+
+  test('a real (non-sample) workspace and a real publication tenant', async () => {
+    const s = await world.spare();
+    const tenant = (id: string, synthetic: boolean) =>
+      mutate(world.f.owner, 'app.tenant', 'UPDATE app.tenant SET synthetic=$2 WHERE id=$1', [
+        id,
+        synthetic,
+      ]);
+    await dies(
+      s,
+      () => tenant(world.workspaceId, false),
+      'alice',
+      () => tenant(world.workspaceId, true),
+    );
+    await dies(
+      s,
+      () => tenant(world.f.tenantA, false),
+      'alice',
+      () => tenant(world.f.tenantA, true),
+    );
+  });
+
+  test('a source past its retention end', async () => {
+    const s = await world.spare();
+    await dies(s, () =>
+      mutate(
+        world.f.owner,
+        'app.source_record',
+        "UPDATE app.source_record SET observed_at=now()-interval '2 days',retention_until=now()-interval '1 minute' WHERE id=$1",
+        [s.sourceId],
+      ),
+    );
+  });
+
+  test('a revoked delivery link and a revoked publication', async () => {
+    const link = await world.spare();
+    await dies(link, () =>
+      world.delivery.revoke(world.f.users.owner.ctx, {
+        commandId: randomUUID(),
+        linkId: link.link.id,
+        publicationId: null,
+        reason: 'Synthetic revocation',
+      }),
+    );
+    const publication = await world.spare();
+    await dies(publication, () =>
+      world.delivery.revoke(world.f.users.owner.ctx, {
+        commandId: randomUUID(),
+        linkId: null,
+        publicationId: publication.publicationId,
+        reason: 'Synthetic revocation',
+      }),
+    );
+  });
+
+  test('a disabled creator, and the card is open again when they are enabled', async () => {
+    const s = await world.spare();
+    const setDisabled = (disabled: boolean) =>
+      mutate(
+        world.f.owner,
+        'customer_private.principal',
+        `UPDATE customer_private.principal SET disabled_at=${disabled ? 'now()' : 'NULL'} WHERE id=$1`,
+        [world.principals.alice],
+      );
+    await dies(
+      s,
+      () => setDisabled(true),
+      'alice',
+      () => setDisabled(false),
+    );
+  });
+
+  test('another decision of the same disclosure lapsing leaves this card open, by design', async () => {
+    switchOn();
+    services();
+    const s = await world.build('alice', world.workspaceId, { second: true });
+    const card = await share(s);
+    const before = await opens(card.cardId);
+    // A newer disclosure that no longer carries the other decision.
+    await s.approve(2, [s.decisionId]);
+    const answer = await (await open({ token: card.token })).json();
+    expect(answer.state).toBe('OPEN');
+    expect(await opens(card.cardId)).toBe(before + 1);
+  });
+});
+
+describe('database failures that reach the owner route (review fix 6)', () => {
+  // A pool whose connections fail one statement with a real PostgreSQL error code, as a deadlock or a lock
+  // timeout would, while everything around it (the proof, the transaction, the rollback) runs for real.
+  const failing = (code: string) =>
+    ({
+      query: (...args: Parameters<typeof world.f.runtime.query>) => world.f.runtime.query(...args),
+      connect: async () => {
+        const client = await world.f.runtime.connect();
+        return {
+          query: async (text: unknown, ...rest: unknown[]) => {
+            if (typeof text === 'string' && text.includes('customer.decision_card_state'))
+              throw Object.assign(new Error('could not obtain lock detail'), { code });
+            return (client.query as (...args: unknown[]) => Promise<unknown>)(text, ...rest);
+          },
+          release: () => client.release(),
+        };
+      },
+    }) as never;
+
+  for (const code of ['40P01', '55P03'])
+    test(`${code} is a retryable 503 with Retry-After and no database detail`, async () => {
+      switchOn();
+      services({
+        customerDecisionCards: new CustomerDecisionCardService(
+          failing(code),
+          world.f.auth,
+          cardOptions,
+          async () => cardSession('alice'),
+          cardSecret,
+        ),
+      });
+      const response = await owner({ action: 'state', resourceId: world.main.resourceId });
+      expect(response.status).toBe(503);
+      expect(response.headers.get('retry-after')).toBe('2');
+      const text = JSON.stringify(await response.json());
+      expect(text).toMatch(/Try again/);
+      expect(text).not.toContain('lock detail');
+    });
 });

@@ -476,3 +476,76 @@ describe('the session and the installation', () => {
     }
   });
 });
+
+describe('the limiter hook of create (review fix 1)', () => {
+  test('is called once, with the verified issuer and subject, only after the session is verified', async () => {
+    const s = await world.spare();
+    const p = await service('alice').preview(s.resourceId, s.decisionId);
+    const limit = vi.fn(async () => {});
+    await service('alice').create(createInput(p, s), undefined, undefined, limit);
+    expect(limit).toHaveBeenCalledTimes(1);
+    expect(limit).toHaveBeenCalledWith({
+      issuer: cardOptions.issuer,
+      subject: cardSession('alice').subject,
+    });
+    const signedOut = vi.fn(async () => {});
+    await refusal(
+      service('alice', false).create(createInput(p, s), 'forged', undefined, signedOut),
+    );
+    await refusal(service('alice').create(createInput(p, s), 'someone-else', undefined, signedOut));
+    expect(signedOut).not.toHaveBeenCalled();
+  });
+
+  test('a refusal from the hook stops the create and writes nothing', async () => {
+    const s = await world.spare();
+    const p = await service('alice').preview(s.resourceId, s.decisionId);
+    const error = await refusal(
+      service('alice').create(createInput(p, s), undefined, undefined, async () => {
+        throw new DomainError('Too many requests. Try again in an hour.', 429);
+      }),
+    );
+    expect(error).toMatchObject({ status: 429 });
+    expect(
+      Number(
+        (
+          await one(
+            'SELECT count(*) n FROM customer_private.decision_card WHERE saved_mission_id=$1',
+            [s.resourceId],
+          )
+        ).n,
+      ),
+    ).toBe(0);
+  });
+});
+
+describe('ids made by the database are accepted whatever their version (review fix 5)', () => {
+  test('a card and a decision with ids that are not RFC 4122 are listed and withdrawn, not a server error', async () => {
+    const s = await world.spare();
+    const p = await service('alice').preview(s.resourceId, s.decisionId);
+    const odd = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    const oddDecision = '00000000-0000-0000-0000-000000000001';
+    await world.f.owner.query(
+      `INSERT INTO customer_private.decision_card(id,principal_id,command_id,saved_mission_id,workspace_id,decision_id,field_digest,token_hash,expires_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '1 day')`,
+      [
+        odd,
+        world.principals.alice,
+        randomUUID(),
+        s.resourceId,
+        world.workspaceId,
+        oddDecision,
+        p.digest,
+        sha256(randomUUID()),
+      ],
+    );
+    const state = await service('alice').state(s.resourceId);
+    expect(state.cards.map((card) => card.id)).toContain(odd);
+    expect(state.cards.find((card) => card.id === odd)?.decisionId).toBe(oddDecision);
+    const withdrawn = await service('alice').withdraw({
+      action: 'withdraw',
+      commandId: randomUUID(),
+      cardId: odd,
+    });
+    expect(withdrawn).toEqual({ cardId: odd, state: 'WITHDRAWN' });
+  });
+});

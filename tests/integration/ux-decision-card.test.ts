@@ -200,7 +200,7 @@ describe('the owner route source contract', () => {
     expect(route).toContain('export async function POST(');
     expect(route).not.toMatch(/export (async )?function (GET|HEAD|PUT|PATCH|DELETE)\b/);
   });
-  it('checks the switch, the origin, the content type and the body size, then the limiter, before the service', () => {
+  it('checks the switch, the origin, the content type and the body size before the service, and spends the limiter inside create', () => {
     const order = [
       'customerDecisionCardsEnabled()',
       'foundations()',
@@ -208,11 +208,20 @@ describe('the owner route source contract', () => {
       "request.headers.get('origin') !== s.config.APP_ORIGIN",
       "startsWith('application/json')",
       'boundedBody(request,',
-      's.delivery.budget(',
       's.customerDecisionCards.create(',
+      's.delivery.budget(',
     ].map((text) => route.indexOf(text));
     expect(order.every((index) => index > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+  it('spends no limiter before the session is verified and none at all on withdraw, with its own client prefix', () => {
+    expect(route.indexOf('s.delivery.budget(')).toBeGreaterThan(
+      route.indexOf('s.customerDecisionCards.create('),
+    );
+    expect(route.match(/s\.delivery\.budget\(/g)).toHaveLength(1);
+    expect(route).toContain('decision-card-owner:');
+    expect(route).not.toContain('decision-card:');
+    expect(route).not.toMatch(/x-corridra-customer-subject'\)[^;]*budget/s);
   });
   it('shows the link only when the card is active and never logs a body, token or hash', () => {
     expect(route).not.toMatch(/console\.(log|info|warn|debug)/);
@@ -231,19 +240,25 @@ describe('the public route source contract', () => {
     expect(route).toContain('export const HEAD = GET;');
     expect(route).not.toMatch(/export (async )?function (PUT|PATCH|DELETE)\b/);
   });
-  it('spends the budget before the database read and never reads the address or query', () => {
+  it('runs the transport checks first, then the switch, then the budget before the database read', () => {
     const order = [
-      'customerDecisionCardsEnabled()',
-      'await s.ready',
+      'foundations()',
       "request.headers.get('origin') !== s.config.APP_ORIGIN",
       "startsWith('application/json')",
       'boundedBody(request,',
+      'customerDecisionCardsEnabled()',
+      'await s.ready',
       's.delivery.budget(',
       's.decisionCardReader.read(',
     ].map((text) => route.indexOf(text));
     expect(order.every((index) => index > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(route).not.toMatch(/searchParams|request\.url|nextUrl|cookies\(|Set-Cookie/);
+  });
+  it('keeps its own client prefix and no global key', () => {
+    expect(route).toContain('decision-card-public:');
+    expect(route).not.toContain("'decision-card-malformed'");
+    expect(route).not.toContain('`decision-card:');
   });
   it('logs nothing about the visitor, the body, the token or its hash', () => {
     expect(route).not.toMatch(/console\.(log|info|warn|debug)/);

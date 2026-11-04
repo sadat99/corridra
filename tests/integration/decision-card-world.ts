@@ -12,6 +12,7 @@ import { DecisionDisclosureService } from '../../packages/delivery/src/decision-
 import { CustomerDeliveryService } from '../../packages/delivery/src/customer-delivery';
 import { CustomerSavedMissionService } from '../../packages/auth/src/customer-saved-missions';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
+import { CustomerMemberRoleService } from '../../packages/auth/src/customer-member-roles';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { admitSyntheticCustomerRequests } from '../../packages/auth/src/customer-request-admission';
 
@@ -87,11 +88,23 @@ export async function cardWorld() {
     workspaceId,
     label: 'Synthetic invited bob',
   });
-  await workspaces('bob').access({
+  const accepted = await workspaces('bob').access({
     action: 'accept',
     commandId: randomUUID(),
     token: invited.token!,
   });
+  // Bob is a plain member until a case promotes him; the owner changes his role and changes it back.
+  const setBobRole = (role: 'admin' | 'member', expectedRole: 'admin' | 'member') =>
+    new CustomerMemberRoleService(f.runtime, f.auth, cardOptions, async () =>
+      cardSession('alice'),
+    ).command({
+      action: 'set_role',
+      commandId: randomUUID(),
+      workspaceId,
+      memberId: accepted.memberId!,
+      role,
+      expectedRole,
+    });
 
   async function journey() {
     const t = await f.target('CN'),
@@ -382,7 +395,17 @@ export async function cardWorld() {
   ).id as string;
   // The limit of five and the hourly limit are proved on reports of their own, so the other cases keep room.
   const spare = () => build('alice', workspaceId);
-  return { f, principals, workspaceId, main, memberResource, spare, build };
+  return {
+    f,
+    delivery,
+    principals,
+    workspaceId,
+    main,
+    memberResource,
+    spare,
+    build,
+    setBobRole,
+  };
 }
 
 // Mutations the product never makes (a revoked member, a lapsed source, an edited decision) are made as the

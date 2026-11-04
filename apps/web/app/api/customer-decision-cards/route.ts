@@ -8,6 +8,10 @@ import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delive
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const unavailable = 'Decision cards are unavailable';
+const client = (request: Request) =>
+  process.env.VERCEL
+    ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
+    : 'local';
 // The signed-in owner's side of the decision card (ADR-076 item 4): see the cards of a saved report, preview the
 // exact fields, make a card and withdraw one. POST only, so no link, prefetch or crawler can start anything.
 // The database decides who may share; the route only shapes the request and the refusals.
@@ -26,13 +30,6 @@ export async function POST(request: Request) {
     );
     const subject = request.headers.get('x-corridra-customer-subject') ?? undefined;
     const issuer = request.headers.get('x-corridra-customer-issuer') ?? undefined;
-    // Making and withdrawing cards write; reading and previewing do not.
-    if (input.action === 'create' || input.action === 'withdraw') {
-      const client = process.env.VERCEL
-        ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
-        : 'local';
-      await s.delivery.budget(`decision-card:${client}`, `decision-card-customer:${subject ?? ''}`);
-    }
     const value =
       input.action === 'state'
         ? await s.customerDecisionCards.state(input.resourceId, subject, issuer)
@@ -44,7 +41,14 @@ export async function POST(request: Request) {
               issuer,
             )
           : input.action === 'create'
-            ? await s.customerDecisionCards.create(input, subject, issuer)
+            ? await s.customerDecisionCards.create(input, subject, issuer, (customer) =>
+                // Spent only after the session is verified, per verified customer, and on create only. Withdraw is
+                // never limited: retraction is always safe, and the database bounds it by cards and makes it idempotent.
+                s.delivery.budget(
+                  `decision-card-owner:${client(request)}`,
+                  `decision-card-customer:${customer.issuer}:${customer.subject}`,
+                ),
+              )
             : await s.customerDecisionCards.withdraw(input, subject, issuer);
     return Response.json(value, { headers: deliveryHeaders });
   } catch (error) {

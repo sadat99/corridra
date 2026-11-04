@@ -17,15 +17,17 @@ const refusal = (error: string, status: number) => Response.json({ error }, { st
 // a POST body (the page takes it from the address fragment), is hashed here, and is never logged or put in a query.
 export async function POST(request: Request) {
   try {
-    if (!customerDecisionCardsEnabled()) return unknown();
     const s = foundations();
     if (!s) return unknown();
-    await s.ready;
+    // The transport checks come first and do not depend on the switch, so a request that is not well formed gets the
+    // same answer whether the card is switched on or off. Only a well formed request is told "unknown" for a switch.
     if (request.headers.get('origin') !== s.config.APP_ORIGIN)
       return refusal('Request origin is not allowed', 403);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       return refusal('JSON required', 415);
     const body = request.body ? await boundedBody(request, 512) : Buffer.alloc(0);
+    if (!customerDecisionCardsEnabled()) return unknown();
+    await s.ready;
     let digest: string | null = null;
     try {
       const asked = publicCardRequest.safeParse(JSON.parse(body.toString('utf8')));
@@ -37,7 +39,12 @@ export async function POST(request: Request) {
       ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
       : 'local';
     // Spent before the database is read, for every request alike, so a refusal for rate reveals nothing about a link.
-    await s.delivery.budget(`decision-card:${client}`, digest ?? 'decision-card-malformed');
+    // A request that is not well formed has no link to count against, so it counts against its own client only; a
+    // key shared by everyone would let sixty malformed requests lock every recipient out.
+    await s.delivery.budget(
+      `decision-card-public:${client}`,
+      digest ?? `decision-card-malformed:${client}`,
+    );
     return Response.json(await s.decisionCardReader.read(digest), { headers });
   } catch (error) {
     if (error instanceof DomainError)
