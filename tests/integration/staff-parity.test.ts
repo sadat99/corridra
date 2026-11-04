@@ -113,16 +113,13 @@ describe('navigation reaches every section for exactly the roles that may open i
   for (const role of all) {
     it(`${role} reaches ${frozen.filter((f) => f[3].includes(role)).length} sections, no more, no fewer`, () => {
       const expected = frozen.filter((f) => f[3].includes(role)).map((f) => f[0]);
-      // Evidence is listed by the sidebar through "also"; the section itself stays reachable.
-      const viaAlso = teamNavigation.flatMap((e) => e.also ?? []);
       const got = reachable(role);
-      for (const id of viaAlso) if (sectionAllowedFor(id, role)) got.add(id);
       expect([...got].sort()).toEqual([...expected].sort());
     });
   }
   it('every section is reachable by at least one role in one or two clicks', () => {
     const ids = new Set([
-      ...teamNavigation.flatMap((e) => (e.section ? [e.section, ...(e.also ?? [])] : [])),
+      ...teamNavigation.flatMap((e) => (e.section ? [e.section] : [])),
       ...teamSettingsSections,
     ]);
     expect([...ids].sort()).toEqual(frozen.map((f) => f[0]).sort());
