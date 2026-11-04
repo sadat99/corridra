@@ -44,8 +44,8 @@ describe('the books switch', () => {
     for (const value of ['TRUE', '1', 'yes', 'false', ''])
       expect(state({ CORRIDRA_UX_BOOKS: value })).toBe('Off');
   });
-  it('leaves the decision card switch planned', () => {
-    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_SHARE_CARD')?.kind).toBe('planned');
+  it('has a decision card switch that is a real one since E3b step 3', () => {
+    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_SHARE_CARD')?.kind).toBe('flag');
   });
 });
 
