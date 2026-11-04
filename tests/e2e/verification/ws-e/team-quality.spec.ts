@@ -314,6 +314,14 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
     // Operations panels load their own data after the workspace: let that settle first.
     await page.waitForTimeout(1500);
     const button = page.getByRole('button', { name, exact: true });
+    // A button inside a closed disclosure is opened first, as a person would.
+    await button.evaluate((el) => {
+      let group = el.closest('details');
+      while (group) {
+        group.open = true;
+        group = group.parentElement?.closest('details') ?? null;
+      }
+    });
     await expect(button, name).toBeVisible({ timeout: 15000 });
     let sent = 0;
     await page.route('**/api/**', async (route) => {
