@@ -4,9 +4,8 @@ import { corridorPages } from '../../../../apps/web/content/corridors';
 // Spec pack 1 (docs/revamp/specs/public-home.md), P-06 and P-07. Every old public address still answers, and
 // the link on it that starts a request keeps the job it names today. Frozen on 4 Nov 2026 from
 // apps/web/content/public-pages.ts, apps/web/app/corridors and apps/web/app/page.tsx. If a job here has to
-// change, that is a product decision, not a refactor. The verification server runs with the trade-fairs
-// switch (CORRIDRA_UX_FAIRS) off, where /fairs and /fairs/<slug> are the plain not found page: that is the
-// behaviour pinned for them, and it must never become an error.
+// change, that is a product decision, not a refactor. /fairs depends on the trade-fairs switch
+// (CORRIDRA_UX_FAIRS) at build time; see its test. The off state is also pinned in tests/integration/ux-fairs.test.ts.
 
 const withJob: [string, string][] = [
   ['/sell', '/plan?job=buyers'],
@@ -65,11 +64,38 @@ test('P-06 an unknown corridor is the plain not found page, not an error', async
   expect((await page.goto('/corridors/not-a-route'))?.status()).toBe(404);
 });
 
-test('P-06 /fairs and /fairs/<slug> answer with the plain not found page while the switch is off', async ({
+test('P-06 /fairs answers for the way this server was built, and keeps its request link', async ({
   page,
 }) => {
-  expect((await page.goto('/fairs'))?.status()).toBe(404);
+  // /fairs is pre-rendered at build time with CORRIDRA_UX_FAIRS. CI builds with it on (ci.yml, "Production
+  // build"); a local build without it is the plain not found page. Each state has its own assertions, and a
+  // build that was made with the switch on must show the page.
+  const response = await page.goto('/fairs');
+  const status = response?.status();
+  if (process.env.CORRIDRA_UX_FAIRS === 'true') expect(status).toBe(200);
+  expect([200, 404]).toContain(status);
+  if (status === 200) {
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Fairs we have checked.' }),
+    ).toBeVisible();
+    // The fair list is empty on purpose until a person adds a checked entry, so the page offers the request.
+    await expect(page.locator('main a[href="/plan?job=trade_fairs"]').first()).toBeVisible();
+    await page.locator('main a[href="/plan?job=trade_fairs"]').first().click();
+    await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
+      'trade_fairs',
+    );
+  } else {
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('main a[href="/plan?job=trade_fairs"]')).toHaveCount(0);
+  }
+});
+
+test('P-06 /fairs/<slug> is the plain not found page for an address that is not a checked fair', async ({
+  page,
+}) => {
+  // No fair is listed yet, so every slug is not found, with the switch on or off, and it is never an error.
   expect((await page.goto('/fairs/any-fair'))?.status()).toBe(404);
+  expect((await page.goto('/fairs/madrid-2026'))?.status()).toBe(404);
 });
 
 test('P-06 /plan#receipt-check opens the receipt check', async ({ page }) => {

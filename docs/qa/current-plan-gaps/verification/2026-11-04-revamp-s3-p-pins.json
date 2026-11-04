@@ -19,16 +19,16 @@
     "P-03": "revamp-intake-pins.test.ts: sample notice 'synthetic-intake-2026-10-05-v1' and real notice 'real-intake-2026-10-21-v1' follow the data mode, and a missing acknowledgement is refused in both. The form's own consent box is pinned in intake-parity.spec.ts (no send until ticked)",
     "P-04 device draft": "intake-parity.spec.ts: draft survives reload on the same step with its fields; nothing is sent before Submit",
     "P-04 account draft": "Already covered by tests/operator/v3-guided-request-ui.spec.ts and tests/integration/customer-mission-drafts.test.ts (save as new version, reload recovery, stable command id on retry, send only from review, read-only after send, own drafts only). revamp-intake-pins.test.ts fails if any of 11 named tests is renamed or removed. No new account-draft behaviour test was written.",
-    "P-06": "old-addresses.spec.ts: /sell, /source, /machinery, /trade-missions, /business-trips, /enter-market answer 200 and keep their request link (buyers, sourcing, machinery_procurement, delegations, business_trips, market_entry) which opens /plan with that job; /corridors and every /corridors/<corridor> answer and carry the BD to market countries into the plan; unknown corridor 404; /plan#receipt-check opens the receipt check",
+    "P-06": "old-addresses.spec.ts: /sell, /source, /machinery, /trade-missions, /business-trips, /enter-market answer 200 and keep their request link (buyers, sourcing, machinery_procurement, delegations, business_trips, market_entry) which opens /plan with that job; /corridors and every /corridors/<corridor> answer and carry the BD to market countries into the plan; unknown corridor 404; /fairs depends on CORRIDRA_UX_FAIRS at build time (CI builds with it on): on it renders 'Fairs we have checked.' with its /plan?job=trade_fairs link, off it is the plain 404, and a build made with the switch on must show the page; /fairs/<slug> is 404 for any address while no fair is listed; /plan#receipt-check opens the receipt check",
     "P-07": "old-addresses.spec.ts: home page links /plan?job=buyers, sourcing, delegations"
   },
   "findingsForConductor": [
     "P-04 says both draft paths 'save each answer'. The device draft does (every change is stored in the tab). The account draft saves only when the person presses Save draft, and warns before leaving with unsaved changes. The tests pin what exists; the spec line is wrong for the account path or the product must change.",
-    "/fairs and /fairs/<slug> answer 404 when CORRIDRA_UX_FAIRS is off (the verification server default). That is pinned as 'plain not found, never an error'. Their on-behaviour (links to /plan?job=trade_fairs) is not pinned: the verification server does not set the switch and I may not change it."
+    "Correction after CI: the verification build in CI has CORRIDRA_UX_FAIRS on (ci.yml, Production build), so /fairs rendered there and my first test, which assumed 404, failed at all three widths. The test now asserts the on-path in CI and the off-path in a local build without the switch; both verified locally (6 passed each). Not pinned: a real /fairs/<slug> page, because the fair list is empty by design."
   ],
   "receipts": {
     "vitest": "revamp-intake-pins.test.ts 14 passed",
-    "playwright": "old-addresses.spec.ts and intake-parity.spec.ts on a production build and local PostgreSQL 16: 96 passed (3.3m) across w1280, w768, w390",
+    "playwright": "old-addresses.spec.ts and intake-parity.spec.ts on a production build and local PostgreSQL 16: 96 passed (3.3m) across w1280, w768, w390 Fairs tests re-run after the CI correction: 6 passed with a build made without the switch and 6 passed with a build made with CORRIDRA_UX_FAIRS=true.",
     "format": "exit 0",
     "lint": "exit 0",
     "typecheck": "exit 0"
