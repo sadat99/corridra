@@ -275,7 +275,13 @@ test('Q-05 a failed load on click says so and keeps the button for another try',
       return route.fulfill({ status: 503, json: { error: 'Service unavailable' } });
     });
     const button = page.getByRole('button', { name: load.name, exact: true });
-    await button.click();
+    const enabled = await button.isEnabled().catch(() => false);
+    expect.soft(enabled, `${load.slug} / ${load.name}: button enabled to click`).toBe(true);
+    if (!enabled) {
+      await page.unroute('**/api/**');
+      continue;
+    }
+    await button.click({ timeout: 8000 });
     await page.waitForTimeout(1500);
     const text = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
     expect
