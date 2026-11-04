@@ -582,10 +582,14 @@ test('quality: an error is announced as an alert, not only shown', async ({ page
 
 test('quality: empty companies and agenda say they are empty, not blank', async ({ page }) => {
   await open(page, 'room=1&proj=1', none);
-  const people = await groupText(page, 'Participants and eligibility');
-  expect(people.text).toMatch(/No active participants on this page/);
-  const plan = await groupText(page, 'Programme and meetings');
-  expect(plan.text).toMatch(/Create a coordination task in Plan and report/);
+  // The projection loads after the group opens, so wait for the empty state instead of reading once.
+  await groupText(page, 'Participants and eligibility');
+  await expect
+    .poll(async () => (await groupText(page, 'Participants and eligibility')).text)
+    .toMatch(/No active participants on this page/);
+  await expect
+    .poll(async () => (await groupText(page, 'Programme and meetings')).text)
+    .toMatch(/Create a coordination task in Plan and report/);
 });
 
 test('quality: the five groups work by keyboard, one at a time', async ({ page }) => {
