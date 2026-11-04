@@ -54,6 +54,31 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   );
   await evidence(page, `V-06-today-${info.project.name}`);
 
+  // Tab order: Today, then each group's summary, then Outcomes and All tools and settings. A closed
+  // group's links are not in the order. Enter and Space both toggle a group and focus stays on its
+  // summary.
+  const focusedText = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
+  await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
+  const order: string[] = [];
+  for (let step = 0; step < 5; step++) {
+    await page.keyboard.press('Tab');
+    order.push(await focusedText());
+  }
+  expect(order).toEqual([
+    'Missions',
+    'Companies',
+    'Delivery',
+    'Outcomes',
+    'All tools and settings',
+  ]);
+  const companies = sidebar.locator('summary', { hasText: 'Companies' });
+  await companies.focus();
+  await page.keyboard.press('Space');
+  await expect(companies.locator('xpath=..')).toHaveAttribute('open', '');
+  await expect(companies).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(companies.locator('xpath=..')).not.toHaveAttribute('open');
+  await expect(companies).toBeFocused();
   // The keyboard opens a group: Enter on its summary lists the sections, and Missions and
   // requirements opens at its own address.
   await sidebar.locator('summary', { hasText: 'Missions' }).focus();
@@ -102,6 +127,37 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     true,
   );
   await evidence(page, `V-06-audit-${info.project.name}`);
+
+  // Loading, failure and recovery on Today and the workspace read. A failed read says so in words a
+  // screen reader announces, and the retry works once the read succeeds again.
+  const todayUrl = `/operator?workspace=${seed.tenantId}`;
+  await page.route('**/api/workspace/missions**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // A read the page cancels while it waits is already handled.
+    await route.continue().catch(() => undefined);
+  });
+  await page.goto(todayUrl);
+  await expect(page.getByRole('status').filter({ hasText: 'Loading today' })).toBeVisible();
+  await expect(page.locator('.ux-overview')).toBeVisible();
+  await page.unroute('**/api/workspace/missions**');
+  await page.route('**/api/workspace/missions**', (route) =>
+    route.fulfill({ status: 500, json: { error: 'unavailable' } }),
+  );
+  await page.goto(todayUrl);
+  await expect(
+    page.getByRole('status').filter({ hasText: "Today's list could not be loaded." }),
+  ).toBeVisible();
+  await page.unroute('**/api/workspace/missions**');
+  await page.route('**/api/workspace/workspace**', (route) =>
+    route.fulfill({ status: 500, json: { error: 'unavailable' } }),
+  );
+  await page.goto(todayUrl);
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Workspace could not be loaded.' }),
+  ).toBeVisible();
+  await page.unroute('**/api/workspace/workspace**');
+  await page.getByRole('button', { name: 'Retry workspace' }).click();
+  await expect(page.locator('.ux-overview')).toBeVisible();
 
   // The old # links keep working inside the shell.
   await page.goto(`/operator?workspace=${seed.tenantId}#workspace-delivery`);
