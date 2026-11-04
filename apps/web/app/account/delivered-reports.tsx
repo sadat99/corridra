@@ -6,6 +6,7 @@ import { formatDate } from '../../lib/ux/format';
 // CQ-77 (customer side): reports the Corridra team published for the customer's own requests, read
 // through listDeliveredPublications (WS-C) behind the customer session proof. Until the service wiring
 // provides it, or when there are none, nothing is shown here: the Library never invents a report.
+// A read that fails is said plainly (revamp Wave 1): hiding it would look like "no reports".
 export async function DeliveredReports({ subject, issuer }: { subject: string; issuer: string }) {
   const s = foundations();
   const service = (s as unknown as { customerDeliveredReports?: CustomerDeliveredReportService })
@@ -16,7 +17,15 @@ export async function DeliveredReports({ subject, issuer }: { subject: string; i
     await s.ready;
     reports = await service.list(subject, issuer);
   } catch {
-    return null;
+    return (
+      <section className="detail-card" aria-labelledby="delivered-reports-heading" lang="en">
+        <h2 id="delivered-reports-heading">Reports for your requests</h2>
+        <p role="status">
+          Your reports could not be loaded just now. Nothing was lost. Refresh this page to try
+          again.
+        </p>
+      </section>
+    );
   }
   if (reports.length === 0) return null;
   return (
