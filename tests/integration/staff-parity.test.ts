@@ -8,16 +8,11 @@ import {
   sectionForSlug,
 } from '../../apps/web/lib/operator-urls';
 import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
-import {
-  sectionAllowedFor,
-  teamNavigation,
-  teamSectionHref,
-  teamSettingsSections,
-} from '../../apps/web/lib/ux/shells';
+import { sectionAllowedFor, teamNavigation, teamSectionHref } from '../../apps/web/lib/ux/shells';
 
 // Staff parity (revamp Wave 5, step B1). This freezes what the staff workspace offers today: the 18
 // section IDs, their address words, labels and permitted roles, every address form and every
-// internal link. Regrouping the navigation (Today, Work, Companies, Delivery, More) may move links
+// internal link. Regrouping the navigation (Today, Missions, Companies, Delivery, Outcomes, All tools and settings) may move links
 // around; it may not remove, rename or widen anything listed here. A change that must alter this
 // table is a product decision and edits the table in the same PR, visibly. Grouping never grants
 // access: the server still decides every action.
@@ -105,9 +100,8 @@ describe('navigation reaches every section for exactly the roles that may open i
   const reachable = (role: string) => {
     const ids = new Set<string>();
     for (const entry of teamNavigation) {
-      if (entry.section && sectionAllowedFor(entry.section, role)) ids.add(entry.section);
+      for (const id of entry.sections ?? []) if (sectionAllowedFor(id, role)) ids.add(id);
     }
-    for (const id of teamSettingsSections) if (sectionAllowedFor(id, role)) ids.add(id);
     return ids;
   };
   for (const role of all) {
@@ -118,10 +112,7 @@ describe('navigation reaches every section for exactly the roles that may open i
     });
   }
   it('every section is reachable by at least one role in one or two clicks', () => {
-    const ids = new Set([
-      ...teamNavigation.flatMap((e) => (e.section ? [e.section] : [])),
-      ...teamSettingsSections,
-    ]);
+    const ids = new Set([...teamNavigation.flatMap((e) => e.sections ?? [])]);
     expect([...ids].sort()).toEqual(frozen.map((f) => f[0]).sort());
   });
 });

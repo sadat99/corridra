@@ -1,0 +1,32 @@
+{
+  "recordedOn": "2026-11-04",
+  "track": "Revamp S4 Staff, Contributor, Recipient (branch revamp/staff)",
+  "kind": "Wave 5 step B2: Signal Desk team navigation, built to docs/revamp/specs/signal-desk.md with the locked names. Written by S4; the Conductor folds it into the ledger.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. Grouping and order only: section ids, address words, roles, mounted panels, MFA, tenant switching, audit and readiness gates are untouched; the server still decides every action.",
+  "changed": [
+    "apps/web/lib/ux/shells.ts: teamNavigation is now the six-item map (Today, Missions, Companies, Delivery, Outcomes, All tools and settings), each of the 18 section ids placed once; teamSettingsSections removed; currentTeamItem maps a section to its group (owner page and unplaced pages count as All tools and settings). Page titles (teamTitles) unchanged.",
+    "apps/web/components/ux/team-sidebar.tsx: a group with one visible section is a plain link, the tools group is always a list (it also holds the Owner page), the group holding the current page opens, a group with no visible section is not rendered, and while the role is unknown only viewer sections show (PR 264 rule kept). Words with no text of their own in the chosen language are marked lang=en.",
+    "apps/web/components/ux/shells.css: .ux-team-settings renamed .ux-team-group (no visual change).",
+    "apps/web/lib/i18n/ws/ws-e.ts: three new keys, wse.team.delivery, wse.team.outcomes and wse.team.allTools; English text in every language as D16 placeholders.",
+    "tests: signal-desk.test.ts (new, S-01, S-03, S-04, language marking), staff-parity.test.ts and ux-kit.test.ts moved to the new model, tests/e2e/verification/ws-e/team-shell.spec.ts rewritten for the new sidebar with a sidebar axe check, keyboard open and no sideways scroll."
+  ],
+  "tests": {
+    "S-01": "signal-desk.test.ts: every id in workspaceSections is in exactly one group, no unknown id, locked names in order, map equals the Guardian table.",
+    "S-02": "staff-parity.test.ts: per role the sections reachable through the sidebar equal the role table (owner 18, admin 17, operator 14, reviewer 10, viewer 8), unchanged from the B1 baseline.",
+    "S-03": "signal-desk.test.ts and team-sidebar-role.test.ts: with the role unknown no role-limited section and no owner link is rendered, and Outcomes is hidden.",
+    "S-04": "signal-desk.test.ts: for each of the 18 address words the sidebar marks that link current and opens exactly one group (none for the single-link Outcomes); the # hash resolves to the same group; staff-parity.test.ts keeps every address form and link literal.",
+    "S-05": "tests/e2e/verification/ws-e/team-shell.spec.ts: 44 px targets, sidebar axe (wcag2a, wcag2aa) with no violations, no sideways scroll, keyboard Enter opens a group. Run locally at 1280, 768 and 390 px: all three pass. The spec's widths are 1280, 768 and 390; 1440 and 320 were not run."
+  },
+  "mutationChecks": [
+    "group never auto-opens: 18 tests fail",
+    "ops-dashboard left unplaced: 10 tests fail",
+    "workspace-ai placed in two groups: 2 tests fail",
+    "role ignored in the sidebar: 3 tests fail"
+  ],
+  "localReceipts": "pnpm preflight (standard) READY TO PUSH on the final head: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e and ux-gate all PASS. A first preflight caught empty message values failing language-catalog.test.ts, fixed by English placeholders.",
+  "openLanguageGap": "Three new keys, wse.team.delivery (Delivery), wse.team.outcomes (Outcomes) and wse.team.allTools (All tools and settings), are English placeholders in Bangla, Chinese, Spanish, Arabic, French and German until a native review (D16). The sidebar marks them lang=en when the chosen language shows English text.",
+  "notRun": "The full operator suite locally (CI runs it). No 1440 or 320 px run, no screen reader pass, no real-browser pass with the production flags.",
+  "openOwnerDecision": "The session plan's Today, Work, Companies, Delivery, More is not built; the locked names are. site-header.tsx's shellWords.team list (S3's file) still names the retired keys and is documentation only.",
+  "retiredKeys": "wse.team.meetings, quotes, reports, network, evidence and settings are no longer used by the sidebar; left in the catalog."
+}

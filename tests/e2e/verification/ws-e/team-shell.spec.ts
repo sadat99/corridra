@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, evidence, signInOwner, qaSeed } from '../fixtures';
 
 // V-06 (shell part), V-05 (client), V-45 (infrastructure) and D14 on the verification server: the
@@ -24,18 +25,11 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   }
   await expect(sidebar).toBeVisible();
-  const names = [
-    'Today',
-    'Missions',
-    'Companies',
-    'Meetings',
-    'Quotes and billing',
-    'Reports',
-    'Network',
-    'Evidence',
-  ];
-  for (const name of names)
-    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
+  // Signal Desk map: Today and Outcomes are links, the other groups open to list their sections.
+  await expect(sidebar.getByRole('link', { name: 'Today', exact: true })).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'Outcomes', exact: true })).toBeVisible();
+  for (const name of ['Missions', 'Companies', 'Delivery', 'All tools and settings'])
+    await expect(sidebar.locator('summary', { hasText: name })).toBeVisible();
   // Every sidebar target is at least 44 pixels tall.
   for (const box of await sidebar
     .locator('a, summary')
@@ -49,9 +43,29 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     'aria-current',
     'page',
   );
+  // S-05: the sidebar has no accessibility violations and the page has no sideways scroll.
+  const axe = await new AxeBuilder({ page })
+    .include('#workspace-navigation')
+    .withTags(['wcag2a', 'wcag2aa'])
+    .analyze();
+  expect(axe.violations.map((v) => v.id)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+    true,
+  );
   await evidence(page, `V-06-today-${info.project.name}`);
 
-  await sidebar.getByRole('link', { name: 'Missions', exact: true }).click();
+  // The keyboard opens a group: Enter on its summary lists the sections, and Missions and
+  // requirements opens at its own address.
+  await sidebar.locator('summary', { hasText: 'Missions' }).focus();
+  await page.keyboard.press('Enter');
+  const missionsLink = sidebar.getByRole('link', {
+    name: 'Missions and requirements',
+    exact: true,
+  });
+  await expect(missionsLink).toBeVisible();
+  for (const name of ['Introductions and meetings', 'Commercial progress'])
+    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
+  await missionsLink.click();
   await expect(page).toHaveURL(new RegExp(`/operator/missions\\?workspace=${seed.tenantId}$`));
   await expect(page).toHaveTitle('Missions | Corridra');
   await expect(page.locator('h1')).toHaveText('Missions');
@@ -60,16 +74,20 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   for (const other of ['#workspace-research', '#workspace-meetings', '#workspace-delivery'])
     await expect(page.locator(other)).toHaveCount(0);
   await expect(page.locator('.ux-overview')).toHaveCount(0);
-
-  // Settings holds the remaining sections and the Owner page.
+  // The group holding the page is open and its section is the current one.
   if (phone && !(await sidebar.isVisible())) await toggle.click();
-  await sidebar.getByText('Settings', { exact: true }).click();
-  for (const name of [
-    'Access and audit',
-    'Authenticator',
-    'Sources and claims',
-    'Workspace controls',
-  ])
+  await expect(
+    sidebar.getByRole('link', { name: 'Missions and requirements', exact: true }),
+  ).toHaveAttribute('aria-current', 'page');
+
+  // Companies holds Sources and claims; All tools and settings holds the rest and the Owner page.
+  if (phone && !(await sidebar.isVisible())) await toggle.click();
+  await sidebar.locator('summary', { hasText: 'Companies' }).click();
+  await expect(
+    sidebar.getByRole('link', { name: 'Sources and claims', exact: true }),
+  ).toBeVisible();
+  await sidebar.getByText('All tools and settings', { exact: true }).click();
+  for (const name of ['Access and audit', 'Authenticator', 'Workspace controls'])
     await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
   await expect(sidebar.getByRole('link', { name: 'Owner: what is on and off' })).toHaveAttribute(
     'href',

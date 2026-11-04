@@ -144,14 +144,14 @@
   margin-inline-start: auto;
   transition: transform 120ms ease;
 }
-.ux-team-settings[open] .ux-team-chevron {
+.ux-team-group[open] .ux-team-chevron {
   transform: rotate(90deg);
 }
-.ux-team-settings ul {
+.ux-team-group ul {
   margin-top: var(--space-1);
   padding-inline-start: var(--space-4);
 }
-.ux-team-settings ul a {
+.ux-team-group ul a {
   font-weight: 500;
   font-size: var(--text-md);
 }
