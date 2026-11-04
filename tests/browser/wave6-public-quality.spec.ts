@@ -128,3 +128,34 @@ for (const path of pages) {
     expect(without, 'stops without a visible focus indicator').toEqual([]);
   });
 }
+
+// Q-01 on /plan: moving between steps moves focus to the step heading, and a failed check moves focus to
+// the error summary.
+test('Q-01 /plan moves focus to the step heading on a step change and to the error summary on a failed check', async ({
+  page,
+}) => {
+  await open(page, '/plan?job=buyers&companyCountry=BD&marketCode=CN', 1440);
+  const where = () =>
+    page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        tag: el?.tagName ?? '',
+        text: el?.textContent?.trim().slice(0, 60) ?? '',
+        summary: !!el?.closest('.ux-error-summary'),
+      };
+    });
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
+  const forward = await where();
+  expect(['H1', 'H2'], `focus after Continue: ${JSON.stringify(forward)}`).toContain(forward.tag);
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  const back = await where();
+  expect(['H1', 'H2'], `focus after Back: ${JSON.stringify(back)}`).toContain(back.tag);
+  // A failed check: the details step needs the offer, so Continue with it empty.
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.locator('#brief-whenNeeded').fill('2026-12-01');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const failed = await where();
+  expect(failed.summary, `focus after a failed check: ${JSON.stringify(failed)}`).toBe(true);
+});
