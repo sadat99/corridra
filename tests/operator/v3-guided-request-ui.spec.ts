@@ -696,3 +696,153 @@ for (const width of [320, 390, 768, 1440])
       });
     }
   });
+
+// P-04a to P-04e: the account draft saves as you go (docs/revamp/specs/public-home.md P-04, UI rule 6).
+// The quiet period before an automatic save is 2 seconds; these tests wait for it for real.
+const market = (page: Page) => page.getByLabel('Target country or market');
+const openExisting = async (page: Page) => {
+  await page.goto(origin);
+  await page.getByRole('button', { name: /Continue Synthetic towel buyer search/ }).click();
+};
+const saved = (server: ReturnType<typeof fake>, count: number) => () =>
+  server.log.saves.length >= count;
+
+test('P-04a an edit is saved once after a pause with no click, and nothing else is sent', async ({
+  page,
+}) => {
+  const server = fake([existing()]);
+  await server.install(page);
+  await openExisting(page);
+  await market(page).fill('Italy');
+  await expect(page.getByText('You have unsaved changes.')).toBeVisible();
+  expect(server.log.saves).toHaveLength(0);
+  await expect.poll(saved(server, 1), { timeout: 8000 }).toBe(true);
+  await expect(page.getByRole('status')).toContainText('Draft saved automatically');
+  await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
+  await page.waitForTimeout(2600);
+  expect(server.log.saves).toHaveLength(1);
+  expect(server.log.saves[0]).toMatchObject({
+    draftId: existing().id,
+    expectedVersion: 2,
+    acknowledged: true,
+    details: { market: 'Italy' },
+  });
+  expect(server.log.requests).toHaveLength(0);
+  expect(server.log.closes).toHaveLength(0);
+});
+
+test('P-04b rapid edits make one save with the final text, and an edit during a save is saved next, never in parallel', async ({
+  page,
+}) => {
+  const server = fake([existing()]);
+  await server.install(page);
+  let inFlight = 0;
+  let overlap = false;
+  await page.route('**/api/customer-mission-drafts**', async (route) => {
+    if (route.request().method() === 'POST') {
+      inFlight += 1;
+      if (inFlight > 1) overlap = true;
+      await new Promise((done) => setTimeout(done, 900));
+      await route.fallback();
+      inFlight -= 1;
+    } else await route.fallback();
+  });
+  await openExisting(page);
+  for (const text of ['I', 'It', 'Ita', 'Ital']) {
+    await market(page).fill(text);
+    await page.waitForTimeout(250);
+  }
+  await expect.poll(saved(server, 1), { timeout: 8000 }).toBe(true);
+  expect(server.log.saves[0]).toMatchObject({ details: { market: 'Ital' } });
+  await market(page).fill('Italy');
+  await expect.poll(saved(server, 2), { timeout: 12000 }).toBe(true);
+  await page.waitForTimeout(2600);
+  expect(server.log.saves).toHaveLength(2);
+  expect(server.log.saves[1]).toMatchObject({ expectedVersion: 3, details: { market: 'Italy' } });
+  expect(overlap).toBe(false);
+  await expect(market(page)).toHaveValue('Italy');
+  await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
+});
+
+test('P-04c a changed draft and a closed draft are never saved automatically', async ({ page }) => {
+  const stale = fake([existing()], { saveStatus: () => 409 });
+  await stale.install(page);
+  await openExisting(page);
+  await market(page).fill('Italy');
+  await expect.poll(saved(stale, 1), { timeout: 8000 }).toBe(true);
+  await expect(page.getByRole('status')).toContainText('This draft changed somewhere else');
+  await market(page).fill('Italy again');
+  await page.waitForTimeout(3000);
+  expect(stale.log.saves).toHaveLength(1);
+  await expect(market(page)).toHaveValue('Italy again');
+  await expect(page.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+  const closed = fake([
+    existing({ status: 'SUBMITTED', requestId: '20000000-0000-4000-8000-000000000001' }),
+  ]);
+  const other = await page.context().newPage();
+  await closed.install(other);
+  await other.goto(origin);
+  await other.getByRole('button', { name: /View Synthetic towel buyer search/ }).click();
+  await other.getByRole('button', { name: '1. What you want' }).click();
+  await expect(other.getByLabel('Name this request (start with Synthetic)')).toBeDisabled();
+  await other.waitForTimeout(3000);
+  expect(closed.log.saves).toHaveLength(0);
+});
+
+test('P-04d a failed automatic save keeps the text and the warning, does not loop, and the next edit tries again', async ({
+  page,
+}) => {
+  let attempt = 0;
+  const server = fake([existing()], { saveStatus: () => (++attempt === 1 ? 500 : null) });
+  await server.install(page);
+  await openExisting(page);
+  await market(page).fill('Italy');
+  await expect.poll(saved(server, 1), { timeout: 8000 }).toBe(true);
+  await expect(page.getByRole('status')).toContainText('Saving could not be confirmed');
+  await expect(market(page)).toHaveValue('Italy');
+  await expect(page.getByText('You have unsaved changes.')).toBeVisible();
+  await page.waitForTimeout(3200);
+  expect(server.log.saves).toHaveLength(1);
+  await market(page).fill('Italy and Spain');
+  await expect.poll(saved(server, 2), { timeout: 8000 }).toBe(true);
+  await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
+  expect(server.log.saves[1]).toMatchObject({ details: { market: 'Italy and Spain' } });
+});
+
+for (const width of [390, 1440])
+  test(
+    'P-04e autosave never sends, closes or ticks the acknowledgement; the status line is polite, English and fits at ' +
+      width,
+    async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const server = fake([existing()]);
+      await server.install(page);
+      await openExisting(page);
+      const line = page.locator('[data-autosave-status]');
+      await expect(line).toHaveAttribute('aria-live', 'polite');
+      await expect(line).toHaveAttribute('lang', 'en');
+      await market(page).fill('Italy');
+      await expect(line).toHaveText('You have unsaved changes.');
+      const fits = async () =>
+        expect(
+          await line.evaluate(
+            (node) =>
+              node.scrollWidth <= node.clientWidth + 1 &&
+              document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+      await fits();
+      await expect.poll(saved(server, 1), { timeout: 8000 }).toBe(true);
+      await page.getByRole('button', { name: '5. Review and send' }).click();
+      await expect(
+        page.getByLabel('I confirm these are fictional test details.'),
+      ).not.toBeChecked();
+      await expect(page.getByRole('button', { name: 'Send request' })).toBeDisabled();
+      await fits();
+      await page.waitForTimeout(2600);
+      expect(server.log.requests).toHaveLength(0);
+      expect(server.log.closes).toHaveLength(0);
+      expect(server.log.saves).toHaveLength(1);
+    },
+  );

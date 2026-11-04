@@ -154,6 +154,9 @@ export function GuidedRequest(props: Scope) {
   );
 }
 
+// How long edits must pause before the draft saves itself.
+const autosaveDelay = 2000;
+
 function Guided(scope: Scope) {
   const id = useId();
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -169,11 +172,15 @@ function Guided(scope: Scope) {
   const [sent, setSent] = useState<string | null>(null);
   const [message, setMessage] = useState('Loading your drafts…');
   const [ack, setAck] = useState(false);
+  const [autosaving, setAutosaving] = useState(false);
   const active = useRef(false);
   const flight = useRef(false);
   const task = useRef<AbortController | null>(null);
   const pendingSave = useRef<{ signature: string; commandId: string } | null>(null);
   const heading = useRef<HTMLHeadingElement | null>(null);
+  const latest = useRef<DraftFormValues | null>(null);
+  const autoFailed = useRef<DraftFormValues | null>(null);
+  const autosave = useRef<() => void>(() => undefined);
 
   const headers = useCallback(
     (json = false): Record<string, string> => ({
@@ -197,6 +204,8 @@ function Guided(scope: Scope) {
     setConflict(false);
     setSent(null);
     setAck(false);
+    setAutosaving(false);
+    autoFailed.current = null;
     pendingSave.current = null;
     setMessage(why);
   }, []);
@@ -365,7 +374,8 @@ function Guided(scope: Scope) {
     if (v.commandId !== pendingSave.current.commandId) throw new Error('mismatch');
     setDraftId(v.draft.id);
     setVersion(v.draft.version);
-    setDirty(false);
+    // An edit made while this save was in flight is newer than what was saved, so it stays unsaved.
+    if (latest.current === form) setDirty(false);
     pendingSave.current = null;
     return { id: v.draft.id, version: v.draft.version };
   };
@@ -384,6 +394,39 @@ function Guided(scope: Scope) {
       if (active.current) setBusy(false);
     }
   };
+  // Saving as you go: after a quiet period the same save runs on its own. It never runs over a conflict,
+  // a closed draft or another request in flight, never touches the acknowledgement and never sends.
+  const runAutosave = async () => {
+    if (flight.current || !form) return;
+    const started = form;
+    flight.current = true;
+    setAutosaving(true);
+    try {
+      const done = await persist();
+      if (!done) autoFailed.current = started;
+      else if (active.current) setMessage('Draft saved automatically.');
+    } catch {
+      autoFailed.current = started;
+      if (active.current)
+        setMessage(
+          'Saving could not be confirmed. Your text is kept. Use Save draft to try again.',
+        );
+    } finally {
+      flight.current = false;
+      if (active.current) setAutosaving(false);
+    }
+  };
+  useEffect(() => {
+    latest.current = form;
+    autosave.current = () => void runAutosave();
+  });
+  const isClosed = closed !== null;
+  useEffect(() => {
+    if (!dirty || !form || busy || autosaving || conflict || isClosed) return;
+    if (autoFailed.current === form || draftProblems(form).length > 0) return;
+    const timer = window.setTimeout(() => autosave.current(), autosaveDelay);
+    return () => window.clearTimeout(timer);
+  }, [dirty, form, busy, autosaving, conflict, isClosed]);
   const reload = async () => {
     if (!draftId) {
       reset('Loading your drafts…');
@@ -1215,7 +1258,9 @@ function Guided(scope: Scope) {
             <button
               type="button"
               className="button button-primary"
-              disabled={busy || !ack || !readiness.ready || problems.length > 0 || conflict}
+              disabled={
+                busy || autosaving || !ack || !readiness.ready || problems.length > 0 || conflict
+              }
               onClick={() => void send()}
             >
               {busy ? 'Working…' : 'Send request'}
@@ -1249,7 +1294,7 @@ function Guided(scope: Scope) {
           <button
             type="button"
             className="button"
-            disabled={busy || conflict || (!dirty && draftId !== null)}
+            disabled={busy || autosaving || conflict || (!dirty && draftId !== null)}
             onClick={() => void save()}
           >
             Save draft
@@ -1260,7 +1305,7 @@ function Guided(scope: Scope) {
             data-intent="destructive"
             type="button"
             className="text-link"
-            disabled={busy}
+            disabled={busy || autosaving}
             onClick={() => void discard()}
           >
             Discard this draft
@@ -1286,7 +1331,11 @@ function Guided(scope: Scope) {
           Back to your drafts
         </button>
       </div>
-      {dirty && !locked && <p>You have unsaved changes.</p>}
+      {!locked && (
+        <p aria-live="polite" lang="en" data-autosave-status>
+          {autosaving ? 'Saving…' : dirty ? 'You have unsaved changes.' : ''}
+        </p>
+      )}
     </section>
   );
 }
