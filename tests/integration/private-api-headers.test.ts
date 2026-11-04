@@ -1,0 +1,51 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+// Every customer API answers with private data, so each one must be registered in the framework's header
+// overrides in apps/web/next.config.ts: a header set only inside a handler can be replaced by the framework's
+// own defaults (root AGENTS.md: register each new private API there before checking the compiled route). This
+// reads that file and the route folders, so a new customer-* route that is not registered fails here.
+const config = readFileSync(resolve('apps/web/next.config.ts'), 'utf8');
+const rules = [...config.matchAll(/source:\s*'([^']+)',\s*headers:\s*\[([^\]]*)\]/g)].map(
+  (match) => ({ source: match[1]!, headers: match[2]! }),
+);
+const covers = (source: string, route: string) => {
+  const prefix = `/api/${route}`;
+  if (source === prefix || source.startsWith(prefix + '/')) return true;
+  const list = /^\/api\/:page\(([^)]+)\)$/.exec(source)?.[1];
+  return !!list && list.split('|').includes(route);
+};
+const routes = readdirSync(resolve('apps/web/app/api'), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name.startsWith('customer-'))
+  .map((entry) => entry.name)
+  .sort();
+// Intentionally unregistered customer-* routes, each with its reason. Nothing is exempt silently.
+const publicByDesign: Record<string, string> = {};
+
+describe('private customer APIs and the framework header overrides', () => {
+  it('finds the customer routes and the override rules it checks', () => {
+    expect(routes.length).toBeGreaterThan(20);
+    expect(routes).toContain('customer-saved-missions');
+    expect(rules.length).toBeGreaterThan(10);
+  });
+  for (const route of routes)
+    it(`${route} is registered with no-referrer and no-store`, () => {
+      if (route in publicByDesign) return;
+      const matching = rules.filter((rule) => covers(rule.source, route));
+      expect(
+        matching,
+        `${route} is missing from the private-header overrides in next.config.ts`,
+      ).not.toHaveLength(0);
+      for (const rule of matching) {
+        expect(rule.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+        expect(rule.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+      }
+    });
+  it('keeps every exemption reasoned and real', () => {
+    for (const [route, reason] of Object.entries(publicByDesign)) {
+      expect(routes).toContain(route);
+      expect(reason.length).toBeGreaterThan(20);
+    }
+  });
+});

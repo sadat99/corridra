@@ -135,6 +135,7 @@ import {
   CustomerSpecificationConfirmationService,
   customerSpecificationConfirmationEnabled,
 } from '@corridra/auth/customer-specification-confirmation';
+import { CustomerBookService, customerBooksEnabled } from '@corridra/auth/customer-books';
 import {
   CustomerAssignedMissionService,
   customerDeliveryEnabled,
@@ -289,6 +290,19 @@ function createServices() {
       authPool,
       {
         enabled: customerSpecificationConfirmationEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerBooks: new CustomerBookService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerBooksEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),

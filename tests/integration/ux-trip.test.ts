@@ -44,8 +44,8 @@ describe('the Trip switch', () => {
     expect(uxSwitchOn('CORRIDRA_UX_TRIP', { CORRIDRA_UX_TRIP: 'true' })).toBe(true);
     expect(uxSwitchOn('CORRIDRA_UX_TRIP', { CORRIDRA_UX_TRIP: '1' })).toBe(false);
   });
-  it('leaves the books and the decision card switches planned (not part of this work)', () => {
-    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_UX_BOOKS')?.kind).toBe('planned');
+  it('leaves the decision card switch planned (not part of this work); the books switch is a real one', () => {
+    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_UX_BOOKS')?.kind).toBe('flag');
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_SHARE_CARD')?.kind).toBe('planned');
   });
 });

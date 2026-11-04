@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "registerId": "current-plan-gaps",
-  "lastRecordedOn": "2026-11-03",
+  "lastRecordedOn": "2026-11-04",
   "baseline": {
     "id": "2026-11-01",
     "path": "baselines/2026-11-01/findings.json",
@@ -2791,10 +2791,10 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E",
-        "summary": "Batch E E1 built the Trip view as a fourth Room lens over the existing reviewed itinerary behind the default-off CORRIDRA_UX_TRIP switch (which needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES). PR 255 merged 3 November 2026 as 8d9ac67 (head 07eba90): all 19 checks completed without failure (18 success, CodeQL aggregate neutral; CI run 41723993619, CodeQL run 41723993557) and the Codex review of 07eba90 found nothing; two independent review passes and a delta re-review preceded it. It adds no query, schema, export, price, offer or contact and shows only the schedule-changed notice when a schedule changed. Post-merge main CI run 41728230272 was still in progress when recorded (CodeQL run 41728230199 succeeded): no success is claimed. Production deployment of 8d9ac67 is not verifiable from the recording environment; the switch is off and no signed-in or genuine acceptance is claimed. Recorded limits: about 0.1 screen margin at 390 for the longest realistic names, kanji tagged as zh because Japanese is not a supported language, and the 25 Trip words are English placeholders (D16 draft, no review claimed). The baseline statement that no consuming lens existed described 1 November main and is preserved in baseline and history.",
+        "summary": "Batch E E1 built the Trip view as a fourth Room lens over the existing reviewed itinerary behind the default-off CORRIDRA_UX_TRIP switch (which needs CORRIDRA_UX_ROAD and CORRIDRA_UX_LENSES). PR 255 merged 3 November 2026 as 8d9ac67 (head 07eba90): all 19 checks completed without failure (18 success, CodeQL aggregate neutral; CI run 41723993619, CodeQL run 41723993557) and the Codex review of 07eba90 found nothing; two independent review passes and a delta re-review preceded it. It adds no query, schema, export, price, offer or contact and shows only the schedule-changed notice when a schedule changed. Post-merge main CI run 41728230272 and CodeQL run 41728230199 both completed with success (re-read through the REST API on 4 November 2026). Production deployment of 8d9ac67 is not verifiable from the recording environment; the switch is off and no signed-in or genuine acceptance is claimed. Recorded limits: about 0.1 screen margin at 390 for the longest realistic names, kanji tagged as zh because Japanese is not a supported language, and the 25 Trip words are English placeholders (D16 draft, no review claimed). The baseline statement that no consuming lens existed described 1 November main and is preserved in baseline and history.",
         "evidenceRevision": "07eba90027304a06d0fb4fa2078cc002f0f60a5e",
-        "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "evidenceObservedOn": "2026-11-04",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
@@ -2831,7 +2831,7 @@
         "prerequisites": [
           "New explicit owner scope/approval before reopening; retain the original boundary.",
           "ADR076 Trip view accepted on 3 November 2026 under the owner direction to take over Batch E and ADR-076; enabling CORRIDRA_UX_TRIP stays an owner action.",
-          "PR 255 is merged (8d9ac67); post-merge main CI run 41728230272 must complete, automatic deployment must be verified from an environment that can see the Corridra project, and activation and genuine signed-in user acceptance remain separate owner steps."
+          "PR 255 is merged (8d9ac67); post-merge main CI run 41728230272 and CodeQL run 41728230199 succeeded; automatic deployment must still be verified from an environment that can see the Corridra project, and activation and genuine signed-in user acceptance remain separate owner steps."
         ],
         "closureEvidence": []
       },
@@ -2859,6 +2859,14 @@
           "evidenceRevision": "07eba90027304a06d0fb4fa2078cc002f0f60a5e",
           "disposition": "OPEN",
           "note": "PR 255 merged as squash 8d9ac67 (head 07eba90) after 19 checks completed without failure (18 success, CodeQL aggregate neutral) and a Codex review with no findings, preceded by two independent review passes and a delta re-review; should-fix items (scroll budget, card gap, lang on Han text and the English lens word, date styling) were fixed. Two CI failures in the PR's own new tests (keyboard race on 1991da1, measure-before-render race on 3cc7fa8) were root-caused with a deliberately slow mocked report and fixed in 07eba90 by waiting on exact rendered state. Post-merge main CI 41728230272 was in progress when recorded. Implementation stays IMPLEMENTED behind a default-off switch; verification stays PARTIAL (exact-head CI passed on the merged build; live and signed-in acceptance absent); deployment stays UNKNOWN (not verifiable here); activation UNKNOWN and off; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-034-H004",
+          "recordedOn": "2026-11-04",
+          "type": "POST_MERGE_CI_CONFIRMED",
+          "evidenceRevision": "8d9ac67d9b64a753ddea11f7e30d738631ec256b",
+          "disposition": "OPEN",
+          "note": "Post-merge main CI run 41728230272 on 8d9ac67 completed with success, and CodeQL run 41728230199 succeeded (REST API, re-read on 4 November 2026); the earlier record said the CI run was still in progress. Production deployment of 8d9ac67 is still NOT verifiable from the recording environment (the connected Vercel account lacks the Corridra project and the host redirects to c.obsidianglobal.studio, which the proxy blocks). States unchanged: implementation IMPLEMENTED, verification PARTIAL, deployment and activation UNKNOWN, approval APPROVED; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2a-books-backend.json."
         }
       ]
     },
@@ -2873,20 +2881,23 @@
         "evidenceAndBoundary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission. Books need their own allowed contents/disclosure decision."
       },
       "current": {
-        "disposition": "OWNER_DEPENDENT",
-        "scope": "OWNER_DEPENDENT_NOT_REOPENED",
-        "summary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission. Books need their own allowed contents/disclosure decision.",
-        "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
-        "evidenceObservedOn": "2026-11-01",
-        "lastRecordedOn": "2026-11-02",
+        "disposition": "OPEN",
+        "scope": "OWNER_APPROVED_BATCH_E",
+        "summary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission; CLIENT_PROGRESS.allow_export is untouched and stays false. ADR076 items 1-3 and 6 (accepted under the owner's 3 November direction to take over Batch E and ADR-076 with full pre-approval; text applied on 4 November 2026) give the books their own disclosure contract. Batch E E2a built the backend in draft PR 257 (local head d3b190e; remote head 941dded when recorded; unmerged) behind the default-off CORRIDRA_UX_BOOKS switch: SQL function customer.saved_mission_book builds a Trip or Supplier projection key by key from the saved report the signed-in owner can already read, through the same ownership, revocation, expiry and retention gates; the PDF is rendered inside the transaction before commit and never stored; one immutable ledger row (digest of the projection and time, no content) and one delivery.book.generated event (no saved-mission id) record each new generation; the same command id returns the same record, a changed source is refused (409) and 30 new generations per hour per customer and mission are allowed (then 429). The download route is POST-only and answers 503 until the switch is on and the books database module is installed; that module is NOT installed in production (the install report would move from `customer_book_migrations: not installed` to `1 applied` only after an owner-approved protected run, which has not been requested). No download panel exists yet (E2b). Local receipts only (books set 73 passed twice, PDF regression 23, saved-mission regression 70 twice, wide switch/UX set 582, typecheck, lint, format, docs, build exit 0); a full integration run had 4 failures that also fail on unmodified main. Frozen-head CI, CodeQL and the Codex review are pending and not claimed. Limits: the PDF fonts lack Arabic, Thai, Devanagari and emoji (refused with an honest 422 UNSUPPORTED_TEXT), the PDF is untagged, and the on-screen mission view still prints the raw country code.",
+        "evidenceRevision": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+        "evidenceObservedOn": "2026-11-04",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
-            "state": "MISSING",
-            "evidence": ["baselines/2026-11-01/REPORT.md#gap-035"]
+            "state": "PARTIAL",
+            "evidence": [
+              "baselines/2026-11-01/REPORT.md#gap-035",
+              "verification/2026-11-04-batch-e2a-books-backend.json"
+            ]
           },
           "verification": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "PARTIAL",
+            "evidence": ["verification/2026-11-04-batch-e2a-books-backend.json"]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -2897,8 +2908,8 @@
             "evidence": []
           },
           "approval": {
-            "state": "UNKNOWN",
-            "evidence": []
+            "state": "APPROVED",
+            "evidence": ["../../adr/0076-trip-books-and-decision-sharing.md"]
           },
           "commercialOperation": {
             "state": "UNKNOWN",
@@ -2907,7 +2918,10 @@
         },
         "closureAcceptance": "Obtain a separate book-export disclosure contract and prove only permitted content can be exported.",
         "prerequisites": [
-          "New explicit owner scope/approval before reopening; retain the original boundary."
+          "Owner scope for the books is given by ADR076 items 1-3 and 6 (accepted under the owner's 3 November direction); retain the original boundary: CLIENT_PROGRESS export stays prohibited and the books use their own purpose.",
+          "Draft PR 257 needs green exact-head CI and CodeQL, a clean Codex review and the owner's merge command, then verified deployment.",
+          "The books database module is installed only by an owner-approved protected install run; enabling CORRIDRA_UX_BOOKS is a separate owner action; the download panel (E2b) must be built and proved in browsers before customers can use the feature.",
+          "Adding fonts for scripts the PDF fonts lack is a separate owner and asset decision."
         ],
         "closureEvidence": []
       },
@@ -2919,6 +2933,14 @@
           "evidenceRevision": "1e9104a4ac43fa0e66c1ce0ec4929f0f4537bfa2",
           "disposition": "OWNER_DEPENDENT",
           "note": "Imported the dated audit unchanged in meaning. No product progress, closure or new approval was inferred."
+        },
+        {
+          "eventId": "GAP-035-H002",
+          "recordedOn": "2026-11-04",
+          "type": "OWNER_SCOPE_APPROVED_AND_BACKEND_IMPLEMENTED",
+          "evidenceRevision": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+          "disposition": "OPEN",
+          "note": "Disposition moves from OWNER_DEPENDENT to OPEN: ADR076 items 1-3 and 6 were accepted for the Trip Book and Supplier Book under the owner's 3 November direction to take over Batch E and ADR-076 with full pre-approval; item 1's 'owner/admin' is recorded as the signed-in customer who owns the active saved mission (a saved mission has no workspace role), the Supplier Book carries the mission title as heading, and no step-up MFA applies to customer routes. The backend is implemented in draft PR 257 (commits bacb384, 9521e0f, 941dded, 5a015a6, ac32e34, d3b190e) behind the default-off CORRIDRA_UX_BOOKS switch with an uninstalled database module. Implementation moves from MISSING to PARTIAL (backend built, download panel E2b not built); verification moves from UNKNOWN to PARTIAL on local receipts only (failing-before then passing runs for the PDF writer, SQL function and route; final books set 5 files 73 passed twice at d3b190e; PDF regression 23 passed; saved-mission regression 70 passed twice; wide switch/UX set 582 passed; typecheck, lint, format, docs and build exit 0). A full integration run at 941dded had 4 failing files that also fail on unmodified main 4456042. Two independent reviews found no blocking defect. Frozen-head CI, CodeQL and the Codex review are pending and not claimed; Playwright suites were not run (no UI). Deployment and activation stay UNKNOWN, approval is APPROVED for items 1-3 and 6, commercial operation UNKNOWN; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2a-books-backend.json."
         }
       ]
     },
@@ -3373,21 +3395,25 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E_PARTIAL",
-        "summary": "ADR076 (3 November 2026) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. Half of this finding, the status link (E3a), is built in draft PR 256 (local head b65cde5; the remote head was 7d3bbe0 when recorded): the first request email opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>; the link grants no authority; a signed-out visitor returns through the ADR067 exact-path allowlist, which also applies when the status-link switch is on. No migration, table or installer run; mail words, recipient, transport and idempotency key are unchanged. Local receipts only (status-link tests 48/48 after a failing-before run, 282/282 across 9 related files, typecheck, lint, format, docs 70 and build exit 0); frozen-head CI, CodeQL and the Codex review are pending and not claimed. PR 256 is unmerged, nothing is deployed or activated. The decision card (CORRIDRA_SHARE_CARD, E3b) is not built and stays PROPOSED. The baseline statement that planned settings were reserved is preserved in baseline and history.",
-        "evidenceRevision": "b65cde5e1e59fa538b458c3fcfa12c322dc68dff",
-        "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "summary": "ADR076 (3 November 2026) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. Half of this finding, the status link (E3a), is built and merged: PR 256 merged 3 November 2026 23:06:34Z as squash 4456042 (head 7d304c5) after 19 checks without failure (18 success, CodeQL neutral), a clean Codex review and an independent security review with no blocking or should-fix item; post-merge main CI run 41736478595 and CodeQL run 41736478634 succeeded (REST API, 4 November). The first request email opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>; the link grants no authority; a signed-out visitor returns through the ADR067 exact-path allowlist, which also applies when the status-link switch is on; the final gating commit b65cde5 made the off path, including Pulse-only, byte-identical to main. No migration, table or installer run; mail words, recipient, transport and idempotency key are unchanged. Production deployment of 4456042 is not verifiable from the recording environment, the switch is off and no signed-in or mailbox acceptance is claimed. The decision card (CORRIDRA_SHARE_CARD, E3b) is not built and stays PROPOSED. The baseline statement that planned settings were reserved is preserved in baseline and history.",
+        "evidenceRevision": "4456042b62617b6d3bb3151fd8c651c72a164988",
+        "evidenceObservedOn": "2026-11-04",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "PARTIAL",
             "evidence": [
               "baselines/2026-11-01/REPORT.md#gap-041",
-              "verification/2026-11-03-batch-e3a-status-link.json"
+              "verification/2026-11-03-batch-e3a-status-link.json",
+              "verification/2026-11-04-batch-e2a-books-backend.json"
             ]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-03-batch-e3a-status-link.json"]
+            "evidence": [
+              "verification/2026-11-03-batch-e3a-status-link.json",
+              "verification/2026-11-04-batch-e2a-books-backend.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -3409,7 +3435,7 @@
         "closureAcceptance": "Obtain approved decision-card/status-link disclosure contracts and prove scope, expiry, revocation and recipient access.",
         "prerequisites": [
           "New explicit owner scope/approval before reopening; retain the original boundary.",
-          "Signed-in emailed status link accepted in ADR076 item 5 and built in draft PR 256 (E3a) with the switch default off; it needs green exact-head CI and CodeQL, a clean Codex review and the owner merge command, then verified deployment. Enabling CORRIDRA_STATUS_LINK stays an owner action.",
+          "Signed-in emailed status link accepted in ADR076 item 5 and merged in PR 256 (E3a) as 4456042 with the switch default off; automatic deployment must be verified from an environment that can see the Corridra project, and enabling CORRIDRA_STATUS_LINK and genuine mailbox and signed-in acceptance stay owner steps.",
           "Decision card remains PROPOSED: the owner must accept its field map and expiry before E3b; it also needs a migration and the protected installer."
         ],
         "closureEvidence": []
@@ -3438,6 +3464,14 @@
           "evidenceRevision": "b65cde5e1e59fa538b458c3fcfa12c322dc68dff",
           "disposition": "OPEN",
           "note": "E3a (the signed-in status link) is implemented in draft PR 256 (commits 5861847 tests first and flag, 7d3bbe0 wiring, b65cde5 Room sign-in return gated on the status-link switch only). Implementation moves from MISSING to PARTIAL because only the status-link half exists; the decision card (E3b) is not built. Verification is PARTIAL on local receipts only (status-link red 21 failed | 10 passed then green 31/31; flow red 2 failed | 13 passed then mail-flow 37/37; gating red 1 failed | 47 passed then green 48/48; 9 files 282/282; typecheck, lint, format, docs 70, build exit 0); the PR is unmerged and frozen-head CI, CodeQL and the Codex review are pending. Side effect tested: with the status link on and Pulse off, /account/move and /account/notifications also become valid next= targets (navigation only; each page re-checks its own switch and sign-in). Not deployed, not activated, nothing RESOLVED; both halves default off. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-041-H004",
+          "recordedOn": "2026-11-04",
+          "type": "STATUS_LINK_HALF_MERGED",
+          "evidenceRevision": "4456042b62617b6d3bb3151fd8c651c72a164988",
+          "disposition": "OPEN",
+          "note": "PR 256 (E3a signed-in status link) merged 3 November 2026 23:06:34Z as squash 4456042 (head 7d304c5): 19 checks without failure (18 success, CodeQL neutral), clean Codex review and an independent security review with no blocking or should-fix item, as relayed by the conductor; the final gating commit b65cde5 made the off path byte-identical to main. Post-merge main CI run 41736478595 and CodeQL run 41736478634 succeeded (REST API, re-read on 4 November 2026). Implementation stays PARTIAL (status-link half merged behind a default-off switch; the decision card E3b is not built). Verification stays PARTIAL: exact-head CI passed on the merged build, but no live, signed-in or mailbox acceptance exists and the real-server redirect check remains builder-reported. Deployment stays UNKNOWN (not verifiable from the recording environment), activation UNKNOWN and off, approval PARTIAL; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2a-books-backend.json and verification/2026-11-03-batch-e3a-status-link.json."
         }
       ]
     },

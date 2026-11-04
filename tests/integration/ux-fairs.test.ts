@@ -144,9 +144,9 @@ describe('the countdown', () => {
 });
 
 describe('the switch and every switch-off path', () => {
-  it('is a real owner switch, and the books switch is still only planned', () => {
+  it('is a real owner switch, as is the books switch', () => {
     expect(switchRegistry.find((s) => s.name === 'CORRIDRA_UX_FAIRS')?.kind).toBe('flag');
-    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_UX_BOOKS')?.kind).toBe('planned');
+    expect(switchRegistry.find((s) => s.name === 'CORRIDRA_UX_BOOKS')?.kind).toBe('flag');
   });
   it('both pages answer not found with the switch off, before they read anything', () => {
     for (const path of ['apps/web/app/fairs/page.tsx', 'apps/web/app/fairs/[slug]/page.tsx']) {
