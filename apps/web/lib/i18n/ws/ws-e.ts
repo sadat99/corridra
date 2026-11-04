@@ -3,7 +3,9 @@ import type { Locale } from '../locales';
 // WS-E message block (commercial readiness program, D16 and 3.3). Only WS-E edits this file.
 // Keys start with "wse.". English is the source; every other language needs the same keys. The
 // translations are drafts until a native reviewer is recorded in docs/qa/2026-10-31/i18n-review.md.
-// Privacy and consent lines stay in English.
+// Privacy and consent lines stay in English. The three team group words Delivery, Outcomes and All
+// tools and settings are English only at launch: the other languages are empty, so the lookup falls
+// back to English and the sidebar marks those words lang="en" (open language gap, S4 record).
 export const wsEEn = {
   'wse.team.nav': 'Team sections',
   'wse.team.today': 'Today',
@@ -16,6 +18,9 @@ export const wsEEn = {
   'wse.team.evidence': 'Evidence',
   'wse.team.settings': 'Settings',
   'wse.team.owner': 'Owner: what is on and off',
+  'wse.team.delivery': 'Delivery',
+  'wse.team.outcomes': 'Outcomes',
+  'wse.team.allTools': 'All tools and settings',
   'wse.shell.team': 'Team workspace',
   'wse.shell.customer': 'Your account',
   'wse.shell.contributor': 'Your tasks',
@@ -51,6 +56,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': 'প্রমাণ',
     'wse.team.settings': 'সেটিংস',
     'wse.team.owner': 'মালিক: কী চালু আর কী বন্ধ',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': 'দলের ওয়ার্কস্পেস',
     'wse.shell.customer': 'আপনার অ্যাকাউন্ট',
     'wse.shell.contributor': 'আপনার কাজ',
@@ -84,6 +92,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': '证据',
     'wse.team.settings': '设置',
     'wse.team.owner': '所有者：哪些已开启，哪些已关闭',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': '团队工作区',
     'wse.shell.customer': '您的账户',
     'wse.shell.contributor': '您的任务',
@@ -117,6 +128,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': 'Evidencias',
     'wse.team.settings': 'Ajustes',
     'wse.team.owner': 'Propietario: qué está activado y qué no',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': 'Espacio del equipo',
     'wse.shell.customer': 'Tu cuenta',
     'wse.shell.contributor': 'Tus tareas',
@@ -150,6 +164,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': 'الأدلة',
     'wse.team.settings': 'الإعدادات',
     'wse.team.owner': 'المالك: ما هو مفعّل وما هو متوقف',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': 'مساحة عمل الفريق',
     'wse.shell.customer': 'حسابك',
     'wse.shell.contributor': 'مهامك',
@@ -183,6 +200,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': 'Preuves',
     'wse.team.settings': 'Réglages',
     'wse.team.owner': 'Propriétaire : ce qui est activé ou non',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': 'Espace de l’équipe',
     'wse.shell.customer': 'Votre compte',
     'wse.shell.contributor': 'Vos tâches',
@@ -216,6 +236,9 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.team.evidence': 'Nachweise',
     'wse.team.settings': 'Einstellungen',
     'wse.team.owner': 'Inhaber: was ein- und ausgeschaltet ist',
+    'wse.team.delivery': '',
+    'wse.team.outcomes': '',
+    'wse.team.allTools': '',
     'wse.shell.team': 'Team-Arbeitsbereich',
     'wse.shell.customer': 'Ihr Konto',
     'wse.shell.contributor': 'Ihre Aufgaben',

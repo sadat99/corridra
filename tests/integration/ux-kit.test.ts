@@ -9,7 +9,6 @@ import {
   teamNavigation,
   teamSectionHref,
   teamSectionTitle,
-  teamSettingsSections,
   teamSidebarShown,
 } from '../../apps/web/lib/ux/shells';
 import { publishTeamContext, readTeamContext } from '../../apps/web/lib/ux/team-context';
@@ -144,32 +143,25 @@ describe('role shells (D14)', () => {
     expect(teamSidebarShown('/operator/signin')).toBe(false);
     expect(teamSidebarShown('/operator/research')).toBe(true);
   });
-  test('the sidebar is the D14 list, in order, and every original section stays reachable', () => {
+  test('the sidebar is the Signal Desk map, in order, and every original section stays reachable', () => {
     expect(teamNavigation.map((item) => item.key)).toEqual([
       'today',
       'missions',
       'companies',
-      'meetings',
-      'quotes',
-      'reports',
-      'network',
-      'evidence',
+      'delivery',
+      'outcomes',
+      'tools',
     ]);
-    const reachable = new Set<string>([
-      ...teamNavigation.flatMap((item) => (item.section ? [item.section] : [])),
-      ...teamSettingsSections,
-    ]);
+    const reachable = new Set<string>(teamNavigation.flatMap((item) => item.sections ?? []));
     for (const section of workspaceSections)
       expect(reachable.has(section.id), section.id).toBe(true);
     expect(teamNavigation.map((item) => translate('en', item.label))).toEqual([
       'Today',
       'Missions',
       'Companies',
-      'Meetings',
-      'Quotes and billing',
-      'Reports',
-      'Network',
-      'Evidence',
+      'Delivery',
+      'Outcomes',
+      'All tools and settings',
     ]);
   });
   test('links keep the chosen workspace and fall back to # links when section addresses are off', () => {
@@ -183,19 +175,20 @@ describe('role shells (D14)', () => {
     expect(teamSectionHref(undefined, true, '')).toBe('/operator');
     expect(teamSectionHref('workspace-evidence', true, 'not-a-uuid')).toBe('/operator/evidence');
   });
-  test('the current item follows the address; a # part wins; the owner page is Settings', () => {
+  test('the current item follows the address; a # part wins; the owner page is All tools and settings', () => {
     const at = (path: string, hash = '') =>
       currentTeamItem(currentTeamSection(path, hash, sectionForSlug));
     expect(at('/operator')).toBe('today');
     expect(at('/operator/missions')).toBe('missions');
     expect(at('/operator/research')).toBe('companies');
-    expect(at('/operator/commercial')).toBe('quotes');
-    expect(at('/operator/sources')).toBe('evidence');
-    expect(at('/operator/audit')).toBe('settings');
-    expect(at('/operator/owner')).toBe('settings');
+    expect(at('/operator/commercial')).toBe('missions');
+    expect(at('/operator/sources')).toBe('companies');
+    expect(at('/operator/audit')).toBe('tools');
+    expect(at('/operator/owner')).toBe('tools');
     expect(at('/operator/missions/abc')).toBe('missions');
-    expect(at('/operator', '#workspace-delivery')).toBe('reports');
-    expect(at('/operator/missions', '#workspace-network')).toBe('network');
+    expect(at('/operator', '#workspace-delivery')).toBe('delivery');
+    expect(at('/operator/missions', '#workspace-network')).toBe('delivery');
+    expect(at('/operator/dashboard')).toBe('outcomes');
     expect(at('/operator', '#workspace-navigation')).toBe('today');
   });
   test('each team page has its own title', () => {
@@ -335,13 +328,17 @@ describe('language and direction before paint (CQ-10, CQ-48)', () => {
 describe('WS-E messages (D16, D17)', () => {
   test('every key exists in all seven languages, with no em dash', () => {
     const keys = Object.keys(wsEEn);
+    const englishOnly = new Set(['wse.team.delivery', 'wse.team.outcomes', 'wse.team.allTools']);
     expect(keys.length).toBeGreaterThan(20);
     for (const key of keys) expect(key.startsWith('wse.'), key).toBe(true);
     for (const locale of localeCodes.filter((code) => code !== 'en')) {
       const block = wsE[locale as Exclude<(typeof localeCodes)[number], 'en'>];
       expect(Object.keys(block).sort(), locale).toEqual([...keys].sort());
-      for (const value of Object.values(block)) {
-        expect(value.trim().length).toBeGreaterThan(0);
+      for (const [key, value] of Object.entries(block)) {
+        // Open language gap: the three team group words are English only at launch. Empty falls back
+        // to English and the sidebar marks the word lang="en". Any other key needs real text.
+        if (englishOnly.has(key)) expect(value, key + ' ' + locale).toBe('');
+        else expect(value.trim().length, key + ' ' + locale).toBeGreaterThan(0);
         expect(value).not.toMatch(/—/);
       }
     }
