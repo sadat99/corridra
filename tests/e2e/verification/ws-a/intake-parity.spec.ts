@@ -106,7 +106,9 @@ async function capture(page: Page) {
 }
 
 for (const entry of jobs) {
-  test(`${entry.job}: opens from its link and sends every field it captures`, async ({ page }) => {
+  test(`P-01 P-02 P-05 ${entry.job}: opens from its link and sends every field it captures`, async ({
+    page,
+  }) => {
     const sentRequest = await capture(page);
     await page.goto(`/plan?job=${entry.job}&companyCountry=BD&marketCode=CN`);
     // Deep-link job selection: the job is chosen before anything is typed.
@@ -223,10 +225,10 @@ for (const entry of jobs) {
   });
 }
 
-test('a guest draft survives a reload and resumes on the same step with its fields', async ({
+test('P-04 a guest draft survives a reload and resumes on the same step with its fields, and nothing is sent before Submit', async ({
   page,
 }) => {
-  await capture(page);
+  const sentRequest = await capture(page);
   await page.goto('/plan?job=sourcing&companyCountry=BD&marketCode=CN');
   await next(page).click();
   await next(page).click();
@@ -246,9 +248,10 @@ test('a guest draft survives a reload and resumes on the same step with its fiel
   await expect(page.locator('#brief-unit')).toHaveValue('kg');
   const draft = await page.evaluate(() => sessionStorage.getItem('corridra-mission-draft'));
   expect(JSON.parse(draft!)).toMatchObject({ version: 2, step: 2 });
+  expect(sentRequest()).toBeUndefined();
 });
 
-test('a quantity without a unit and a partial budget are refused on their own fields', async ({
+test('P-02 a quantity without a unit and a partial budget are refused on their own fields', async ({
   page,
 }) => {
   await page.goto('/plan?job=sourcing&companyCountry=BD&marketCode=CN');
@@ -268,7 +271,7 @@ test('a quantity without a unit and a partial budget are refused on their own fi
   await expect(page.locator('#brief-budgetAmount')).toBeVisible();
 });
 
-test('an old or unknown job link opens the plan with no job chosen', async ({ page }) => {
+test('P-05 an old or unknown job link opens the plan with no job chosen', async ({ page }) => {
   for (const path of ['/plan', '/plan?job=not_a_job', '/plan?job=']) {
     await page.goto(path);
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(

@@ -1,0 +1,37 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S3 Public, Intake and Organise: spec pack 1 pins P-03, P-04, P-06, P-07 and P-id names for P-01, P-02, P-05",
+  "kind": "Test-only. No application code changed.",
+  "findings": [],
+  "findingsNote": "No gap register entry is created or changed.",
+  "status": "Built on branch revamp/public over main c8aefb8. CI on the exact pushed head is the verifier; see the pull request.",
+  "base": "c8aefb8",
+  "specSource": "docs/revamp/specs/public-home.md as in PR 266 (not yet on main when written)",
+  "newFilesOnly": [
+    "tests/e2e/verification/ws-a/old-addresses.spec.ts (Playwright, P-06 and P-07)",
+    "tests/integration/revamp-intake-pins.test.ts (vitest, P-03 and the P-04 account-draft traceability)"
+  ],
+  "editedOwnFiles": [
+    "tests/e2e/verification/ws-a/intake-parity.spec.ts: titles now carry P-01, P-02, P-04 and P-05; the device-draft test also asserts nothing is sent to /api/intake before Submit."
+  ],
+  "map": {
+    "P-01 P-02 P-05": "intake-parity.spec.ts, one test per job per width (deep link selects the job, every field sent, errors inline), plus the old or unknown job link test",
+    "P-03": "revamp-intake-pins.test.ts: sample notice 'synthetic-intake-2026-10-05-v1' and real notice 'real-intake-2026-10-21-v1' follow the data mode, and a missing acknowledgement is refused in both. The form's own consent box is pinned in intake-parity.spec.ts (no send until ticked)",
+    "P-04 device draft": "intake-parity.spec.ts: draft survives reload on the same step with its fields; nothing is sent before Submit",
+    "P-04 account draft": "Already covered by tests/operator/v3-guided-request-ui.spec.ts and tests/integration/customer-mission-drafts.test.ts (save as new version, reload recovery, stable command id on retry, send only from review, read-only after send, own drafts only). revamp-intake-pins.test.ts fails if any of 11 named tests is renamed or removed. No new account-draft behaviour test was written.",
+    "P-06": "old-addresses.spec.ts: /sell, /source, /machinery, /trade-missions, /business-trips, /enter-market answer 200 and keep their request link (buyers, sourcing, machinery_procurement, delegations, business_trips, market_entry) which opens /plan with that job; /corridors and every /corridors/<corridor> answer and carry the BD to market countries into the plan; unknown corridor 404; /plan#receipt-check opens the receipt check",
+    "P-07": "old-addresses.spec.ts: home page links /plan?job=buyers, sourcing, delegations"
+  },
+  "findingsForConductor": [
+    "P-04 says both draft paths 'save each answer'. The device draft does (every change is stored in the tab). The account draft saves only when the person presses Save draft, and warns before leaving with unsaved changes. The tests pin what exists; the spec line is wrong for the account path or the product must change.",
+    "/fairs and /fairs/<slug> answer 404 when CORRIDRA_UX_FAIRS is off (the verification server default). That is pinned as 'plain not found, never an error'. Their on-behaviour (links to /plan?job=trade_fairs) is not pinned: the verification server does not set the switch and I may not change it."
+  ],
+  "receipts": {
+    "vitest": "revamp-intake-pins.test.ts 14 passed",
+    "playwright": "old-addresses.spec.ts and intake-parity.spec.ts on a production build and local PostgreSQL 16: 96 passed (3.3m) across w1280, w768, w390",
+    "format": "exit 0",
+    "lint": "exit 0",
+    "typecheck": "exit 0"
+  },
+  "notRun": ["Full integration and operator suites, UX gate (CI runs them on the pushed head)."]
+}
