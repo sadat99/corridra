@@ -27,6 +27,29 @@ describe('team sidebar before the role is known', () => {
   });
 });
 
+describe('team sidebar sections while the role is unknown', () => {
+  const link = (html: string, word: string) => html.includes('href="/operator/' + word + '"');
+  test('lists only what every role may open, and none of the restricted sections', async () => {
+    const TeamSidebar = await load();
+    const html = renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
+    for (const word of ['missions', 'authenticator']) expect(link(html, word), word).toBe(true);
+    for (const word of [
+      'controls',
+      'audit',
+      'settings',
+      'control-center',
+      'operations',
+      'dashboard',
+      'health',
+      'readiness',
+      'assistance',
+      'network',
+    ]) {
+      expect(link(html, word), word).toBe(false);
+    }
+  });
+});
+
 describe('team sidebar once the role is known', () => {
   const renderAs = async (role: string) => {
     vi.resetModules();
