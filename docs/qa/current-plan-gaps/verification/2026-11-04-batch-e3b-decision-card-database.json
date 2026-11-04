@@ -21,7 +21,15 @@
       },
       {
         "sha": "54af3c4",
-        "note": "fixes after the adversarial review: lifetime is interval '168 hours' (not '7 days', DST), 30 new cards per hour, state lists live cards (ACTIVE and UNAVAILABLE) first and always, comments recording the two accepted behaviours below, a sleep-based expiry test replaced, eight missing tests added; the released-file hash in the upgrade test is c525914355534506068902c048ba051f50e503f64a5af903e8c0133954425e04, so any later SQL edit after the owner install needs a new file"
+        "note": "fixes after the adversarial review: lifetime is interval '168 hours' (not '7 days', DST), 30 new cards per hour, state lists live cards (ACTIVE and UNAVAILABLE) first and always, comments recording the two accepted behaviours below, a sleep-based expiry test replaced, eight missing tests added; the released-file hash in the upgrade test is 0772e61db198d385b0d1028ea217cba32b2e8999ddf0cd3cbba8ecdac158c469 (after the Codex race fix 27eb3ee; it replaced c525914355534506068902c048ba051f50e503f64a5af903e8c0133954425e04 from 54af3c4), so any later SQL edit after the owner install needs a new file"
+      },
+      {
+        "sha": "61af6e3",
+        "note": "records for the ADR acceptance and the database module (the scribe commit); PR 261 head when it was opened"
+      },
+      {
+        "sha": "27eb3ee",
+        "note": "fix after Codex P2 on PR 261 (read race): app.read_decision_card now re-validates after the open-counter write, which can block on another transaction's row lock: withdrawal, the live digest and the wall-clock expiry least(card expiry, resolved source expiry) are re-checked and any change returns the uniform unknown and rolls the count back (a nested block raising a private SQLSTATE handled inside the function); the valid path resolves twice; released-file hash updated; four new tests with no sleeps (ordering by an owner connection holding FOR UPDATE on the counter row and a bounded poll of pg_stat_activity for wait_event_type Lock): undisturbed read still OPEN with the same six fields and the counter plus one, withdrawn while waiting, time ran out while waiting, a decision field changed while waiting; three of the four failed before the change (the race reproduced); cards suite 57 of 57 and upgrade suite 10 of 10; mutation checks removing each re-validation one at a time each failed exactly the matching case; ten neighbouring suites together 181 of 181; pnpm typecheck, lint, format:check, test:docs, v3-context verify and authority check exit 0; the owner connection used SET LOCAL session_replication_role = replica for the test mutations (an ALTER TABLE DISABLE TRIGGER would deadlock behind the blocked reader). Not run after this commit: a full pnpm test:integration (the previous full run had only the four known environment failures) and any browser suite. Reported by the builder; receipts are local work/ paths not kept in the repo."
       }
     ]
   },
