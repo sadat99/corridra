@@ -100,6 +100,10 @@ export class CustomerSessionBoundary {
     ) => Promise<T>,
     expectedSubject?: string,
     expectedIssuer?: string,
+    // Runs once the fresh provider session is verified and before this request takes any pool connection, so work
+    // that needs a connection of its own (a rate limit) cannot wait on one this request already holds. It receives
+    // the verified issuer and subject, never the browser's. A refusal from it ends the request.
+    afterIdentity?: (identity: { issuer: string; subject: string }) => Promise<void>,
   ): Promise<T> {
     if (
       !this.options.enabled ||
@@ -146,6 +150,7 @@ export class CustomerSessionBoundary {
       (expectedIssuer !== undefined && expectedIssuer !== issuer)
     )
       throw new DomainError('Your account changed. Reload before continuing.', 409);
+    await afterIdentity?.({ issuer, subject: session.subject });
     await Promise.all([
       assertRestrictedPool(this.runtime),
       assertRestrictedPool(this.auth, 'corridra_auth'),

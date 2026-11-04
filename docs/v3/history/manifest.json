@@ -317,6 +317,14 @@
       "bytes": 11528,
       "sha256": "234aa673b9e6148b9c3ea841e41ebb86fdcfb80b19a45279471d68c32af42488",
       "meaning": "Exact active ledger at de8c66a (the PR 260 merge, 4 Nov), before the decision card ADR acceptance and database module (E3b steps 1 and 2) were recorded, including the PR 259 and G residual bullets and the next-action list that said ADR-076 item 4 was PROPOSED and PR 260 was still to be opened. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "a1dbbc9af6e15470cddced85b834ac197bf27c36",
+      "archive": "docs/v3/history/ledger-before-e3b-service-routes-records-2026-11-04.md",
+      "bytes": 11515,
+      "sha256": "df7644b44794b3afb61085808f937dd776e3d1d10c497fb68df27934acae54f7",
+      "meaning": "Exact active ledger at a1dbbc9 (the PR 261 merge, 4 Nov), before the PR 261 main result and the decision card service and routes (E3b step 3) were recorded, including the E3b bullet that said the branch was not pushed and the next-action list that said to open the PR for steps 1 and 2, and the PR 255, 257, 258, 259 and 260 bullets later condensed. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

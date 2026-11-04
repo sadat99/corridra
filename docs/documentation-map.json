@@ -1389,6 +1389,11 @@
       "use": "Exact hashed ledger at de8c66a (the PR 260 merge), before the decision card ADR acceptance and database module (E3b steps 1 and 2) were recorded; preserves the wording condensed or superseded in the current ledger; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-e3b-service-routes-records-2026-11-04.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at a1dbbc9 (the PR 261 merge), before the PR 261 main result and the decision card service and routes (E3b step 3) were recorded; preserves the wording condensed or superseded in the current ledger; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

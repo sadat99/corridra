@@ -183,8 +183,8 @@ describe('the owner switch list', () => {
     expect(stateOf({ CORRIDRA_STATUS_LINK: '1' })).toBe('Off');
   });
 
-  it('leaves the decision card planned; the books switch is a real one', () => {
+  it('the books switch and the decision card switch are both real ones', () => {
     expect(entry('CORRIDRA_UX_BOOKS').kind).toBe('flag');
-    expect(entry('CORRIDRA_SHARE_CARD').kind).toBe('planned');
+    expect(entry('CORRIDRA_SHARE_CARD').kind).toBe('flag');
   });
 });

@@ -219,3 +219,10 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** main push CI run 41775257221 (PR258 merge, 4f2870e), attempt 1: only job `ux (2)` failed. `pnpm db:prepare-local` ended with `Error: read ECONNRESET` (pg-pool, `packages/db/src/migrate.ts`) at 04:48:02Z, two seconds after the runner's Postgres container reported started and before any test ran. `validate` was red only as the roll-up. One re-run of the failed jobs passed (attempt 2 success).
 - **Cause:** inferred (a database readiness race on a fresh runner container), not proven.
 - **If it recurs:** reproduce the pattern first. Only then add a short readiness wait (a `pg_isready` loop) in the workflow. Do not change tests for it.
+
+### KI-36 Two parallel runs shared one local database and one lost its results (4 November 2026)
+
+- **Observed:** on the decision card database work (E3b, 4 November) two builders ran in parallel and both used the KI-15 sandbox at `/tmp/pg54329` and port 54329. One changed the other's password, stopped its server and deleted its data directory, so that builder's first test results were lost and no result came from it.
+- **Cause:** a fixed data directory and a fixed port shared by two processes; KI-15 describes one run, not two.
+- **Fix used by the later runs:** give each run a private network namespace (`unshare -n`, loopback only; the container has no `ip` binary, so raise loopback with a small Python ioctl script), a data directory unique to that run, and port 54329 inside the namespace (the tests need that port). Run every database test through `nsenter -t <pid> -n`.
+- **Rule:** when running database suites in parallel always isolate them this way, and never share `/tmp/pg54329`. A run whose database was touched by another run proves nothing; rerun it in its own namespace.
