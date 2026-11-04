@@ -512,9 +512,9 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_SHARE_CARD',
     label: 'Decision card',
-    line: 'Lets a customer share a read-only, expiring decision card with a co-owner or bank.',
+    line: 'Lets customers who are owners or admins of a sample workspace create read-only links to one reviewed decision. Needs saved reports and decisions on, its database module installed and the recorded privacy review. A link can be withdrawn, but what was seen cannot be recalled.',
     group: 'Delivery',
-    kind: 'planned',
+    kind: 'flag',
   },
   {
     name: 'CORRIDRA_UX_OPERATOR_URLS',

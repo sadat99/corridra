@@ -49,3 +49,27 @@ describe('private customer APIs and the framework header overrides', () => {
     }
   });
 });
+
+// The public decision card read (ADR-076 item 4) is anonymous, so it is not under customer-*; it still answers
+// with a card, so the framework must never replace its no-store, no-referrer or noindex headers.
+describe('the public decision card API and the framework header overrides', () => {
+  const matching = rules.filter((rule) => rule.source === '/api/decision-card');
+  it('has one explicit rule for /api/decision-card', () => {
+    expect(
+      matching,
+      'the public card read is missing from the private-header overrides',
+    ).toHaveLength(1);
+  });
+  it('sends no-referrer, no-store and noindex, nofollow', () => {
+    const headers = matching[0]!.headers;
+    expect(headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(headers).toContain("key: 'Cache-Control', value: 'no-store'");
+    expect(headers).toContain("key: 'X-Robots-Tag', value: 'noindex, nofollow'");
+  });
+  it('registers the owner API among the customer pages as well', () => {
+    expect(
+      rules.some((rule) => covers(rule.source, 'customer-decision-cards')),
+      'customer-decision-cards is missing from the private-header overrides',
+    ).toBe(true);
+  });
+});
