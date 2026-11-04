@@ -1,6 +1,6 @@
 # ADR-070: Decision card and sharing with a co-owner or bank
 
-Status: proposed, design only, nothing built. Switch `CORRIDRA_SHARE_CARD` stays "planned". The interviews in [phase2-interviews.md](../product/phase2-interviews.md) decide whether it is worth building.
+Status: proposed; the decision card is accepted for building, not yet built, under [ADR-076](0076-trip-books-and-decision-sharing.md) item 4, default off. See the addendum at the end.
 
 ## Context
 
@@ -22,3 +22,7 @@ The interviews show that co-owners or banks are involved often enough to justify
 ## Rollback
 
 Not applicable until built. When built: unset the switch, revoke all links.
+
+## Addendum, 3 November 2026
+
+ADR-076 narrows this proposal. The expiry is at most seven days (not thirty), the card stores a digest of the previewed fields rather than a copy of them, the creator must be a current owner or admin of the workspace, and cards exist for sample (synthetic) workspaces only. The "Not built until" interviews condition is waived for building behind the default-off switch, on the owner's direction. It is not waived for enabling. Turning `CORRIDRA_SHARE_CARD` on remains an owner action and needs the recorded privacy review and the installed database module. ADR-076 item 4 governs where the two differ.
