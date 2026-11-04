@@ -507,6 +507,44 @@ test('skipped declarations written across lines or with other quoting do not fla
   );
 });
 
+test('a test declared inside a function that is not a suite or test callback is not evidence', () => {
+  const positive = "test('synthetic behaviour is allowed', () => { expect(1).toBe(1); });";
+  for (const wrapper of [
+    "function unused() { test('synthetic denial is refused', () => { expect(2).toBe(2); }); }",
+    "const helper = () => { test('synthetic denial is refused', () => { expect(2).toBe(2); }); };",
+    "const helper = function () { test('synthetic denial is refused', () => { expect(2).toBe(2); }); };",
+    "class Registry { register() { test('synthetic denial is refused', () => { expect(2).toBe(2); }); } }",
+    "void (async () => { test('synthetic denial is refused', () => { expect(2).toBe(2); }); });",
+  ]) {
+    const source = ["import { expect, test } from 'vitest';", positive, wrapper, ''].join('\n');
+    const problems = problemsFor(sampleShards(), overlay({ [samplePath]: source }));
+    expectProblem(problems, 'R4', 'not runnable');
+  }
+});
+
+test('tests nested in suite and test callbacks are still runnable evidence', () => {
+  const scan = findTestTitles(
+    [
+      "describe('group', () => {",
+      '  beforeEach(() => {});',
+      "  describe('inner group', () => {",
+      "    it('deeply nested', () => {});",
+      '  });',
+      "  test.describe('playwright inner', function () {",
+      "    test('function callback', async ({ page }) => {});",
+      '  });',
+      '});',
+      "test('top level', async () => {",
+      "  await test.step('a step inside a test', async () => {});",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  const byTitle = new Map(scan.calls.map((c) => [c.title, c] as const));
+  for (const title of ['deeply nested', 'function callback', 'top level'])
+    expect(byTitle.get(title)?.problem, title).toBeNull();
+});
+
 test('the title scanner marks suite calls so they can be told apart from test cases', () => {
   const scan = findTestTitles(
     [

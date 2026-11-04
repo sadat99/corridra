@@ -13,7 +13,7 @@
       "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
       "docs/v3/phase-0/requirement-bindings.schema.json",
       "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
-      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite, 59 after the fourth; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
     ]
   },
   "rulesEnforcedByCheck": {
@@ -63,6 +63,11 @@
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
       "base": "4f2870e",
       "result": "52 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "bbf27ca plus the fourth Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 58 passed; after the fix 59 passed. Fourth Codex P2: a test declared inside an uninvoked helper function (function declaration, arrow or function expression assigned to a name, class method, uncalled async arrow) was reported as runnable, so a requirement could be bound to a test the runner never registers. Rule now: every function a test sits inside must be a callback argument of a recognised test, it or describe call; anything else is refused as 'declared inside a function that is not a suite or test callback, so it may never be registered'. A guard test confirms tests nested in describe, test.describe and test callbacks (including function-expression callbacks) stay runnable. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2), so the 7 pilot rows are unaffected."
     },
     {
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",

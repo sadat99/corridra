@@ -262,6 +262,22 @@ function suiteLevelSkip(suite: ts.CallExpression): boolean {
   return found;
 }
 
+// A test only exists when the runner registers it. A declaration inside a function is provably registered only
+// when that function is a callback passed to a test, it or describe call; any other function (a helper, a
+// class method, a function nothing calls) is refused.
+function inUncalledFunction(ancestors: ts.Node[]): boolean {
+  return ancestors.some((ancestor, index) => {
+    if (!ts.isFunctionLike(ancestor)) return false;
+    const parent = ancestors[index - 1];
+    return !(
+      parent !== undefined &&
+      ts.isCallExpression(parent) &&
+      shapeOf(parent) !== null &&
+      parent.arguments.some((argument) => argument === ancestor)
+    );
+  });
+}
+
 function describeCall(
   source: string,
   node: ts.CallExpression,
@@ -295,6 +311,9 @@ function describeCall(
       (shape.name.startsWith('x') ? shape.name : modifiers.join('.')) +
       ' and is not a plain runnable test';
   else if (!literalTitle) call.problem = 'its title is built from an expression';
+  else if (inUncalledFunction(ancestors))
+    call.problem =
+      'it is declared inside a function that is not a suite or test callback, so it may never be registered';
   else if (enclosing.some((entry) => hasSkipModifier(entry.shape)))
     call.problem = 'it sits inside a skipped suite';
   else if (
