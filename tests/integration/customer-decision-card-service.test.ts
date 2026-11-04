@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { DomainError } from '../../packages/domain/src/index';
+import { Pool } from '../../packages/db/src/index';
+import { connection, sandbox } from './support';
 import {
   CustomerDecisionCardService,
   cardToken,
@@ -547,5 +549,121 @@ describe('ids made by the database are accepted whatever their version (review f
       cardId: odd,
     });
     expect(withdrawn).toEqual({ cardId: odd, state: 'WITHDRAWN' });
+  });
+});
+
+describe('the create limiter runs before any pool connection is held', () => {
+  // The limiter spends its count through the same runtime pool the request uses (the runtime pool is small, and
+  // the real limiter checks out its own connection). A hook that ran while the request already held a connection
+  // would wait for another one: with every connection held by a waiting request, nothing could finish.
+  const small = (max: number) =>
+    new Pool({
+      ...connection('corridra_integration', 'corridra_runtime_local', sandbox.runtimePassword),
+      max,
+      connectionTimeoutMillis: 1500,
+    });
+  const through = (pool: Pool, who = 'alice') =>
+    new CustomerDecisionCardService(
+      pool,
+      world.f.auth,
+      cardOptions,
+      async () => cardSession(who),
+      cardSecret,
+    );
+
+  test('a create whose limiter uses the same one-connection pool succeeds', async () => {
+    const pool = small(1);
+    try {
+      const s = await world.spare();
+      const p = await service('alice').preview(s.resourceId, s.decisionId);
+      const limit = vi.fn(async () => {
+        await pool.query('SELECT 1');
+      });
+      const card = await through(pool).create(createInput(p, s), undefined, undefined, limit);
+      expect(card.state).toBe('ACTIVE');
+      expect(limit).toHaveBeenCalledTimes(1);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  test('the request holds no connection at all while the limiter runs', async () => {
+    const pool = small(2);
+    try {
+      const s = await world.spare();
+      const p = await service('alice').preview(s.resourceId, s.decisionId);
+      let held = -1;
+      await through(pool).create(createInput(p, s), undefined, undefined, async () => {
+        held = pool.totalCount - pool.idleCount;
+      });
+      expect(held).toBe(0);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  test('concurrent creates all succeed when the pool is as small as the number of requests', async () => {
+    const pool = small(2);
+    try {
+      const s = await world.spare();
+      const p = await service('alice').preview(s.resourceId, s.decisionId);
+      const limit = async () => {
+        await pool.query('SELECT 1');
+      };
+      const cards = await Promise.all(
+        [1, 2, 3, 4].map(() =>
+          through(pool).create(createInput(p, s), undefined, undefined, limit),
+        ),
+      );
+      expect(cards.map((card) => card.state)).toEqual(['ACTIVE', 'ACTIVE', 'ACTIVE', 'ACTIVE']);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  test('a refusal from the limiter still stops the create and writes nothing', async () => {
+    const pool = small(1);
+    try {
+      const s = await world.spare();
+      const p = await service('alice').preview(s.resourceId, s.decisionId);
+      const error = await refusal(
+        through(pool).create(createInput(p, s), undefined, undefined, async () => {
+          throw new DomainError('Too many requests. Try again in an hour.', 429);
+        }),
+      );
+      expect(error).toMatchObject({ status: 429 });
+      expect(
+        Number(
+          (
+            await one(
+              'SELECT count(*) n FROM customer_private.decision_card WHERE saved_mission_id=$1',
+              [s.resourceId],
+            )
+          ).n,
+        ),
+      ).toBe(0);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  test('the limiter is not run for a signed-out request, a header that names someone else, or a wrong issuer', async () => {
+    const s = await world.spare();
+    const p = await service('alice').preview(s.resourceId, s.decisionId);
+    const limit = vi.fn(async () => {});
+    const signedOut = service('alice', false);
+    await refusal(
+      signedOut.create(createInput(p, s), cardSession('alice').subject, undefined, limit),
+    );
+    await refusal(service('alice').create(createInput(p, s), 'someone-else', undefined, limit));
+    await refusal(
+      service('alice').create(
+        createInput(p, s),
+        undefined,
+        'https://other.example.invalid/auth',
+        limit,
+      ),
+    );
+    expect(limit).not.toHaveBeenCalled();
   });
 });
