@@ -1452,6 +1452,21 @@
       "path": "docs/revamp/specs/programme-consent.md",
       "classification": "Current guide/contract",
       "use": "Spec pack 2: organiser room consent and disclosure tests C-01 to C-10 (ADR-075)"
+    },
+    {
+      "path": "docs/revamp/specs/wave6-quality.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 3: Wave 6 keyboard, reflow, contrast, states, busy actions, performance tests Q-01 to Q-08"
+    },
+    {
+      "path": "docs/revamp/specs/wave7-cleanup.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 3: Wave 7 usage graph, candidate report, proven deletions and docs consolidation K-01 to K-04"
+    },
+    {
+      "path": "docs/revamp/specs/wave8-acceptance.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 3: Wave 8 journeys J1 to J7 on fixtures and the release memo"
     }
   ]
 }
