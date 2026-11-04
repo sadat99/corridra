@@ -1,0 +1,29 @@
+# Organiser room: consent and disclosure tests
+
+Document status: CURRENT.
+
+Track S3, Wave 5 (journey J3 Organise). The organiser room regroups existing programme views into Overview, Participants, Programme and meetings, Terms and fees, and Results. It reuses the existing programme, projection and coordination services and adds no field, audience or disclosure. [ADR-075](../../adr/0075-programme-projections-and-consented-meeting-counts.md) (with its 3 November amendment) is the contract; contract section 2 Product 3 and section 8 "Financial truth" also bind.
+
+## What an organiser may see
+
+- Company projection (owner and admin of the programme workspace only, and only while the participant shares it): company name, country, business roles, sectors and the short shared objective, labelled self-reported. Nothing else.
+- Meeting counts only where the participant separately allowed them: scheduled and qualified-held, as two numbers. Never meeting titles, counterparties, contacts, notes, opportunity values or mission ids.
+- Readiness: the five criteria with the missing ones named and a real denominator.
+- Organiser economics: the organiser's own fees, expenses and margin. Never a participant's trade value, quote or deal, and never Corridra revenue presented as organiser revenue.
+
+## Required tests (S3, named by id)
+
+| Id   | Case                                                                                                                                                                    |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-01 | A member, an outsider and an organiser of another programme are denied the company projection and meeting counts (existing uniform denial).                             |
+| C-02 | With no share, a withdrawn share, a removed registration or an expired source, the participant shows "Not shared", never zero or an empty company.                      |
+| C-03 | After the participant re-enrols with another company, the old company never appears; the organiser sees "Not shared" (ADR-075 amendment, clause 1).                     |
+| C-04 | Meeting counts appear only with the separate count consent; objective-sharing consent alone shows "Not shared".                                                         |
+| C-05 | Scheduled and qualified-held counts are separate numbers; a self-reported outcome never counts as qualified.                                                            |
+| C-06 | A seeded meeting title, counterparty, contact, note, opportunity value and mission id appear nowhere in the organiser HTML or API body (deep key and substring search). |
+| C-07 | Readiness names each missing criterion and shows "N of M ready" from the server data; unavailable data shows "Not measured yet", never a guessed total.                 |
+| C-08 | A participant's quote, price or private economics never appears in any organiser view; organiser revenue and Corridra fees carry their own labels.                      |
+| C-09 | Every existing programme room view, action, id and link is still reachable after the regroup (ids and hrefs snapshot before and after).                                 |
+| C-10 | With `CORRIDRA_CUSTOMER_PROGRAMME_PROJECTIONS_ENABLED` off, the company, agenda-conflict and count views are absent and the old five views are exactly as before.       |
+
+`Sensitive: yes` (consent, tenant scope, money). Guardian PASS required.
