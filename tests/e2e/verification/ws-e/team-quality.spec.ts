@@ -9,18 +9,22 @@ import { operatorSlugs } from '../../../../apps/web/lib/operator-urls';
 // tests, so it runs once, at 1280. The contributor board is covered in tests/operator/
 // real-network-work.spec.ts, which already holds an invited contributor.
 test.describe.configure({ mode: 'serial' });
-test.skip(({}, info) => info.project.name !== 'w1280', 'Runs once; it switches widths itself.');
+const once = (name: string) => name === 'w1280';
+test.beforeEach(({}, info) => {
+  test.skip(!once(info.project.name), 'Runs once, at 1280; it switches widths itself.');
+});
 
 let page: Page;
 let tenant = '';
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser }, info) => {
+  if (!once(info.project.name)) return;
   const context = await browser.newContext({ baseURL: 'http://127.0.0.1:3300' });
   page = await context.newPage();
   await signInOwner(page);
   tenant = qaSeed().tenantId;
 });
 test.afterAll(async () => {
-  await page.context().close();
+  await page?.context().close();
 });
 
 const sections = Object.entries(operatorSlugs).map(([id, slug]) => ({ id, slug }));
