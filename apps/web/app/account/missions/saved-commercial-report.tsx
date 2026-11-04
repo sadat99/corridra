@@ -6,6 +6,7 @@ import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
 import { MissionExperienceView } from '../../mission-experience-view';
 import { displayDate, displayMoney } from '@corridra/domain/locale';
+import { translate } from '../../../lib/i18n/messages';
 import { missionStatus } from '@corridra/domain/missions';
 import { timeZone } from '@corridra/domain/geography';
 import { currency } from '@corridra/domain/opportunities';
@@ -13,11 +14,14 @@ import { requirementFields, offerTerms } from '@corridra/domain/commercial-missi
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
 import { SpecificationConfirmation } from './specification-confirmation';
+import { BookDownloads, createPendingBooks } from './book-downloads';
 export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip';
 type Scope = SavedMissionScope & {
   resourceId: string;
   decisionsEnabled?: boolean;
   specificationConfirmationsEnabled?: boolean;
+  /** Trip Book and Supplier Book downloads (`CORRIDRA_UX_BOOKS`, read on the server). Only the whole page shows them. */
+  books?: boolean;
   /** UX update (`CORRIDRA_UX_LENSES`, read on the server): the offers as cards. */
   lenses?: boolean;
   /** The Room shows the report in two lenses. `all` is the whole page, as it has always been. */
@@ -202,6 +206,7 @@ function PrivateReport({
   resourceId,
   decisionsEnabled = false,
   specificationConfirmationsEnabled = false,
+  books = false,
   lenses = false,
   section = 'all',
   renderTrip,
@@ -220,6 +225,13 @@ function PrivateReport({
     [notice, setNotice] = useState('');
   const inFlight = useRef(false);
   const controller = useRef<AbortController | null>(null);
+  // A book download that could not be confirmed keeps its command id here, so it survives the panel being removed
+  // when the page is hidden. A denial of a book download is said in its own alert, which takes the focus.
+  const [pendingBooks] = useState(createPendingBooks);
+  const [bookDenial, setBookDenial] = useState<{ message: string; signedOut: boolean } | null>(
+    null,
+  );
+  const bookAlert = useRef<HTMLParagraphElement>(null);
   const read = useCallback(() => {
     controller.current?.abort();
     const task = new AbortController();
@@ -237,6 +249,7 @@ function PrivateReport({
         if (!task.signal.aborted) {
           setData(next);
           setStatus('ready');
+          setBookDenial(null);
         }
       })
       .catch((error) => {
@@ -245,6 +258,8 @@ function PrivateReport({
           if (error instanceof Error && error.message === 'denied') {
             setPending(null);
             setDrafts({});
+            pendingBooks.clear();
+            setBookDenial(null);
             setNotice(
               'Access or request state changed. Local response recovery was cleared for privacy.',
             );
@@ -256,7 +271,7 @@ function PrivateReport({
           );
         }
       });
-  }, [subject, issuer, resourceId]);
+  }, [subject, issuer, resourceId, pendingBooks]);
   useEffect(() => {
     function clear() {
       controller.current?.abort();
@@ -285,6 +300,20 @@ function PrivateReport({
       document.removeEventListener('visibilitychange', visible);
     };
   }, [read]);
+  useEffect(() => {
+    if (bookDenial) bookAlert.current?.focus();
+  }, [bookDenial]);
+  // A book download was refused because access is gone: the report and every local retry are cleared, as for any
+  // other denial, and the reason is said once, in the alert that takes the focus.
+  function bookDenied(message: string, signedOut: boolean) {
+    controller.current?.abort();
+    setData(null);
+    setPending(null);
+    setDrafts({});
+    pendingBooks.clear();
+    setStatus('denied');
+    setBookDenial({ message, signedOut });
+  }
   async function respond(requestId: string) {
     if (inFlight.current || (pending && pending.requestId !== requestId)) return;
     const draft = drafts[requestId];
@@ -350,6 +379,8 @@ function PrivateReport({
           setData(null);
           setPending(null);
           setDrafts({});
+          pendingBooks.clear();
+          setBookDenial(null);
           setStatus('denied');
           setNotice(
             'Access or request state changed. Local response recovery was cleared for privacy.',
@@ -384,7 +415,19 @@ function PrivateReport({
           : 'Sample data only. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Opening your approved commercial report…</p>}
-      {status === 'denied' && (
+      {status === 'denied' && bookDenial && (
+        <>
+          <p role="alert" tabIndex={-1} ref={bookAlert}>
+            {bookDenial.message}
+          </p>
+          {bookDenial.signedOut && (
+            <a className="text-link" href="/signin">
+              {translate('en', 'books.signInAgain')}
+            </a>
+          )}
+        </>
+      )}
+      {status === 'denied' && !bookDenial && (
         <p role="alert">
           This saved mission is unavailable or access could not be confirmed. No commercial report
           content is shown.
@@ -594,6 +637,18 @@ function PrivateReport({
                     quotations.
                   </p>
                 </section>
+              )}
+              {showRest && books && (
+                <BookDownloads
+                  subject={subject}
+                  issuer={issuer}
+                  resourceId={resourceId}
+                  tripCount={m.itinerary.length}
+                  supplierCount={m.experience?.shortlist.length ?? 0}
+                  pending={pendingBooks}
+                  onDenied={bookDenied}
+                  onChanged={read}
+                />
               )}
             </article>
           ))}

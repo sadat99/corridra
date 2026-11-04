@@ -45,6 +45,49 @@ const tripWords = {
   'room.trip.status.rescheduleRequired': 'New time needed',
 } as const;
 
+/**
+ * Trip Book and Supplier Book download panel words (saved mission page, ADR-076). English placeholder until
+ * native review (D16): every catalog carries these English words, so no unreviewed translation is shown. The
+ * panel sits in the page's English frame. The words never say "digest": the person is given a content code.
+ */
+const bookWords = {
+  'books.heading': 'Download a Trip Book or Supplier Book',
+  'books.intro':
+    'A book is a PDF copy of what the Corridra team has reviewed for this mission. It shows no prices, offers or contact details.',
+  'books.notice':
+    'A downloaded file cannot be recalled. If access is withdrawn later, the file stays on your device and with anyone you send it to.',
+  'books.count.line': 'Trip Book: {trip}. Supplier Book: {supplier}.',
+  'books.count.trip.one': '1 meeting or visit',
+  'books.count.trip.other': '{n} meetings or visits',
+  'books.count.supplier.one': '1 company',
+  'books.count.supplier.other': '{n} companies',
+  'books.count.none': 'none yet',
+  'books.name.trip': 'Trip Book',
+  'books.name.supplier': 'Supplier Book',
+  'books.download.trip': 'Download Trip Book (PDF)',
+  'books.download.supplier': 'Download Supplier Book (PDF)',
+  'books.empty.trip': 'No meetings or visits have been reviewed yet, so there is no Trip Book.',
+  'books.empty.supplier': 'No companies have been reviewed yet, so there is no Supplier Book.',
+  'books.busy': 'Preparing your {book}…',
+  'books.success':
+    'Your {book} was created. Your browser should now save the file. Keep it private.',
+  'books.success.detail':
+    'Created {time}. Content code {code}. Give this code to the Corridra team if you ask about the file.',
+  'books.retry':
+    'We could not confirm the download. Try again. It will not create a second record.',
+  'books.denied': 'This mission is unavailable or access has changed. Nothing was downloaded.',
+  'books.signedOut': 'Your sign-in has ended. Nothing was downloaded.',
+  'books.signInAgain': 'Sign in again',
+  'books.tooMany': 'Too many downloads for this mission just now. Try again later.',
+  'books.changed':
+    'The reviewed content changed since you started. This page now shows the latest version. Download again to get it.',
+  'books.unavailable':
+    'Downloads are not available right now. Nothing was downloaded. Try again later.',
+  'books.unsupported':
+    'This book cannot be made because it has text the PDF cannot show. Ask the Corridra team for help.',
+  'books.emptyStale': 'Nothing has been reviewed for this book yet.',
+} as const;
+
 export const en = {
   ...homeEn,
   // Commercial readiness stream blocks (one file per stream, so streams never edit the same lines).
@@ -174,6 +217,7 @@ export const en = {
   'room.replies.all': 'Read every reply',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -339,6 +383,7 @@ const bn: Catalog = {
   'room.replies.all': 'সব উত্তর পড়ুন',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -491,6 +536,7 @@ const zh: Catalog = {
   'room.replies.all': '阅读全部回复',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -648,6 +694,7 @@ const es: Catalog = {
   'room.replies.all': 'Leer todas las respuestas',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -804,6 +851,7 @@ const ar: Catalog = {
   'room.replies.all': 'اقرأ كل الردود',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -962,6 +1010,7 @@ const fr: Catalog = {
   'room.replies.all': 'Lire toutes les réponses',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1124,6 +1173,7 @@ const de: Catalog = {
   'room.replies.all': 'Alle Antworten lesen',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...bookWords,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',

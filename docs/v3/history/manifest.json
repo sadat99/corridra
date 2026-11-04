@@ -277,6 +277,22 @@
       "bytes": 12161,
       "sha256": "a3f3eac5e98c213b56ee8d02651b1fc43dd8c19d8eb6981706eb6fe4404193cb",
       "meaning": "Exact active ledger after GAP012 production verification, while GAP015 PR246 checks were pending. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
+      "archive": "docs/v3/history/ledger-through-pr257-merge-2026-11-04.md",
+      "bytes": 11467,
+      "sha256": "0a869cf08b1885df894fb37bf8ae8c6546f0316a7ecbe07610ea11bc99c26c4d",
+      "meaning": "Exact active ledger before the PR 257 merge and the Books panel (E2b) were recorded, including the E2a detail and the PR 253 to 256 bullets later condensed. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "archive": "docs/v3/history/ledger-before-429-rule-records-2026-11-04.md",
+      "bytes": 11525,
+      "sha256": "357f0b1bc2ec91ae20bcf5b66879778dc13a4884d33b69a5cd68dc9ec45d467f",
+      "meaning": "Exact active ledger at 1033c4a, before the Books command id rule on a 429 (Codex P2 on PR 258, fixed in 89776fc) was recorded, including the E2a, Batch D and E2b wording later condensed or corrected. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

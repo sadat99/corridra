@@ -547,7 +547,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_BOOKS',
     label: 'Trip and Supplier books',
-    line: "Turns on the download route for the Trip Book and the Supplier Book (two PDF files) of a signed-in customer's saved mission, once its database module is installed. The download screen arrives in a following step. They show no prices, offers or contact details. A downloaded file cannot be recalled.",
+    line: "Turns on the download route and the download panel for the Trip Book and the Supplier Book (two PDF files) of a signed-in customer's saved mission, once its database module is installed. The panel is on the saved mission page. They show no prices, offers or contact details. A downloaded file cannot be recalled.",
     group: 'Delivery',
     kind: 'flag',
   },

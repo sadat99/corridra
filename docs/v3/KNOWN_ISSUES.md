@@ -207,3 +207,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Fix:** constrain the existing field grid to `minmax(0, 1fr)`; keep the original viewport/axe/permission assertions and add bounded geometry to failure messages. The identical4-case sequence now passes all six widths after a fresh build. Do not hide overflow or substitute the isolated passing case for this reproduction. Evidence: [layout verification](../qa/current-plan-gaps/verification/2026-11-03-gap009-layout-local.json).
 
 - KI-33 diagnostic follow-up: use `Array.from` for DOM node lists under the repository test TypeScript library. The app-only build does not typecheck operator test sources; full root `pnpm typecheck` verifies this path.
+
+### KI-34 Startup-recovery operator test timed out once on a slow runner (4 November 2026)
+
+- **Observed:** PR257 head 4309ec5, operator shard (6): `tests/operator/z-startup-recovery.spec.ts` (UX-01 startup outage) failed once with "Test timeout of 180000ms exceeded". In the same run operator (2) and browser took about 15 and 18 minutes against about 5 for the other jobs. One re-run of operator (6) passed with no code change.
+- **Cause:** inferred (runner slowness), not proven. The test starts its own `next start` and normally needs about 120 s.
+- **If it recurs:** on a normal-speed run, reproduce it locally before changing anything. Do not raise the timeout blindly.
