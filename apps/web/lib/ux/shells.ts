@@ -34,46 +34,58 @@ export type TeamNavItem = {
   key: string;
   label: MessageKey;
   icon: string;
-  /** The section this item opens; absent for Today (the workspace overview). */
-  section?: SectionId;
-  /** Other sections that count as this item being the current one. */
-  also?: readonly SectionId[];
+  /** The sections this group holds, in the order they are listed; absent for Today. */
+  sections?: readonly SectionId[];
 };
 
-/** The Team sidebar, in the order D14 fixes. */
+/**
+ * The Team sidebar (Signal Desk map, docs/revamp/specs/signal-desk.md): Today, Missions, Companies,
+ * Delivery and Outcomes, and "All tools and settings", which keeps every other section reachable.
+ * Each of the 18 sections is placed exactly once. Grouping never grants access: the sidebar lists a
+ * section only for a role that may open it, and each page and action still checks on the server.
+ * The section ids, address words, roles and panels are not touched here.
+ */
 export const teamNavigation: readonly TeamNavItem[] = [
   { key: 'today', label: 'wse.team.today', icon: 'home' },
-  { key: 'missions', label: 'wse.team.missions', icon: 'mission', section: 'workspace-missions' },
-  { key: 'companies', label: 'wse.team.companies', icon: 'company', section: 'workspace-research' },
-  { key: 'meetings', label: 'wse.team.meetings', icon: 'people', section: 'workspace-meetings' },
-  { key: 'quotes', label: 'wse.team.quotes', icon: 'progress', section: 'workspace-commercial' },
-  { key: 'reports', label: 'wse.team.reports', icon: 'document', section: 'workspace-delivery' },
-  { key: 'network', label: 'wse.team.network', icon: 'network', section: 'workspace-network' },
   {
-    key: 'evidence',
-    label: 'wse.team.evidence',
-    icon: 'evidence',
-    section: 'workspace-evidence',
-    also: ['workspace-sources'],
+    key: 'missions',
+    label: 'wse.team.missions',
+    icon: 'mission',
+    sections: ['workspace-missions', 'workspace-meetings', 'workspace-commercial'],
   },
-];
-
-/**
- * Everything else lives under Settings, so every original section stays one or two clicks away.
- * The Owner page is added there when the owner page is on and the person can open it.
- */
-export const teamSettingsSections: readonly SectionId[] = [
-  'workspace-settings',
-  'workspace-audit',
-  'workspace-controls',
-  'workspace-authenticator',
-  'workspace-sources',
-  'workspace-ai',
-  'workspace-operations',
-  'ops-dashboard',
-  'ops-center',
-  'ops-health',
-  'ops-gates',
+  {
+    key: 'companies',
+    label: 'wse.team.companies',
+    icon: 'company',
+    sections: ['workspace-research', 'workspace-sources', 'workspace-evidence'],
+  },
+  {
+    key: 'delivery',
+    label: 'wse.team.delivery',
+    icon: 'document',
+    sections: ['workspace-delivery', 'workspace-network', 'workspace-ai'],
+  },
+  {
+    key: 'outcomes',
+    label: 'wse.team.outcomes',
+    icon: 'progress',
+    sections: ['ops-dashboard'],
+  },
+  {
+    key: 'tools',
+    label: 'wse.team.allTools',
+    icon: 'settings',
+    sections: [
+      'workspace-operations',
+      'ops-health',
+      'ops-gates',
+      'ops-center',
+      'workspace-settings',
+      'workspace-audit',
+      'workspace-authenticator',
+      'workspace-controls',
+    ],
+  },
 ];
 
 export function sectionLabel(id: string): string {
@@ -137,12 +149,9 @@ export function teamSectionTitle(section: string | undefined): string {
   return teamTitles[section] ?? sectionLabel(section);
 }
 
-/** Which sidebar item is current for a section id ('' is Today). */
+/** Which sidebar item is current for a section id ('' is Today). The owner page counts as the last group. */
 export function currentTeamItem(section: string): string {
   if (!section) return 'today';
-  const direct = teamNavigation.find(
-    (item) => item.section === section || item.also?.includes(section as SectionId),
-  );
-  if (direct) return direct.key;
-  return 'settings';
+  const group = teamNavigation.find((item) => item.sections?.includes(section as SectionId));
+  return group ? group.key : 'tools';
 }
