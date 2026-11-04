@@ -1,0 +1,118 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "E",
+  "kind": "E3b decision card step 3: service and routes behind the default-off CORRIDRA_SHARE_CARD switch (branch claude/zen-hopper-1iqtdn, not pushed, not in a PR), plus the main result of PR 261 (steps 1 and 2)",
+  "findings": ["GAP-041"],
+  "status": "Step 3 is written and committed on branch claude/zen-hopper-1iqtdn as 4304fbe and 3f34950 over main a1dbbc9, with the ADR wording commit a0a8c62 (architect). Not pushed and not in a PR when recorded, so no CI, CodeQL or Codex result exists for them and none is claimed. CORRIDRA_SHARE_CARD is now a real flag, off unless exactly 'true'. No screen or page exists (step 4). The database module is merged (PR 261) but not installed anywhere, so with the switch on the owner API would answer 503 and the public read would answer unknown. Nothing is deployed-verified, enabled or activated by agents. Production deployment beyond the Vercel commit status and the production value of every switch are not observable from the recording session.",
+  "pr261MainResult": {
+    "pullRequest": "sadat99/corridra#261",
+    "title": "decision card, steps 1 and 2: ADR acceptance and database module (E3b), nothing calls it yet",
+    "mergedAt": "2026-11-04T11:09:35Z",
+    "squashCommit": "a1dbbc9af6e15470cddced85b834ac197bf27c36",
+    "prHead": "4cbbd75711c4a4465229725ec8502840d7ec2f86",
+    "beforeMerge": "Two Codex findings were fixed (a sleep-based test, and a read race on the open counter fixed in 27eb3ee) and an adversarial review found no blocking defect (relayed by the conductor).",
+    "mainChecks": [
+      {
+        "name": "CI (push to main)",
+        "runId": 41819013003,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": "14 jobs, all success"
+      },
+      {
+        "name": "CodeQL Advanced",
+        "runId": 41819012942,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "commitStatus": "GitHub combined commit status for a1dbbc9 is success (one status, Vercel = success).",
+    "readBy": "The scribe re-read the pull request, both runs, the job conclusions and the commit status through the GitHub REST API (read calls only) on 4 November 2026.",
+    "notObservable": "Production deployment beyond the Vercel commit status, and the production value of every switch. The database module is merged and NOT installed in production (owner-approved protected 'Install customer modules' run, expected report 'not installed' then '1 applied')."
+  },
+  "branch": {
+    "name": "claude/zen-hopper-1iqtdn",
+    "base": "a1dbbc9af6e15470cddced85b834ac197bf27c36",
+    "pushed": false,
+    "pullRequest": null,
+    "commits": [
+      {
+        "sha": "4304fbeaab8065dae1f901224189b3861eba59c4",
+        "note": "feat: decision card service and routes (E3b step 3), off by default. 15 files, built in the worktree corridra-wt-card-s3 and rebased onto a1dbbc9"
+      },
+      {
+        "sha": "3f349502a6eb329b50e17c3fe2339d6c2ceac58d",
+        "note": "fix: decision card route review items (E3b step 3)"
+      },
+      {
+        "sha": "a0a8c6211c4252c536b9ef1c5ea6de3214ba4832",
+        "note": "architect: ADR-076 and ADR-070 wording. Service and routes are built behind the real default-off switch, screens not built, module not installed, plus one Consequences bullet on the review's accepted limits. The scribe did not edit any ADR."
+      }
+    ]
+  },
+  "files": {
+    "service": "packages/auth/src/customer-decision-cards.ts: customerDecisionCardsEnabled (saved reports and decisions on AND CORRIDRA_SHARE_CARD exactly 'true' AND production not locked); cardToken (HMAC-SHA256 of AUTH_SECRET over 'decision-card:' + issuer + ':' + subject + ':' + commandId, 43-character base64url; only the SHA-256 hex goes to the database); mapDecisionCardError (by SQLSTATE AND message); CustomerDecisionCardService (state, preview, create, withdraw; the link is returned only when the state is ACTIVE; preview's expiresAt is passed as expected_expires); DecisionCardReader (one plain SELECT app.read_decision_card($1), not READ ONLY, no replica)",
+    "ownerRoute": "apps/web/app/api/customer-decision-cards/route.ts: POST only, action state, preview, create or withdraw",
+    "publicRoute": "apps/web/app/api/decision-card/route.ts: PUBLIC read, POST only",
+    "wiring": "apps/web/lib/card-availability.ts, apps/web/lib/foundations.ts, apps/web/lib/owner-switches.ts (CORRIDRA_SHARE_CARD changed from planned to a real flag), apps/web/next.config.ts (customer-decision-cards added to the :page header list and an explicit /api/decision-card rule)",
+    "tests": "tests/integration/ux-decision-card.test.ts, customer-decision-card-service.test.ts, customer-decision-card-route.test.ts, the decision-card-world.ts fixture, header pins in private-api-headers.test.ts, and the planned-to-flag assertion changes in ux-trip.test.ts, ux-books.test.ts and status-link.test.ts"
+  },
+  "behaviour": {
+    "errorMapping": [
+      "23514 'DECISION_CARD_CHANGED' to 409 reason CHANGED",
+      "53400 'DECISION_CARD_CAP_REACHED' to 409 reason CAP_REACHED",
+      "54000 'DECISION_CARD_RATE_LIMITED' to 429",
+      "42501 to a uniform 403 (401 for a missing or invalid session)",
+      "any other 23514 to 400",
+      "40P01 and 55P03 to a retryable 503 with Retry-After 2",
+      "module missing: owner API 503; public route the same 200 unknown"
+    ],
+    "publicRoute": "POST only. GET and HEAD answer 405 with Allow: POST and no card data. One byte-identical 200 {\"state\":\"unknown\"} for every non-open answer: unknown or malformed token, withdrawn, expired, changed, role lost, real workspace, switch off and module missing. A 512-byte body bound. The token is read only from the POST body (query string and headers are ignored). Headers: no-store, no-referrer, X-Robots-Tag noindex nofollow, nosniff, JSON; no cookie; no logging of the body, token, hash or fragment. After the review fixes the transport checks (origin, content type, body bound) run BEFORE the switch check so the switch state is not observable.",
+    "limiters": "Create is limited per verified customer ('decision-card-customer:<issuer>:<verified subject>') and per client ('decision-card-owner:<client>'), applied AFTER the customer session is verified, through a hook inside the transaction. Withdraw is never limited. Public reads are limited per client ('decision-card-public:<client>'; malformed requests are keyed per client only) and per token digest. create requires acknowledged: true at the HTTP layer only."
+  },
+  "receipts": {
+    "builderTestsFirst": "Before the code, 6 failed of 125 and the two database-backed files failed at import. After 4304fbe: 7 files 206 passed; the 16 neighbouring files 440 passed; the full pnpm test:integration gave 150 of 154 files, 2335 passed, 4 failed (the known environment tests adapters, blob and scan-bypass need ClamAV; foundations restore needs pg_dump), 1 skipped.",
+    "mutationChecksFirstRound": "13 checks, each failed its tests and was restored byte for byte: 53400 mapped ignoring the message; 23514 CHANGED ignoring the message; link returned regardless of state; expected_expires not passed; switch tested as !== undefined; public budget after the read; switch-off answer 404; X-Robots-Tag removed; GET answered 200; /api/decision-card header rule removed; customer-decision-cards removed from the :page list; registry set back to planned; reader in a READ ONLY transaction.",
+    "verifierRerun": "Independent re-run by the verifier on the rebased 4304fbe in an isolated database: 12 database-backed test files 370 of 370 passed; typecheck, lint, format:check, test:docs (70 of 70), v3-context verify and build exit 0; cleanup confirmed.",
+    "reviewFixes": "Adversarial review (corridra-reviewer, read-only) of 4304fbe found no blocking defect and traced the public route's byte-identical unknown and the token and hash handling as sound. One CONFIRMED should-fix: the owner limiter was keyed on the raw x-corridra-customer-subject header and ran before the session was verified, so a signed-out caller with a forged Origin could burn a victim's hourly allowance and lock them out of withdrawing, and a request with no subject shared one global bucket. Also fixed in 3f34950: public and owner traffic shared one per-client bucket; a global malformed-request bucket; switch state observable through a non-conforming request; z.uuid() strictness on database output (now z.guid()); missing handler-level tests; a random-octet flake. 19 of 110 tests in three files failed first and 110 passed after; the related 15 suites passed 464.",
+    "mutationChecksSecondRound": "7 checks, each failed its tests and was restored: limiter before verification (8 tests failed); withdraw limited (3); shared client prefix (4); global malformed key (3); switch before transport checks (2); z.uuid instead of z.guid (1); hook given the header subject instead of the verified one (1).",
+    "afterFixChecks": "pnpm typecheck, lint, format:check, test:docs, node scripts/v3-context.mjs verify, node scripts/authority.mjs check and pnpm build exit 0 (reported by the conductor); compiled-route headers re-checked.",
+    "compiledHeaders": "Through next start, POST without a session. Before the routes were registered in next.config.ts the framework default Referrer-Policy strict-origin-when-cross-origin replaced the handler's no-referrer. After: public POST 200 unknown and owner POST 503 both with no-referrer and no-store, public also noindex; GET and HEAD 405 with allow: POST; PUT 405 and OPTIONS 204 carry the same headers; the books route is unchanged as a control. Receipts headers-before.txt, headers-after.txt and headers-after-fix.txt are in the conductor's session scratchpad, not in the repository.",
+    "receiptNote": "All numbers above were relayed by the conductor, builder and verifier; the receipts are local or scratchpad paths that the scribe did not re-read. The scribe re-read only the facts about PR 261 and its main result (pr261MainResult) and the git history of the branch."
+  },
+  "notRun": [
+    "pnpm preflight.",
+    "Any Playwright, browser or operator suite (no UI is in scope of step 3).",
+    "The full pnpm test:integration after 3f34950 (the full run before the fixes had only the four known environment failures).",
+    "Compiled-route headers with the switch ON, and a compiled wrong-Origin 403: both need a full database and auth environment.",
+    "CI, CodeQL and Codex on this branch: not pushed, no pull request.",
+    "Any test against production or against the installed module: the module is not installed."
+  ],
+  "acceptedAndRecorded": [
+    "The per-token read allowance is shared by all visitors of one link: a mail scanner or a team opening the link can use it up and give a recipient a rate-limit answer. That answer reveals nothing about whether a card exists.",
+    "State and preview are not rate limited (signed-in customers only).",
+    "The rate-limit table keeps a keyed hash of the visitor address per hour, so page and owner copy must not claim that nothing at all is stored about visitors.",
+    "A rotation of AUTH_SECRET makes an exact create retry answer CHANGED. This is safe; a new card is needed.",
+    "acknowledged is enforced at the HTTP layer only.",
+    "The limiter spends its count on a separate connection, so a rolled-back create still uses one unit (same as the Books route).",
+    "A failed foundations ready gives a logged 503."
+  ],
+  "limits": [
+    "The four failing integration tests (adapters, blob, scan-bypass need ClamAV; foundations backup restore needs pg_dump) fail in the sandbox and on main; CI is the proof for the exact head.",
+    "The module is not installed. The owner approves a protected 'Install customer modules' run for customer_decision_card_migrations (expected 'not installed' then '1 applied'), install run 41705868221 (migration 0002) and a later books run are still owner-pending.",
+    "Enabling CORRIDRA_SHARE_CARD needs the recorded privacy review and the installed module; it also needs saved reports and decisions on and the production lock off.",
+    "Cards exist for sample (synthetic) workspaces only; real workspaces answer unknown, so D06 and D08 stay closed.",
+    "Owner-only and open, unchanged: native language review; French and German emails; GAP-049/050 scope; owner-switches wording; V-02 admin invites decisions."
+  ],
+  "step4Requirements": [
+    "Add the PAGE /decision-card to next.config.ts with no-store, no-referrer and noindex headers plus a robots meta and a header test; only /api/decision-card is registered today and pages get the global strict-origin-when-cross-origin.",
+    "Confirm proxy.ts canonical-origin redirect preserves the #fragment and that the page Origin equals APP_ORIGIN.",
+    "Read the fragment, remove it with history.replaceState before any other script or fetch, POST {token} as JSON, no cookie or session call, no third-party resource.",
+    "Show ONE neutral message for unknown, 429, 403, 415, 413 and 503 alike; render only the six fields with provenance labelled as a sample.",
+    "Hide the public header, footer and corner dock on exactly /decision-card and /decision-card/ through ONE shared isBarePublicPage(pathname) predicate used by ShellHeader, SiteFooterView and CornerDock (CSS-only hiding rejected), with a real-build test of zero get-session requests, no Set-Cookie on /decision-card or /api/decision-card, and the full operator suite.",
+    "Owner UI: send x-corridra-customer-subject and x-corridra-customer-issuer on every call; show the link once from the create response only (no token in localStorage or the URL); keep the commandId in memory only; handle reason CHANGED by re-previewing and CAP_REACHED by offering to withdraw; retry a 503 with the same commandId; plain-words 429 and 403.",
+    "Words: the designer spec (spec-e3b-card-ui.md, in the conductor's session scratchpad, not in the repository) and an English-only frame with D16 placeholders in a cardWords block in all 7 catalogs plus the language-review row."
+  ]
+}
