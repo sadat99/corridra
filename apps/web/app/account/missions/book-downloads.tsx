@@ -10,9 +10,9 @@ import './book-downloads.css';
 export type BookKind = 'TRIP' | 'SUPPLIER';
 /**
  * The command id of each kind of download that was started and not finished. The parent holds it, so it survives
- * this panel being removed and mounted again. It is forgotten on success, on 409, 429 and an unsupported or empty
- * 422 (no record can exist for those) and on a denial; never on a failure that leaves it unknown whether the file
- * was made, which includes a 503 or 404.
+ * this panel being removed and mounted again. It is forgotten on success, on 409, on an unsupported or empty 422
+ * (no record can exist for those) and on a denial; never on a failure that leaves it unknown whether the file was
+ * made, which includes a 429, 503 or 404.
  */
 export type PendingBooks = {
   /** The id for this kind, made on the first press and the same on every retry. */
@@ -192,7 +192,8 @@ export function BookDownloads({
         return;
       }
       if (response.status === 429) {
-        forget();
+        // Not forgotten: the route's rate budget also counts replays and reads, so a 429 can reach a retry whose
+        // earlier attempt was committed and lost. The same id can then only get that record.
         finish({ tone: 'alert', text: say('books.tooMany') });
         return;
       }

@@ -202,6 +202,8 @@ type Reply = {
   headers?: Record<string, string>;
   /** The connection fails, as when the network drops. */
   fail?: boolean;
+  /** The server commits a record for this command even though the answer is lost or refused. */
+  commits?: boolean;
   /** The answer waits for this promise, so a test can look at the busy state for as long as it needs. */
   gate?: Promise<void>;
 };
@@ -213,6 +215,8 @@ type Rig = {
   replies: Reply[];
   /** Reports to give next, in order; after that the first one again. */
   nextReports: Shape[];
+  /** The command ids the mock server holds a generation record for: one per id, as the real ledger keeps. */
+  records: Set<string>;
   /** Book requests the test has finished answering (or could not, because the page had already left). */
   answered: { count: number };
 };
@@ -251,6 +255,7 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     replies: [...(options.replies ?? [])],
     nextReports: [...(options.reports ?? [])],
     answered: { count: 0 },
+    records: new Set(),
   };
   if (options.clock) await page.clock.install();
   await page.unrouteAll({ behavior: 'ignoreErrors' });
@@ -316,6 +321,9 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     if (bookDelay > 0) await new Promise((done) => setTimeout(done, bookDelay));
     const reply = rig.replies.shift() ?? pdfReply();
     if (reply.gate) await reply.gate;
+    const sent = rig.posts[rig.posts.length - 1]!.body.commandId;
+    if (reply.commits || (!reply.fail && (reply.status ?? 200) === 200))
+      rig.records.add(String(sent));
     try {
       if (reply.fail) {
         await route.abort('failed');
@@ -631,14 +639,15 @@ test('409 keeps the panel open, reads the report again, and the next press is a 
   expect(rig.posts[1]!.body.commandId).not.toBe(rig.posts[0]!.body.commandId);
 });
 
-// A command id is forgotten only when no record can exist for it: 429 and the two 422 reasons. A 503 or 404 may come
-// from the platform after a generation was committed, so the retry carries the same id and can only get that record.
+// A command id is forgotten only when no record can exist for it: success, 409 and the two 422 reasons. A 429, 503 or
+// 404 may come after a generation was committed (the route's rate budget also counts replays and reads, and a platform
+// error can follow a commit), so the retry carries the same id and can only get that record.
 const refusals: [string, Reply, string, boolean][] = [
   [
     '429',
     json(429, { error: 'Too many downloads' }),
     'Too many downloads for this mission just now. Try again later.',
-    false,
+    true,
   ],
   [
     '503',
@@ -676,6 +685,36 @@ for (const [name, reply, text, keeps] of refusals) {
     expect(same).toBe(keeps);
   });
 }
+
+test('a download whose answer was lost, then refused as too many, is still the same command: the server holds one record', async ({
+  page,
+}) => {
+  // The first attempt is committed on the server but its answer never arrives. The retry is stopped by the rate budget
+  // (it counts replays too). Once the budget clears, the next retry must still carry the first id.
+  const rig = await openPage(page, {
+    replies: [
+      { fail: true, commits: true },
+      json(429, { error: 'Too many downloads' }),
+      pdfReply(),
+    ],
+  });
+  await openPanel(page);
+  await trip(page).click();
+  await expect(alert(page)).toHaveText(retryText);
+  await trip(page).click();
+  await expect(alert(page)).toHaveText(
+    'Too many downloads for this mission just now. Try again later.',
+  );
+  await expect(trip(page)).toBeEnabled();
+  await trip(page).click();
+  await expect(status(page)).toHaveText(created('Trip Book'));
+  expect(rig.posts).toHaveLength(3);
+  expect(new Set(rig.posts.map((post) => post.body.commandId)).size).toBe(1);
+  expect(rig.records.size).toBe(1);
+  // After a success the next download is a new command, so a second record is then made on purpose.
+  await trip(page).click();
+  await expect.poll(() => rig.records.size).toBe(2);
+});
 
 test('422 for a book with nothing reviewed says so and reads the report again', async ({
   page,
