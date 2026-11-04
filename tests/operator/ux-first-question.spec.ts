@@ -336,6 +336,8 @@ test('notes validation keeps its context hint and exposes the error on the texta
     .getByLabel('Your offer or requirement', { exact: true })
     .fill('Synthetic cotton fabric requirement');
   await next.click();
+  // The optional notes sit behind "More details (optional)" on the results step (the step fits its budget).
+  await page.getByRole('button', { name: 'More details (optional)', exact: true }).click();
   const notes = page.locator('.intake-form textarea');
   await expect(notes).toHaveAttribute('aria-describedby', 'request-context-hint');
   await notes.evaluate((el) => ((el as HTMLTextAreaElement).maxLength = 2000));

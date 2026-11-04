@@ -11,6 +11,11 @@ import { test, expect } from '../fixtures';
 type Sent = { key: string; brief: Record<string, any>; websiteCheck: string };
 
 const next = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true });
+// The optional fields of the details and results steps sit behind "More details (optional)".
+const unfold = async (page: Page) => {
+  const toggle = page.getByRole('button', { name: 'More details (optional)', exact: true });
+  if (await toggle.count()) await toggle.click();
+};
 const fillField = async (page: Page, name: string, value: string) =>
   await page.locator(`#brief-${name}`).fill(value);
 
@@ -131,6 +136,7 @@ for (const entry of jobs) {
       .getByLabel(/^Your offer or requirement|^What should the trip achieve/)
       .first()
       .fill(`QA test (madeup): ${entry.label} for a knitting unit`);
+    await unfold(page);
     const everyOptional = [
       'technicalPurpose',
       'parameters',
@@ -164,6 +170,7 @@ for (const entry of jobs) {
     await fillField(page, 'website', 'https://example.com/catalogue');
     await next(page).click();
     // Results.
+    await unfold(page);
     await fillField(page, 'worthwhile', 'Three real meetings');
     await page.getByLabel('Relevant meetings', { exact: true }).check();
     await page.getByLabel('Supplier visits', { exact: true }).check();
@@ -235,6 +242,7 @@ test('P-04 a guest draft survives a reload and resumes on the same step with its
   await page
     .getByLabel('Your offer or requirement', { exact: true })
     .fill('QA test (madeup): combed cotton yarn, kept across a reload');
+  await unfold(page);
   await fillField(page, 'quantity', '500');
   await fillField(page, 'unit', 'kg');
   await page.reload();
@@ -260,6 +268,7 @@ test('P-02 a quantity without a unit and a partial budget are refused on their o
   await page
     .getByLabel('Your offer or requirement', { exact: true })
     .fill('QA test (madeup): combed cotton yarn for a knitting unit');
+  await unfold(page);
   await fillField(page, 'quantity', '500');
   await next(page).click();
   await expect(page.locator('#unit-error')).toBeVisible();

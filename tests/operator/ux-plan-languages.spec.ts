@@ -28,7 +28,11 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // merges to main, point it at the main commit that carries the same apps/web/app/plan/page.tsx and intake.tsx.
 // GAP-010 changes the English country controls. Keep this fixed source snapshot reachable
 // through baseline/gap-010-request-countries-groups-2026-11-03 after the PR is squash-merged.
-const baseline = '039cd7d5040022dc14157a22e33507a9c1f8e25f';
+// The /plan step budget (revamp, 4 Nov 2026) folds the optional fields of the details and results steps behind
+// "More details (optional)" so every step fits its budget; the request bodies are unchanged. The baseline now
+// names the commit that carries that form. That commit is kept reachable because the pull request is merged with
+// a merge commit, not squashed (no tag), so main's history holds it.
+const baseline = '4bd7b5d1acc1df4fbecadf8f46f85e10d62bba49';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
