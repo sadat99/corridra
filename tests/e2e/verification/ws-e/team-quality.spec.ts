@@ -192,7 +192,11 @@ for (const target of targets) {
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
       await page.waitForTimeout(2500);
       const shown = await page.evaluate(() =>
-        [...document.querySelectorAll('main [role=status], main [role=alert], main .ux-state')]
+        [
+          ...document.querySelectorAll(
+            'main [role=status], main [role=alert], main .ux-state, main [aria-live]',
+          ),
+        ]
           .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
           .filter(Boolean)
           .join(' | '),
@@ -213,6 +217,36 @@ for (const target of targets) {
     }
   });
 }
+
+// Q-05 sweep: with every data read of a section failing (503), no section is a blank area, and
+// none shows an empty or zero state as if it were a result.
+test('Q-05 every section says its data could not be loaded when every read fails', async () => {
+  test.setTimeout(400000);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const skip = new Set(['workspace-authenticator', 'workspace-controls']);
+  for (const { id, slug } of sections.filter((s) => !skip.has(s.id))) {
+    await page.route('**/api/**', (route) => {
+      const url = route.request().url();
+      if (
+        /\/api\/workspace\/(workspace|config)\b/.test(url) ||
+        !/\/api\/(workspace|team-control)\//.test(url)
+      )
+        return route.continue();
+      return route.fulfill({ status: 503, json: { error: 'Service unavailable' } });
+    });
+    await page.goto(`/operator/${slug}?workspace=${tenant}`, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
+    await page.waitForTimeout(2500);
+    const text = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
+    expect
+      .soft(text, `${slug} (${id}): no failure words with every read failing`)
+      .toMatch(/could not|unavailable|failed|try again|retry|check your connection/i);
+    expect
+      .soft(text, `${slug} (${id}): an empty or zero state shown as a result`)
+      .not.toMatch(/No mission requests yet|Nothing is waiting|None recorded/i);
+    await page.unroute('**/api/**');
+  }
+});
 
 // Q-06: a request-sending action is disabled or busy while it is in flight, a double click sends
 // one request, and the result is announced. Read-only refresh and load actions are used so the

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
 import { OperatorIcon } from '../../components/operator-icon';
+import { readFailureKind, readFailureWords, type ReadFailureKind } from './read-failure';
 import { displayDate } from '@corridra/domain/locale';
 
 type Mission = {
@@ -103,7 +104,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
   const [today, setToday] = useState<Today | null>(null);
   // Why the list could not be read: the person's role, too many requests, or anything else (an
   // unavailable service or no connection). Each gets its own words and a retry where one helps.
-  const [failure, setFailure] = useState<null | 'denied' | 'later' | 'unavailable'>(null);
+  const [failure, setFailure] = useState<ReadFailureKind | null>(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
@@ -157,10 +158,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        const status = (error as { status?: number }).status;
-        setFailure(
-          status === 401 || status === 403 ? 'denied' : status === 429 ? 'later' : 'unavailable',
-        );
+        setFailure(readFailureKind(error));
       });
     return () => controller.abort();
   }, [tenant, revision, attempt]);
@@ -191,14 +189,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
       </header>
       {failure ? (
         <div role="status">
-          <p>
-            Today&apos;s list could not be loaded.{' '}
-            {failure === 'denied'
-              ? 'Your role is not allowed to read it. Ask your workspace owner to review your access.'
-              : failure === 'later'
-                ? 'There have been too many requests. Try again later.'
-                : 'Check your connection and try again.'}
-          </p>
+          <p>Today&apos;s list could not be loaded. {readFailureWords(failure)}</p>
           {failure !== 'denied' && (
             <button
               type="button"
