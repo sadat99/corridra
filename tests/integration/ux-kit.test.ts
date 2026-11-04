@@ -328,17 +328,13 @@ describe('language and direction before paint (CQ-10, CQ-48)', () => {
 describe('WS-E messages (D16, D17)', () => {
   test('every key exists in all seven languages, with no em dash', () => {
     const keys = Object.keys(wsEEn);
-    const englishOnly = new Set(['wse.team.delivery', 'wse.team.outcomes', 'wse.team.allTools']);
     expect(keys.length).toBeGreaterThan(20);
     for (const key of keys) expect(key.startsWith('wse.'), key).toBe(true);
     for (const locale of localeCodes.filter((code) => code !== 'en')) {
       const block = wsE[locale as Exclude<(typeof localeCodes)[number], 'en'>];
       expect(Object.keys(block).sort(), locale).toEqual([...keys].sort());
       for (const [key, value] of Object.entries(block)) {
-        // Open language gap: the three team group words are English only at launch. Empty falls back
-        // to English and the sidebar marks the word lang="en". Any other key needs real text.
-        if (englishOnly.has(key)) expect(value, key + ' ' + locale).toBe('');
-        else expect(value.trim().length, key + ' ' + locale).toBeGreaterThan(0);
+        expect(value.trim().length, key + ' ' + locale).toBeGreaterThan(0);
         expect(value).not.toMatch(/—/);
       }
     }
