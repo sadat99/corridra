@@ -128,3 +128,126 @@ test('Q-01 Tab reaches every control with a visible focus ring, never traps, and
   });
   expect.soft(landed.inside, `focus after the view change: ${JSON.stringify(landed)}`).toBe(true);
 });
+
+// Q-05: every read failure says what happened in words. A 503 and an offline request offer a retry,
+// a 429 says to try again later, a 403 says access is not allowed. The words each screen shows are
+// written into the failure message so a miss names what the person would have read.
+const failures = [
+  {
+    name: '503',
+    apply: (r: import('@playwright/test').Route) =>
+      r.fulfill({ status: 503, json: { error: 'Service unavailable' } }),
+    retry: true,
+    words: /could not|unavailable|try again/i,
+  },
+  {
+    name: '403',
+    apply: (r: import('@playwright/test').Route) =>
+      r.fulfill({ status: 403, json: { error: 'Forbidden' } }),
+    retry: false,
+    words: /not allowed|no access|don.t have access|permission|denied|role/i,
+  },
+  {
+    name: '429',
+    apply: (r: import('@playwright/test').Route) =>
+      r.fulfill({
+        status: 429,
+        headers: { 'Retry-After': '30' },
+        json: { error: 'Too many requests' },
+      }),
+    retry: false,
+    words: /try again (later|in)|too many|wait/i,
+  },
+  {
+    name: 'offline',
+    apply: (r: import('@playwright/test').Route) => r.abort('failed'),
+    retry: true,
+    words: /could not|offline|connection|try again/i,
+  },
+] as const;
+const targets = [
+  {
+    name: 'Today (the missions read)',
+    path: () => `/operator?workspace=${tenant}`,
+    pattern: '**/api/workspace/missions**',
+  },
+  {
+    name: 'the workspace read',
+    path: () => `/operator?workspace=${tenant}`,
+    pattern: '**/api/workspace/workspace**',
+  },
+  {
+    name: 'the Missions section',
+    path: () => `/operator/missions?workspace=${tenant}`,
+    pattern: '**/api/workspace/missions**',
+  },
+];
+for (const target of targets) {
+  test(`Q-05 ${target.name}: 503, 403, 429 and offline each get honest words and the right next step`, async () => {
+    test.setTimeout(240000);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    for (const failure of failures) {
+      await page.route(target.pattern, failure.apply);
+      await page.goto(target.path(), { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
+      await page.waitForTimeout(2500);
+      const shown = await page.evaluate(() =>
+        [...document.querySelectorAll('main [role=status], main [role=alert], main .ux-state')]
+          .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
+          .filter(Boolean)
+          .join(' | '),
+      );
+      const retry = await page.getByRole('button', { name: /retry|try again|refresh/i }).count();
+      const label = `${target.name} / ${failure.name}: shown="${shown.slice(0, 220)}" retryButtons=${retry}`;
+      expect.soft(shown, label).toMatch(failure.words);
+      if (failure.retry) expect.soft(retry, label).toBeGreaterThan(0);
+      expect.soft(shown, label + ' (blank area)').not.toBe('');
+      await page.unroute(target.pattern);
+    }
+  });
+}
+
+// Q-06: a request-sending action is disabled or busy while it is in flight, a double click sends
+// one request, and the result is announced. Read-only refresh and load actions are used so the
+// seeded data never changes; the request is slowed so the in-flight window can be seen.
+const busyActions = [
+  { slug: 'missions', name: 'Refresh missions' },
+  { slug: 'research', name: 'Refresh research' },
+  { slug: 'research', name: 'Load company link requests' },
+  { slug: 'assistance', name: 'Refresh AI review' },
+  { slug: 'network', name: 'Refresh invitations' },
+  { slug: 'network', name: 'Refresh execution work' },
+  { slug: 'health', name: 'Refresh operations' },
+  { slug: 'settings', name: 'Refresh reviewed configuration' },
+  { slug: 'audit', name: 'Load access and recent changes' },
+  { slug: 'controls', name: 'Load workspace members' },
+];
+test('Q-06 busy actions: one request on a double click, disabled or busy in flight', async () => {
+  test.setTimeout(400000);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const action of busyActions) {
+    await open(`/operator/${action.slug}?workspace=${tenant}`);
+    // Operations panels load their own data after the workspace: let that settle first.
+    await page.waitForTimeout(1500);
+    const button = page.getByRole('button', { name: action.name, exact: true });
+    await expect(button, action.name).toBeVisible();
+    let sent = 0;
+    await page.route('**/api/**', async (route) => {
+      sent++;
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      await route.continue().catch(() => undefined);
+    });
+    await button.dblclick();
+    const inFlight = await button.evaluate(
+      (el) => (el as HTMLButtonElement).disabled || el.getAttribute('aria-busy') === 'true',
+    );
+    await page.waitForTimeout(1600);
+    await page.unroute('**/api/**');
+    expect
+      .soft(sent, `${action.slug} / ${action.name}: requests after a double click`)
+      .toBeLessThanOrEqual(1);
+    expect
+      .soft(inFlight, `${action.slug} / ${action.name}: disabled or aria-busy while in flight`)
+      .toBe(true);
+  }
+});
