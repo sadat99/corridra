@@ -1379,6 +1379,11 @@
       "use": "Exact hashed ledger at the PR 258 merge (4f2870e), before the merge and the requirement-bindings first slice were recorded; preserves the wording condensed or superseded in the current ledger; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr259-merge-records-2026-11-04.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 288d8e8, before the PR 259 merge and main result and the G residual acceptance tests were recorded; preserves the wording condensed or superseded in the current ledger; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
