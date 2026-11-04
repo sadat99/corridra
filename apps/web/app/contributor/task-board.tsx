@@ -11,6 +11,7 @@ const words = (code: string) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
 const place = (value: string) => (/^[A-Z]{2}$/.test(value) ? countryName(value) : value);
+import { readFailureKind, readFailureWords } from '../operator/read-failure';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 type Task = {
   id: string;
@@ -83,7 +84,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
         setLoaded(false);
       }
       setReadInterrupted(true);
-      throw new Error(body.error);
+      throw Object.assign(new Error(body.error), { status: r.status });
     }
     setTasks(body);
     setLoaded(true);
@@ -98,14 +99,14 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
     })
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error);
+        if (!r.ok) throw Object.assign(new Error(data.error), { status: r.status });
         if (live) {
           setTasks(data);
           setLoaded(true);
         }
       })
       .catch((e) => {
-        if (live) setMessage(e.message);
+        if (live) setMessage(readFailureWords(readFailureKind(e)));
       });
     return () => {
       live = false;
@@ -140,7 +141,10 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
       setMessage('Received and saved.');
       await refresh().catch((e) => {
         setReadInterrupted(true);
-        setMessage('Received and saved. The task list could not refresh: ' + e.message);
+        setMessage(
+          'Received and saved. The task list could not refresh. ' +
+            readFailureWords(readFailureKind(e)),
+        );
       });
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Not received. Retry this submission.');
@@ -178,7 +182,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
           inFlight.current = true;
           setBusy(true);
           void refresh()
-            .catch((e) => setMessage(e.message))
+            .catch((e) => setMessage(readFailureWords(readFailureKind(e))))
             .finally(() => {
               inFlight.current = false;
               setBusy(false);
