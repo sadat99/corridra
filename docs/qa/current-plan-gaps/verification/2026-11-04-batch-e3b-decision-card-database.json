@@ -1,0 +1,330 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "E",
+  "kind": "E3b decision card steps 1 and 2: ADR-076 item 4 acceptance and the database module (branch claude/zen-hopper-1iqtdn, not pushed, not in a PR)",
+  "findings": ["GAP-041"],
+  "status": "Written and committed on branch claude/zen-hopper-1iqtdn as three commits, in order 71df943, 8a5a10c and 54af3c4, on main de8c66a. Not pushed and not in a PR when recorded, so no CI, CodeQL or Codex result exists for it and none is claimed. Nothing calls the module: there is no service, route, screen or switch, and CORRIDRA_SHARE_CARD stays 'planned' in the registry. The module is not installed anywhere. Nothing is deployed-verified, enabled or activated by agents.",
+  "branch": {
+    "name": "claude/zen-hopper-1iqtdn",
+    "base": "de8c66a2c1c7eca7f7e7fed311b2cdabd0b31549",
+    "head": "54af3c4b725be0c61bb87abd8c399c01ea3453d8",
+    "pushed": false,
+    "pullRequest": null,
+    "commits": [
+      {
+        "sha": "71df943",
+        "note": "architect: ADR-076 item 4 moved from PROPOSED to ACCEPTED, NOT YET BUILT; contract heading 'items 1-6 accepted; item 4 not yet built'; item 6 says CORRIDRA_SHARE_CARD becomes a real switch when the service step lands; ADR-070 status line and addendum (7 days, digest, current owner or admin, sample workspaces only; the 'interviews first' condition waived for BUILDING behind the off switch, NOT for enabling); docs/adr/README.md rows updated"
+      },
+      {
+        "sha": "8a5a10c",
+        "note": "database module: packages/db/customer-decision-card-migrations/0001_decision_cards.sql, packages/db/src/customer-decision-card-migrate.ts, the entry ['decision cards', migrateCustomerDecisionCards] in scripts/install-customer-modules.ts, tests/integration/customer-decision-cards.test.ts and customer-decision-card-upgrade.test.ts"
+      },
+      {
+        "sha": "54af3c4",
+        "note": "fixes after the adversarial review: lifetime is interval '168 hours' (not '7 days', DST), 30 new cards per hour, state lists live cards (ACTIVE and UNAVAILABLE) first and always, comments recording the two accepted behaviours below, a sleep-based expiry test replaced, eight missing tests added; the released-file hash in the upgrade test is c525914355534506068902c048ba051f50e503f64a5af903e8c0133954425e04, so any later SQL edit after the owner install needs a new file"
+      }
+    ]
+  },
+  "authority": {
+    "ownerDirection": "Owner, 3 Nov 2026 (ledger): 'take over batch E and ADR-076, and correctly complete them' and 'full pre-approval for everything including necessary migration'. The conductor applied it to the decision card on 4 Nov after the owner asked why work had stopped. This covers building behind the default-off switch. It does not cover enabling, the protected install run, the recorded privacy review, or the real-workspace gates D06 and D08.",
+    "acceptedContract": "Creator is the saved-mission holder who is at that moment owner or admin of the workspace that owns the request AND the requester of the request the report was delivered for. One currently reviewed SELECT, DECLINE or NEED_INFORMATION disclosure; exact-fields preview; six fields only (company, decision, rationale, next action, due date, one provenance label); never a quotation, price, contact, file, another decision or requirement text. Digest only: every read re-derives live and answers one uniform 'unknown' on any change. A 43-character token in the URL fragment of /decision-card (POST body); only its SHA-256 is stored. The same command retried returns the same card. At most 7 days and never beyond the earlier of the delivery link expiry and the retention end of every source. Read-only, no-store, no-referrer, noindex; GET and HEAD never disclose. Only the creator can withdraw. At most 5 active cards per saved report. The creator sees an open count (page loads, which may include automatic link checks) and the last-opened time. Cards exist for SAMPLE (synthetic) workspaces only; real workspaces always answer unknown. Enabling is an owner action needing the recorded privacy review and the installed module."
+  },
+  "databaseModule": {
+    "summary": "Three append-only tables in customer_private with RLS and immutability triggers, no policy, no CREATE OR REPLACE. Twelve new functions: five granted to corridra_runtime with EXECUTE only and seven helpers granted to nobody. Own registry table customer_decision_card_migrations, advisory lock, multi-file hash-guarded installer, error 'Customer decision card migration history mismatch'. The installer first runs the prerequisite migrators for decisions, delivery, organisation profiles and member roles.",
+    "grantedFunctions": [
+      "customer.decision_card_state(uuid): resourceId, canShare, maxActive, and the caller's own cards (id, decisionId, state ACTIVE|WITHDRAWN|EXPIRED|UNAVAILABLE, createdAt, expiresAt, opens, lastOpenedAt); live cards (ACTIVE and UNAVAILABLE) are listed first and always",
+      "customer.decision_card_preview(uuid, uuid)",
+      "customer.create_decision_card(command, resource, decision, expected_digest, token_hash, expected_expires default null)",
+      "customer.withdraw_decision_card(command, card)",
+      "app.read_decision_card(h): takes the SHA-256 hex of the token; returns {state:'unknown'} or {state:'OPEN', card, expiresAt, synthetic:true}"
+    ],
+    "errorConstants": [
+      "23514 'DECISION_CARD_CHANGED': stale digest, changed retry or stale shown expiry",
+      "53400 'DECISION_CARD_CAP_REACHED': the fifth live card",
+      "54000 'DECISION_CARD_RATE_LIMITED': the 31st new card per actor and saved report per hour",
+      "42501: access lost",
+      "23505: duplicate token hash"
+    ],
+    "installerStep": "scripts/install-customer-modules.ts gains ['decision cards', migrateCustomerDecisionCards]. The report moves from 'not installed' to '1 applied' only after an owner-approved protected 'Install customer modules' run. No such run has been dispatched and none can happen before this branch is merged.",
+    "acceptedBehaviours": [
+      "A card validates only the CHOSEN decision: it stays OPEN when another decision in the same disclosure lapses (unlike customer.saved_mission_decisions). Recorded in the SQL comments.",
+      "A creator who is demoted and then re-promoted revives the same link (heal); a changed field never heals. Recorded in the SQL comments.",
+      "The stored token_hash is a bearer credential for app.read_decision_card, the same pattern as the delivery link. A database read plus AUTH_SECRET regenerates every link, so command ids that carry tokens must never be logged.",
+      "UNAVAILABLE cards count toward the cap of 5 (stricter); UNAVAILABLE cards can be withdrawn.",
+      "Timing is not claimed identical beyond the response body.",
+      "53400 is also used by admission functions and 23514 by other validation, so a route must map the 409 reason by message text and not by SQLSTATE alone."
+    ]
+  },
+  "review": "One adversarial read-only review (corridra-reviewer) found no blocking or security defect. It traced every authority edge, token handling, the cap under 8 concurrent creates, grants, RLS, immutability, the prerequisite guard and the installer, and found them sound. Items fixed in 54af3c4: a sleep-based expiry test, 168 hours, the hourly cap, list ordering, and eight missing tests (disabled principal, padded hash, duplicate token hash, expected_expires above 7 days or above the resolved expiry, exact retry after withdrawal and after demotion, withdraw after the report was removed, the withdrawn event payload carrying no digest or token, a non-UTC session). The review result is relayed by the conductor and builder; no review file exists in the repository.",
+  "mutationChecks": "Reported by the builder, no receipt files: first round, each applied then restored byte for byte and each caught: cap raised, cap check before the retry lookup, withdraw without the principal check, publication-tenant synthetic check removed, workspace synthetic check removed, digest comparison removed from the public read, expiry ignoring source retention, role check weakened, requester equality removed, withdrawn check removed from the public read, disclosure membership check removed. Second round, all caught: read-time expiry clamp removed, CHECK back to 7 days, hourly limit raised, live-first ordering removed.",
+  "receipts": [
+    {
+      "name": "card-red",
+      "receiptPath": "work/card-red-2026-11-04T08-55-50-165Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts",
+      "exit": 1,
+      "seconds": 31,
+      "logSha256": "caf7a17c121268a2b47b26801ac1a3bab7f98068cd3783b89e1da7623a626add",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 4,
+      "role": "failing-before reproduction (card suite, before the SQL)",
+      "result": "40 failed (40): function or relation does not exist"
+    },
+    {
+      "name": "card-upgrade-red",
+      "receiptPath": "work/card-upgrade-red-2026-11-04T08-57-26-072Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-card-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 6.4,
+      "logSha256": "bc807b778ee2fa397b9c52557f7a37ac252c26d05e32c989e661bc8b7d41f6bd",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "failing-before reproduction (upgrade suite, before the SQL)",
+      "result": "3 failed | 7 passed (10)"
+    },
+    {
+      "name": "card-green1",
+      "receiptPath": "work/card-green1-2026-11-04T08-59-44-998Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts",
+      "exit": 1,
+      "seconds": 33,
+      "logSha256": "b5ab811344cb3466a1c27a8481218166524aa314aeb92bdb660662d4b4483ba5",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "first run after the SQL was written",
+      "result": "36 failed | 4 passed (40); kept, not proof"
+    },
+    {
+      "name": "card-green2",
+      "receiptPath": "work/card-green2-2026-11-04T09-00-43-566Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts",
+      "exit": 1,
+      "seconds": 42.9,
+      "logSha256": "e6cb3a487952574e9f7943d430198de09a3d152ebee2cf84a8d6a48cd3bcfea4",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "second run during the SQL work",
+      "result": "9 failed | 31 passed (40); kept, not proof"
+    },
+    {
+      "name": "card-green3",
+      "receiptPath": "work/card-green3-2026-11-04T09-02-19-304Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts",
+      "exit": 0,
+      "seconds": 46.3,
+      "logSha256": "d7022e6da972be074df0e195957d46ecc950f3dd3f98d4b1f68dea705bc09571",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "card suite passing",
+      "result": "40 passed (40)"
+    },
+    {
+      "name": "card-upgrade1",
+      "receiptPath": "work/card-upgrade1-2026-11-04T09-03-10-412Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-card-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 7.1,
+      "logSha256": "0b998b02759d9c6016d87cc5d07d0595df8f2035da029064a1669d484101114d",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "upgrade suite during the SQL work",
+      "result": "2 failed | 8 passed (10); kept, not proof"
+    },
+    {
+      "name": "card-green4",
+      "receiptPath": "work/card-green4-2026-11-04T09-13-21-884Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts tests/integration/customer-decision-card-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 54.4,
+      "logSha256": "1f0ec618f2867e76f69f9c4960870d4dff504ed03fa1ab866d77c6125ac4014c",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "pair run with one remaining failure",
+      "result": "1 failed | 50 passed (51) in the two files"
+    },
+    {
+      "name": "fu-red",
+      "receiptPath": "work/fu-red-2026-11-04T09-45-53-359Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts",
+      "exit": 1,
+      "seconds": 72.6,
+      "logSha256": "df1559459cbb36bbfe7132a3b04706595c4f72325c919f7d16f7419c84e35add",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 1,
+      "role": "failing-before reproduction of three review-fix tests (168 hour bound under a New York session, 31st-card limit, live cards behind 105 newer withdrawn cards)",
+      "result": "3 failed | 50 passed (53)"
+    },
+    {
+      "name": "fu-green1",
+      "receiptPath": "work/fu-green1-2026-11-04T09-47-50-969Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts tests/integration/customer-decision-card-upgrade.test.ts",
+      "exit": 1,
+      "seconds": 80.8,
+      "logSha256": "3a6c09f086e4f59444ba17173f478a5fa993bff769c85640efabd0c4866ac030",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "pair run after the review fixes with one failure left",
+      "result": "1 failed | 62 passed (63)"
+    },
+    {
+      "name": "fu-green2",
+      "receiptPath": "work/fu-green2-2026-11-04T10-12-04-254Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-decision-cards.test.ts tests/integration/customer-decision-card-upgrade.test.ts",
+      "exit": 0,
+      "seconds": 78.9,
+      "logSha256": "47df8580dcaef65e42672fa9085d13b451b7243012107d1da1b7b06e39dbcda6",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "passing: card suite plus upgrade suite on the review-fix tree (committed as 54af3c4)",
+      "result": "2 files, 63 passed (63)"
+    },
+    {
+      "name": "integration-full",
+      "receiptPath": "work/integration-full-2026-11-04T09-15-35-326Z.log.receipt.json",
+      "command": "pnpm test:integration",
+      "exit": 1,
+      "seconds": 1008,
+      "logSha256": "1e9bf14baf9d07562f24e9a2602e7cf82e249a4e00d851969218b4a9a5056c7f",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "full integration run before the review fixes",
+      "result": "4 failed | 2239 passed | 1 skipped (2244); the four are adapters (ClamAV), blob, scan-bypass and foundations backup restore"
+    },
+    {
+      "name": "integration-full2",
+      "receiptPath": "work/integration-full2-2026-11-04T09-54-15-547Z.log.receipt.json",
+      "command": "pnpm test:integration",
+      "exit": 1,
+      "seconds": 1017.8,
+      "logSha256": "53e3ca0c128a93ce57fc6e484fe3f9a088d8b643fbd3c2ef06b2790035ff10a2",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "full integration run on the review-fix tree (committed as 54af3c4)",
+      "result": "4 failed | 2251 passed | 1 skipped (2256); the same four environment tests"
+    },
+    {
+      "name": "typecheck",
+      "receiptPath": "work/typecheck-2026-11-04T09-15-36-333Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 35.7,
+      "logSha256": "6efc1124948a61fe0368766ddf2d5d2e7120ff435c0587a081393e42f167180e",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "typecheck before the review fixes",
+      "result": "exit 0"
+    },
+    {
+      "name": "typecheck2",
+      "receiptPath": "work/typecheck2-2026-11-04T09-54-17-549Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 2,
+      "seconds": 34.5,
+      "logSha256": "c23a1441a5adf6157533676da54ed6710f21e2817f91ebcac1210ddd7b9ccb97",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "typecheck on the review-fix tree, first run",
+      "result": "exit 2: a type error at tests/integration/customer-decision-cards.test.ts(1709,81) (a string passed where a UUID template type is required); kept"
+    },
+    {
+      "name": "typecheck3",
+      "receiptPath": "work/typecheck3-2026-11-04T10-11-34-870Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 27.2,
+      "logSha256": "a1b60f3f07c3d02c7509be697f286e202cc3fc32650c47282829749d75385906",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "typecheck after the one-line type fix",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint",
+      "receiptPath": "work/lint-2026-11-04T09-16-15-122Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 49.5,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "71df9434909e06311483611ed9cfd174d154bb03",
+      "changedPaths": 5,
+      "role": "lint before the review fixes",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint2",
+      "receiptPath": "work/lint2-2026-11-04T09-54-52-142Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 54.1,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "lint on the review-fix tree, before the one-line type fix",
+      "result": "exit 0"
+    },
+    {
+      "name": "format3",
+      "receiptPath": "work/format3-2026-11-04T10-13-23-168Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 43.6,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "format check on the final test and SQL tree",
+      "result": "exit 0"
+    },
+    {
+      "name": "docs2",
+      "receiptPath": "work/docs2-2026-11-04T09-56-30-591Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 17.2,
+      "logSha256": "38eba18761ac9b3860a76c02654c78380c4cb5ee50231d1dccb8cbe0065a6dad",
+      "head": "8a5a10c98dc6c4d8b0da127fbb7bb6e8b3d1791b",
+      "changedPaths": 3,
+      "role": "pnpm test:docs on the review-fix tree",
+      "result": "exit 0"
+    },
+    {
+      "name": "scribe-lint-e3b",
+      "receiptPath": "work/scribe-lint-e3b-2026-11-04T10-16-57-405Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 52.2,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "54af3c4b725be0c61bb87abd8c399c01ea3453d8",
+      "changedPaths": 4,
+      "role": "lint re-run by the scribe on the committed head 54af3c4",
+      "result": "exit 0 (changed paths are the scribe documentation edits)"
+    },
+    {
+      "name": "scribe-typecheck-e3b",
+      "receiptPath": "work/scribe-typecheck-e3b-2026-11-04T10-17-49-653Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 25.3,
+      "logSha256": "7324b34d40ef521c56918ecb6759b3e7230302f1fad5b55e8b5e06470726e010",
+      "head": "54af3c4b725be0c61bb87abd8c399c01ea3453d8",
+      "changedPaths": 5,
+      "role": "typecheck re-run by the scribe on the committed head 54af3c4",
+      "result": "exit 0 (changed paths are the scribe documentation edits)"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands, exits, log hashes and the head each reports. A receipt that reports 71df943 or 8a5a10c with changed paths ran on the working tree before that work was committed (the SQL, installer and tests became 8a5a10c; the review fixes became 54af3c4). Several earlier red or flaky runs are kept in the list on purpose and are not proof. The builder reported 41 of 41 card tests and 10 of 10 upgrade tests passing after the SQL; the retained receipts show card-green3 at 40 of 40 and card-green4 with 1 failure in 51, and no retained receipt shows a clean 41 plus 10 run before the review fixes. The final pair result is fu-green2: 63 of 63. The conductor also reported pnpm format:check, test:docs, node scripts/v3-context.mjs verify and node scripts/authority.mjs check as exit 0 on the final tree; the format3 and docs2 receipts above are for the tree before the commit and the scribe re-ran the checks on the records.",
+  "notRun": [
+    "No Playwright or browser test, no route test, no HTTP test and no switch-off test exists: steps 3 and 4 own them. 'Production locked' and 'switch off' behaviour are application-level and not exercised.",
+    "The full integration run was last repeated on the review-fix tree (integration-full2, 2251 passed, 4 failed); it was not repeated after the one-line type fix in the test file.",
+    "No CI, CodeQL or Codex review: the branch is not pushed and has no pull request.",
+    "No test of the installer against the real production database, which is not reachable from here."
+  ],
+  "limits": [
+    "The four failing integration tests (adapters and blob and scan-bypass need ClamAV; foundations backup restore needs pg_dump) fail in this sandbox and also fail on main; CI is the proof for the exact head.",
+    "The module is not installed. After the database pull request merges, the owner approves a protected 'Install customer modules' run (expected report 'not installed' then '1 applied'). Install runs 41705868221 (migration 0002) and a later books run are still owner-pending.",
+    "Enabling CORRIDRA_SHARE_CARD needs the recorded privacy review and the installed module; it also needs saved reports and decisions on and the production lock off once step 3 makes it a real flag.",
+    "Cards exist for sample (synthetic) workspaces only; real workspaces answer unknown, so D06 and D08 stay closed.",
+    "Step 3 (service and routes) must: map 23514 DECISION_CARD_CHANGED to 409 CHANGED and 53400 DECISION_CARD_CAP_REACHED to 409 CAP_REACHED by message text, 54000 to 429, 42501 to 403 or 401, other 23514 to 400, 40P01 and 55P03 to a retryable 503; pass preview.expiresAt through as expected_expires; derive the token from HMAC(AUTH_SECRET, issuer, subject, commandId) and show the link only when the create or retry state is ACTIVE; add a per-customer limiter on create and withdraw and a per-client budget before the public read; make the public route POST only (GET and HEAD 405 with Allow: POST and no card data) with no-store, no-referrer, X-Robots-Tag noindex nofollow, JSON, no cookie, Origin check, body bound and one identical 200 {state:'unknown'} for every non-OPEN answer; never run the public read in a READ ONLY transaction or on a replica because it writes the open counter; never log body, token, hash or fragment; make CORRIDRA_SHARE_CARD a real flag (off unless exactly 'true'); update the ux-trip assertion; register the new private API in apps/web/next.config.ts private-header overrides and extend the private-api-headers test.",
+    "Step 4 (UI) follows the designer spec and the architect's verdict on decision 8: hide the public site header, footer and corner dock on /decision-card through one shared predicate isBarePublicPage(pathname) used by ShellHeader, SiteFooterView and CornerDock (CSS-only hiding is rejected because the session calls would still run); a real-build test of zero get-session requests and no Set-Cookie on /decision-card or /api/decision-card; the full operator suite before merge; LanguageProvider and language-boot.js must write no cookie on that page. The designer spec is not in the repository.",
+    "GAP-041 stays OPEN. Implementation PARTIAL (database module only), verification PARTIAL, approval PARTIAL, deployment and activation UNKNOWN. Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP/mailbox/production observation and native language review stay closed or owner-only."
+  ]
+}
