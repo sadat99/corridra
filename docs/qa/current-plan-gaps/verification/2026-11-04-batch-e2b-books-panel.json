@@ -3,7 +3,7 @@
   "batch": "E",
   "kind": "E2b Books download panel on the saved mission page, and the record of the PR 257 merge",
   "findings": ["GAP-035"],
-  "status": "PR 257 (E2a Trip Book and Supplier Book backend) is MERGED as d1ddbcd. The E2b download panel is built on branch claude/zen-hopper-1iqtdn in commits eae5140 (feature) and f7caeb3 (review follow-ups), behind the default-off CORRIDRA_UX_BOOKS switch; it was not pushed or in a pull request when recorded, so no CI, CodeQL or Codex result exists for it. Nothing is deployed-verified, enabled or activated by agents. Migration 0002 (programme projection) and the books database module are not installed in production.",
+  "status": "PR 257 (E2a Trip Book and Supplier Book backend) is MERGED as d1ddbcd. The E2b download panel is built on branch claude/zen-hopper-1iqtdn in commits eae5140 (feature) and f7caeb3 (review follow-ups), behind the default-off CORRIDRA_UX_BOOKS switch; it was not pushed or in a pull request when recorded, so no CI, CodeQL or Codex result exists for it. Nothing is deployed-verified, enabled or activated by agents. Migration 0002 (programme projection) and the books database module are not installed in production. Update, same day: the panel was pushed and opened as PR 258 (sadat99/corridra#258, ready for review, NOT merged); Codex raised a P2 on head 1033c4a and it was fixed in 89776fc (see e2bBehaviour.codexP2On1033c4a and retries); CI and Codex on 89776fc were pending when recorded and no result is claimed.",
   "pullRequests": {
     "pr257Merged": {
       "number": 257,
@@ -34,10 +34,18 @@
         {
           "sha": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
           "note": "fix: Books panel follow-ups from review (E2b)"
+        },
+        {
+          "sha": "1033c4a",
+          "note": "docs: record the PR 257 merge and the Books download panel (E2b); the head of PR 258 when Codex raised the P2"
+        },
+        {
+          "sha": "89776fc2fb9b3526022e5bd79092fc6e09698976",
+          "note": "fix: keep the Books command id on a 429 (E2b); the Codex P2 fix. Changes only the 429 branch of book-downloads.tsx and tests/operator/ux-books.spec.ts (+47 -7 lines)"
         }
       ],
       "baseRevision": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
-      "state": "local only when recorded; the scribe's record commit is the third commit; the conductor pushes and opens the draft pull request"
+      "state": "local only when first recorded (eae5140, f7caeb3, then the scribe's record commit 1033c4a). Later the same day the branch was pushed and PR 258 was opened; at 89776fc the PR is open and ready for review, not merged; CI and Codex on 89776fc pending when recorded"
     }
   },
   "e2bBehaviour": {
@@ -51,10 +59,11 @@
       "docs/agents/ui-direction.md (Components note)",
       "docs/product/language-review-record.md (row)",
       "tests/integration/ux-books.test.ts",
-      "tests/operator/ux-books.spec.ts (35 tests)"
+      "tests/operator/ux-books.spec.ts (35 tests at f7caeb3; 36 tests at 89776fc)"
     ],
     "summary": "A closed disclosure on the saved mission page, shown only when the books switch is on. No checkbox: the cannot-recall notice is shown above the buttons inside the panel, with the same sentence in the PDF. Two buttons, 'Download Trip Book (PDF)' and 'Download Supplier Book (PDF)'.",
-    "retries": "The same commandId is reused on retry and forgotten only on success, 409, 429 and a 422 with UNSUPPORTED_TEXT or EMPTY. 503, 404, other 5xx, timeouts and non-PDF answers keep the id. A 60 s client timeout shows 'could not confirm'. The object URL is revoked after 10 s.",
+    "retries": "The same commandId is reused on retry. CURRENT RULE (89776fc): it is forgotten ONLY on success, a 409, a 422 with reason UNSUPPORTED_TEXT or EMPTY, and the 401/403 full clear. A 429, 503, 404, any other 4xx or 5xx, a timeout, a non-PDF response and a missing digest or time header KEEP it. A 60 s client timeout shows 'could not confirm'. The object URL is revoked after 10 s. SUPERSEDED (eae5140 and f7caeb3, and the first version of this record at 1033c4a): the id was also forgotten on a 429.",
+    "codexP2On1033c4a": "Codex P2 on PR 258 (head 1033c4a): the route calls s.delivery.budget(...) BEFORE s.customerBooks.generate(...), and that budget also covers replays and reads, so a 429 can arrive for a retry whose earlier attempt DID commit a record (the answer was lost). Forgetting the id on 429 would make the next retry create a second ledger record and a second event. The SQL-cap 429 (SQLSTATE 54000, the 31st new generation in an hour) is raised inside the generation transaction before the ledger insert, so no record exists for it; keeping the id there is harmless (the retry generates once the cap clears). Fixed in 89776fc. Copy unchanged (books.tooMany = 'Too many downloads for this mission just now. Try again later.'). Tests: the operator refusals table now asserts that a 429 keeps the SAME id; a new test has the first POST commit with the answer lost (network error), the retry get 429, the next retry get 200: 3 POSTs, ONE distinct commandId, exactly 1 record in the mock ledger; a press after that success makes a new command and a second record. The operator spec now has 36 tests.",
     "accessibility": "An empty kind uses aria-disabled with a visible reason and keeps focus. A denial shows one dedicated alert and moves focus to it; a 401 adds a Sign in again link.",
     "copy": "27 English placeholder words (bookWords) marked D16 in all 7 catalogs; the language-review row reads 'Draft, review not yet recorded'. No native review exists.",
     "reviews": "An adversarial review and a designer audit ran on eae5140 with no blocking defect. One real defect (a stale book denial shown on a later evidence-response denial, and pending ids not cleared) and several test gaps were found and fixed in f7caeb3.",
@@ -80,7 +89,8 @@
       "unmount abort removed",
       "timedOut removed",
       "both pending.clear() removed",
-      "revoke shortened (after adding a clock-based test)"
+      "revoke shortened (after adding a clock-based test)",
+      "89776fc: forget() put back on 429 (as reported by the conductor; no receipt): both the 429 refusal test and the lost-answer-then-429 test fail"
     ],
     "survived": [
       "either single setBookDenial(null) (paired clears, defence in depth; both kept)",
@@ -235,7 +245,7 @@
       "head": "eae5140c39dc55978494b421bc485c687f1c068b",
       "changedPaths": 5,
       "role": "operator ux-books spec, first run after the follow-up edits",
-      "result": "32 passed (the spec had 32 tests at that time, 35 in the final commit)"
+      "result": "32 passed (the spec had 32 tests at that time, 35 at f7caeb3, 36 at 89776fc)"
     },
     {
       "name": "op-r5",
@@ -344,13 +354,146 @@
       "changedPaths": 5,
       "role": "build",
       "result": "exit 0"
+    },
+    {
+      "name": "prep",
+      "receiptPath": "work/prep-2026-11-04T03-44-00-745Z.log.receipt.json",
+      "command": "pnpm db:prepare-local",
+      "exit": 0,
+      "seconds": 2.1,
+      "logSha256": "85acbc7680c0bcf8faa3a3cffd026573e9bedf98bc26c8a239003fa3967b3b3b",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 0,
+      "role": "89776fc work: prepare the local sandbox database before the 429 checks",
+      "result": "exit 0"
+    },
+    {
+      "name": "op-fail429",
+      "receiptPath": "work/op-fail429-2026-11-04T03-44-18-213Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts -g 429|too many",
+      "exit": 1,
+      "seconds": 9.9,
+      "logSha256": "5af92d3b0640cf6bbffc58245fb362b618909e295a162274fd7b397cb6a222ea",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 1,
+      "role": "89776fc failing-before reproduction: the two new 429 tests added to the spec (changed paths 1 = the spec only), application code still forgetting the id on 429",
+      "result": "2 failed (the 429 refusal test and the lost-answer-then-429 test)"
+    },
+    {
+      "name": "op-fail429b",
+      "receiptPath": "work/op-fail429b-2026-11-04T03-44-49-163Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts -g 429|too many",
+      "exit": 0,
+      "seconds": 9.1,
+      "logSha256": "e1241f2d6b1c0af879d1f601ae60a518eb65b256971aa00d93680a8217f68a76",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc passing after the code change (changed paths 2 = panel and spec)",
+      "result": "2 passed (7.8 s)"
+    },
+    {
+      "name": "cap",
+      "receiptPath": "work/cap-2026-11-04T03-45-15-506Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/customer-books.test.ts tests/integration/customer-book-route.test.ts tests/integration/ux-books.test.ts",
+      "exit": 0,
+      "seconds": 19.8,
+      "logSha256": "38dc3eac3acc315af97065193ba24f161d26253cc759961c8893ea92c0c137e2",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc vitest against the sandbox database; includes the 31st-generation SQLSTATE 54000 test and the route 31st-new-book 429 test",
+      "result": "3 files, 59 passed (59)"
+    },
+    {
+      "name": "r5a",
+      "receiptPath": "work/r5a-2026-11-04T03-45-39-525Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 264.8,
+      "logSha256": "56d68afd4770521202346b05ca5bd645772d4cfa5039e4761c7f780bc0d654ba",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc operator ux-books spec, --repeat-each=5, fast mocks (REPORT_DELAY_MS=0 BOOK_DELAY_MS=0 as reported by the conductor; not in the receipt command); includes the scroll-budget test",
+      "result": "180 passed (36 tests x 5) in 4.4 min"
+    },
+    {
+      "name": "r5b",
+      "receiptPath": "work/r5b-2026-11-04T04-00-11-785Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 711.3,
+      "logSha256": "001103d322fe1bbe523da7d89257513b4e563495660808c78fa5806625eb961c",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc operator ux-books spec, --repeat-each=5, slowed mocks (REPORT_DELAY_MS=600 BOOK_DELAY_MS=400 as reported by the conductor); includes the scroll-budget test. A first slow-mock attempt was killed by a too-low background timeout and rerun in full; only this complete rerun counts",
+      "result": "180 passed (36 tests x 5) in 11.8 min"
+    },
+    {
+      "name": "fmt3",
+      "receiptPath": "work/fmt3-2026-11-04T04-12-17-487Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 36.1,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc format check",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint3",
+      "receiptPath": "work/lint3-2026-11-04T04-12-53-681Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 43.8,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc lint",
+      "result": "exit 0"
+    },
+    {
+      "name": "types3",
+      "receiptPath": "work/types3-2026-11-04T04-13-37-530Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 25.9,
+      "logSha256": "89356d6a5143fe81f9e05f8fe01ac09fe73a630326526254e0e9c175da1adf3f",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc typecheck",
+      "result": "exit 0"
+    },
+    {
+      "name": "docs3",
+      "receiptPath": "work/docs3-2026-11-04T04-14-03-509Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 14.1,
+      "logSha256": "89c346a590fdce425e270efd9ab5ecb73f33ddf2817f656f655cc61230073035",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc pnpm test:docs",
+      "result": "exit 0"
+    },
+    {
+      "name": "build3",
+      "receiptPath": "work/build3-2026-11-04T04-14-17-642Z.log.receipt.json",
+      "command": "pnpm build",
+      "exit": 0,
+      "seconds": 23,
+      "logSha256": "58ca3b7e76d76b12e39ab83ced14a96e733df913d780aafb0fcb707305e9593c",
+      "head": "1033c4afded284dab99233ad58060b6f2fa04a2e",
+      "changedPaths": 2,
+      "role": "89776fc build",
+      "result": "exit 0"
     }
   ],
-  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands, exits, log hashes and the head each reports. Receipts that report eae5140 with changed paths ran on the working tree before f7caeb3 was committed; receipts that report d1ddbcd ran on the working tree before eae5140 was committed. Format, lint, typecheck, docs and build report eae5140 with 5 changed paths and ran minutes before f7caeb3 (committed 03:31:04Z). The REPORT_DELAY_MS and BOOK_DELAY_MS values come from the conductor and are not in the receipt commands. The scribe re-read totals from the logs for the vitest, operator and full-integration receipts.",
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands, exits, log hashes and the head each reports. Receipts that report eae5140 with changed paths ran on the working tree before f7caeb3 was committed; receipts that report d1ddbcd ran on the working tree before eae5140 was committed. Format, lint, typecheck, docs and build report eae5140 with 5 changed paths and ran minutes before f7caeb3 (committed 03:31:04Z). The REPORT_DELAY_MS and BOOK_DELAY_MS values come from the conductor and are not in the receipt commands. The scribe re-read totals from the logs for the vitest, operator and full-integration receipts. HISTORY OF HEADS (do not read these as one run): 135/135 twice (27 tests) ran on d1ddbcd's working tree before eae5140; 175/175 twice (35 tests) ran before f7caeb3 was committed; 180/180 twice (36 tests) ran for 89776fc. The earlier receipts stay as the receipts of those heads. The 89776fc receipts (prep through build3) report head 1033c4a because they ran on the working tree (changed paths 1 or 2) before 89776fc was committed at 04:15:00Z; the 89776fc tree is the tree they ran on, as reported by the conductor, and the scribe re-read the log tails for 180 passed (4.4m and 11.8m) and 59 passed. v3-context verify and authority check PASS at 89776fc as reported by the conductor (no receipt).",
   "notRun": [
     "pnpm test:ux and the full operator suite were not run.",
     "The full integration run was done once (before eae5140) and not repeated after f7caeb3, which changed copy, the panel, its parent logic and tests only. The four failing files need Docker, ClamAV and pg_dump; the E2a record says the same four fail on unmodified main, and main was not re-run to confirm identity here.",
-    "No pull request, exact-head CI, CodeQL or Codex review exists yet for the E2b commits.",
+    "No exact-head CI, CodeQL or Codex result is claimed for the E2b commits. PR 258 is open, not merged; CI and Codex on 89776fc were pending when recorded.",
+    "After 89776fc these were NOT run: the ux-room, v3-saved-commercial-ui and specification-confirmation operator specs (last passed, 85 tests, before f7caeb3; the change touches only the 429 branch of the panel and its spec), the full pnpm test:integration, pnpm test:ux and the full operator suite.",
     "Real browser downloads in iOS Safari or Firefox, real screen readers, and the PDF route in a browser were not proven: the book API is mocked in the operator spec, and the route and PDF are covered by customer-book-route and books-pdf tests.",
     "Production enablement was not done and is not observable."
   ],
