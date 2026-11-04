@@ -72,7 +72,7 @@ const saved = (who: string) =>
   new CustomerSavedMissionService(f.runtime, f.auth, options, async () => session(who));
 
 // One statement as a customer with a fresh proof, in its own transaction, exactly as the service runs it.
-async function as(who: string, sql: string, args: unknown[] = []) {
+async function as(who: string, sql: string, args: unknown[] = [], zone?: string) {
   const hash = sessionHash(randomBytes(32).toString('hex'));
   await f.auth.query(
     "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at) VALUES($1,$2,$3,clock_timestamp()+interval '25 seconds')",
@@ -82,6 +82,7 @@ async function as(who: string, sql: string, args: unknown[] = []) {
   try {
     await db.query('BEGIN');
     await db.query("SELECT set_config('corridra.customer_proof_hash',$1,true)", [hash]);
+    if (zone) await db.query("SELECT set_config('TimeZone',$1,true)", [zone]);
     const result = await db.query(sql, args);
     await db.query('COMMIT');
     return result;
@@ -108,7 +109,7 @@ const create = async (
   decision: string,
   digest: string,
   token = newToken(),
-  commandId = randomUUID(),
+  commandId: string = randomUUID(),
   expiresAt: string | null = null,
 ) => {
   const result = (
@@ -1251,7 +1252,9 @@ describe('expiry', () => {
       p.expiresAt,
     );
     expect(Date.parse(card.expiresAt)).toBe(retention.getTime());
-    expect((await state('alice', s.resourceId)).cards[0].expiresAt).toBeTruthy();
+    expect(Date.parse((await state('alice', s.resourceId)).cards[0].expiresAt)).toBe(
+      retention.getTime(),
+    );
     // The link ends sooner than seven days here.
     const short = await build('alice', workspaceId, { days: 2 });
     const q = await preview('alice', short, short.decisionId);
@@ -1261,20 +1264,30 @@ describe('expiry', () => {
     expect(Date.parse(q.expiresAt)).toBe(linkExpiry.getTime());
   });
 
-  test('shortening a source after creation ends the card; the card never outlives it', async () => {
+  test('shortening a source after creation clamps the open card to the new retention date', async () => {
     const s = await build('alice', workspaceId, { days: 20 });
     const card = await share('alice', s);
-    const soon = new Date(Date.now() + 1500);
+    // The card itself runs for seven days, so only the live clamp on every read can end it at the new date.
+    const stored = (
+      await one('SELECT expires_at FROM customer_private.decision_card WHERE id=$1', [card.cardId])
+    ).expires_at;
+    const retention = new Date(Date.now() + 3600000);
+    retention.setMilliseconds(0);
+    expect(stored.getTime()).toBeGreaterThan(retention.getTime() + 24 * 3600000);
     await mutate(
       'app.source_record',
       'UPDATE app.source_record SET retention_until=$2 WHERE id=$1',
-      [s.sourceId, soon.toISOString()],
+      [s.sourceId, retention.toISOString()],
     );
     const opened = await read(card.hash);
-    expect(opened.state === 'OPEN' ? Date.parse(opened.expiresAt) : 0).toBeLessThanOrEqual(
-      soon.getTime(),
+    expect(opened.state).toBe('OPEN');
+    expect(Date.parse(opened.expiresAt)).toBe(retention.getTime());
+    // And once that date has passed the same card is unknown.
+    await mutate(
+      'app.source_record',
+      "UPDATE app.source_record SET observed_at=now()-interval '2 days',retention_until=now()-interval '1 minute' WHERE id=$1",
+      [s.sourceId],
     );
-    await new Promise((resolve) => setTimeout(resolve, 1700));
     expect(await read(card.hash)).toEqual(unknown);
   });
 
@@ -1555,5 +1568,351 @@ describe('roles, grants and immutability', () => {
         ).opens,
       ),
     ).toBe(2);
+  });
+});
+
+describe('session time zone, churn and the list', () => {
+  const zone = 'America/New_York';
+  test('a card is at most 168 hours whatever the session time zone, and times leave as UTC text', async () => {
+    const s = await build('alice', workspaceId, { days: 20 });
+    const p = (
+      await as(
+        'alice',
+        'SELECT customer.decision_card_preview($1,$2) AS result',
+        [s.resourceId, s.decisionId],
+        zone,
+      )
+    ).rows[0].result;
+    const utc = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}Z$/;
+    expect(p.expiresAt).toMatch(utc);
+    expect(p.fields.dueAt).toMatch(utc);
+    const made = (
+      await as(
+        'alice',
+        'SELECT customer.create_decision_card($1,$2,$3,$4,$5) AS result',
+        [randomUUID(), s.resourceId, s.decisionId, p.digest, newToken().hash],
+        zone,
+      )
+    ).rows[0].result;
+    expect(made.expiresAt).toMatch(utc);
+    const row = await one(
+      "SELECT expires_at-created_at<=interval '168 hours' AS within,extract(epoch FROM expires_at-created_at)/3600 AS hours FROM customer_private.decision_card WHERE id=$1",
+      [made.cardId],
+    );
+    expect(row.within).toBe(true);
+    expect(Number(row.hours)).toBeGreaterThan(167.9);
+    // 28 October to 4 November 2026 is 169 hours by the New York clock (the clocks go back on 1 November). A
+    // table bound written as seven days would let a 169 hour card in under that session time zone.
+    const attempt = async (expires: string) => {
+      const client = await f.owner.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(`SET LOCAL TIME ZONE '${zone}'`);
+        await client.query(
+          `INSERT INTO customer_private.decision_card(principal_id,command_id,saved_mission_id,workspace_id,decision_id,field_digest,token_hash,created_at,expires_at)
+           VALUES($1,$2,$3,$4,$5,$6,$7,'2026-10-28 12:00:00-04',$8)`,
+          [
+            principals.alice,
+            randomUUID(),
+            s.resourceId,
+            workspaceId,
+            s.decisionId,
+            p.digest,
+            newToken().hash,
+            expires,
+          ],
+        );
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+      }
+    };
+    await expect(attempt('2026-11-04 12:00:00-05')).rejects.toMatchObject({ code: '23514' });
+    await attempt('2026-11-04 11:00:00-05');
+  });
+
+  test('the thirty-first new card in an hour for one report is the RATE_LIMITED refusal; a retry, another report and another customer are not affected', async () => {
+    const s = await build('alice', workspaceId);
+    const p = await preview('alice', s, s.decisionId);
+    let last: Awaited<ReturnType<typeof create>> | undefined;
+    for (let n = 0; n < 30; n++) {
+      last = await create('alice', s, s.decisionId, p.digest);
+      await withdraw('alice', last.cardId);
+    }
+    const before = [
+      await count('customer_private.decision_card'),
+      await count('app.domain_event', "type='customer.decision_card.created'"),
+    ];
+    await expect(create('alice', s, s.decisionId, p.digest)).rejects.toMatchObject({
+      code: '54000',
+      message: 'DECISION_CARD_RATE_LIMITED',
+    });
+    expect([
+      await count('customer_private.decision_card'),
+      await count('app.domain_event', "type='customer.decision_card.created'"),
+    ]).toEqual(before);
+    // The exact retry of the last command still returns that card, before every limit.
+    const retry = await as(
+      'alice',
+      'SELECT customer.create_decision_card($1,$2,$3,$4,$5) AS result',
+      [last!.commandId, s.resourceId, s.decisionId, p.digest, last!.hash],
+    );
+    expect(retry.rows[0].result).toMatchObject({ cardId: last!.cardId, state: 'WITHDRAWN' });
+    expect((await share('alice', plain)).state).toBe('ACTIVE');
+    expect((await share('bob', adminSaved)).state).toBe('ACTIVE');
+  }, 120000);
+
+  test('live cards are always listed first and a hundred newer withdrawn cards never push them off', async () => {
+    const s = await build('alice', workspaceId);
+    const live = await share('alice', s);
+    const p = await preview('alice', s, s.decisionId);
+    const drift = newToken();
+    await f.owner.query(
+      `INSERT INTO customer_private.decision_card(principal_id,command_id,saved_mission_id,workspace_id,decision_id,field_digest,token_hash,created_at,expires_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,now()-interval '1 day',now()+interval '1 day')`,
+      [
+        principals.alice,
+        randomUUID(),
+        s.resourceId,
+        workspaceId,
+        s.decisionId,
+        hex('other fields'),
+        drift.hash,
+      ],
+    );
+    await f.owner.query(
+      `INSERT INTO customer_private.decision_card(principal_id,command_id,saved_mission_id,workspace_id,decision_id,field_digest,token_hash,created_at,expires_at)
+       SELECT $1,gen_random_uuid(),$2,$3,$4,$5,encode(sha256(convert_to(gen_random_uuid()::text,'UTF8')),'hex'),
+        clock_timestamp()+n*interval '1 second',clock_timestamp()+n*interval '1 second'+interval '1 hour' FROM generate_series(1,105) n`,
+      [principals.alice, s.resourceId, workspaceId, s.decisionId, p.digest],
+    );
+    await f.owner.query(
+      `INSERT INTO customer_private.decision_card_withdrawal(card_id,principal_id,command_id)
+       SELECT c.id,c.principal_id,gen_random_uuid() FROM customer_private.decision_card c WHERE c.saved_mission_id=$1 AND c.id<>$2 AND c.token_hash<>$3`,
+      [s.resourceId, live.cardId, drift.hash],
+    );
+    const cards = (await state('alice', s.resourceId)).cards as { id: string; state: string }[];
+    expect(cards).toHaveLength(100);
+    expect(cards.slice(0, 2).map((c) => c.state)).toEqual(['ACTIVE', 'UNAVAILABLE']);
+    expect(cards[0]!.id).toBe(live.cardId);
+    expect(cards.slice(2).every((c) => c.state === 'WITHDRAWN')).toBe(true);
+  }, 60000);
+});
+
+describe('edges of the creator and the command', () => {
+  const retry = (
+    who: string,
+    s: { resourceId: string },
+    decision: string,
+    digest: string,
+    card: Card & { commandId: string },
+  ) => create(who, s, decision, digest, { token: card.token, hash: card.hash }, card.commandId);
+
+  test('a disabled customer cannot create, preview, list or withdraw, and their card answers unknown', async () => {
+    const s = await build('bob', workspaceId);
+    const p = await preview('bob', s, s.decisionId);
+    const card = await create('bob', s, s.decisionId, p.digest);
+    expect((await read(card.hash)).state).toBe('OPEN');
+    await mutate(
+      'customer_private.principal',
+      'UPDATE customer_private.principal SET disabled_at=now() WHERE id=$1',
+      [principals.bob],
+    );
+    try {
+      await expect(preview('bob', s, s.decisionId)).rejects.toMatchObject({ code: '42501' });
+      await expect(create('bob', s, s.decisionId, p.digest)).rejects.toMatchObject({
+        code: '42501',
+      });
+      await expect(state('bob', s.resourceId)).rejects.toMatchObject({ code: '42501' });
+      await expect(withdraw('bob', card.cardId)).rejects.toMatchObject({ code: '42501' });
+      expect(await read(card.hash)).toEqual(unknown);
+    } finally {
+      await mutate(
+        'customer_private.principal',
+        'UPDATE customer_private.principal SET disabled_at=NULL WHERE id=$1',
+        [principals.bob],
+      );
+    }
+    expect((await read(card.hash)).state).toBe('OPEN');
+  });
+
+  test('a hash with whitespace around it is unknown, not an error', async () => {
+    const card = await share('alice', plain);
+    expect((await read(card.hash)).state).toBe('OPEN');
+    for (const padded of [
+      card.hash + '\n',
+      card.hash + ' ',
+      ' ' + card.hash,
+      '\t' + card.hash,
+      card.hash + '\r\n',
+    ])
+      expect(await read(padded)).toEqual(unknown);
+  });
+
+  test('a link secret already used under another command is the plain unique violation and writes nothing', async () => {
+    const s = await build('alice', workspaceId);
+    const p = await preview('alice', s, s.decisionId);
+    const first = await create('alice', s, s.decisionId, p.digest);
+    const before = [
+      await count('customer_private.decision_card'),
+      await count('app.domain_event', "type='customer.decision_card.created'"),
+      await count('app.outbox'),
+    ];
+    await expect(
+      create('alice', s, s.decisionId, p.digest, { token: first.token, hash: first.hash }),
+    ).rejects.toMatchObject({ code: '23505' });
+    expect([
+      await count('customer_private.decision_card'),
+      await count('app.domain_event', "type='customer.decision_card.created'"),
+      await count('app.outbox'),
+    ]).toEqual(before);
+  });
+
+  test('a shown expiry beyond seven days or beyond the live expiry is the CHANGED conflict; a shorter one is kept', async () => {
+    const s = await build('alice', workspaceId, { days: 20 });
+    const p = await preview('alice', s, s.decisionId);
+    const changed = { code: '23514', message: 'DECISION_CARD_CHANGED' };
+    await expect(
+      create(
+        'alice',
+        s,
+        s.decisionId,
+        p.digest,
+        newToken(),
+        randomUUID(),
+        new Date(Date.parse(p.expiresAt) + 3600000).toISOString(),
+      ),
+    ).rejects.toMatchObject(changed);
+    const retention = new Date(Date.now() + 36 * 3600000);
+    await mutate(
+      'app.source_record',
+      'UPDATE app.source_record SET retention_until=$2 WHERE id=$1',
+      [s.sourceId, retention.toISOString()],
+    );
+    await expect(
+      create(
+        'alice',
+        s,
+        s.decisionId,
+        p.digest,
+        newToken(),
+        randomUUID(),
+        new Date(Date.now() + 48 * 3600000).toISOString(),
+      ),
+    ).rejects.toMatchObject(changed);
+    expect(
+      await count('customer_private.decision_card', 'saved_mission_id=$1', [s.resourceId]),
+    ).toBe(0);
+    const shorter = new Date(Date.now() + 30 * 3600000);
+    shorter.setMilliseconds(0);
+    const card = await create(
+      'alice',
+      s,
+      s.decisionId,
+      p.digest,
+      newToken(),
+      randomUUID(),
+      shorter.toISOString(),
+    );
+    expect(Date.parse(card.expiresAt)).toBe(shorter.getTime());
+  });
+
+  test('an exact retry after a withdrawal is the same card, withdrawn, and never active again', async () => {
+    const s = await build('alice', workspaceId);
+    const p = await preview('alice', s, s.decisionId);
+    const card = await create('alice', s, s.decisionId, p.digest);
+    await withdraw('alice', card.cardId);
+    const again = await retry('alice', s, s.decisionId, p.digest, card);
+    expect(again).toMatchObject({
+      cardId: card.cardId,
+      state: 'WITHDRAWN',
+      expiresAt: card.expiresAt,
+    });
+    expect(await read(card.hash)).toEqual(unknown);
+  });
+
+  test('a demoted creator gets the same card back as unavailable on a retry, and the same link works again when they are promoted', async () => {
+    const s = await build('bob', workspaceId);
+    const p = await preview('bob', s, s.decisionId);
+    const card = await create('bob', s, s.decisionId, p.digest);
+    const opened = await read(card.hash);
+    expect(opened.state).toBe('OPEN');
+    await setRole('bob', 'member', 'admin');
+    try {
+      expect(await retry('bob', s, s.decisionId, p.digest, card)).toMatchObject({
+        cardId: card.cardId,
+        state: 'UNAVAILABLE',
+      });
+      expect(await read(card.hash)).toEqual(unknown);
+    } finally {
+      await setRole('bob', 'admin', 'member');
+    }
+    // Intended: the card is not rebuilt, so the same link revives with the same fields once the role is back.
+    expect(await retry('bob', s, s.decisionId, p.digest, card)).toMatchObject({
+      cardId: card.cardId,
+      state: 'ACTIVE',
+    });
+    expect(await read(card.hash)).toMatchObject({ state: 'OPEN', card: opened.card });
+  });
+
+  test('a card checks only its own decision: another decision leaving the disclosure does not end it', async () => {
+    const s = await build('alice', workspaceId, { second: true });
+    const a = await share('alice', s, s.decisionId);
+    const b = await share('alice', s, s.otherDecisionId!);
+    await s.approve(2, [s.decisionId]);
+    expect(await read(b.hash)).toEqual(unknown);
+    expect((await read(a.hash)).state).toBe('OPEN');
+  });
+
+  test('the creator can still withdraw after the saved report was removed, and a repeat is the same answer', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    await as('alice', 'SELECT customer.remove_saved_mission($1,$2)', [randomUUID(), s.resourceId]);
+    expect(await read(card.hash)).toEqual(unknown);
+    const commandId = randomUUID();
+    const first = await withdraw('alice', card.cardId, commandId);
+    expect(first).toEqual({ cardId: card.cardId, state: 'WITHDRAWN' });
+    expect(await withdraw('alice', card.cardId, commandId)).toEqual(first);
+    expect(await withdraw('alice', card.cardId)).toEqual(first);
+    expect(
+      await count('customer_private.decision_card_withdrawal', 'card_id=$1', [card.cardId]),
+    ).toBe(1);
+    const listed = await state('alice', s.resourceId);
+    expect(listed.canShare).toBe(false);
+    expect(listed.cards.map((c: { state: string }) => c.state)).toEqual(['WITHDRAWN']);
+  });
+
+  test('the withdrawn event names the card, report and decision and no digest, field or link secret', async () => {
+    const s = await build('alice', workspaceId);
+    const p = await preview('alice', s, s.decisionId);
+    const card = await create('alice', s, s.decisionId, p.digest);
+    const commandId = randomUUID();
+    await withdraw('alice', card.cardId, commandId);
+    const events = (
+      await f.owner.query(
+        "SELECT id,tenant_id,payload FROM app.domain_event WHERE type='customer.decision_card.withdrawn' AND correlation_id=$1",
+        [commandId],
+      )
+    ).rows;
+    expect(events).toHaveLength(1);
+    expect(events[0].tenant_id).toBe(workspaceId);
+    expect(events[0].payload).toMatchObject({
+      cardId: card.cardId,
+      resourceId: s.resourceId,
+      decisionId: s.decisionId,
+      initiator_id: principals.alice,
+    });
+    const serialized = JSON.stringify(events[0].payload);
+    for (const value of [
+      card.token,
+      card.hash,
+      p.digest,
+      p.fields.rationale,
+      p.fields.company,
+      p.fields.nextAction,
+    ])
+      expect(serialized).not.toContain(value);
+    expect(await count('app.audit_event', 'domain_event_id=$1', [events[0].id])).toBe(1);
+    expect(await count('app.outbox', 'event_id=$1', [events[0].id])).toBe(1);
   });
 });

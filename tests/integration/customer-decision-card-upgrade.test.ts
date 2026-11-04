@@ -21,7 +21,7 @@ import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admissi
 const issuer = 'https://ep-card-upgrade.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const file = '0001_decision_cards.sql';
 const directory = resolve('packages/db/customer-decision-card-migrations');
-const releasedHash = 'e275681124e717c8d5505e8a896a4bb7b3f50c55aa817df94c8609023e97d2cd';
+const releasedHash = 'c525914355534506068902c048ba051f50e503f64a5af903e8c0133954425e04';
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 // Everything the file may add, and nothing else.
 const addedFunctions = [
@@ -30,6 +30,7 @@ const addedFunctions = [
   'customer.decision_card_preview(uuid,uuid)',
   'customer.decision_card_state(uuid)',
   'customer.withdraw_decision_card(uuid,uuid)',
+  'customer_private.decision_card_hourly_limit()',
   'customer_private.decision_card_iso(timestamp with time zone)',
   'customer_private.decision_card_lifetime()',
   'customer_private.decision_card_max_active()',

@@ -22,11 +22,15 @@ DO $guard$ BEGIN
  END IF;
 END $guard$;
 
--- The two limits live here and nowhere else in the database. The table also holds seven days as a hard bound.
+-- The limits live here and nowhere else in the database; the table also holds the lifetime as a hard bound.
+-- A week is written as 168 hours, not 7 days: a day interval follows the session time zone, so across a clock change
+-- seven days can be 169 hours.
 CREATE FUNCTION customer_private.decision_card_max_active() RETURNS integer
  LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$ SELECT 5 $$;
+CREATE FUNCTION customer_private.decision_card_hourly_limit() RETURNS integer
+ LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$ SELECT 30 $$;
 CREATE FUNCTION customer_private.decision_card_lifetime() RETURNS interval
- LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$ SELECT interval '7 days' $$;
+ LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$ SELECT interval '168 hours' $$;
 -- Times leave the database as UTC ISO text, so a digest or a screen never depends on a session time zone.
 CREATE FUNCTION customer_private.decision_card_iso(t timestamptz) RETURNS text
  LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$ SELECT to_char(t AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') $$;
@@ -43,7 +47,7 @@ CREATE TABLE customer_private.decision_card (
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  expires_at timestamptz NOT NULL,
  UNIQUE(principal_id,command_id),
- CHECK(expires_at>created_at AND expires_at<=created_at+interval '7 days')
+ CHECK(expires_at>created_at AND expires_at<=created_at+interval '168 hours')
 );
 CREATE INDEX decision_card_by_report ON customer_private.decision_card(saved_mission_id,created_at DESC);
 CREATE TABLE customer_private.decision_card_withdrawal (
@@ -105,6 +109,11 @@ BEGIN
 EXCEPTION WHEN insufficient_privilege THEN RETURN NULL;
 END $$;
 
+-- Intended behaviour 1: a card validates only the CHOSEN decision. If another decision of the same disclosure lapses
+-- or is dropped, this card stays open; customer.saved_mission_decisions, which lists them all, fails as a whole
+-- instead. Intended behaviour 2: a card is never rebuilt. If its creator is demoted or the sources lapse, the card
+-- answers unknown; when the same role or the same sources come back inside the card's life, the same link answers again
+-- with the same digest (it heals). A changed field never heals, because the digest no longer matches.
 -- The one place the six fields are made. Preview, creation, the owner's list and the public read all call it, so what
 -- the owner confirms is by construction what the reader sees. Returns NULL (never raises) unless the decision is in
 -- the latest approved disclosure of the report and every source behind it is still valid. The fields are the company
@@ -162,7 +171,9 @@ BEGIN
   'lastOpenedAt',customer_private.decision_card_iso(counted.last_opened_at));
 END $$;
 
--- The creator's own cards for one saved report, newest first (at most 100 are returned), and whether they may share.
+-- The creator's own cards for one saved report and whether they may share. Live cards (not withdrawn, not expired:
+-- ACTIVE or UNAVAILABLE) come first and are always all included, because the limit of five bounds them; then the
+-- withdrawn and expired ones, newest first, up to 100 cards in all. A live older card can never fall off the list.
 CREATE FUNCTION customer.decision_card_state(resource uuid) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid:=customer_private.saved_mission_actor();allowed boolean;cards jsonb;
@@ -171,8 +182,10 @@ BEGIN
   RAISE EXCEPTION 'Saved mission unavailable' USING ERRCODE='42501';
  END IF;
  allowed:=customer_private.decision_card_workspace(resource,actor) IS NOT NULL;
- SELECT coalesce(jsonb_agg(customer_private.decision_card_summary(c) ORDER BY c.created_at DESC,c.id),'[]'::jsonb) INTO cards
- FROM (SELECT * FROM customer_private.decision_card WHERE saved_mission_id=resource AND principal_id=actor ORDER BY created_at DESC,id LIMIT 100) c;
+ SELECT coalesce(jsonb_agg(customer_private.decision_card_summary(c.card) ORDER BY c.live DESC,(c.card).created_at DESC,(c.card).id),'[]'::jsonb) INTO cards
+ FROM (SELECT d AS card,(d.expires_at>clock_timestamp() AND NOT EXISTS(SELECT FROM customer_private.decision_card_withdrawal w WHERE w.card_id=d.id)) AS live
+  FROM customer_private.decision_card d WHERE d.saved_mission_id=resource AND d.principal_id=actor
+  ORDER BY 2 DESC,d.created_at DESC,d.id LIMIT 100) c;
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
  RETURN jsonb_build_object('resourceId',resource,'canShare',allowed,'maxActive',customer_private.decision_card_max_active(),'cards',cards);
 END $$;
@@ -190,9 +203,10 @@ BEGIN
   'maxActive',customer_private.decision_card_max_active());
 END $$;
 
--- Makes one card. Two distinct conflicts, so the caller can tell them apart (both are 409, never access loss):
+-- Makes one card. Distinct refusals, so the caller can tell them apart (the first two are 409, never access loss):
 --   23514 DECISION_CARD_CHANGED       the digest, the shown expiry or a reused command no longer matches
 --   53400 DECISION_CARD_CAP_REACHED   five cards for this report are already live
+--   54000 DECISION_CARD_RATE_LIMITED  thirty new cards for this report in the last hour (an exact retry is never limited)
 -- Access loss is 42501. The link secret never arrives: only its SHA-256, which the caller derives from the command.
 -- expected_expires is the expiry the preview showed. When given, the card gets exactly that expiry (so the stored time
 -- is the time the owner saw), and a card that would now end sooner than shown is refused as CHANGED.
@@ -233,6 +247,11 @@ BEGIN
  IF (SELECT count(*) FROM customer_private.decision_card c WHERE c.saved_mission_id=resource AND c.principal_id=actor AND c.expires_at>created
   AND NOT EXISTS(SELECT FROM customer_private.decision_card_withdrawal w WHERE w.card_id=c.id))>=customer_private.decision_card_max_active() THEN
   RAISE EXCEPTION 'DECISION_CARD_CAP_REACHED' USING ERRCODE='53400';
+ END IF;
+ -- Churn: create and withdraw is bounded by cards, so one limit on new cards per hour covers both.
+ IF (SELECT count(*) FROM customer_private.decision_card c WHERE c.saved_mission_id=resource AND c.principal_id=actor
+  AND c.created_at>created-interval '1 hour')>=customer_private.decision_card_hourly_limit() THEN
+  RAISE EXCEPTION 'DECISION_CARD_RATE_LIMITED' USING ERRCODE='54000';
  END IF;
  INSERT INTO customer_private.decision_card(principal_id,command_id,saved_mission_id,workspace_id,decision_id,field_digest,token_hash,created_at,expires_at)
  VALUES(actor,command,resource,(resolved->>'workspaceId')::uuid,chosen,expected_digest,token_hash,created,expiry) RETURNING * INTO made;
@@ -297,7 +316,7 @@ BEGIN
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('state','unknown');
 END $$;
 
-REVOKE ALL ON FUNCTION customer_private.decision_card_max_active(),customer_private.decision_card_lifetime(),customer_private.decision_card_iso(timestamptz),
+REVOKE ALL ON FUNCTION customer_private.decision_card_max_active(),customer_private.decision_card_hourly_limit(),customer_private.decision_card_lifetime(),customer_private.decision_card_iso(timestamptz),
  customer_private.guard_decision_card_open(),customer_private.decision_card_workspace(uuid,uuid),customer_private.decision_card_resolve(uuid,uuid,uuid),
  customer_private.decision_card_summary(customer_private.decision_card),customer.decision_card_state(uuid),customer.decision_card_preview(uuid,uuid),
  customer.create_decision_card(uuid,uuid,uuid,text,text,timestamptz),customer.withdraw_decision_card(uuid,uuid),app.read_decision_card(text)
