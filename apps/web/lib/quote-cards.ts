@@ -14,6 +14,8 @@ export type OfferVerdict = {
   missing: string[];
   status: string;
   inconsistentTotal?: boolean;
+  /** Terms or settings on which this offer differs from the other current offers (the engine's list). */
+  differences?: string[];
   expired?: boolean;
   evidenceCurrent?: boolean;
 };
@@ -38,6 +40,11 @@ const termLabels: Record<string, string> = {
   spares: 'Spares',
   paymentTerms: 'Payment terms',
 };
+/** Differences the engine reports that are not terms of the offer itself. */
+const differenceLabels: Record<string, string> = {
+  currency: 'Currency',
+  requirement: 'Requirement',
+};
 /** The terms the engine needs for a like-for-like comparison, in reading order (the prices have their own place). */
 const required = [
   'specification',
@@ -51,7 +58,7 @@ const required = [
   'setupMinor',
   'packagingMinor',
 ] as const;
-/** Terms worth showing when the supplier gave them, though the engine does not require them. */
+/** Terms the engine does not require but a buyer must be able to see are missing: never left out of the card. */
 const optional = ['moq', 'warranty', 'installation', 'training', 'spares'] as const;
 
 const factNames = {
@@ -98,6 +105,12 @@ export function reasonFor(verdict: OfferVerdict): string {
   const parts: string[] = [];
   if (verdict.missing.length)
     parts.push(`Missing: ${verdict.missing.map((key) => termLabels[key] ?? key).join(', ')}.`);
+  if (verdict.differences?.length)
+    parts.push(
+      `Differs from the other offers in: ${verdict.differences
+        .map((key) => differenceLabels[key] ?? termLabels[key] ?? key)
+        .join(', ')}.`,
+    );
   if (verdict.expired) parts.push('The offer has expired.');
   if (verdict.inconsistentTotal) parts.push('The total does not match unit price times quantity.');
   if (verdict.evidenceCurrent === false) parts.push('It does not match the current request.');
@@ -142,8 +155,9 @@ export function quoteCardsFrom({
       });
     };
     for (const key of required) add(key);
-    for (const key of optional)
-      if ((offer.terms as Record<string, unknown>)[key] !== undefined) add(key);
+    // An omitted warranty, installation, training, spares or MOQ shows as not stated on its own card, so
+    // a lower price never hides what it leaves out.
+    for (const key of optional) add(key);
     const trust = factNameFor(offer.claimStatus);
     const comparable = verdict.status === 'COMPARABLE ON SUPPLIED TERMS';
     return {
