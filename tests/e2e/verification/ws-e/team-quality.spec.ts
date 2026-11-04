@@ -105,7 +105,8 @@ test('Q-01 Tab reaches every control with a visible focus ring, never traps, and
           (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0) ||
           style.boxShadow !== 'none';
         const label = (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 30);
-        return { key: `${el.tagName}:${el.id}:${label}`, ring };
+        const index = [...document.querySelectorAll('*')].indexOf(el);
+        return { key: `${index}:${el.tagName}:${el.id}:${label}`, ring };
       });
       if (info.key === 'BODY') break;
       expect.soft(info.ring, `${address.name}: no visible focus on ${info.key}`).toBe(true);
