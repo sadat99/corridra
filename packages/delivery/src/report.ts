@@ -274,7 +274,7 @@ async function renderPdf(
   });
   const select = (character: string) => {
     const index = supported.findIndex((set) => set.has(character.codePointAt(0)!));
-    if (index < 0) throw new DomainError(options.unsupportedText, 422);
+    if (index < 0) throw new DomainError(options.unsupportedText, 422, 'UNSUPPORTED_TEXT');
     return ['Latin', 'Bengali', 'Chinese'][index];
   };
   const doc = new PDFDocument({
@@ -482,6 +482,16 @@ const bookMeetingTime = (iso: string, timezone: string | undefined) => {
   const city = (zone.split('/').pop() ?? zone).replaceAll('_', ' ');
   return `${date}, ${time} (${city}, UTC${offset})`;
 };
+// "BD" is written "Bangladesh". A code the runtime has no name for, or text that is not a code, is written as given.
+const bookRegions = new Intl.DisplayNames(['en'], { type: 'region' });
+const bookCountry = (country: string) => {
+  try {
+    const name = bookRegions.of(country);
+    return name && name !== 'Unknown Region' ? name : country;
+  } catch {
+    return country;
+  }
+};
 const bookCode = (book: BookRecord) => book.digest.slice(0, 16);
 function bookBlocks(book: BookRecord): BookBlock[] {
   const { projection } = book;
@@ -534,7 +544,11 @@ function bookBlocks(book: BookRecord): BookBlock[] {
     });
     projection.shortlist.forEach((item, index) => {
       blocks.push(
-        { text: `${index + 1}. ${item.company} (${item.country})`, size: 11, keep: bookItemRoom },
+        {
+          text: `${index + 1}. ${item.company} (${bookCountry(item.country)})`,
+          size: 11,
+          keep: bookItemRoom,
+        },
         { text: `Fit: ${bookFit[item.fit] ?? item.fit}` },
         { text: `Reason: ${item.rationale || bookNotStated}` },
         { text: `What is uncertain: ${item.uncertainty || bookNotStated}` },

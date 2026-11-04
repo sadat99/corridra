@@ -7,6 +7,7 @@ import {
 } from '../../packages/domain/src/books';
 import { DomainError } from '../../packages/domain/src/index';
 import { bookLines, bookPdf } from '../../packages/delivery/src/report';
+import { pdfPages } from './pdf-text';
 
 // The book shapes and the PDF writer (ADR-076 items 1 to 3). The database function that builds a projection
 // is proved in customer-books.test.ts; these checks prove what a projection may carry and what a file says.
@@ -81,7 +82,6 @@ const withItems = (count: number): BookRecord => ({
     })),
   },
 });
-const pageCount = (pdf: Buffer) => (pdf.toString('latin1').match(/\/Type \/Page\b/g) ?? []).length;
 
 describe('book shapes', () => {
   it('accepts the exact Trip and Supplier projections', () => {
@@ -156,7 +156,7 @@ describe('what a book says', () => {
       'Important',
       'This file is a copy as of the time above. A copy that has left Corridra cannot be recalled, and later changes or withdrawal do not update it. Check the current status in your account.',
       'Companies reviewed (1)',
-      '1. Synthetic Mills (BD)',
+      '1. Synthetic Mills (Bangladesh)',
       'Fit: Possible fit',
       'Reason: Makes the declared product',
       'What is uncertain: Capacity is not verified',
@@ -200,35 +200,144 @@ describe('the book PDF', () => {
     expect(text).toContain('(D:20261103140500Z)');
     expect(text).toContain('(Corridra Trip Book)');
   });
-  it('refuses text the PDF fonts cannot show with the books message and never substitutes it', async () => {
-    const withEmoji = {
+  it('refuses text the PDF fonts cannot show with the books message and the UNSUPPORTED_TEXT reason, and never substitutes it', async () => {
+    const titled = (title: string): BookRecord => ({
       ...trip,
       projection: {
         ...(trip.projection as Extract<BookRecord['projection'], { kind: 'TRIP' }>),
-        title: 'Buyers 🛸',
+        title,
       },
-    };
-    const error = await bookPdf(withEmoji).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(DomainError);
-    expect((error as DomainError).status).toBe(422);
-    expect((error as DomainError).message).toContain('This book cannot be made');
-    expect((error as DomainError).message).not.toMatch(/CSV/);
+    });
+    // Emoji, Arabic, Thai and Devanagari are not in the three embedded fonts.
+    for (const title of ['Buyers 🛸', 'مرحبا', 'สวัสดี', 'नमस्ते']) {
+      const error = await bookPdf(titled(title)).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(DomainError);
+      expect((error as DomainError).status).toBe(422);
+      expect((error as DomainError).code).toBe('UNSUPPORTED_TEXT');
+      expect((error as DomainError).message).toContain('This book cannot be made');
+      expect((error as DomainError).message).not.toMatch(/CSV/);
+    }
   });
-  it('paginates a long shortlist with Chinese names and wraps an unbroken run at the margin', async () => {
-    const long = withItems(40);
-    const run = {
+  it('reads a long list with Chinese names back from the file, Latin and CJK names both kept', async () => {
+    const pages = pdfPages(await bookPdf(withItems(3)));
+    const text = pages.flatMap((page) => page.lines.map((line) => line.text)).join('\n');
+    expect(text).toContain('Company 1 ');
+    expect(text).toContain('中文公司');
+  });
+});
+
+describe('the book PDF layout, read back from the file', () => {
+  it('puts the footer with the book name, content code and page count on every page', async () => {
+    for (const book of [withItems(40), trip]) {
+      const pages = pdfPages(await bookPdf(book));
+      const name = book.projection.kind === 'TRIP' ? 'Trip Book' : 'Supplier Book';
+      if (book.projection.kind === 'SUPPLIER') expect(pages.length).toBeGreaterThan(3);
+      pages.forEach((page, index) => {
+        const footer = page.lines.filter((line) => line.size === 8);
+        expect(footer.map((line) => line.text)).toEqual([
+          `Corridra ${name} | Content code 3f9a1c0b7d2e4a55 | Page ${index + 1} of ${pages.length}`,
+        ]);
+      });
+    }
+  });
+  it('wraps an unbroken run at the margin with every character kept and no line wider than the text area', async () => {
+    const run = 'https://' + 'a1b2c3d4e5'.repeat(30);
+    const long = withItems(1);
+    const projection = long.projection as Extract<BookRecord['projection'], { kind: 'SUPPLIER' }>;
+    const book: BookRecord = {
       ...long,
-      projection: {
-        ...(long.projection as Extract<BookRecord['projection'], { kind: 'SUPPLIER' }>),
-        shortlist: [
-          {
-            ...(long.projection as { shortlist: object[] }).shortlist[0],
-            rationale: 'https://' + 'a'.repeat(400),
-          },
-        ],
-      } as BookRecord['projection'],
+      projection: { ...projection, shortlist: [{ ...projection.shortlist[0]!, rationale: run }] },
     };
-    expect(pageCount(await bookPdf(long))).toBeGreaterThan(3);
-    expect(pageCount(await bookPdf(run as BookRecord))).toBe(1);
+    const lines = pdfPages(await bookPdf(book)).flatMap((page) => page.lines);
+    const reason = lines.filter(
+      (line) => line.text.startsWith('Reason: ') || /^[a-z0-9:/]{20,}$/.test(line.text),
+    );
+    // The run was cut into several lines, and joined back it is exactly the text that was given.
+    expect(reason.length).toBeGreaterThan(2);
+    expect(reason.map((line) => line.text).join('')).toBe('Reason: ' + run);
+    // A4 is 595.28 points wide with 45 point margins.
+    const textWidth = 595.28 - 2 * 45;
+    for (const line of lines) {
+      expect(line.x).toBeGreaterThanOrEqual(45);
+      expect(line.x + line.width).toBeLessThanOrEqual(45 + textWidth + 1);
+    }
+  });
+  it('shows each of the eight meeting statuses in plain words, and a changed one with its own sentence', () => {
+    const words: Record<string, string> = {
+      PROPOSED: 'Suggested',
+      ACCEPTED: 'Accepted',
+      SCHEDULED: 'Time confirmed',
+      HELD: 'Done',
+      DECLINED: 'Declined',
+      CANCELLED: 'Cancelled',
+      NO_SHOW: 'Missed',
+      RESCHEDULE_REQUIRED: 'New time needed',
+    };
+    for (const [status, word] of Object.entries(words)) {
+      const changed = status === 'RESCHEDULE_REQUIRED';
+      const lines = bookLines({
+        ...trip,
+        projection: {
+          ...(trip.projection as Extract<BookRecord['projection'], { kind: 'TRIP' }>),
+          itinerary: [{ label: 'Visit', status, changed }],
+        },
+      });
+      // The database marks RESCHEDULE_REQUIRED as changed, and a changed item says so instead of the status.
+      expect(lines).toContain(changed ? 'Status: Date changed' : `Status: ${word}`);
+      expect(
+        lines.includes(
+          'The date or time has changed. The old time is not shown. Ask the Corridra team for the new one.',
+        ),
+      ).toBe(changed);
+    }
+    const unknown = bookLines({
+      ...trip,
+      projection: {
+        ...(trip.projection as Extract<BookRecord['projection'], { kind: 'TRIP' }>),
+        itinerary: [{ label: 'Visit', status: 'SOMETHING_NEW', changed: false }],
+      },
+    });
+    expect(unknown).toContain('Status: SOMETHING_NEW');
+  });
+  it('shows each of the four fit values in plain words and an unknown value as given', () => {
+    const fits: Record<string, string> = {
+      RESEARCH: 'Still being researched',
+      POSSIBLE: 'Possible fit',
+      STRONG: 'Strong fit',
+      UNSUITABLE: 'Not a fit',
+      SOMETHING_NEW: 'SOMETHING_NEW',
+    };
+    for (const [fit, word] of Object.entries(fits)) {
+      const lines = bookLines({
+        ...supplier,
+        projection: {
+          ...(supplier.projection as Extract<BookRecord['projection'], { kind: 'SUPPLIER' }>),
+          shortlist: [
+            {
+              ...(supplier.projection as { shortlist: { company: string }[] }).shortlist[0]!,
+              fit,
+            } as never,
+          ],
+        },
+      });
+      expect(lines).toContain(`Fit: ${word}`);
+    }
+  });
+  it('writes the country as an English name, and the code itself when no name is known', () => {
+    const named = (country: string) =>
+      bookLines({
+        ...supplier,
+        projection: {
+          ...(supplier.projection as Extract<BookRecord['projection'], { kind: 'SUPPLIER' }>),
+          shortlist: [
+            { ...(supplier.projection as { shortlist: object[] }).shortlist[0]!, country } as never,
+          ],
+        },
+      }).find((line) => line.startsWith('1. '));
+    expect(named('BD')).toBe('1. Synthetic Mills (Bangladesh)');
+    expect(named('CN')).toBe('1. Synthetic Mills (China)');
+    expect(named('ZZ')).toBe('1. Synthetic Mills (ZZ)');
+    expect(named('x1')).toBe('1. Synthetic Mills (x1)');
+    expect(named('Bangladesh')).toBe('1. Synthetic Mills (Bangladesh)');
   });
 });
