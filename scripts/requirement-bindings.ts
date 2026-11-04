@@ -233,32 +233,59 @@ function runtimeSkipIn(node: ts.Node): boolean {
   return found;
 }
 
-// A runtime test.skip(condition, ...) or test.fixme(condition, ...) written directly in a suite body (not inside
-// one of its tests or hooks, and not the declaration form test.skip('title', fn)) disables every test in it.
-function suiteLevelSkip(suite: ts.CallExpression): boolean {
+const hookModifiers = new Set(['beforeEach', 'beforeAll']);
+
+// test.skip(condition, ...) / test.fixme(condition, ...) / test.skip(): a run-time skip, not the declaration
+// form test.skip('title', fn).
+function isRuntimeSkipCall(node: ts.CallExpression): boolean {
+  const shape = shapeOf(node);
+  const first = node.arguments[0];
+  return (
+    shape !== null &&
+    (shape.name === 'test' || shape.name === 'it') &&
+    shape.chain.some((part) => part === 'skip' || part === 'fixme') &&
+    (first === undefined || !isLiteralTitle(first))
+  );
+}
+
+function anyRuntimeSkip(root: ts.Node): boolean {
+  let found = false;
+  const visit = (node: ts.Node) => {
+    if (found) return;
+    if (ts.isCallExpression(node) && isRuntimeSkipCall(node)) found = true;
+    else ts.forEachChild(node, visit);
+  };
+  visit(root);
+  return found;
+}
+
+// A run-time skip written directly in a scope (a whole file or a suite body, not inside one of its tests) or
+// inside a beforeEach or beforeAll hook of that scope disables every test in the scope.
+function scopeSkips(scope: ts.SourceFile | ts.CallExpression): boolean {
   let found = false;
   const visit = (node: ts.Node) => {
     if (found) return;
     if (ts.isCallExpression(node)) {
-      const shape = shapeOf(node);
-      const first = node.arguments[0];
-      if (
-        shape &&
-        (shape.name === 'test' || shape.name === 'it') &&
-        shape.chain.some((part) => part === 'skip' || part === 'fixme') &&
-        first !== undefined &&
-        !isLiteralTitle(first)
-      ) {
+      if (isRuntimeSkipCall(node)) {
         found = true;
         return;
       }
+      const shape = shapeOf(node);
+      if (shape && shape.name === 'test' && shape.chain.some((part) => hookModifiers.has(part)))
+        for (const argument of node.arguments)
+          if (
+            (ts.isArrowFunction(argument) || ts.isFunctionExpression(argument)) &&
+            anyRuntimeSkip(argument.body)
+          )
+            found = true;
     }
-    if (ts.isFunctionLike(node)) return;
+    if (found || ts.isFunctionLike(node)) return;
     ts.forEachChild(node, visit);
   };
-  for (const argument of suite.arguments)
-    if (ts.isArrowFunction(argument) || ts.isFunctionExpression(argument))
-      ts.forEachChild(argument.body, visit);
+  if (ts.isSourceFile(scope)) ts.forEachChild(scope, visit);
+  else
+    for (const argument of scope.arguments)
+      if (ts.isArrowFunction(argument) || ts.isFunctionExpression(argument)) visit(argument.body);
   return found;
 }
 
@@ -282,6 +309,7 @@ function describeCall(
   source: string,
   node: ts.CallExpression,
   ancestors: ts.Node[],
+  fileSkips: boolean,
 ): TitleCall | null {
   const shape = shapeOf(node);
   const first = node.arguments[0];
@@ -350,9 +378,10 @@ function describeCall(
     call.problem = 'it calls skip or fixme at run time, so it may not run';
   else if (
     !call.suite &&
-    enclosing.some((entry) => isSuite(entry.shape) && suiteLevelSkip(entry.node))
+    (fileSkips || enclosing.some((entry) => isSuite(entry.shape) && scopeSkips(entry.node)))
   )
-    call.problem = 'its enclosing suite calls skip or fixme at run time, so it may not run';
+    call.problem =
+      'its file or enclosing suite calls skip or fixme at run time (directly or in a beforeEach or beforeAll hook), so it may not run';
   return call;
 }
 
@@ -371,9 +400,10 @@ export function findTestTitles(source: string): { balanced: boolean; calls: Titl
   });
   const calls: TitleCall[] = [];
   const ancestors: ts.Node[] = [];
+  const fileSkips = scopeSkips(file);
   const visit = (node: ts.Node) => {
     if (ts.isCallExpression(node)) {
-      const call = describeCall(source, node, ancestors);
+      const call = describeCall(source, node, ancestors, fileSkips);
       if (call) calls.push(call);
     }
     ancestors.push(node);

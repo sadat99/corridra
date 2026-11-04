@@ -522,6 +522,73 @@ test('a test declared inside a function that is not a suite or test callback is 
   }
 });
 
+test('a file-level skip or a skip inside a beforeEach or beforeAll hook makes the affected tests not runnable', () => {
+  const positive = "test('synthetic behaviour is allowed', () => { expect(1).toBe(1); });";
+  const denial = "test('synthetic denial is refused', () => { expect(2).toBe(2); });";
+  const header = "import { expect, test } from '@playwright/test';";
+  const cases: Record<string, string[]> = {
+    'file-level skip': [header, "test.skip(true, 'disabled file');", positive, denial, ''],
+    'file-level conditional fixme': [
+      header,
+      "test.fixme(process.env.CI === 'true', 'unstable');",
+      positive,
+      denial,
+      '',
+    ],
+    'file-level beforeAll hook': [
+      header,
+      "test.beforeAll(() => { test.skip(true, 'disabled'); });",
+      positive,
+      denial,
+      '',
+    ],
+    'suite beforeEach hook': [
+      header,
+      positive,
+      "test.describe('suite', () => {",
+      "  test.beforeEach(() => { test.skip(true, 'disabled'); });",
+      '  ' + denial,
+      '});',
+      '',
+    ],
+    'hook with a conditional no-argument skip': [
+      header,
+      positive,
+      "test.describe('suite', () => {",
+      '  test.beforeEach(async ({ page }) => { if (!page) test.skip(); });',
+      '  ' + denial,
+      '});',
+      '',
+    ],
+  };
+  for (const [label, lines] of Object.entries(cases)) {
+    const problems = problemsFor(
+      sampleShards(),
+      overlay({ [samplePath]: lines.join('\n') }),
+    ).filter((p) => p.includes('synthetic denial is refused'));
+    expect(problems.length, label).toBeGreaterThan(0);
+    expectProblem(problems, 'R4', 'enclosing suite');
+  }
+});
+
+test('hooks without a skip and a declared-skipped test at file level do not flag other tests', () => {
+  const scan = findTestTitles(
+    [
+      "import { test } from '@playwright/test';",
+      "test.skip('declared skipped at file level', () => {});",
+      'test.beforeEach(async ({ page }) => { await page.goto("/"); });',
+      "test.describe('suite', () => {",
+      '  test.afterEach(async () => {});',
+      "  test('still runnable', () => {});",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  const byTitle = new Map(scan.calls.map((c) => [c.title, c] as const));
+  expect(byTitle.get('still runnable')?.problem).toBeNull();
+  expect(byTitle.get('declared skipped at file level')?.problem).toEqual(expect.any(String));
+});
+
 test('tests nested in suite and test callbacks are still runnable evidence', () => {
   const scan = findTestTitles(
     [

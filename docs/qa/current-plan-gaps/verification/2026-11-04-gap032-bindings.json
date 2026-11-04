@@ -13,7 +13,7 @@
       "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
       "docs/v3/phase-0/requirement-bindings.schema.json",
       "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
-      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite, 59 after the fourth; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite, 59 after the fourth, 61 after the fifth; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
     ]
   },
   "rulesEnforcedByCheck": {
@@ -66,6 +66,11 @@
     },
     {
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "eb8c0b3 plus the fifth Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 60 passed; after the fix 61 passed. Fifth Codex P2: a file-level test.skip(true, ...) or test.fixme(condition), a test.beforeAll hook that skips, and a beforeEach hook (or a no-argument conditional test.skip() inside one) did not stop the affected tests being reported runnable. The scope check now covers the whole file and every enclosing suite, descends into beforeEach and beforeAll hook callbacks, and treats test.skip() with no argument as a run-time skip; the declaration form test.skip('title', fn) and hooks without a skip still flag nothing else (guard test). check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2), so the 7 pilot rows are unaffected."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
       "base": "bbf27ca plus the fourth Codex P2 fix (uncommitted when run)",
       "result": "red first: 1 new test failed, 58 passed; after the fix 59 passed. Fourth Codex P2: a test declared inside an uninvoked helper function (function declaration, arrow or function expression assigned to a name, class method, uncalled async arrow) was reported as runnable, so a requirement could be bound to a test the runner never registers. Rule now: every function a test sits inside must be a callback argument of a recognised test, it or describe call; anything else is refused as 'declared inside a function that is not a suite or test callback, so it may never be registered'. A guard test confirms tests nested in describe, test.describe and test callbacks (including function-expression callbacks) stay runnable. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2), so the 7 pilot rows are unaffected."
     },
@@ -99,7 +104,11 @@
       "base": "4f2870e",
       "result": "507 = 7 BOUND + 486 NONE + 12 GATED + 2 DEFERRED (re-read by the scribe on d7a6e96 plus the records)"
     },
-    { "command": "prettier --check on the new files", "base": "4f2870e", "result": "PASS" },
+    {
+      "command": "prettier --check on the new files",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
     {
       "command": "eslint --max-warnings 0 on the two .ts files",
       "base": "builder worktree, identical files",
@@ -129,7 +138,8 @@
   "doesNotProve": [
     "That any test fits its requirement beyond the quoted assertion. Semantic fit is a reviewed claim.",
     "That any requirement is accepted.",
-    "Anything about live providers."
+    "Anything about live providers.",
+    "That a bound test runs and passes. The checker is a static reader built on the TypeScript parser: it proves the title exists once as a registered, non-skipped test case in a file a CI suite runs, and refuses the skip, loop, conditional and uncalled-function shapes it can see. It does not model every run-time skip mechanism (for example vitest context.skip(), custom wrappers, registration through imports or helpers it cannot follow). Execution and pass results come only from CI on the exact head."
   ],
   "gapState": {
     "GAP-032": "Disposition stays EVIDENCE_MISSING. Implementation PARTIAL (tooling and a 7-row pilot built). Verification PARTIAL (pending exact-head CI and a second review). Deployment, activation, approval and commercialOperation stay UNKNOWN. closureEvidence stays empty."
@@ -143,7 +153,10 @@
       "question": "Should narrative rows get a NOT_APPLICABLE state?",
       "default": "No; they stay NONE (taken)."
     },
-    { "question": "PRESERVATION and unresolved-decision evidence kinds?", "default": "Later." },
+    {
+      "question": "PRESERVATION and unresolved-decision evidence kinds?",
+      "default": "Later."
+    },
     {
       "question": "Where does the check live?",
       "default": "In the vitest integration job, not test:docs (taken)."
