@@ -145,7 +145,7 @@ const failures = [
     apply: (r: import('@playwright/test').Route) =>
       r.fulfill({ status: 403, json: { error: 'Forbidden' } }),
     retry: false,
-    words: /not allowed|no access|don.t have access|permission|denied|role/i,
+    words: /not allowed|no access|don.t have access|access required|permission|denied|role/i,
   },
   {
     name: '429',
