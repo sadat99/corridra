@@ -313,9 +313,15 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
     await open(`/operator/${slug}?workspace=${tenant}`);
     // Operations panels load their own data after the workspace: let that settle first.
     await page.waitForTimeout(1500);
-    const button = page.getByRole('button', { name, exact: true });
-    // A button inside a closed disclosure is opened first, as a person would.
-    await button.evaluate((el) => {
+    // A plain locator: a button inside a closed disclosure is hidden from the role query. It is
+    // opened first, as a person would, and the handle keeps the button even if its label changes.
+    const button = page
+      .locator('button')
+      .filter({ hasText: new RegExp(`^${name}$`) })
+      .first();
+    const handle = await button.elementHandle({ timeout: 15000 });
+    if (!handle) throw new Error('button not found');
+    await handle.evaluate((el) => {
       let group = el.closest('details');
       while (group) {
         group.open = true;
@@ -331,7 +337,7 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
     });
     if (clicks === 2) await button.dblclick();
     else await button.click();
-    const inFlight = await button.evaluate(
+    const inFlight = await handle.evaluate(
       (el) => (el as HTMLButtonElement).disabled || el.getAttribute('aria-busy') === 'true',
     );
     await page.waitForTimeout(2200);
