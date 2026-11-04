@@ -3,6 +3,7 @@
 // customer or contributor) gets its shell's own header and never the public marketing header. Off,
 // or on a public page, it is the public header exactly as before. Owner: WS-E.
 import { usePathname } from 'next/navigation';
+import { isBarePublicPage } from '../../lib/ux/bare-pages';
 import { BrandMark, SiteHeader } from '../site-header';
 import { signedInShellFor } from '../../lib/ux/shells';
 import { AppHeader } from './app-header';
@@ -24,6 +25,8 @@ export function ShellHeader({
   mode?: 'sample' | 'real';
 }) {
   const pathname = usePathname();
+  // A bare page (the decision card) renders no header, so nothing here can ask the server who is signed in.
+  if (isBarePublicPage(pathname)) return null;
   const shell = shells ? signedInShellFor(pathname) : null;
   if (shell)
     return (

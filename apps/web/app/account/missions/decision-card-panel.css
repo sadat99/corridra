@@ -1,0 +1,106 @@
+/* The owner panel for decision cards. Existing tokens only; one column, 44 px targets. */
+.decision-card-owner {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.decision-card-owner h3,
+.decision-card-owner h4,
+.decision-card-owner p {
+  margin: 0;
+}
+.decision-card-owner fieldset {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.decision-card-owner legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-weight: 650;
+}
+.decision-card-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+}
+.decision-card-choice input {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+.decision-card-action {
+  min-height: 2.75rem;
+  padding-inline: var(--space-4);
+  justify-self: start;
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.decision-card-action:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+.decision-card-preview,
+.decision-card-link,
+.decision-card-list {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.decision-card-preview dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.decision-card-preview dl > div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}
+.decision-card-preview dt {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--text-2);
+}
+.decision-card-preview dd {
+  margin: 0;
+}
+.decision-card-link input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding-inline: var(--space-3);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+.decision-card-list ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.decision-card-list li {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}
+.decision-card-notice {
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--guided-card-radius);
+}

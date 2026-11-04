@@ -22,6 +22,8 @@ type Scope = SavedMissionScope & {
   specificationConfirmationsEnabled?: boolean;
   /** Trip Book and Supplier Book downloads (`CORRIDRA_UX_BOOKS`, read on the server). Only the whole page shows them. */
   books?: boolean;
+  /** Decision cards (`CORRIDRA_SHARE_CARD`, read on the server): the owner panel inside the decisions. */
+  decisionCards?: boolean;
   /** UX update (`CORRIDRA_UX_LENSES`, read on the server): the offers as cards. */
   lenses?: boolean;
   /** The Room shows the report in two lenses. `all` is the whole page, as it has always been. */
@@ -207,6 +209,7 @@ function PrivateReport({
   decisionsEnabled = false,
   specificationConfirmationsEnabled = false,
   books = false,
+  decisionCards = false,
   lenses = false,
   section = 'all',
   renderTrip,
@@ -476,7 +479,12 @@ function PrivateReport({
               )}
               {showTrip && renderTrip && renderTrip(m.itinerary)}
               {showEvidence && decisionsEnabled && (
-                <DecisionHistory subject={subject} issuer={issuer} resourceId={resourceId} />
+                <DecisionHistory
+                  subject={subject}
+                  issuer={issuer}
+                  resourceId={resourceId}
+                  cards={decisionCards}
+                />
               )}
               {showEvidence && specificationConfirmationsEnabled && (
                 <SpecificationConfirmation

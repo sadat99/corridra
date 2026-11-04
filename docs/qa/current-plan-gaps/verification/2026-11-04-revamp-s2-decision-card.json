@@ -1,0 +1,41 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 4, decision card step 4, the two screens (D-01 to D-10)",
+  "kind": "The public /decision-card page, the owner panel inside the saved mission page and the shared bare-page predicate. Behind CORRIDRA_SHARE_CARD, default off. No schema, route, migration or switch change.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. Building does not enable: enabling needs the recorded privacy review, the installed module and the owner (ADR-076 item 6).",
+  "status": "Built on branch revamp/customer over main after the money PR. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "authorityStamp": "auth-4041eae60ee6",
+  "newFiles": [
+    "apps/web/lib/ux/bare-pages.ts (the one isBarePublicPage predicate)",
+    "apps/web/lib/decision-card-page.ts, apps/web/app/decision-card/{page,decision-card-view,decision-card-page}.tsx and decision-card.css (the public page)",
+    "apps/web/lib/decision-card-owner.ts, apps/web/app/account/missions/decision-card-panel.tsx and .css (the owner panel)",
+    "tests/integration/revamp-bare-pages.test.ts, revamp-decision-card-page.test.ts, revamp-decision-card-owner.test.ts (vitest)",
+    "tests/e2e/verification/revamp-s2/decision-card.spec.ts (Playwright on a real production build)"
+  ],
+  "changedFiles": [
+    "apps/web/components/ux/shell-header.tsx, site-footer-place.tsx and corner-dock.tsx: one early return each so a bare page draws no header, footer or help dock (the header is the component that asks /api/*/get-session). These three belong to S3; the change is one guard each.",
+    "apps/web/app/account/missions/decision-history.tsx, saved-commercial-report.tsx and [resourceId]/page.tsx: a `decisionCards` flag, read on the server, mounts the owner panel inside the approved decisions. With the switch off nothing is mounted."
+  ],
+  "decisions": {
+    "realWorkspace": "Ruled by the Guardian (4 Nov 2026): use the saved report's own synthetic flag. With the switch on and the flag false the panel shows only 'Decision cards are available for sample workspaces only.' with no control, link, count or preview. On a sample report any denied or failed state answer, or canShare false, means the panel is absent, never that line and never a disabled panel. Both cases are tested (D-07 real workspace, D-09 sub-case).",
+    "linkKeptInMemory": "The link returned by create is held in memory only and dropped on pagehide; it is never stored. After a reload the card is listed without its link.",
+    "everyAnswerOneMessage": "On the public page a network failure, a 429, a 503, a malformed fragment and an unknown answer all show 'This link is not available.'",
+    "withdrawOnlyActive": "State lists only the caller's own cards, and Withdraw is offered only for an active one."
+  },
+  "receipts": {
+    "vitest": "bare-pages 14, decision-card-page 15, decision-card-owner 20 pass. The existing decision card suites (ux-decision-card, customer-decision-card-route, customer-decision-cards: 138) and ux-room, ux-teaching-layer, money and work tests (165) still pass.",
+    "red": "Each new test file failed first with the module not found.",
+    "realBuild": "tests/e2e/verification/revamp-s2/decision-card.spec.ts on a production build, local PostgreSQL 16: 9 passed (D-01 no get-session request and no Set-Cookie on the page or any response, no cookies in the context, no header, footer or dock; D-02 the token in no request URL, not in the address after load, not in either storage, POST body only; D-03 four different links show identical text; D-04 no-store on the page and the answer, noindex, no-referrer, X-Robots-Tag; D-10 the public page unavailable and open states at 320, 390, 768, 1440 with no sideways scroll and axe wcag2a, wcag2aa, wcag22aa clean).",
+    "mutation": "Removing the header guard fails D-01 (the page then requests /api/operator-auth/get-session). Restored.",
+    "otherBrowserSpecs": "corner-dock, header-session and mission-mail-mute browser specs: 14 passed with the guards in place.",
+    "ownerPanelLayout": "LOCAL APPROXIMATION, not CI-gated: the panel in its fullest state (preview, link, error, two cards) rendered with the real stylesheets and measured in Chromium at 320, 390, 768, 1440: no sideways scroll, no target under 44px, axe clean; 2.5, 2.3, 1.9, 1.9 screens.",
+    "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0. pnpm preflight standard on the rebased tree: the first run caught a real failure (a raw font-family in the owner panel stylesheet, design-system test 16), fixed to the --font-mono token, then rerun; its result is recorded in the pull request. An earlier preflight on the money branch failed its e2e step in 1 to 2 ms each because the browser path was empty (KI-12); the affected specs were rerun with the right path."
+  },
+  "notRun": [
+    "The owner panel signed in against a real decision card database (there is no signed-in fixture for it; the module is not installed). The create, preview, withdraw and state requests are shaped by the same strict schema the service uses and tested for shape, not exercised end to end from the browser.",
+    "A screen-reader walk-through of either screen.",
+    "The full operator suite locally (CI runs it on the pushed head)."
+  ],
+  "sensitive": "Public unauthenticated route, link tokens, cookies and tenant scope. Guardian review requested."
+}

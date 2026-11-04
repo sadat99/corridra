@@ -1,3 +1,4 @@
+import { customerDecisionCardsEnabled } from '@corridra/auth/customer-decision-cards';
 import { customerDecisionsEnabled } from '@corridra/auth/customer-decisions';
 import { specificationConfirmationForPage } from '../../../../lib/specification-availability';
 import { booksForPage } from '../../../../lib/book-availability';
@@ -51,6 +52,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
         decisionsEnabled={customerDecisionsEnabled()}
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         books={await booksForPage()}
+        decisionCards={customerDecisionCardsEnabled()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
       />
     </CustomerShell>
