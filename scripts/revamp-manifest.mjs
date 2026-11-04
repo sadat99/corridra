@@ -3,7 +3,9 @@
 // from the existing V3 static collector (scripts/v3-inventory.mjs). Read-only: it never
 // deletes, renames or moves a file. Static reachability is not functional verification.
 //
-// Usage: node scripts/v3-inventory.mjs <sha> <dir> && node scripts/revamp-manifest.mjs <dir>/inventory.json [out]
+// Usage: node scripts/v3-inventory.mjs <sha> <dir> && node scripts/revamp-manifest.mjs <dir>/inventory.json [manifest-dir] [contract-dir]
+// The frozen Wave 0 baseline stays in docs/revamp/wave-0; pass a scratch manifest-dir to refresh only
+// docs/revamp/COVERAGE.json and docs/revamp/CLEANUP-MANIFEST.json at a later revision.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -11,6 +13,8 @@ import path from 'node:path';
 
 const inventoryPath = process.argv[2];
 const output = process.argv[3] ?? 'docs/revamp/wave-0';
+// Contract section 11 files (COVERAGE.json, CLEANUP-MANIFEST.json). Defaults to docs/revamp.
+const contractDir = process.argv[4] ?? 'docs/revamp';
 if (!inventoryPath || !existsSync(inventoryPath)) {
   console.error('usage: node scripts/revamp-manifest.mjs <inventory.json> [output-dir]');
   process.exit(2);
@@ -174,6 +178,187 @@ const manifest = {
 };
 mkdirSync(output, { recursive: true });
 writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+
+// Contract section 11 files, written next to the wave folder (docs/revamp/). Evidence-only states:
+// IMPLEMENTED means the route file exists at the baseline; GATED means its file returns not-found or
+// unavailable behind a switch or module check (the production value of that switch stays UNKNOWN);
+// VERIFIED is never set here, because static reading is not runtime acceptance.
+// Contract section 3 target experience, by route prefix. First match wins.
+const targets = [
+  [/^\/$/, 'Public home (Commerce Atelier)', 'Public entry', 'P0'],
+  [
+    /^\/(sell|source|machinery|enter-market)$/,
+    'Purpose explainer and deep link to start the right work',
+    'Public acquisition',
+    'P1',
+  ],
+  [
+    /^\/(business-trips|fairs|trade-missions|institutions|corridors)(\/|$)/,
+    'Programme or mission context, route or event detail',
+    'Public acquisition/support',
+    'P1',
+  ],
+  [/^\/plan$/, 'Universal intake', 'Universal intake', 'P0'],
+  [/^\/account\/move$/, 'Customer Home', 'Customer Home', 'P0'],
+  [/^\/account$/, 'Customer Work (?view=work) and Home', 'Customer Work', 'P0'],
+  [
+    /^\/account\/(drafts|request)\//,
+    'One guided request experience over both persistence paths',
+    'Work creation',
+    'P0',
+  ],
+  [/^\/account\/(requests|rooms)\//, 'Work Room', 'Work delivery', 'P0'],
+  [/^\/account\/missions\//, 'Results and decision workspace', 'Work results', 'P0'],
+  [/^\/account\/service-requests(\/|$)/, 'Services and quotations', 'Commercial', 'P0'],
+  [
+    /^\/account\/(companies|profile)(\/|$)/,
+    'Companies portfolio and company profile',
+    'Shared company data',
+    'P1',
+  ],
+  [/^\/account\/delegations(\/|$)/, 'Organise work (programme room)', 'Delegation', 'P0/P1'],
+  [
+    /^\/account\/(notifications|billing)(\/|$)/,
+    'Updates / Account / More',
+    'Account/recovery',
+    'P1',
+  ],
+  [/^\/account\/all-tools$/, 'All tools fallback', 'Discoverability safety', 'P0'],
+  [/^\/operator\/owner$/, 'Permission-gated Administration', 'Owner/admin', 'P1'],
+  [/^\/operator(\/|$)/, 'Signal Desk staff shell', 'Staff / execution', 'P1'],
+  [/^\/contributor(\/|$)/, 'Assigned work and secure contribution', 'Contributor', 'P1'],
+  [
+    /^\/(buyer|client|programme|mute|pulse)(\/|$)/,
+    'Restricted recipient experience',
+    'Counterparty',
+    'P1',
+  ],
+  [/^\/api\//, 'Server boundary for the screens above (no screen of its own)', 'API', 'n/a'],
+  [
+    /^\/(signin|signup|verify-email|forgot-password|reset-password)$/,
+    'Customer account and security (contract section 5)',
+    'Customer identity',
+    'P1',
+  ],
+  [
+    /^\/(about|how-it-works|trust|privacy|network|coming-soon|workspace)$/,
+    'Supporting public page, kept reachable from the footer',
+    'Public support',
+    'P1',
+  ],
+  [/^\/language-boot\.js$/, 'Language bootstrap script (asset, no screen)', 'Asset', 'n/a'],
+];
+const targetOf = (route) => {
+  const hit = targets.find(([re]) => re.test(route));
+  return hit
+    ? { target: hit[1], classification: hit[2], priority: hit[3] }
+    : {
+        target: 'Not in the contract section 3 map; keep reachable',
+        classification: 'Unmapped',
+        priority: 'n/a',
+      };
+};
+const testFiles = tracked.filter((f) => f.startsWith('tests/') && /\.(ts|tsx|mjs|js)$/.test(f));
+const testTexts = new Map(testFiles.map((f) => [f, readFileSync(f, 'utf8')]));
+// GATED only when a negated switch or module check directly guards a not-found or 503 answer,
+// for example `if (!uxSwitchOn('X')) notFound();` or `if (!fooEnabled()) return ...503...`.
+const gatePattern =
+  /if\s*\(\s*!\s*(?:uxSwitchOn\([^)]*\)|[A-Za-z]+Enabled\([^)]*\))[^)]{0,80}\)\s*(?:\{[^}]{0,240}|[^;]{0,240})(?:notFound\(\)|\b503\b)/;
+const coverage = routes.map((r) => {
+  const source = existsSync(r.file) ? readFileSync(r.file, 'utf8') : '';
+  const gated = gatePattern.test(source);
+  const literal = r.route.split('[')[0].replace(/\/$/, '') || '/';
+  const tests = [...testTexts]
+    .filter(([, t]) => (literal === '/' ? /['"`]\/['"`]/.test(t) : t.includes(literal)))
+    .map(([f]) => f);
+  return {
+    route: r.route,
+    file: r.file,
+    audience: r.audience,
+    access: r.access,
+    v3Home: r.v3Home,
+    ...targetOf(r.route),
+    controls: r.controls,
+    handlerBranches: r.handlerBranches?.length ?? 0,
+    permissionBoundariesInFile: r.permissionBoundariesInFile,
+    state: gated ? 'GATED' : 'IMPLEMENTED',
+    stages: {
+      implemented: 'IMPLEMENTED (file present at baseline)',
+      tested: tests.length
+        ? 'PARTIAL (tests name this address; not proof of every state)'
+        : 'UNKNOWN',
+      deployed: 'UNKNOWN (deployment not observable from the recording environment)',
+      enabled: gated
+        ? 'UNKNOWN (behind a switch or module check)'
+        : 'n/a (no switch in the route file)',
+      accepted: 'UNKNOWN',
+    },
+    testReferences: tests.length,
+  };
+});
+const stateCounts = {};
+for (const c of coverage) stateCounts[c.state] = (stateCounts[c.state] ?? 0) + 1;
+writeFileSync(
+  path.join(contractDir, 'COVERAGE.json'),
+  JSON.stringify(
+    {
+      schemaVersion: 1,
+      purpose:
+        'Revamp contract section 11: route, audience, access, target experience and per-stage evidence state. No acceptance is inferred.',
+      baseline: head,
+      generatedBy: manifest.generatedBy,
+      stateWords: {
+        VERIFIED: 'runtime acceptance recorded with a receipt (none are set by this generator)',
+        IMPLEMENTED: 'the route file exists at the baseline',
+        PARTIAL: 'some evidence exists for a stage, not all of it',
+        MISSING: 'a required capability has no code',
+        GATED: 'the route answers not-found or unavailable behind a switch or module check',
+        UNKNOWN: 'no evidence for that stage',
+      },
+      counts: { routes: coverage.length, byState: stateCounts, byAudience: counts },
+      inventoryTotals: manifest.sourceInventory.totals,
+      operatorSections: 18,
+      routes: coverage,
+    },
+    null,
+    2,
+  ) + '\n',
+);
+writeFileSync(
+  path.join(contractDir, 'CLEANUP-MANIFEST.json'),
+  JSON.stringify(
+    {
+      schemaVersion: 1,
+      purpose:
+        'Revamp contract sections 7 and 11: evidenced keep, consolidate, archive or delete decisions. Nothing here is deleted; a delete needs an owner-approved PR, the Guardian PASS, this check rerun and the recovery step below.',
+      baseline: head,
+      generatedBy: manifest.generatedBy,
+      neverCandidates: [
+        'docs/source/',
+        'docs/v3/history/',
+        'docs/adr/',
+        'docs/qa/',
+        'packages/db/**/migrations*',
+        'requirement identities (docs/v3/phase-0/requirements.json)',
+        'privacy, legal and consent text',
+        'docs/revamp/CONTRACT.md',
+      ],
+      entries: cleanup.map((c) => ({
+        path: c.path ?? c.file,
+        classification: c.disposition.startsWith('KEEP') ? 'KEEP' : 'REVIEW',
+        reason: c.disposition,
+        incomingReferences: { importers: 0, documentation: c.documentationReferences },
+        replacement: null,
+        recovery: `git checkout ${head.slice(0, 12)} -- ${c.file}`,
+        proof: { sha256: c.sha256, lastCommit: c.lastCommit, method: manifest.cleanup.method },
+        approval: c.disposition.startsWith('KEEP') ? 'n/a (kept)' : 'PENDING owner and Guardian',
+      })),
+      deleted: [],
+    },
+    null,
+    2,
+  ) + '\n',
+);
 console.log(
   JSON.stringify({
     baseline: head.slice(0, 8),
