@@ -12,12 +12,14 @@ const submitName = 'Submit mission request';
 async function toSubmit(page: Page) {
   await page.goto('/plan?job=buyers&companyCountry=BD&marketCode=CN');
   await next(page).click();
+  await page.locator('#brief-whenNeeded').fill('2026-12-01');
   await next(page).click();
   await page
     .getByLabel(/^Your offer or requirement/)
     .first()
     .fill('QA test (madeup): fabric for a knitting unit');
   await next(page).click();
+  await page.getByLabel('Relevant meetings', { exact: true }).check();
   await next(page).click();
   await page.getByLabel('Name', { exact: true }).fill('QA buyer (madeup)');
   await page.getByLabel('Company', { exact: true }).fill('QA test company (madeup)');
@@ -113,7 +115,7 @@ test('Q-06 /plan send: busy while in flight, one request for a double click, res
     });
   });
   await toSubmit(page);
-  const button = page.getByRole('button', { name: submitName, exact: true });
+  const button = page.locator('.guide-actions .primary-link');
   await button.dblclick();
   const form = page.locator('form.intake-form');
   const busy = async () =>

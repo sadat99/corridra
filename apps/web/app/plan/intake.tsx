@@ -258,6 +258,45 @@ export type PrivateIntakeSubmission = {
   draftStorageKey: string;
   submit: (commandId: string, brief: unknown) => Promise<void>;
 };
+
+// Words for a send that did not come back as expected (Wave 6). The server's own sentence always wins. When
+// there is none (a proxy page, an empty body, a refused connection) the status says what to do next, so the
+// person never reads a raw error and never faces a blank area. The answers on the page are never lost.
+const sendWords = {
+  offline:
+    'The request did not reach Corridra. Check your connection, then send it again. Your answers are still here.',
+  limited:
+    'Too many requests just now. Wait a few minutes, then send it again. Your answers are still here.',
+  changed: 'This request changed while it was being sent. Check your answers, then try again.',
+  unavailable:
+    'Corridra could not save this right now. Your answers are still here. Try again in a moment.',
+};
+function wordsFor(status: number, said: unknown, fallback: string = sendWords.unavailable) {
+  if (typeof said === 'string' && said.trim()) return said;
+  return status === 429 ? sendWords.limited : status === 409 ? sendWords.changed : fallback;
+}
+async function reach(request: Promise<Response>) {
+  try {
+    return await request;
+  } catch {
+    throw new Error(sendWords.offline);
+  }
+}
+type Reply = {
+  error?: string;
+  fields?: Record<string, string[]>;
+  duplicate?: boolean;
+  receipt?: string;
+};
+async function readReply(response: Response): Promise<Reply> {
+  try {
+    const value = await response.json();
+    return value && typeof value === 'object' ? (value as Reply) : {};
+  } catch {
+    return {};
+  }
+}
+
 async function claimSavedRequest(storageKey: string, navigate: (path: string) => void) {
   const response = await fetch('/api/intake/pending/claim', {
     method: 'POST',
@@ -740,16 +779,19 @@ function IntakeForm({
         if (account && draft.email.trim().toLowerCase() !== account.email.trim().toLowerCase())
           throw new Error(formEn['form.message.emailMismatch']);
         if (!account && password.length < 14) throw new Error(formEn['form.message.passwordShort']);
-        const response = await fetch('/api/intake/pending', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            key: key.current,
-            brief: realBriefSchema.parse(canonicalDraft()),
+        const response = await reach(
+          fetch('/api/intake/pending', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              key: key.current,
+              brief: realBriefSchema.parse(canonicalDraft()),
+            }),
           }),
-        });
-        const saved = await response.json();
-        if (!response.ok) throw new Error(saved.error ?? formEn['form.message.notSaved']);
+        );
+        const saved = await readReply(response);
+        if (!response.ok)
+          throw new Error(wordsFor(response.status, saved.error, formEn['form.message.notSaved']));
         setPendingReady(true);
         submitted.current = true;
         if (account?.emailVerified) {
@@ -785,19 +827,21 @@ function IntakeForm({
         submitted.current = true;
         return;
       }
-      const r = await fetch('/api/intake', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: key.current,
-          brief: briefSchema.parse({ ...draft, experience: experience() }),
-          websiteCheck: '',
+      const r = await reach(
+        fetch('/api/intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: key.current,
+            brief: briefSchema.parse({ ...draft, experience: experience() }),
+            websiteCheck: '',
+          }),
         }),
-      });
-      const data = await r.json();
+      );
+      const data = await readReply(r);
       if (!r.ok) {
         setErrors(data.fields ?? {});
-        throw new Error(data.error);
+        throw new Error(wordsFor(r.status, data.error));
       }
       submitted.current = true;
       setFinished(true);
@@ -819,7 +863,7 @@ function IntakeForm({
         if (place === 'none') setDraftNotice(formEn['form.message.receiptUnsaved']);
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : formEn['form.message.unableToSave']);
+      setMessage(e instanceof Error && e.message ? e.message : formEn['form.message.unableToSave']);
     } finally {
       setBusy(false);
     }
@@ -843,16 +887,25 @@ function IntakeForm({
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch('/api/intake/receipt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receipt: checkCode }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
+      const r = await reach(
+        fetch('/api/intake/receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ receipt: checkCode }),
+        }),
+      );
+      const data = (await readReply(r)) as {
+        status: string;
+        replies: { body: string; createdAt: string }[];
+        error?: string;
+      };
+      if (!r.ok)
+        throw new Error(wordsFor(r.status, data.error, formEn['form.message.unableToCheck']));
       setResult(data);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : formEn['form.message.unableToCheck']);
+      setMessage(
+        e instanceof Error && e.message ? e.message : formEn['form.message.unableToCheck'],
+      );
     } finally {
       setBusy(false);
     }
