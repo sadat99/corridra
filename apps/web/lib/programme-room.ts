@@ -105,6 +105,30 @@ export const roomLenses = [
 ] as const;
 export type RoomLensKey = (typeof roomLenses)[number]['key'];
 
+/**
+ * The five groups the organiser room shows (Wave 5), in order. Each group holds existing views, kept under their
+ * own section ids: nothing is removed or moved. A group appears only where one of its views has a panel.
+ */
+export const roomGroups = [
+  { key: 'overview', label: 'Overview', members: ['overview'] },
+  { key: 'people', label: 'Participants and eligibility', members: ['people', 'companies'] },
+  { key: 'plan', label: 'Programme and meetings', members: ['plan', 'agenda'] },
+  { key: 'terms', label: 'Terms and fees', members: ['terms', 'money'] },
+  { key: 'results', label: 'Results', members: ['results'] },
+] as const;
+export type RoomGroupKey = (typeof roomGroups)[number]['key'];
+/** The words a view keeps as the name of its section inside a group. */
+export const roomViewLabels = {
+  overview: 'Overview',
+  people: 'People',
+  companies: 'Companies',
+  plan: 'Plan and report',
+  agenda: 'Agenda',
+  terms: 'Terms and places',
+  money: 'Money',
+  results: 'Results',
+} as const;
+
 /** Optional ADR075 views; the original five views and off path stay unchanged. */
 export const programmeProjectionLenses = [
   { key: 'companies', label: 'Companies' },
