@@ -7,6 +7,7 @@ import {
   canCreate,
   canPreview,
   cardLink,
+  nextCreateCommand,
   countsWords,
   failureWords,
   initialPanel,
@@ -178,6 +179,57 @@ describe('D-06 nothing is created before the acknowledgement', () => {
   });
 });
 
+describe('D-06 an uncertain create is retried with the same command', () => {
+  const previewed = () => {
+    let p = panelReducer(ready(), { type: 'choose', decisionId });
+    p = panelReducer(p, { type: 'previewLoaded', preview });
+    return panelReducer(p, { type: 'acknowledge', value: true });
+  };
+  it('reuses the command id when the answer was lost, so the service returns the first card', () => {
+    let p = previewed();
+    const first = nextCreateCommand(p, 'cmd-1');
+    expect(first).toBe('cmd-1');
+    p = panelReducer(p, { type: 'createStarted', commandId: first });
+    // The answer never came back (network, 500, 503): the same acknowledged preview is still there.
+    p = panelReducer(p, { type: 'failed', status: 0 });
+    expect(canCreate(p)).toBe(true);
+    expect(nextCreateCommand(p, 'cmd-2')).toBe('cmd-1');
+    p = panelReducer(p, { type: 'failed', status: 503 });
+    expect(nextCreateCommand(p, 'cmd-3')).toBe('cmd-1');
+  });
+  it('starts a new command for a genuinely new creation', () => {
+    let p = previewed();
+    p = panelReducer(p, { type: 'createStarted', commandId: 'cmd-1' });
+    // A new preview, another decision, a changed decision and a success each end the old command.
+    expect(nextCreateCommand(panelReducer(p, { type: 'previewLoaded', preview }), 'cmd-2')).toBe(
+      'cmd-2',
+    );
+    expect(
+      nextCreateCommand(panelReducer(p, { type: 'choose', decisionId: decisions[1]!.id }), 'cmd-3'),
+    ).toBe('cmd-3');
+    expect(
+      nextCreateCommand(
+        panelReducer(p, { type: 'failed', status: 409, reason: 'CHANGED' }),
+        'cmd-4',
+      ),
+    ).toBe('cmd-4');
+    const done = panelReducer(p, {
+      type: 'created',
+      created: { cardId, state: 'ACTIVE', expiresAt: preview.expiresAt, token: 'T'.repeat(43) },
+      origin: 'https://corridra.test',
+    });
+    expect(nextCreateCommand(done, 'cmd-5')).toBe('cmd-5');
+    // A different preview digest never reuses a command made for another one.
+    const other = { ...p, preview: { ...preview, digest: 'b'.repeat(64) } };
+    expect(nextCreateCommand(other, 'cmd-6')).toBe('cmd-6');
+  });
+  it('the component takes the command from the panel, not a new random id each click', () => {
+    const source = readFileSync('apps/web/app/account/missions/decision-card-panel.tsx', 'utf8');
+    expect(source).toContain('nextCreateCommand(');
+    expect(source).not.toMatch(/commandId:\s*crypto\.randomUUID\(\)\s*\}\)\.create/);
+  });
+});
+
 describe('D-07 every refusal has its exact words', () => {
   it.each([
     [409, 'CHANGED', 'The decision changed since the preview. Preview again.'],
@@ -280,17 +332,25 @@ describe('D-08 withdraw', () => {
   });
   it('is offered only for an active card, and only the creator’s own cards are ever listed', async () => {
     expect(withdrawable(card('ACTIVE'))).toBe(true);
-    for (const state of ['WITHDRAWN', 'EXPIRED', 'UNAVAILABLE'] as const)
+    // An unavailable card (a source changed) still counts toward the cap of five until it expires, and the
+    // creator may withdraw it, so it must be possible to free that slot.
+    expect(withdrawable(card('UNAVAILABLE'))).toBe(true);
+    for (const state of ['WITHDRAWN', 'EXPIRED'] as const)
       expect(withdrawable(card(state))).toBe(false);
     const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel');
     const p = panelReducer(initialPanel, {
       type: 'stateLoaded',
       canShare: true,
       maxActive: 5,
-      cards: [card('ACTIVE'), { ...card('WITHDRAWN'), id: decisions[1]!.id }],
+      cards: [
+        card('ACTIVE'),
+        { ...card('WITHDRAWN'), id: decisions[1]!.id },
+        { ...card('UNAVAILABLE'), id: '55555555-5555-4555-8555-555555555555' },
+        { ...card('EXPIRED'), id: '66666666-6666-4666-8666-666666666666' },
+      ],
     });
     const html = render(ce(DecisionCardPanelView, { panel: p, decisions, handlers: {} }));
-    expect(html.match(/>Withdraw</g)).toHaveLength(1);
+    expect(html.match(/>Withdraw</g)).toHaveLength(2);
     expect(html).toContain('2 opens');
   });
   it('a withdrawn card leaves the active list', () => {

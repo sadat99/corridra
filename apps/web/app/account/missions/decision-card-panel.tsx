@@ -5,6 +5,7 @@ import {
   canPreview,
   countsWords,
   initialPanel,
+  nextCreateCommand,
   panelReducer,
   requestBodies,
   shareableDecisions,
@@ -288,10 +289,11 @@ export function DecisionCardPanel({
       void run(async (signal) => {
         // The only place a card is made: after a preview and the acknowledgement.
         if (!canCreate(panel) || !panel.chosen || !panel.preview) return;
-        const body = requestBodies({ resourceId, commandId: crypto.randomUUID() }).create(
-          panel.chosen,
-          panel.preview,
-        );
+        // The same command as an earlier try for this preview whose answer was lost, so a retry returns the
+        // first card and its link instead of making another.
+        const commandId = nextCreateCommand(panel, crypto.randomUUID());
+        dispatch({ type: 'createStarted', commandId });
+        const body = requestBodies({ resourceId, commandId }).create(panel.chosen, panel.preview);
         const value = await send(body, scope, signal);
         dispatch({
           type: 'created',

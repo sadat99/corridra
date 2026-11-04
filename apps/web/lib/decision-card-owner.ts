@@ -41,6 +41,12 @@ export type Panel = {
   linkExpiresAt: string | null;
   notice: string | null;
   busy: boolean;
+  /**
+   * The create command in flight for the preview now on screen. If its answer is lost the same acknowledged
+   * preview is still there, and a retry must send this same command so the service returns the first card and
+   * its link instead of making a second one.
+   */
+  pendingCreate: { commandId: string; decisionId: string; digest: string } | null;
 };
 
 export const initialPanel: Panel = {
@@ -54,6 +60,7 @@ export const initialPanel: Panel = {
   linkExpiresAt: null,
   notice: null,
   busy: false,
+  pendingCreate: null,
 };
 
 export type PanelEvent =
@@ -63,6 +70,7 @@ export type PanelEvent =
   | { type: 'previewLoaded'; preview: Preview }
   | { type: 'acknowledge'; value: boolean }
   | { type: 'busy'; value: boolean }
+  | { type: 'createStarted'; commandId: string }
   | { type: 'created'; created: CreatedCard; origin: string }
   | { type: 'withdrawn'; cardId: string }
   | { type: 'failed'; status: number; reason?: string }
@@ -92,7 +100,20 @@ export const shareableDecisions = <T extends { requirementCurrent?: boolean }>(
   decisions: T[],
 ): T[] => decisions.filter((decision) => decision.requirementCurrent === true);
 
-export const withdrawable = (card: Pick<CardSummary, 'state'>) => card.state === 'ACTIVE';
+/**
+ * An active card, or one that is momentarily unavailable because a source changed: the database still counts
+ * that one toward the five allowed until it expires, and the creator may withdraw it, so the slot can be freed.
+ */
+export const withdrawable = (card: Pick<CardSummary, 'state'>) =>
+  card.state === 'ACTIVE' || card.state === 'UNAVAILABLE';
+
+/** The command for a create: the one already in flight for this very preview, otherwise a fresh one. */
+export function nextCreateCommand(panel: Panel, fresh: string): string {
+  const pending = panel.pendingCreate;
+  return pending && pending.decisionId === panel.chosen && pending.digest === panel.preview?.digest
+    ? pending.commandId
+    : fresh;
+}
 
 export const canPreview = (panel: Panel) =>
   panel.phase === 'ready' && !!panel.chosen && !panel.busy;
@@ -118,13 +139,29 @@ export function panelReducer(panel: Panel, event: PanelEvent): Panel {
         preview: null,
         acknowledged: false,
         notice: null,
+        pendingCreate: null,
       };
     case 'previewLoaded':
-      return { ...panel, preview: event.preview, acknowledged: false, notice: null, busy: false };
+      return {
+        ...panel,
+        preview: event.preview,
+        acknowledged: false,
+        notice: null,
+        busy: false,
+        pendingCreate: null,
+      };
     case 'acknowledge':
       return { ...panel, acknowledged: panel.preview ? event.value : false };
     case 'busy':
       return { ...panel, busy: event.value };
+    case 'createStarted':
+      return {
+        ...panel,
+        pendingCreate:
+          panel.chosen && panel.preview
+            ? { commandId: event.commandId, decisionId: panel.chosen, digest: panel.preview.digest }
+            : null,
+      };
     case 'created': {
       const card: CardSummary = {
         id: event.created.cardId,
@@ -145,6 +182,7 @@ export function panelReducer(panel: Panel, event: PanelEvent): Panel {
         acknowledged: false,
         notice: null,
         busy: false,
+        pendingCreate: null,
       };
     }
     case 'withdrawn':
@@ -163,7 +201,7 @@ export function panelReducer(panel: Panel, event: PanelEvent): Panel {
         notice: failureWords(event.status, event.reason),
         // A changed decision must be previewed again before anything can be made.
         ...(event.status === 409 && event.reason === 'CHANGED'
-          ? { preview: null, acknowledged: false }
+          ? { preview: null, acknowledged: false, pendingCreate: null }
           : {}),
         busy: false,
       };
