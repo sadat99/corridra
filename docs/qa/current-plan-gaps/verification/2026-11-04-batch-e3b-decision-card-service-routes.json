@@ -49,6 +49,14 @@
       {
         "sha": "a0a8c6211c4252c536b9ef1c5ea6de3214ba4832",
         "note": "architect: ADR-076 and ADR-070 wording. Service and routes are built behind the real default-off switch, screens not built, module not installed, plus one Consequences bullet on the review's accepted limits. The scribe did not edit any ADR."
+      },
+      {
+        "sha": "2b88874",
+        "note": "records for step 3 (the scribe commit); the head of draft PR 262 when it was opened"
+      },
+      {
+        "sha": "7e3e82b",
+        "note": "fix after Codex P2 on PR 262 (pool starvation): the create limiter hook ran inside the transaction work callback, while the request already held a runtime-pool connection, and the limiter checked out a second connection from the same pool (max 5, 15 s timeout), so five concurrent creates could each hold one connection and wait for a second. CustomerSessionBoundary.transaction in packages/auth/src/customer-session.ts gains an optional fourth parameter afterIdentity(identity) called after the fresh provider session and the header checks (401, unverified email, invalid session, 409 on a mismatched subject or issuer header) and before assertRestrictedPool, the proof insert and runtime.connect(); it receives the pinned issuer and the provider session's subject; existing callers pass nothing and are unchanged. The decision card service passes its limiter through it. Five new tests (a one-connection pool create whose limiter queries the same pool succeeds; no connection is held while the hook runs; four concurrent creates on a pool of two all succeed; a 429 from the hook still stops the create and writes no row; the hook is never invoked for a signed-out request, a mismatched subject header or a wrong issuer header): three failed before the fix, 34 of 34 pass in the service file; mutation checks (hook back inside the work callback, hook after runtime.connect(), verified identity replaced by empty strings) each failed their tests and were restored byte for byte; full pnpm test:integration: 2374 passed, 4 failed (the known environment tests: adapters, blob and scan-bypass need ClamAV, foundations restore needs pg_dump), 1 skipped; pnpm typecheck, lint, format:check, test:docs, v3-context verify, authority check and pnpm build exit 0. Not run: any Playwright or operator suite, pnpm preflight, a compiled-route header re-check (no route file changed). Builder-reported; local receipts only."
       }
     ]
   },
@@ -70,7 +78,7 @@
       "module missing: owner API 503; public route the same 200 unknown"
     ],
     "publicRoute": "POST only. GET and HEAD answer 405 with Allow: POST and no card data. One byte-identical 200 {\"state\":\"unknown\"} for every non-open answer: unknown or malformed token, withdrawn, expired, changed, role lost, real workspace, switch off and module missing. A 512-byte body bound. The token is read only from the POST body (query string and headers are ignored). Headers: no-store, no-referrer, X-Robots-Tag noindex nofollow, nosniff, JSON; no cookie; no logging of the body, token, hash or fragment. After the review fixes the transport checks (origin, content type, body bound) run BEFORE the switch check so the switch state is not observable.",
-    "limiters": "Create is limited per verified customer ('decision-card-customer:<issuer>:<verified subject>') and per client ('decision-card-owner:<client>'), applied AFTER the customer session is verified, through a hook inside the transaction. Withdraw is never limited. Public reads are limited per client ('decision-card-public:<client>'; malformed requests are keyed per client only) and per token digest. create requires acknowledged: true at the HTTP layer only."
+    "limiters": "Create is limited per verified customer ('decision-card-customer:<issuer>:<verified subject>') and per client ('decision-card-owner:<client>'), applied AFTER the customer session is verified through a hook that runs after the verified identity and BEFORE any pool connection is held (an earlier version ran the hook inside the transaction and could starve the pool, fixed in 7e3e82b). Withdraw is never limited. Public reads are limited per client ('decision-card-public:<client>'; malformed requests are keyed per client only) and per token digest. create requires acknowledged: true at the HTTP layer only."
   },
   "receipts": {
     "builderTestsFirst": "Before the code, 6 failed of 125 and the two database-backed files failed at import. After 4304fbe: 7 files 206 passed; the 16 neighbouring files 440 passed; the full pnpm test:integration gave 150 of 154 files, 2335 passed, 4 failed (the known environment tests adapters, blob and scan-bypass need ClamAV; foundations restore needs pg_dump), 1 skipped.",
