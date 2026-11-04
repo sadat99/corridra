@@ -8,6 +8,7 @@ import {
   type NotificationPreferences,
 } from '@corridra/domain/notifications';
 import './notifications-form.css';
+import { limitWords, notReachedWords } from '../../../lib/account-limit';
 import { TimeZoneSelect } from '../../../components/ux/pickers';
 
 // The words people read here are plain English. Another language needs a reviewed catalog entry first;
@@ -130,8 +131,19 @@ export function NotificationsForm({
           ...(on ? chosen : lastSaved),
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Your choices were not saved');
+      // An answer that is not JSON (an error page, a dropped connection) is not the interface's own words.
+      const data: { saved?: unknown; error?: unknown } = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setFailed(true);
+        setMessage(
+          response.status === 429
+            ? limitWords
+            : typeof data.error === 'string' && data.error
+              ? data.error
+              : 'Your choices were not saved',
+        );
+        return;
+      }
       if (data.saved === false) {
         setFailed(true);
         setMessage('Email is not switched on yet, so nothing was saved.');
@@ -144,9 +156,9 @@ export function NotificationsForm({
             : 'Request-update emails are off. Account security messages and request receipts can still be sent.',
         );
       }
-    } catch (error) {
+    } catch {
       setFailed(true);
-      setMessage(error instanceof Error ? error.message : 'Your choices were not saved');
+      setMessage(notReachedWords);
     } finally {
       setBusy(false);
     }
@@ -161,7 +173,7 @@ export function NotificationsForm({
       : '';
 
   return (
-    <form className="notifications-form" onSubmit={save} noValidate>
+    <form className="notifications-form" onSubmit={save} noValidate aria-busy={busy}>
       {closed && (
         <p role="note" className="notifications-note">
           Email about your requests is not switched on yet. You can look at the choices, but they
