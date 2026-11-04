@@ -197,3 +197,26 @@ test('the owner-supplied revamp execution contract stays byte-for-byte as receiv
     '93230e4b05d7d0d52660e5f6944c1c5b98e2af3a2301680b1d00da29ff80d4ea',
   );
 });
+
+test('revamp coverage and cleanup manifests claim no acceptance and delete nothing', async () => {
+  const coverage = JSON.parse(await readFile(new URL('docs/revamp/COVERAGE.json', root), 'utf8'));
+  const cleanup = JSON.parse(
+    await readFile(new URL('docs/revamp/CLEANUP-MANIFEST.json', root), 'utf8'),
+  );
+  const words = new Set(['VERIFIED', 'IMPLEMENTED', 'PARTIAL', 'MISSING', 'GATED', 'UNKNOWN']);
+  assert.equal(coverage.routes.length, coverage.counts.routes);
+  for (const route of coverage.routes) {
+    assert.ok(words.has(route.state), route.route);
+    assert.notEqual(route.state, 'VERIFIED', `${route.route}: the generator never sets VERIFIED`);
+    assert.notEqual(route.classification, 'Unmapped', `${route.route}: map it to a target`);
+    assert.match(route.stages.accepted, /^UNKNOWN/, route.route);
+  }
+  assert.deepEqual(cleanup.deleted, []);
+  for (const entry of cleanup.entries) {
+    assert.ok(['KEEP', 'REVIEW'].includes(entry.classification), entry.path);
+    assert.ok(entry.recovery.startsWith('git checkout '), entry.path);
+    if (entry.classification === 'REVIEW') assert.match(entry.approval, /^PENDING/, entry.path);
+    for (const never of ['docs/source/', 'docs/v3/history/', 'docs/adr/', 'docs/qa/'])
+      assert.ok(!entry.path.startsWith(never), entry.path);
+  }
+});
