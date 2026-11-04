@@ -75,7 +75,7 @@ export function pdfPages(pdf: Buffer): PdfPage[] {
       size = 0,
       fontId = 0;
     for (const token of content.matchAll(
-      /1 0 0 1 ([\d.]+) ([\d.]+) Tm|\/(\w+) ([\d.]+) Tf|\[((?:<[0-9a-f]*>|\s|-?[\d.]+)*)\] TJ/g,
+      /1 0 0 1 ([\d.]+) ([\d.]+) Tm|\/(\w+) ([\d.]+) Tf|\[([^\]]*)\] TJ/g,
     )) {
       if (token[1] !== undefined) {
         x = Number(token[1]);
