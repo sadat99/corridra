@@ -226,3 +226,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Cause:** a fixed data directory and a fixed port shared by two processes; KI-15 describes one run, not two.
 - **Fix used by the later runs:** give each run a private network namespace (`unshare -n`, loopback only; the container has no `ip` binary, so raise loopback with a small Python ioctl script), a data directory unique to that run, and port 54329 inside the namespace (the tests need that port). Run every database test through `nsenter -t <pid> -n`.
 - **Rule:** when running database suites in parallel always isolate them this way, and never share `/tmp/pg54329`. A run whose database was touched by another run proves nothing; rerun it in its own namespace.
+
+### KI-37 Local preflight e2e lost a trace file while the ux gate ran at the same time (4 November 2026)
+
+- **Observed:** S3's local `node scripts/preflight.mjs` run on 4 November reported an ENOENT for a Playwright trace file in the e2e step while the ux-gate step ran alongside it. Run on its own, the same e2e step passed 198 of 198, and exact-head CI was green.
+- **Likely cause, not proven:** two Playwright runs in one container wrote under the same output directory, and one cleaned files the other still needed.
+- **Rule:** before treating a local trace ENOENT as a failure, rerun the e2e step alone. Do not change a test because of it. CI on the exact head is the verifier.
