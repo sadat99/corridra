@@ -30,3 +30,14 @@
 .programme-refresh {
   margin-inline-start: var(--space-3);
 }
+
+/* The road's Invite step is a button inside a grid cell: keep it on the same left edge and baseline as the
+   other labels instead of stretching and centring (Wave 6, Q-07). Its tap area is still the full label. */
+.programme-room .mr-road-text > .text-link {
+  justify-self: start;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  line-height: inherit;
+}

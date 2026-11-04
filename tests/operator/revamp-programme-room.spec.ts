@@ -815,3 +815,119 @@ test('Q-06 Save sample programme is busy while in flight, sends once for a doubl
   await expect(page.getByRole('status').filter({ hasText: 'is saved' })).toBeVisible();
   expect(posts).toBe(1);
 });
+
+// Q-07 (GAP-049): screenshots of the organiser room, all five groups, at 390 and 1440, for the owner's named
+// art review. Not part of the normal run: `WAVE6_EVIDENCE=1` writes the files, so a normal run never rewrites
+// tracked images. The room is the real component with the real stylesheet over made-up data; panels whose
+// service is not mocked show their calm unavailable state. No self-approval: a named human reviews these.
+const evidenceDir = 'docs/design-system/evidence/revamp-wave6';
+const stamp = () => new Date(Date.now() + 3600000).toISOString();
+const sampleParticipants = {
+  workspaceId,
+  programmeId,
+  invitations: [
+    {
+      id: '00000000-0000-4000-8000-000000000101',
+      label: 'Synthetic participant invitation',
+      expiresAt: stamp(),
+      status: 'USED',
+    },
+    {
+      id: '00000000-0000-4000-8000-000000000102',
+      label: 'Synthetic participant invitation',
+      expiresAt: stamp(),
+      status: 'ISSUED',
+    },
+  ],
+  registrations: [
+    {
+      id: '00000000-0000-4000-8000-000000000201',
+      displayLabel: 'Synthetic participant label',
+      consentedAt: '2026-10-18T00:00:00Z',
+      status: 'REGISTERED',
+    },
+  ],
+  nextInvitationAfter: null,
+  nextRegistrationAfter: null,
+  synthetic: true,
+};
+for (const width of [390, 1440])
+  test(`Q-07 evidence: the five groups at ${width}`, async ({ browser }) => {
+    test.skip(!process.env.WAVE6_EVIDENCE, 'evidence is written only when WAVE6_EVIDENCE=1');
+    const context = await browser.newContext({
+      viewport: { width, height: 900 },
+      deviceScaleFactor: 2,
+    });
+    const page = await context.newPage();
+    await page.route('**/api/customer-programme-participants*', (route) =>
+      route.fulfill({ json: sampleParticipants }),
+    );
+    await open(page, 'room=1&proj=1', {
+      state: 'AVAILABLE',
+      ...shared,
+      scheduled: 2,
+      qualifiedHeld: 1,
+    });
+    const room = page.getByRole('article', { name: programme.name });
+    const slugs = ['overview', 'participants', 'programme', 'terms', 'results'];
+    for (const [index, name] of groups.entries()) {
+      await room.getByRole('button', { name, exact: true }).click();
+      await page.waitForTimeout(500);
+      await room.screenshot({ path: `${evidenceDir}/${slugs[index]}-${width}.png` });
+    }
+    await context.close();
+  });
+
+// Q-07 defects found by looking at the screenshots (AC/1): a button must not fall back to the browser's own
+// look, and the road's labels must line up.
+test('Q-07 no button in any group falls back to the browser default look', async ({ page }) => {
+  await page.route('**/api/customer-programme-participants*', (route) =>
+    route.fulfill({ json: sampleParticipants }),
+  );
+  await open(page, 'room=1&proj=1', {
+    state: 'AVAILABLE',
+    ...shared,
+    scheduled: 2,
+    qualifiedHeld: 1,
+  });
+  const room = page.getByRole('article', { name: programme.name });
+  for (const name of groups) {
+    await room.getByRole('button', { name, exact: true }).click();
+    await page.waitForTimeout(400);
+    const bare = await room.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('article.programme-room button'))
+        .filter((el) => el.getBoundingClientRect().height > 0 && !el.closest('[hidden]'))
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          // The browser's own button face, with its own border: nothing in the design system looks like it.
+          return style.backgroundColor === 'rgb(239, 239, 239)';
+        })
+        .map((el) => el.textContent?.trim()),
+    );
+    expect(bare, `${name}: buttons with the browser default look`).toEqual([]);
+  }
+});
+
+for (const width of [390, 1440])
+  test(`Q-07 the road labels line up at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'room=1&proj=1', none);
+    const boxes = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('.mr-road > li')).map((li) => {
+        // The label's cell: a plain label, or the button that holds it for the Invite step.
+        const label = li.querySelector<HTMLElement>('.mr-road-text > :first-child')!;
+        const state = li.querySelector<HTMLElement>('.mr-road-state')!;
+        const a = label.getBoundingClientRect();
+        const b = state.getBoundingClientRect();
+        return { left: a.left - li.getBoundingClientRect().left, top: a.top, stateTop: b.top };
+      }),
+    );
+    expect(boxes.length).toBe(6);
+    for (const box of boxes) {
+      expect(Math.abs(box.left - boxes[0].left), 'label left edge').toBeLessThanOrEqual(1);
+      if (width === 1440) {
+        expect(Math.abs(box.top - boxes[0].top), 'label top').toBeLessThanOrEqual(2);
+        expect(Math.abs(box.stateTop - boxes[0].stateTop), 'state top').toBeLessThanOrEqual(2);
+      }
+    }
+  });

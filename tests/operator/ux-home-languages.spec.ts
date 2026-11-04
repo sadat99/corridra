@@ -339,3 +339,50 @@ for (const width of [320, 390, 768, 1440]) {
     });
   }
 }
+
+// Wave 6, Q-04: the home page already renders Arabic. With dir="rtl" the layout mirrors with no overlap, no
+// clipped control and no sideways scroll. No new translated string is added.
+for (const width of [320, 390, 1440])
+  test(`Q-04 the Arabic home page mirrors at ${width} without overlap or clipped controls`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript((v) => localStorage.setItem('corridra.language', v), 'ar');
+    await page.goto(`${origin}/?pages=1`);
+    await expect(page.locator('h1')).toHaveText(translate('ar', 'home.title'));
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const found = await page.evaluate(() => {
+      const controls = Array.from(
+        document.querySelectorAll<HTMLElement>('a[href],button,input,select,textarea'),
+      )
+        .filter((el) => {
+          const box = el.getBoundingClientRect();
+          return box.width > 0 && box.height > 0 && !el.closest('[hidden],[inert],.sr-only');
+        })
+        .map((el) => ({ el, box: el.getBoundingClientRect() }));
+      const clipped = controls
+        .filter(({ box }) => box.left < -1 || box.right > innerWidth + 1)
+        .map(({ el }) => el.textContent?.trim().slice(0, 30));
+      const overlapping: string[] = [];
+      for (let a = 0; a < controls.length; a++)
+        for (let b = a + 1; b < controls.length; b++) {
+          const x = controls[a],
+            y = controls[b];
+          if (x.el.contains(y.el) || y.el.contains(x.el)) continue;
+          const w = Math.min(x.box.right, y.box.right) - Math.max(x.box.left, y.box.left);
+          const h = Math.min(x.box.bottom, y.box.bottom) - Math.max(x.box.top, y.box.top);
+          if (w > 2 && h > 2)
+            overlapping.push(
+              `${x.el.textContent?.trim().slice(0, 20)} / ${y.el.textContent?.trim().slice(0, 20)}`,
+            );
+        }
+      return {
+        sideways: document.documentElement.scrollWidth - innerWidth,
+        clipped,
+        overlapping,
+      };
+    });
+    expect(found.sideways, 'sideways scroll').toBeLessThanOrEqual(0);
+    expect(found.clipped, 'clipped controls').toEqual([]);
+    expect(found.overlapping, 'overlapping controls').toEqual([]);
+  });
