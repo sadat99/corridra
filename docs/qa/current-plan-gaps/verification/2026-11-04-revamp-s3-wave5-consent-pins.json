@@ -1,0 +1,45 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S3 Public, Intake and Organise: Wave 5 first slice, consent and disclosure tests C-01 to C-10 over the room as it is, plus the honest-proof guard fix from PR 269",
+  "kind": "Test-only. No application code changed.",
+  "sensitive": "yes (consent, tenant scope). Guardian PASS required.",
+  "findings": [],
+  "findingsNote": "No gap register entry is created or changed.",
+  "status": "Built on branch revamp/public over main 43325f9. CI on the exact pushed head is the verifier; see the pull request. The regroup into five views is not in this slice: it waits for the Guardian's answer on how C-10 and the regroup fit together.",
+  "base": "43325f9",
+  "specSource": "docs/revamp/specs/programme-consent.md and ADR-075 with its 3 November amendment",
+  "newFilesOnly": [
+    "tests/integration/revamp-programme-consent.test.ts (vitest on real SQL through the restricted customer services; C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-08)",
+    "tests/operator/revamp-programme-room.spec.ts (Playwright over the real programme list and room; C-09, C-10)",
+    "tests/integration/proof-claims.ts and proof-claims.test.ts (the honest-proof guard helper and its red fixtures)"
+  ],
+  "editedOwnFiles": [
+    "tests/e2e/verification/ws-a/intake-payload.spec.ts: the proof guard now reads text per block and uses the helper."
+  ],
+  "reviewFindingClosed": "PR 269 thread on the proof guard (Codex P2, confirmed by the Guardian): a sentence containing 'no' or 'not' anywhere no longer hides a claim, and a denial in one block no longer reaches the next. A claim is excused only when a denial word sits in its own clause before it. Red fixtures: 'Trusted by 100 companies with no subscription fees.', a denial in one paragraph next to a claim in the next, and a denial at the end of one block before a claim at the start of the next. The guard still passes on all 15 public pages.",
+  "map": {
+    "C-01": "A member, an outsider, a participant and the organiser of another programme are denied the projection (which carries the counts) under this programme, under their own workspace and across both; the denial message is identical for an existing and a non-existing programme; an organiser cannot share or withdraw for a participant.",
+    "C-02": "No share, a withdrawn share and a removed registration: the company is null and 'currentSharedCompany' is missing, never an empty object, and the old name is nowhere in the body; a withdrawn registration is no longer a participant and counts no one; a revoked source is state UNAVAILABLE with no counts, not zero. The 'Not shared' words in the browser are covered by tests/operator/v3-programme-projections-ui.spec.ts.",
+    "C-03": "After cancel and re-apply with another company, the organiser body holds neither company's name, the row is not ready, and the participant's own view says sourceChanged. The longer same-version replacement case stays in customer-programme-projections.test.ts.",
+    "C-04": "Sharing a mission objective alone gives meetings state NOT_SHARED with no counts; the separate count permission gives AVAILABLE; withdrawing it returns to NOT_SHARED.",
+    "C-05": "scheduled and qualifiedHeld are two numbers; an unqualified held meeting is neither; a participant-reported 'meeting held' outcome never changes qualifiedHeld; a recorded qualification moves qualifiedHeld to 1 while scheduled stays 0.",
+    "C-06": "The organiser body is searched by text and by key for the seeded meeting title, counterparty names, location, brief, outcome note, opportunity title and attribution, the participant's own note and objective summary, the mission, meeting, opportunity, request and link ids; none appears. The meetings object has exactly six keys. The walkers are proven to read the body (the participant label and the top-level keys are found). The HTML half of C-06 is not covered here.",
+    "C-07": "With one enrolled participant who has not shared and one registered participant who is not enrolled: 'N of M' comes from server totals (0 of 2, then 1 of 2), the first misses only currentSharedCompany, the second misses confirmedPlace, currentEligibility, currentTerms and currentSharedCompany, and the definition string is the ADR-075 one. 'Not measured yet' for unavailable data is a browser case and is not covered here.",
+    "C-08": "No key in the organiser body names a quote, price, amount, currency, budget, value, deal, cost, margin, revenue or fee. The labelling of organiser revenue versus Corridra fees in the economics view is not covered here.",
+    "C-09": "Opens every view the room offers, whatever it is called, then checks that each of the seven original views (overview, people, companies, agenda, plan, terms, money) still has its section id and a button that controls it, and that the room's ids frozen before the regroup are all still present. With every API unavailable the room exposes its seven section ids and no links; the panels inside are not touched by the regroup.",
+    "C-10": "With the projections switch off the room has exactly Overview, People, Plan and report, Terms and places, Money, in that order, with five sections and no Companies, Agenda, 'Meeting counts are' or sharing panel."
+  },
+  "notCovered": [
+    "The regroup itself: Overview, Participants and eligibility, Programme and meetings, Terms and fees, Results. The existing room tests click the old labels and C-10 says the old five views stay exactly as before with the switch off; the Guardian is asked how these fit.",
+    "C-06 in rendered HTML and C-07 'Not measured yet', C-08 labels, C-02 'Not shared' wording as new browser cases: the existing v3-programme-projections-ui.spec.ts covers the honest unshared and unavailable states.",
+    "Meeting-count and company views inside the organiser UI under a consent denial in a browser."
+  ],
+  "receipts": {
+    "vitest": "revamp-programme-consent.test.ts 5 passed and proof-claims.test.ts 17 passed (22 total), local PostgreSQL 16 through the commercial fixture; the existing customer-programme-projections.test.ts also passes unchanged (15).",
+    "playwright": "revamp-programme-room.spec.ts 2 passed (operator config, local); intake-payload.spec.ts 53 passed, 1 skipped across the three verification widths.",
+    "format": "exit 0",
+    "lint": "exit 0",
+    "typecheck": "exit 0"
+  },
+  "notRun": ["The full integration and operator suites (CI runs them on the pushed head)."]
+}

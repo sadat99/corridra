@@ -105,7 +105,7 @@ const readBlocks = (root: Element) => {
   copy.querySelectorAll('.ac1-record').forEach((node) => node.remove());
   const selector = 'p,li,h1,h2,h3,h4,h5,h6,dt,dd,td,th,figcaption,blockquote,summary,button,label';
   const blocks: string[] = [];
-  const leaves = [...copy.querySelectorAll(selector)].filter(
+  const leaves = Array.from(copy.querySelectorAll(selector)).filter(
     (node) => !node.querySelector(selector),
   );
   for (const leaf of leaves) {
