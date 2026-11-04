@@ -1,0 +1,23 @@
+{
+  "recordedOn": "2026-11-04",
+  "track": "Revamp S4 Staff, Contributor, Recipient (branch revamp/staff)",
+  "kind": "Wave 5 quality pass on the Signal Desk sidebar and staff load states (tests only), plus the slice C survey of the contributor and recipient surfaces (read-only, no change). Written by S4; the Conductor folds it into the ledger.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. No application code changed in this record's PR: no test proved a defect.",
+  "qualityPass": {
+    "file": "tests/e2e/verification/ws-e/team-shell.spec.ts (added to the existing V-06 and D14 test so it keeps one sign-in per width)",
+    "keyboard": "From the Today link, Tab visits Missions, Companies, Delivery, Outcomes, All tools and settings in that order; a closed group's links are not in the order. Space and Enter both toggle a group; focus stays on its summary after each toggle.",
+    "states": "Loading: a delayed read shows the status line Loading today's list, then the overview. Failure: a failed missions read shows the status line Today's list could not be loaded, the mission list below still works. A failed workspace read shows the alert Workspace could not be loaded with a Retry workspace button, and Retry recovers once the read works again.",
+    "widths": "Run locally at 1280, 768 and 390 px: all pass. Earlier checks in the same test (44 px targets, sidebar axe, no sideways scroll) unchanged.",
+    "notCovered": "The Owner page and the mission page render their failure states on the server (Denied, access unavailable), so a browser route cannot simulate them; they are covered by the existing owner-page and mission specs. The Missions list empty state and the Today empty state were not exercised here. No 320 or 1440 px run. No screen reader pass."
+  },
+  "sliceCSurvey": {
+    "scope": "apps/web/app/contributor/**, apps/web/app/api/network/tasks, apps/web/app/mute/**, apps/web/app/pulse/mute/** read, plus the existing integration tests that pin the server side.",
+    "result": "No proven defect, so nothing was changed.",
+    "contributor": "The page and the task route fail closed when signed out. The board comes only from network.mine. A reward is shown only as conditional on reviewed work and independent approval, with payment not guaranteed; no payout or ledger view is invented.",
+    "mute": "The token travels in the address fragment and is removed from history; opening the page does nothing, and muting needs a button press, so link scanners cannot mute by accident.",
+    "serverScopingPinnedBy": "tests/integration/intelligence-network.test.ts (an outsider sees only their own board, no brief in the payload, reward paymentGuaranteed false, 0 rows from app.mission and app.network_task; an unrelated user sees none) and tests/integration/real-network-work.test.ts.",
+    "notAudited": "The decisions behind these views live in packages/**, which is outside the S4 file list; those code paths were not audited here. Supplier and counterparty response-link surfaces were not found in S4 paths and are left to the Conductor to assign."
+  },
+  "localReceipts": "See the PR for the preflight receipt on the exact head."
+}
