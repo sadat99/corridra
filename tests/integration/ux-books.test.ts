@@ -93,10 +93,13 @@ describe('the route source contract', () => {
       'boundedBody(request, 2048)',
       's.delivery.budget(client, input.resourceId)',
       's.customerBooks.generate(',
-      'await bookPdf(book)',
     ].map((text) => route.indexOf(text));
     expect(order.every((index) => index > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+  it('makes the file inside the generation, by passing the renderer in, so a book that cannot be made leaves no record', () => {
+    expect(route).toMatch(/generate\(\s*input,\s*bookPdf,/);
+    expect(route).not.toMatch(/await bookPdf\(/);
   });
   it('sends a PDF with the private headers and a fixed ASCII file name, and reads the digest and time from the record', () => {
     expect(route).toContain('...deliveryHeaders');

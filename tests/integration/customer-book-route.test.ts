@@ -24,6 +24,8 @@ const session = (who: string) => ({
 });
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 let resourceId: string;
+let meetingId: string;
+let shareAgain: () => Promise<string>;
 const post = (
   body: unknown,
   headers: Record<string, string> = {},
@@ -49,6 +51,22 @@ const input = (kind: string, over: Record<string, unknown> = {}) => ({
   acknowledged: true,
   ...over,
 });
+// Changes the product never makes are made as the owner with the table's guard triggers off for one statement.
+async function owner(table: string, sql: string, params: unknown[] = []) {
+  const client = await f.owner.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`ALTER TABLE ${table} DISABLE TRIGGER USER`);
+    await client.query(sql, params);
+    await client.query(`ALTER TABLE ${table} ENABLE TRIGGER USER`);
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 const ledger = async () =>
   (
     await f.owner.query(
@@ -70,6 +88,7 @@ beforeAll(async () => {
   // One reviewed meeting and no shortlist: the Trip Book has content and the Supplier Book is empty.
   const target = await f.target('ES');
   const held = await f.held(undefined, target);
+  meetingId = held.meetingId;
   const publication = await delivery.publication(f.users.owner.ctx, {
     commandId: randomUUID(),
     missionId: target.missionId,
@@ -94,11 +113,29 @@ beforeAll(async () => {
     allowExport: false,
     approved: true,
   });
-  resourceId = (
-    await new CustomerSavedMissionService(f.runtime, f.auth, options, async () =>
-      session('alice'),
-    ).command({ action: 'save', commandId: randomUUID(), token: link.token, acknowledged: true })
-  ).id;
+  const saveToken = async (token: string) =>
+    (
+      await new CustomerSavedMissionService(f.runtime, f.auth, options, async () =>
+        session('alice'),
+      ).command({ action: 'save', commandId: randomUUID(), token, acknowledged: true })
+    ).id as string;
+  resourceId = await saveToken(link.token);
+  // Another saved mission of the same customer for the same reviewed content, with its own hourly count.
+  shareAgain = async () =>
+    saveToken(
+      (
+        await delivery.share(f.users.owner.ctx, {
+          commandId: randomUUID(),
+          programmeId: null,
+          publicationIds: [publication.id],
+          audience: 'CLIENT_PROGRESS',
+          purpose: 'Synthetic book route check',
+          expiresAt: future(2),
+          allowExport: false,
+          approved: true,
+        })
+      ).token,
+    );
   account.services = {
     delivery,
     customerBooks: new CustomerBookService(f.runtime, f.auth, options, async () =>
@@ -188,6 +225,85 @@ describe('the book route', () => {
     expect(response.status).toBe(422);
     expect(await response.json()).toEqual({
       error: 'Nothing has been reviewed for this book yet.',
+      reason: 'EMPTY',
+    });
+    expect(await ledger()).toBe(before);
+  });
+
+  test('text the PDF fonts cannot show is 422 UNSUPPORTED_TEXT and leaves no record, and the same command works once it is fixed', async () => {
+    switchOn();
+    const body = input('TRIP');
+    const before = await ledger();
+    const original = (
+      await f.owner.query('SELECT location FROM app.meeting WHERE id=$1', [meetingId])
+    ).rows[0].location;
+    await owner('app.meeting', 'UPDATE app.meeting SET location=$2 WHERE id=$1', [
+      meetingId,
+      'Room مرحبا',
+    ]);
+    try {
+      const response = await post(body);
+      expect(response.status).toBe(422);
+      const answer = await response.json();
+      expect(answer.reason).toBe('UNSUPPORTED_TEXT');
+      expect(answer.error).toContain('This book cannot be made');
+      expect(await ledger()).toBe(before);
+      const events = await f.owner.query(
+        "SELECT count(*)::int n FROM app.domain_event WHERE type='delivery.book.generated' AND aggregate_id=$1",
+        [body.commandId],
+      );
+      expect(events.rows[0].n).toBe(0);
+    } finally {
+      await owner('app.meeting', 'UPDATE app.meeting SET location=$2 WHERE id=$1', [
+        meetingId,
+        original,
+      ]);
+    }
+    const fixed = await post(body);
+    expect(fixed.status).toBe(200);
+    expect(fixed.headers.get('x-corridra-book-replayed')).toBe('false');
+    expect(await ledger()).toBe(before + 1);
+  });
+
+  test('a retry after the reviewed content changed is 409 and writes nothing, and works again once it matches', async () => {
+    switchOn();
+    const body = input('TRIP');
+    expect((await post(body)).status).toBe(200);
+    const before = await ledger();
+    const original = (
+      await f.owner.query('SELECT status FROM app.meeting WHERE id=$1', [meetingId])
+    ).rows[0].status;
+    await owner('app.meeting', "UPDATE app.meeting SET status='ACCEPTED' WHERE id=$1", [meetingId]);
+    try {
+      const response = await post(body);
+      expect(response.status).toBe(409);
+      expect(await ledger()).toBe(before);
+    } finally {
+      await owner('app.meeting', 'UPDATE app.meeting SET status=$2 WHERE id=$1', [
+        meetingId,
+        original,
+      ]);
+    }
+    const again = await post(body);
+    expect(again.status).toBe(200);
+    expect(again.headers.get('x-corridra-book-replayed')).toBe('true');
+  });
+
+  test('the 31st new book for one mission in an hour is 429 in plain words and writes nothing', async () => {
+    switchOn();
+    const mission = await shareAgain();
+    // Thirty books already made this hour for this mission (the database function's own test makes them one by one).
+    await f.owner.query(
+      `INSERT INTO customer_private.saved_mission_command(principal_id,command_id,input,resource_id)
+       SELECT principal_id,gen_random_uuid(),jsonb_build_object('action','book','kind','TRIP','resourceId',id),id
+       FROM customer_private.saved_mission s,generate_series(1,30) WHERE s.id=$1`,
+      [mission],
+    );
+    const before = await ledger();
+    const response = await post(input('TRIP', { resourceId: mission }));
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      error: 'Too many downloads for this mission just now. Try again in a while.',
     });
     expect(await ledger()).toBe(before);
   });

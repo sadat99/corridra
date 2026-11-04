@@ -85,7 +85,8 @@ BEGIN
   INSERT INTO customer_private.saved_mission_command(principal_id,command_id,input,resource_id)
   VALUES(actor,command,jsonb_build_object('action','book','kind',kind,'resourceId',resource,'schemaVersion',1,'digest',digest,'generatedAt',generated,
    'publicationId',mission->>'publicationId','reviewedAt',projection->>'reviewedAt'),resource);
-  PERFORM app.delivery_external_event(l,'delivery.book.generated',command,jsonb_build_object('kind',kind,'resourceId',resource,
+  -- The event names the book, its link (added by the writer) and its publication, never the customer's private saved-mission id.
+  PERFORM app.delivery_external_event(l,'delivery.book.generated',command,jsonb_build_object('kind',kind,
    'publicationId',mission->>'publicationId','digest',digest,'schemaVersion',1,'format','PDF'));
  END IF;
  IF result IS NULL THEN

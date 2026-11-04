@@ -24,12 +24,13 @@ export async function POST(request: Request) {
       ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
       : 'local';
     await s.delivery.budget(client, input.resourceId);
-    const book = await s.customerBooks.generate(
+    // The file is made inside the database transaction that records it, so a book that cannot be made leaves no record.
+    const { record: book, file: pdf } = await s.customerBooks.generate(
       input,
+      bookPdf,
       request.headers.get('x-corridra-customer-subject') ?? undefined,
       request.headers.get('x-corridra-customer-issuer') ?? undefined,
     );
-    const pdf = await bookPdf(book);
     const name = book.kind === 'TRIP' ? 'trip' : 'supplier';
     return new Response(new Uint8Array(pdf), {
       headers: {
@@ -44,6 +45,16 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    // Two different 422s, so the page can say which: nothing reviewed yet, or text the PDF fonts cannot show.
+    if (
+      error instanceof DomainError &&
+      error.status === 422 &&
+      (error.code === 'EMPTY' || error.code === 'UNSUPPORTED_TEXT')
+    )
+      return Response.json(
+        { error: error.message, reason: error.code },
+        { status: 422, headers: deliveryHeaders },
+      );
     return deliveryError(
       ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
         ? new DomainError(unavailable, 503)

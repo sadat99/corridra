@@ -19,7 +19,7 @@ const options = { enabled: true, synthetic: true, production: false, issuer };
 const file = '0001_trip_and_supplier_books.sql';
 const directory = resolve('packages/db/customer-book-migrations');
 const signature = 'customer.saved_mission_book(uuid,text,uuid,boolean)';
-const releasedHash = '0cb05a75c83fc2a4f5aa0a585a647520bb7849ea14b94cba046b55a751dee84f';
+const releasedHash = '9b9983789aa2aecaee8136ea28afa4ff1869e4fd68fdffcbf7e2d18c8ae0f71a';
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 

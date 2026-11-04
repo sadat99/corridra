@@ -8,7 +8,7 @@ import { initialRoutes } from '../../packages/domain/src/corridors';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
-import { bookLines } from '../../packages/delivery/src/report';
+import { bookLines, bookPdf } from '../../packages/delivery/src/report';
 import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
 import { CustomerBookService, customerBooksEnabled } from '../../packages/auth/src/customer-books';
 import { CustomerSavedMissionService } from '../../packages/auth/src/customer-saved-missions';
@@ -59,6 +59,7 @@ let f: Awaited<ReturnType<typeof commercialFixture>>;
 let delivery: DeliveryService;
 let resourceId: string, publicationId: string, linkId: string, emptyResourceId: string;
 let sourceId: string;
+let secondCompanyId: string;
 let unreviewedCompany: string;
 const caller = (who = 'alice') =>
   new BookCaller(f.runtime, f.auth, options, async () => session(who));
@@ -116,10 +117,17 @@ const rows = async (resource: string) =>
 const events = async (resource: string) =>
   (
     await f.owner.query(
-      "SELECT payload FROM app.domain_event WHERE type='delivery.book.generated' AND payload->>'resourceId'=$1",
+      `SELECT payload FROM app.domain_event WHERE type='delivery.book.generated'
+       AND aggregate_id IN (SELECT command_id::text FROM customer_private.saved_mission_command WHERE resource_id=$1)`,
       [resource],
     )
   ).rows;
+const eventCount = async () =>
+  (
+    await f.owner.query(
+      "SELECT count(*)::int n FROM app.domain_event WHERE type='delivery.book.generated'",
+    )
+  ).rows[0].n as number;
 const bookCount = async () =>
   (
     await f.owner.query(
@@ -171,6 +179,12 @@ beforeAll(async () => {
     ).id as string;
   const secondTarget = await addTarget(second, 'Source-reported fit with the second company');
   const thirdTarget = await addTarget(third, 'Not reviewed by the customer report');
+  secondCompanyId = (
+    await f.owner.query(
+      'SELECT r.organisation_id id FROM app.target_account a JOIN app.relationship r ON r.tenant_id=a.tenant_id AND r.id=a.relationship_id WHERE a.id=$1',
+      [secondTarget],
+    )
+  ).rows[0].id;
   unreviewedCompany = (
     await f.owner.query(
       'SELECT o.name FROM app.target_account a JOIN app.relationship r ON r.tenant_id=a.tenant_id AND r.id=a.relationship_id JOIN app.organisation o ON o.id=r.organisation_id WHERE a.id=$1',
@@ -708,9 +722,13 @@ describe('an empty book and a retried download', () => {
       )
     ).rows;
     expect(eventsForCommand).toHaveLength(1);
+    // The event names the book, its link and its publication, but not the customer's private saved-mission id.
+    expect(eventsForCommand[0].payload).not.toHaveProperty('resourceId');
+    expect(JSON.stringify(eventsForCommand[0].payload)).not.toContain(resourceId);
     expect(eventsForCommand[0].payload).toMatchObject({
       kind: 'TRIP',
-      resourceId,
+      publicationId,
+      linkId,
       digest: a.digest,
       schemaVersion: 1,
       format: 'PDF',
@@ -880,6 +898,7 @@ describe('the service', () => {
   };
   const service = (who = 'alice', over: Partial<typeof options> & { dataMode?: 'real' } = {}) =>
     new CustomerBookService(f.runtime, f.auth, { ...options, ...over }, async () => session(who));
+  const render = (record: BookRecord) => bookPdf(record);
   const request = (over: Record<string, unknown> = {}) => ({
     resourceId,
     commandId: randomUUID(),
@@ -904,24 +923,25 @@ describe('the service', () => {
   });
   test('returns a validated record, and a retry is the same record marked as a replay', async () => {
     const body = request();
-    const first = await service().generate(body);
-    expect(first).toMatchObject({ resourceId, kind: 'TRIP', replayed: false });
-    expect(await service().generate(body)).toEqual({ ...first, replayed: true });
+    const first = await service().generate(body, render);
+    expect(first.record).toMatchObject({ resourceId, kind: 'TRIP', replayed: false });
+    expect(first.file.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    const again = await service().generate(body, render);
+    expect(again.record).toEqual({ ...first.record, replayed: true });
+    expect(again.file.equals(first.file)).toBe(true);
   });
   test('answers 422 for an empty book, 401 signed out and 429 past the hourly limit', async () => {
     await expect(
-      service().generate(request({ resourceId: emptyResourceId })),
-    ).rejects.toMatchObject({
-      status: 422,
-    });
+      service().generate(request({ resourceId: emptyResourceId }), render),
+    ).rejects.toMatchObject({ status: 422, code: 'EMPTY' });
     const signedOut = new CustomerBookService(f.runtime, f.auth, options, async () => null);
-    await expect(signedOut.generate(request())).rejects.toMatchObject({ status: 401 });
+    await expect(signedOut.generate(request(), render)).rejects.toMatchObject({ status: 401 });
     const mission = await save((await share(publicationId)).token);
     for (let index = 0; index < 30; index++)
-      await service().generate(request({ resourceId: mission }));
-    await expect(service().generate(request({ resourceId: mission }))).rejects.toMatchObject({
-      status: 429,
-    });
+      await service().generate(request({ resourceId: mission }), render);
+    await expect(
+      service().generate(request({ resourceId: mission }), render),
+    ).rejects.toMatchObject({ status: 429 });
   });
   test('refuses input that is not exactly a book request before it reaches the database', async () => {
     const before = await bookCount();
@@ -931,20 +951,20 @@ describe('the service', () => {
       request({ tenantId: randomUUID() }),
       {},
     ])
-      await expect(service().generate(bad)).rejects.toThrow();
+      await expect(service().generate(bad, render)).rejects.toThrow();
     expect(await bookCount()).toBe(before);
   });
   test('a browser that still shows another account is refused as access, never as a conflict', async () => {
-    await expect(service().generate(request(), 'someone-else', issuer)).rejects.toMatchObject({
-      status: 403,
-    });
+    await expect(
+      service().generate(request(), render, 'someone-else', issuer),
+    ).rejects.toMatchObject({ status: 403 });
   });
   test('a real-data session is told plainly when shared reports are switched off, before the database', async () => {
     vi.stubEnv('CORRIDRA_REAL_REPORT_SIGNED_IN_ENABLED', 'false');
     try {
       const before = await bookCount();
       await expect(
-        service('alice', { dataMode: 'real' }).generate(request()),
+        service('alice', { dataMode: 'real' }).generate(request(), render),
       ).rejects.toMatchObject({
         status: 503,
       });
@@ -952,5 +972,41 @@ describe('the service', () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+  test('a book that cannot be made leaves no record and no event, and a retry after the text is fixed works', async () => {
+    const before = { rows: await bookCount(), events: await eventCount() };
+    const id = randomUUID();
+    const original = (
+      await f.owner.query('SELECT name FROM app.organisation WHERE id=$1', [secondCompanyId])
+    ).rows[0].name;
+    await owner('app.organisation', 'UPDATE app.organisation SET name=$2 WHERE id=$1', [
+      secondCompanyId,
+      'شركة ' + original,
+    ]);
+    try {
+      // The database function succeeds and would record the book, but the file cannot be made: all of it rolls back.
+      await expect(
+        service().generate(request({ kind: 'SUPPLIER', commandId: id }), render),
+      ).rejects.toMatchObject({ status: 422, code: 'UNSUPPORTED_TEXT' });
+      expect({ rows: await bookCount(), events: await eventCount() }).toEqual(before);
+      // The same happens for a renderer that fails any other way.
+      await expect(
+        service().generate(request({ commandId: id }), async () => {
+          throw new Error('The renderer failed');
+        }),
+      ).rejects.toThrow('The renderer failed');
+      expect({ rows: await bookCount(), events: await eventCount() }).toEqual(before);
+    } finally {
+      await owner('app.organisation', 'UPDATE app.organisation SET name=$2 WHERE id=$1', [
+        secondCompanyId,
+        original,
+      ]);
+    }
+    const fixed = await service().generate(request({ kind: 'SUPPLIER', commandId: id }), render);
+    expect(fixed.record.replayed).toBe(false);
+    expect({ rows: await bookCount(), events: await eventCount() }).toEqual({
+      rows: before.rows + 1,
+      events: before.events + 1,
+    });
   });
 });

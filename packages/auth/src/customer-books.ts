@@ -30,23 +30,40 @@ export class CustomerBookService extends CustomerSessionBoundary {
     );
     return result.rows[0]?.installed === true;
   }
-  // The signed-in customer who owns the saved mission, and nobody else, gets one book as a validated projection.
-  // A retry with the same command id returns the first record; the file itself is made by the caller.
-  async generate(input: unknown, subject?: string, issuer?: string): Promise<BookRecord> {
+  // The signed-in customer who owns the saved mission, and nobody else, gets one book. The file is made inside the
+  // same transaction as the record, so a book that cannot be made (text the fonts lack, a file over the size cap)
+  // rolls back its ledger row and event instead of leaving a record of a download that never happened. The renderer
+  // is passed in because this package does not depend on the delivery package. A retry with the same command id
+  // returns the first record.
+  async generate<File>(
+    input: unknown,
+    render: (record: BookRecord) => Promise<File>,
+    subject?: string,
+    issuer?: string,
+  ): Promise<{ record: BookRecord; file: File }> {
     this.requireRealReports();
     const v = bookInput.parse(input);
-    let result: unknown;
     try {
-      result = await this.transaction(
-        async (db) =>
-          (
-            await db.query('SELECT customer.saved_mission_book($1,$2,$3,$4) AS result', [
-              v.resourceId,
-              v.kind,
-              v.commandId,
-              v.acknowledged,
-            ])
-          ).rows[0].result,
+      return await this.transaction(
+        async (db) => {
+          const checked = bookResult.safeParse(
+            (
+              await db.query('SELECT customer.saved_mission_book($1,$2,$3,$4) AS result', [
+                v.resourceId,
+                v.kind,
+                v.commandId,
+                v.acknowledged,
+              ])
+            ).rows[0].result,
+          );
+          // A record the database function made that does not have the agreed shape is our fault, not the
+          // caller's: it is a server error, not "check the submitted values".
+          if (!checked.success) throw new Error('The book record did not have the agreed shape');
+          const parsed = checked.data;
+          if ('state' in parsed)
+            throw new DomainError('Nothing has been reviewed for this book yet.', 422, 'EMPTY');
+          return { record: parsed, file: await render(parsed) };
+        },
         subject,
         issuer,
       );
@@ -62,9 +79,5 @@ export class CustomerBookService extends CustomerSessionBoundary {
         throw new DomainError('Access denied or link unavailable', 403);
       throw error;
     }
-    const parsed = bookResult.parse(result);
-    if ('state' in parsed)
-      throw new DomainError('Nothing has been reviewed for this book yet.', 422);
-    return parsed;
   }
 }
