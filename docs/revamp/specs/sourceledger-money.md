@@ -6,16 +6,16 @@ Track S2, Wave 4 (journeys J1 Source and J2 Sell). The work room's compare and q
 
 ## Money words that must never collapse
 
-| Thing                                                     | What the screen calls it                        | Never shown as                        |
-| --------------------------------------------------------- | ----------------------------------------------- | ------------------------------------- |
-| A supplier's quoted price, in its original currency       | Price quote, with the supplier's name as seller | Corridra revenue, an order, a payment |
-| A bundled supply price (ADR-073)                          | Supply price, attributed to its actual seller   | A Corridra fee                        |
-| A fixed Corridra service fee on an accepted service quote | Service fee                                     | Supply value, commission              |
-| A success commission (ADR-073)                            | Possible commission, estimate, with its trigger | Earned, invoiced, collected or paid   |
-| An invoice                                                | Invoice                                         | Confirmed payment                     |
-| A confirmed payment                                       | Payment received (only from a payment record)   | Anything derived from a quote         |
+| Thing                                                     | What the screen calls it                                                                                | Never shown as                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| A supplier's quoted price, in its original currency       | Price quote, with the supplier's name as seller                                                         | Corridra revenue, an order, a payment |
+| A bundled supply price (ADR-073)                          | Seller's quoted supply price, attributed to its actual seller                                           | A Corridra fee                        |
+| A fixed Corridra service fee on an accepted service quote | Service fee                                                                                             | Supply value, commission              |
+| A success commission (ADR-073)                            | Conditional commission; Estimated commission, with its trigger and "Not earned, invoiced or collected." | Earned, invoiced, collected or paid   |
+| An invoice                                                | Invoice                                                                                                 | Confirmed payment                     |
+| A confirmed payment                                       | Payment received (only from a payment record)                                                           | Anything derived from a quote         |
 
-Corridra is never shown as the seller unless the stored arrangement names it, and principal sales stay blocked (ADR-073).
+The words in this table follow the existing arrangement screen (decision 4 Nov 2026, PR 274 review: M-06 keeps them). Corridra is never shown as the seller unless the stored arrangement names it, and principal sales stay blocked (ADR-073).
 
 ## Private fields (staff only)
 
