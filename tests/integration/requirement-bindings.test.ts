@@ -388,6 +388,65 @@ test('a title under test.skip, describe.skip, fixme or todo is refused', () => {
   expectProblem(problemsFor(sampleShards(), overlay({ [samplePath]: suite })), 'R4', 'skipped');
 });
 
+test('a describe or test.describe suite title is not evidence of a test case', () => {
+  const positive = "test('synthetic behaviour is allowed', () => { expect(1).toBe(1); });";
+  for (const [label, opener] of [
+    ['describe', 'describe'],
+    ['test.describe', 'test.describe'],
+    ['test.describe.serial', 'test.describe.serial'],
+  ]) {
+    const source = [
+      "import { describe, expect, test } from 'vitest';",
+      positive,
+      opener + "('synthetic denial is refused', () => {",
+      "  test('an unrelated inner case', () => { expect(2).toBe(2); });",
+      '});',
+      '',
+    ].join('\n');
+    const problems = problemsFor(sampleShards(), overlay({ [samplePath]: source }));
+    expectProblem(problems, 'R4', 'suite');
+    expect(
+      problems.some((p) => p.includes('synthetic denial is refused')),
+      label,
+    ).toBe(true);
+  }
+  const emptySuite = [
+    "import { describe, expect, test } from 'vitest';",
+    positive,
+    "describe('synthetic denial is refused', () => {});",
+    '',
+  ].join('\n');
+  expectProblem(problemsFor(sampleShards(), overlay({ [samplePath]: emptySuite })), 'R4', 'suite');
+  // A suite that merely shares a title with exactly one real test case does not make that case ambiguous.
+  const shared = [
+    "import { describe, expect, test } from 'vitest';",
+    positive,
+    "describe('synthetic denial is refused', () => {",
+    "  test('synthetic denial is refused', () => { expect(2).toBe(2); });",
+    '});',
+    '',
+  ].join('\n');
+  expect(problemsFor(sampleShards(), overlay({ [samplePath]: shared }))).toEqual([]);
+});
+
+test('the title scanner marks suite calls so they can be told apart from test cases', () => {
+  const scan = findTestTitles(
+    [
+      "describe('a group', () => { it('inside a group', () => {}); });",
+      "test.describe.serial('serial group', () => { test('inside serial', () => {}); });",
+      "test('plain', () => {});",
+      '',
+    ].join('\n'),
+  );
+  expect(scan.calls.map((c) => [c.title, c.suite])).toEqual([
+    ['a group', true],
+    ['inside a group', false],
+    ['serial group', true],
+    ['inside serial', false],
+    ['plain', false],
+  ]);
+});
+
 test('an ambiguous duplicated title is refused', () => {
   const doubled =
     sampleSource + "test('synthetic denial is refused', () => { expect(3).toBe(3); });\n";

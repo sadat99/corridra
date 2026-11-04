@@ -153,12 +153,16 @@ export function loadShards(workspace: Workspace): unknown[] {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Title scanner: finds string-literal titles of test(, it(, describe( and test.describe( calls and says why a
-// title would not run. It is deliberately conservative: anything it cannot prove is reported, never accepted.
+// Title scanner: finds string-literal titles of test(, it(, describe( and test.describe( calls, marks which are
+// suites and says why a title would not run. It is deliberately conservative: anything it cannot prove is
+// reported, never accepted.
 
 export interface TitleCall {
   title: string;
   literal: 'string' | 'template';
+  // True for describe(...) and test.describe(...): a group, not a test case. Groups stay in the scan so that
+  // skip and loop detection can see them, but they are never evidence.
+  suite: boolean;
   problem: string | null;
 }
 
@@ -349,9 +353,14 @@ function describeCall(
 ): TitleCall {
   const quoteAt = match.index + match[0].length - 1;
   const literal = literals.get(quoteAt)!;
-  const call: TitleCall = { title: literal.value, literal: literal.kind, problem: null };
   const name = match[1];
   const chain = match[2].split('.').filter(Boolean);
+  const call: TitleCall = {
+    title: literal.value,
+    literal: literal.kind,
+    suite: name.endsWith('describe') || chain.includes('describe'),
+    problem: null,
+  };
   const modifiers = chain.filter((part) => !allowedChain.has(part));
   const after = clean.slice(literal.end + 1).match(/^\s*(.)/)?.[1];
   const parenAt = match.index + match[0].lastIndexOf('(');
@@ -661,8 +670,17 @@ function checkTest(
     found.push('R4 ' + item.path + ' could not be read reliably (unbalanced source)');
     return;
   }
-  const hits = scan.calls.filter((call) => call.title === item.title);
-  if (hits.length === 0)
+  const named = scan.calls.filter((call) => call.title === item.title);
+  const hits = named.filter((call) => !call.suite);
+  if (hits.length === 0 && named.length > 0)
+    found.push(
+      'R4 title "' +
+        item.title +
+        '" in ' +
+        item.path +
+        ' names a describe suite, not a test case, so it is not evidence',
+    );
+  else if (hits.length === 0)
     found.push('R4 title "' + item.title + '" not found as a string-literal title in ' + item.path);
   else if (hits.length > 1)
     found.push(
