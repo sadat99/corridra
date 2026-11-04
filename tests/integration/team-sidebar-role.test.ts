@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
@@ -66,5 +67,60 @@ describe('team sidebar once the role is known', () => {
     expect(await renderAs('admin')).toContain('/operator/owner');
     expect(await renderAs('operator')).not.toContain('/operator/owner');
     expect(await renderAs('viewer')).not.toContain('/operator/owner');
+  });
+});
+
+describe('team pages that do not mount the workspace publish the role from the server', () => {
+  const publisherPath = '../../apps/web/components/ux/team-context-publisher';
+  const link = (html: string, word: string) => html.includes('href="/operator/' + word + '"');
+  // The sidebar reads the published context on the server render too, so the chain is the real one:
+  // publisher effect -> context store -> sidebar. Effects do not run in a static render, so the
+  // publisher's effect is run at once.
+  const withPublisher = async (role: string | null) => {
+    vi.resetModules();
+    vi.doMock(web.resolve('react'), async (original) => {
+      const react = await original<Record<string, unknown>>();
+      return { ...react, useEffect: (effect: () => void) => void effect() };
+    });
+    vi.doMock('../../apps/web/lib/ux/team-context', async (original) => {
+      const real = await original<typeof import('../../apps/web/lib/ux/team-context')>();
+      return { ...real, readServerTeamContext: real.readTeamContext };
+    });
+    if (role) {
+      const { TeamContextPublisher } = await import(/* @vite-ignore */ publisherPath);
+      renderToStaticMarkup(createElement(TeamContextPublisher, { tenant: 't1', role }));
+    }
+    const TeamSidebar = await load();
+    return renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
+  };
+  test('an owner or admin sees the Owner page, controls and network once the publisher ran', async () => {
+    const owner = await withPublisher('owner');
+    expect(owner).toContain('href="/operator/owner"');
+    for (const word of ['controls', 'network', 'settings'])
+      expect(link(owner, word), word).toBe(true);
+    const admin = await withPublisher('admin');
+    expect(admin).toContain('href="/operator/owner"');
+    expect(link(admin, 'network')).toBe(true);
+    expect(link(admin, 'controls')).toBe(false);
+  });
+  test('a viewer gets nothing more than the unknown role does', async () => {
+    const viewer = await withPublisher('viewer');
+    expect(viewer).not.toContain('/operator/owner');
+    for (const word of ['controls', 'network', 'settings'])
+      expect(link(viewer, word), word).toBe(false);
+  });
+  test('with no publisher mounted the owner links are absent', async () => {
+    vi.resetModules();
+    const html = await withPublisher(null);
+    expect(html).not.toContain('/operator/owner');
+    expect(link(html, 'controls')).toBe(false);
+  });
+  test('the Owner page and the mission page mount it with the role the server resolved', () => {
+    const root = new URL('../../apps/web/app/operator/', import.meta.url);
+    const owner = readFileSync(new URL('owner/page.tsx', root), 'utf8');
+    const mission = readFileSync(new URL('[section]/[missionId]/page.tsx', root), 'utf8');
+    expect(owner).toContain('<TeamContextPublisher tenant={tenant.id} role={tenant.role} />');
+    expect(mission).toContain('<TeamContextPublisher tenant={tenant} role={chosen.role} />');
+    for (const page of [owner, mission]) expect(page).toContain('s.access.tenants(identity.token)');
   });
 });
