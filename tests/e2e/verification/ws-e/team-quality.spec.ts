@@ -384,11 +384,15 @@ test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', a
       const nav = page.locator('#workspace-navigation');
       await expect(nav).toBeVisible();
       const geometry = await page.evaluate(() => {
+        // A link inside a closed group is not shown, though the browser still lays it out.
+        const shown = (el: HTMLElement) =>
+          el.tagName === 'SUMMARY' || !el.closest('details:not([open])');
         const items = [
           ...document.querySelectorAll<HTMLElement>(
             '#workspace-navigation a, #workspace-navigation summary',
           ),
         ]
+          .filter(shown)
           .map((el) => el.getBoundingClientRect())
           .filter((r) => r.width > 0 && r.height > 0);
         const navBox = document.querySelector('#workspace-navigation')!.getBoundingClientRect();
@@ -396,12 +400,31 @@ test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', a
         return {
           outside: items.filter((r) => r.left < -1 || r.right > innerWidth + 1).length,
           overlaps: items.filter((r, i) => i > 0 && r.top < items[i - 1]!.bottom - 1).length,
+          rects: [
+            ...document.querySelectorAll<HTMLElement>(
+              '#workspace-navigation a, #workspace-navigation summary',
+            ),
+          ]
+            .map((el) => ({
+              t: (el.textContent || '').trim().slice(0, 14),
+              r: el.getBoundingClientRect(),
+            }))
+            .filter((x) => x.r.width > 0)
+            .map(
+              (x) =>
+                `${x.t}@${Math.round(x.r.left)},${Math.round(x.r.top)}-${Math.round(x.r.right)},${Math.round(x.r.bottom)}`,
+            ),
           sidebarOnRight: navBox.left + navBox.width / 2 > main.left + main.width / 2,
           overflow: document.documentElement.scrollWidth - innerWidth,
         };
       });
       expect.soft(geometry.outside, `${width}: sidebar controls outside the screen`).toBe(0);
-      expect.soft(geometry.overlaps, `${width}: overlapping sidebar controls`).toBe(0);
+      expect
+        .soft(
+          geometry.overlaps,
+          `${width}: overlapping sidebar controls ${geometry.rects.join(' | ')}`,
+        )
+        .toBe(0);
       expect.soft(geometry.overflow, `${width}: sideways scroll`).toBeLessThanOrEqual(1);
       if (width >= 1000)
         expect.soft(geometry.sidebarOnRight, `${width}: sidebar mirrored to the right`).toBe(true);
