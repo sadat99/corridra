@@ -143,7 +143,7 @@ test.beforeAll(async () => {
               args.path === 'next/link'
                 ? 'export default function Link({prefetch,...props}){return <a {...props}/>}'
                 : args.path === 'next/navigation'
-                  ? 'const router={replace:(path)=>{window.navigatedTo=path},refresh:()=>{},push:()=>{}};export function useRouter(){return router}'
+                  ? 'const router={replace:(path)=>{window.navigatedTo=path},refresh:()=>{},push:()=>{}};export function useRouter(){return router}export function usePathname(){return "/plan"}'
                   : 'export const accountClient={getSession:async()=>({data:null,error:null}),signUp:{email:async()=>({error:null})}};',
           }));
         },
