@@ -3443,7 +3443,7 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E_PARTIAL",
-        "summary": "ADR076 (3 November 2026) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. Half of this finding, the status link (E3a), is built and merged: PR 256 merged 3 November 2026 23:06:34Z as squash 4456042 (head 7d304c5) after 19 checks without failure (18 success, CodeQL neutral), a clean Codex review and an independent security review with no blocking or should-fix item; post-merge main CI run 41736478595 and CodeQL run 41736478634 succeeded (REST API, 4 November). The first request email opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>; the link grants no authority; a signed-out visitor returns through the ADR067 exact-path allowlist, which also applies when the status-link switch is on; the final gating commit b65cde5 made the off path, including Pulse-only, byte-identical to main. No migration, table or installer run; mail words, recipient, transport and idempotency key are unchanged. Production deployment of 4456042 is not verifiable from the recording environment, the switch is off and no signed-in or mailbox acceptance is claimed. The decision card (CORRIDRA_SHARE_CARD, E3b) is not built and stays PROPOSED. The baseline statement that planned settings were reserved is preserved in baseline and history.",
+        "summary": "ADR076 (3 November 2026) accepts the emailed status link only in its narrower signed-in Room form (item 5, switch CORRIDRA_STATUS_LINK, default off) and narrows ADR058 by one line: the anonymous 90-day link is not adopted. Half of this finding, the status link (E3a), is built and merged: PR 256 merged 3 November 2026 23:06:34Z as squash 4456042 (head 7d304c5) after 19 checks without failure (18 success, CodeQL neutral), a clean Codex review and an independent security review with no blocking or should-fix item; post-merge main CI run 41736478595 and CodeQL run 41736478634 succeeded (REST API, 4 November). The first request email opens /account/rooms/<id> only when CORRIDRA_STATUS_LINK and CORRIDRA_UX_ROAD are both exactly 'true', else /account/requests/<id>; the link grants no authority; a signed-out visitor returns through the ADR067 exact-path allowlist, which also applies when the status-link switch is on; the final gating commit b65cde5 made the off path, including Pulse-only, byte-identical to main. No migration, table or installer run; mail words, recipient, transport and idempotency key are unchanged. Production deployment of 4456042 is not verifiable from the recording environment, the switch is off and no signed-in or mailbox acceptance is claimed. On 4 November 2026 ADR076 item 4 (the decision card, CORRIDRA_SHARE_CARD, E3b) was moved from PROPOSED to ACCEPTED, NOT YET BUILT, under the same owner direction; only its database module is written (branch claude/zen-hopper-1iqtdn, commits 71df943, 8a5a10c and 54af3c4, not pushed or in a PR when recorded): three append-only tables and 12 functions in a new migration file with its own hash-guarded installer step, covered by integration tests against a sandbox PostgreSQL 16. No service, route, screen or switch exists, nothing is merged or installed, and the card works for sample (synthetic) workspaces only, so the real-workspace gates D06 and D08 stay closed. The baseline statement that planned settings were reserved is preserved in baseline and history.",
         "evidenceRevision": "4456042b62617b6d3bb3151fd8c651c72a164988",
         "evidenceObservedOn": "2026-11-04",
         "lastRecordedOn": "2026-11-04",
@@ -3453,14 +3453,16 @@
             "evidence": [
               "baselines/2026-11-01/REPORT.md#gap-041",
               "verification/2026-11-03-batch-e3a-status-link.json",
-              "verification/2026-11-04-batch-e2a-books-backend.json"
+              "verification/2026-11-04-batch-e2a-books-backend.json",
+              "verification/2026-11-04-batch-e3b-decision-card-database.json"
             ]
           },
           "verification": {
             "state": "PARTIAL",
             "evidence": [
               "verification/2026-11-03-batch-e3a-status-link.json",
-              "verification/2026-11-04-batch-e2a-books-backend.json"
+              "verification/2026-11-04-batch-e2a-books-backend.json",
+              "verification/2026-11-04-batch-e3b-decision-card-database.json"
             ]
           },
           "deployment": {
@@ -3484,7 +3486,7 @@
         "prerequisites": [
           "New explicit owner scope/approval before reopening; retain the original boundary.",
           "Signed-in emailed status link accepted in ADR076 item 5 and merged in PR 256 (E3a) as 4456042 with the switch default off; automatic deployment must be verified from an environment that can see the Corridra project, and enabling CORRIDRA_STATUS_LINK and genuine mailbox and signed-in acceptance stay owner steps.",
-          "Decision card remains PROPOSED: the owner must accept its field map and expiry before E3b; it also needs a migration and the protected installer."
+          "Decision card is ACCEPTED for building behind the default-off CORRIDRA_SHARE_CARD (ADR076 item 4, 4 November 2026) and NOT YET BUILT beyond its database module: the service and routes (E3b step 3) and the screens (step 4) are still to do, the module must merge and then be installed by an owner-approved protected install run, and enabling the switch is an owner action that needs the recorded privacy review."
         ],
         "closureEvidence": []
       },
@@ -3520,6 +3522,14 @@
           "evidenceRevision": "4456042b62617b6d3bb3151fd8c651c72a164988",
           "disposition": "OPEN",
           "note": "PR 256 (E3a signed-in status link) merged 3 November 2026 23:06:34Z as squash 4456042 (head 7d304c5): 19 checks without failure (18 success, CodeQL neutral), clean Codex review and an independent security review with no blocking or should-fix item, as relayed by the conductor; the final gating commit b65cde5 made the off path byte-identical to main. Post-merge main CI run 41736478595 and CodeQL run 41736478634 succeeded (REST API, re-read on 4 November 2026). Implementation stays PARTIAL (status-link half merged behind a default-off switch; the decision card E3b is not built). Verification stays PARTIAL: exact-head CI passed on the merged build, but no live, signed-in or mailbox acceptance exists and the real-server redirect check remains builder-reported. Deployment stays UNKNOWN (not verifiable from the recording environment), activation UNKNOWN and off, approval PARTIAL; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2a-books-backend.json and verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-041-H005",
+          "recordedOn": "2026-11-04",
+          "type": "DECISION_CARD_ACCEPTED_DATABASE_MODULE_WRITTEN",
+          "evidenceRevision": "54af3c4b725be0c61bb87abd8c399c01ea3453d8",
+          "disposition": "OPEN",
+          "note": "ADR076 item 4 (the decision card) moved from PROPOSED to ACCEPTED, NOT YET BUILT (commit 71df943), under the owner direction of 3 November 2026 to take over Batch E and ADR076 with full pre-approval including the necessary migration, applied by the conductor on 4 November after the owner asked why work had stopped; the interviews condition is waived for building behind the off switch, not for enabling. The database module is written in commits 8a5a10c and 54af3c4 on branch claude/zen-hopper-1iqtdn (not pushed and not in a PR when recorded): a new migration file, a hash-guarded installer and the optional install step decision cards. Builder receipts: tests failed first (40 of 40 card tests and 3 of 10 upgrade tests before the SQL), then the card suite (53 tests) and the upgrade suite (10 tests) pass, 63 of 63, after the review fixes; 15 mutation checks were all caught; the full integration run gave 2251 passed and 4 failed (the four environment tests: ClamAV and pg_dump). An adversarial read-only review found no blocking or security defect. Implementation stays PARTIAL (database module only), verification stays PARTIAL (no route, HTTP, browser or switch-off test exists; no CI on this head), approval stays PARTIAL (building is accepted; enabling needs the recorded privacy review), deployment and activation UNKNOWN, nothing is RESOLVED. Disposition unchanged. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e3b-decision-card-database.json."
         }
       ]
     },
