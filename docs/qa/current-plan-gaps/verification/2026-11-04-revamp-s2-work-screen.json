@@ -9,7 +9,7 @@
   "newFiles": [
     "apps/web/app/account/work-list.tsx, work-rows.tsx, work-list.css",
     "apps/web/lib/work-items/view.ts",
-    "tests/integration/revamp-work-screen.test.ts (vitest, 31 tests: H-01, H-02, H-04, H-05, H-06, H-08 and row rules)"
+    "tests/integration/revamp-work-screen.test.ts (vitest, 34 tests: H-01, H-02, H-04, H-05, H-06, H-08 and row rules)"
   ],
   "changedFiles": [
     "apps/web/app/account/page.tsx: reads `work` from the address, shows the list first in the Work view only when the workspace module is on, and adds one link 'See all your work' under the Home next-step card."
@@ -25,7 +25,7 @@
     "language": "Stored titles and workspace names are marked lang zh for Han text and lang bn for Bengali text."
   },
   "receipts": {
-    "vitest": "pnpm exec vitest run on revamp-work-items and revamp-work-screen: 2 files, 61 passed (local, node 22).",
+    "vitest": "pnpm exec vitest run on revamp-work-items and revamp-work-screen: 2 files, 64 passed (local, node 22).",
     "mutations": "Treating an unreadable empty list as empty fails 3; dropping the 'or more' rule fails 3; accepting a raw work value fails 2; showing every row instead of twenty fails 1. Each restored.",
     "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/). The first typecheck failed on my own test importing a .tsx file directly; fixed with the dynamic import the existing tests use.",
     "layout": "LOCAL APPROXIMATION, not CI-gated: the component rendered to HTML with the real globals.css and work-list.css inside main.ux-customer, measured in Chromium at 320, 390, 768 and 1440 with axe (wcag2a, wcag2aa, wcag22aa). Four states: no sideways scroll, no action under 44px, axe clean in all 16 cases. Twenty rows first measured 5.1 screens at 390 with long text, over the budget of 4, so the first page was cut to ten rows (then 'Show 10 more'). Ten rows of the worst-case fixture (45-character workspace name and a long title in every fifth row, 900px viewport): 3.6 screens at 320, 2.9 at 390, 1.9 at 768, 1.5 at 1440 (budget 4 phone, 2.5 desktop). Ordinary workspace names: 3.0, 2.4, 1.6, 1.5."

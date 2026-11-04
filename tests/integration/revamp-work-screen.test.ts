@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  contentLang,
   parseWorkFilter,
   workCounts,
   workFilters,
@@ -274,5 +275,30 @@ describe('rows', () => {
     const html = await view(list([]));
     const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual(['/plan?job=buyers', '/plan?job=sourcing', '/plan?job=delegations']);
+  });
+});
+
+describe('language marks for stored text', () => {
+  it('marks Chinese text lang zh in a title and in a workspace name', async () => {
+    expect(contentLang('广州家具采购')).toBe('zh');
+    const html = await view(
+      list([item(1, { title: '广州家具采购' })], { workspaces: [{ id: W, name: '广州工厂' }] }),
+    );
+    expect(html).toContain('<h3 dir="auto" lang="zh">广州家具采购</h3>');
+    expect(html).toContain('lang="zh">广州工厂</span>');
+  });
+  it('marks Bangla text lang bn in a title and in a workspace name', async () => {
+    expect(contentLang('কারখানা পরিদর্শন')).toBe('bn');
+    const html = await view(
+      list([item(1, { title: 'কারখানা পরিদর্শন' })], {
+        workspaces: [{ id: W, name: 'ঢাকা নিটওয়্যার' }],
+      }),
+    );
+    expect(html).toContain('<h3 dir="auto" lang="bn">কারখানা পরিদর্শন</h3>');
+    expect(html).toContain('lang="bn">ঢাকা নিটওয়্যার</span>');
+  });
+  it('leaves English text unmarked', () => {
+    expect(contentLang('Sourcing request 1')).toBeUndefined();
+    expect(contentLang('')).toBeUndefined();
   });
 });
