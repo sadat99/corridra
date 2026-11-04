@@ -4,12 +4,15 @@ Document status: CURRENT.
 
 Specs the revamp track sessions build to. Written by the Conductor and Guardian session (S1). A track starts a wave only after its spec is on main. A spec never overrides the [V3 contract](../../V3_CONTRACT.md), the [UI direction](../../agents/ui-direction.md), the [AC/1 design system](../../design-system/README.md) or an accepted ADR; where they conflict, the stronger control wins and the spec is corrected.
 
-| Spec                                          | Track | Wave | What it fixes                                                            |
-| --------------------------------------------- | ----- | ---- | ------------------------------------------------------------------------ |
-| [Work-item adapter](work-items.md)            | S2    | 2    | One list of customer work, explicit classification only, required tests  |
-| [Home and Work screens](home-work.md)         | S2    | 2    | Layout, states and widths for Home and Work inside the locked navigation |
-| [Public home and fast intake](public-home.md) | S3    | 3    | Parity tests first, then changes within the settled home concept         |
-| [Signal Desk map](signal-desk.md)             | S4    | 5    | Where each of the 18 staff sections lives in the locked team navigation  |
+| Spec                                            | Track | Wave | What it fixes                                                                   |
+| ----------------------------------------------- | ----- | ---- | ------------------------------------------------------------------------------- |
+| [Work-item adapter](work-items.md)              | S2    | 2    | One list of customer work, explicit classification only, required tests         |
+| [Home and Work screens](home-work.md)           | S2    | 2    | Layout, states and widths for Home and Work inside the locked navigation        |
+| [Public home and fast intake](public-home.md)   | S3    | 3    | Parity tests first, then changes within the settled home concept                |
+| [Signal Desk map](signal-desk.md)               | S4    | 5    | Where each of the 18 staff sections lives in the locked team navigation         |
+| [SourceLedger and money](sourceledger-money.md) | S2    | 4    | Quote comparison, money words and private markup confidentiality (M-01 to M-10) |
+| [Decision card screens](decision-card-ui.md)    | S2    | 4    | Owner panel and bare public page for the built card (D-01 to D-10)              |
+| [Organiser room consent](programme-consent.md)  | S3    | 5    | What an organiser may see, consent and revocation (C-01 to C-10)                |
 
 ## Rules for every track PR
 

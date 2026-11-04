@@ -1437,6 +1437,21 @@
       "path": "docs/revamp/CONTRACT.md",
       "classification": "Current guide/contract",
       "use": "Owner's V3 controlled revamp execution contract of 4 Nov 2026, byte for byte (sha256 93230e4b...d4ea); never edit, amend forward in docs/revamp/README.md"
+    },
+    {
+      "path": "docs/revamp/specs/sourceledger-money.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 2: SourceLedger comparison rules, money words and private markup confidentiality tests M-01 to M-10 (ADR-073)"
+    },
+    {
+      "path": "docs/revamp/specs/decision-card-ui.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 2: decision card step 4 owner panel and bare public page tests D-01 to D-10 (ADR-076 item 4)"
+    },
+    {
+      "path": "docs/revamp/specs/programme-consent.md",
+      "classification": "Current guide/contract",
+      "use": "Spec pack 2: organiser room consent and disclosure tests C-01 to C-10 (ADR-075)"
     }
   ]
 }
