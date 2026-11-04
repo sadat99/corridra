@@ -11,6 +11,7 @@ import { OperatorIcon } from '../operator-icon';
 import { useT } from '../language-provider';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
+import { workspaceSections } from '../../lib/workspace-navigation';
 import {
   currentTeamItem,
   currentTeamSection,
@@ -50,8 +51,17 @@ export function TeamSidebar({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   // A section word on a mission page, the owner page or a `#` link is a full page change: the
   // workspace reads the address once, so a soft change could show the old section.
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
-  const settingsItems = teamSettingsSections.filter((id) => sectionAllowedFor(id, role));
-  const showOwner = ownerPage && (role === null || role === 'owner' || role === 'admin');
+  // Until the workspace has loaded the role is unknown. Then only what every role may open is
+  // listed, so an owner or admin link never flashes for someone who cannot use it. Presentation
+  // only: each section and action still checks the role on the server.
+  const allowed = (id: string) =>
+    role === null
+      ? !!(
+          workspaceSections.find((entry) => entry.id === id)?.roles as readonly string[] | undefined
+        )?.includes('viewer')
+      : sectionAllowedFor(id, role);
+  const settingsItems = teamSettingsSections.filter(allowed);
+  const showOwner = ownerPage && (role === 'owner' || role === 'admin');
   function item(key: string, label: string, icon: string, target: string, active: boolean) {
     const content = (
       <>
@@ -78,7 +88,7 @@ export function TeamSidebar({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     >
       <ul>
         {teamNavigation
-          .filter((entry) => !entry.section || sectionAllowedFor(entry.section, role))
+          .filter((entry) => !entry.section || allowed(entry.section))
           .map((entry) => (
             <li key={entry.key}>
               {item(

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
+import { TeamContextPublisher } from '../../../../components/ux/team-context-publisher';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { foundations } from '../../../../lib/foundations';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
@@ -52,8 +53,8 @@ export default async function Page({
     redirect('/operator/signin?next=' + encodeURIComponent(back));
   }
   const tenants = await s.access.tenants(identity.token);
-  const tenant = tenants.find((t) => t.id === requested)?.id ?? tenants[0]?.id;
-  if (!tenant)
+  const chosen = tenants.find((t) => t.id === requested) ?? tenants[0];
+  if (!chosen)
     return (
       <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>Your session needs a current authenticator check and an active membership.</p>
@@ -62,8 +63,10 @@ export default async function Page({
         </Link>
       </WorkspaceShell>
     );
+  const tenant = chosen.id;
   return (
     <WorkspaceShell eyebrow="MISSION" title="Mission" className="ux-operator-home">
+      <TeamContextPublisher tenant={tenant} role={chosen.role} />
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
         <MissionPage
           tenant={tenant}
