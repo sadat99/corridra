@@ -2,6 +2,12 @@
 
 Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and its [working summary](product-vision.md) first: they explain what Corridra is, for whom and why. Every visible change in Corridra follows this file. It turns the locked UX10X decisions (`docs/ux10x/master-handoff.md`, section 1.1) into concrete rules so that Claude Code and Codex produce one product, not two styles. The Fusion 01 prototype is a visual reference only. Its names, figures and statuses are fictional and carry no domain authority.
 
+## Layout, page length and form steps (owner decision, 4 November 2026)
+
+Owner, verbatim: "ensure we have navigation bar in the left side, and the rest as sub-tab on the page if required .no page should be more than 2 or 1.5 mobile screen. in case of forms they must come as 1-3 fields at a time a time, following all the MAANG GRADE global standards for ux/ui along with this entire revamp plan."
+
+This supersedes, where they differ, the earlier rules on navigation placement (customer top row on desktop and bottom tab bar on phones), on whole-page length, and on the "no field moves between steps" decision in the revamp public-home spec. Navigation names, sets, roles, ids, addresses and payloads are unchanged. The build contract is [the layout budget spec](../revamp/specs/layout-budget.md).
+
 ## AC/1 Atlantic Cobalt brand and composition lock (owner decision, 22 October 2026)
 
 The owner locked **Corridra AC/1**: the Atlantic Cobalt brand (Midnight Navy `#142438`, International Cobalt `#2856C5`, Porcelain `#F6F8FB`, Copper `#BF7548`, Ink `#18283C`), one foundation (Meridian) and four task compositions (SourceLedger, Encounter Grid, Commerce Atelier, Signal Desk). It is one design system, not five themes. The supplied package is preserved byte for byte in `docs/source/ac1-design-system/`; the working index, reconciliation and implemented crosswalk are in [the design-system index](../design-system/README.md).

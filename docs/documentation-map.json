@@ -1467,6 +1467,11 @@
       "path": "docs/revamp/specs/wave8-acceptance.md",
       "classification": "Current guide/contract",
       "use": "Spec pack 3: Wave 8 journeys J1 to J7 on fixtures and the release memo"
+    },
+    {
+      "path": "docs/revamp/specs/layout-budget.md",
+      "classification": "Current guide/contract",
+      "use": "Owner decision 4 Nov 2026: left navigation, page length budget and 1 to 3 fields per form step (L-01 to L-06)"
     }
   ]
 }
