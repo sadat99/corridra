@@ -70,7 +70,9 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
         throw Error(
           response.status === 403
             ? 'This view needs the permitted programme account.'
-            : 'Programme data could not be read.',
+            : response.status === 429
+              ? 'Too many requests just now. Wait a minute, then refresh.'
+              : 'Programme data could not be read.',
         );
       const value = (await response.json()) as T & Record<string, unknown>,
         q = new URLSearchParams(queryText);
@@ -93,7 +95,13 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     } catch (error) {
       if (!controller.signal.aborted && ticket === sequence.current && mounted.current) {
         setData(null);
-        setNotice(error instanceof Error ? error.message : 'Programme data is unavailable.');
+        setNotice(
+          error instanceof TypeError
+            ? 'Programme data did not arrive. Check your connection, then refresh.'
+            : error instanceof Error
+              ? error.message
+              : 'Programme data is unavailable.',
+        );
       }
     }
   }, [queryText, identity.subject, identity.issuer]);
@@ -181,9 +189,11 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
         setCanRetry(true);
         setData(null);
         setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Change could not be confirmed. Refresh before trying again.',
+          error instanceof TypeError
+            ? 'The change did not reach Corridra. Check your connection, then retry the same change.'
+            : error instanceof Error
+              ? error.message
+              : 'Change could not be confirmed. Refresh before trying again.',
         );
       }
       return false;

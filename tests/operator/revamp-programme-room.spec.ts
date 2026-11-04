@@ -647,3 +647,127 @@ for (const width of [390, 1440]) {
     }
   });
 }
+
+// Wave 6 on the organiser room (Q-01, Q-02, Q-05).
+test('Q-01 choosing a group moves focus to that group heading', async ({ page }) => {
+  await open(page, 'room=1&proj=1', none);
+  const room = page.getByRole('article', { name: programme.name });
+  for (const name of groups.slice(1)) {
+    await room.getByRole('button', { name, exact: true }).click();
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        tag: el?.tagName ?? '',
+        text: el?.textContent?.trim().slice(0, 50) ?? '',
+        inRoom: !!el?.closest('article.programme-room'),
+        visible: !!el && el.getBoundingClientRect().height > 0,
+      };
+    });
+    expect(['H2', 'H3', 'H4'], `${name}: focus is ${JSON.stringify(focused)}`).toContain(
+      focused.tag,
+    );
+    expect(focused.inRoom && focused.visible, `${name}: heading is in the open group`).toBe(true);
+  }
+});
+
+for (const width of [320, 640])
+  test(`Q-02 the room reflows at ${width} in every group with no sideways scroll`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'room=1&proj=1', {
+      state: 'AVAILABLE',
+      ...shared,
+      scheduled: 2,
+      qualifiedHeld: 1,
+    });
+    for (const name of groups) {
+      await groupText(page, name);
+      const over = await page.evaluate(() => ({
+        page: document.documentElement.scrollWidth - innerWidth,
+        cut: Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'article.programme-room a[href],article.programme-room button,article.programme-room input,article.programme-room select,article.programme-room textarea',
+          ),
+        )
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            return box.width > 0 && !el.closest('[hidden]') && box.right > innerWidth + 1;
+          })
+          .map((el) => `${el.tagName} ${el.textContent?.trim().slice(0, 40)}`),
+      }));
+      expect(over.page, `${name}: sideways scroll`).toBeLessThanOrEqual(0);
+      expect(over.cut, `${name}: actions cut off`).toEqual([]);
+    }
+  });
+
+const raw =
+  /unexpected|json|failed to fetch|networkerror|undefined|\bnull\b|\[object|syntax|load failed/i;
+const broken503 = {
+  status: 503,
+  contentType: 'text/html',
+  body: '<h1>Service Unavailable</h1>',
+};
+for (const [label, answer, says] of [
+  ['offline (the request is rejected)', 'abort', /connection|offline|try again/i],
+  ['409', { status: 409, json: {} }, /changed|refresh|try again/i],
+  ['a 503 page instead of data', broken503, /could not|unavailable|try again|refresh/i],
+] as const)
+  test(`Q-05 every group reads plain words when the room APIs answer ${label}, and Refresh is there`, async ({
+    page,
+  }) => {
+    await page.route('**/api/customer-programme-*', (route) =>
+      answer === 'abort' ? route.abort('internetdisconnected') : route.fulfill(answer),
+    );
+    await page.route('**/api/customer-programmes*', (route) =>
+      route.fulfill({
+        json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+      }),
+    );
+    await page.goto(`${origin}/?room=1&proj=1`);
+    await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+    const room = page.getByRole('article', { name: programme.name });
+    const said: string[] = [];
+    for (const name of groups) {
+      await room.getByRole('button', { name, exact: true }).click();
+      // Give the panel's own read time to answer.
+      await page.waitForTimeout(600);
+      said.push(
+        ...(await room.locator('[role="alert"]:visible, [role="status"]:visible').allInnerTexts()),
+      );
+    }
+    const words = said.map((text) => text.trim()).filter(Boolean);
+    expect(words.length, 'the room says something').toBeGreaterThan(0);
+    expect(
+      words.filter((text) => raw.test(text)),
+      'raw error text',
+    ).toEqual([]);
+    expect(words.join(' '), 'a plain line for this state').toMatch(says);
+    await expect(room.getByRole('button', { name: /^Refresh/ }).first()).toBeVisible();
+  });
+
+test('Q-05 the Results, companies and agenda views say wait and refresh on a 429, and Refresh works afterwards', async ({
+  page,
+}) => {
+  let limited = true;
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programme-projections**', (route) =>
+    limited ? route.fulfill({ status: 429, json: {} }) : route.fulfill({ json: projection(none) }),
+  );
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({
+      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+    }),
+  );
+  await page.goto(`${origin}/?room=1&proj=1`);
+  const room = page.getByRole('article', { name: programme.name });
+  await expect(room).toBeVisible();
+  await room.getByRole('button', { name: 'Results', exact: true }).click();
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(results.getByRole('alert')).toContainText(/Wait a minute, then refresh/);
+  limited = false;
+  await results.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(results.getByText(/^Not shared/)).toBeVisible();
+});
