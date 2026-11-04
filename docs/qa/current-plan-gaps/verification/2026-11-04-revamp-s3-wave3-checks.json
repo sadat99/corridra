@@ -1,0 +1,67 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S3 Public, Intake and Organise: Wave 3 checks P-10 and P-11, honest-proof guard (change 3), and the decisions on changes 1, 2 and 5",
+  "kind": "Test-only. No application code changed.",
+  "findings": [],
+  "findingsNote": "No gap register entry is created or changed.",
+  "status": "Built on branch revamp/public. CI on the exact pushed head is the verifier; see the pull request.",
+  "specSource": "docs/revamp/specs/public-home.md on main (4b7f83e), as amended by the Guardian's answer to the 'Guardian question' on change 1",
+  "newFilesOnly": ["tests/e2e/verification/ws-a/intake-payload.spec.ts"],
+  "decisions": {
+    "change1FastFirstStep": "Skipped by Guardian decision: step 1 of /plan already asks only the job, which is more minimal than job plus market. No field moved, so no existing test hook changed.",
+    "change2OnePrimaryActionPerSection": "No code change. The UX gate already enforces one primary decision per action region and every public route sits at zero in tests/ux/ux-baseline.json. P-09 is verified by the CI ux job on the exact head.",
+    "change3HonestProof": "No code change needed: a scan of 15 public pages finds no proof claim. The new test fails on 'trusted by', testimonials, case studies, counts of companies, buyers, suppliers, customers, meetings or deals, 'verified buyers/suppliers/factories', guaranteed meetings or results, and superlatives. It skips sentences that deny a claim ('We do not book travel or guarantee meetings') and the home page sample mission, whose 'Example' tag it asserts. The home sample line '4 of 11 companies reviewed for fit' is inside that labelled example.",
+    "change4EnglishOnly": "No string added.",
+    "change5SignedInFooter": "No change needed. The footer has no sign-in link; the header already reads the session. The workspace footer was fixed in PR 265."
+  },
+  "p10": {
+    "asserted": "Form card of /plan step 1: 974 px at 390 wide (1.15 phone screens, limit 1.5) and 750 px at 1440 by 900 (limit 900), both with and without a link that sets the job.",
+    "existingDebtNotAsserted": {
+      "formCardHeightPx_w390": {
+        "step1": 974,
+        "step2": 1037,
+        "step3_details": 1577,
+        "step4_results": 1468,
+        "step5_contact": 962
+      },
+      "formCardHeightPx_w1440": {
+        "step1": 750,
+        "step2": 831,
+        "step3_details": 1327,
+        "step4_results": 1058,
+        "step5_contact": 804
+      },
+      "overBudget": "Details step 1577 px at 390 (1.87 screens, limit 1.5) and 1327 px at 1440 (limit 900); results step 1468 px at 390 (1.74) and 1058 px at 1440. The spec requires only the first step; shortening these steps would move fields behind disclosures and is not in Wave 3.",
+      "wholePage_w390": {
+        "pagePx": 3196,
+        "phoneScreens": 3.79,
+        "header": 77,
+        "formCard": 962,
+        "summaryPanel": 351,
+        "receiptCheck": 94,
+        "footer": 991
+      },
+      "wholePage_w1440": {
+        "pagePx": 2010,
+        "header": 88,
+        "formCard": 804,
+        "summaryPanel": 351,
+        "receiptCheck": 94,
+        "footer": 479
+      },
+      "note": "Whole-page figures are measured on step 5 (contact) and are not asserted. The excess is mostly the shared site footer (991 px at 390), which is not a section this wave changes."
+    }
+  },
+  "p11": "The request body for fixed sourcing answers (BHD budget, quantity and unit, two outcomes, website, notes) is frozen byte for byte, including key order, in intake-payload.spec.ts. The random request key is outside the brief. The same payload was captured before any change, so it is the baseline.",
+  "receipts": {
+    "playwright": "intake-payload.spec.ts on a production build and local PostgreSQL 16 across w390, w768, w1280: 50 passed, 1 skipped (P-10 is stated for 390 and 1440 only, so the w768 run skips it).",
+    "claimPatternsSanity": "The ten patterns fire on 'Trusted by 40 exporters', 'Join 1,200 companies', 'Read our testimonials', 'We guarantee meetings', 'Verified suppliers only' and 'The leading platform for trade', and stay quiet on 'A plan for a trip'.",
+    "format": "exit 0",
+    "lint": "exit 0",
+    "typecheck": "exit 0"
+  },
+  "notRun": [
+    "pnpm test:ux locally (the ux job in CI is the check for P-09)",
+    "Full integration and operator suites"
+  ]
+}
