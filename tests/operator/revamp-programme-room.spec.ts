@@ -818,7 +818,7 @@ test('Q-06 Save sample programme is busy while in flight, sends once for a doubl
 
 // Q-07 (GAP-049): screenshots of the organiser room, all five groups, at 390 and 1440, for the owner's named
 // art review. Not part of the normal run: `WAVE6_EVIDENCE=1` writes the files, so a normal run never rewrites
-// tracked images. The room is the real component with the real stylesheet over made-up data; panels whose
+// tracked images. The room is the real component with the real stylesheet over made-up data (notes in the Wave 6 receipt); panels whose
 // service is not mocked show their calm unavailable state. No self-approval: a named human reviews these.
 const evidenceDir = 'docs/design-system/evidence/revamp-wave6';
 const stamp = () => new Date(Date.now() + 3600000).toISOString();

@@ -43,7 +43,20 @@
     },
     "note": "Source reading, not a runtime test per action. 'Disabled while busy only' means the button is disabled by the busy flag and the handler has no entry guard; a click cannot reach the handler twice because the discrete click re-renders before the next event."
   },
-  "q07": "10 screenshots in docs/design-system/evidence/revamp-wave6/ (five groups, 390 and 1440, 2x) for named human review; no self-approval",
+  "q07": {
+    "files": "docs/design-system/evidence/revamp-wave6/{overview,participants,programme,terms,results}-{390,1440}.png, 2x",
+    "for": "named human art review; no self-approval; gap status stays with the Conductor and the owner",
+    "notes": [
+      "made-up data only; the real component and stylesheet in the test fixture",
+      "panels whose service is not mocked show their calm unavailable words, which is the room's own state",
+      "the fixture does not load the app fonts, so type shows in the fallback face: judge layout, spacing and colour here and type on the live page"
+    ],
+    "regenerate": "WAVE6_EVIDENCE=1 pnpm exec playwright test --config playwright.operator.config.ts tests/operator/revamp-programme-room.spec.ts -g \"Q-07 evidence\"",
+    "fixedAgainstAC1": [
+      "projection panel buttons fell back to the browser default look",
+      "road Invite step was off the label column"
+    ]
+  },
   "q08": {
     "conditions": "production build served locally, 390x844, 4x CPU throttle, no network throttle, median of 3 runs, JS bytes are encoded transfer sizes of script responses",
     "routes": [
