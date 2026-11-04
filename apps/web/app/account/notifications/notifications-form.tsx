@@ -132,21 +132,28 @@ export function NotificationsForm({
         }),
       });
       // An answer that is not JSON (an error page, a dropped connection) is not the interface's own words.
-      const data: { saved?: unknown; error?: unknown } = await response.json().catch(() => ({}));
+      const data: { saved?: unknown; error?: unknown } | null = await response
+        .json()
+        .catch(() => null);
       if (!response.ok) {
         setFailed(true);
         setMessage(
           response.status === 429
             ? limitWords
-            : typeof data.error === 'string' && data.error
+            : typeof data?.error === 'string' && data.error
               ? data.error
               : 'Your choices were not saved',
         );
         return;
       }
-      if (data.saved === false) {
+      if (data?.saved === false) {
         setFailed(true);
         setMessage('Email is not switched on yet, so nothing was saved.');
+      } else if (data?.saved !== true) {
+        // Only an explicit yes counts. An unreadable or empty answer is not a confirmation, so nothing is
+        // announced and the saved state stays as it was.
+        setFailed(true);
+        setMessage(notReachedWords);
       } else {
         if (on) setLastSaved(chosen);
         setSavedOn(on);

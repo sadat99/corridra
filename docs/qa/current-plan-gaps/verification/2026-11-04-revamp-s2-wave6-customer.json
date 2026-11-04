@@ -12,7 +12,8 @@
     "notifications-form.tsx, Q-06: the form had no aria-busy while a save ran (the button was already disabled and a double click already sent one request). aria-busy added. Test failed first on that attribute only.",
     "customer-workspace-leave.tsx, Q-05 429: showed \"Leaving was not confirmed. Try the same request again.\" which invites an immediate retry. Now the limit line. Test failed first.",
     "customer-workspace-invitation.tsx, Q-05 429: same pattern (\"Retry this invitation with the same request.\"). Now the limit line. Test failed first.",
-    "drafts/guided-request.tsx: persist() now re-checks the editor session after reading the answer as well, per the Conductor's instruction. Defensive only: Back, Discard, Send and Save draft are disabled during a save, so no screen path exists to prove it with a failing test; this is said plainly here and in the pull request."
+    "drafts/guided-request.tsx: persist() now re-checks the editor session after reading the answer as well, per the Conductor's instruction. Defensive only: Back, Discard, Send and Save draft are disabled during a save, so no screen path exists to prove it with a failing test; this is said plainly here and in the pull request.",
+    "notifications-form.tsx, Codex P2 on PR 285 (verified): a 200 whose body could not be read became an empty answer, took the success branch and announced that email was on or off without confirmation. Now only an explicit saved:true counts; an unreadable body or one with no saved flag shows the not-saved line, announces nothing and leaves the saved state as it was. Two cases (unreadable body, no saved flag) failed first."
   ],
   "checkedNoDefect": [
     "customer-workspace-invitation.tsx, Q-05 offline: keeps the code and says joining was not confirmed, with no machine words (test passed on first run).",
@@ -61,7 +62,7 @@
     "apps/web/app/account/drafts/guided-request.tsx"
   ],
   "receipts": {
-    "operator": "tests/operator/revamp-wave6-customer.spec.ts: 9 passed. Before the fixes 6 cases failed (offline, non-JSON, 429 on the email form, aria-busy, 429 on leave, 429 on join); the other cases passed on the first run. Existing specs for the same components still pass: ux-pulse, v3-workspace-invitation-ui, v3-customer-workspaces-ui, v3-workspace-team-ui, v3-guided-request-ui."
+    "operator": "tests/operator/revamp-wave6-customer.spec.ts: 11 passed. Before the fixes 8 cases failed (offline, non-JSON, 429 on the email form, aria-busy, 429 on leave, 429 on join); the other cases passed on the first run. Existing specs for the same components still pass: ux-pulse, v3-workspace-invitation-ui, v3-customer-workspaces-ui, v3-workspace-team-ui, v3-guided-request-ui."
   },
   "notRun": [
     "Q-08 performance numbers.",

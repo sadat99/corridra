@@ -182,6 +182,25 @@ test.describe('Q-05 and Q-06 email choices', () => {
   });
 });
 
+test.describe('Q-05 a save that was never confirmed', () => {
+  // A 200 whose body cannot be read, or has no saved flag, is not a confirmation. The page must not say email
+  // is on or off, and must offer the same save again.
+  for (const [name, body] of [
+    ['an unreadable body', 'not json at all'],
+    ['a body with no saved flag', '{}'],
+  ] as const)
+    test('Q-05 a 200 with ' + name + ' is not announced as saved', async ({ page }) => {
+      await openChoices(page, (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body }),
+      );
+      await save(page).click();
+      await expect(said(page)).toContainText('not saved');
+      await expect(said(page)).toHaveAttribute('role', 'alert');
+      await expect(said(page)).not.toContainText('Email is on');
+      await expect(save(page)).toBeEnabled();
+    });
+});
+
 const member = { id: '00000000-0000-4000-8000-000000000006', name: 'Synthetic Dhaka Towels' };
 async function openLeave(page: Page, status: number | 'abort', body = '{}') {
   let calls = 0;
