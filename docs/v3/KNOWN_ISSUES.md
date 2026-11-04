@@ -213,3 +213,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** PR257 head 4309ec5, operator shard (6): `tests/operator/z-startup-recovery.spec.ts` (UX-01 startup outage) failed once with "Test timeout of 180000ms exceeded". In the same run operator (2) and browser took about 15 and 18 minutes against about 5 for the other jobs. One re-run of operator (6) passed with no code change.
 - **Cause:** inferred (runner slowness), not proven. The test starts its own `next start` and normally needs about 120 s.
 - **If it recurs:** on a normal-speed run, reproduce it locally before changing anything. Do not raise the timeout blindly.
+
+### KI-35 Local database preparation lost its connection once on a fresh runner (4 November 2026)
+
+- **Observed:** main push CI run 41775257221 (PR258 merge, 4f2870e), attempt 1: only job `ux (2)` failed. `pnpm db:prepare-local` ended with `Error: read ECONNRESET` (pg-pool, `packages/db/src/migrate.ts`) at 04:48:02Z, two seconds after the runner's Postgres container reported started and before any test ran. `validate` was red only as the roll-up. One re-run of the failed jobs passed (attempt 2 success).
+- **Cause:** inferred (a database readiness race on a fresh runner container), not proven.
+- **If it recurs:** reproduce the pattern first. Only then add a short readiness wait (a `pg_isready` loop) in the workflow. Do not change tests for it.

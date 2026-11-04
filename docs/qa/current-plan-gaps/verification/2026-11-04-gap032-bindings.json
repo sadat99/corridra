@@ -1,0 +1,141 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "B",
+  "kind": "GAP-032 requirement-to-evidence bindings, first slice (tooling and a seven-row pilot)",
+  "findings": ["GAP-032"],
+  "status": "Built and committed locally as d7a6e96. It was not pushed and was not in a pull request when recorded. A binding is a pointer to evidence that exists at HEAD. It is never acceptance: every shard carries that constant and the report ends with 'No requirement is reported ACCEPTED by this file.'",
+  "commit": {
+    "sha": "d7a6e96",
+    "message": "feat: requirement-to-evidence bindings for the 507 V3 requirements, first slice (GAP-032)",
+    "branch": "claude/zen-hopper-1iqtdn",
+    "base": "4f2870ea424148c8ffa80996df0efc3915dba92f",
+    "newFilesOnly": [
+      "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
+      "docs/v3/phase-0/requirement-bindings.schema.json",
+      "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
+      "tests/integration/requirement-bindings.test.ts (52 tests, vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+    ]
+  },
+  "rulesEnforcedByCheck": {
+    "R1": "All 507 ids are present in order with the manifest identity hash.",
+    "R2": "NONE, GATED and DEFERRED rows carry a reason and no evidence. A BOUND row needs a positive item plus a denial item or an explicit denialNotApplicable reason.",
+    "R3": "The 12 GATED requirements (V3-06-008, V3-06-009 and V3-09-041 to V3-09-050) can never be BOUND, nor can any item with a closed-gate tag. 15 keyword-suspect rows (payment, payout, GST, bank, outreach, inference, IdP, mailbox, native language, real customer) need an explicit gateReview to be bound; none is bound.",
+    "R4": "TEST evidence must be an exact, unique string-literal test title in a file under tests/ that a CI suite runs, and not skipped.",
+    "R5": "RECEIPT evidence pointers must resolve. Only the head shape is checked; git objects are not verified offline.",
+    "R6": "Candidate files exist.",
+    "R7": "No duplicate items."
+  },
+  "report": {
+    "total": 507,
+    "BOUND": 7,
+    "boundWithPositiveAndDenialEvidence": 4,
+    "boundWithPositiveAndStatedReasonDenialDoesNotApply": 3,
+    "NONE": 486,
+    "GATED": 12,
+    "DEFERRED": 2,
+    "noneRowsWithLegacyCandidateFile": "50 (informational, never counted as evidence)",
+    "keywordSuspectRows": "15, none BOUND",
+    "perSection": {
+      "00": "total 4, BOUND 0, NONE 4, GATED 0, DEFERRED 0",
+      "01": "total 23, BOUND 1, NONE 22, GATED 0, DEFERRED 0",
+      "02": "total 76, BOUND 4, NONE 72, GATED 0, DEFERRED 0",
+      "03": "total 36, BOUND 0, NONE 36, GATED 0, DEFERRED 0",
+      "04": "total 94, BOUND 2, NONE 92, GATED 0, DEFERRED 0",
+      "05": "total 64, BOUND 0, NONE 64, GATED 0, DEFERRED 0",
+      "06": "total 19, BOUND 0, NONE 15, GATED 2, DEFERRED 2",
+      "07": "total 49, BOUND 0, NONE 49, GATED 0, DEFERRED 0",
+      "08": "total 39, BOUND 0, NONE 39, GATED 0, DEFERRED 0",
+      "09": "total 103, BOUND 0, NONE 93, GATED 10, DEFERRED 0"
+    }
+  },
+  "pilotBoundRows": {
+    "reviewState": "Agent-written, checked by the conductor against the test bodies, reviewedBy 'corridra-builder (unreviewed by product)'. NOT reviewed by product or QA. Do not quote the 7 as coverage.",
+    "rows": [
+      "V3-01-018: tests/integration/customer-companies.test.ts, one positive and two denial titles",
+      "V3-02-034, V3-02-035, V3-02-036: customer-mission-drafts.test.ts prompts test; denial does not apply (stated reason)",
+      "V3-02-062: customer-programme-coordination.test.ts, positive and denial",
+      "V3-04-040: customer-mission-drafts.test.ts and tests/operator/v3-guided-request-ui.spec.ts, positive, recovery and denial",
+      "V3-04-076: v3-guided-request-ui.spec.ts and customer-mission-drafts.test.ts, positive and denial"
+    ]
+  },
+  "receipts": [
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "4f2870e",
+      "result": "52 passed"
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts seed --check",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts check",
+      "base": "4f2870e",
+      "result": "PASS (re-run by the scribe on d7a6e96 plus the records)"
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts report",
+      "base": "4f2870e",
+      "result": "507 = 7 BOUND + 486 NONE + 12 GATED + 2 DEFERRED (re-read by the scribe on d7a6e96 plus the records)"
+    },
+    { "command": "prettier --check on the new files", "base": "4f2870e", "result": "PASS" },
+    {
+      "command": "eslint --max-warnings 0 on the two .ts files",
+      "base": "builder worktree, identical files",
+      "result": "exit 0"
+    },
+    {
+      "command": "pnpm typecheck and pnpm test:docs",
+      "base": "builder worktree on the same files, base d1ddbcd",
+      "result": "exit 0 and pass"
+    },
+    {
+      "command": "node scripts/v3-context.mjs verify and node scripts/authority.mjs check",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
+    {
+      "command": "mutation: the V3-04-040 pilot test title was altered",
+      "result": "check failed with exit 1 ('R4 V3-04-040: title ... not found'); restored, PASS"
+    }
+  ],
+  "receiptNote": "Receipts are as reported by the conductor except where marked re-read by the scribe. The builder agent's own red runs (module not found, then missing ids) are in worktree receipts that are not kept.",
+  "notRun": [
+    "pnpm test:integration in full.",
+    "CI on a pull request head (pending until the PR is pushed).",
+    "A second review of the pilot rows."
+  ],
+  "doesNotProve": [
+    "That any test fits its requirement beyond the quoted assertion. Semantic fit is a reviewed claim.",
+    "That any requirement is accepted.",
+    "Anything about live providers."
+  ],
+  "gapState": {
+    "GAP-032": "Disposition stays EVIDENCE_MISSING. Implementation PARTIAL (tooling and a 7-row pilot built). Verification PARTIAL (pending exact-head CI and a second review). Deployment, activation, approval and commercialOperation stay UNKNOWN. closureEvidence stays empty."
+  },
+  "ownerQuestions": [
+    {
+      "question": "Does BOUND mean an existing CI-run assertion pointer, not acceptance?",
+      "default": "Yes (taken)."
+    },
+    {
+      "question": "Should narrative rows get a NOT_APPLICABLE state?",
+      "default": "No; they stay NONE (taken)."
+    },
+    { "question": "PRESERVATION and unresolved-decision evidence kinds?", "default": "Later." },
+    {
+      "question": "Where does the check live?",
+      "default": "In the vitest integration job, not test:docs (taken)."
+    },
+    {
+      "question": "Who signs semantic fit?",
+      "default": "A product or QA agent plus the scribe's record; the owner to confirm."
+    }
+  ],
+  "nextActions": [
+    "Open the PR for d7a6e96 plus these records; after exact-head CI and a clean Codex review, merge.",
+    "Then bind one section per PR (separate shards avoid conflicts) with a second reviewer before any BOUND count is quoted to the owner.",
+    "Later, optionally make scripts/v3-context.mjs verify call the checker (hot file, separate PR)."
+  ]
+}

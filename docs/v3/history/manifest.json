@@ -293,6 +293,14 @@
       "bytes": 11525,
       "sha256": "357f0b1bc2ec91ae20bcf5b66879778dc13a4884d33b69a5cd68dc9ec45d467f",
       "meaning": "Exact active ledger at 1033c4a, before the Books command id rule on a 429 (Codex P2 on PR 258, fixed in 89776fc) was recorded, including the E2a, Batch D and E2b wording later condensed or corrected. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "4f2870ea424148c8ffa80996df0efc3915dba92f",
+      "archive": "docs/v3/history/ledger-before-pr258-merge-records-2026-11-04.md",
+      "bytes": 11556,
+      "sha256": "107c52da6da426e35781bf9f974011bb296b720cd50d8535ff10289ac951c398",
+      "meaning": "Exact active ledger at the PR 258 merge (4f2870e), before the merge and the GAP-032 requirement-bindings first slice were recorded, including the E2b bullet that still said PR 258 was open. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
