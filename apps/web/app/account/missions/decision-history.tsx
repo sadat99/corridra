@@ -201,10 +201,11 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
               subject={subject}
               issuer={issuer}
               synthetic={data.synthetic}
-              decisions={data.decisions.map(({ id, company, decision }) => ({
+              decisions={data.decisions.map(({ id, company, decision, requirementCurrent }) => ({
                 id,
                 company,
                 decision,
+                requirementCurrent,
               }))}
             />
           )}

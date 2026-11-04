@@ -84,6 +84,14 @@ export const cardLink = (origin: string, token: string) => `${origin}/decision-c
 export const countsWords = (opens: number) =>
   `${opens} ${opens === 1 ? 'open' : 'opens'}. Counts page loads, including automatic link checks.`;
 
+/**
+ * Step 1 offers only decisions whose original requirement is still current. A decision made against a
+ * requirement that has since changed is not something to put in a link, whatever else is true of it.
+ */
+export const shareableDecisions = <T extends { requirementCurrent?: boolean }>(
+  decisions: T[],
+): T[] => decisions.filter((decision) => decision.requirementCurrent === true);
+
 export const withdrawable = (card: Pick<CardSummary, 'state'>) => card.state === 'ACTIVE';
 
 export const canPreview = (panel: Panel) =>

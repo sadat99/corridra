@@ -12,6 +12,7 @@ import {
   initialPanel,
   panelReducer,
   requestBodies,
+  shareableDecisions,
   withdrawable,
   type Panel,
   type Preview,
@@ -35,11 +36,17 @@ const resourceId = '11111111-1111-4111-8111-111111111111';
 const decisionId = '22222222-2222-4222-8222-222222222222';
 const cardId = '33333333-3333-4333-8333-333333333333';
 const decisions = [
-  { id: decisionId, company: 'Lantern Cutting Works', decision: 'SELECT' as const },
+  {
+    id: decisionId,
+    company: 'Lantern Cutting Works',
+    decision: 'SELECT' as const,
+    requirementCurrent: true,
+  },
   {
     id: '44444444-4444-4444-8444-444444444444',
     company: 'Green Field Machinery',
     decision: 'DECLINE' as const,
+    requirementCurrent: true,
   },
 ];
 const preview: Preview = {
@@ -91,6 +98,32 @@ describe('D-06 nothing is created before the acknowledgement', () => {
     p = panelReducer(p, { type: 'acknowledge', value: false });
     expect(canCreate(p)).toBe(false);
   });
+  it('D-06 offers only decisions whose requirement is still current', async () => {
+    const all = [
+      { id: decisionId, company: 'Current Co', decision: 'SELECT', requirementCurrent: true },
+      {
+        id: '44444444-4444-4444-8444-444444444444',
+        company: 'Changed Co',
+        decision: 'SELECT',
+        requirementCurrent: false,
+      },
+    ];
+    expect(shareableDecisions(all).map((d) => d.company)).toEqual(['Current Co']);
+    expect(shareableDecisions([all[1]!])).toEqual([]);
+    // The step 1 list shows only the current one, and says so when none is left.
+    const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel');
+    const html = render(
+      ce(DecisionCardPanelView, { panel: ready(), decisions: all, handlers: {} }),
+    );
+    expect(html).toContain('Current Co');
+    expect(html).not.toContain('Changed Co');
+    const none = render(
+      ce(DecisionCardPanelView, { panel: ready(), decisions: [all[1]!], handlers: {} }),
+    );
+    expect(none).not.toContain('Changed Co');
+    expect(none).toContain('There is no reviewed decision to share yet.');
+    expect(none).not.toContain('type="radio"');
+  });
   it('choosing another decision drops the preview and the acknowledgement', () => {
     let p = panelReducer(ready(), { type: 'choose', decisionId });
     p = panelReducer(p, { type: 'previewLoaded', preview });
@@ -118,7 +151,9 @@ describe('D-06 nothing is created before the acknowledgement', () => {
   });
   it('marks a Chinese company name as Chinese in the list and the preview', async () => {
     const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel');
-    const zh = [{ id: decisionId, company: '绿野机械有限公司', decision: 'SELECT' }];
+    const zh = [
+      { id: decisionId, company: '绿野机械有限公司', decision: 'SELECT', requirementCurrent: true },
+    ];
     let p = panelReducer(ready(), { type: 'choose', decisionId });
     p = panelReducer(p, {
       type: 'previewLoaded',

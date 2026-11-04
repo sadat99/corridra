@@ -7,6 +7,7 @@ import {
   initialPanel,
   panelReducer,
   requestBodies,
+  shareableDecisions,
   withdrawable,
   type CardSummary,
   type CreatedCard,
@@ -19,7 +20,12 @@ import { formatDate, formatDateTime } from '../../../lib/ux/format';
 import { savedMissionHeaders } from '../saved-missions';
 import './decision-card-panel.css';
 
-type Decision = { id: string; company: string; decision: string };
+type Decision = {
+  id: string;
+  company: string;
+  decision: string;
+  requirementCurrent?: boolean;
+};
 type Handlers = {
   choose?: (decisionId: string) => void;
   preview?: () => void;
@@ -57,6 +63,7 @@ export function DecisionCardPanelView({
   // Absent, never disabled: until the service says this person can share, nothing is drawn.
   if (!panel || panel.phase !== 'ready') return null;
   const preview = panel.preview;
+  const offered = shareableDecisions(decisions);
   return (
     <section className="decision-card-owner" aria-label="Share a decision">
       <h3>Share a decision</h3>
@@ -64,12 +71,12 @@ export function DecisionCardPanelView({
         Make a private link to one decision you have reviewed. You see exactly what it shows before
         anything is made.
       </p>
-      {decisions.length === 0 ? (
+      {offered.length === 0 ? (
         <p>There is no reviewed decision to share yet.</p>
       ) : (
         <fieldset>
           <legend>1. Choose a decision</legend>
-          {decisions.map((d) => (
+          {offered.map((d) => (
             <label key={d.id} className="decision-card-choice">
               <input
                 type="radio"
