@@ -27,6 +27,10 @@ describe('the books switch', () => {
     expect(line).not.toMatch(/[–—]/);
     expect(line).toMatch(/database module/i);
     expect(line).toContain('cannot be recalled');
+    // Honest about the state of the build: there is a route, and the download screen is a later step.
+    expect(line).toContain('download route');
+    expect(line).toContain('download screen arrives in a following step');
+    expect(line).not.toMatch(/^Lets a signed-in customer download/);
     expect(line).toMatch(/PDF/);
   });
   it('is Off unless the setting is exactly "true"', () => {
