@@ -3065,17 +3065,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 IS installed: protected install run 41705868221 completed on 4 Nov 2026 at 04:37Z on 76d9d03 and its job log shows customer_programme_projection_migrations '2 applied' (verification/2026-11-04-batch-d-0002-installed.json). Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-04-batch-d-0002-installed.json"
             ]
           },
           "verification": {
@@ -3155,6 +3156,14 @@
           "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
           "disposition": "OPEN",
           "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-037-H006",
+          "recordedOn": "2026-11-04",
+          "type": "INSTALL_RECEIPT_CORRECTION",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "Corrects the stale wording that additive migration 0002 is not installed. Protected install run 41705868221 (job 126160899778) completed with success on 4 November 2026 at 04:37:29Z on 76d9d03, and its job log shows customer_programme_projection_migrations '2 applied'. States are unchanged: this is an install receipt, not activation, deployment proof for 76d9d03 or user acceptance; activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-d-0002-installed.json."
         }
       ]
     },
@@ -3171,17 +3180,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 IS installed: protected install run 41705868221 completed on 4 Nov 2026 at 04:37Z on 76d9d03 and its job log shows customer_programme_projection_migrations '2 applied' (verification/2026-11-04-batch-d-0002-installed.json). Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-04-batch-d-0002-installed.json"
             ]
           },
           "verification": {
@@ -3261,6 +3271,14 @@
           "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
           "disposition": "OPEN",
           "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-038-H006",
+          "recordedOn": "2026-11-04",
+          "type": "INSTALL_RECEIPT_CORRECTION",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "Corrects the stale wording that additive migration 0002 is not installed. Protected install run 41705868221 (job 126160899778) completed with success on 4 November 2026 at 04:37:29Z on 76d9d03, and its job log shows customer_programme_projection_migrations '2 applied'. States are unchanged: this is an install receipt, not activation, deployment proof for 76d9d03 or user acceptance; activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-d-0002-installed.json."
         }
       ]
     },
@@ -3277,17 +3295,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 IS installed: protected install run 41705868221 completed on 4 Nov 2026 at 04:37Z on 76d9d03 and its job log shows customer_programme_projection_migrations '2 applied' (verification/2026-11-04-batch-d-0002-installed.json). Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-04-batch-d-0002-installed.json"
             ]
           },
           "verification": {
@@ -3367,6 +3386,14 @@
           "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
           "disposition": "OPEN",
           "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-039-H006",
+          "recordedOn": "2026-11-04",
+          "type": "INSTALL_RECEIPT_CORRECTION",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "Corrects the stale wording that additive migration 0002 is not installed. Protected install run 41705868221 (job 126160899778) completed with success on 4 November 2026 at 04:37:29Z on 76d9d03, and its job log shows customer_programme_projection_migrations '2 applied'. States are unchanged: this is an install receipt, not activation, deployment proof for 76d9d03 or user acceptance; activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-d-0002-installed.json."
         }
       ]
     },
@@ -3556,17 +3583,18 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_D",
-        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 is NOT installed: protected install run 41705868221 (dispatched under the owner's pre-approval, apply=yes) was waiting at the customer-modules-install gate when recorded. Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
+        "summary": "Batch D PR253 merged at ab9337c (19 exact-head checks completed without failures); exact READY production revision, aliases, fra1 and the default-off private API 503 are verified for ab9337c. Protected installer 41657859737 succeeded on ab9337c at 15:15:26Z and its job log shows customer_programme_projection_migrations 'not installed' then '1 applied' (migration 0001 only). A post-merge audit found 3 defects (schedule save could overwrite another organiser; company shown after a workspace switch; counts shown up to about 60 s past source retention). The repairs and additive migration 0002 merged in PR254 as 76d9d03 on 3 November 2026 (tested head 6f49b32; main CI 41705549794 and CodeQL succeeded). Production deployment of 76d9d03 is not verifiable from the recording environment, and migration 0002 IS installed: protected install run 41705868221 completed on 4 Nov 2026 at 04:37Z on 76d9d03 and its job log shows customer_programme_projection_migrations '2 applied' (verification/2026-11-04-batch-d-0002-installed.json). Whether the application switch is on is UNKNOWN; nothing is activated. Genuine user acceptance is not claimed.",
         "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
         "evidenceObservedOn": "2026-11-03",
-        "lastRecordedOn": "2026-11-03",
+        "lastRecordedOn": "2026-11-04",
         "states": {
           "implementation": {
             "state": "IMPLEMENTED",
             "evidence": [
               "verification/2026-11-03-batch-d-local.json",
               "verification/2026-11-03-batch-d-release.json",
-              "verification/2026-11-03-batch-d-repairs.json"
+              "verification/2026-11-03-batch-d-repairs.json",
+              "verification/2026-11-04-batch-d-0002-installed.json"
             ]
           },
           "verification": {
@@ -3646,6 +3674,14 @@
           "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
           "disposition": "OPEN",
           "note": "PR254 merged 3 November 2026 as squash 76d9d03 (tested head 6f49b32; 19 checks, 18 success and CodeQL aggregate neutral; one unrelated operator ECONNRESET shard passed on re-run; Codex review found nothing). Main CI 41705549794 and CodeQL succeeded. Migration 0002 is not installed: protected install run 41705868221 was waiting at the customer-modules-install gate when recorded. Production deployment of 76d9d03 is not verifiable from the recording environment. This corrects the stale H004 wording that PR254 was a draft. States are unchanged (the DEPLOYED stage rests on the ab9337c release evidence only, not on 76d9d03); activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-03-batch-d-repairs.json and verification/2026-11-03-batch-e3a-status-link.json."
+        },
+        {
+          "eventId": "GAP-042-H006",
+          "recordedOn": "2026-11-04",
+          "type": "INSTALL_RECEIPT_CORRECTION",
+          "evidenceRevision": "76d9d03b866ce03fe13c3988f8e25ae6dabe4e78",
+          "disposition": "OPEN",
+          "note": "Corrects the stale wording that additive migration 0002 is not installed. Protected install run 41705868221 (job 126160899778) completed with success on 4 November 2026 at 04:37:29Z on 76d9d03, and its job log shows customer_programme_projection_migrations '2 applied'. States are unchanged: this is an install receipt, not activation, deployment proof for 76d9d03 or user acceptance; activation stays UNKNOWN and nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-d-0002-installed.json."
         }
       ]
     },

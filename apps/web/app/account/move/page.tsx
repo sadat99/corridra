@@ -51,6 +51,7 @@ export default async function Page() {
         startHref={startHref}
         skippedWorkspaces={loaded.skippedWorkspaces}
         partial={loaded.partial}
+        unreadable={loaded.unreadable.length > 0}
       />
     </CustomerShell>
   );

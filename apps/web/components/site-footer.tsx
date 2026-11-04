@@ -1,6 +1,9 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import { SiteFooterView } from './site-footer-view';
+import { SiteFooterPlace } from './site-footer-place';
+import { uxSwitchOn } from '../lib/ux-switches';
 
 export function SiteFooter() {
-  return <SiteFooterView realUse={realUseEnabled()} />;
+  return (
+    <SiteFooterPlace realUse={realUseEnabled()} shells={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')} />
+  );
 }

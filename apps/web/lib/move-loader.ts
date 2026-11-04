@@ -1,6 +1,7 @@
 // Reads, for one signed-in person, the records Your Move is built from. Server only. Every source is
 // read only when its own module is on (a closed gate must not touch provider state or private data),
-// and a source that fails is left out: Your Move shows what it can prove and never guesses.
+// and a source that fails is left out but named in `unreadable`, so Your Move shows what it can prove,
+// never guesses, and never says "nothing is waiting" when it could not look.
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
@@ -14,6 +15,10 @@ import type { MoveInput } from './move-cards';
 import { movePageCap, moveWorkspaceCap } from './move-constants';
 import { followPages } from './move-pages';
 
+/** A record source that is switched on but could not be read for this page. */
+export type MoveSource =
+  'account' | 'workspaces' | 'drafts' | 'quotes' | 'companies' | 'requests' | 'moves' | 'reports';
+
 type Loaded = {
   input: MoveInput;
   /** Workspaces beyond the cap, whose drafts and quotes were not read. */
@@ -22,6 +27,8 @@ type Loaded = {
   requestCreationEnabled: boolean;
   /** True when a list was longer than the pages read, so what is shown may not be everything. */
   partial: boolean;
+  /** Sources that are on but failed to answer. Empty means every source that is on was read. */
+  unreadable: MoveSource[];
 };
 
 async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
@@ -38,17 +45,22 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
     skippedWorkspaces: 0,
     requestCreationEnabled: false,
     partial: false,
+    unreadable: [],
   };
+  // The workspace module being off is a true empty: there is nothing to read.
   if (!customerWorkspacesEnabled()) return empty;
   const services = foundations();
-  if (!services) return empty;
+  if (!services) return { ...empty, unreadable: ['account'] };
   try {
     await services.ready;
   } catch {
-    return empty;
+    return { ...empty, unreadable: ['account'] };
   }
 
-  const workspaces = (await attempt(() => services.customerWorkspaces.list(subject, issuer))) ?? [];
+  const unreadable = new Set<MoveSource>();
+  const listed = await attempt(() => services.customerWorkspaces.list(subject, issuer));
+  if (listed === null) unreadable.add('workspaces');
+  const workspaces = listed ?? [];
   const read = workspaces.slice(0, moveWorkspaceCap);
   const input: MoveInput = {
     workspaces: workspaces.map(({ id, name, role }) => ({ id, name, role })),
@@ -108,7 +120,10 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
 
   let partial = false;
   for (const page of drafts) {
-    if (page.failed) continue;
+    if (page.failed) {
+      unreadable.add('drafts');
+      continue;
+    }
     partial ||= !page.complete;
     for (const draft of page.items)
       if (draft.status === 'OPEN')
@@ -120,7 +135,10 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
         });
   }
   for (const page of quotes) {
-    if (page.failed) continue;
+    if (page.failed) {
+      unreadable.add('quotes');
+      continue;
+    }
     partial ||= !page.complete;
     for (const request of page.items)
       if (request.status === 'quoted')
@@ -131,12 +149,14 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
           contextLabel: request.contextLabel,
         });
   }
+  if (customerOrganisationLinksEnabled() && links === null) unreadable.add('companies');
   for (const link of links?.workspaces ?? [])
     if (link.status === 'needs_evidence')
       input.companyLinks.push({
         workspaceId: link.workspaceId,
         organisationName: link.organisationName,
       });
+  if (requests?.failed) unreadable.add('requests');
   if (requests && !requests.failed) {
     partial ||= !requests.complete;
     for (const row of requests.items as {
@@ -154,13 +174,18 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
       });
   }
 
+  if (customerMovesEnabled() && moveRecords === null) unreadable.add('moves');
   input.moves = (moveRecords?.requests ?? []) as NonNullable<MoveInput['moves']>;
 
   // CQ-77: published reports, once the service wiring provides the delivered-reports service.
   const delivered = (
     services as unknown as { customerDeliveredReports?: CustomerDeliveredReportService }
   ).customerDeliveredReports;
-  if (delivered) input.reports = (await attempt(() => delivered.list(subject, issuer))) ?? [];
+  if (delivered) {
+    const reports = await attempt(() => delivered.list(subject, issuer));
+    if (reports === null) unreadable.add('reports');
+    input.reports = reports ?? [];
+  }
 
   return {
     input,
@@ -168,5 +193,6 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
     // Same test as the account page: the request list answers, so a request can be started.
     requestCreationEnabled: requests !== null && !requests.failed,
     partial,
+    unreadable: [...unreadable],
   };
 }
