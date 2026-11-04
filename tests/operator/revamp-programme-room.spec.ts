@@ -771,3 +771,47 @@ test('Q-05 the Results, companies and agenda views say wait and refresh on a 429
   await results.getByRole('button', { name: 'Refresh programme projection' }).click();
   await expect(results.getByText(/^Not shared/)).toBeVisible();
 });
+
+// Q-06: the one action the organiser room list offers to create a programme. Disabled while the request is in
+// flight, one request for a double click, and the result is announced.
+test('Q-06 Save sample programme is busy while in flight, sends once for a double click and announces the result', async ({
+  page,
+}) => {
+  let posts = 0;
+  const created: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programmes*', async (route) => {
+    if (route.request().method() === 'POST') {
+      posts += 1;
+      const command = route.request().postDataJSON() as { name: string; reportingPurpose: string };
+      await new Promise((done) => setTimeout(done, 900));
+      const made = {
+        ...programme,
+        id: '00000000-0000-4000-8000-000000000003',
+        name: command.name,
+        reportingPurpose: command.reportingPurpose,
+      };
+      created.push(made);
+      return route.fulfill({ status: 201, json: made });
+    }
+    return route.fulfill({
+      json: { workspaceId, programmes: [programme, ...created], nextAfter: null, synthetic: true },
+    });
+  });
+  await page.goto(`${origin}/?room=1&proj=1`);
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+  await page.getByLabel('Programme name').fill('Fictional Dhaka garment delegation');
+  await page
+    .getByLabel('Purpose and intended outcomes')
+    .fill('Fictional purpose: meet fabric buyers in Shanghai.');
+  await page.getByLabel('I am using fictional information for sample planning only.').check();
+  const save = page.locator('form.operator-form .primary-link');
+  await expect(save).toHaveText('Save sample programme');
+  await save.dblclick();
+  await expect(save).toBeDisabled();
+  await expect(save, 'a first attempt in flight does not read as a retry').toHaveText('Saving…');
+  await expect(page.getByRole('status').filter({ hasText: 'is saved' })).toBeVisible();
+  expect(posts).toBe(1);
+});

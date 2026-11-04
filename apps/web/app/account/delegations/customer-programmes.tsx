@@ -813,11 +813,13 @@ function ScopedProgrammes({
                 : 'I am using fictional information for sample planning only.'}
             </label>
             <button className="primary-link" disabled={busy || !planningDraft.restored}>
-              {pending
-                ? 'Retry same planning request'
-                : realCustomerInput()
-                  ? 'Save programme'
-                  : 'Save sample programme'}
+              {busy
+                ? 'Saving…'
+                : pending
+                  ? 'Retry same planning request'
+                  : realCustomerInput()
+                    ? 'Save programme'
+                    : 'Save sample programme'}
             </button>
           </form>
         </>
