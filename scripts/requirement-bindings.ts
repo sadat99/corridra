@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
+import ts from 'typescript';
 import { z } from 'zod';
 
 // GAP-032 requirement-to-evidence bindings. A binding is a pointer to evidence that exists at HEAD.
@@ -153,9 +154,9 @@ export function loadShards(workspace: Workspace): unknown[] {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Title scanner: finds string-literal titles of test(, it(, describe( and test.describe( calls, marks which are
-// suites and says why a title would not run. It is deliberately conservative: anything it cannot prove is
-// reported, never accepted.
+// Title scanner: reads a test file with the TypeScript parser and lists the string-literal titles of test(, it(,
+// describe( and test.describe( calls, marks which are suites and says why a title would not run. It is
+// deliberately conservative: anything it cannot prove is reported, never accepted.
 
 export interface TitleCall {
   title: string;
@@ -166,258 +167,202 @@ export interface TitleCall {
   problem: string | null;
 }
 
-interface Lexed {
-  clean: string;
-  literals: Map<number, { kind: 'string' | 'template'; value: string; end: number }>;
-  terminated: boolean;
+interface CallShape {
+  name: string;
+  chain: string[];
 }
 
-function decodeEscapes(raw: string): string {
-  const simple: Record<string, string> = {
-    n: '\n',
-    t: '\t',
-    r: '\r',
-    b: '\b',
-    f: '\f',
-    v: '\v',
-    '0': '\0',
-  };
-  return raw.replace(
-    /\\(u\{[0-9a-fA-F]+\}|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|\r?\n|[\s\S])/g,
-    (_, code: string) => {
-      if (code.startsWith('u{')) return String.fromCodePoint(parseInt(code.slice(2, -1), 16));
-      if (/^[ux][0-9a-fA-F]+$/.test(code)) return String.fromCharCode(parseInt(code.slice(1), 16));
-      if (code === '\n' || code === '\r\n') return '';
-      return simple[code] ?? code;
-    },
+const callRoots = new Set(['xit', 'xtest', 'xdescribe', 'test', 'it', 'describe']);
+const plainChain = new Set(['describe', 'serial', 'parallel']);
+const skipModifiers = new Set(['skip', 'fixme', 'todo', 'fail', 'only', 'skipIf']);
+const runtimeSkipModifiers = new Set(['skip', 'fixme', 'fail']);
+const loopMethods = new Set(['forEach', 'map', 'flatMap', 'reduce', 'filter', 'each']);
+
+// test.describe.serial -> ['test', 'describe', 'serial']; anything that is not a plain name chain gives null.
+function calleeChain(expression: ts.Expression): string[] | null {
+  if (ts.isIdentifier(expression)) return [expression.text];
+  if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.name)) {
+    const head = calleeChain(expression.expression);
+    return head ? [...head, expression.name.text] : null;
+  }
+  return null;
+}
+
+function shapeOf(node: ts.CallExpression): CallShape | null {
+  const chain = calleeChain(node.expression);
+  if (!chain || !callRoots.has(chain[0])) return null;
+  return { name: chain[0], chain: chain.slice(1) };
+}
+
+const isSuite = (shape: CallShape) =>
+  shape.name.endsWith('describe') || shape.chain.includes('describe');
+const hasSkipModifier = (shape: CallShape) =>
+  shape.name.startsWith('x') || shape.chain.some((part) => skipModifiers.has(part));
+const isTemplate = (node: ts.Node) =>
+  ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node);
+const isLiteralTitle = (node: ts.Node) => ts.isStringLiteral(node) || isTemplate(node);
+
+// 'a' + b + 'c': a title built from an expression whose first piece is a literal.
+function startsWithLiteral(node: ts.Expression): boolean {
+  if (isLiteralTitle(node)) return true;
+  return (
+    ts.isBinaryExpression(node) &&
+    node.operatorToken.kind === ts.SyntaxKind.PlusToken &&
+    startsWithLiteral(node.left)
   );
 }
 
-// Blanks comments, string contents, template contents and regular expressions so that only code structure
-// remains, and records every string and template literal by the index of its opening quote.
-function lex(source: string): Lexed {
-  const clean = source.split('');
-  const literals: Lexed['literals'] = new Map();
-  let terminated = true;
-  const blank = (from: number, to: number) => {
-    for (let k = from; k < to; k++) if (clean[k] !== '\n') clean[k] = ' ';
-  };
-  const regexAllowedAt = (index: number) => {
-    let k = index - 1;
-    while (k >= 0 && /\s/.test(clean[k])) k--;
-    if (k < 0 || '(,=:[!&|?{};+-*%<>~^'.includes(clean[k])) return true;
-    const word = /([A-Za-z_$][\w$]*)$/.exec(clean.slice(Math.max(0, k - 12), k + 1).join(''));
-    return (
-      word !== null &&
-      [
-        'return',
-        'typeof',
-        'case',
-        'in',
-        'of',
-        'delete',
-        'void',
-        'throw',
-        'new',
-        'else',
-        'do',
-        'yield',
-        'await',
-      ].includes(word[1])
-    );
-  };
-  const scanString = (start: number, quote: string) => {
-    let j = start + 1;
-    while (j < source.length && source[j] !== quote && source[j] !== '\n')
-      j += source[j] === '\\' ? 2 : 1;
-    if (source[j] !== quote) terminated = false;
-    literals.set(start, {
-      kind: 'string',
-      value: decodeEscapes(source.slice(start + 1, j)),
-      end: j,
-    });
-    blank(start + 1, j);
-    return j + 1;
-  };
-  const scanRegex = (start: number) => {
-    let j = start + 1;
-    let inClass = false;
-    while (j < source.length && source[j] !== '\n') {
-      if (source[j] === '/' && !inClass) break;
-      if (source[j] === '[') inClass = true;
-      else if (source[j] === ']') inClass = false;
-      j += source[j] === '\\' ? 2 : 1;
-    }
-    if (source[j] !== '/') return start + 1;
-    blank(start + 1, j);
-    j++;
-    while (/[a-z]/.test(source[j] ?? '')) j++;
-    return j;
-  };
-  const scanTemplate = (start: number) => {
-    let j = start + 1;
-    while (j < source.length && source[j] !== '`') {
-      if (source[j] === '\\') j += 2;
-      else if (source[j] === '$' && source[j + 1] === '{') j = scanCode(j + 2, true) + 1;
-      else j++;
-    }
-    if (source[j] !== '`') terminated = false;
-    literals.set(start, { kind: 'template', value: source.slice(start + 1, j), end: j });
-    blank(start + 1, j);
-    return j + 1;
-  };
-  function scanCode(start: number, insideTemplate: boolean): number {
-    let depth = 0;
-    let i = start;
-    while (i < source.length) {
-      const ch = source[i];
-      const next = source[i + 1];
-      if (ch === '/' && next === '/') {
-        const end = source.indexOf('\n', i);
-        const to = end < 0 ? source.length : end;
-        blank(i, to);
-        i = to;
-      } else if (ch === '/' && next === '*') {
-        const end = source.indexOf('*/', i + 2);
-        const to = end < 0 ? source.length : end + 2;
-        blank(i, to);
-        i = to;
-      } else if (ch === '"' || ch === "'") i = scanString(i, ch);
-      else if (ch === '`') i = scanTemplate(i);
-      else if (ch === '/' && regexAllowedAt(i)) i = scanRegex(i);
-      else {
-        if (insideTemplate && ch === '{') depth++;
-        else if (insideTemplate && ch === '}') {
-          if (depth === 0) return i;
-          depth--;
-        }
-        i++;
+function runtimeSkipIn(node: ts.Node): boolean {
+  let found = false;
+  const visit = (child: ts.Node) => {
+    if (found) return;
+    if (ts.isCallExpression(child)) {
+      const shape = shapeOf(child);
+      if (
+        shape &&
+        (shape.name === 'test' || shape.name === 'it') &&
+        shape.chain.some((part) => runtimeSkipModifiers.has(part))
+      ) {
+        found = true;
+        return;
       }
     }
-    return i;
-  }
-  scanCode(0, false);
-  return { clean: clean.join(''), literals, terminated };
+    ts.forEachChild(child, visit);
+  };
+  ts.forEachChild(node, visit);
+  return found;
 }
 
-const callPattern =
-  /(?<![\w$.])(xit|xtest|xdescribe|test|it|describe)((?:\.[A-Za-z]+)*)\s*\(\s*(['"`])/g;
-const allowedChain = new Set(['describe', 'serial', 'parallel']);
-const skippedSuite =
-  /(?<![\w$.])(?:describe|test|it)(?:\.[A-Za-z]+)*\.(?:skip|fixme|todo|fail|only)\b|(?<![\w$.])x(?:describe|it|test)\b|\.skipIf\b/;
-const loopLead = /(?<![\w$.])(?:for|while)\b|\.(?:forEach|map|flatMap|reduce|filter|each)\b/;
-const conditionalLead = /(?<![\w$.])(?:if|else)\b/;
-const conditionalPrefix =
-  /(?<![\w$.])if\s*\(.*\)\s*(?:else\s*)?$|(?<![\w$.])else\s*$|&&\s*$|\|\|\s*$|\?\s*$/s;
-const loopPrefix = /(?<![\w$.])(?:for|while)\s*(?:await\s*)?\(.*\)\s*$/s;
-const runtimeSkip = /(?<![\w$.])(?:test|it)\.(?:skip|fixme|fail)\s*\(/;
-
-export function findTestTitles(source: string): { balanced: boolean; calls: TitleCall[] } {
-  const { clean, literals, terminated } = lex(source);
-  const starts = new Map<number, RegExpExecArray>();
-  for (const match of clean.matchAll(callPattern))
-    starts.set(match.index, match as RegExpExecArray);
-  interface Frame {
-    open: string;
-    lead: string;
-    stmtStart: number;
-    at: number;
-  }
-  const frames: Frame[] = [{ open: '', lead: '', stmtStart: 0, at: 0 }];
-  const partner: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
-  const calls: TitleCall[] = [];
-  let balanced = terminated;
-  for (let i = 0; i < clean.length && balanced; i++) {
-    const top = frames[frames.length - 1];
-    const match = starts.get(i);
-    if (match) calls.push(describeCall(clean, literals, match, frames, top));
-    const ch = clean[i];
-    if ('([{'.includes(ch))
-      frames.push({
-        open: ch,
-        lead: clean.slice(top.stmtStart, i).trim(),
-        stmtStart: i + 1,
-        at: i,
-      });
-    else if (')]}'.includes(ch)) {
-      if (frames.length === 1 || top.open !== partner[ch]) balanced = false;
-      else {
-        frames.pop();
-        if (ch === '}') frames[frames.length - 1].stmtStart = i + 1;
+// A runtime test.skip(condition, ...) or test.fixme(condition, ...) written directly in a suite body (not inside
+// one of its tests or hooks, and not the declaration form test.skip('title', fn)) disables every test in it.
+function suiteLevelSkip(suite: ts.CallExpression): boolean {
+  let found = false;
+  const visit = (node: ts.Node) => {
+    if (found) return;
+    if (ts.isCallExpression(node)) {
+      const shape = shapeOf(node);
+      const first = node.arguments[0];
+      if (
+        shape &&
+        (shape.name === 'test' || shape.name === 'it') &&
+        shape.chain.some((part) => part === 'skip' || part === 'fixme') &&
+        first !== undefined &&
+        !isLiteralTitle(first)
+      ) {
+        found = true;
+        return;
       }
-    } else if (ch === ';') top.stmtStart = i + 1;
-  }
-  return { balanced: balanced && frames.length === 1, calls };
+    }
+    if (ts.isFunctionLike(node)) return;
+    ts.forEachChild(node, visit);
+  };
+  for (const argument of suite.arguments)
+    if (ts.isArrowFunction(argument) || ts.isFunctionExpression(argument))
+      ts.forEachChild(argument.body, visit);
+  return found;
 }
 
 function describeCall(
-  clean: string,
-  literals: Lexed['literals'],
-  match: RegExpExecArray,
-  frames: { lead: string; stmtStart: number; at: number }[],
-  top: { stmtStart: number },
-): TitleCall {
-  const quoteAt = match.index + match[0].length - 1;
-  const literal = literals.get(quoteAt)!;
-  const name = match[1];
-  const chain = match[2].split('.').filter(Boolean);
+  source: string,
+  node: ts.CallExpression,
+  ancestors: ts.Node[],
+): TitleCall | null {
+  const shape = shapeOf(node);
+  const first = node.arguments[0];
+  if (!shape || first === undefined || !startsWithLiteral(first)) return null;
+  const literalTitle = isLiteralTitle(first);
   const call: TitleCall = {
-    title: literal.value,
-    literal: literal.kind,
-    suite: name.endsWith('describe') || chain.includes('describe'),
+    title: ts.isStringLiteral(first)
+      ? first.text
+      : isTemplate(first)
+        ? source.slice(first.getStart() + 1, first.getEnd() - 1)
+        : first.getText(),
+    literal: isTemplate(first) ? 'template' : 'string',
+    suite: isSuite(shape),
     problem: null,
   };
-  const modifiers = chain.filter((part) => !allowedChain.has(part));
-  const after = clean.slice(literal.end + 1).match(/^\s*(.)/)?.[1];
-  const parenAt = match.index + match[0].lastIndexOf('(');
-  const prefix = clean.slice(top.stmtStart, match.index);
-  const leads = frames.map((frame) => frame.lead);
-  if (literal.kind === 'template') call.problem = 'it is a template literal, not a plain string';
-  else if (name.startsWith('x') || modifiers.length > 0)
+  const calls = ancestors.filter(ts.isCallExpression);
+  const enclosing = calls
+    .map((ancestor) => ({ node: ancestor, shape: shapeOf(ancestor) }))
+    .filter(
+      (entry): entry is { node: ts.CallExpression; shape: CallShape } => entry.shape !== null,
+    );
+  const modifiers = shape.chain.filter((part) => !plainChain.has(part));
+  if (isTemplate(first)) call.problem = 'it is a template literal, not a plain string';
+  else if (shape.name.startsWith('x') || modifiers.length > 0)
     call.problem =
       'it is marked ' +
-      (name.startsWith('x') ? name : modifiers.join('.')) +
+      (shape.name.startsWith('x') ? shape.name : modifiers.join('.')) +
       ' and is not a plain runnable test';
-  else if (after !== ',' && after !== ')') call.problem = 'its title is built from an expression';
-  else if (leads.some((lead) => skippedSuite.test(lead)))
+  else if (!literalTitle) call.problem = 'its title is built from an expression';
+  else if (enclosing.some((entry) => hasSkipModifier(entry.shape)))
     call.problem = 'it sits inside a skipped suite';
-  else if (loopPrefix.test(prefix) || leads.some((lead) => loopLead.test(lead)))
+  else if (
+    ancestors.some(
+      (ancestor) =>
+        ts.isForStatement(ancestor) ||
+        ts.isForInStatement(ancestor) ||
+        ts.isForOfStatement(ancestor) ||
+        ts.isWhileStatement(ancestor) ||
+        ts.isDoStatement(ancestor),
+    ) ||
+    calls.some(
+      (ancestor) =>
+        ts.isPropertyAccessExpression(ancestor.expression) &&
+        loopMethods.has(ancestor.expression.name.text),
+    )
+  )
     call.problem = 'it is generated in a loop or callback';
-  else if (conditionalPrefix.test(prefix) || leads.some((lead) => conditionalLead.test(lead)))
+  else if (
+    ancestors.some(
+      (ancestor) =>
+        ts.isIfStatement(ancestor) ||
+        ts.isConditionalExpression(ancestor) ||
+        (ts.isBinaryExpression(ancestor) &&
+          [
+            ts.SyntaxKind.AmpersandAmpersandToken,
+            ts.SyntaxKind.BarBarToken,
+            ts.SyntaxKind.QuestionQuestionToken,
+          ].includes(ancestor.operatorToken.kind)),
+    )
+  )
     call.problem = 'it is defined conditionally';
-  else if (runtimeSkip.test(clean.slice(parenAt, closingParen(clean, parenAt) + 1)))
+  else if (runtimeSkipIn(node))
     call.problem = 'it calls skip or fixme at run time, so it may not run';
   else if (
     !call.suite &&
-    frames.some((frame) => suiteLead.test(frame.lead) && suiteLevelSkip(clean, frame.at))
+    enclosing.some((entry) => isSuite(entry.shape) && suiteLevelSkip(entry.node))
   )
     call.problem = 'its enclosing suite calls skip or fixme at run time, so it may not run';
   return call;
 }
 
-// A runtime test.skip(condition, ...) or test.fixme(condition, ...) written directly in a suite body (not inside
-// one of its tests, and not the declaration form test.skip('title', fn)) disables every test in that suite.
-const suiteLead = /(?<![\w$.])(?:xdescribe|describe|test\.describe)(?:\.[A-Za-z]+)*$/;
-function suiteLevelSkip(clean: string, open: number): boolean {
-  const body = clean.slice(open, closingParen(clean, open) + 1);
-  for (const skip of body.matchAll(/(?<![\w$.])(?:test|it)\.(?:skip|fixme)\s*\(\s*(?!['"`])/g)) {
-    let depth = 0;
-    for (let k = 0; k < skip.index; k++) {
-      if ('([{'.includes(body[k])) depth++;
-      else if (')]}'.includes(body[k])) depth--;
+export function findTestTitles(source: string): { balanced: boolean; calls: TitleCall[] } {
+  const file = ts.createSourceFile(
+    'scan.ts',
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const syntax = ts.transpileModule(source, {
+    fileName: 'scan.ts',
+    reportDiagnostics: true,
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+  });
+  const calls: TitleCall[] = [];
+  const ancestors: ts.Node[] = [];
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node)) {
+      const call = describeCall(source, node, ancestors);
+      if (call) calls.push(call);
     }
-    if (depth <= 2) return true;
-  }
-  return false;
-}
-
-function closingParen(clean: string, open: number): number {
-  let depth = 0;
-  for (let i = open; i < clean.length; i++) {
-    if ('([{'.includes(clean[i])) depth++;
-    else if (')]}'.includes(clean[i]) && --depth === 0) return i;
-  }
-  return clean.length - 1;
+    ancestors.push(node);
+    ts.forEachChild(node, visit);
+    ancestors.pop();
+  };
+  visit(file);
+  return { balanced: (syntax.diagnostics ?? []).length === 0, calls };
 }
 
 // ---------------------------------------------------------------------------------------------------------

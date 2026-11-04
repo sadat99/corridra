@@ -13,7 +13,7 @@
       "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
       "docs/v3/phase-0/requirement-bindings.schema.json",
       "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
-      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
     ]
   },
   "rulesEnforcedByCheck": {
@@ -63,6 +63,11 @@
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
       "base": "4f2870e",
       "result": "52 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "ee22826 plus the scanner rewrite (uncommitted when run)",
+      "result": "57 passed. Third Codex P2 (the skipped-declaration check used a regex whose whitespace backtracking made a multiline test.skip('title', fn) look like a suite-level skip and flagged every runnable sibling) was a defect in the same text-scanning approach as the first two, so findTestTitles now parses the file with the TypeScript compiler API (ts.createSourceFile, a syntax-error check through ts.transpileModule) instead of lexing text: comments, strings and layout can no longer confuse it, and about 200 lines of lexer and regular expressions were removed. The existing scanner tests were the specification and pass unchanged except one expectation: a title built from an expression is now reported under its full source text instead of its first literal piece. New regression test for multiline, commented and template-quoted skipped declarations plus a multiline suite-level skip; on the previous scanner that test and the changed expectation fail (2 failed, 55 passed), on the new scanner 57 pass. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2)."
     },
     {
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",

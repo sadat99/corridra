@@ -467,6 +467,46 @@ test('a skipped sibling or a skip inside another test does not make unrelated te
   expect(byTitle.get('unrelated one')?.problem).toBeNull();
 });
 
+test('skipped declarations written across lines or with other quoting do not flag their siblings', () => {
+  const scan = findTestTitles(
+    [
+      "test.describe('suite', () => {",
+      '  test.skip(',
+      "    'skipped sibling',",
+      '    () => {},',
+      '  );',
+      '  test.fixme( // note',
+      '    "fixme sibling",',
+      '    () => {},',
+      '  );',
+      '  test.skip(`template sibling`, () => {});',
+      "  test('runnable one', () => {});",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  const byTitle = new Map(scan.calls.map((c) => [c.title, c] as const));
+  expect(byTitle.get('skipped sibling')?.problem).toEqual(expect.any(String));
+  expect(byTitle.get('fixme sibling')?.problem).toEqual(expect.any(String));
+  expect(byTitle.get('runnable one')?.problem).toBeNull();
+  // The same suite with a real suite-level condition on its own line still disables the test.
+  const disabled = findTestTitles(
+    [
+      "test.describe('suite', () => {",
+      '  test.skip(',
+      '    true,',
+      "    'disabled',",
+      '  );',
+      "  test('now not runnable', () => {});",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  expect(disabled.calls.find((c) => c.title === 'now not runnable')?.problem).toContain(
+    'enclosing suite',
+  );
+});
+
 test('the title scanner marks suite calls so they can be told apart from test cases', () => {
   const scan = findTestTitles(
     [
@@ -798,7 +838,7 @@ test('the title scanner marks skipped, conditional, generated and non-literal ti
     'todo one',
     'x one',
     'template one',
-    'joined ',
+    "'joined ' + 1 + ' title'",
     'each one',
     'for block one',
     'for statement one',
