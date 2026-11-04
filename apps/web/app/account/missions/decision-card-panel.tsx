@@ -6,6 +6,7 @@ import {
   countsWords,
   initialPanel,
   nextCreateCommand,
+  nextWithdrawCommand,
   panelReducer,
   requestBodies,
   shareableDecisions,
@@ -306,11 +307,10 @@ export function DecisionCardPanel({
     },
     withdraw: (cardId) =>
       void run(async (signal) => {
-        await send(
-          requestBodies({ resourceId, commandId: crypto.randomUUID() }).withdraw(cardId),
-          scope,
-          signal,
-        );
+        // One command per card: a retry after a lost answer is the same command.
+        const commandId = nextWithdrawCommand(panel, cardId, crypto.randomUUID());
+        dispatch({ type: 'withdrawStarted', cardId, commandId });
+        await send(requestBodies({ resourceId, commandId }).withdraw(cardId), scope, signal);
         dispatch({ type: 'withdrawn', cardId });
       }),
   };

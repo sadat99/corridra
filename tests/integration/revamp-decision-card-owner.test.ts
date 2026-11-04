@@ -8,6 +8,7 @@ import {
   canPreview,
   cardLink,
   nextCreateCommand,
+  nextWithdrawCommand,
   countsWords,
   failureWords,
   initialPanel,
@@ -352,6 +353,24 @@ describe('D-08 withdraw', () => {
     const html = render(ce(DecisionCardPanelView, { panel: p, decisions, handlers: {} }));
     expect(html.match(/>Withdraw</g)).toHaveLength(2);
     expect(html).toContain('2 opens');
+  });
+  it('D-08 keeps one command id per card for withdraw, so a retry is the same command', () => {
+    let p = panelReducer(initialPanel, {
+      type: 'stateLoaded',
+      canShare: true,
+      maxActive: 5,
+      cards: [card('ACTIVE')],
+    });
+    expect(nextWithdrawCommand(p, cardId, 'w-1')).toBe('w-1');
+    p = panelReducer(p, { type: 'withdrawStarted', cardId, commandId: 'w-1' });
+    // The answer was lost: the next click for the same card sends the same command.
+    p = panelReducer(p, { type: 'failed', status: 0 });
+    expect(nextWithdrawCommand(p, cardId, 'w-2')).toBe('w-1');
+    // Another card gets its own.
+    expect(nextWithdrawCommand(p, decisions[1]!.id, 'w-3')).toBe('w-3');
+    // After the withdrawal succeeds nothing is pending for it.
+    p = panelReducer(p, { type: 'withdrawn', cardId });
+    expect(nextWithdrawCommand(p, cardId, 'w-4')).toBe('w-4');
   });
   it('a withdrawn card leaves the active list', () => {
     let p = panelReducer(initialPanel, {

@@ -47,6 +47,8 @@ export type Panel = {
    * its link instead of making a second one.
    */
   pendingCreate: { commandId: string; decisionId: string; digest: string } | null;
+  /** The withdraw command in flight for each card, so a retry of a lost answer sends the same one. */
+  pendingWithdraw: Record<string, string>;
 };
 
 export const initialPanel: Panel = {
@@ -61,6 +63,7 @@ export const initialPanel: Panel = {
   notice: null,
   busy: false,
   pendingCreate: null,
+  pendingWithdraw: {},
 };
 
 export type PanelEvent =
@@ -71,6 +74,7 @@ export type PanelEvent =
   | { type: 'acknowledge'; value: boolean }
   | { type: 'busy'; value: boolean }
   | { type: 'createStarted'; commandId: string }
+  | { type: 'withdrawStarted'; cardId: string; commandId: string }
   | { type: 'created'; created: CreatedCard; origin: string }
   | { type: 'withdrawn'; cardId: string }
   | { type: 'failed'; status: number; reason?: string }
@@ -106,6 +110,10 @@ export const shareableDecisions = <T extends { requirementCurrent?: boolean }>(
  */
 export const withdrawable = (card: Pick<CardSummary, 'state'>) =>
   card.state === 'ACTIVE' || card.state === 'UNAVAILABLE';
+
+/** The command for a withdraw: the one already in flight for this card, otherwise a fresh one. */
+export const nextWithdrawCommand = (panel: Panel, cardId: string, fresh: string): string =>
+  panel.pendingWithdraw[cardId] ?? fresh;
 
 /** The command for a create: the one already in flight for this very preview, otherwise a fresh one. */
 export function nextCreateCommand(panel: Panel, fresh: string): string {
@@ -185,9 +193,17 @@ export function panelReducer(panel: Panel, event: PanelEvent): Panel {
         pendingCreate: null,
       };
     }
+    case 'withdrawStarted':
+      return {
+        ...panel,
+        pendingWithdraw: { ...panel.pendingWithdraw, [event.cardId]: event.commandId },
+      };
     case 'withdrawn':
       return {
         ...panel,
+        pendingWithdraw: Object.fromEntries(
+          Object.entries(panel.pendingWithdraw).filter(([id]) => id !== event.cardId),
+        ),
         cards: panel.cards.map((card) =>
           card.id === event.cardId ? { ...card, state: 'WITHDRAWN' as const } : card,
         ),
