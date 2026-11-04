@@ -1916,3 +1916,114 @@ describe('edges of the creator and the command', () => {
     expect(await count('app.outbox', 'event_id=$1', [events[0].id])).toBe(1);
   });
 });
+
+describe('a public read that waits on the open counter', () => {
+  // Concurrent reads of one card contend on its counter row. A read that was blocked there must check everything
+  // again when it wakes, because the card can be withdrawn, lapse or change while it waits. The ordering is made by
+  // locks, not by timing: A holds the counter row, B (the reader) is seen waiting in pg_stat_activity, the
+  // disturbance commits on its own connection, and only then is A released.
+  const quietly = async (sql: string, args: unknown[]) => {
+    // Owner-connection test mutation with trigger enforcement off for this transaction only. ALTER TABLE ... DISABLE
+    // TRIGGER cannot be used here: it would wait for the blocked reader, which waits for A.
+    const client = await f.owner.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SET LOCAL session_replication_role=replica');
+      await client.query(sql, args);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+  const opens = async (card: string) =>
+    Number(
+      (
+        await one(
+          'SELECT coalesce(max(opens),0) n FROM customer_private.decision_card_open WHERE card_id=$1',
+          [card],
+        )
+      ).n,
+    );
+  async function waitedRead(card: Card, disturb: () => Promise<unknown>) {
+    await read(card.hash); // creates the counter row, so the lock below has a row to hold
+    const before = await opens(card.cardId);
+    const holder = await f.owner.connect();
+    const reader = await f.runtime.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query(
+        'SELECT 1 FROM customer_private.decision_card_open WHERE card_id=$1 FOR UPDATE',
+        [card.cardId],
+      );
+      const pid = (await reader.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+      const answer = reader.query('SELECT app.read_decision_card($1) AS result', [card.hash]);
+      let waiting = false;
+      for (let attempt = 0; attempt < 400 && !waiting; attempt++) {
+        waiting =
+          (
+            await f.owner.query(
+              "SELECT 1 FROM pg_stat_activity WHERE pid=$1 AND wait_event_type='Lock'",
+              [pid],
+            )
+          ).rowCount === 1;
+        if (!waiting) await new Promise((resolve) => setImmediate(resolve));
+      }
+      expect(waiting).toBe(true);
+      await disturb();
+      await holder.query('COMMIT');
+      return { result: (await answer).rows[0].result, before, after: await opens(card.cardId) };
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      holder.release();
+      reader.release();
+    }
+  }
+
+  test('a read nothing disturbed still opens with the six fields and counts exactly once', async () => {
+    const s = await build('alice', workspaceId);
+    const p = await preview('alice', s, s.decisionId);
+    const card = await create('alice', s, s.decisionId, p.digest);
+    const { result, before, after } = await waitedRead(card, async () => undefined);
+    expect(result.state).toBe('OPEN');
+    expect(result.card).toEqual(p.fields);
+    expect(Object.keys(result).sort()).toEqual(['card', 'expiresAt', 'state', 'synthetic']);
+    expect(after).toBe(before + 1);
+  }, 60000);
+
+  test('a card withdrawn while the read waited answers unknown and is not counted', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    const { result, before, after } = await waitedRead(card, () => withdraw('alice', card.cardId));
+    expect(result).toEqual(unknown);
+    expect(after).toBe(before);
+  }, 60000);
+
+  test('a card whose time ran out while the read waited answers unknown and is not counted', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    const { result, before, after } = await waitedRead(card, () =>
+      quietly(
+        "UPDATE customer_private.decision_card SET created_at=now()-interval '2 days',expires_at=now()-interval '1 minute' WHERE id=$1",
+        [card.cardId],
+      ),
+    );
+    expect(result).toEqual(unknown);
+    expect(after).toBe(before);
+  }, 60000);
+
+  test('a decision field that changed while the read waited answers unknown and is not counted', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    const { result, before, after } = await waitedRead(card, () =>
+      quietly(
+        "UPDATE app.mission_selection SET next_action='Changed while a read waited' WHERE id=$1",
+        [s.decisionId],
+      ),
+    );
+    expect(result).toEqual(unknown);
+    expect(after).toBe(before);
+  }, 60000);
+});

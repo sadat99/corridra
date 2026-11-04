@@ -309,9 +309,21 @@ BEGIN
  expiry:=least(card.expires_at,(resolved->>'expiresAt')::timestamptz);
  opened:=clock_timestamp();
  IF expiry<=opened THEN RETURN jsonb_build_object('state','unknown'); END IF;
- INSERT INTO customer_private.decision_card_open(card_id,opens,first_opened_at,last_opened_at) VALUES(card.id,1,opened,opened)
- ON CONFLICT (card_id) DO UPDATE SET opens=customer_private.decision_card_open.opens+1,
-  last_opened_at=greatest(customer_private.decision_card_open.last_opened_at,excluded.last_opened_at);
+ BEGIN
+  -- Readers of one card contend on its counter row, so this write can wait for another transaction, and the card can
+  -- be withdrawn, lapse or change meanwhile. Everything is therefore checked again, with fresh statements, after the
+  -- write. Any change raises inside this nested block, which undoes the count, so an unknown answer never counts.
+  INSERT INTO customer_private.decision_card_open(card_id,opens,first_opened_at,last_opened_at) VALUES(card.id,1,opened,opened)
+  ON CONFLICT (card_id) DO UPDATE SET opens=customer_private.decision_card_open.opens+1,
+   last_opened_at=greatest(customer_private.decision_card_open.last_opened_at,excluded.last_opened_at);
+  SELECT * INTO card FROM customer_private.decision_card WHERE id=card.id;
+  IF EXISTS(SELECT FROM customer_private.decision_card_withdrawal WHERE card_id=card.id) THEN RAISE EXCEPTION 'Card changed while it was read' USING ERRCODE='DC001'; END IF;
+  resolved:=customer_private.decision_card_resolve(card.saved_mission_id,card.decision_id,card.principal_id);
+  IF resolved IS NULL OR resolved->>'digest' IS DISTINCT FROM card.field_digest THEN RAISE EXCEPTION 'Card changed while it was read' USING ERRCODE='DC001'; END IF;
+  expiry:=least(card.expires_at,(resolved->>'expiresAt')::timestamptz);
+  IF expiry<=clock_timestamp() THEN RAISE EXCEPTION 'Card changed while it was read' USING ERRCODE='DC001'; END IF;
+ EXCEPTION WHEN SQLSTATE 'DC001' THEN RETURN jsonb_build_object('state','unknown');
+ END;
  RETURN jsonb_build_object('state','OPEN','card',resolved->'fields','expiresAt',customer_private.decision_card_iso(expiry),'synthetic',true);
 EXCEPTION WHEN insufficient_privilege THEN RETURN jsonb_build_object('state','unknown');
 END $$;
