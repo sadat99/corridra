@@ -32,6 +32,9 @@ import { AccountHashRedirect } from './hash-redirect';
 import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
+import { Suspense } from 'react';
+import { WorkList } from './work-list';
+import { parseWorkFilter } from '../../lib/work-items/view';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -48,9 +51,10 @@ const headings: Record<View, { eyebrow: string; title: string }> = {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string | string[] }>;
+  searchParams: Promise<{ view?: string | string[]; work?: string | string[] }>;
 }) {
-  const requested = (await searchParams).view;
+  const query = await searchParams;
+  const requested = query.view;
   const view: View = views.find((item) => item === requested) ?? 'home';
   const auth = neonAuth();
   if (!auth) redirect('/signin');
@@ -125,6 +129,13 @@ export default async function Page({
             action="New request"
             href={requestCreationEnabled ? '/account?view=work#customer-workspaces' : '/plan'}
           />
+          {workspaceIssuer && (
+            <p>
+              <Link prefetch={false} className="text-link" href="/account?view=work">
+                See all your work
+              </Link>
+            </p>
+          )}
           <section className="guide-area ux-account-groups" aria-labelledby="open-title">
             <h2 id="open-title">Have something to open?</h2>
             <ul className="ux-quick-links">
@@ -162,6 +173,16 @@ export default async function Page({
       )}
       {view === 'work' && (
         <div id="my-work" tabIndex={-1} className="ux-account-groups">
+          {workspaceIssuer && (
+            <Suspense fallback={<p role="status">Loading your work…</p>}>
+              <WorkList
+                subject={data.user.id}
+                issuer={workspaceIssuer}
+                filter={parseWorkFilter(query.work)}
+                rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+              />
+            </Suspense>
+          )}
           <section aria-label="Manage your work">
             <h2>Manage your work</h2>
             <ul className="ux-quick-links">

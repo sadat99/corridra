@@ -1,0 +1,39 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 2 phase 2, the Work list on /account?view=work",
+  "kind": "Screen built to docs/revamp/specs/home-work.md on top of the work-item adapter (PR 268). Existing panels stay mounted and visible.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch or write is added.",
+  "status": "Built on branch revamp/customer over the adapter commit. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "authorityStamp": "auth-e741ff45cd18",
+  "newFiles": [
+    "apps/web/app/account/work-list.tsx, work-rows.tsx, work-list.css",
+    "apps/web/lib/work-items/view.ts",
+    "tests/integration/revamp-work-screen.test.ts (vitest, 34 tests: H-01, H-02, H-04, H-05, H-06, H-08 and row rules)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: reads `work` from the address, shows the list first in the Work view only when the workspace module is on, and adds one link 'See all your work' under the Home next-step card."
+  ],
+  "decisions": {
+    "noDisclosure": "The spec says the existing panels may move into a closed disclosure. They did not: about fifteen operator specs open /account?view=work and act on those panels, and a closed disclosure would hide them. Every panel, id and link stays in place and visible, so #customer-workspaces and #customer-requests land as today and H-03 holds without a disclosure.",
+    "countLine": "No count line, because there is no disclosure.",
+    "selector": "A real radio group in a GET form with a Show button, no script needed. Counts come from the items read and read 'N or more' whenever the list is partial, unreadable or has skipped workspaces.",
+    "titles": "A request title is the one the requests route derives from its original brief (via the adapter); the kind word is the heading only when it was not read.",
+    "statusWords": "Existing sets only: customerStatusLabel for drafts and requests, the service-request status words for service requests. A programme has no status and shows none.",
+    "dates": "Rows say 'Updated', 'Sent' (requests) or 'Created' (programmes) by atKind, never 'Updated' for a creation time.",
+    "firstPage": "Ten rows before 'Show 10 more' instead of the spec's twenty, because twenty long rows were over the phone scroll budget (Guardian item 5).",
+    "language": "Stored titles and workspace names are marked lang zh for Han text and lang bn for Bengali text."
+  },
+  "receipts": {
+    "vitest": "pnpm exec vitest run on revamp-work-items and revamp-work-screen: 2 files, 64 passed (local, node 22).",
+    "mutations": "Treating an unreadable empty list as empty fails 3; dropping the 'or more' rule fails 3; accepting a raw work value fails 2; showing every row instead of twenty fails 1. Each restored.",
+    "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/). The first typecheck failed on my own test importing a .tsx file directly; fixed with the dynamic import the existing tests use.",
+    "layout": "LOCAL APPROXIMATION, not CI-gated: the component rendered to HTML with the real globals.css and work-list.css inside main.ux-customer, measured in Chromium at 320, 390, 768 and 1440 with axe (wcag2a, wcag2aa, wcag22aa). Four states: no sideways scroll, no action under 44px, axe clean in all 16 cases. Twenty rows first measured 5.1 screens at 390 with long text, over the budget of 4, so the first page was cut to ten rows (then 'Show 10 more'). Ten rows of the worst-case fixture (45-character workspace name and a long title in every fifth row, 900px viewport): 3.6 screens at 320, 2.9 at 390, 1.9 at 768, 1.5 at 1440 (budget 4 phone, 2.5 desktop). Ordinary workspace names: 3.0, 2.4, 1.6, 1.5."
+  },
+  "notRun": [
+    "The real /account page signed in: the verification server has no customer identity (KI-16), so H-07 is not proved in the real frame. CI's operator suite runs the existing panels but does not measure this list.",
+    "Keyboard walk-through with a screen reader.",
+    "Full integration, operator and Playwright suites (CI runs them on the pushed head)."
+  ],
+  "sensitive": "Reads only through the adapter, which keeps items in the person's own workspaces. Guardian review requested."
+}
