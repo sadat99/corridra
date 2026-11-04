@@ -1,0 +1,45 @@
+/* The bare decision card page. Existing tokens only. One column, readable at 320 px and up. */
+.decision-card {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  min-height: 60vh;
+  align-content: start;
+}
+.decision-card h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: var(--text-h2);
+  line-height: 1.15;
+}
+.decision-card-note {
+  margin: 0;
+  color: var(--text-2);
+}
+.decision-card dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.decision-card dl > div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-card-radius);
+  overflow-wrap: anywhere;
+}
+.decision-card dt {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--text-2);
+}
+.decision-card dd {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-1);
+}

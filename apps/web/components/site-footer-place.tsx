@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useT } from './language-provider';
 import { SiteFooterView } from './site-footer-view';
 import { signedInShellFor } from '../lib/ux/shells';
+import { isBarePublicPage } from '../lib/ux/bare-pages';
 
 /**
  * Chooses the footer for the page. `shells` is CORRIDRA_UX_SHELLS_V2, read on the server, the same switch the
@@ -15,6 +16,7 @@ import { signedInShellFor } from '../lib/ux/shells';
 export function SiteFooterPlace({ realUse, shells }: { realUse: boolean; shells: boolean }) {
   const t = useT();
   const pathname = usePathname();
+  if (isBarePublicPage(pathname)) return null;
   if (!shells || !signedInShellFor(pathname)) return <SiteFooterView realUse={realUse} />;
   return (
     <footer className="site-footer">

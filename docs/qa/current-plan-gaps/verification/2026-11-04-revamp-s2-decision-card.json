@@ -1,0 +1,49 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 4, decision card step 4, the two screens (D-01 to D-10)",
+  "kind": "The public /decision-card page, the owner panel inside the saved mission page and the shared bare-page predicate. Behind CORRIDRA_SHARE_CARD, default off. No schema, route, migration or switch change.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. Building does not enable: enabling needs the recorded privacy review, the installed module and the owner (ADR-076 item 6).",
+  "status": "Built on branch revamp/customer over main after the money PR. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "authorityStamp": "auth-4041eae60ee6",
+  "newFiles": [
+    "apps/web/lib/ux/bare-pages.ts (the one isBarePublicPage predicate)",
+    "apps/web/lib/decision-card-page.ts, apps/web/app/decision-card/{page,decision-card-view,decision-card-page}.tsx and decision-card.css (the public page)",
+    "apps/web/lib/decision-card-owner.ts, apps/web/app/account/missions/decision-card-panel.tsx and .css (the owner panel)",
+    "tests/integration/revamp-bare-pages.test.ts, revamp-decision-card-page.test.ts, revamp-decision-card-owner.test.ts (vitest)",
+    "tests/e2e/verification/revamp-s2/decision-card.spec.ts (Playwright on a real production build)"
+  ],
+  "changedFiles": [
+    "apps/web/components/ux/shell-header.tsx, site-footer-place.tsx and corner-dock.tsx: one early return each so a bare page draws no header, footer or help dock (the header is the component that asks /api/*/get-session). These three belong to S3; the change is one guard each.",
+    "apps/web/app/account/missions/decision-history.tsx, saved-commercial-report.tsx and [resourceId]/page.tsx: a `decisionCards` flag, read on the server, mounts the owner panel inside the approved decisions. With the switch off nothing is mounted.",
+    "tests/ux/ux-baseline.json: one line, '/decision-card': {} (a new route starts clean). The UX gate discovers every route and refused it without an entry; with the entry the gate for /decision-card passes, so the page measures clean at every width.",
+    "tests/operator/ux-plan-languages.spec.ts, ux-home-languages.spec.ts, ux-first-question.spec.ts, v3-language-switcher.spec.ts: the esbuild fixtures that bundle the site chrome stub next/navigation with only useRouter. The dock guard imports usePathname, so CI failed (operator shards 1, 2, 4; 'No matching export in fixture:next/navigation for import usePathname'). Each stub now also exports usePathname (a page that is not bare). Reproduced locally first, then fixed: ux-plan-languages 110 passed, ux-home-languages and v3-language-switcher 59 passed, ux-first-question and v3-saved-commercial-ui 55 passed."
+  ],
+  "decisions": {
+    "realWorkspace": "Ruled by the Guardian (4 Nov 2026): use the saved report's own synthetic flag. With the switch on and the flag false the panel shows only 'Decision cards are available for sample workspaces only.' with no control, link, count or preview. On a sample report any denied or failed state answer, or canShare false, means the panel is absent, never that line and never a disabled panel. Both cases are tested (D-07 real workspace, D-09 sub-case).",
+    "linkKeptInMemory": "The link returned by create is held in memory only and dropped on pagehide; it is never stored. After a reload the card is listed without its link.",
+    "everyAnswerOneMessage": "On the public page a network failure, a 429, a 503, a malformed fragment and an unknown answer all show 'This link is not available.'",
+    "withdrawOnlyActive": "State lists only the caller's own cards, and Withdraw is offered for an active or an unavailable one (an unavailable card still counts toward the cap).",
+    "onlyCurrentRequirements": "Guardian finding 2: step 1 offers only decisions whose requirementCurrent is true (a decision made against a requirement that has since changed is never put in a link). D-06 case added: a changed requirement is not offered, and when none is current the panel says 'There is no reviewed decision to share yet.'",
+    "evidenceImages": "Guardian finding 1: the first push carried 8 regenerated evidence images under docs/design-system/evidence/ux-repair-2026-10-29/after/ from a local operator run (git add -A after the run). They are restored to main's versions. Commits here now add named files only.",
+    "retryReusesCommand": "Codex finding (P2), verified: create is idempotent only for the same command id, so a lost answer followed by a fresh id would have made a second card and left the first without its link. The panel now keeps the create command for the preview on screen (pendingCreate) and a retry sends the same one; a new preview, another decision, a changed decision or a success starts a new one. The same holds for withdraw: one command per card, kept until the withdrawal succeeds (the Guardian asked for it; the database already answers a repeat withdrawal of a card with the same result).",
+    "withdrawUnavailable": "Codex finding (P2), verified in the SQL: create_decision_card counts every unexpired, unwithdrawn card toward the five, including UNAVAILABLE ones, and withdraw_decision_card accepts any of the creator's cards. Withdraw is now offered for ACTIVE and UNAVAILABLE cards, so the slot can be freed."
+  },
+  "receipts": {
+    "vitest": "bare-pages 14, decision-card-page 15, decision-card-owner 25 pass. The existing decision card suites (138) and ux-room, ux-teaching-layer, money and work tests (165) still pass.",
+    "red": "Each new test file failed first with the module not found.",
+    "realBuild": "tests/e2e/verification/revamp-s2/decision-card.spec.ts on a production build, local PostgreSQL 16: 9 passed (rerun on the final tree: 9 passed) (D-01 no get-session request and no Set-Cookie on the page or any response, no cookies in the context, no header, footer or dock; D-02 the token in no request URL, not in the address after load, not in either storage, POST body only; D-03 four different links show identical text; D-04 no-store on the page and the answer, noindex, no-referrer, X-Robots-Tag; D-10 the public page unavailable and open states at 320, 390, 768, 1440 with no sideways scroll and axe wcag2a, wcag2aa, wcag22aa clean).",
+    "mutation": "Removing the header guard fails D-01 (the page then requests /api/operator-auth/get-session). Restored.",
+    "otherBrowserSpecs": "corner-dock, header-session and mission-mail-mute browser specs: 14 passed with the guards in place.",
+    "ownerPanelLayout": "LOCAL APPROXIMATION, not CI-gated: the panel in its fullest state (preview, link, error, two cards) rendered with the real stylesheets and measured in Chromium at 320, 390, 768, 1440: no sideways scroll, no target under 44px, axe clean; 2.5, 2.3, 1.9, 1.9 screens.",
+    "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0. pnpm preflight standard on the rebased tree, with the browser path set: format, lint, typecheck, docs-tests (after one fix: a raw font-family in the owner panel stylesheet, now the --font-mono token), ledger, security-scan, integration-changed, build, e2e (198 passed) passed. It reported NOT READY on two things, both resolved and rerun: the UX gate had no baseline entry for the new /decision-card route (added as {}; the gate for that route then passed), and two operator specs (v3-workspace-invitation-ui, v3-workspace-team-ui) failed on 'git show <old sha>' because the clone was shallow (KI-15); after git fetch --unshallow all 9 tests in those two files pass. The full preflight was not re-run end to end after those two fixes.",
+    "ciFailureOnFirstPush": "The first push (2ad095e) failed CI on three operator shards for that one cause. The earlier local preflight did not catch it: its operator-affected step runs only the specs it maps to the changed files, and none of these fixtures import the three guarded files directly. The stubs are fixed in this push.",
+    "lastDelta": "The last two pushes (044207b and the withdraw-command change) were verified by the unit tests, format, lint and typecheck and by CI on the exact head; pnpm preflight was not re-run for them (the container's browser steps were unreliable, see above)."
+  },
+  "notRun": [
+    "The owner panel signed in against a real decision card database (there is no signed-in fixture for it; the module is not installed). The create, preview, withdraw and state requests are shaped by the same strict schema the service uses and tested for shape, not exercised end to end from the browser.",
+    "A screen-reader walk-through of either screen.",
+    "The full operator suite locally (CI runs it on the pushed head)."
+  ],
+  "sensitive": "Public unauthenticated route, link tokens, cookies and tenant scope. Guardian review requested."
+}

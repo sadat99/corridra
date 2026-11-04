@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
+import { DecisionCardPanel } from './decision-card-panel';
 const record = z
   .object({
     id: z.uuid(),
@@ -39,7 +40,7 @@ const result = z.discriminatedUnion('state', [
     })
     .strict(),
 ]);
-type Scope = SavedMissionScope & { resourceId: string };
+type Scope = SavedMissionScope & { resourceId: string; cards?: boolean };
 export function DecisionHistory(props: Scope) {
   return (
     <PrivateHistory
@@ -48,7 +49,7 @@ export function DecisionHistory(props: Scope) {
     />
   );
 }
-function PrivateHistory({ subject, issuer, resourceId }: Scope) {
+function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
   const [data, setData] = useState<z.infer<typeof result> | null>(null),
     [status, setStatus] = useState('idle');
   const controller = useRef<AbortController | null>(null);
@@ -194,6 +195,20 @@ function PrivateHistory({ subject, issuer, resourceId }: Scope) {
               )}
             </article>
           ))}
+          {cards && (
+            <DecisionCardPanel
+              resourceId={resourceId}
+              subject={subject}
+              issuer={issuer}
+              synthetic={data.synthetic}
+              decisions={data.decisions.map(({ id, company, decision, requirementCurrent }) => ({
+                id,
+                company,
+                decision,
+                requirementCurrent,
+              }))}
+            />
+          )}
         </>
       )}
     </section>

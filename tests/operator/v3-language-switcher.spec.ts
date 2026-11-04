@@ -55,7 +55,7 @@ test.beforeAll(async () => {
             contents:
               args.path === 'next/link'
                 ? 'export default function Link(props){return <a {...props}/>}'
-                : 'const router={replace:()=>{},refresh:()=>{}};export function useRouter(){return router}',
+                : 'const router={replace:()=>{},refresh:()=>{}};export function useRouter(){return router}export function usePathname(){return "/"}',
           }));
         },
       },
