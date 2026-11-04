@@ -277,6 +277,14 @@
       "bytes": 12161,
       "sha256": "a3f3eac5e98c213b56ee8d02651b1fc43dd8c19d8eb6981706eb6fe4404193cb",
       "meaning": "Exact active ledger after GAP012 production verification, while GAP015 PR246 checks were pending. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
+      "archive": "docs/v3/history/ledger-through-pr257-merge-2026-11-04.md",
+      "bytes": 11467,
+      "sha256": "0a869cf08b1885df894fb37bf8ae8c6546f0316a7ecbe07610ea11bc99c26c4d",
+      "meaning": "Exact active ledger before the PR 257 merge and the Books panel (E2b) were recorded, including the E2a detail and the PR 253 to 256 bullets later condensed. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

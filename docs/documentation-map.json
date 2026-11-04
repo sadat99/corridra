@@ -1364,6 +1364,11 @@
       "use": "Exact hashed ledger through GAP012 release evidence; preserve prior recovery references and use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-through-pr257-merge-2026-11-04.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger of 4 November 2026 before the PR 257 merge record; preserves the older bullets condensed in the current ledger; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

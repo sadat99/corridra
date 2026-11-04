@@ -2883,8 +2883,8 @@
       "current": {
         "disposition": "OPEN",
         "scope": "OWNER_APPROVED_BATCH_E",
-        "summary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission; CLIENT_PROGRESS.allow_export is untouched and stays false. ADR076 items 1-3 and 6 (accepted under the owner's 3 November direction to take over Batch E and ADR-076 with full pre-approval; text applied on 4 November 2026) give the books their own disclosure contract. Batch E E2a built the backend in draft PR 257 (local head d3b190e; remote head 941dded when recorded; unmerged) behind the default-off CORRIDRA_UX_BOOKS switch: SQL function customer.saved_mission_book builds a Trip or Supplier projection key by key from the saved report the signed-in owner can already read, through the same ownership, revocation, expiry and retention gates; the PDF is rendered inside the transaction before commit and never stored; one immutable ledger row (digest of the projection and time, no content) and one delivery.book.generated event (no saved-mission id) record each new generation; the same command id returns the same record, a changed source is refused (409) and 30 new generations per hour per customer and mission are allowed (then 429). The download route is POST-only and answers 503 until the switch is on and the books database module is installed; that module is NOT installed in production (the install report would move from `customer_book_migrations: not installed` to `1 applied` only after an owner-approved protected run, which has not been requested). No download panel exists yet (E2b). Local receipts only (books set 73 passed twice, PDF regression 23, saved-mission regression 70 twice, wide switch/UX set 582, typecheck, lint, format, docs, build exit 0); a full integration run had 4 failures that also fail on unmodified main. Frozen-head CI, CodeQL and the Codex review are pending and not claimed. Limits: the PDF fonts lack Arabic, Thai, Devanagari and emoji (refused with an honest 422 UNSUPPORTED_TEXT), the PDF is untagged, and the on-screen mission view still prints the raw country code.",
-        "evidenceRevision": "d3b190e3585bd737de3200df7c656e420f2ad7de",
+        "summary": "Existing report/PDF export is different. Scoped-delivery SQL `0016:32` prohibits client-progress export and `:205`/`:219` enforces permission; CLIENT_PROGRESS.allow_export is untouched and stays false. ADR076 items 1-3 and 6 (accepted under the owner's 3 November direction to take over Batch E and ADR-076 with full pre-approval) give the books their own disclosure contract. Batch E E2a, the backend, was squash-merged on 4 November 2026 as PR 257 (d1ddbcd, PR head 4309ec5; Codex's P1 about the private-API header overrides was fixed in 4309ec5; 19 checks green after one re-run of a timed-out startup-recovery operator test, KI-34; main push CI run 41758581009 succeeded; CodeQL run 41758580965 was still running when last read and is not claimed). It sits behind the default-off CORRIDRA_UX_BOOKS switch: a SQL function builds a Trip or Supplier projection from the saved report the signed-in owner can already read, the PDF is rendered inside the transaction and never stored, one immutable ledger row and one event record each new generation, a changed source is refused (409) and 30 new generations per hour are allowed (then 429). The route is POST-only and answers 503 until the switch is on and the books database module is installed; that module is NOT installed in production (it needs an owner-approved protected run). Deployment of d1ddbcd is UNKNOWN (not verifiable from the recording environment). Batch E E2b, the download panel on the saved mission page (commits eae5140 and f7caeb3 on branch claude/zen-hopper-1iqtdn, not yet in a pull request when recorded), is built behind the same switch: closed disclosure, no checkbox, cannot-recall notice, two PDF buttons, retry with the same command id, honest denial and could-not-confirm messages, 27 English placeholder words (D16). Local receipts: ux-books vitest 23/23, operator ux-books spec 35 tests with 175/175 on --repeat-each=5 at two mock delays, 85 neighbouring operator tests, 168 related vitest, typecheck, lint, format, docs and build exit 0. Not proven: real-browser downloads (iOS Safari, Firefox), screen readers, the PDF route in a browser (the book API is mocked in the operator spec), production enablement. Limits: the PDF fonts lack Arabic, Thai, Devanagari and emoji (refused with an honest 422 UNSUPPORTED_TEXT), the PDF is untagged, and the on-screen mission view still prints the raw country code.",
+        "evidenceRevision": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
         "evidenceObservedOn": "2026-11-04",
         "lastRecordedOn": "2026-11-04",
         "states": {
@@ -2892,12 +2892,16 @@
             "state": "PARTIAL",
             "evidence": [
               "baselines/2026-11-01/REPORT.md#gap-035",
-              "verification/2026-11-04-batch-e2a-books-backend.json"
+              "verification/2026-11-04-batch-e2a-books-backend.json",
+              "verification/2026-11-04-batch-e2b-books-panel.json"
             ]
           },
           "verification": {
             "state": "PARTIAL",
-            "evidence": ["verification/2026-11-04-batch-e2a-books-backend.json"]
+            "evidence": [
+              "verification/2026-11-04-batch-e2a-books-backend.json",
+              "verification/2026-11-04-batch-e2b-books-panel.json"
+            ]
           },
           "deployment": {
             "state": "UNKNOWN",
@@ -2919,8 +2923,8 @@
         "closureAcceptance": "Obtain a separate book-export disclosure contract and prove only permitted content can be exported.",
         "prerequisites": [
           "Owner scope for the books is given by ADR076 items 1-3 and 6 (accepted under the owner's 3 November direction); retain the original boundary: CLIENT_PROGRESS export stays prohibited and the books use their own purpose.",
-          "Draft PR 257 needs green exact-head CI and CodeQL, a clean Codex review and the owner's merge command, then verified deployment.",
-          "The books database module is installed only by an owner-approved protected install run; enabling CORRIDRA_UX_BOOKS is a separate owner action; the download panel (E2b) must be built and proved in browsers before customers can use the feature.",
+          "The E2b panel needs its pull request, green exact-head CI and CodeQL, a clean Codex review, merge and verified deployment.",
+          "The books database module is installed only by an owner-approved protected install run; enabling CORRIDRA_UX_BOOKS is a separate owner action; real-browser download checks and native language review are still to do before customers rely on the feature.",
           "Adding fonts for scripts the PDF fonts lack is a separate owner and asset decision."
         ],
         "closureEvidence": []
@@ -2941,6 +2945,14 @@
           "evidenceRevision": "d3b190e3585bd737de3200df7c656e420f2ad7de",
           "disposition": "OPEN",
           "note": "Disposition moves from OWNER_DEPENDENT to OPEN: ADR076 items 1-3 and 6 were accepted for the Trip Book and Supplier Book under the owner's 3 November direction to take over Batch E and ADR-076 with full pre-approval; item 1's 'owner/admin' is recorded as the signed-in customer who owns the active saved mission (a saved mission has no workspace role), the Supplier Book carries the mission title as heading, and no step-up MFA applies to customer routes. The backend is implemented in draft PR 257 (commits bacb384, 9521e0f, 941dded, 5a015a6, ac32e34, d3b190e) behind the default-off CORRIDRA_UX_BOOKS switch with an uninstalled database module. Implementation moves from MISSING to PARTIAL (backend built, download panel E2b not built); verification moves from UNKNOWN to PARTIAL on local receipts only (failing-before then passing runs for the PDF writer, SQL function and route; final books set 5 files 73 passed twice at d3b190e; PDF regression 23 passed; saved-mission regression 70 passed twice; wide switch/UX set 582 passed; typecheck, lint, format, docs and build exit 0). A full integration run at 941dded had 4 failing files that also fail on unmodified main 4456042. Two independent reviews found no blocking defect. Frozen-head CI, CodeQL and the Codex review are pending and not claimed; Playwright suites were not run (no UI). Deployment and activation stay UNKNOWN, approval is APPROVED for items 1-3 and 6, commercial operation UNKNOWN; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2a-books-backend.json."
+        },
+        {
+          "eventId": "GAP-035-H003",
+          "recordedOn": "2026-11-04",
+          "type": "BACKEND_MERGED_AND_PANEL_BUILT",
+          "evidenceRevision": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
+          "disposition": "OPEN",
+          "note": "PR 257 (E2a backend) was squash-merged on 4 November 2026 at 02:06:48Z as d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c (PR head 4309ec5a). Codex's P1 on 32cfcb6 (route not in the private-API header overrides) was fixed in 4309ec5, which registers customer-books and customer-missions (customer-missions previously shipped the default referrer policy) and adds tests/integration/private-api-headers.test.ts (30 tests); Codex then reported no major issues. CI on 4309ec5: 19 checks green after one re-run of operator (6), whose first run failed one test, tests/operator/z-startup-recovery.spec.ts, with a 180000 ms timeout on a slow runner (cause inferred, not proven; KI-34). Main push CI run 41758581009 for d1ddbcd concluded success; CodeQL run 41758580965 was in progress when last read and is not claimed. Vercel deployment of d1ddbcd is UNKNOWN. The E2b download panel is built on the branch (commits eae5140 and f7caeb3, not in a pull request when recorded); an adversarial review and a designer audit on eae5140 found no blocking defect, one real defect (a stale book denial shown on a later evidence denial) and test gaps, all fixed in f7caeb3. Implementation stays PARTIAL (the panel is not merged and nothing is enabled); verification stays PARTIAL (local receipts; exact-head CI and Codex on the panel pending; no real-browser or screen-reader proof). Deployment and activation UNKNOWN, approval APPROVED for items 1-3 and 6, commercial operation UNKNOWN; nothing is RESOLVED. Baseline and earlier history preserved. Evidence: verification/2026-11-04-batch-e2b-books-panel.json."
         }
       ]
     },

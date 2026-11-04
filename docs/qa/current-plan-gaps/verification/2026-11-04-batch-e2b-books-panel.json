@@ -1,0 +1,372 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "E",
+  "kind": "E2b Books download panel on the saved mission page, and the record of the PR 257 merge",
+  "findings": ["GAP-035"],
+  "status": "PR 257 (E2a Trip Book and Supplier Book backend) is MERGED as d1ddbcd. The E2b download panel is built on branch claude/zen-hopper-1iqtdn in commits eae5140 (feature) and f7caeb3 (review follow-ups), behind the default-off CORRIDRA_UX_BOOKS switch; it was not pushed or in a pull request when recorded, so no CI, CodeQL or Codex result exists for it. Nothing is deployed-verified, enabled or activated by agents. Migration 0002 (programme projection) and the books database module are not installed in production.",
+  "pullRequests": {
+    "pr257Merged": {
+      "number": 257,
+      "url": "https://github.com/sadat99/corridra/pull/257",
+      "mergedAt": "2026-11-04T02:06:48Z",
+      "mergeCommit": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "head": "4309ec5a",
+      "source": "relayed by the conductor, who verified it; the scribe did not re-read GitHub",
+      "review": "Codex review of 32cfcb6 raised a P1: the route was not in the private-API header overrides. Fixed in 4309ec5, which registers customer-books and customer-missions (customer-missions had shipped the default referrer policy strict-origin-when-cross-origin; both now send no-referrer, no-store and nosniff, checked on the compiled route through next start; GET on /api/customer-books answers 405 with the same headers) and adds tests/integration/private-api-headers.test.ts (30 tests; it fails on the old configuration for exactly those two routes and checks every apps/web/app/api/customer-* folder against the rules). Codex then reported no major issues on 4309ec5.",
+      "checks": "19 checks green on 4309ec5 after ONE re-run of operator (6). Its first run failed one test, tests/operator/z-startup-recovery.spec.ts (UX-01 startup outage), with Test timeout of 180000ms exceeded, while operator (2) and browser also ran about 15 and 18 minutes against about 5 for the other jobs (slow runner). The re-run passed with no code change. The cause is inferred, not proven (KI-34).",
+      "postMergeMainCi": {
+        "run": 41758581009,
+        "conclusion": "success"
+      },
+      "postMergeCodeql": {
+        "run": 41758580965,
+        "status": "in progress when last read; no result is claimed"
+      },
+      "deployment": "Vercel deployment of d1ddbcd: state UNKNOWN. The GitHub status for the sha was 'pending: Vercel is deploying' at about 02:10Z and Vercel was not reachable from the recording session. Production behaviour of the Books switch is not observable and is not enabled by this work."
+    },
+    "e2bBranch": {
+      "branch": "claude/zen-hopper-1iqtdn",
+      "commits": [
+        {
+          "sha": "eae5140",
+          "note": "feat: Books download panel on the saved mission page (E2b), default off"
+        },
+        {
+          "sha": "f7caeb3342b879ffb00474a0106722dfbb6d0a96",
+          "note": "fix: Books panel follow-ups from review (E2b)"
+        }
+      ],
+      "baseRevision": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "state": "local only when recorded; the scribe's record commit is the third commit; the conductor pushes and opens the draft pull request"
+    }
+  },
+  "e2bBehaviour": {
+    "files": [
+      "apps/web/app/account/missions/book-downloads.tsx",
+      "apps/web/app/account/missions/book-downloads.css",
+      "apps/web/app/account/missions/saved-commercial-report.tsx",
+      "apps/web/app/account/missions/[resourceId]/page.tsx (books={await booksForPage()})",
+      "apps/web/lib/i18n/messages.ts (bookWords)",
+      "apps/web/lib/owner-switches.ts (one line)",
+      "docs/agents/ui-direction.md (Components note)",
+      "docs/product/language-review-record.md (row)",
+      "tests/integration/ux-books.test.ts",
+      "tests/operator/ux-books.spec.ts (35 tests)"
+    ],
+    "summary": "A closed disclosure on the saved mission page, shown only when the books switch is on. No checkbox: the cannot-recall notice is shown above the buttons inside the panel, with the same sentence in the PDF. Two buttons, 'Download Trip Book (PDF)' and 'Download Supplier Book (PDF)'.",
+    "retries": "The same commandId is reused on retry and forgotten only on success, 409, 429 and a 422 with UNSUPPORTED_TEXT or EMPTY. 503, 404, other 5xx, timeouts and non-PDF answers keep the id. A 60 s client timeout shows 'could not confirm'. The object URL is revoked after 10 s.",
+    "accessibility": "An empty kind uses aria-disabled with a visible reason and keeps focus. A denial shows one dedicated alert and moves focus to it; a 401 adds a Sign in again link.",
+    "copy": "27 English placeholder words (bookWords) marked D16 in all 7 catalogs; the language-review row reads 'Draft, review not yet recorded'. No native review exists.",
+    "reviews": "An adversarial review and a designer audit ran on eae5140 with no blocking defect. One real defect (a stale book denial shown on a later evidence-response denial, and pending ids not cleared) and several test gaps were found and fixed in f7caeb3.",
+    "specDeviationsAcceptedByDesigner": [
+      "extra CSS rules",
+      "a dedicated denial alert",
+      "a 60 s timeout",
+      "any other 4xx or 5xx is shown as could not confirm"
+    ]
+  },
+  "mutationChecks": {
+    "caught": [
+      "new command id per press",
+      "no URL revoke",
+      "no in-flight guard",
+      "no 409 re-read",
+      "no denial focus",
+      "no books gate",
+      "clear() removed from respond()",
+      "both setBookDenial(null) removed",
+      "native disabled on an empty kind",
+      "503/404 forgetting restored",
+      "unmount abort removed",
+      "timedOut removed",
+      "both pending.clear() removed",
+      "revoke shortened (after adding a clock-based test)"
+    ],
+    "survived": [
+      "either single setBookDenial(null) (paired clears, defence in depth; both kept)",
+      "the panel's own pending.clear() (defence in depth; kept)",
+      "the 'if (controller.signal.aborted) throw' line before the blob URL (unreachable because fetch rejects on abort; kept as a guard)"
+    ]
+  },
+  "layout": {
+    "widths": "320, 390, 768 and 1440, axe, 44 px targets, 200% text at 320 and reduced motion are checked by the builder inside tests/operator/ux-books.spec.ts.",
+    "scroll": "The closed panel adds 0.10 screen at 390 and 0.08 at 1440 (86.8 px at 390). The open panel is recorded, not budgeted (8.44 screens at 390 and 5.37 at 1440 on the longest fixture). The saved mission page with the longest fixture is ALREADY over budget without the panel (7.80 at 390 against 4; 4.98 at 1440 against 2.5): existing debt, so the assertion is delta-based. The fixture is one level deeper than the real page and has no real header or footer (KI-16)."
+  },
+  "receipts": [
+    {
+      "name": "books-ux-fail",
+      "receiptPath": "work/books-ux-fail-2026-11-04T02-10-21-051Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts",
+      "exit": 1,
+      "seconds": 4.7,
+      "logSha256": "9d695e4d9a986216380b6e69616e6bd1909d381dbc081fcceece04b5db449247",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 1,
+      "role": "failing-before reproduction (panel tests, before any panel code)",
+      "result": "11 failed | 12 passed (23) in tests/integration/ux-books.test.ts"
+    },
+    {
+      "name": "books-ux",
+      "receiptPath": "work/books-ux-2026-11-04T02-11-34-728Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts",
+      "exit": 1,
+      "seconds": 2.1,
+      "logSha256": "aa01687b6169992d9532e4714497cede79914d5e62da4618f2075015d358f2c7",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 7,
+      "role": "intermediate run during the build",
+      "result": "1 failed | 22 passed (23); not proof"
+    },
+    {
+      "name": "books-ux",
+      "receiptPath": "work/books-ux-2026-11-04T02-12-00-786Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts",
+      "exit": 0,
+      "seconds": 1.8,
+      "logSha256": "24f17e9e947d1d4afadce92a739be1fea72afb283ee81b41addf0f5c162b0943",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 8,
+      "role": "passing (panel tests) while building",
+      "result": "23 passed (23)"
+    },
+    {
+      "name": "op-books",
+      "receiptPath": "work/op-books-2026-11-04T02-16-29-303Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts",
+      "exit": 1,
+      "seconds": 93.3,
+      "logSha256": "65895fae3a515f8faec02c2c2509bf293f31dbed209ee440f8ae3bceac49f37a",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 9,
+      "role": "intermediate operator run during the build",
+      "result": "24 passed, 3 failed (27 tests); not proof"
+    },
+    {
+      "name": "op-books-r5",
+      "receiptPath": "work/op-books-r5-2026-11-04T02-19-47-335Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 195.7,
+      "logSha256": "e543829ceab49aeb955afea027947302e4fc5b1449ec71f9ffd62573a7d3c48c",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 9,
+      "role": "operator ux-books spec, --repeat-each=5, fast mocks, before the first commit",
+      "result": "135 passed (27 tests x 5)"
+    },
+    {
+      "name": "op-books-slow",
+      "receiptPath": "work/op-books-slow-2026-11-04T02-23-05-376Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 522.9,
+      "logSha256": "2b7a7ffa15655e027daab7062ee133d20094578309da6b361f8b43a75fd76e27",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 9,
+      "role": "operator ux-books spec, --repeat-each=5, slowed mocks, before the first commit",
+      "result": "135 passed (27 tests x 5)"
+    },
+    {
+      "name": "op-saved",
+      "receiptPath": "work/op-saved-2026-11-04T02-33-40-887Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-room.spec.ts tests/operator/v3-saved-commercial-ui.spec.ts tests/operator/specification-confirmation.spec.ts",
+      "exit": 0,
+      "seconds": 102.3,
+      "logSha256": "bba45284f95c1cb54da08e03baa01f2d9a5c976d50f3334fe90be45a6891e9e1",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 17,
+      "role": "neighbouring operator specs (ux-room, v3-saved-commercial-ui golden, specification-confirmation) before the first commit",
+      "result": "85 passed"
+    },
+    {
+      "name": "integ",
+      "receiptPath": "work/integ-2026-11-04T02-39-57-110Z.log.receipt.json",
+      "command": "pnpm test:integration",
+      "exit": 1,
+      "seconds": 882.8,
+      "logSha256": "a77f3b35e7ddac7361fb9277b4ee9cc354bbf93b3a8d748f3a294e79e5da4114",
+      "head": "d1ddbcd0bb139ed4fedf3e2af13bf5cd5d53e04c",
+      "changedPaths": 10,
+      "role": "full integration run before the first commit (not repeated after f7caeb3)",
+      "result": "4 failed | 2121 passed | 1 skipped (2126); 4 files failed: adapters/ClamAV, blob, foundations backup restore, scan-bypass (need Docker, ClamAV and pg_dump)"
+    },
+    {
+      "name": "vit-fail",
+      "receiptPath": "work/vit-fail-2026-11-04T03-01-30-629Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts",
+      "exit": 1,
+      "seconds": 1.4,
+      "logSha256": "858a3d9fbe49d4128fb6f65ff5302158ecdda3c68dc459ebaaf8c73626780a8c",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 2,
+      "role": "failing-before reproduction for the review follow-up tests (run on eae5140 with the new tests, before the follow-up code)",
+      "result": "2 failed | 21 passed (23)"
+    },
+    {
+      "name": "op-fail",
+      "receiptPath": "work/op-fail-2026-11-04T03-01-50-476Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts",
+      "exit": 1,
+      "seconds": 187.3,
+      "logSha256": "c0a8d52b4b79547cf3490dfdf5c708ade1b8d2730e5b712209d7b4b576266b4d",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 2,
+      "role": "failing run with the follow-up test edits in the working tree (changed paths 2); the scribe did not examine why 25 failed",
+      "result": "25 failed | 7 passed (full file)"
+    },
+    {
+      "name": "vit",
+      "receiptPath": "work/vit-2026-11-04T03-05-21-440Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts",
+      "exit": 0,
+      "seconds": 1.4,
+      "logSha256": "d28165aab0d8045e9bbc34a00ef026d6ea6eeb13830d453dbbaa30b4a27b19b6",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "passing (panel tests) after the follow-up edits",
+      "result": "23 passed (23)"
+    },
+    {
+      "name": "op1",
+      "receiptPath": "work/op1-2026-11-04T03-05-22-860Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts",
+      "exit": 0,
+      "seconds": 56.3,
+      "logSha256": "f990d05e9751af30aa7d4804f98fc29a1e705d7c2200dc98fac1a78bcc4993c2",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "operator ux-books spec, first run after the follow-up edits",
+      "result": "32 passed (the spec had 32 tests at that time, 35 in the final commit)"
+    },
+    {
+      "name": "op-r5",
+      "receiptPath": "work/op-r5-2026-11-04T03-10-17-796Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 261.1,
+      "logSha256": "bbbc1ac8084df8e1e51081937040aa2fd8c369aadf6bc67833137a372711fc49",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "operator ux-books spec, --repeat-each=5, fast mocks (REPORT_DELAY_MS=0 BOOK_DELAY_MS=0 as reported by the conductor; the variables are not in the receipt command)",
+      "result": "175 passed (35 tests x 5)"
+    },
+    {
+      "name": "op-slow",
+      "receiptPath": "work/op-slow-2026-11-04T03-14-42-818Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-books.spec.ts --repeat-each=5",
+      "exit": 0,
+      "seconds": 690.3,
+      "logSha256": "d5a3d0ce8dce52550935e1854088aa072bea7bea132a45cf155c9abbe101152c",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "operator ux-books spec, --repeat-each=5, slowed mocks (REPORT_DELAY_MS=600 BOOK_DELAY_MS=400 as reported by the conductor; not in the receipt command)",
+      "result": "175 passed (35 tests x 5)"
+    },
+    {
+      "name": "op-saved2",
+      "receiptPath": "work/op-saved2-2026-11-04T03-26-19-681Z.log.receipt.json",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-room.spec.ts tests/operator/v3-saved-commercial-ui.spec.ts tests/operator/specification-confirmation.spec.ts",
+      "exit": 0,
+      "seconds": 104.6,
+      "logSha256": "61a4c5872cec31d4537aa365c2e82b9ec5cb9a297dcb161b6e2cde23316e81d3",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 13,
+      "role": "neighbouring operator specs again after the follow-up edits",
+      "result": "85 passed"
+    },
+    {
+      "name": "vset",
+      "receiptPath": "work/vset-2026-11-04T03-28-04-359Z.log.receipt.json",
+      "command": "npx vitest run tests/integration/ux-books.test.ts tests/integration/ux-trip.test.ts tests/integration/ux-fairs.test.ts tests/integration/ux-room.test.ts tests/integration/language-pages.test.ts tests/integration/status-link.test.ts tests/in",
+      "exit": 0,
+      "seconds": 7.4,
+      "logSha256": "fb9d343678d9ce4a575e01dbbaf068bb8638da4215e66adcb022e7bc013743fd",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 13,
+      "role": "related vitest set (ux-books, ux-trip, ux-fairs, ux-room, language-pages, status-link, customer-book-route)",
+      "result": "7 files, 168 passed"
+    },
+    {
+      "name": "fmt2",
+      "receiptPath": "work/fmt2-2026-11-04T03-28-16-451Z.log.receipt.json",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "seconds": 39,
+      "logSha256": "bd3f010970fe2a75de1a29f12225df6fde6793c2f6996d7841f4bfd25a144003",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "format check",
+      "result": "exit 0"
+    },
+    {
+      "name": "lint2",
+      "receiptPath": "work/lint2-2026-11-04T03-28-55-529Z.log.receipt.json",
+      "command": "pnpm lint",
+      "exit": 0,
+      "seconds": 46.5,
+      "logSha256": "76e678034f530e036e56efe21e0cc60097fd08bf347a0edf7df67df4c3c6131a",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "lint",
+      "result": "exit 0"
+    },
+    {
+      "name": "types2",
+      "receiptPath": "work/types2-2026-11-04T03-29-42-050Z.log.receipt.json",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "seconds": 30.7,
+      "logSha256": "2e69057a98735df7359c3eaeb679517ae1ee256dba243d9299388757518342a6",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "typecheck",
+      "result": "exit 0"
+    },
+    {
+      "name": "docs2",
+      "receiptPath": "work/docs2-2026-11-04T03-30-12-763Z.log.receipt.json",
+      "command": "pnpm test:docs",
+      "exit": 0,
+      "seconds": 14.9,
+      "logSha256": "eef8e9ebb55fc842b915c78dca9985c61936107230a2edfb7b2a020f136cbd04",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "pnpm test:docs",
+      "result": "exit 0"
+    },
+    {
+      "name": "build2",
+      "receiptPath": "work/build2-2026-11-04T03-30-27-754Z.log.receipt.json",
+      "command": "pnpm build",
+      "exit": 0,
+      "seconds": 28,
+      "logSha256": "ea4ca239021a79e6fa6c28644c08d69da772f5abfc01fde82a454d4ea645568e",
+      "head": "eae5140c39dc55978494b421bc485c687f1c068b",
+      "changedPaths": 5,
+      "role": "build",
+      "result": "exit 0"
+    }
+  ],
+  "receiptNote": "Receipts are ignored local work/ paths; this record carries names, commands, exits, log hashes and the head each reports. Receipts that report eae5140 with changed paths ran on the working tree before f7caeb3 was committed; receipts that report d1ddbcd ran on the working tree before eae5140 was committed. Format, lint, typecheck, docs and build report eae5140 with 5 changed paths and ran minutes before f7caeb3 (committed 03:31:04Z). The REPORT_DELAY_MS and BOOK_DELAY_MS values come from the conductor and are not in the receipt commands. The scribe re-read totals from the logs for the vitest, operator and full-integration receipts.",
+  "notRun": [
+    "pnpm test:ux and the full operator suite were not run.",
+    "The full integration run was done once (before eae5140) and not repeated after f7caeb3, which changed copy, the panel, its parent logic and tests only. The four failing files need Docker, ClamAV and pg_dump; the E2a record says the same four fail on unmodified main, and main was not re-run to confirm identity here.",
+    "No pull request, exact-head CI, CodeQL or Codex review exists yet for the E2b commits.",
+    "Real browser downloads in iOS Safari or Firefox, real screen readers, and the PDF route in a browser were not proven: the book API is mocked in the operator spec, and the route and PDF are covered by customer-book-route and books-pdf tests.",
+    "Production enablement was not done and is not observable."
+  ],
+  "limits": [
+    "Copy is English placeholders; native language review is owner-only and not recorded.",
+    "The PDF fonts lack Arabic, Thai, Devanagari and emoji (honest 422 UNSUPPORTED_TEXT), and the PDF is untagged.",
+    "The Vercel deployment of d1ddbcd is unknown; earlier merges (76d9d03, 8d9ac67, 4456042) are also not verifiable from the recording environment.",
+    "Protected installer run 41705868221 (migration 0002) was waiting at the customer-modules-install gate when last read; a later books install run (customer_book_migrations 'not installed' to '1 applied') has not been requested. Until then the book route answers 503 even with the switch on.",
+    "GAP-035 is not resolved. The decision card (E3b, ADR-076 item 4) stays PROPOSED and nothing built so far authorises it.",
+    "Real-world gates D01-D06/D08, real payments or payouts, outreach, AI inference, real GST or bank, live IdP or mailbox or production observation and native language review stay closed or owner-only."
+  ],
+  "ownerItems": [
+    "Approve protected install run 41705868221 (migration 0002).",
+    "Later approve a books install run.",
+    "Set CORRIDRA_UX_BOOKS only when chosen.",
+    "Native language review of the Books words.",
+    "ADR-076 item 4 (decision card) remains PROPOSED."
+  ]
+}

@@ -168,7 +168,7 @@ Use [bounded context](v3/CONTEXT.md) for current-state and requirement queries. 
 
 The [ledger before gap repairs](v3/history/ledger-before-gap-repairs-2026-11-02.md) is an exact hashed historical snapshot.
 
-The [ledger through GAP012](v3/history/ledger-through-gap012-2026-11-03.md) preserves the exact prior release index and recovery references. The current ledger records subsequent work.
+The [ledger through GAP012](v3/history/ledger-through-gap012-2026-11-03.md) preserves the exact prior release index and recovery references. The [ledger before the PR 257 merge record](v3/history/ledger-through-pr257-merge-2026-11-04.md) preserves the exact ledger of 4 November 2026 before its older bullets were condensed. The current ledger records subsequent work.
 
 [ADR075](adr/0075-programme-projections-and-consented-meeting-counts.md) holds the accepted Batch D disclosure/readiness contract; implementation, installation and activation evidence remain separate.
 
