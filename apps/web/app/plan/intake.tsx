@@ -199,6 +199,16 @@ const fieldStep: Record<string, number> = {
   notes: 3,
 };
 const budgetFields = ['budgetAmount', 'currency', 'budgetBasis'];
+/**
+ * The optional fields a step folds behind "More details (optional)" so the step fits the flow-step budget. Only
+ * optional fields are listed: a required field is never folded. A folded field stays mounted (hidden) with its
+ * own id and name, and an error in one opens its fold and puts the focus on it.
+ */
+const foldedFields = {
+  details: ['quantity', 'unit', 'preferences', 'website'],
+  results: ['worthwhile', 'notes'],
+} as const;
+type FoldGroup = keyof typeof foldedFields;
 /** The choices a link can make (`?job`, `?companyCountry` and `?marketCode`), applied to a draft. */
 function withLinkChoices(base: Draft): Draft {
   const query = new URLSearchParams(window.location.search);
@@ -337,13 +347,17 @@ function IntakeForm({
     [draftNotice, setDraftNotice] = useState(''),
     // A link asked for another job than the saved draft has (CQ-14): the person chooses which to keep.
     [jobChoice, setJobChoice] = useState(''),
-    [checkEmpty, setCheckEmpty] = useState(false);
+    [checkEmpty, setCheckEmpty] = useState(false),
+    // The person's own open or close choice for each fold; without one a fold is open when it holds a value.
+    [foldChoice, setFoldChoice] = useState<Partial<Record<FoldGroup, boolean>>>({});
   const key = useRef(''),
     submitted = useRef(false),
     heading = useRef<HTMLHeadingElement>(null),
     errorSummary = useRef<HTMLDivElement>(null),
     // The error summary takes focus once, when a check finds problems; typing in a field never moves focus.
     focusSummary = useRef(false),
+    // A field to focus after an error opened its fold (a fold's own error replaces the summary focus).
+    focusField = useRef(''),
     budgetDetails = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -474,6 +488,13 @@ function IntakeForm({
     if (budgetProblem && budgetDetails.current) budgetDetails.current.open = true;
   }, [budgetProblem]);
   useEffect(() => {
+    if (focusField.current) {
+      const name = focusField.current;
+      focusField.current = '';
+      focusSummary.current = false;
+      document.getElementById(`brief-${name}`)?.focus();
+      return;
+    }
     if (!focusSummary.current) return;
     focusSummary.current = false;
     if (Object.values(errors).some((messages) => messages.length)) errorSummary.current?.focus();
@@ -620,6 +641,21 @@ function IntakeForm({
       }
     }
     focusSummary.current = Object.keys(next).length > 0;
+    // An error in a folded field opens its fold. When every problem is in a fold, the first problem's field
+    // takes the focus instead of the summary, so the person lands on the field to fix.
+    const problems = Object.keys(next).filter((name) => next[name]?.length);
+    const folded = (name: string) =>
+      (Object.keys(foldedFields) as FoldGroup[]).find((group) =>
+        (foldedFields[group] as readonly string[]).includes(name),
+      );
+    const opened = problems.map(folded).filter((group): group is FoldGroup => !!group);
+    if (opened.length)
+      setFoldChoice((current) => ({
+        ...current,
+        ...Object.fromEntries(opened.map((g) => [g, true])),
+      }));
+    focusField.current =
+      problems.length > 0 && problems.every((name) => folded(name)) ? problems[0]! : '';
     setErrors(next);
     if (all && Object.keys(next).length) {
       // Open the first step that has a problem, so the person sees the field to fix.
@@ -840,6 +876,22 @@ function IntakeForm({
         </span>
       )}
     </div>
+  );
+  const foldOpen = (group: FoldGroup) =>
+    foldChoice[group] ??
+    (foldedFields[group] as readonly (keyof Draft)[]).some(
+      (name) => String(draft[name]).trim() !== '',
+    );
+  const foldToggle = (group: FoldGroup) => (
+    <button
+      type="button"
+      className="text-link ux-fold-toggle"
+      aria-expanded={foldOpen(group)}
+      aria-controls={`fold-${group}`}
+      onClick={() => setFoldChoice((current) => ({ ...current, [group]: !foldOpen(group) }))}
+    >
+      {english(foldOpen(group) ? 'Fewer details' : 'More details (optional)')}
+    </button>
   );
   const error = (name: string) =>
     errors[name]?.length ? (
@@ -1178,7 +1230,7 @@ function IntakeForm({
                   <label className="field">
                     {delegation ? wsa('wsa.plan.trip.offer') : say('form.details.offer')}
                     <textarea
-                      rows={6}
+                      rows={4}
                       dir={translated ? 'auto' : undefined}
                       maxLength={1000}
                       value={draft.offer}
@@ -1199,19 +1251,13 @@ function IntakeForm({
                     {delegation ? wsa('wsa.plan.trip.offerHint') : say('form.details.offerHint')}
                   </p>
                   {draft.job === 'machinery_procurement' && (
-                    <>
+                    <div className="guide-pair">
                       {field('technicalPurpose', say('form.details.technicalPurpose'))}
                       {field('parameters', say('form.details.technicalParameters'))}
-                      {field('preferences', say('form.details.siteConstraints'))}
-                    </>
+                    </div>
                   )}
                   {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) && (
-                    <>
-                      {field('parameters', say('form.details.specifications'))}
-                      {field('quantity', say('form.details.quantity'))}
-                      {field('unit', say('form.details.unit'))}
-                      {field('preferences', say('form.details.supplierPreferences'))}
-                    </>
+                    <>{field('parameters', say('form.details.specifications'))}</>
                   )}
                   {[
                     'buyers',
@@ -1220,15 +1266,14 @@ function IntakeForm({
                     'market_entry',
                     'export_market_access',
                   ].includes(draft.job) && (
-                    <>
-                      {field('parameters', say('form.details.targetBuyer'))}
-                      {field('preferences', say('form.details.readiness'))}
-                    </>
+                    <>{field('parameters', say('form.details.targetBuyer'))}</>
                   )}
                   {draft.job === 'delegations' && (
                     <>
-                      {field('organiser', say('form.details.organiser'))}
-                      {field('participants', say('form.details.participants'))}
+                      <div className="guide-pair">
+                        {field('organiser', say('form.details.organiser'))}
+                        {field('participants', say('form.details.participants'))}
+                      </div>
                       <p className="guide-hint">
                         {withEnglish(
                           'form.details.delegationHint',
@@ -1268,13 +1313,36 @@ function IntakeForm({
                     </details>
                   )}
                   {error('requirements')}
-                  {field('website', say('form.details.website'), 'url')}
-                  <p className="guide-hint">{say('form.details.websiteHint')}</p>
+                  <div className="ux-fold">
+                    {foldToggle('details')}
+                    <div id="fold-details" hidden={!foldOpen('details')}>
+                      {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(
+                        draft.job,
+                      ) && (
+                        <div className="guide-pair">
+                          {field('quantity', say('form.details.quantity'))}
+                          {field('unit', say('form.details.unit'))}
+                        </div>
+                      )}
+                      {draft.job === 'machinery_procurement' &&
+                        field('preferences', say('form.details.siteConstraints'))}
+                      {['sourcing', 'supplier_evaluation', 'factory_visits'].includes(draft.job) &&
+                        field('preferences', say('form.details.supplierPreferences'))}
+                      {[
+                        'buyers',
+                        'distributors',
+                        'customers',
+                        'market_entry',
+                        'export_market_access',
+                      ].includes(draft.job) && field('preferences', say('form.details.readiness'))}
+                      {field('website', say('form.details.website'), 'url')}
+                      <p className="guide-hint">{say('form.details.websiteHint')}</p>
+                    </div>
+                  </div>
                 </>
               )}
               {step === 3 && (
                 <>
-                  {field('worthwhile', say('form.results.worthwhile'))}
                   <fieldset
                     aria-describedby={
                       errors.outcomes?.length ? 'outcomes-hint outcomes-error' : 'outcomes-hint'
@@ -1308,24 +1376,31 @@ function IntakeForm({
                     </div>
                     {error('outcomes')}
                   </fieldset>
-                  <label className="field">
-                    {say('form.results.notes')}
-                    <textarea
-                      rows={3}
-                      dir={translated ? 'auto' : undefined}
-                      maxLength={1000}
-                      value={draft.notes}
-                      onChange={(e) => change('notes', e.target.value)}
-                      aria-invalid={!!errors.notes?.length}
-                      aria-describedby={
-                        errors.notes?.length
-                          ? 'request-context-hint notes-error'
-                          : 'request-context-hint'
-                      }
-                    />
-                    {error('notes')}
-                  </label>
-                  <p id="request-context-hint">{say('form.results.contextHint')}</p>
+                  <div className="ux-fold">
+                    {foldToggle('results')}
+                    <div id="fold-results" hidden={!foldOpen('results')}>
+                      {field('worthwhile', say('form.results.worthwhile'))}
+                      <label className="field">
+                        {say('form.results.notes')}
+                        <textarea
+                          id="brief-notes"
+                          rows={3}
+                          dir={translated ? 'auto' : undefined}
+                          maxLength={1000}
+                          value={draft.notes}
+                          onChange={(e) => change('notes', e.target.value)}
+                          aria-invalid={!!errors.notes?.length}
+                          aria-describedby={
+                            errors.notes?.length
+                              ? 'request-context-hint notes-error'
+                              : 'request-context-hint'
+                          }
+                        />
+                        {error('notes')}
+                      </label>
+                      <p id="request-context-hint">{say('form.results.contextHint')}</p>
+                    </div>
+                  </div>
                 </>
               )}
               {step === 4 && (
