@@ -34,9 +34,10 @@ const addresses = [
   { name: 'owner', path: () => `/operator/owner?workspace=${tenant}` },
 ];
 async function open(path: string) {
-  await page.goto(path);
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState('networkidle').catch(() => undefined);
+  // The workspace reads its data after load: wait until no loading line is left.
+  await expect(page.getByText(/Loading (workspace|today)/i)).toHaveCount(0, { timeout: 20000 });
 }
 
 test('Q-03 axe is clean at 390 and 1440 on Today, every section and the owner page', async () => {
