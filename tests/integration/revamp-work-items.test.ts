@@ -305,6 +305,10 @@ describe('W-06 to W-08 scope, joins and duplicates', () => {
     });
     const list = await run();
     expect(list.items.map((i) => i.id)).toEqual([id(101)]);
+    expect(list.workspaces).toEqual([
+      { id: A, name: 'Atelier Rahman' },
+      { id: B, name: 'Dhaka Knit' },
+    ]);
     expect(JSON.stringify(list)).not.toContain(OUTSIDE);
     expect(JSON.stringify(list)).not.toContain('Leaked');
   });
@@ -410,6 +414,7 @@ describe('W-09 and W-10 truth states', () => {
       unreadable: [],
       partial: false,
       skippedWorkspaces: 0,
+      workspaces: [],
     });
   });
 

@@ -33,4 +33,6 @@ export type WorkList = {
   partial: boolean;
   /** Workspaces beyond the cap, not read. */
   skippedWorkspaces: number;
+  /** The person's workspaces by id, for display only. A name never classifies or joins anything. */
+  workspaces: { id: string; name: string }[];
 };

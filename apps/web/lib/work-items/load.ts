@@ -39,7 +39,13 @@ export async function loadWorkItems(
     /** `CORRIDRA_UX_ROAD`: a request opens in its Room, as Your Move does. */ rooms?: boolean;
   } = {},
 ): Promise<WorkList> {
-  const none: WorkList = { items: [], unreadable: [], partial: false, skippedWorkspaces: 0 };
+  const none: WorkList = {
+    items: [],
+    unreadable: [],
+    partial: false,
+    skippedWorkspaces: 0,
+    workspaces: [],
+  };
   // The workspace module being off is a true empty: there is nothing to read.
   if (!customerWorkspacesEnabled()) return none;
   const services = foundations();
@@ -231,5 +237,6 @@ export async function loadWorkItems(
     unreadable: [...unreadable],
     partial,
     skippedWorkspaces: Math.max(0, listed.length - read.length),
+    workspaces: listed.map(({ id, name }) => ({ id, name })),
   };
 }
