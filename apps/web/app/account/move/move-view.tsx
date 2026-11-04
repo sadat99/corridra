@@ -92,6 +92,15 @@ function day(value: string, locale: string) {
   return formatDate(`${value}T00:00:00Z`, { timeZone: 'UTC', locale }) || value;
 }
 
+// Launch language is English only (owner, 4 Nov 2026), so these lines are not in the catalogues and
+// carry lang="en" in every locale: no screen claims a translation nobody reviewed.
+const unreadWords = {
+  title: 'We could not check everything just now.',
+  text: 'Something may be waiting for you that this page could not read. Your work is safe.',
+  some: 'Some of your work could not be read just now, so this list may not show everything.',
+  retry: 'Try again',
+} as const;
+
 /**
  * Your Move, drawn. The server decides what exists (see `buildMoveModel`); this only chooses words
  * and shows them in the person's language. The region says which language it is written in, so a
@@ -102,12 +111,15 @@ export function MoveView({
   startHref,
   skippedWorkspaces = 0,
   partial = false,
+  unreadable = false,
 }: {
   model: MoveModel;
   startHref: string;
   skippedWorkspaces?: number;
   /** True when a list was longer than the pages read. */
   partial?: boolean;
+  /** True when a source that is on could not be read, so an empty list is not proof of nothing. */
+  unreadable?: boolean;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -199,7 +211,19 @@ export function MoveView({
 
       <section aria-labelledby="move-you">
         <h2 id="move-you">{say('move.you.heading')}</h2>
-        {nothing ? (
+        {nothing && unreadable ? (
+          <div className="move-empty" role="status" lang="en">
+            <p>
+              <strong>{unreadWords.title}</strong> {unreadWords.text}
+            </p>
+            <a className="text-link ux-action" href="/account/move">
+              {unreadWords.retry}
+            </a>
+            <Link prefetch={false} className="button" href={startHref}>
+              {say('move.start')}
+            </Link>
+          </div>
+        ) : nothing ? (
           <div className="move-empty" role="status">
             <p>
               <strong>{say('move.empty.title')}</strong> {say('move.empty.text')}
@@ -266,6 +290,14 @@ export function MoveView({
       {skippedWorkspaces > 0 ? (
         <p className="move-explainer" role="note">
           {fill(say('move.capped'), { count: moveWorkspaceCap })}
+        </p>
+      ) : null}
+      {unreadable && !nothing ? (
+        <p className="move-explainer" role="note" lang="en">
+          {unreadWords.some}{' '}
+          <a className="text-link" href="/account/move">
+            {unreadWords.retry}
+          </a>
         </p>
       ) : null}
       {partial ? (
