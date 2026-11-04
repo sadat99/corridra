@@ -12,6 +12,7 @@ import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { foundations } from '../foundations';
 import { movePageCap, moveWorkspaceCap } from '../move-constants';
 import { followPages } from '../move-pages';
+import { requestTitle } from '../../app/account/request-words';
 import { classifyDraftFamily, classifyObjective } from './classify';
 import { sortWorkItems } from './sort';
 import type { WorkItem, WorkList, WorkSource } from './types';
@@ -145,7 +146,8 @@ export async function loadWorkItems(
           family: classifyDraftFamily(draft.family),
           title: text(draft.title),
           status: draft.status,
-          updatedAt: draft.updatedAt,
+          at: draft.updatedAt,
+          atKind: 'updated',
           href: `/account/drafts/${seg(page.workspaceId)}`,
         });
   }
@@ -169,7 +171,8 @@ export async function loadWorkItems(
         title: text(programme.name),
         // A programme has no status of its own, so none is shown.
         status: '',
-        updatedAt: text(programme.createdAt) ?? '',
+        at: text(programme.createdAt) ?? '',
+        atKind: 'created',
         href: `/account/delegations/${seg(workspaceId)}`,
       });
     }
@@ -191,7 +194,8 @@ export async function loadWorkItems(
         family: 'UNCLASSIFIED',
         title: text(request.serviceTitle),
         status: request.status,
-        updatedAt: request.updatedAt,
+        at: request.updatedAt,
+        atKind: 'updated',
         href: `/account/service-requests/${seg(request.workspaceId)}/${seg(request.id)}`,
       });
   }
@@ -199,34 +203,45 @@ export async function loadWorkItems(
   if (requests?.failed) unreadable.add('requests');
   if (requests && !requests.failed) {
     partial ||= !requests.complete;
-    const rows = requests.items.filter(
-      (row) => typeof row.id === 'string' && allowed.has(String(row.workspaceId)),
-    );
-    // The objective is in the request's original brief, one session-checked read each. A detail that
-    // cannot be read leaves the request UNCLASSIFIED and listed; it does not make the list unreadable.
-    const families = await Promise.all(
+    // Newest first, so the detail cap reads the requests the person most likely cares about. The list is
+    // ordered by id, which is not by date.
+    const created = (row: Obj) => Date.parse(text(row.createdAt) ?? '') || 0;
+    const rows = requests.items
+      .filter((row) => typeof row.id === 'string' && allowed.has(String(row.workspaceId)))
+      .sort((a, b) => created(b) - created(a));
+    const readDetails = customerRequestDetailsEnabled();
+    // Requests beyond the cap are still listed, but their family and title are not known, so say so.
+    if (readDetails && rows.length > workDetailCap) partial = true;
+    // The objective and title are in the request's original brief, one session-checked read each. A
+    // detail that cannot be read leaves the request UNCLASSIFIED, untitled and listed; it does not make
+    // the list unreadable.
+    const details = await Promise.all(
       rows.map(async (row, index) => {
-        if (!customerRequestDetailsEnabled() || index >= workDetailCap)
-          return 'UNCLASSIFIED' as const;
-        const detail = (await attempt(() =>
+        if (!readDetails || index >= workDetailCap) return null;
+        return (await attempt(() =>
           services.customerRequestDetails.detail(row.id, subject, issuer),
-        )) as { original?: { objective?: unknown } | null } | null;
-        return classifyObjective(detail?.original?.objective);
+        )) as {
+          original?: unknown;
+        } | null;
       }),
     );
     rows.forEach((row, index) => {
       const id = row.id as string;
       const progress = row.progress as { status?: unknown } | null | undefined;
+      const original = details[index]?.original;
       add({
         key: `request:${id}`,
         kind: 'request',
         id,
         workspaceId: String(row.workspaceId),
-        family: families[index]!,
-        // The list carries no title; the original brief is never copied into a list row.
-        title: null,
+        family: classifyObjective(
+          (original as { objective?: unknown } | null | undefined)?.objective,
+        ),
+        // The same title the requests route derives from the original brief; null when it was not read.
+        title: requestTitle(original),
         status: row.available === true ? (text(progress?.status) ?? '') : '',
-        updatedAt: text(row.createdAt) ?? '',
+        at: text(row.createdAt) ?? '',
+        atKind: 'created',
         href: options.rooms ? `/account/rooms/${seg(id)}` : `/account/requests/${seg(id)}`,
       });
     });

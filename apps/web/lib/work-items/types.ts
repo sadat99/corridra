@@ -20,7 +20,9 @@ export type WorkItem = {
   /** The source's own status value, never renamed. Empty when the source has no status. */
   status: string;
   /** ISO time from the source. */
-  updatedAt: string;
+  at: string;
+  /** Which time `at` is. A creation time is never shown as an update. */
+  atKind: 'updated' | 'created';
   /** An existing route for this record. */
   href: string;
 };

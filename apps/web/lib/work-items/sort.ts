@@ -8,6 +8,6 @@ const time = (iso: string) => {
 /** Newest first, then by key, so equal times keep one stable order. */
 export function sortWorkItems(items: WorkItem[]): WorkItem[] {
   return [...items].sort(
-    (a, b) => time(b.updatedAt) - time(a.updatedAt) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+    (a, b) => time(b.at) - time(a.at) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
   );
 }

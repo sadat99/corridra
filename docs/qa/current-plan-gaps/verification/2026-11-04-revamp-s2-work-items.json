@@ -9,18 +9,19 @@
   "authorityStamp": "auth-e741ff45cd18",
   "newFilesOnly": [
     "apps/web/lib/work-items/types.ts, classify.ts, sort.ts, load.ts",
-    "tests/integration/revamp-work-items.test.ts (vitest, no browser, no database, 23 tests, cases W-01 to W-14)"
+    "tests/integration/revamp-work-items.test.ts (vitest, no browser, no database, 30 tests: W-01 to W-15, request titles and the detail cap)"
   ],
   "decisions": {
-    "participationOmitted": "customerParticipants.own() rows carry no workspaceId and no update time, so they cannot be scoped to the person's workspaces or dated without a join by programme id. The adapter lists no participation items; the Delegations link is unchanged. Raised to the Conductor.",
-    "requestsHaveNoTitle": "private_requests rows carry no title or update time. Request items use title null and updatedAt = createdAt; the original brief is read only for its objective and never copied into a row.",
-    "programmesHaveNoStatus": "A programme has no status of its own, so its item status is empty and updatedAt = createdAt.",
-    "detailReadsBounded": "At most 30 request details are read per list (workDetailCap); later requests are UNCLASSIFIED, listed, and not marked unreadable."
+    "participationOmitted": "Decided by the Conductor, 4 Nov 2026 (spec case W-15): customerParticipants.own() rows carry no workspaceId, so a registration is never a work item and is never read. The Delegation registrations link stays on the Work view.",
+    "requestTitle": "A request title is requestTitle(detail.original), as the requests route derives it; null when the detail was not read.",
+    "dates": "Items carry `at` and `atKind`. Drafts and service requests are 'updated'; requests and programmes are 'created'. Ordering is by `at`.",
+    "programmesHaveNoStatus": "A programme has no status of its own, so its item status is empty.",
+    "detailCap": "Guardian finding 1 (medium): at most 30 request details are read (workDetailCap), newest request first, and the list is marked partial when more exist. Requests beyond the cap are listed unclassified and untitled."
   },
   "receipts": {
-    "red": "Before the code: pnpm exec vitest run tests/integration/revamp-work-items.test.ts: 23 failed of 23 (module not found).",
-    "green": "After the code: 23 passed of 23 (local, node 22).",
-    "mutations": "Removing the workspace filter fails W-06; listing non-OPEN drafts fails W-08; classifying an objective in more than one family fails W-02 and W-03. Each restored.",
+    "red": "Before the code: 23 of 23 failed (module not found). After the Guardian and Conductor amendments, tests were changed first and 5 failed before the code.",
+    "green": "After the code: 30 passed of 30 (local, node 22).",
+    "mutations": "Removing the workspace filter fails W-06; listing non-OPEN drafts fails W-08; classifying an objective in more than one family fails W-02 and W-03; reading details in id order instead of newest first fails the 31-request case; dropping the partial flag fails it too. Each restored.",
     "checks": "pnpm format:check, pnpm lint and pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/)."
   },
   "notRun": [

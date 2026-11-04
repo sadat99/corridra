@@ -487,7 +487,8 @@ describe('W-11 to W-13 shape', () => {
           'kind',
           'status',
           'title',
-          'updatedAt',
+          'at',
+          'atKind',
           'workspaceId',
         ].sort(),
       );
@@ -556,6 +557,53 @@ describe('W-11 to W-13 shape', () => {
     expect(plain.items.find((i) => i.kind === 'draft')?.href).toBe('/account/drafts/' + A);
   });
 
+  it('W-13 requests and programmes carry a creation time, drafts and services an update time', async () => {
+    patch({
+      customerWorkspaces: { list: async () => [owner] },
+      customerMissionDrafts: {
+        list: async () => ({ drafts: [draft(1, 'OTHER')], nextAfter: null }),
+      },
+      customerRequests: { list: async () => ({ requests: [requestRow(1)], nextAfter: null }) },
+      customerProgrammes: {
+        list: async () => ({
+          programmes: [
+            { id: id(10), workspaceId: A, name: 'P', createdAt: '2026-10-05T00:00:00Z' },
+          ],
+          nextAfter: null,
+        }),
+      },
+      customerServiceRequests: {
+        list: async () => ({
+          requests: [
+            {
+              id: id(20),
+              workspaceId: A,
+              contextKind: 'company',
+              contextRef: 'c',
+              contextLabel: 'l',
+              serviceKey: 'k',
+              serviceTitle: 'T',
+              status: 'requested',
+              needVersion: 1,
+              region: 'EU',
+              createdAt: '2026-10-06T00:00:00.000Z',
+              updatedAt: '2026-10-07T00:00:00.000Z',
+            },
+          ],
+          nextAfter: null,
+        }),
+      },
+    });
+    const { items } = await run();
+    const kind = (k: string) => items.find((i) => i.kind === k);
+    expect(kind('draft')?.atKind).toBe('updated');
+    expect(kind('service_request')?.atKind).toBe('updated');
+    expect(kind('service_request')?.at).toBe('2026-10-07T00:00:00.000Z');
+    expect(kind('request')?.atKind).toBe('created');
+    expect(kind('programme')?.atKind).toBe('created');
+    expect(kind('programme')?.at).toBe('2026-10-05T00:00:00Z');
+  });
+
   it('W-13 orders newest first and is stable for equal times', async () => {
     const t = '2026-11-01T10:00:00.000Z';
     patch({
@@ -575,5 +623,74 @@ describe('W-11 to W-13 shape', () => {
     const { items } = await run();
     expect(items.map((i) => i.id)).toEqual([id(2), id(1), id(3), id(4)]);
     expect((await run()).items.map((i) => i.id)).toEqual(items.map((i) => i.id));
+  });
+});
+
+describe('request titles and the detail cap', () => {
+  it('a request title comes from the original brief, as the requests route derives it', async () => {
+    patch({
+      customerRequests: { list: async () => ({ requests: [requestRow(1)], nextAfter: null }) },
+      customerRequestDetails: {
+        detail: async () => ({
+          available: true,
+          original: { objective: 'Sell in a new market', market: 'ES' },
+        }),
+      },
+    });
+    const { items } = await run();
+    expect(items[0]!.title).toBe('Sell in Spain');
+    expect(items[0]!.family).toBe('SELL');
+  });
+
+  it('a request whose detail cannot be read has a null title', async () => {
+    patch({
+      customerRequests: { list: async () => ({ requests: [requestRow(1)], nextAfter: null }) },
+      customerRequestDetails: { detail: fail },
+    });
+    expect((await run()).items[0]!.title).toBeNull();
+  });
+
+  it('with more requests than the detail cap, the newest are classified and the list is partial', async () => {
+    // The service lists by id, so the newest request has the last id here.
+    const rows = Array.from({ length: 31 }, (_, n) =>
+      requestRow(n + 1, A, {
+        createdAt: `2026-09-${String(n + 1).padStart(2, '0')}T09:00:00.000Z`,
+      }),
+    );
+    const detail = vi.fn(async () => detailFor('Source suppliers'));
+    patch({
+      customerRequests: { list: async () => ({ requests: rows, nextAfter: null }) },
+      customerRequestDetails: { detail },
+    });
+    const list = await run();
+    expect(detail).toHaveBeenCalledTimes(30);
+    const byId = new Map(list.items.map((i) => [i.id, i]));
+    expect(byId.get(id(131))!.family).toBe('SOURCE'); // the newest
+    expect(byId.get(id(101))!.family).toBe('UNCLASSIFIED'); // the oldest, beyond the cap
+    expect(list.items).toHaveLength(31);
+    expect(list.partial).toBe(true);
+    expect(list.unreadable).toEqual([]);
+  });
+
+  it('at the cap exactly, nothing is partial', async () => {
+    const rows = Array.from({ length: 30 }, (_, n) => requestRow(n + 1));
+    patch({ customerRequests: { list: async () => ({ requests: rows, nextAfter: null }) } });
+    expect((await run()).partial).toBe(false);
+  });
+});
+
+describe('W-15 delegation registrations are not work items', () => {
+  it('never produces a participation item and never reads registrations', async () => {
+    const own = vi.fn(async () => ({ registrations: [{ id: id(1), programmeId: id(2) }] }));
+    patch({ customerParticipants: { own, list: own } });
+    const list = await run();
+    expect(list.items.some((i) => (i.kind as string) === 'participation')).toBe(false);
+    expect(own).not.toHaveBeenCalled();
+  });
+  it('keeps the Delegation registrations link on the Work view', async () => {
+    const { readFileSync } = await import('node:fs');
+    const page = readFileSync('apps/web/app/account/page.tsx', 'utf8');
+    expect(page).toContain('href="/account/delegations"');
+    expect(page).toContain('Delegation registrations');
   });
 });

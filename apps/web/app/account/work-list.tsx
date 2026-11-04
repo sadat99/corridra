@@ -8,6 +8,7 @@ import {
   workFilterLabels,
   workFilters,
   workState,
+  workDateWords,
   workStatusWords,
   type WorkFilter,
 } from '../../lib/work-items/view';
@@ -42,7 +43,7 @@ function Starts() {
 function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
   const heading = item.title ?? kindWords[item.kind];
   const status = workStatusWords(item);
-  const date = item.updatedAt ? formatDate(item.updatedAt) : '';
+  const date = item.at ? formatDate(item.at) : '';
   return (
     <li className="work-row">
       <h3 dir="auto" lang={hanLang(heading)}>
@@ -54,7 +55,7 @@ function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
           {names.get(item.workspaceId)}
         </span>
         <span>{status}</span>
-        <span className="work-date">{date && `Updated ${date}`}</span>
+        <span className="work-date">{date && `${workDateWords(item)} ${date}`}</span>
       </p>
       <Link prefetch={false} className="text-link work-open" href={item.href}>
         Open<span className="sr-only"> {heading}</span>

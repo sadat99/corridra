@@ -18,11 +18,12 @@
     "noDisclosure": "The spec says the existing panels may move into a closed disclosure. They did not: about fifteen operator specs open /account?view=work and act on those panels, and a closed disclosure would hide them. Every panel, id and link stays in place and visible, so #customer-workspaces and #customer-requests land as today and H-03 holds without a disclosure.",
     "countLine": "No count line, because there is no disclosure.",
     "selector": "A real radio group in a GET form with a Show button, no script needed. Counts come from the items read and read 'N or more' whenever the list is partial, unreadable or has skipped workspaces.",
-    "titles": "A request has no stored title, so its kind word is the heading. Nothing is invented.",
-    "statusWords": "Existing sets only: customerStatusLabel for drafts and requests, the service-request status words for service requests. A programme has no status and shows none."
+    "titles": "A request title is the one the requests route derives from its original brief (via the adapter); the kind word is the heading only when it was not read.",
+    "statusWords": "Existing sets only: customerStatusLabel for drafts and requests, the service-request status words for service requests. A programme has no status and shows none.",
+    "dates": "Rows say 'Updated', 'Sent' (requests) or 'Created' (programmes) by atKind, never 'Updated' for a creation time."
   },
   "receipts": {
-    "vitest": "pnpm exec vitest run on revamp-work-items, revamp-work-screen, revamp-truth-states and ux-move-records: 4 files, 102 passed (local, node 22).",
+    "vitest": "pnpm exec vitest run on revamp-work-items and revamp-work-screen: 2 files, 61 passed (local, node 22).",
     "mutations": "Treating an unreadable empty list as empty fails 3; dropping the 'or more' rule fails 3; accepting a raw work value fails 2; showing every row instead of twenty fails 1. Each restored.",
     "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/). The first typecheck failed on my own test importing a .tsx file directly; fixed with the dynamic import the existing tests use.",
     "layout": "LOCAL APPROXIMATION, not CI-gated: the component rendered to HTML with the real globals.css and work-list.css inside main.ux-customer, measured in Chromium at 320, 390, 768 and 1440 with axe (wcag2a, wcag2aa, wcag22aa). Four states (25 rows with one failed source, true empty, unreadable, filtered empty): no sideways scroll, no action under 44px, axe clean in all 16 cases. Height of 20 rows with ordinary workspace names: 3.9 screens at 390, 2.7 at 768, 2.4 at 1440 of a 900px viewport (budget 4 and 2.5); 5.1 at 320, over the phone budget. With a 45-character workspace name in every row: 5.1 at 390."

@@ -44,7 +44,8 @@ const item = (n: number, extra: Partial<WorkItem> = {}): WorkItem => ({
   family: 'SELL',
   title: `Draft ${n}`,
   status: 'OPEN',
-  updatedAt: '2026-11-04T10:00:00.000Z',
+  at: '2026-11-04T10:00:00.000Z',
+  atKind: 'updated',
   href: `/account/drafts/${W}`,
   ...extra,
 });
@@ -216,7 +217,7 @@ describe('rows', () => {
   it('show stored text, the existing status words, the workspace and a plain date', async () => {
     const html = await view(
       list([
-        item(1, { title: '广州家具采购', updatedAt: '2026-11-04T10:00:00.000Z' }),
+        item(1, { title: '广州家具采购', at: '2026-11-04T10:00:00.000Z' }),
         item(2, {
           kind: 'service_request',
           key: 'service_request:x',
@@ -225,7 +226,22 @@ describe('rows', () => {
           status: 'quoted',
           href: `/account/service-requests/${W}/x`,
         }),
-        item(3, { kind: 'request', key: 'request:r', id: 'r', title: null, status: 'ACTIVE' }),
+        item(3, {
+          kind: 'request',
+          key: 'request:r',
+          id: 'r',
+          title: null,
+          status: 'ACTIVE',
+          atKind: 'created',
+        }),
+        item(4, {
+          kind: 'programme',
+          key: 'programme:p',
+          id: 'p',
+          title: 'Dhaka visit',
+          status: '',
+          atKind: 'created',
+        }),
       ]),
     );
     expect(html).toContain('lang="zh"');
@@ -233,9 +249,11 @@ describe('rows', () => {
     expect(html).toContain('Atelier Rahman');
     expect(html).toContain('Quote ready for you');
     expect(html).toContain('Updated 4 Nov 2026');
+    expect(html).toContain('Sent 4 Nov 2026');
+    expect(html).toContain('Created 4 Nov 2026');
     // A request has no stored title, so its kind word is the heading and nothing is invented.
     expect(html).toContain('<h3 dir="auto">Request</h3>');
-    expect(html.match(/work-open/g)).toHaveLength(3);
+    expect(html.match(/work-open/g)).toHaveLength(4);
   });
   it('use no status word that does not already exist', () => {
     expect(workStatusWords(item(1))).toBe('Draft');

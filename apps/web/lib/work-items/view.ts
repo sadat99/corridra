@@ -53,6 +53,12 @@ export function workState(list: WorkList, filter: WorkFilter): WorkState {
   return filterWorkItems(list.items, filter).length === 0 ? 'filtered-empty' : 'list';
 }
 
+/** The date word for a row: an update, a request being sent, or a programme being created. */
+export function workDateWords(item: WorkItem): string {
+  if (!item.at) return '';
+  return item.atKind === 'updated' ? 'Updated' : item.kind === 'request' ? 'Sent' : 'Created';
+}
+
 export const kindWords: Record<WorkKind, string> = {
   draft: 'Draft request',
   request: 'Request',
