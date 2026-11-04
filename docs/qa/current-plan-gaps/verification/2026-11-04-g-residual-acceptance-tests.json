@@ -1,0 +1,125 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "G (work order in docs/qa/2026-10-31/REMAINING.md)",
+  "kind": "Acceptance tests for three polish rows of the commercial readiness program: CQ-52 workspace card, CQ-70 place options, CQ-06 sample-mode lines (test-only)",
+  "findings": [],
+  "findingsNote": "CQ-52, CQ-70 and CQ-06 are commercial readiness program items and have no GAP id in this register, so no gap is created or changed. The related register entry for the bindings is GAP-032; no binding was added or changed.",
+  "status": "Built and committed locally as 288d8e8 on branch claude/zen-hopper-1iqtdn. It was not pushed and was not in a pull request when recorded. Test files only: no application code changed and no defect was found. There is no visual or live acceptance.",
+  "commit": {
+    "sha": "288d8e8",
+    "message": "test: acceptance tests for the workspace card, place options and sample-mode lines (CQ-52, CQ-70, CQ-06)",
+    "branch": "claude/zen-hopper-1iqtdn",
+    "base": "d9b34a13d7c43fefdd1105c583ddf7207d010948",
+    "newFilesOnly": [
+      "tests/integration/cq-06-sample-lines.test.ts (vitest, no browser, no database, 6 tests)",
+      "tests/operator/cq-52-70-ui.spec.ts (Playwright operator fixture spec, 5 tests)"
+    ]
+  },
+  "pinned": {
+    "CQ-52": {
+      "source": "apps/web/app/account/customer-workspaces.tsx",
+      "assertions": [
+        "Exactly one primary action per card: 'New request in <name>' to /account/drafts/<id>, or the request form when saved drafts are off.",
+        "All other actions sit inside a closed 'More for <name>' menu.",
+        "The owner More menu holds the six original extras in order with exact hrefs: Continue a saved draft, Send a private request, Edit company profile, Plan delegations, Paid-service requests, Plan and billing.",
+        "A member's menu has 'View company profile' instead of 'Edit company profile' and no 'Plan delegations'.",
+        "With only requests on, the primary action is /account/request/<id> and there is no More menu. With requests and billing on, More holds only 'Plan and billing'."
+      ],
+      "codeFactNotDefect": "With drafts on but requests off there is no More menu, and 'Continue a saved draft' is reachable only through the primary action, which points to the same drafts page."
+    },
+    "CQ-70": {
+      "source": "apps/web/app/account/service-requests/service-request-new.tsx",
+      "assertions": [
+        "No place question until a service is chosen.",
+        "Options are 'Choose a place' plus the chosen catalogue entry's regions in order (source customer_private.service_catalogue_version.regions text[]; 1 to 12 regions are required by packages/delivery/src/customer-service-staff.ts; the server denial 'That service is not offered in this region' is already covered by tests/integration/customer-service-requests.test.ts:636).",
+        "Switching service replaces the options and resets the place.",
+        "The place is a closed required select (no free text); an empty place keeps Send disabled.",
+        "The POST carries the service key and a place from that service's list."
+      ],
+      "fixtures": "Explicit protocol fixtures, not the real catalogue or production data."
+    },
+    "CQ-06": {
+      "sources": [
+        "apps/web/components/customer-shell.tsx",
+        "apps/web/app/plan/intake.tsx",
+        "apps/web/app/plan/page.tsx"
+      ],
+      "assertions": [
+        "realUseEnabled() is DATA_ENVIRONMENT=real, CORRIDRA_REAL_USE_ENABLED=true and not production-locked.",
+        "Real use off: the customer frame prints 'Preview workspace: use made-up names and details here.' Real use on: 'Your work stays private to the people given access.' and no made-up line. Real use requested on a locked production deployment still prints the sample line.",
+        "The /plan intake notice in sample mode shows 'Test mode', the invented-details and @example.invalid lines, 'Sample requests stay private to this account.', 'Email delivery is not enabled.' and a data-madeup-panel marker; in real mode none of them.",
+        "apps/web/app/plan/page.tsx passes realUseEnabled() through."
+      ],
+      "notTouched": "apps/web/lib/owner-switches.ts: its copy fix needs the owner's wording approval."
+    }
+  },
+  "receipts": [
+    {
+      "command": "vitest run tests/integration/cq-06-sample-lines.test.ts",
+      "result": "6 passed, exit 0"
+    },
+    {
+      "command": "operator Playwright spec tests/operator/cq-52-70-ui.spec.ts",
+      "result": "5 passed, exit 0; 25 passed with --repeat-each=5, exit 0 (log work/cq5270x5-2026-11-04T06-59-12-311Z.log)"
+    },
+    {
+      "command": "operator specs v3-service-requests-ui and v3-customer-programmes-ui plus the new spec",
+      "result": "41 passed"
+    },
+    {
+      "command": "vitest neighbours: requirement-bindings, ux-first-question, ws-b-customer-words, ux-fairs and the new file",
+      "result": "5 files, 123 passed"
+    },
+    {
+      "command": "pnpm typecheck, pnpm lint, pnpm format:check, pnpm test:docs",
+      "result": "exit 0 each"
+    },
+    {
+      "command": "node scripts/v3-context.mjs verify and node scripts/authority.mjs check",
+      "result": "PASS"
+    }
+  ],
+  "mutationProofs": {
+    "reportedBy": "the builder (each mutation applied, a test failed, the code restored, the tests passed); the logs are under the session scratchpad and are not in the repository",
+    "CQ-52": [
+      "A second primary link outside More: tests 1 and 2 fail.",
+      "'Plan and billing' removed from More: tests 1 and 2 fail.",
+      "'Plan delegations' removed: test 1 fails.",
+      "'Paid-service requests' given the primary class: test 1 fails."
+    ],
+    "CQ-70": [
+      "Options hard-coded: tests 1, 2 and 3 fail.",
+      "Options built from all services' regions: tests 1 and 3 fail.",
+      "setRegion('') removed: test 3 fails.",
+      "required removed from the select: test 3 fails.",
+      "'!region' removed from the Send disable condition: test 3 fails."
+    ],
+    "CQ-06": [
+      "Shell condition forced false: test 2 fails. Forced true: tests 1 and 3 fail.",
+      "Intake notice always real: tests 4 and 6 fail. Always sample: tests 5 and 6 fail.",
+      "Plan page hard-codes realMode false: test 6 fails.",
+      "'!customerProductionLocked(env)' dropped from realUseEnabled: tests 3 and 6 fail."
+    ]
+  },
+  "settledConservatively": [
+    "'Every original action' for CQ-52 is read as the six More extras plus the primary action in its two forms.",
+    "CQ-70 free text is asserted as a closed select.",
+    "CQ-06 is limited to the customer frame note and the /plan intake notice, not every 'sample' word."
+  ],
+  "notRun": [
+    "The full operator suite.",
+    "The full vitest integration suite.",
+    "The UX gate.",
+    "The GAP-032 bindings checker against the two new files. Their titles are plain string literals directly in describe/test callbacks, so they are bindable later. No GAP-032 binding was added or changed."
+  ],
+  "doesNotProve": [
+    "Visual or live acceptance of any of the three rows.",
+    "Anything about the real catalogue, production data or production switch values.",
+    "CQ-48 (GAP-013, a language item, excluded) is untouched."
+  ],
+  "workOrderState": "Row G of REMAINING.md stays PARTIAL. CQ-15, CQ-26, CQ-46 and CQ-30 were built earlier (PR243, PR244, PR245, PR251 per the register). CQ-52, CQ-70 and CQ-06 now have acceptance tests. CQ-48 stays excluded.",
+  "nextActions": [
+    "Open the PR for 288d8e8 plus these records; after exact-head CI and a clean Codex review, merge and verify main CI.",
+    "Owner: wording approval for the owner-switches.ts copy fix."
+  ]
+}
