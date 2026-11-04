@@ -98,4 +98,4 @@ ADR074: [Each translated page has its own release](0074-per-page-language-releas
 
 ADR075: [Programme projections and consented meeting counts](0075-programme-projections-and-consented-meeting-counts.md), accepted Batch D contract, 3 November; consented company and aggregate meeting disclosure, operational readiness and attendee/time conflict rules.
 
-ADR076: [Trip view, scoped books and decision sharing](0076-trip-books-and-decision-sharing.md), Batch E; Trip view and the signed-in emailed status link accepted (default off); books and decision card still proposed.
+ADR076: [Trip view, scoped books and decision sharing](0076-trip-books-and-decision-sharing.md), Batch E; Trip view, the signed-in emailed status link and the Trip Book and Supplier Book accepted (all default off; books backend only, download panel not built); decision card still proposed.
