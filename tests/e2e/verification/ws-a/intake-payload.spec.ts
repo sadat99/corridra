@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures';
+import { proofClaimsIn } from '../../../integration/proof-claims';
 
 // Spec pack 1 (docs/revamp/specs/public-home.md), P-10 and P-11, plus the honest-proof rule of change 3.
 
@@ -96,37 +97,53 @@ const publicPaths = [
   '/institutions',
   '/network',
 ];
-const proofClaims: RegExp[] = [
-  /trusted by/i,
-  /our customers/i,
-  /testimonials?/i,
-  /case studies?/i,
-  /as seen (in|on)/i,
-  /\b[0-9][0-9,]*\+?\s+(companies|buyers|suppliers|factories|customers|missions|meetings|deals)\b/i,
-  /\b(thousands|hundreds) of (companies|buyers|suppliers)\b/i,
-  /\bverified (buyers|suppliers|factories)\b/i,
-  /\b(guaranteed|guarantee[sd]?)\s+(meetings|sales|orders|results)\b/i,
-  /\bno\.?\s*1\b|\bleading platform\b|\bworld'?s (best|leading|largest)\b/i,
-];
+// The text of a page as separate blocks, so a denial in one paragraph never reaches a claim in the next. A block
+// is the text of an element that holds no other block (a paragraph, list item, heading, cell, caption, summary);
+// text outside those is read one text node at a time. Runs in the browser. The labelled Example mission is left out.
+const readBlocks = (root: Element) => {
+  const copy = root.cloneNode(true) as HTMLElement;
+  copy.querySelectorAll('.ac1-record').forEach((node) => node.remove());
+  const selector = 'p,li,h1,h2,h3,h4,h5,h6,dt,dd,td,th,figcaption,blockquote,summary,button,label';
+  const blocks: string[] = [];
+  const leaves = [...copy.querySelectorAll(selector)].filter(
+    (node) => !node.querySelector(selector),
+  );
+  for (const leaf of leaves) {
+    blocks.push(leaf.textContent ?? '');
+    leaf.textContent = '';
+  }
+  const walker = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode())
+    if ((node.textContent ?? '').trim()) blocks.push(node.textContent ?? '');
+  return blocks;
+};
+
+test('change 3 guard: a claim after a denial, in the same or the next block, is still found', async ({
+  page,
+}) => {
+  await page.setContent(
+    `<main><p>Trusted by 100 companies with no subscription fees.</p>
+     <p>We do not promise sales</p><p>Trusted by 5 buyers</p>
+     <ul><li>We do not offer</li><li>Join 1,200 companies</li></ul>
+     <p>We do not book travel or guarantee meetings.</p>
+     <p>A plan for a <b>trip</b>.</p></main>`,
+  );
+  const blocks = await page.locator('main').evaluate(readBlocks);
+  const found = proofClaimsIn(blocks).map((item) => item.sentence);
+  expect(found).toEqual([
+    'Trusted by 100 companies with no subscription fees.',
+    'Trusted by 5 buyers',
+    'Join 1,200 companies',
+  ]);
+});
+
 for (const path of publicPaths)
   test(`change 3 ${path} makes no proof claim`, async ({ page }) => {
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
     // The sample mission on the home page is labelled Example and is not scanned; its label must be there.
-    const example = page.locator('.ac1-record');
-    if (path === '/') await expect(example.locator('.ac1-example-tag')).toBeVisible();
-    const text = await page.locator('main').evaluate((main) => {
-      const copy = main.cloneNode(true) as HTMLElement;
-      copy.querySelectorAll('.ac1-record').forEach((node) => node.remove());
-      return copy.textContent ?? '';
-    });
-    // A sentence that denies a claim ("We do not book travel or guarantee meetings") is not a claim.
-    const sentences = text
-      .split(/(?<=[.!?])\s+|\n+/)
-      .filter(
-        (sentence) =>
-          !/\b(do|does|did|will|can|would)\s*not\b|\bnever\b|\bno\b|n't\b/i.test(sentence),
-      );
-    for (const sentence of sentences)
-      for (const claim of proofClaims) expect(sentence, `${path} ${claim}`).not.toMatch(claim);
+    if (path === '/') await expect(page.locator('.ac1-record .ac1-example-tag')).toBeVisible();
+    const blocks = await page.locator('main').evaluate(readBlocks);
+    expect(blocks.length, path).toBeGreaterThan(3);
+    expect(proofClaimsIn(blocks), path).toEqual([]);
   });
