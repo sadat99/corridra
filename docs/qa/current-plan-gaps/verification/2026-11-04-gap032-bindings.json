@@ -1,0 +1,174 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "B",
+  "kind": "GAP-032 requirement-to-evidence bindings, first slice (tooling and a seven-row pilot)",
+  "findings": ["GAP-032"],
+  "status": "Built and committed locally as d7a6e96. It was not pushed and was not in a pull request when recorded. A binding is a pointer to evidence that exists at HEAD. It is never acceptance: every shard carries that constant and the report ends with 'No requirement is reported ACCEPTED by this file.'",
+  "commit": {
+    "sha": "d7a6e96",
+    "message": "feat: requirement-to-evidence bindings for the 507 V3 requirements, first slice (GAP-032)",
+    "branch": "claude/zen-hopper-1iqtdn",
+    "base": "4f2870ea424148c8ffa80996df0efc3915dba92f",
+    "newFilesOnly": [
+      "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
+      "docs/v3/phase-0/requirement-bindings.schema.json",
+      "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
+      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second, 57 after the scanner rewrite, 59 after the fourth, 61 after the fifth; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+    ]
+  },
+  "rulesEnforcedByCheck": {
+    "R1": "All 507 ids are present in order with the manifest identity hash.",
+    "R2": "NONE, GATED and DEFERRED rows carry a reason and no evidence. A BOUND row needs a positive item plus a denial item or an explicit denialNotApplicable reason.",
+    "R3": "The 12 GATED requirements (V3-06-008, V3-06-009 and V3-09-041 to V3-09-050) can never be BOUND, nor can any item with a closed-gate tag. 15 keyword-suspect rows (payment, payout, GST, bank, outreach, inference, IdP, mailbox, native language, real customer) need an explicit gateReview to be bound; none is bound.",
+    "R4": "TEST evidence must be an exact, unique string-literal test title in a file under tests/ that a CI suite runs, and not skipped.",
+    "R5": "RECEIPT evidence pointers must resolve. Only the head shape is checked; git objects are not verified offline.",
+    "R6": "Candidate files exist.",
+    "R7": "No duplicate items."
+  },
+  "report": {
+    "total": 507,
+    "BOUND": 7,
+    "boundWithPositiveAndDenialEvidence": 4,
+    "boundWithPositiveAndStatedReasonDenialDoesNotApply": 3,
+    "NONE": 486,
+    "GATED": 12,
+    "DEFERRED": 2,
+    "noneRowsWithLegacyCandidateFile": "50 (informational, never counted as evidence)",
+    "keywordSuspectRows": "15, none BOUND",
+    "perSection": {
+      "00": "total 4, BOUND 0, NONE 4, GATED 0, DEFERRED 0",
+      "01": "total 23, BOUND 1, NONE 22, GATED 0, DEFERRED 0",
+      "02": "total 76, BOUND 4, NONE 72, GATED 0, DEFERRED 0",
+      "03": "total 36, BOUND 0, NONE 36, GATED 0, DEFERRED 0",
+      "04": "total 94, BOUND 2, NONE 92, GATED 0, DEFERRED 0",
+      "05": "total 64, BOUND 0, NONE 64, GATED 0, DEFERRED 0",
+      "06": "total 19, BOUND 0, NONE 15, GATED 2, DEFERRED 2",
+      "07": "total 49, BOUND 0, NONE 49, GATED 0, DEFERRED 0",
+      "08": "total 39, BOUND 0, NONE 39, GATED 0, DEFERRED 0",
+      "09": "total 103, BOUND 0, NONE 93, GATED 10, DEFERRED 0"
+    }
+  },
+  "pilotBoundRows": {
+    "reviewState": "Agent-written, checked by the conductor against the test bodies, reviewedBy 'corridra-builder (unreviewed by product)'. NOT reviewed by product or QA. Do not quote the 7 as coverage.",
+    "rows": [
+      "V3-01-018: tests/integration/customer-companies.test.ts, one positive and two denial titles",
+      "V3-02-034, V3-02-035, V3-02-036: customer-mission-drafts.test.ts prompts test; denial does not apply (stated reason)",
+      "V3-02-062: customer-programme-coordination.test.ts, positive and denial",
+      "V3-04-040: customer-mission-drafts.test.ts and tests/operator/v3-guided-request-ui.spec.ts, positive, recovery and denial",
+      "V3-04-076: v3-guided-request-ui.spec.ts and customer-mission-drafts.test.ts, positive and denial"
+    ]
+  },
+  "receipts": [
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "4f2870e",
+      "result": "52 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "eb8c0b3 plus the fifth Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 60 passed; after the fix 61 passed. Fifth Codex P2: a file-level test.skip(true, ...) or test.fixme(condition), a test.beforeAll hook that skips, and a beforeEach hook (or a no-argument conditional test.skip() inside one) did not stop the affected tests being reported runnable. The scope check now covers the whole file and every enclosing suite, descends into beforeEach and beforeAll hook callbacks, and treats test.skip() with no argument as a run-time skip; the declaration form test.skip('title', fn) and hooks without a skip still flag nothing else (guard test). check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2), so the 7 pilot rows are unaffected."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "bbf27ca plus the fourth Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 58 passed; after the fix 59 passed. Fourth Codex P2: a test declared inside an uninvoked helper function (function declaration, arrow or function expression assigned to a name, class method, uncalled async arrow) was reported as runnable, so a requirement could be bound to a test the runner never registers. Rule now: every function a test sits inside must be a callback argument of a recognised test, it or describe call; anything else is refused as 'declared inside a function that is not a suite or test callback, so it may never be registered'. A guard test confirms tests nested in describe, test.describe and test callbacks (including function-expression callbacks) stay runnable. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2), so the 7 pilot rows are unaffected."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "ee22826 plus the scanner rewrite (uncommitted when run)",
+      "result": "57 passed. Third Codex P2 (the skipped-declaration check used a regex whose whitespace backtracking made a multiline test.skip('title', fn) look like a suite-level skip and flagged every runnable sibling) was a defect in the same text-scanning approach as the first two, so findTestTitles now parses the file with the TypeScript compiler API (ts.createSourceFile, a syntax-error check through ts.transpileModule) instead of lexing text: comments, strings and layout can no longer confuse it, and about 200 lines of lexer and regular expressions were removed. The existing scanner tests were the specification and pass unchanged except one expectation: a title built from an expression is now reported under its full source text instead of its first literal piece. New regression test for multiline, commented and template-quoted skipped declarations plus a multiline suite-level skip; on the previous scanner that test and the changed expectation fail (2 failed, 55 passed), on the new scanner 57 pass. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2)."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "ee6e39b plus the second Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 55 passed; after the fix 56 passed. Fix: a runtime test.skip(condition) or test.fixme(condition) written directly in a describe or test.describe body (not inside one of its tests, not the declaration form test.skip('title', fn)) marks every test inside that suite as not runnable evidence. A second new test guards against over-flagging: a skipped sibling declaration and a skip inside another test do not flag unrelated tests. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2)."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "4f2870e plus the first Codex P2 fix (uncommitted when run)",
+      "result": "red first: 2 new tests failed, 52 passed; after the fix 54 passed. Fix: describe and test.describe titles are marked as suites and never count as TEST evidence; a suite sharing a title with exactly one real test case does not make it ambiguous. check, seed --check, prettier and eslint (max warnings 0) were re-run and pass; report unchanged (507 = 7 + 486 + 12 + 2)."
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts seed --check",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts check",
+      "base": "4f2870e",
+      "result": "PASS (re-run by the scribe on d7a6e96 plus the records)"
+    },
+    {
+      "command": "pnpm exec tsx scripts/requirement-bindings.ts report",
+      "base": "4f2870e",
+      "result": "507 = 7 BOUND + 486 NONE + 12 GATED + 2 DEFERRED (re-read by the scribe on d7a6e96 plus the records)"
+    },
+    {
+      "command": "prettier --check on the new files",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
+    {
+      "command": "eslint --max-warnings 0 on the two .ts files",
+      "base": "builder worktree, identical files",
+      "result": "exit 0"
+    },
+    {
+      "command": "pnpm typecheck and pnpm test:docs",
+      "base": "builder worktree on the same files, base d1ddbcd",
+      "result": "exit 0 and pass"
+    },
+    {
+      "command": "node scripts/v3-context.mjs verify and node scripts/authority.mjs check",
+      "base": "4f2870e",
+      "result": "PASS"
+    },
+    {
+      "command": "mutation: the V3-04-040 pilot test title was altered",
+      "result": "check failed with exit 1 ('R4 V3-04-040: title ... not found'); restored, PASS"
+    }
+  ],
+  "receiptNote": "Receipts are as reported by the conductor except where marked re-read by the scribe. The builder agent's own red runs (module not found, then missing ids) are in worktree receipts that are not kept.",
+  "notRun": [
+    "pnpm test:integration in full.",
+    "CI on a pull request head (pending until the PR is pushed).",
+    "A second review of the pilot rows."
+  ],
+  "doesNotProve": [
+    "That any test fits its requirement beyond the quoted assertion. Semantic fit is a reviewed claim.",
+    "That any requirement is accepted.",
+    "Anything about live providers.",
+    "That a bound test runs and passes. The checker is a static reader built on the TypeScript parser: it proves the title exists once as a registered, non-skipped test case in a file a CI suite runs, and refuses the skip, loop, conditional and uncalled-function shapes it can see. It does not model every run-time skip mechanism (for example vitest context.skip(), custom wrappers, registration through imports or helpers it cannot follow). Execution and pass results come only from CI on the exact head."
+  ],
+  "gapState": {
+    "GAP-032": "Disposition stays EVIDENCE_MISSING. Implementation PARTIAL (tooling and a 7-row pilot built). Verification PARTIAL (pending exact-head CI and a second review). Deployment, activation, approval and commercialOperation stay UNKNOWN. closureEvidence stays empty."
+  },
+  "ownerQuestions": [
+    {
+      "question": "Does BOUND mean an existing CI-run assertion pointer, not acceptance?",
+      "default": "Yes (taken)."
+    },
+    {
+      "question": "Should narrative rows get a NOT_APPLICABLE state?",
+      "default": "No; they stay NONE (taken)."
+    },
+    {
+      "question": "PRESERVATION and unresolved-decision evidence kinds?",
+      "default": "Later."
+    },
+    {
+      "question": "Where does the check live?",
+      "default": "In the vitest integration job, not test:docs (taken)."
+    },
+    {
+      "question": "Who signs semantic fit?",
+      "default": "A product or QA agent plus the scribe's record; the owner to confirm."
+    }
+  ],
+  "nextActions": [
+    "Open the PR for d7a6e96 plus these records; after exact-head CI and a clean Codex review, merge.",
+    "Then bind one section per PR (separate shards avoid conflicts) with a second reviewer before any BOUND count is quoted to the owner.",
+    "Later, optionally make scripts/v3-context.mjs verify call the checker (hot file, separate PR)."
+  ]
+}

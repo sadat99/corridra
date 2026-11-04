@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/v3/phase-0/requirement-bindings.schema.json",
+  "title": "Requirement-to-evidence binding shard (GAP-032)",
+  "description": "One shard per requirement section. A binding is a pointer to evidence that exists at HEAD. It is not acceptance. scripts/requirement-bindings.ts check enforces this shape and the rules R1 to R7 that a schema cannot express.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "meaning", "identitySha256", "section", "bindings"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "meaning": {
+      "const": "A binding is a pointer to evidence that exists at HEAD. It is not acceptance."
+    },
+    "identitySha256": {
+      "description": "Equals requirementIdentitySha256 in docs/v3/history/manifest.json.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "section": { "type": "string", "pattern": "^[0-9]{2}$" },
+    "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" } }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "state", "gate", "candidates", "evidence"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^V3-[0-9]{2}-[0-9]{3}$" },
+        "state": { "enum": ["NONE", "BOUND", "GATED", "DEFERRED"] },
+        "reason": {
+          "description": "Required and non-empty unless the state is BOUND.",
+          "type": "string"
+        },
+        "gate": {
+          "description": "A row with a non-null gate can never be BOUND.",
+          "enum": [
+            null,
+            "D01",
+            "D02",
+            "D03",
+            "D04",
+            "D05",
+            "D06",
+            "D08",
+            "REAL_PAYMENT",
+            "OUTREACH",
+            "AI_INFERENCE",
+            "REAL_GST_BANK",
+            "LIVE_IDP_MAILBOX",
+            "PRODUCTION_OBSERVATION",
+            "NATIVE_LANGUAGE_REVIEW"
+          ]
+        },
+        "gateReview": {
+          "description": "Required, with a reason, when a BOUND row's requirement text mentions a closed-gate keyword.",
+          "const": "NOT_GATED"
+        },
+        "candidates": {
+          "description": "Informational legacy file pointers (tests/** and release.json). Never counted as evidence.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidence": {
+          "description": "Empty unless the state is BOUND. A BOUND row needs a positive item and either a denial item or denialNotApplicable.",
+          "type": "array",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/testEvidence" }, { "$ref": "#/$defs/receiptEvidence" }]
+          }
+        },
+        "denialNotApplicable": {
+          "description": "Why the requirement states no refusal behaviour, when no denial item is bound.",
+          "type": "string"
+        }
+      }
+    },
+    "testEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "axis", "path", "title", "assertion", "reviewedBy", "reviewedOn"],
+      "properties": {
+        "kind": { "const": "TEST" },
+        "axis": { "enum": ["positive", "denial", "recovery"] },
+        "path": {
+          "description": "A file under tests/ that a CI suite runs.",
+          "type": "string",
+          "pattern": "^tests/"
+        },
+        "title": {
+          "description": "Appears exactly once as a plain string-literal title of a test, it or describe call that is not skipped.",
+          "type": "string",
+          "minLength": 1
+        },
+        "assertion": { "type": "string", "minLength": 1 },
+        "reviewedBy": { "type": "string", "minLength": 1 },
+        "reviewedOn": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+      }
+    },
+    "receiptEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "axis",
+        "path",
+        "headPointer",
+        "resultPointer",
+        "expect",
+        "assertion",
+        "reviewedBy",
+        "reviewedOn"
+      ],
+      "properties": {
+        "kind": { "const": "RECEIPT" },
+        "axis": { "enum": ["positive", "denial", "recovery"] },
+        "path": {
+          "description": "A JSON file under docs/qa/current-plan-gaps/verification/ or docs/v3/.",
+          "type": "string",
+          "pattern": "^docs/(qa/current-plan-gaps/verification|v3)/.*\\.json$"
+        },
+        "headPointer": {
+          "description": "JSON Pointer that resolves to a hexadecimal commit id of 7 to 40 characters.",
+          "type": "string"
+        },
+        "resultPointer": {
+          "description": "JSON Pointer that resolves to a value equal to expect.",
+          "type": "string"
+        },
+        "expect": { "enum": ["success", 0] },
+        "assertion": { "type": "string", "minLength": 1 },
+        "reviewedBy": { "type": "string", "minLength": 1 },
+        "reviewedOn": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+      }
+    }
+  }
+}

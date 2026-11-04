@@ -1,0 +1,792 @@
+{
+  "schemaVersion": 1,
+  "meaning": "A binding is a pointer to evidence that exists at HEAD. It is not acceptance.",
+  "identitySha256": "ffd2b76c57b08fabaaca94735183f63dfa0d630e748a9bf137bd90ef1f5c1d60",
+  "section": "02",
+  "bindings": [
+    {
+      "id": "V3-02-001",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-002",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-003",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-004",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-005",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-006",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-007",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-008",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-009",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-010",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-011",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-012",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-013",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-014",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-015",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-016",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-017",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-018",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-019",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-020",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-021",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-022",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-023",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-024",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-025",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-026",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-027",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-028",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-029",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-030",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-decisions.test.ts",
+        "tests/operator/v3-customer-decisions-ui.spec.ts",
+        "docs/v3/phase-3/customer-decisions/release.json"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-031",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-032",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-033",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-034",
+      "state": "BOUND",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "TEST",
+          "axis": "positive",
+          "path": "tests/integration/customer-mission-drafts.test.ts",
+          "title": "V3 prompts match the contract: Product 2 sourcing contexts, Product 1, delegation and no machinery for others",
+          "assertion": "requirementPrompts('SUPPLIERS_PRODUCTS', 'MACHINERY') equals exactly the four general prompts (technical, commercial, regulatory, delivery) followed by Application, Capacity, Power, Installation, Commissioning, Acceptance tests, Warranties, Spares, Maintenance and After-sales support.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        }
+      ],
+      "denialNotApplicable": "The row lists what a machinery or equipment request asks for and states no refusal or authority behaviour. The same test also asserts that buyer, delegation and other requests never offer these fields, which is bound under V3-04-076."
+    },
+    {
+      "id": "V3-02-035",
+      "state": "BOUND",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "TEST",
+          "axis": "positive",
+          "path": "tests/integration/customer-mission-drafts.test.ts",
+          "title": "V3 prompts match the contract: Product 2 sourcing contexts, Product 1, delegation and no machinery for others",
+          "assertion": "After the four general prompts, requirementPrompts('SUPPLIERS_PRODUCTS', 'FINISHED_PRODUCTS') equals exactly Specifications, Quality, Packaging, Certifications where applicable, MOQ, Lead times and Delivery.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        }
+      ],
+      "denialNotApplicable": "The row lists what a finished-products request asks for and states no refusal or authority behaviour."
+    },
+    {
+      "id": "V3-02-036",
+      "state": "BOUND",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "TEST",
+          "axis": "positive",
+          "path": "tests/integration/customer-mission-drafts.test.ts",
+          "title": "V3 prompts match the contract: Product 2 sourcing contexts, Product 1, delegation and no machinery for others",
+          "assertion": "After the four general prompts, requirementPrompts('SUPPLIERS_PRODUCTS', 'MATERIALS_COMPONENTS') equals exactly Grades, Tolerances, Consistency, Testing, Supply continuity and Traceability.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        }
+      ],
+      "denialNotApplicable": "The row lists what a raw-materials or components request asks for and states no refusal or authority behaviour."
+    },
+    {
+      "id": "V3-02-037",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-038",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-039",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-040",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-041",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-042",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-043",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-044",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-045",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "docs/v3/phase-3/customer-programmes/release.json",
+        "docs/v3/phase-3/customer-programme-context/release.json",
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-046",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "docs/v3/phase-3/customer-programme-context/release.json",
+        "tests/integration/customer-mission-drafts.test.ts",
+        "tests/operator/v3-guided-request-ui.spec.ts",
+        "tests/browser/v3-guided-request-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-047",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-048",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": ["docs/v3/phase-3/customer-participants/release.json"],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-049",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-050",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-051",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-052",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-053",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-054",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-055",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-056",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-057",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-058",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-059",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programmes.test.ts",
+        "docs/v3/phase-3/customer-programmes/release.json"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-060",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-061",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-062",
+      "state": "BOUND",
+      "gate": null,
+      "candidates": [
+        "docs/v3/phase-3/participant-commercial-missions/release.json",
+        "docs/v3/phase-3/customer-programme-context/release.json",
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": [
+        {
+          "kind": "TEST",
+          "axis": "positive",
+          "path": "tests/integration/customer-programme-coordination.test.ts",
+          "title": "the organiser sees only what the participant chose to share, and a retraction removes it",
+          "assertion": "The organiser report counts unshared feedback only as notShared with ratingCount 0 and no comments; once the participants share them the ratings and comments are counted without any participant name; withdrawing consent removes the figure again; a retraction hides the record, and retracting together with sharing is refused by the schema and by SQL (23514).",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        },
+        {
+          "kind": "TEST",
+          "axis": "denial",
+          "path": "tests/integration/customer-programme-coordination.test.ts",
+          "title": "feedback and outcomes are written only by the registered participant, as consented revisions",
+          "assertion": "Each other principal tried (alice, carol, dave, eve and an outsider) is refused with 42501 when writing feedback for the registered participant bob or reading his own records; a participant cannot revise another record or another kind of record (42501); a revision against a stale expected version is refused with 23514.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        }
+      ]
+    },
+    {
+      "id": "V3-02-063",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-064",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-065",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-066",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-067",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-068",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-069",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-070",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-071",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-072",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-073",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts",
+        "tests/operator/v3-participant-results-ui.spec.ts",
+        "tests/browser/v3-programme-coordination-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-074",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-075",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-02-076",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    }
+  ]
+}

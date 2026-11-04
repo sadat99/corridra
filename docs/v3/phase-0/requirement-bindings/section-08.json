@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "meaning": "A binding is a pointer to evidence that exists at HEAD. It is not acceptance.",
+  "identitySha256": "ffd2b76c57b08fabaaca94735183f63dfa0d630e748a9bf137bd90ef1f5c1d60",
+  "section": "08",
+  "bindings": [
+    {
+      "id": "V3-08-001",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-002",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-003",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-004",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-005",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-006",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-007",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-008",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-009",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-010",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-011",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-012",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-013",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-014",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-015",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-016",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-017",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-018",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-019",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-020",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-021",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-022",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-programme-economics.test.ts",
+        "tests/operator/v3-programme-economics-ui.spec.ts",
+        "tests/browser/v3-programme-economics-gate.spec.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-023",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-024",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-025",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-026",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-027",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-028",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-029",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-030",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-031",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-032",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-033",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-034",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-035",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-036",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-037",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-038",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-08-039",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    }
+  ]
+}

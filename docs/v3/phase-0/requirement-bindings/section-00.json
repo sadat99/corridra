@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "meaning": "A binding is a pointer to evidence that exists at HEAD. It is not acceptance.",
+  "identitySha256": "ffd2b76c57b08fabaaca94735183f63dfa0d630e748a9bf137bd90ef1f5c1d60",
+  "section": "00",
+  "bindings": [
+    {
+      "id": "V3-00-001",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-00-002",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-00-003",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-00-004",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    }
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "meaning": "A binding is a pointer to evidence that exists at HEAD. It is not acceptance.",
+  "identitySha256": "ffd2b76c57b08fabaaca94735183f63dfa0d630e748a9bf137bd90ef1f5c1d60",
+  "section": "01",
+  "bindings": [
+    {
+      "id": "V3-01-001",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-002",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-003",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-004",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-005",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-006",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-007",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-008",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-009",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-010",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-011",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-012",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-013",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-014",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-015",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-016",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-017",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-018",
+      "state": "BOUND",
+      "gate": null,
+      "candidates": [
+        "tests/integration/customer-companies.test.ts",
+        "docs/v3/phase-3/customer-companies/release.json"
+      ],
+      "evidence": [
+        {
+          "kind": "TEST",
+          "axis": "positive",
+          "path": "tests/integration/customer-companies.test.ts",
+          "title": "one canonical company spans different approved missions without merging their contexts",
+          "assertion": "The portfolio lists one company with a 64-character hexadecimal opaque id and two contexts from two different approved missions; each context keeps its own objective and equals the source report entry for company, country, fit, rationale, uncertainty, gaps and verification; the result text contains no private negotiation text, buyer person name, email address or organisationId.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        },
+        {
+          "kind": "TEST",
+          "axis": "denial",
+          "path": "tests/integration/customer-companies.test.ts",
+          "title": "workspace ownership,member access and guessed cursors grant no other customer portfolio",
+          "assertion": "A second member sees no companies and scopesRead 0, also when passing another portfolio resource as the cursor; an unknown account is refused with code 42501; a mismatched session subject is refused with status 409.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        },
+        {
+          "kind": "TEST",
+          "axis": "denial",
+          "path": "tests/integration/customer-companies.test.ts",
+          "title": "same approved bearer in another admitted account has a separate opaque identity namespace",
+          "assertion": "When a second admitted account saves the same approved link it sees one company with one context, and that company id differs from the first account company id.",
+          "reviewedBy": "corridra-builder (unreviewed by product)",
+          "reviewedOn": "2026-11-04"
+        }
+      ]
+    },
+    {
+      "id": "V3-01-019",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-020",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-021",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-022",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    },
+    {
+      "id": "V3-01-023",
+      "state": "NONE",
+      "reason": "No test title or receipt pointer bound yet; legacy evidence is file pointers, not an executed assertion",
+      "gate": null,
+      "candidates": [],
+      "evidence": []
+    }
+  ]
+}
