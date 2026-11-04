@@ -188,3 +188,12 @@ test('UX acceptance ledgers keep phase identifiers, unique records and bounded v
     });
   }
 });
+
+test('the owner-supplied revamp execution contract stays byte-for-byte as received on 4 Nov 2026', async () => {
+  const source = await readFile(new URL('docs/revamp/CONTRACT.md', root));
+  assert.equal(source.length, 36064);
+  assert.equal(
+    createHash('sha256').update(source).digest('hex'),
+    '93230e4b05d7d0d52660e5f6944c1c5b98e2af3a2301680b1d00da29ff80d4ea',
+  );
+});
