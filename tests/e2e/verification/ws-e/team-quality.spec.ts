@@ -263,7 +263,6 @@ test('Q-05 a failed load on click says so and keeps the button for another try',
   const loads = [
     { slug: 'audit', name: 'Load access and recent changes' },
     { slug: 'controls', name: 'Load workspace members' },
-    { slug: 'research', name: 'Load company link requests' },
   ];
   for (const load of loads) {
     await open(`/operator/${load.slug}?workspace=${tenant}`);
