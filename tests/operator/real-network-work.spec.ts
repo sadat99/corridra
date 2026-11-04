@@ -336,6 +336,9 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
     await worker.unroute('**/api/network/tasks**');
     await expect(worker.getByRole('button', { name: 'Refresh tasks', exact: true })).toBeEnabled();
   }
+  // One working refresh clears the interruption: the task forms are usable again.
+  await worker.getByRole('button', { name: 'Refresh tasks', exact: true }).click();
+  await expect(worker.getByRole('button', { name: 'Accept the disclosed task' })).toBeEnabled();
   expect(await worker.locator('body').innerText()).not.toContain(
     'network-request-owner@business.test',
   );
