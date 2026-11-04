@@ -1,0 +1,31 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 2 phase 1, the work-item adapter",
+  "kind": "Read-only adapter and its tests, built to docs/revamp/specs/work-items.md. No screen yet (phase 2).",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch or write is added.",
+  "status": "Built on branch revamp/customer over main 4b7f83e. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "base": "4b7f83e9c3b846c5fb0067bce1333f795a07fb36",
+  "authorityStamp": "auth-e741ff45cd18",
+  "newFilesOnly": [
+    "apps/web/lib/work-items/types.ts, classify.ts, sort.ts, load.ts",
+    "tests/integration/revamp-work-items.test.ts (vitest, no browser, no database, 23 tests, cases W-01 to W-14)"
+  ],
+  "decisions": {
+    "participationOmitted": "customerParticipants.own() rows carry no workspaceId and no update time, so they cannot be scoped to the person's workspaces or dated without a join by programme id. The adapter lists no participation items; the Delegations link is unchanged. Raised to the Conductor.",
+    "requestsHaveNoTitle": "private_requests rows carry no title or update time. Request items use title null and updatedAt = createdAt; the original brief is read only for its objective and never copied into a row.",
+    "programmesHaveNoStatus": "A programme has no status of its own, so its item status is empty and updatedAt = createdAt.",
+    "detailReadsBounded": "At most 30 request details are read per list (workDetailCap); later requests are UNCLASSIFIED, listed, and not marked unreadable."
+  },
+  "receipts": {
+    "red": "Before the code: pnpm exec vitest run tests/integration/revamp-work-items.test.ts: 23 failed of 23 (module not found).",
+    "green": "After the code: 23 passed of 23 (local, node 22).",
+    "mutations": "Removing the workspace filter fails W-06; listing non-OPEN drafts fails W-08; classifying an objective in more than one family fails W-02 and W-03. Each restored.",
+    "checks": "pnpm format:check, pnpm lint and pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/)."
+  },
+  "notRun": [
+    "Full integration, operator and Playwright suites (CI runs them on the pushed head).",
+    "No rendered screen exists in this PR; widths, axe and states H-01 to H-08 belong to phase 2."
+  ],
+  "sensitive": "Tenant scope: items are kept only for workspaces from customerWorkspaces.list; Guardian review requested."
+}
