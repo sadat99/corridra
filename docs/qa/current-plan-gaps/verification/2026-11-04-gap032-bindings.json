@@ -13,7 +13,7 @@
       "docs/v3/phase-0/requirement-bindings/section-00.json to section-09.json",
       "docs/v3/phase-0/requirement-bindings.schema.json",
       "scripts/requirement-bindings.ts (check, report [--json], seed [--check])",
-      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the Codex P2 fix; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
+      "tests/integration/requirement-bindings.test.ts (52 tests at d7a6e96, 54 after the first Codex P2 fix, 56 after the second; vitest, no database; the existing vitest include picks it up, so CI runs it in the integration job)"
     ]
   },
   "rulesEnforcedByCheck": {
@@ -66,7 +66,12 @@
     },
     {
       "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
-      "base": "4f2870e plus the Codex P2 fix (uncommitted when run)",
+      "base": "ee6e39b plus the second Codex P2 fix (uncommitted when run)",
+      "result": "red first: 1 new test failed, 55 passed; after the fix 56 passed. Fix: a runtime test.skip(condition) or test.fixme(condition) written directly in a describe or test.describe body (not inside one of its tests, not the declaration form test.skip('title', fn)) marks every test inside that suite as not runnable evidence. A second new test guards against over-flagging: a skipped sibling declaration and a skip inside another test do not flag unrelated tests. check, seed --check, eslint (max warnings 0) and typecheck pass; report unchanged (507 = 7 + 486 + 12 + 2)."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/requirement-bindings.test.ts",
+      "base": "4f2870e plus the first Codex P2 fix (uncommitted when run)",
       "result": "red first: 2 new tests failed, 52 passed; after the fix 54 passed. Fix: describe and test.describe titles are marked as suites and never count as TEST evidence; a suite sharing a title with exactly one real test case does not make it ambiguous. check, seed --check, prettier and eslint (max warnings 0) were re-run and pass; report unchanged (507 = 7 + 486 + 12 + 2)."
     },
     {

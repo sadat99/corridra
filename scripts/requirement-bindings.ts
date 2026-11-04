@@ -321,8 +321,9 @@ export function findTestTitles(source: string): { balanced: boolean; calls: Titl
     open: string;
     lead: string;
     stmtStart: number;
+    at: number;
   }
-  const frames: Frame[] = [{ open: '', lead: '', stmtStart: 0 }];
+  const frames: Frame[] = [{ open: '', lead: '', stmtStart: 0, at: 0 }];
   const partner: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
   const calls: TitleCall[] = [];
   let balanced = terminated;
@@ -332,7 +333,12 @@ export function findTestTitles(source: string): { balanced: boolean; calls: Titl
     if (match) calls.push(describeCall(clean, literals, match, frames, top));
     const ch = clean[i];
     if ('([{'.includes(ch))
-      frames.push({ open: ch, lead: clean.slice(top.stmtStart, i).trim(), stmtStart: i + 1 });
+      frames.push({
+        open: ch,
+        lead: clean.slice(top.stmtStart, i).trim(),
+        stmtStart: i + 1,
+        at: i,
+      });
     else if (')]}'.includes(ch)) {
       if (frames.length === 1 || top.open !== partner[ch]) balanced = false;
       else {
@@ -348,7 +354,7 @@ function describeCall(
   clean: string,
   literals: Lexed['literals'],
   match: RegExpExecArray,
-  frames: { lead: string; stmtStart: number }[],
+  frames: { lead: string; stmtStart: number; at: number }[],
   top: { stmtStart: number },
 ): TitleCall {
   const quoteAt = match.index + match[0].length - 1;
@@ -381,7 +387,28 @@ function describeCall(
     call.problem = 'it is defined conditionally';
   else if (runtimeSkip.test(clean.slice(parenAt, closingParen(clean, parenAt) + 1)))
     call.problem = 'it calls skip or fixme at run time, so it may not run';
+  else if (
+    !call.suite &&
+    frames.some((frame) => suiteLead.test(frame.lead) && suiteLevelSkip(clean, frame.at))
+  )
+    call.problem = 'its enclosing suite calls skip or fixme at run time, so it may not run';
   return call;
+}
+
+// A runtime test.skip(condition, ...) or test.fixme(condition, ...) written directly in a suite body (not inside
+// one of its tests, and not the declaration form test.skip('title', fn)) disables every test in that suite.
+const suiteLead = /(?<![\w$.])(?:xdescribe|describe|test\.describe)(?:\.[A-Za-z]+)*$/;
+function suiteLevelSkip(clean: string, open: number): boolean {
+  const body = clean.slice(open, closingParen(clean, open) + 1);
+  for (const skip of body.matchAll(/(?<![\w$.])(?:test|it)\.(?:skip|fixme)\s*\(\s*(?!['"`])/g)) {
+    let depth = 0;
+    for (let k = 0; k < skip.index; k++) {
+      if ('([{'.includes(body[k])) depth++;
+      else if (')]}'.includes(body[k])) depth--;
+    }
+    if (depth <= 2) return true;
+  }
+  return false;
 }
 
 function closingParen(clean: string, open: number): number {

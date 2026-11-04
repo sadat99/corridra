@@ -429,6 +429,44 @@ test('a describe or test.describe suite title is not evidence of a test case', (
   expect(problemsFor(sampleShards(), overlay({ [samplePath]: shared }))).toEqual([]);
 });
 
+test('a suite-level runtime skip or fixme makes every test inside the suite not runnable evidence', () => {
+  const positive = "test('synthetic behaviour is allowed', () => { expect(1).toBe(1); });";
+  for (const skip of [
+    "test.skip(true, 'disabled');",
+    "test.fixme(process.env.CI === 'true', 'broken in CI');",
+    "test.skip(({ browserName }) => browserName === 'webkit', 'no webkit');",
+  ]) {
+    const source = [
+      "import { expect, test } from '@playwright/test';",
+      positive,
+      "test.describe('suite', () => {",
+      '  ' + skip,
+      "  test('synthetic denial is refused', () => { expect(2).toBe(2); });",
+      '});',
+      '',
+    ].join('\n');
+    const problems = problemsFor(sampleShards(), overlay({ [samplePath]: source }));
+    expectProblem(problems, 'R4', 'enclosing suite');
+  }
+});
+
+test('a skipped sibling or a skip inside another test does not make unrelated tests not runnable', () => {
+  const scan = findTestTitles(
+    [
+      "test.describe('suite', () => {",
+      "  test.skip('declared as skipped', () => {});",
+      "  test('skips itself at run time', ({ page }) => { test.skip(!page, 'no page'); });",
+      "  test('unrelated one', () => {});",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  const byTitle = new Map(scan.calls.map((c) => [c.title, c] as const));
+  expect(byTitle.get('declared as skipped')?.problem).toEqual(expect.any(String));
+  expect(byTitle.get('skips itself at run time')?.problem).toEqual(expect.any(String));
+  expect(byTitle.get('unrelated one')?.problem).toBeNull();
+});
+
 test('the title scanner marks suite calls so they can be told apart from test cases', () => {
   const scan = findTestTitles(
     [
