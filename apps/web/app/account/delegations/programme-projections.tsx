@@ -212,7 +212,11 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
 }
 
 export function ProgrammeProjectionPanel(
-  props: Identity & { workspaceId: string; programmeId: string; view: 'companies' | 'agenda' },
+  props: Identity & {
+    workspaceId: string;
+    programmeId: string;
+    view: 'companies' | 'agenda' | 'results';
+  },
 ) {
   return (
     <OwnerPanel
@@ -222,7 +226,11 @@ export function ProgrammeProjectionPanel(
   );
 }
 function OwnerPanel(
-  props: Identity & { workspaceId: string; programmeId: string; view: 'companies' | 'agenda' },
+  props: Identity & {
+    workspaceId: string;
+    programmeId: string;
+    view: 'companies' | 'agenda' | 'results';
+  },
 ) {
   const [after, setAfter] = useState<string | undefined>(),
     [taskId, setTaskId] = useState(''),
@@ -287,11 +295,21 @@ function OwnerPanel(
     <section
       ref={host}
       aria-label={
-        props.view === 'companies' ? 'Programme companies and readiness' : 'Programme timed agenda'
+        props.view === 'results'
+          ? 'Programme results'
+          : props.view === 'companies'
+            ? 'Programme companies and readiness'
+            : 'Programme timed agenda'
       }
       aria-busy={view.busy}
     >
-      <h4>{props.view === 'companies' ? 'Companies and readiness' : 'Timed agenda'}</h4>
+      <h4>
+        {props.view === 'results'
+          ? 'Meeting results'
+          : props.view === 'companies'
+            ? 'Companies and readiness'
+            : 'Timed agenda'}
+      </h4>
       {view.notice && <p role="alert">{view.notice}</p>}
       {view.canRetry && (
         <button type="button" disabled={view.busy} onClick={() => void view.retry()}>
@@ -301,7 +319,38 @@ function OwnerPanel(
       <button type="button" disabled={view.busy} onClick={() => void view.load()}>
         Refresh programme projection
       </button>
-      {!d ? (
+      {props.view === 'results' ? (
+        <>
+          <p>
+            Counts come only from missions that a participant chose to share and separately allowed
+            to be counted. A participant&apos;s own report of a meeting never counts as qualified.
+          </p>
+          {!d ? (
+            <p role="status">
+              Not measured yet: programme data is loading or has expired. Refresh to read it again.
+            </p>
+          ) : d.meetings.scheduled === null || d.meetings.qualifiedHeld === null ? (
+            <p>
+              {d.meetings.state === 'NOT_SHARED'
+                ? 'Not shared: no participant has allowed meeting counts yet.'
+                : 'Not measured yet: the shared missions are unavailable, so no count can be given.'}
+            </p>
+          ) : (
+            <>
+              <p>Scheduled meetings: {d.meetings.scheduled}</p>
+              <p>Qualified held meetings: {d.meetings.qualifiedHeld}</p>
+              <p>
+                Counts cover {d.meetings.sharedLinks} permitted shared mission links from{' '}
+                {d.meetings.participantsSharing} of {d.readiness.activeParticipants} active
+                participants. They do not represent all private activity.
+              </p>
+              {d.meetings.unavailableLinks > 0 && (
+                <p>{d.meetings.unavailableLinks} shared links are unavailable and excluded.</p>
+              )}
+            </>
+          )}
+        </>
+      ) : !d ? (
         <p role="status">Programme data is loading or has expired. Refresh to read it again.</p>
       ) : props.view === 'companies' ? (
         <>

@@ -1,11 +1,11 @@
 {
   "recordedOn": "2026-11-04",
-  "batch": "Revamp S3 Public, Intake and Organise: Wave 5 first slice, consent and disclosure tests C-01 to C-10 over the room as it is, plus the honest-proof guard fix from PR 269",
-  "kind": "Test-only. No application code changed.",
+  "batch": "Revamp S3 Public, Intake and Organise: Wave 5 organiser room regroup with consent and disclosure tests C-01 to C-10, plus the honest-proof guard fix from PR 269",
+  "kind": "Application change (room layout and one read-only view) with its tests. No SQL, migration, API, switch or permission change.",
   "sensitive": "yes (consent, tenant scope). Guardian PASS required.",
   "findings": [],
   "findingsNote": "No gap register entry is created or changed.",
-  "status": "Built on branch revamp/public over main 43325f9. CI on the exact pushed head is the verifier; see the pull request. The regroup into five views is not in this slice: it waits for the Guardian's answer on how C-10 and the regroup fit together.",
+  "status": "Built on branch revamp/public over main 43325f9. CI on the exact pushed head is the verifier; see the pull request.",
   "base": "43325f9",
   "specSource": "docs/revamp/specs/programme-consent.md and ADR-075 with its 3 November amendment",
   "newFilesOnly": [
@@ -26,20 +26,45 @@
     "C-06": "The organiser body is searched by text and by key for the seeded meeting title, counterparty names, location, brief, outcome note, opportunity title and attribution, the participant's own note and objective summary, the mission, meeting, opportunity, request and link ids; none appears. The meetings object has exactly six keys. The walkers are proven to read the body (the participant label and the top-level keys are found). The HTML half of C-06 is not covered here.",
     "C-07": "With one enrolled participant who has not shared and one registered participant who is not enrolled: 'N of M' comes from server totals (0 of 2, then 1 of 2), the first misses only currentSharedCompany, the second misses confirmedPlace, currentEligibility, currentTerms and currentSharedCompany, and the definition string is the ADR-075 one. 'Not measured yet' for unavailable data is a browser case and is not covered here.",
     "C-08": "No key in the organiser body names a quote, price, amount, currency, budget, value, deal, cost, margin, revenue or fee. The labelling of organiser revenue versus Corridra fees in the economics view is not covered here.",
-    "C-09": "Opens every view the room offers, whatever it is called, then checks that each of the seven original views (overview, people, companies, agenda, plan, terms, money) still has its section id and a button that controls it, and that the room's ids frozen before the regroup are all still present. With every API unavailable the room exposes its seven section ids and no links; the panels inside are not touched by the regroup.",
-    "C-10": "With the projections switch off the room has exactly Overview, People, Plan and report, Terms and places, Money, in that order, with five sections and no Companies, Agenda, 'Meeting counts are' or sharing panel."
+    "C-09": "Opens every group, then checks that each of the seven original views (overview, people, companies, agenda, plan, terms, money) still has its section id and is reachable (a button controls it or it sits inside a section a button controls), that the room's ids frozen before the regroup are all present, and where each view now sits (companies in people, agenda in plan, money in terms). Group labels asserted.",
+    "C-10": "With the switch off: the five group buttons, every original view section present and reachable, no companies or agenda section, no Companies and readiness, Timed agenda or Meeting results heading, no sharing panel, no 'Meeting counts are' sentence, and in Results the line 'Meeting counts are not available for this programme.' with no count and no ': 0'.",
+    "Results states": "C-04 C-05: two separate numbers (2 and 1) with the not-qualified note; C-02 C-04: NOT_SHARED reads 'Not shared' with no numbers; C-07: unread data and UNAVAILABLE sources read 'Not measured yet' with no numbers and no ': 0'."
   },
   "notCovered": [
-    "The regroup itself: Overview, Participants and eligibility, Programme and meetings, Terms and fees, Results. The existing room tests click the old labels and C-10 says the old five views stay exactly as before with the switch off; the Guardian is asked how these fit.",
-    "C-06 in rendered HTML and C-07 'Not measured yet', C-08 labels, C-02 'Not shared' wording as new browser cases: the existing v3-programme-projections-ui.spec.ts covers the honest unshared and unavailable states.",
-    "Meeting-count and company views inside the organiser UI under a consent denial in a browser."
+    "C-06 in rendered HTML as a new browser case, and C-08 labels for organiser revenue versus Corridra fees: not added; the backend body is covered by revamp-programme-consent.test.ts and the economics view is untouched by this change.",
+    "No visual acceptance on the real signed-in page: the rendered fixture was looked at (five group buttons, Participants and Companies stacked) with no CSS added. No UX gate run locally; the CI ux job is the check.",
+    "Production switch values are not observed. CORRIDRA_UX_PROGRAMME (the room) and the projections switch stay as the owner set them."
   ],
   "receipts": {
-    "vitest": "revamp-programme-consent.test.ts 5 passed and proof-claims.test.ts 17 passed (22 total), local PostgreSQL 16 through the commercial fixture; the existing customer-programme-projections.test.ts also passes unchanged (15).",
-    "playwright": "revamp-programme-room.spec.ts 2 passed (operator config, local); intake-payload.spec.ts 53 passed, 1 skipped across the three verification widths.",
+    "vitest": "revamp-programme-consent.test.ts 5 and proof-claims.test.ts 17 passed; ux-programme-room.test.ts, ux-trip.test.ts and ux-teaching-layer.test.ts 64 passed unchanged; customer-programme-projections.test.ts 15 passed unchanged.",
+    "playwright": "operator config, local: revamp-programme-room.spec.ts 6 and ux-programme-room.spec.ts 11 passed (17); v3-programme-projections-ui.spec.ts 28 passed unchanged. intake-payload.spec.ts 53 passed, 1 skipped.",
     "format": "exit 0",
     "lint": "exit 0",
     "typecheck": "exit 0"
   },
-  "notRun": ["The full integration and operator suites (CI runs them on the pushed head)."]
+  "notRun": ["The full integration and operator suites (CI runs them on the pushed head)."],
+  "decision": "Guardian answer, 4 Nov 2026: regroup with the projections switch off too (one code path); the layout is not tied to CORRIDRA_CUSTOMER_PROGRAMME_PROJECTIONS_ENABLED, which stays a disclosure control. C-10 amended to: with the switch off, Companies, Agenda conflicts and counts are absent, and every existing view, section id, action and link is reachable as before.",
+  "applicationChanges": [
+    "apps/web/lib/programme-room.ts: adds roomGroups (five groups and the views each holds) and roomViewLabels. roomLenses and programmeProjectionLenses are unchanged.",
+    "apps/web/app/account/delegations/programme-room.tsx: the room offers five group buttons. Each group mounts the views it holds under their existing section ids `${programmeId}-<view>` (the view with the group's own key keeps that id on the group section; the others are inner sections). Mounting on first open, hidden-not-removed, the overview note, the sharedMoneyNote text and the refresh on change of group are as before.",
+    "apps/web/app/account/delegations/programme-projections.tsx: a third read-only view, 'results', in the existing owner panel. It uses the same read and the same data; it shows Scheduled meetings and Qualified held meetings as two numbers, 'Not shared' when no participant allowed counts, and 'Not measured yet' when the data is unread or the sources are unavailable, never a zero it did not measure. No new field, audience or disclosure.",
+    "apps/web/app/account/delegations/customer-programmes.tsx: supplies the Results panel: the results view with the switch on, and the line 'Meeting counts are not available for this programme.' with it off. Results is offered only where participants are on, so the bare room still has one view."
+  ],
+  "groups": {
+    "Overview": ["overview"],
+    "Participants and eligibility": ["people", "companies"],
+    "Programme and meetings": ["plan", "agenda"],
+    "Terms and fees": ["terms", "money"],
+    "Results": ["results"]
+  },
+  "exportsPanel": "The exports panel is a workspace-wide tab (Pricing, series and exports) shared across programmes and mounted below the programme list. Moving it into one room would move an action and break its programme selector, so Results keeps it where it is and says so in the same words the Money view already uses for fee schedules. Flagged to the Guardian.",
+  "changedExistingTestStrings": {
+    "file": "tests/operator/ux-programme-room.spec.ts (only the label strings the test clicks or lists; every assertion stays)",
+    "changes": [
+      "Money (4 clicks) -> Terms and fees",
+      "People (3 clicks) -> Participants and eligibility",
+      "the five-name list ['Overview','People','Plan and report','Terms and places','Money'] -> ['Overview','Participants and eligibility','Programme and meetings','Terms and fees','Results']"
+    ],
+    "unchanged": "tests/integration/ux-programme-room.test.ts passes without any change: its source-pattern assertions on programme-room.tsx still hold."
+  }
 }

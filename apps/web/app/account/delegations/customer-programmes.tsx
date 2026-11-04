@@ -440,6 +440,23 @@ function ScopedProgrammes({
                             view="agenda"
                           />
                         ) : null,
+                        // Results (Wave 5): the two meeting counts where the projections are on, and a plain line
+                        // where they are off. A count that is not available is never shown as zero.
+                        results: participantsEnabled ? (
+                          projectionsEnabled ? (
+                            <ProgrammeProjectionPanel
+                              subject={subject}
+                              issuer={issuer}
+                              workspaceId={workspaceId}
+                              programmeId={p.id}
+                              view="results"
+                            />
+                          ) : (
+                            <p className="programme-note">
+                              Meeting counts are not available for this programme.
+                            </p>
+                          )
+                        ) : null,
                         overview: contextEnabled ? (
                           <ProgrammeContext
                             subject={subject}

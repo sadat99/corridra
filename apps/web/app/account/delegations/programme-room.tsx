@@ -8,9 +8,10 @@ import {
   programmeRoadLegend,
   programmeRoadStates,
   programmeRoadSteps,
-  roomLenses,
-  programmeProjectionLenses,
+  roomGroups,
+  roomViewLabels,
   type BoardingCounts,
+  type RoomGroupKey,
   type RoomLensKey,
 } from '../../../lib/programme-room';
 import { useParticipantView, type ParticipantScope } from './participant-client';
@@ -22,7 +23,7 @@ import { useParticipantView, type ParticipantScope } from './participant-client'
 // the first time it is opened and keeps it mounted afterwards, so anything typed in a panel is still
 // there when the person comes back to it. The room reads nothing the participants panel does not
 // already read, and shows only counts and states, never a participant's own answers.
-type LensKey = RoomLensKey | 'companies' | 'agenda';
+type LensKey = RoomLensKey | 'companies' | 'agenda' | 'results';
 export type RoomPanels = Partial<Record<LensKey, ReactNode>>;
 
 const noop = () => {};
@@ -157,7 +158,7 @@ export function ProgrammeRoom({
   notes,
   scope,
   participantsEnabled,
-  panels,
+  panels: parts,
   sharedMoneyNote = false,
 }: {
   programmeId: string;
@@ -171,19 +172,57 @@ export function ProgrammeRoom({
   /** True where fee schedules, pricing templates or series are on: they sit below the programme list. */
   sharedMoneyNote?: boolean;
 }) {
-  const [lens, setLens] = useState<LensKey>('overview');
-  const [opened, setOpened] = useState<ReadonlySet<LensKey>>(new Set(['overview']));
+  const [lens, setLens] = useState<RoomGroupKey>('overview');
+  const [opened, setOpened] = useState<ReadonlySet<RoomGroupKey>>(new Set(['overview']));
   const [reads, setReads] = useState(0);
   const [onScreen, watch] = useOnScreen();
-  const lenses =
-    panels.companies || panels.agenda
-      ? [...roomLenses.slice(0, 2), ...programmeProjectionLenses, ...roomLenses.slice(2)]
-      : roomLenses;
+  // The room shows five groups. Each group holds the views it always held, mounted under their own section ids
+  // (`${programmeId}-<view>`); a view that has no panel is not there, and a group with no view is not offered.
+  const panels: Partial<Record<RoomGroupKey, ReactNode>> = {};
+  for (const group of roomGroups) {
+    const present = group.members.filter((member) => parts[member]);
+    if (present.length === 0) continue;
+    panels[group.key] = (
+      <>
+        {present.map((member) => {
+          const view = (
+            <>
+              {parts[member]}
+              {member === 'money' && sharedMoneyNote && (
+                <p className="programme-note">
+                  Fee schedules, pricing templates and series are shared across your programmes and
+                  stay below the programme list, exactly as before.
+                </p>
+              )}
+              {member === 'results' && sharedMoneyNote && (
+                <p className="programme-note">
+                  Programme exports are shared across your programmes and stay below the programme
+                  list, in Pricing, series and exports, exactly as before.
+                </p>
+              )}
+            </>
+          );
+          return member === group.key ? (
+            <div key={member}>{view}</div>
+          ) : (
+            <section
+              key={member}
+              id={`${programmeId}-${member}`}
+              aria-label={roomViewLabels[member]}
+            >
+              {view}
+            </section>
+          );
+        })}
+      </>
+    );
+  }
+  const lenses = roomGroups;
   const available = lenses.filter((item) => item.key === 'overview' || panels[item.key]);
   const emblem = emblemFor(name);
   const refresh = () => setReads((count) => count + 1);
   const onInvite = panels.people ? () => choose('people') : undefined;
-  function choose(key: LensKey) {
+  function choose(key: RoomGroupKey) {
     if (key !== lens) refresh();
     setLens(key);
     setOpened((current) => (current.has(key) ? current : new Set(current).add(key)));
@@ -212,7 +251,16 @@ export function ProgrammeRoom({
             type="button"
             className="room-lens"
             aria-pressed={lens === item.key}
-            aria-controls={opened.has(item.key) ? `${programmeId}-${item.key}` : undefined}
+            aria-controls={
+              opened.has(item.key)
+                ? [
+                    `${programmeId}-${item.key}`,
+                    ...item.members
+                      .filter((member) => member !== item.key && parts[member])
+                      .map((member) => `${programmeId}-${member}`),
+                  ].join(' ')
+                : undefined
+            }
             onClick={() => choose(item.key)}
           >
             {item.label}
@@ -233,12 +281,6 @@ export function ProgrammeRoom({
                     <p className="programme-note">Choose a view above to work on this programme.</p>
                   )
                 : panels[item.key]}
-              {item.key === 'money' && sharedMoneyNote && (
-                <p className="programme-note">
-                  Fee schedules, pricing templates and series are shared across your programmes and
-                  stay below the programme list, exactly as before.
-                </p>
-              )}
             </section>
           ),
       )}

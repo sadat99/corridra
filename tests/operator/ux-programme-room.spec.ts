@@ -238,7 +238,7 @@ test('Refresh counts reads again, and a changed list shows after it', async ({ p
   expect(log).toHaveLength(2);
   // Coming back from another view reads again too, so the numbers beside a panel are not left behind.
   body = manage([invitation(1, 'USED')], [registration(1)]);
-  await page.getByRole('button', { name: 'Money', exact: true }).click();
+  await page.getByRole('button', { name: 'Terms and fees', exact: true }).click();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await expect(page.getByText('1 of 1 invitations used')).toBeVisible();
 });
@@ -278,7 +278,13 @@ test('every original panel is one view away and a view keeps what was typed when
 }) => {
   await open(page);
   const views = page.getByRole('group', { name: 'Programme views' });
-  for (const name of ['Overview', 'People', 'Plan and report', 'Terms and places', 'Money'])
+  for (const name of [
+    'Overview',
+    'Participants and eligibility',
+    'Programme and meetings',
+    'Terms and fees',
+    'Results',
+  ])
     await expect(views.getByRole('button', { name, exact: true })).toBeVisible();
   await expect(views.getByRole('button', { name: 'Overview', exact: true })).toHaveAttribute(
     'aria-pressed',
@@ -286,19 +292,19 @@ test('every original panel is one view away and a view keeps what was typed when
   );
   // Nothing is opened (and nothing is fetched) until a view is chosen.
   await expect(page.getByRole('heading', { name: 'Invitations' })).toHaveCount(0);
-  await views.getByRole('button', { name: 'People', exact: true }).click();
+  await views.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Invitations' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Consented registrations' })).toBeVisible();
   const label = page.getByLabel(/invitation label/i).first();
   await label.fill('Synthetic invitation kept across views');
-  await views.getByRole('button', { name: 'Money', exact: true }).click();
+  await views.getByRole('button', { name: 'Terms and fees', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Invitations' })).toBeHidden();
-  await views.getByRole('button', { name: 'People', exact: true }).click();
+  await views.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
   await expect(page.getByLabel(/invitation label/i).first()).toHaveValue(
     'Synthetic invitation kept across views',
   );
   // A view that is not chosen is hidden, not removed: its panel is still in the page.
-  await views.getByRole('button', { name: 'Money', exact: true }).click();
+  await views.getByRole('button', { name: 'Terms and fees', exact: true }).click();
   const people = page.locator(`[id="${programmeId}-people"]`);
   await expect(people).toBeHidden();
   await expect(people).toHaveCount(1);
@@ -338,10 +344,10 @@ for (const width of [320, 390, 768, 1440]) {
     };
     await expect(page.locator('.programme-room')).toBeVisible();
     await check('overview');
-    await page.getByRole('button', { name: 'People', exact: true }).click();
+    await page.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Invitations' })).toBeVisible();
     await check('people');
-    await page.getByRole('button', { name: 'Money', exact: true }).click();
+    await page.getByRole('button', { name: 'Terms and fees', exact: true }).click();
     await check('money');
     if (width === 320 || width === 1440)
       await page.screenshot({

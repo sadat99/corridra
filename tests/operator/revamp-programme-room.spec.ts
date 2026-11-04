@@ -102,10 +102,38 @@ test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
 
-async function open(page: Page, query: string) {
+const frozenIds = ['overview', 'people', 'companies', 'agenda', 'plan', 'terms', 'money'];
+const frozenLinks: string[] = [];
+type Meetings = {
+  state: 'NOT_SHARED' | 'UNAVAILABLE' | 'AVAILABLE' | 'PARTIAL';
+  sharedLinks: number;
+  unavailableLinks: number;
+  participantsSharing: number;
+  scheduled: number | null;
+  qualifiedHeld: number | null;
+};
+const projection = (meetings: Meetings) => ({
+  workspaceId,
+  programmeId,
+  expiresAt: new Date(Date.now() + 600000).toISOString(),
+  sendsMessages: false,
+  readiness: { activeParticipants: 4, readyParticipants: 1, definition: 'x' },
+  companies: [],
+  nextAfter: null,
+  context: null,
+  agenda: [],
+  conflicts: [],
+  meetings,
+});
+
+async function open(page: Page, query: string, meetings?: Meetings) {
   await page.route('**/api/customer-programme-*', (route) =>
     route.fulfill({ status: 503, json: { error: 'unavailable' } }),
   );
+  if (meetings)
+    await page.route('**/api/customer-programme-projections**', (route) =>
+      route.fulfill({ json: projection(meetings) }),
+    );
   await page.route('**/api/customer-programmes*', (route) =>
     route.fulfill({
       json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
@@ -115,75 +143,168 @@ async function open(page: Page, query: string) {
   await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
 }
 
-// Opens every view the room offers, whatever it is called, and reports the room's structure.
+// Opens every group the room offers, whatever it is called, and reports the room's structure.
 async function structure(page: Page) {
   const room = page.getByRole('article', { name: programme.name });
   const views = room.getByRole('group', { name: 'Programme views' });
   const labels = await views.getByRole('button').allInnerTexts();
   const count = await views.getByRole('button').count();
   for (let index = 0; index < count; index++) await views.getByRole('button').nth(index).click();
-  return page
-    .evaluate(
-      ({ id }) => {
-        const room = document.querySelector('article.programme-room')!;
-        const sections = Array.from(room.querySelectorAll(`section[id^="${id}-"]`)).map(
-          (node) => node.id,
-        );
-        const ids = Array.from(room.querySelectorAll('[id]'))
-          .map((node) => node.id)
-          .sort();
-        const links = Array.from(room.querySelectorAll('a[href]'))
-          .map((node) => node.getAttribute('href')!)
-          .sort();
-        const controls = Array.from(room.querySelectorAll('.room-lens')).map(
-          (node) => node.getAttribute('aria-controls') ?? '',
-        );
-        return { sections, ids, links, controls };
-      },
-      { id: programmeId },
-    )
-    .then((found) => ({ labels, ...found }));
+  const found = await page.evaluate(
+    ({ id }) => {
+      const room = document.querySelector('article.programme-room')!;
+      const sections = Array.from(room.querySelectorAll(`section[id^="${id}-"]`)).map(
+        (node) => node.id,
+      );
+      const ids = Array.from(room.querySelectorAll('[id]'))
+        .map((node) => node.id)
+        .sort();
+      const links = Array.from(room.querySelectorAll('a[href]'))
+        .map((node) => node.getAttribute('href')!)
+        .sort();
+      const controlled = new Set(
+        Array.from(room.querySelectorAll('.room-lens')).flatMap((node) =>
+          (node.getAttribute('aria-controls') ?? '').split(' ').filter(Boolean),
+        ),
+      );
+      // A view is reachable when a button controls it or it sits inside a section a button controls.
+      const reachable = (sectionId: string) => {
+        for (let node = document.getElementById(sectionId); node; node = node.parentElement)
+          if (node.id && controlled.has(node.id)) return true;
+        return false;
+      };
+      return {
+        sections,
+        ids,
+        links,
+        controlled: Array.from(controlled),
+        reachable: sections.filter(reachable),
+      };
+    },
+    { id: programmeId },
+  );
+  return { labels, ...found };
 }
 
-// The old five views, with the projections switch off: exactly these labels, in this order, and these sections.
-const oldFive = ['Overview', 'People', 'Plan and report', 'Terms and places', 'Money'];
+const groups = [
+  'Overview',
+  'Participants and eligibility',
+  'Programme and meetings',
+  'Terms and fees',
+  'Results',
+];
 const oldKeys = ['overview', 'people', 'plan', 'terms', 'money'];
+const section = (key: string) => `${programmeId}-${key}`;
 
-const frozenIds = ['overview', 'people', 'companies', 'agenda', 'plan', 'terms', 'money'];
-const frozenLinks: string[] = [];
-
-test('C-10 with the projections switch off the room has the old five views and no company, agenda or count view', async ({
+test('C-10 with the projections switch off, companies, agenda conflicts and counts are absent and every existing view is reachable as before', async ({
   page,
 }) => {
   await open(page, 'room=1&proj=0');
   const found = await structure(page);
-  expect(found.labels).toEqual(oldFive);
-  expect(found.sections.sort()).toEqual(oldKeys.map((key) => `${programmeId}-${key}`).sort());
+  expect(found.labels).toEqual(groups);
+  // Every original view, section id and its panel are there and reachable.
+  for (const key of oldKeys) {
+    expect(found.sections, key).toContain(section(key));
+    expect(found.reachable, key).toContain(section(key));
+  }
+  // The company, agenda and count views are absent, and the counts are stated as not available, never as 0.
   for (const absent of ['companies', 'agenda'])
-    expect(found.sections).not.toContain(`${programmeId}-${absent}`);
+    expect(found.sections).not.toContain(section(absent));
   await expect(
-    page.getByRole('heading', { name: /Companies and readiness|Timed agenda/ }),
+    page.getByRole('heading', { name: /Companies and readiness|Timed agenda|Meeting results/ }),
   ).toHaveCount(0);
-  await expect(page.getByText(/Meeting counts are/)).toHaveCount(0);
+  await expect(page.getByText(/Meeting counts are\b(?! not available)/)).toHaveCount(0);
   await expect(page.locator('[aria-label="Programme company and meeting sharing"]')).toHaveCount(0);
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(
+    results.getByText('Meeting counts are not available for this programme.'),
+  ).toBeVisible();
+  await expect(results).not.toContainText(/Scheduled meetings|Qualified held|: 0\b/);
 });
 
-test('C-09 every original room view stays reachable, with its section id, and no id or link is lost', async ({
+test('C-09 every original room view stays reachable under its section id, and no id or link is lost', async ({
   page,
 }) => {
   await open(page, 'room=1&proj=1');
   const found = await structure(page);
-  // The five original views and the two projection views: each one still has its section and is reachable
-  // from a button that controls it.
+  expect(found.labels).toEqual(groups);
+  // The five original views and the two projection views: each one still has its section id and is reachable.
   const keys = [...oldKeys, 'companies', 'agenda'];
   for (const key of keys) {
-    expect(found.sections, key).toContain(`${programmeId}-${key}`);
-    expect(found.controls, key).toContain(`${programmeId}-${key}`);
+    expect(found.sections, key).toContain(section(key));
+    expect(found.reachable, key).toContain(section(key));
   }
-  expect(found.ids).toEqual(expect.arrayContaining(keys.map((key) => `${programmeId}-${key}`)));
   // No id or link of the room as it was before the regroup is gone. Frozen on 4 Nov 2026 from the room before
   // Wave 5, with every API answering unavailable: the room's own seven section ids and no links. The panels
   // inside are not touched by the regroup and have their own id and link tests.
-  for (const id of frozenIds) expect(found.ids, id).toContain(`${programmeId}-${id}`);
+  for (const id of frozenIds) expect(found.ids, id).toContain(section(id));
   for (const href of frozenLinks) expect(found.links, href).toContain(href);
+  // The groups hold the views as agreed: nothing is in two places.
+  const parentOf = async (key: string) =>
+    page
+      .locator(`[id="${section(key)}"]`)
+      .evaluate((node) => node.parentElement?.closest('section')?.id ?? '');
+  expect(await parentOf('companies')).toBe(section('people'));
+  expect(await parentOf('agenda')).toBe(section('plan'));
+  expect(await parentOf('money')).toBe(section('terms'));
+});
+
+// Results: the two counts, as two numbers, with the honest states. Nothing is shown as zero unless it is zero.
+const shared = { sharedLinks: 3, unavailableLinks: 0, participantsSharing: 2 };
+test('C-04 C-05 Results shows scheduled and qualified-held as two separate numbers', async ({
+  page,
+}) => {
+  await open(page, 'room=1&proj=1', {
+    state: 'AVAILABLE',
+    ...shared,
+    scheduled: 2,
+    qualifiedHeld: 1,
+  });
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(results.getByText('Scheduled meetings: 2')).toBeVisible();
+  await expect(results.getByText('Qualified held meetings: 1')).toBeVisible();
+  await expect(results.getByText(/never counts as qualified/)).toBeVisible();
+});
+
+test('C-02 C-04 Results says not shared when no participant has allowed counts, never zero', async ({
+  page,
+}) => {
+  await open(page, 'room=1&proj=1', {
+    state: 'NOT_SHARED',
+    sharedLinks: 0,
+    unavailableLinks: 0,
+    participantsSharing: 0,
+    scheduled: null,
+    qualifiedHeld: null,
+  });
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(results.getByText(/^Not shared/)).toBeVisible();
+  await expect(results).not.toContainText(/Scheduled meetings|Qualified held/);
+});
+
+test('C-07 Results says not measured yet when the counts cannot be read, never zero', async ({
+  page,
+}) => {
+  // Every API answers unavailable: the data was never read.
+  await open(page, 'room=1&proj=1');
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(results.getByText(/^Not measured yet/)).toBeVisible();
+  await expect(results).not.toContainText(/Scheduled meetings|Qualified held|: 0\b/);
+  // The sources are unavailable: also not measured, not zero.
+  const other = await page.context().newPage();
+  await open(other, 'room=1&proj=1', {
+    state: 'UNAVAILABLE',
+    sharedLinks: 0,
+    unavailableLinks: 2,
+    participantsSharing: 0,
+    scheduled: null,
+    qualifiedHeld: null,
+  });
+  await other.getByRole('button', { name: 'Results', exact: true }).click();
+  await expect(
+    other.locator(`[id="${section('results')}"]`).getByText(/^Not measured yet/),
+  ).toBeVisible();
 });
