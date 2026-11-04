@@ -1,0 +1,36 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S3 Public, Intake and Organise: Phase A intake parity guard",
+  "kind": "Test-only guard for the request as it works on main before the Wave 3 public home and /plan work",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No application code changed and no defect was found.",
+  "status": "Built on branch revamp/public over main 49163d1. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "base": "49163d11acad3f6788b823c4bceba7fe45cc3074",
+  "authorityStamp": "auth-73f8e123e22a",
+  "newFilesOnly": [
+    "tests/integration/intake-parity.test.ts (vitest, no browser, no database, 50 tests)",
+    "tests/e2e/verification/ws-a/intake-parity.spec.ts (Playwright verification suite, 18 tests per width, 54 across w1280, w768 and w390)"
+  ],
+  "pinned": {
+    "jobs": "All 15 mission jobs: key, label and criteria in catalogue order; objective a link sets, picture that opens it, and requirement role for each.",
+    "fieldsPerJob": "Each job's own optional fields are shown and no other job's; every filled field leaves the browser in the structured request (specifications, quantity, unit, technical constraints, machinery application, organiser, participants, travel dates, decision criteria, budget).",
+    "originalCurrencies": "Budget in BHD (3 places) and CNY (2 places) is sent in the currency's own smallest unit; 1.234 BHD gives 1234 and 12000.50 CNY gives 1200050; more decimals than the currency allows, comma separators and unknown currencies are refused.",
+    "validation": "Quantity without a unit and a partial budget are refused on their own fields; offer, outcomes, website, name, company, market, timezone and visit window rules; the five steps cover every brief field.",
+    "consent": "Sample and real schemas refuse an unacknowledged request; the form shows the acknowledgement error and sends nothing until it is ticked.",
+    "draftsAndResume": "Guest draft survives a reload on the same step with its fields. Guided draft path: composeOffer keeps the customer's words, draftReadiness names plain gaps, draftProblems saving rules, draftCommandId is stable per draft version.",
+    "deepLinksAndOldUrls": "/plan?job=<each of 15> selects the job; countries from the link are kept; /plan, an unknown job and an empty job leave no job chosen.",
+    "sentRequestIsStubbed": "The browser spec answers POST /api/intake itself, so no request is stored and the hourly intake budget is untouched."
+  },
+  "notPinned": [
+    "The private account request path (/account/request) is a different page owned by S2; it shares the same Intake component and brief schema, and its sign-in flow is not exercised here.",
+    "The real-use pending and claim path (/api/intake/pending) is not exercised: the verification server runs without real use."
+  ],
+  "receipts": {
+    "vitest": "pnpm exec vitest run tests/integration/intake-parity.test.ts: exit 0, 50 passed (local, node 22).",
+    "playwright": "pnpm exec playwright test --config playwright.verification.config.ts tests/e2e/verification/ws-a/intake-parity.spec.ts on a local PostgreSQL 16 and a production build: 54 passed (2.8m) across the three widths. A first run failed 3 on my own selectors (a select and a textarea whose labels include their options or value); fixed in the test, no product change. After that run only type annotations in the spec changed.",
+    "format": "pnpm format:check exit 0",
+    "lint": "pnpm lint exit 0",
+    "typecheck": "pnpm typecheck exit 0"
+  },
+  "notRun": ["Full integration and operator suites (CI runs them on the pushed head).", "UX gate."]
+}

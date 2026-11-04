@@ -1,0 +1,36 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S3 Public, Intake and Organise: Wave 1 public footer inside signed-in workspaces",
+  "kind": "Truth-preserving layout fix: the marketing footer no longer renders under a signed-in workspace",
+  "findings": [],
+  "findingsNote": "No gap register entry is created or changed.",
+  "status": "Built on branch revamp/public over main 49163d1, stacked after the intake parity PR. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "base": "49163d11acad3f6788b823c4bceba7fe45cc3074",
+  "defectObserved": "On a production build with the verification server (CORRIDRA_UX_SHELLS_V2 on), signed in as staff, /operator rendered the full navy public footer (tagline, ways to work, company links, 479 px tall) below the Today workspace. The root layout renders SiteFooter on every route. The header already switched on signedInShellFor(pathname); the footer did not.",
+  "changed": [
+    "apps/web/components/site-footer-place.tsx (new client component): with the shells switch on and a path inside /account, /operator or /contributor, renders a one-line footer (copyright and the privacy link, same words as before); otherwise renders the unchanged SiteFooterView.",
+    "apps/web/components/site-footer.tsx: renders SiteFooterPlace with CORRIDRA_UX_SHELLS_V2, the same switch the header follows.",
+    "tests/integration/site-footer-workspace.test.ts (26 tests), tests/e2e/verification/ws-a/footer-workspace.spec.ts (2 tests per width)."
+  ],
+  "preserved": [
+    "site-footer-view.tsx is untouched, so the language-catalog source check and the operator language-switcher fixture (which stubs next/navigation with useRouter only) are unaffected.",
+    "Uses the existing signedInShellFor predicate: sign-in, forgot and reset password and setup under /operator, and the staff customer preview /operator/view-as, keep the full footer, exactly as they keep the public header.",
+    "With the shells switch off, every page keeps the full footer.",
+    "The privacy notice link stays reachable from every signed-in page (sample and real wording unchanged).",
+    "No privacy, consent or disclosure wording changed. No CSS changed: the one-line footer reuses the existing .site-footer rule."
+  ],
+  "receipts": {
+    "redFirst": "tests/integration/site-footer-workspace.test.ts before the fix: 9 failed (every workspace path), 17 passed (every preservation case).",
+    "vitest": "site-footer-workspace.test.ts 26 passed; with language-catalog.test.ts 80 passed.",
+    "rendered": "Production build, verification server, staff sign-in: /operator footer 70 px tall, no .guide-footer, text '© 2026 Corridra' and the intake notice link (was 479 px); /operator/signin and / keep the full 479 px footer. Screenshot read at work/footer-probe-operator-after.png (not committed).",
+    "playwright": "footer-workspace.spec.ts: 6 passed across w1280, w768 and w390.",
+    "format": "pnpm format:check exit 0",
+    "lint": "pnpm lint exit 0",
+    "typecheck": "pnpm typecheck exit 0"
+  },
+  "notRun": [
+    "Customer (/account) workspace in a real browser: it needs a customer sign-in this suite does not have; covered by the pathname unit tests only.",
+    "Contributor workspace in a browser.",
+    "Full integration and operator suites, UX gate (CI runs the suites on the pushed head)."
+  ]
+}
