@@ -65,9 +65,9 @@ test('Q-02 no sideways scroll at 320 and at 640 (1280 at 200 percent zoom)', asy
       await open(address.path());
       const overflow = await page.evaluate(() => {
         const wide = document.documentElement.scrollWidth - innerWidth;
-        const clipped = [
-          ...document.querySelectorAll<HTMLElement>('a, button, input, select, textarea'),
-        ]
+        const clipped = Array.from(
+          document.querySelectorAll<HTMLElement>('a, button, input, select, textarea'),
+        )
           .filter((el) => el.getBoundingClientRect().width > 0)
           .filter((el) => el.getBoundingClientRect().right > innerWidth + 1)
           .map((el) =>
@@ -105,7 +105,7 @@ test('Q-01 Tab reaches every control with a visible focus ring, never traps, and
           (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0) ||
           style.boxShadow !== 'none';
         const label = (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 30);
-        const index = [...document.querySelectorAll('*')].indexOf(el);
+        const index = Array.from(document.querySelectorAll('*')).indexOf(el);
         return { key: `${index}:${el.tagName}:${el.id}:${label}`, ring };
       });
       if (info.key === 'BODY') break;
@@ -192,11 +192,11 @@ for (const target of targets) {
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
       await page.waitForTimeout(2500);
       const shown = await page.evaluate(() =>
-        [
-          ...document.querySelectorAll(
+        Array.from(
+          document.querySelectorAll(
             'main [role=status], main [role=alert], main .ux-state, main [aria-live]',
           ),
-        ]
+        )
           .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
           .filter(Boolean)
           .join(' | '),
@@ -387,11 +387,11 @@ test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', a
         // A link inside a closed group is not shown, though the browser still lays it out.
         const shown = (el: HTMLElement) =>
           el.tagName === 'SUMMARY' || !el.closest('details:not([open])');
-        const items = [
-          ...document.querySelectorAll<HTMLElement>(
+        const items = Array.from(
+          document.querySelectorAll<HTMLElement>(
             '#workspace-navigation a, #workspace-navigation summary',
           ),
-        ]
+        )
           .filter(shown)
           .map((el) => el.getBoundingClientRect())
           .filter((r) => r.width > 0 && r.height > 0);
@@ -400,11 +400,11 @@ test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', a
         return {
           outside: items.filter((r) => r.left < -1 || r.right > innerWidth + 1).length,
           overlaps: items.filter((r, i) => i > 0 && r.top < items[i - 1]!.bottom - 1).length,
-          rects: [
-            ...document.querySelectorAll<HTMLElement>(
+          rects: Array.from(
+            document.querySelectorAll<HTMLElement>(
               '#workspace-navigation a, #workspace-navigation summary',
             ),
-          ]
+          )
             .map((el) => ({
               t: (el.textContent || '').trim().slice(0, 14),
               r: el.getBoundingClientRect(),
