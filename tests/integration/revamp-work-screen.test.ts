@@ -218,6 +218,7 @@ describe('rows', () => {
     const html = await view(
       list([
         item(1, { title: '广州家具采购', at: '2026-11-04T10:00:00.000Z' }),
+        item(5, { title: 'কারখানা পরিদর্শন' }),
         item(2, {
           kind: 'service_request',
           key: 'service_request:x',
@@ -245,6 +246,8 @@ describe('rows', () => {
       ]),
     );
     expect(html).toContain('lang="zh"');
+    expect(html).toContain('lang="bn"');
+    expect(html).toContain('কারখানা পরিদর্শন');
     expect(html).toContain('广州家具采购');
     expect(html).toContain('Atelier Rahman');
     expect(html).toContain('Quote ready for you');
@@ -253,17 +256,17 @@ describe('rows', () => {
     expect(html).toContain('Created 4 Nov 2026');
     // A request has no stored title, so its kind word is the heading and nothing is invented.
     expect(html).toContain('<h3 dir="auto">Request</h3>');
-    expect(html.match(/work-open/g)).toHaveLength(4);
+    expect(html.match(/work-open/g)).toHaveLength(5);
   });
   it('use no status word that does not already exist', () => {
     expect(workStatusWords(item(1))).toBe('Draft');
     expect(workStatusWords(item(2, { kind: 'programme', status: '' }))).toBe('');
     expect(workStatusWords(item(3, { kind: 'request', status: 'CLOSED' }))).toBe('Finished');
   });
-  it('show twenty rows and one button for more', async () => {
+  it('show ten rows and one button for more', async () => {
     const html = await view(list(Array.from({ length: 25 }, (_, n) => item(n + 1))));
-    expect(html.match(/<li class="work-row/g)).toHaveLength(20);
-    expect(html).toContain('Show 5 more');
+    expect(html.match(/<li class="work-row/g)).toHaveLength(10);
+    expect(html).toContain('Show 10 more');
     const small = await view(list([item(1)]));
     expect(small).not.toContain('work-more');
   });

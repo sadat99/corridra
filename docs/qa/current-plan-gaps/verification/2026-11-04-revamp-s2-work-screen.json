@@ -20,13 +20,15 @@
     "selector": "A real radio group in a GET form with a Show button, no script needed. Counts come from the items read and read 'N or more' whenever the list is partial, unreadable or has skipped workspaces.",
     "titles": "A request title is the one the requests route derives from its original brief (via the adapter); the kind word is the heading only when it was not read.",
     "statusWords": "Existing sets only: customerStatusLabel for drafts and requests, the service-request status words for service requests. A programme has no status and shows none.",
-    "dates": "Rows say 'Updated', 'Sent' (requests) or 'Created' (programmes) by atKind, never 'Updated' for a creation time."
+    "dates": "Rows say 'Updated', 'Sent' (requests) or 'Created' (programmes) by atKind, never 'Updated' for a creation time.",
+    "firstPage": "Ten rows before 'Show 10 more' instead of the spec's twenty, because twenty long rows were over the phone scroll budget (Guardian item 5).",
+    "language": "Stored titles and workspace names are marked lang zh for Han text and lang bn for Bengali text."
   },
   "receipts": {
     "vitest": "pnpm exec vitest run on revamp-work-items and revamp-work-screen: 2 files, 61 passed (local, node 22).",
     "mutations": "Treating an unreadable empty list as empty fails 3; dropping the 'or more' rule fails 3; accepting a raw work value fails 2; showing every row instead of twenty fails 1. Each restored.",
     "checks": "pnpm format:check, pnpm lint, pnpm typecheck: exit 0 each (node scripts/gate.mjs receipts in work/). The first typecheck failed on my own test importing a .tsx file directly; fixed with the dynamic import the existing tests use.",
-    "layout": "LOCAL APPROXIMATION, not CI-gated: the component rendered to HTML with the real globals.css and work-list.css inside main.ux-customer, measured in Chromium at 320, 390, 768 and 1440 with axe (wcag2a, wcag2aa, wcag22aa). Four states (25 rows with one failed source, true empty, unreadable, filtered empty): no sideways scroll, no action under 44px, axe clean in all 16 cases. Height of 20 rows with ordinary workspace names: 3.9 screens at 390, 2.7 at 768, 2.4 at 1440 of a 900px viewport (budget 4 and 2.5); 5.1 at 320, over the phone budget. With a 45-character workspace name in every row: 5.1 at 390."
+    "layout": "LOCAL APPROXIMATION, not CI-gated: the component rendered to HTML with the real globals.css and work-list.css inside main.ux-customer, measured in Chromium at 320, 390, 768 and 1440 with axe (wcag2a, wcag2aa, wcag22aa). Four states: no sideways scroll, no action under 44px, axe clean in all 16 cases. Twenty rows first measured 5.1 screens at 390 with long text, over the budget of 4, so the first page was cut to ten rows (then 'Show 10 more'). Ten rows of the worst-case fixture (45-character workspace name and a long title in every fifth row, 900px viewport): 3.6 screens at 320, 2.9 at 390, 1.9 at 768, 1.5 at 1440 (budget 4 phone, 2.5 desktop). Ordinary workspace names: 3.0, 2.4, 1.6, 1.5."
   },
   "notRun": [
     "The real /account page signed in: the verification server has no customer identity (KI-16), so H-07 is not proved in the real frame. CI's operator suite runs the existing panels but does not measure this list.",

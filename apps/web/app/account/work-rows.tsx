@@ -2,7 +2,7 @@
 import { Children, useState, type ReactNode } from 'react';
 
 /** The first rows, then one button for more: a long list stays within the scroll budget. */
-export const workRowsFirst = 20;
+export const workRowsFirst = 10;
 
 export function WorkRows({ children }: { children: ReactNode }) {
   const rows = Children.toArray(children);

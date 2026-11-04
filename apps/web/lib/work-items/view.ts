@@ -59,6 +59,12 @@ export function workDateWords(item: WorkItem): string {
   return item.atKind === 'updated' ? 'Updated' : item.kind === 'request' ? 'Sent' : 'Created';
 }
 
+/** The language mark for stored text inside the English page: Chinese and Bangla are marked as such. */
+export function contentLang(text: string): 'zh' | 'bn' | undefined {
+  if (/\p{Script=Han}/u.test(text)) return 'zh';
+  return /\p{Script=Bengali}/u.test(text) ? 'bn' : undefined;
+}
+
 export const kindWords: Record<WorkKind, string> = {
   draft: 'Draft request',
   request: 'Request',

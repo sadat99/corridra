@@ -8,12 +8,12 @@ import {
   workFilterLabels,
   workFilters,
   workState,
+  contentLang,
   workDateWords,
   workStatusWords,
   type WorkFilter,
 } from '../../lib/work-items/view';
 import type { WorkItem, WorkList as WorkListData } from '../../lib/work-items/types';
-import { hanLang } from '../../lib/trip';
 import { formatDate } from '../../lib/ux/format';
 import { WorkRows } from './work-rows';
 import './work-list.css';
@@ -46,12 +46,12 @@ function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
   const date = item.at ? formatDate(item.at) : '';
   return (
     <li className="work-row">
-      <h3 dir="auto" lang={hanLang(heading)}>
+      <h3 dir="auto" lang={contentLang(heading)}>
         {heading}
       </h3>
       <p className="work-meta">
         <span>{kindWords[item.kind]}</span>
-        <span dir="auto" lang={hanLang(names.get(item.workspaceId) ?? '')}>
+        <span dir="auto" lang={contentLang(names.get(item.workspaceId) ?? '')}>
           {names.get(item.workspaceId)}
         </span>
         <span>{status}</span>
