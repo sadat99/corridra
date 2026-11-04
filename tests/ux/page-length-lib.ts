@@ -30,9 +30,14 @@ export const viewports: readonly Viewport[] = [
 
 export type CoverageRoute = { route: string; file: string; audience: string; state: string };
 export type Verdict = 'within target' | 'over target' | 'over hard limit';
+/** The track that owns measuring a route (layout budget, ownership table). */
+export type Track =
+  'S2 customer' | 'S3 public and organiser' | 'S4 team and contributor' | 'unassigned';
 export type Measurement = {
   route: string;
   audience: string;
+  /** Who measures this route: S2 customer, S3 public and organiser, S4 team and contributor. */
+  owner: Track;
   viewport: Viewport['name'];
   /** True only when the page itself was measured: not redirected, not an error page. */
   measured: boolean;
@@ -50,6 +55,22 @@ export function pageRoutes(): CoverageRoute[] {
     routes: CoverageRoute[];
   };
   return coverage.routes.filter((entry) => entry.file.endsWith('page.tsx'));
+}
+
+/**
+ * The track that owns the measurement of a route, from its audience and address. A route no track
+ * is named for is 'unassigned' and is listed so the Conductor can assign it: by the last layout PR the
+ * union of every track's spec must cover every page route.
+ */
+export function trackFor(entry: Pick<CoverageRoute, 'route' | 'audience'>): Track {
+  const { route, audience } = entry;
+  if (audience === 'customer') return 'S2 customer';
+  if (audience === 'staff' || audience === 'contributor') return 'S4 team and contributor';
+  if (audience === 'public' || audience === 'public intake and customer identity')
+    return 'S3 public and organiser';
+  if (/^\/(mute|pulse|network)(\/|$)/.test(route)) return 'S4 team and contributor';
+  if (route === '/programme' || route.startsWith('/programme/')) return 'S3 public and organiser';
+  return 'unassigned';
 }
 
 export const hasDynamicSegment = (route: string) => route.includes('[');
@@ -79,7 +100,12 @@ export async function measure(
   viewport: Viewport,
   settle?: (page: Page) => Promise<void>,
 ): Promise<Measurement> {
-  const base = { route: entry.route, audience: entry.audience, viewport: viewport.name };
+  const base = {
+    route: entry.route,
+    audience: entry.audience,
+    owner: trackFor(entry),
+    viewport: viewport.name,
+  };
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   const response = await page.goto(url, { waitUntil: 'load' }).catch(() => null);
   if (!response) return { ...base, measured: false, reason: 'the page did not load' };
@@ -116,6 +142,7 @@ export function notMeasured(
   return {
     route: entry.route,
     audience: entry.audience,
+    owner: trackFor(entry),
     viewport: viewport.name,
     measured: false,
     reason,
@@ -139,6 +166,17 @@ export function writeReport(name: string, rows: Measurement[]): string {
       `  ${viewport.width}x${viewport.height}: ${count('within target', viewport.name)} within target, ` +
         `${count('over target', viewport.name)} over target, ${count('over hard limit', viewport.name)} over the hard limit`,
     );
+  }
+  // Every route not measured here, grouped by the track that owns measuring it.
+  const missing = new Map<string, Set<string>>();
+  for (const row of rows.filter((r) => !r.measured)) {
+    const set = missing.get(row.owner) ?? new Set<string>();
+    set.add(`${row.route} (${row.reason})`);
+    missing.set(row.owner, set);
+  }
+  for (const [owner, set] of [...missing].sort()) {
+    lines.push(`  not measured here, owner ${owner}: ${set.size} route(s)`);
+    for (const item of [...set].sort()) lines.push(`    ${item}`);
   }
   const worst = [...measured]
     .sort((a, b) => (b.screens ?? 0) / viewportOf(b).hard - (a.screens ?? 0) / viewportOf(a).hard)
