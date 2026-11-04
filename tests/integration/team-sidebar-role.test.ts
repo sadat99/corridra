@@ -15,8 +15,9 @@ vi.mock('next/link', () => ({
 }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/operator' }));
 
-const load = async () =>
-  (await import(/* @vite-ignore */ '../../apps/web/components/ux/team-sidebar')).TeamSidebar;
+// The component is TSX and the package type check has no JSX setting, so it is loaded by path.
+const sidebarPath = '../../apps/web/components/ux/team-sidebar';
+const load = async () => (await import(/* @vite-ignore */ sidebarPath)).TeamSidebar;
 
 describe('team sidebar before the role is known', () => {
   test('first render (role unknown) offers no owner or admin-only links', async () => {
