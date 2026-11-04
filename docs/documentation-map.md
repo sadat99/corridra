@@ -142,7 +142,7 @@ The [current-plan gap register](qa/current-plan-gaps/README.md) preserves all 60
 
 The [V3 controlled revamp](revamp/README.md), with the owner's [execution contract](revamp/CONTRACT.md) kept byte for byte, records the owner's 4 November 2026 approval for Waves 0 to 8, its merge and preservation rules, session file ownership and the Wave 0 route and cleanup manifest. Live state stays in the ledger.
 
-The [revamp specs](revamp/specs/README.md) are what track sessions build to: the [work-item adapter](revamp/specs/work-items.md), [Home and Work](revamp/specs/home-work.md), [public home and intake](revamp/specs/public-home.md) the [Signal Desk map](revamp/specs/signal-desk.md), [SourceLedger and money](revamp/specs/sourceledger-money.md), the [decision card screens](revamp/specs/decision-card-ui.md) and [organiser room consent](revamp/specs/programme-consent.md).
+The [revamp specs](revamp/specs/README.md) are what track sessions build to: the [work-item adapter](revamp/specs/work-items.md), [Home and Work](revamp/specs/home-work.md), [public home and intake](revamp/specs/public-home.md) the [Signal Desk map](revamp/specs/signal-desk.md), [SourceLedger and money](revamp/specs/sourceledger-money.md), the [decision card screens](revamp/specs/decision-card-ui.md), [organiser room consent](revamp/specs/programme-consent.md), [Wave 6 quality](revamp/specs/wave6-quality.md), [Wave 7 cleanup](revamp/specs/wave7-cleanup.md) and [Wave 8 acceptance](revamp/specs/wave8-acceptance.md).
 
 Use [bounded context](v3/CONTEXT.md) for current-state and requirement queries. The [historical ledger](v3/history/ledger-through-109.md) is preserved byte-for-byte, with identity hashes in `v3/history/manifest.json`; it is not current acceptance.
 
