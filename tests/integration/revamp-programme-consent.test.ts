@@ -351,36 +351,53 @@ test('C-01 a member, an outsider and the organiser of another programme are deni
       })
     ).programmeId,
   ).toBe(otherProgramme);
+  // Every attempt runs one at a time and reports exactly what it was told. Nothing is allowed.
+  const attempts: [string, () => Promise<unknown>][] = [];
   for (const person of ['member', 'outsider', 'another', 'participant']) {
-    await expect(projections(person).owner(scope()), person).rejects.toThrow();
-    // Neither this programme named under their own workspace, nor their programme under this workspace.
-    await expect(
-      projections(person).owner({ workspaceId: otherWorkspace, programmeId }),
-    ).rejects.toThrow();
+    attempts.push([person + ' reads this programme', () => projections(person).owner(scope())]);
+    attempts.push([
+      person + ' reads this programme under the other workspace',
+      () => projections(person).owner({ workspaceId: otherWorkspace, programmeId }),
+    ]);
   }
-  await expect(
-    projections('another').owner({ workspaceId, programmeId: otherProgramme }),
-  ).rejects.toThrow();
-  // The denial is the same for a programme that does not exist, so it does not reveal which programmes exist.
-  const reasons = new Set<string>();
-  for (const attempt of [
-    projections('outsider').owner(scope()),
-    projections('another').owner(scope()),
-    projections('another').owner({ workspaceId, programmeId: randomUUID() }),
-  ])
-    await attempt.catch((error: Error) => reasons.add(error.message));
-  expect(reasons.size).toBe(1);
-  // An organiser cannot share or withdraw on a participant's behalf.
-  await expect(
-    projections().command({
-      action: 'company',
-      commandId: randomUUID(),
-      registrationId,
-      expectedVersion: 0,
-      shared: false,
-      acknowledged: true,
-    }),
-  ).rejects.toThrow();
+  attempts.push([
+    'another organiser reads their own programme under this workspace',
+    () => projections('another').owner({ workspaceId, programmeId: otherProgramme }),
+  ]);
+  attempts.push([
+    'another organiser reads a programme that does not exist',
+    () => projections('another').owner({ workspaceId, programmeId: randomUUID() }),
+  ]);
+  attempts.push([
+    'the organiser shares for a participant',
+    () =>
+      projections().command({
+        action: 'company',
+        commandId: randomUUID(),
+        registrationId,
+        expectedVersion: 0,
+        shared: false,
+        acknowledged: true,
+      }),
+  ]);
+  const told: Record<string, string> = {};
+  for (const [name, run] of attempts)
+    told[name] = await run().then(
+      () => 'ALLOWED',
+      (error: Error) => error.message,
+    );
+  // The one denial every organiser-side read gets, with no hint of whether the programme exists, and the one
+  // denial for acting on a participant's behalf.
+  const denial = 'Programme owner or admin required';
+  expect(told).toEqual(
+    Object.fromEntries(
+      attempts.map(([name]) => [
+        name,
+        name === 'the organiser shares for a participant' ? 'Own registration required' : denial,
+      ]),
+    ),
+  );
+  expect(Object.keys(told)).toHaveLength(11);
 });
 
 test('C-07 readiness names each missing criterion and counts from the server', async () => {

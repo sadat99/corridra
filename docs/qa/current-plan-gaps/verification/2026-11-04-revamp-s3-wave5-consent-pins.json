@@ -31,13 +31,12 @@
     "Results states": "C-04 C-05: two separate numbers (2 and 1) with the not-qualified note; C-02 C-04: NOT_SHARED reads 'Not shared' with no numbers; C-07: unread data and UNAVAILABLE sources read 'Not measured yet' with no numbers and no ': 0'."
   },
   "notCovered": [
-    "C-06 in rendered HTML as a new browser case, and C-08 labels for organiser revenue versus Corridra fees: not added; the backend body is covered by revamp-programme-consent.test.ts and the economics view is untouched by this change.",
     "No visual acceptance on the real signed-in page: the rendered fixture was looked at (five group buttons, Participants and Companies stacked) with no CSS added. No UX gate run locally; the CI ux job is the check.",
     "Production switch values are not observed. CORRIDRA_UX_PROGRAMME (the room) and the projections switch stay as the owner set them."
   ],
   "receipts": {
-    "vitest": "revamp-programme-consent.test.ts 5 and proof-claims.test.ts 17 passed; ux-programme-room.test.ts, ux-trip.test.ts and ux-teaching-layer.test.ts 64 passed unchanged; customer-programme-projections.test.ts 15 passed unchanged.",
-    "playwright": "operator config, local: revamp-programme-room.spec.ts 6 and ux-programme-room.spec.ts 11 passed (17); v3-programme-projections-ui.spec.ts 28 passed unchanged. intake-payload.spec.ts 53 passed, 1 skipped.",
+    "vitest": "revamp-programme-consent.test.ts 5 passed and proof-claims.test.ts 20 passed, exit 0 with no unhandled errors; the existing room, trip and teaching-layer tests (64) and customer-programme-projections.test.ts (15) pass unchanged.",
+    "playwright": "operator config, local: revamp-programme-room.spec.ts 8 passed and ux-programme-room.spec.ts 11 passed; v3-programme-projections-ui.spec.ts 28 passed unchanged. intake-payload.spec.ts 53 passed, 1 skipped.",
     "format": "exit 0",
     "lint": "exit 0",
     "typecheck": "exit 0"
@@ -66,5 +65,11 @@
       "the five-name list ['Overview','People','Plan and report','Terms and places','Money'] -> ['Overview','Participants and eligibility','Programme and meetings','Terms and fees','Results']"
     ],
     "unchanged": "tests/integration/ux-programme-room.test.ts passes without any change: its source-pattern assertions on programme-room.tsx still hold."
+  },
+  "guardianConditionsOn5fd1ff4": {
+    "1 proof guard checks every match": "proofClaimsIn now scans every match of every pattern (a global copy with matchAll) and excuses a sentence only if every match is denied in its own clause. New red fixtures, red against the old single-match code (2 failed, 18 passed) and green now (20): 'We never fake testimonials, read our testimonials.', 'We never fake testimonials and read our testimonials.', 'We do not say trusted by anyone, but Trusted by 100 companies.'",
+    "2 C-01 exact denial": "Every attempt now runs one at a time and the exact message is asserted: 'Programme owner or admin required' for all ten organiser-side reads (member, outsider, another organiser and participant, on this programme and under the other workspace, another programme under this workspace, a programme that does not exist) and 'Own registration required' when the organiser shares for a participant. Also removed a real defect in my own test: three promises were started before any was awaited, which made vitest report an unhandled rejection; the run is now clean (exit 0, no unhandled errors).",
+    "3 browser cases": "revamp-programme-room.spec.ts adds C-06 (the projection answers with a seeded meeting title, counterparty, contact, note, opportunity value, mission id and company website, contact and private summary; the room text and HTML, including hidden groups, show none of them and do show the allowed company name and scheduled count), C-07 (the room shows '1 of 4 active participants ready' from the server, and with the data unreadable shows 'Not measured yet' in the boarding line and in Results and no 'N of M ready'), C-08 (the Terms and fees group shows 'Fees due from participants' and a separate 'Corridra service fee' inside costs and as its own record kind, the sentence that Corridra does not collect, hold or send money, never 'Corridra revenue', and none of the seeded participant quote, trade value or price).",
+    "4 C-10 and room tests to the five labels": "Done in commit 518ee84: the five groups in both switch states, every section id, action and href kept, the C-09 frozen id list unchanged and passing."
   }
 }

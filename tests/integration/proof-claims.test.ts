@@ -15,6 +15,9 @@ describe('the proof guard finds claims', () => {
     'The leading platform for trade.',
     'We never charge setup fees, but we are trusted by 300 companies.',
     'No hidden costs. Trusted by 12 suppliers.',
+    'We never fake testimonials, read our testimonials.',
+    'We never fake testimonials and read our testimonials.',
+    'We do not say trusted by anyone, but Trusted by 100 companies.',
   ])('%s', (text) => expect(found(text)).toBe(true));
 
   it('finds a claim in the block after a block that holds a denial', () => {

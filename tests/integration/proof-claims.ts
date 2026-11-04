@@ -37,9 +37,10 @@ export function proofClaimsIn(blocks: readonly string[]): { claim: string; sente
     for (const sentence of block.split(/(?<=[.!?])\s+|\n+/)) {
       const text = sentence.trim();
       if (!text) continue;
+      // Every match of a pattern is checked, so a denied first mention never hides a later claim.
       const hits = proofClaims.filter((pattern) => {
-        const match = pattern.exec(text);
-        return match && !denied(text, match.index);
+        const every = new RegExp(pattern.source, pattern.flags.replace('g', '') + 'g');
+        return Array.from(text.matchAll(every)).some((match) => !denied(text, match.index ?? 0));
       });
       // One entry per sentence, naming every pattern it breaks.
       if (hits.length) found.push({ claim: hits.map(String).join(' '), sentence: text });

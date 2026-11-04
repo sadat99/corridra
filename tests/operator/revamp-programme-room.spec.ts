@@ -126,14 +126,35 @@ const projection = (meetings: Meetings) => ({
   meetings,
 });
 
-async function open(page: Page, query: string, meetings?: Meetings) {
+async function open(
+  page: Page,
+  query: string,
+  meetings?: Meetings,
+  extra: { body?: Record<string, unknown>; economics?: Record<string, unknown> } = {},
+) {
   await page.route('**/api/customer-programme-*', (route) =>
     route.fulfill({ status: 503, json: { error: 'unavailable' } }),
   );
   if (meetings)
     await page.route('**/api/customer-programme-projections**', (route) =>
-      route.fulfill({ json: projection(meetings) }),
+      route.fulfill({ json: { ...projection(meetings), ...extra.body } }),
     );
+  if (extra.economics)
+    await page.route('**/api/customer-programme-economics**', (route) => {
+      const view = new URL(route.request().url()).searchParams.get('view');
+      return route.fulfill({
+        json:
+          view === 'summary'
+            ? extra.economics
+            : {
+                workspaceId,
+                programmeId,
+                entries: [],
+                nextBefore: null,
+                expiresAt: new Date(Date.now() + 600000).toISOString(),
+              },
+      });
+    });
   await page.route('**/api/customer-programmes*', (route) =>
     route.fulfill({
       json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
@@ -307,4 +328,175 @@ test('C-07 Results says not measured yet when the counts cannot be read, never z
   await expect(
     other.locator(`[id="${section('results')}"]`).getByText(/^Not measured yet/),
   ).toBeVisible();
+});
+
+// C-06 in the rendered organiser HTML. The projection answers with extra private fields that the organiser
+// must never be sent; the room renders only what it is meant to, so none of them can appear in the page.
+const seeded = {
+  title: 'Seeded private meeting title',
+  counterparty: 'Seeded Counterparty Trading Ltd',
+  contact: 'seeded.contact@private.example',
+  note: 'Seeded private negotiation note',
+  opportunityValue: 'USD 99999 seeded opportunity value',
+  missionId: '00000000-0000-4000-8000-0000000000aa',
+};
+test('C-06 the rendered organiser room shows no meeting title, counterparty, contact, note, value or mission id', async ({
+  page,
+}) => {
+  await open(
+    page,
+    'room=1&proj=1',
+    {
+      state: 'AVAILABLE',
+      sharedLinks: 2,
+      unavailableLinks: 0,
+      participantsSharing: 1,
+      scheduled: 2,
+      qualifiedHeld: 1,
+      ...seeded,
+    } as Meetings,
+    {
+      body: {
+        companies: [
+          {
+            registrationId: '00000000-0000-4000-8000-0000000000bb',
+            label: 'Synthetic participant label',
+            company: {
+              name: 'Synthetic shared company',
+              countryCode: 'BD',
+              roles: ['SELLER'],
+              sectors: ['Textiles'],
+              objective: 'Synthetic shared objective',
+              profileVersion: 1,
+              provenance: 'SELF_REPORTED',
+              website: 'https://seeded-private.example',
+              contactEmail: seeded.contact,
+              summary: seeded.note,
+            },
+            ready: true,
+            missing: [],
+          },
+        ],
+      },
+    },
+  );
+  const found = await structure(page);
+  expect(found.labels).toEqual(groups);
+  const room = page.getByRole('article', { name: programme.name });
+  const html = await room.innerHTML();
+  // Every group is searched, including the ones that are hidden after the last click.
+  const text = (await room.evaluate((node) => node.textContent)) ?? '';
+  // The room did render the allowed fields, so the absence below is not an empty page.
+  expect(text).toContain('Synthetic shared company');
+  expect(text).toContain('Scheduled meetings: 2');
+  for (const secret of [...Object.values(seeded), 'seeded-private.example'])
+    expect(html + text, secret).not.toContain(secret);
+});
+
+// C-07: a readiness total appears only when it was measured. Unread data is never a guessed total.
+test('C-07 readiness shows N of M from the server, and not measured yet when it cannot be read', async ({
+  page,
+}) => {
+  await open(page, 'room=1&proj=1', {
+    state: 'NOT_SHARED',
+    sharedLinks: 0,
+    unavailableLinks: 0,
+    participantsSharing: 0,
+    scheduled: null,
+    qualifiedHeld: null,
+  });
+  await page.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
+  await expect(page.getByText('1 of 4 active participants ready')).toBeVisible();
+  const other = await page.context().newPage();
+  await open(other, 'room=1&proj=1');
+  await other.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
+  await other.getByRole('button', { name: 'Results', exact: true }).click();
+  const room = other.getByRole('article', { name: programme.name });
+  await expect(room.locator('.programme-boarding')).toContainText('Not measured yet');
+  await expect(room.getByText(/^Not measured yet/).first()).toBeVisible();
+  expect(await room.innerText()).not.toMatch(/\d+ of \d+ active participants ready/);
+});
+
+// C-08: organiser revenue (what participants owe the organiser) and Corridra's own fee carry their own labels,
+// and nothing a participant holds about price, quote or trade value is in the organiser room.
+test('C-08 organiser fees and the Corridra service fee have their own labels, with no participant price', async ({
+  page,
+}) => {
+  const costs = {
+    expenses: '100000',
+    obligations: '50000',
+    corridraServiceFees: '25000',
+    total: '175000',
+  };
+  await open(page, 'room=1&proj=0', undefined, {
+    economics: {
+      workspaceId,
+      programmeId,
+      collectsPayments: false,
+      verified: false,
+      currencies: [
+        {
+          currency: 'BDT',
+          feesDue: '500000',
+          paymentsRecorded: '200000',
+          outstanding: '300000',
+          plannedCosts: costs,
+          actualCosts: costs,
+          marginIfPlanned: '325000',
+          marginOnActual: '325000',
+          cashMargin: '25000',
+        },
+      ],
+      participants: [
+        {
+          registrationId: '00000000-0000-4000-8000-0000000000cc',
+          label: 'Synthetic participant label',
+          state: 'ACTIVE',
+          amounts: [
+            {
+              currency: 'BDT',
+              due: '500000',
+              recorded: '200000',
+              status: 'PART_PAID',
+              quote: 'Seeded participant quote USD 7777',
+            },
+          ],
+          tradeValue: 'Seeded participant trade value USD 8888',
+          price: 'Seeded participant price USD 9999',
+        },
+      ],
+      counts: { registered: 1, active: 1, withdrawnOrRemoved: 0 },
+    },
+  });
+  await page.getByRole('button', { name: 'Terms and fees', exact: true }).click();
+  const money = page.locator(`[id="${section('money')}"]`);
+  const finances = money.getByRole('region', { name: 'Sample programme finances' });
+  await expect(finances).toBeVisible();
+  // Organiser income, Corridra's fee and the organiser's own costs are different rows with different words.
+  await expect(
+    finances.getByRole('rowheader', { name: 'Fees due from participants' }),
+  ).toBeVisible();
+  await expect(finances.getByRole('row', { name: /^Planned costs/ })).toContainText(
+    /Corridra service fee/,
+  );
+  await expect(
+    finances.getByText('Corridra service fee you owe under your own agreement'),
+  ).toHaveCount(1);
+  await expect(
+    finances.getByText(
+      /not verified by Corridra\. Corridra does not collect, hold or send any money/,
+    ),
+  ).toBeVisible();
+  const text = (await money.evaluate((node) => node.textContent)) ?? '';
+  expect(text).not.toMatch(/Corridra revenue/i);
+  for (const secret of [
+    'Seeded participant quote',
+    'Seeded participant trade value',
+    'Seeded participant price',
+    '9999',
+    '8888',
+    '7777',
+  ])
+    expect(text, secret).not.toContain(secret);
+  expect(await money.innerHTML()).not.toMatch(/Seeded participant/);
 });
