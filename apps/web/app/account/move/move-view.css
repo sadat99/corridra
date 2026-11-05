@@ -1,69 +1,289 @@
+/* Home (Your Move), owner-approved design of 5 Nov 2026: a one-line summary, what waits for the person and
+   their latest request side by side, what others hold as one table, and shortcuts. Tokens only. */
 .move-view {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
-.move-view h2 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-lg);
+.move-view .corridra-icon {
+  width: 20px;
+  height: 20px;
 }
-.move-explainer {
+.move-lede {
+  margin: calc(-1 * var(--space-3)) 0 0;
+  color: var(--text-2);
+  font-size: var(--text-md);
+}
+.move-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .move-grid[data-latest='true'] {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: stretch;
+  }
+}
+.move-card {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  align-content: start;
+}
+/* The head row: the heading, its count and an optional link, then everything else full width below a line. */
+.move-card > h2 {
   margin: 0;
-  color: var(--text-muted);
-  max-width: 60ch;
+  padding: var(--space-4) 0 var(--space-4) var(--space-5);
+  font-size: var(--text-md);
+  font-weight: 650;
 }
+.move-card > .move-count {
+  margin-inline-start: var(--space-3);
+}
+.move-card > :not(h2, .move-count, .move-card-link) {
+  grid-column: 1 / -1;
+  align-self: stretch;
+  border-top: 1px solid var(--line);
+}
+.move-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.move-count[data-hot='true'] {
+  background: var(--brand);
+  color: var(--paper);
+}
+.move-card-link {
+  grid-column: 3;
+  justify-self: end;
+  margin-inline-end: var(--space-5);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  margin-inline-start: auto;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+.move-card-link .corridra-icon {
+  width: 16px;
+  height: 16px;
+}
+[dir='rtl'] .move-card-link .corridra-icon {
+  transform: scaleX(-1);
+}
+.move-card-link:focus-visible,
+.move-tile:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* What waits for the person: each Move is a row of the card. */
 .move-list {
   display: grid;
-  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.move-list > li + li {
+  border-top: 1px solid var(--line);
+}
+.move-items .mr-move {
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.move-items .mr-move-kind {
+  /* The verb already opens the title ("Send your draft request"); the label stays for assistive technology. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.move-items .mr-move h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
 .move-reply {
   display: grid;
   gap: var(--space-2);
+  padding-block-end: var(--space-3);
 }
 .move-reply > .button {
   justify-self: start;
+  margin-inline-start: var(--space-5);
+}
+.move-more {
+  border-top: 1px solid var(--line);
 }
 .move-more > summary {
   display: flex;
   align-items: center;
   min-height: 2.75rem;
+  padding: 0 var(--space-5);
   cursor: pointer;
-  color: var(--text-link, var(--text-1));
+  color: var(--brand);
+  font-weight: 600;
 }
-.move-more > .move-list {
-  margin-block-start: var(--space-3);
-}
-.move-wait {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.move-wait p {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.move-wait-title {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-}
-.move-wait a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-}
+
+/* Nothing waits: a calm mark, one sentence and the suggested next step. */
 .move-empty {
   display: grid;
   gap: var(--space-3);
   justify-items: start;
+  padding: var(--space-6) var(--space-5) var(--space-5);
 }
 .move-empty p {
   margin: 0;
+  max-width: 60ch;
+}
+.move-empty strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-lg);
+}
+.move-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--positive-surface);
+  color: var(--positive);
+}
+.move-guide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--line));
+  border-radius: var(--radius-md);
+  background: var(--selected-surface);
+}
+.move-guide-mark,
+.move-tile-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--brand);
+  color: var(--paper);
+}
+.move-guide-words,
+.move-tile-words {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.move-guide-words small,
+.move-tile-words small {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.move-guide > .button {
+  margin-inline-start: auto;
+}
+
+/* The latest request. */
+.move-latest {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+.move-latest-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+.move-latest-sent {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+/* What others hold: the shared row list inside the card, its rows inset to the card's padding. */
+.move-card > .ux-rows {
+  border-top: 0;
+}
+.move-card > .ux-rows ul {
+  border-top: 1px solid var(--line);
+}
+.move-card > .ux-rows .ux-row:last-child {
+  border-bottom: 0;
+}
+.move-card > .ux-rows .ux-row-link {
+  margin-inline-start: 0;
+  padding-inline: var(--space-5);
+}
+.move-card > .ux-rows .ux-rows-head {
+  padding: 0 var(--space-5) var(--space-2);
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Shortcuts. */
+.move-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+.move-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  text-decoration: none;
+}
+.move-tile:hover {
+  border-color: var(--border-strong);
+}
+.move-tile .move-tile-mark {
+  background: var(--surface-2);
+  color: var(--brand-deep);
+}
+.move-tile-words b {
+  font-weight: 600;
+}
+
+.move-explainer {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
 }
 .move-foot {
   display: flex;
@@ -74,4 +294,80 @@
 .move-foot .button {
   max-width: 100%;
   white-space: normal;
+}
+@media (max-width: 40rem) {
+  .move-card > h2 {
+    padding-inline-start: var(--space-4);
+  }
+  .move-items .mr-move,
+  .move-latest,
+  .move-empty {
+    padding-inline: var(--space-4);
+  }
+  .move-guide > .button {
+    width: 100%;
+    margin-inline-start: 0;
+    justify-content: center;
+  }
+}
+
+/* Each task carries the icon of its kind (Meridian line icons, the same paths as components/corridra-icon.tsx). */
+.move-items li > .mr-move {
+  position: relative;
+  align-items: flex-start;
+  padding-inline-start: calc(var(--space-5) + 36px + var(--space-4));
+}
+.move-items li > .mr-move::before,
+.move-items li > .mr-move::after {
+  content: '';
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-start: var(--space-5);
+  width: 36px;
+  height: 36px;
+}
+.move-items li > .mr-move::before {
+  border-radius: 10px;
+  background: var(--selected-surface);
+}
+.move-items li > .mr-move::after {
+  background: var(--brand);
+  -webkit-mask: var(--move-icon) center / 20px 20px no-repeat;
+  mask: var(--move-icon) center / 20px 20px no-repeat;
+}
+.move-items li[data-kind='quote'] > .mr-move::before {
+  background: var(--caution-surface);
+}
+.move-items li[data-kind='quote'] > .mr-move::after {
+  background: var(--ac-warning);
+}
+.move-items .mr-move-action {
+  align-self: center;
+}
+.move-items li[data-kind='draft'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 16l1-4 7.5-7.5 3 3L8 15zM10.5 6.5l3 3'/%3E%3C/svg%3E");
+}
+.move-items li[data-kind='quote'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M5 3h7l3 3v11H5zM12 3v3h3M7.5 10h5M7.5 13h5'/%3E%3C/svg%3E");
+}
+.move-items li[data-kind='company'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 16V4h7v12M11 8h5v8M2.5 16h15M6.5 7h2M6.5 10h2M6.5 13h2'/%3E%3C/svg%3E");
+}
+.move-items li[data-kind='report'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 3.5h8a3 3 0 0 1 3 3V17H7a3 3 0 0 1-3-3zM4 14a3 3 0 0 1 3-3h8M7 6.5h5'/%3E%3C/svg%3E");
+}
+.move-items li[data-kind='move'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3.5 11.5 5.5 4h9l2 7.5V16h-13zM3.5 11.5H7l1 2h4l1-2h3.5'/%3E%3C/svg%3E");
+}
+.move-items li[data-kind='reply'] {
+  --move-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M3.5 11.5 5.5 4h9l2 7.5V16h-13zM3.5 11.5H7l1 2h4l1-2h3.5'/%3E%3C/svg%3E");
+}
+@media (max-width: 40rem) {
+  .move-items li > .mr-move {
+    padding-inline-start: calc(var(--space-4) + 36px + var(--space-3));
+  }
+  .move-items li > .mr-move::before,
+  .move-items li > .mr-move::after {
+    inset-inline-start: var(--space-4);
+  }
 }

@@ -33,3 +33,47 @@
   color: var(--ink);
   font-weight: 650;
 }
+
+/* Named: each segment carries its stage name, the current one in the brand colour (Home's request card). */
+.mr-stage-wrap[data-named='true'] .mr-stage {
+  align-items: start;
+  gap: var(--space-2);
+}
+.mr-stage-wrap[data-named='true'] .mr-stage li {
+  display: grid;
+  gap: var(--space-2);
+  height: auto;
+  background: none;
+}
+.mr-stage-wrap[data-named='true'] .mr-stage li::before {
+  content: '';
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.mr-stage-wrap[data-named='true'] .mr-stage li:is([data-state='done'], [data-state='now'])::before {
+  background: var(--brand);
+  box-shadow: none;
+}
+.mr-stage-wrap[data-named='true'] .mr-stage li[data-state='now']::before {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.mr-stage-name {
+  font-size: var(--text-xs);
+  line-height: 1.25;
+  color: var(--text-2);
+}
+.mr-stage li[data-state='done'] .mr-stage-name {
+  color: var(--ink);
+}
+.mr-stage li[data-state='now'] .mr-stage-name {
+  color: var(--brand);
+  font-weight: 650;
+}
+@media (max-width: 40rem) {
+  /* Phones: the names would crowd; the line under the bar names the current stage. */
+  .mr-stage-name {
+    display: none;
+  }
+}

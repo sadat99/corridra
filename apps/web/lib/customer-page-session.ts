@@ -4,7 +4,14 @@ import { signInPath } from './account-return';
 import { neonAuth } from './neon-auth';
 
 export type CustomerPageSession =
-  { ok: true; subject: string; issuer: string } | { ok: false; message: string };
+  | {
+      ok: true;
+      subject: string;
+      issuer: string;
+      /** The display name the person gave their account, for a greeting only. Never used to decide access. */
+      name: string | null;
+    }
+  | { ok: false; message: string };
 
 /**
  * The same checks the account pages make before they read anything: a signed-out visitor goes to
@@ -23,5 +30,7 @@ export async function customerPageSession(next?: string): Promise<CustomerPageSe
     };
   if (!session.data?.user) redirect(signInPath(next));
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
-  return { ok: true, subject: session.data.user.id, issuer };
+  const name =
+    typeof session.data.user.name === 'string' ? session.data.user.name.trim() || null : null;
+  return { ok: true, subject: session.data.user.id, issuer, name };
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useSyncExternalStore } from 'react';
 import { MoveCard, StageBar, mrLabelsFor, type MoveVerb } from '../../../components/mr';
 import { RowLink, RowList } from '../../../components/ux/row-list';
+import { CorridraIcon } from '../../../components/corridra-icon';
 import { useLanguage } from '../../../components/language-provider';
 import { fill } from '../../../lib/i18n/fill';
 import { localeMeta } from '../../../lib/i18n/locales';
@@ -137,7 +138,7 @@ export function MoveView({
 
   const items = [
     ...unread.map((reply) => (
-      <li key={`reply:${reply.requestId}`} className="move-reply">
+      <li key={`reply:${reply.requestId}`} className="move-reply" data-kind="reply">
         <MoveCard
           verb="Read"
           object={say('move.card.reply.object')}
@@ -157,7 +158,7 @@ export function MoveView({
       </li>
     )),
     ...model.cards.map((card) => (
-      <li key={card.id}>
+      <li key={card.id} data-kind={card.kind}>
         {card.kind === 'move' ? (
           <MoveCard
             verb={card.verb}
@@ -206,60 +207,99 @@ export function MoveView({
             labels.road.sublines.ACTIVE);
   const ownerHolders = { ...labels.holder, third: say('move.wait.owner') };
 
+  const count = items.length;
+  const lede = nothing
+    ? 'You are all caught up. Here is where your work stands.'
+    : count === 1
+      ? 'One thing needs you. Everything else is moving.'
+      : `${count} things need you. Everything else is moving.`;
+
   return (
     <div className="move-view" lang={html} dir={dir}>
-      <p className="move-explainer">{labels.move.explainer}</p>
+      <p className="move-lede" lang="en">
+        {lede}
+      </p>
 
-      <section aria-labelledby="move-you">
-        <h2 id="move-you">{say('move.you.heading')}</h2>
-        {nothing && unreadable ? (
-          <div className="move-empty" role="status" lang="en">
-            <p>
-              <strong>{unreadWords.title}</strong> {unreadWords.text}
-            </p>
-            <a className="text-link ux-action" href="/account/move">
-              {unreadWords.retry}
-            </a>
-            <Link prefetch={false} className="text-link ux-action" href={startHref}>
-              {say('move.start')}
-            </Link>
-          </div>
-        ) : nothing ? (
-          <div className="move-empty" role="status">
-            <p>
-              <strong>{say('move.empty.title')}</strong> {say('move.empty.text')}
-            </p>
-            {model.latest ? (
-              <>
-                <h3>{say('move.empty.latest')}</h3>
-                {model.latest.status ? (
-                  <StageBar status={model.latest.status} labels={labels.road} />
-                ) : null}
-                <Link prefetch={false} className="text-link ux-action" href={model.latest.href}>
-                  {say('move.wait.open')}
+      <div className="move-grid" data-latest={model.latest ? 'true' : 'false'}>
+        <section className="move-card" aria-labelledby="move-you">
+          <h2 id="move-you">{say('move.you.heading')}</h2>
+          <span className="move-count" data-hot={nothing ? 'false' : 'true'}>
+            <span className="sr-only">: </span>
+            {count}
+          </span>
+          {nothing && unreadable ? (
+            <div className="move-empty" role="status" lang="en">
+              <p>
+                <strong>{unreadWords.title}</strong> {unreadWords.text}
+              </p>
+              <a className="text-link ux-action" href="/account/move">
+                {unreadWords.retry}
+              </a>
+              <Link prefetch={false} className="text-link ux-action" href={startHref}>
+                {say('move.start')}
+              </Link>
+            </div>
+          ) : nothing ? (
+            <div className="move-empty" role="status">
+              <span className="move-empty-mark" aria-hidden="true">
+                <CorridraIcon name="check" />
+              </span>
+              <p>
+                <strong>{say('move.empty.title')}</strong> {say('move.empty.text')}
+              </p>
+              <div className="move-guide">
+                <span className="move-guide-mark" aria-hidden="true">
+                  <CorridraIcon name="draft" />
+                </span>
+                <span className="move-guide-words" lang="en">
+                  <b>Suggested next step</b>
+                  <small>Tell us your goal. It takes a few minutes.</small>
+                </span>
+                <Link prefetch={false} className="button button-secondary" href={startHref}>
+                  {say('move.start')}
                 </Link>
-              </>
-            ) : null}
-            <Link prefetch={false} className="text-link ux-action" href={startHref}>
-              {say('move.start')}
+              </div>
+            </div>
+          ) : (
+            <div className="move-items">
+              <ul className="move-list">{items.slice(0, firstShown)}</ul>
+              {items.length > firstShown ? (
+                <details className="move-more">
+                  <summary>{fill(say('move.more'), { count: items.length - firstShown })}</summary>
+                  <ul className="move-list">{items.slice(firstShown)}</ul>
+                </details>
+              ) : null}
+            </div>
+          )}
+        </section>
+
+        {model.latest ? (
+          <section className="move-card" aria-labelledby="move-latest">
+            <h2 id="move-latest">{say('move.empty.latest')}</h2>
+            <Link prefetch={false} className="move-card-link" href={model.latest.href}>
+              <span>{say('move.wait.open')}</span>
+              <CorridraIcon name="arrow" />
             </Link>
-          </div>
-        ) : (
-          <>
-            <ul className="move-list">{items.slice(0, firstShown)}</ul>
-            {items.length > firstShown ? (
-              <details className="move-more">
-                <summary>{fill(say('move.more'), { count: items.length - firstShown })}</summary>
-                <ul className="move-list">{items.slice(firstShown)}</ul>
-              </details>
-            ) : null}
-          </>
-        )}
-      </section>
+            <div className="move-latest">
+              <p className="move-latest-top">
+                <span className="move-latest-sent">
+                  {fill(say('move.received'), {
+                    date: day(model.latest.createdAt.slice(0, 10), locale),
+                  })}
+                </span>
+              </p>
+              {model.latest.status ? (
+                <StageBar status={model.latest.status} labels={labels.road} named />
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+      </div>
 
       {model.waiting.length > 0 ? (
-        <section aria-labelledby="move-others">
+        <section className="move-card" aria-labelledby="move-others">
           <h2 id="move-others">{say('move.others.heading')}</h2>
+          <span className="move-count">{model.waiting.length}</span>
           <RowList
             label={say('move.others.heading')}
             title="Request"
@@ -313,18 +353,56 @@ export function MoveView({
         </p>
       ) : null}
 
-      <div className="move-foot">
+      <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
         {!nothing ? (
-          <Link prefetch={false} className="text-link ux-action" href={startHref}>
-            {say('move.start')}
+          <Link prefetch={false} className="move-tile" href={startHref}>
+            <span className="move-tile-mark" aria-hidden="true">
+              <CorridraIcon name="draft" />
+            </span>
+            <span className="move-tile-words">
+              <b>{say('move.start')}</b>
+              <small>Sell, source, organise or plan a trip.</small>
+            </span>
           </Link>
         ) : null}
-        {seen && Object.keys(seen).length > 0 ? (
+        <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
+          <span className="move-tile-mark" aria-hidden="true">
+            <CorridraIcon name="search" />
+          </span>
+          <span className="move-tile-words">
+            <b>Check a Request Receipt</b>
+            <small>See progress and replies on a request you sent.</small>
+          </span>
+        </Link>
+        <Link prefetch={false} className="move-tile" href="/account?view=results">
+          <span className="move-tile-mark" aria-hidden="true">
+            <CorridraIcon name="open" />
+          </span>
+          <span className="move-tile-words">
+            <b>Open a Shared Mission</b>
+            <small>Paste the private link you were sent.</small>
+          </span>
+        </Link>
+        {nothing ? (
+          <Link prefetch={false} className="move-tile" href="/account?view=work">
+            <span className="move-tile-mark" aria-hidden="true">
+              <CorridraIcon name="work" />
+            </span>
+            <span className="move-tile-words">
+              <b>See All Requests</b>
+              <small>Every request in your workspaces.</small>
+            </span>
+          </Link>
+        ) : null}
+      </nav>
+
+      {seen && Object.keys(seen).length > 0 ? (
+        <div className="move-foot">
           <button type="button" className="button button-secondary" onClick={forget}>
             {say('move.forget')}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

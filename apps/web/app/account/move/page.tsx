@@ -12,6 +12,12 @@ import { AccountHashRedirect } from '../hash-redirect';
 import { MoveView } from './move-view';
 
 export const dynamic = 'force-dynamic';
+
+/** Home's heading: the person's first name when the account has one. An email address is never shown here. */
+function greeting(name: string | null) {
+  const first = name && !name.includes('@') ? name.split(/\s+/)[0] : null;
+  return first ? `Welcome back, ${first}` : 'Welcome back';
+}
 export const runtime = 'nodejs';
 export const metadata = {
   title: 'Your Move | Corridra',
@@ -42,7 +48,7 @@ export default async function Page() {
     ? '/account?view=work#customer-workspaces'
     : '/plan';
   return (
-    <CustomerShell tab="move" eyebrow="YOUR MOVE" title="Here is what is waiting for you.">
+    <CustomerShell tab="move" eyebrow="YOUR MOVE" title={greeting(session.name)}>
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
       {customerNotificationsEnabled() && <EmailNudge />}

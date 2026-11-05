@@ -142,3 +142,174 @@
     transition: none;
   }
 }
+
+/* App frame (owner, 5 Nov 2026: the left bar and the header must join like one product frame). From 1024 px a
+   signed-in page with a left bar leaves the centred marketing column: the bar runs the full height at the
+   window's edge, the brand sits at its top, a slim header covers only the content and stays in view, and the
+   page has a readable column. Below 1024 px nothing changes: the bar is the drawer. Tokens only. */
+.site-shell:has(.ux-leftnav-frame) {
+  max-width: none;
+}
+@media (min-width: 1024px) {
+  .site-shell:has(.ux-leftnav-frame) {
+    --frame-rail: 16.5rem;
+    --frame-bar: 4rem;
+    padding: 0;
+  }
+  .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) {
+    --frame-rail: 4.25rem;
+  }
+  /* The bar's column, painted for the whole window height so the frame never breaks under a short page. */
+  .site-shell:has(.ux-leftnav-frame)::before {
+    content: '';
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 0;
+    width: var(--frame-rail);
+    background: var(--surface-1);
+    border-inline-end: 1px solid var(--line);
+  }
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    flex-wrap: nowrap;
+    height: var(--frame-bar);
+    min-height: var(--frame-bar);
+    padding-block: 0;
+    padding-inline: 0 var(--space-6);
+    border-bottom: 0;
+  }
+  /* The header's own surface and line start where the bar ends, so the bar reads as one column. */
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--frame-rail);
+    inset-inline-end: 0;
+    z-index: -1;
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand {
+    flex: none;
+    width: var(--frame-rail);
+    height: var(--frame-bar);
+    padding-inline: var(--space-5);
+    gap: var(--space-2);
+    color: var(--brand-deep);
+  }
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand span {
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+  }
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand-mark {
+    width: 24px;
+    height: 24px;
+  }
+  .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  /* The first item after the brand starts at the content column's edge. */
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand + * {
+    margin-inline-start: var(--space-8);
+  }
+  .site-shell:has(.ux-leftnav-frame)
+    > .ux-app-header
+    :is(.ux-bar-primary, .ux-app-button, .ux-app-link) {
+    min-height: 40px;
+  }
+  .ux-leftnav-frame {
+    position: relative;
+    z-index: 1;
+    grid-template-columns: var(--frame-rail, 16.5rem) minmax(0, 1fr);
+    gap: 0;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] {
+    grid-template-columns: var(--frame-rail, 4.25rem) minmax(0, 1fr);
+  }
+  /* The bar is fixed to the window's edge, so it never adds height to a page: a short page stays one screen. */
+  .ux-leftnav-rail {
+    position: fixed;
+    inset-block: var(--frame-bar, 0px) 0;
+    inset-inline-start: 0;
+    z-index: 2;
+    width: var(--frame-rail, 16.5rem);
+    max-height: none;
+    padding: var(--space-3);
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-rail {
+    width: var(--frame-rail, 4.25rem);
+  }
+  .ux-leftnav-page {
+    grid-column: 2;
+  }
+  .ux-leftnav-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-height: 100%;
+  }
+  .ux-leftnav-panel .ux-leftnav-collapse {
+    margin-top: auto;
+    color: var(--text-2);
+    font-weight: 500;
+  }
+  .ux-leftnav-page {
+    padding: var(--space-8) var(--space-8) var(--space-12);
+  }
+  .ux-leftnav-page > * {
+    max-width: 80rem;
+  }
+  /* The page column already carries the frame's spacing: the page's own block padding and the heading's tall
+     top space are not repeated inside it. */
+  .ux-leftnav-page .operator-page.ux-workspace {
+    padding-block: 0;
+  }
+  .ux-leftnav-page .ux-page-heading {
+    padding-block: 0 var(--space-1);
+    margin-bottom: var(--space-4);
+  }
+  .site-shell:has(.ux-leftnav-frame) > .site-footer {
+    position: relative;
+    z-index: 1;
+    margin-inline-start: var(--frame-rail);
+    padding-inline: var(--space-8);
+  }
+  /* Bar items: one quiet weight, a filled current item, no edge stripe. */
+  .ux-leftnav-panel .ux-team-sidebar a,
+  .ux-leftnav-panel .ux-team-sidebar summary {
+    color: var(--text-2);
+    font-weight: 500;
+  }
+  .ux-leftnav-panel .ux-team-sidebar a:hover,
+  .ux-leftnav-panel .ux-team-sidebar summary:hover {
+    color: var(--ink);
+  }
+  .ux-leftnav-panel .ux-team-sidebar a[aria-current='page'],
+  .ux-leftnav-panel .ux-team-sidebar summary[aria-current='true'] {
+    color: var(--brand);
+    font-weight: 600;
+    box-shadow: none;
+  }
+}
+@media (max-width: 1023.98px) {
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+}
