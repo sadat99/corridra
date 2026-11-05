@@ -307,7 +307,7 @@ test('an unmatched acknowledgement retains the exact command for a safe retry', 
   await fillRequired(page);
   await saveButton(page).click();
   await expect(page.getByRole('status')).toContainText('Save could not be confirmed');
-  await page.getByRole('button', { name: 'Retry Same Save', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry same save', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Company profile saved.');
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);

@@ -764,7 +764,7 @@ for (const width of [320, 390, 768, 1440])
     await mock(page);
     const area = await open(page);
     await area
-      .getByRole('button', { name: 'Edit fee schedule Synthetic autumn delegation fees' })
+      .getByRole('button', { name: 'Edit Fee Schedule Synthetic autumn delegation fees' })
       .click();
     await expect(area.getByLabel('Tier 1 name')).toBeVisible();
     await page.keyboard.press('Tab');
@@ -852,7 +852,7 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
   ]);
   await area.getByRole('button', { name: 'Cancel', exact: true }).click();
   await area
-    .getByRole('button', { name: 'Edit fee schedule ' + template().name, exact: true })
+    .getByRole('button', { name: 'Edit Fee Schedule ' + template().name, exact: true })
     .click();
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(template().name);
   await area.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -866,7 +866,7 @@ test('GAP-006 fee fields wait for their editor draft before accepting edits', as
   const posts = await mock(page);
   const area = await open(page);
   const edit = area.getByRole('button', {
-    name: 'Edit fee schedule ' + template().name,
+    name: 'Edit Fee Schedule ' + template().name,
     exact: true,
   });
   await expect(edit).toBeEnabled();
@@ -878,7 +878,7 @@ test('GAP-006 fee fields wait for their editor draft before accepting edits', as
   await page.clock.runFor(20);
   await page.clock.resume();
   await area.getByLabel('Tier 2 name').fill('Synthetic edit after restoration');
-  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await area.getByRole('button', { name: 'Remove Tier 1', exact: true }).click();
   await page.reload();
   await edit.click();
   await expect(area.getByLabel('Tier 2 name')).toHaveValue('Synthetic edit after restoration');
@@ -900,7 +900,7 @@ test('GAP-006 edited labels survive row removal without restoring amounts or cro
   await area.getByRole('button', { name: 'Add a Tier', exact: true }).click();
   await area.getByLabel('Tier 2 name').fill('Synthetic retained label');
   await area.getByLabel(/Tier 2 fee/).fill('72.34');
-  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await area.getByRole('button', { name: 'Remove Tier 1', exact: true }).click();
   await area.getByLabel('Name (start with Synthetic)').fill('Synthetic reordered draft');
   await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('72.34');
   await page.reload();
@@ -910,14 +910,14 @@ test('GAP-006 edited labels survive row removal without restoring amounts or cro
   await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('');
   await area.getByRole('button', { name: 'Cancel', exact: true }).click();
   await area
-    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .getByRole('button', { name: 'Edit Fee Schedule ' + current.name, exact: true })
     .click();
   const originalSecond = await area.getByLabel(/Tier 2 fee/).inputValue();
   await area.getByLabel('Tier 2 name').fill('Synthetic own second label');
-  await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
+  await area.getByRole('button', { name: 'Remove Tier 1', exact: true }).click();
   await page.reload();
   await area
-    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .getByRole('button', { name: 'Edit Fee Schedule ' + current.name, exact: true })
     .click();
   await expect(area.getByLabel('Tier 1 name')).toHaveValue(standard);
   await expect(area.getByLabel('Tier 2 name')).toHaveValue('Synthetic own second label');
@@ -934,7 +934,7 @@ test('GAP-006 edited labels survive row removal without restoring amounts or cro
   };
   await page.reload();
   await area
-    .getByRole('button', { name: 'Edit fee schedule ' + current.name, exact: true })
+    .getByRole('button', { name: 'Edit Fee Schedule ' + current.name, exact: true })
     .click();
   await expect(area.getByLabel('Tier 2 name')).toHaveValue(student);
   await expect(area.getByLabel(/Tier 2 fee/)).not.toHaveValue(originalSecond);
