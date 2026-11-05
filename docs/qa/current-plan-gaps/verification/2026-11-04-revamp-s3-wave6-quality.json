@@ -1,0 +1,185 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Wave 6 quality (Q-01 to Q-08) on public pages, /plan, organiser room and programme pages",
+  "date": "2026-11-04",
+  "sensitive": false,
+  "gapStatusChanges": "none; evidence only, the Conductor decides",
+  "findingsFixedEachWithFailingTestFirst": [
+    "Q-05 /plan send: a proxy 503 page showed a raw parser error ('Unexpected token'); an empty JSON error on 503, 429 and 409 showed nothing. Now the form's own existing sentences (intakeNotSaved, tooMany, changed), which the form already translates; announced; the same button retries. Tests: tests/e2e/verification/ws-a/wave6-plan-states.spec.ts. No new string was added to any catalogue.",
+    "Q-05 room projection panel: a rejected request showed 'Failed to fetch'; a 429 had no wait line. Now plain lines. Tests: Q-05 cases in tests/operator/revamp-programme-room.spec.ts",
+    "Q-01 organiser room: choosing a group left focus on the button. Now a visible heading per group takes focus.",
+    "Q-06 Save programme: while the first save was in flight the button read 'Retry same planning request'. Now 'Saving\u2026' while busy.",
+    "Q-07 projection panel: 15 buttons fell back to the browser default look. Now text-link and primary-link like the sibling panels.",
+    "Q-07 road: the Invite step was off the label column (indented at 390, 16px low at 1440). Fixed in programme-room.css.",
+    "Review of PR 288: a good status with an unreadable or wrong-shaped body is no longer a success on the send, the pending save and the receipt check (the form said 'recorded' with no receipt). Readers in apps/web/app/plan/send-reply.ts; tests: three browser and four unit cases (tests/integration/plan-send-reply.test.ts). Run against the old code the send said 'recorded' and the receipt check showed no error.",
+    "Review of PR 288: the road Invite button keeps its 44 px tap height (negative block margins keep the label level); tested at 390 and 1440."
+  ],
+  "cleanSurfacesTestOnly": [
+    "Q-01, Q-02, Q-03 on 18 public pages: no positive tabindex, every tab stop shows focus (negative control proves the check can fail), no trap, no sideways scroll at 320 and 640, axe wcag2a and wcag2aa clean at 390 and 1440. tests/browser/wave6-public-quality.spec.ts",
+    "Q-01 /plan: step change focuses the step heading, a failed check focuses the error summary",
+    "Q-02 organiser room at 320 and 640 in all five groups",
+    "Q-04 Arabic home page at 320, 390 and 1440: no overlap, clipped control or sideways scroll (tests/operator/ux-home-languages.spec.ts). Other surfaces render no translated content on the deployed build, so no RTL case applies",
+    "Q-05 organiser room offline, 409 and a 503 page: plain words and a Refresh button"
+  ],
+  "q06ActionsChecked": {
+    "runtimeTested": [
+      "/plan guided request send (double click one request, disabled while in flight, result announced)",
+      "organiser room Save sample programme (same three checks)"
+    ],
+    "sourceChecked": {
+      "entryGuardAndDisabledWhileBusy": [
+        "customer-programmes create (in-flight ref and busy)",
+        "programme-objective-editor (in-flight ref and busy)",
+        "programme-projections consent and schedule sends (busy entry guard)",
+        "programme-terms (busy entry guard)",
+        "programme-context-editor submit (busy in its guard)"
+      ],
+      "disabledWhileBusyOnly": [
+        "programme-coordination create and update task (entry guard only on paging)",
+        "programme-economics entry and fee actions (entry guard only on paging)",
+        "participant-results feedback send",
+        "programme-exports export request",
+        "programme-templates create and apply",
+        "participant-place"
+      ]
+    },
+    "note": "Source reading, not a runtime test per action. 'Disabled while busy only' means the button is disabled by the busy flag and the handler has no entry guard; a click cannot reach the handler twice because the discrete click re-renders before the next event."
+  },
+  "q07": {
+    "files": "docs/design-system/evidence/revamp-wave6/{overview,participants,programme,terms,results}-{390,1440}.png, 2x",
+    "for": "named human art review; no self-approval; gap status stays with the Conductor and the owner",
+    "notes": [
+      "made-up data only; the real component and stylesheet in the test fixture",
+      "panels whose service is not mocked show their calm unavailable words, which is the room's own state",
+      "the fixture does not load the app fonts, so type shows in the fallback face: judge layout, spacing and colour here and type on the live page"
+    ],
+    "regenerate": "WAVE6_EVIDENCE=1 pnpm exec playwright test --config playwright.operator.config.ts tests/operator/revamp-programme-room.spec.ts -g \"Q-07 evidence\"",
+    "fixedAgainstAC1": [
+      "projection panel buttons fell back to the browser default look",
+      "road Invite step was off the label column"
+    ]
+  },
+  "q08": {
+    "conditions": "production build served locally, 390x844, 4x CPU throttle, no network throttle, median of 3 runs, JS bytes are encoded transfer sizes of script responses",
+    "routes": [
+      {
+        "route": "/",
+        "jsBytes": 203038,
+        "mainHeadingMs": 305,
+        "lcpMs": 300
+      },
+      {
+        "route": "/plan",
+        "jsBytes": 305872,
+        "mainHeadingMs": 290,
+        "lcpMs": 308
+      },
+      {
+        "route": "/about",
+        "jsBytes": 199578,
+        "mainHeadingMs": 220,
+        "lcpMs": 232
+      },
+      {
+        "route": "/how-it-works",
+        "jsBytes": 199850,
+        "mainHeadingMs": 238,
+        "lcpMs": 244
+      },
+      {
+        "route": "/network",
+        "jsBytes": 199850,
+        "mainHeadingMs": 216,
+        "lcpMs": 228
+      },
+      {
+        "route": "/trust",
+        "jsBytes": 199850,
+        "mainHeadingMs": 220,
+        "lcpMs": 236
+      },
+      {
+        "route": "/workspace",
+        "jsBytes": 336971,
+        "mainHeadingMs": 201,
+        "lcpMs": 216
+      },
+      {
+        "route": "/sell",
+        "jsBytes": 199850,
+        "mainHeadingMs": 210,
+        "lcpMs": 228
+      },
+      {
+        "route": "/machinery",
+        "jsBytes": 199850,
+        "mainHeadingMs": 208,
+        "lcpMs": 220
+      },
+      {
+        "route": "/enter-market",
+        "jsBytes": 199850,
+        "mainHeadingMs": 219,
+        "lcpMs": 224
+      },
+      {
+        "route": "/trade-missions",
+        "jsBytes": 199850,
+        "mainHeadingMs": 213,
+        "lcpMs": 212
+      },
+      {
+        "route": "/business-trips",
+        "jsBytes": 199850,
+        "mainHeadingMs": 274,
+        "lcpMs": 280
+      },
+      {
+        "route": "/corridors",
+        "jsBytes": 262445,
+        "mainHeadingMs": 272,
+        "lcpMs": 240
+      },
+      {
+        "route": "/corridors/bangladesh-china",
+        "jsBytes": 199850,
+        "mainHeadingMs": 218,
+        "lcpMs": 236
+      },
+      {
+        "route": "/programme",
+        "jsBytes": 252520,
+        "mainHeadingMs": 207,
+        "lcpMs": 784
+      },
+      {
+        "route": "/institutions",
+        "jsBytes": 199850,
+        "mainHeadingMs": 227,
+        "lcpMs": 228
+      },
+      {
+        "route": "/privacy",
+        "jsBytes": 199578,
+        "mainHeadingMs": 291,
+        "lcpMs": 288
+      },
+      {
+        "route": "/source",
+        "jsBytes": 199850,
+        "mainHeadingMs": 220,
+        "lcpMs": 224
+      }
+    ],
+    "notMeasured": "organiser room and programme pages need a signed-in session; not measurable on the local production build without one",
+    "note": "/programme LCP 784 ms against a 207 ms heading is the one outlier; no score invented and no code changed for Q-08"
+  },
+  "openRisks": [
+    "Known gap (language work is excluded): /plan offline, a rejected request, still shows the browser's own words ('Failed to fetch' in English). Q-05 asks for honest words, but tests/operator/ux-plan-languages.spec.ts pins 'English keeps the browser words' and the form translates them per language; honest English words would need a new string in every language. Retry and non-blank are tested.",
+    "429: only the projection panel (Results, companies, agenda views) says wait-and-refresh; the other room panels fall back to their existing plain 'could not be read, reload' lines for a 429, which is honest but not a later-retry line. Fixing each of about 20 handlers touches consent and terms panels; left for a decision",
+    "Focus moves to the group heading on choosing a group, as Q-01 asks; a keyboard user returns to the group buttons with Shift+Tab",
+    "Screenshots come from the synthetic fixture with fallback fonts; no visual acceptance on a real signed-in organiser room"
+  ],
+  "closedGatesUntouched": true,
+  "preflight": "to be filled from the final run"
+}

@@ -70,7 +70,9 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
         throw Error(
           response.status === 403
             ? 'This view needs the permitted programme account.'
-            : 'Programme data could not be read.',
+            : response.status === 429
+              ? 'Too many requests just now. Wait a minute, then refresh.'
+              : 'Programme data could not be read.',
         );
       const value = (await response.json()) as T & Record<string, unknown>,
         q = new URLSearchParams(queryText);
@@ -93,7 +95,13 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
     } catch (error) {
       if (!controller.signal.aborted && ticket === sequence.current && mounted.current) {
         setData(null);
-        setNotice(error instanceof Error ? error.message : 'Programme data is unavailable.');
+        setNotice(
+          error instanceof TypeError
+            ? 'Programme data did not arrive. Check your connection, then refresh.'
+            : error instanceof Error
+              ? error.message
+              : 'Programme data is unavailable.',
+        );
       }
     }
   }, [queryText, identity.subject, identity.issuer]);
@@ -181,9 +189,11 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
         setCanRetry(true);
         setData(null);
         setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Change could not be confirmed. Refresh before trying again.',
+          error instanceof TypeError
+            ? 'The change did not reach Corridra. Check your connection, then retry the same change.'
+            : error instanceof Error
+              ? error.message
+              : 'Change could not be confirmed. Refresh before trying again.',
         );
       }
       return false;
@@ -280,12 +290,22 @@ function OwnerPanel(
     d && (after || d.nextAfter) ? (
       <div className="button-row">
         {after && (
-          <button type="button" disabled={view.busy} onClick={() => setAfter(undefined)}>
+          <button
+            className="text-link"
+            type="button"
+            disabled={view.busy}
+            onClick={() => setAfter(undefined)}
+          >
             First participant page
           </button>
         )}
         {d.nextAfter && (
-          <button type="button" disabled={view.busy} onClick={() => setAfter(d.nextAfter!)}>
+          <button
+            className="text-link"
+            type="button"
+            disabled={view.busy}
+            onClick={() => setAfter(d.nextAfter!)}
+          >
             Next participant page
           </button>
         )}
@@ -312,11 +332,21 @@ function OwnerPanel(
       </h4>
       {view.notice && <p role="alert">{view.notice}</p>}
       {view.canRetry && (
-        <button type="button" disabled={view.busy} onClick={() => void view.retry()}>
+        <button
+          className="text-link"
+          type="button"
+          disabled={view.busy}
+          onClick={() => void view.retry()}
+        >
           Retry same change
         </button>
       )}
-      <button type="button" disabled={view.busy} onClick={() => void view.load()}>
+      <button
+        className="text-link"
+        type="button"
+        disabled={view.busy}
+        onClick={() => void view.load()}
+      >
         Refresh programme projection
       </button>
       {props.view === 'results' ? (
@@ -470,7 +500,12 @@ function OwnerPanel(
                 {row.needsReview && (
                   <p role="status">Programme dates changed. Review this activity.</p>
                 )}
-                <button type="button" disabled={view.busy} onClick={() => edit(row.taskId)}>
+                <button
+                  className="text-link"
+                  type="button"
+                  disabled={view.busy}
+                  onClick={() => edit(row.taskId)}
+                >
                   Edit schedule for {row.title}
                 </button>
               </li>
@@ -579,6 +614,7 @@ function OwnerPanel(
                     entries currently typed with the latest saved schedule.
                   </p>
                   <button
+                    className="text-link"
                     type="button"
                     onClick={() => {
                       edit(taskId);
@@ -590,6 +626,7 @@ function OwnerPanel(
                 </>
               )}
               <button
+                className="primary-link"
                 type="submit"
                 aria-describedby={stale ? staleNotice : undefined}
                 disabled={
@@ -605,6 +642,7 @@ function OwnerPanel(
               </button>
               {task?.scheduled && (
                 <button
+                  className="text-link"
                   type="button"
                   aria-describedby={stale ? staleNotice : undefined}
                   disabled={view.busy || stale || seenVersion === null}
@@ -660,11 +698,21 @@ function OwnSharing(props: Identity & { registrationId: string }) {
       </p>
       {view.notice && <p role="alert">{view.notice}</p>}
       {view.canRetry && (
-        <button type="button" disabled={view.busy} onClick={() => void view.retry()}>
+        <button
+          className="text-link"
+          type="button"
+          disabled={view.busy}
+          onClick={() => void view.retry()}
+        >
           Retry same change
         </button>
       )}
-      <button type="button" disabled={view.busy} onClick={() => void view.load()}>
+      <button
+        className="text-link"
+        type="button"
+        disabled={view.busy}
+        onClick={() => void view.load()}
+      >
         Refresh sharing
       </button>
       {!d ? (
@@ -724,7 +772,11 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                 I agree to share these company fields and this objective with the programme owner
                 and admins.
               </label>
-              <button type="submit" disabled={view.busy || consentProfileId !== d.profile.id}>
+              <button
+                className="primary-link"
+                type="submit"
+                disabled={view.busy || consentProfileId !== d.profile.id}
+              >
                 {d.company.shared ? 'Update company sharing' : 'Share company profile'}
               </button>
             </form>
@@ -742,6 +794,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                   : 'Your company for this place changed after you shared. Programme organisers do not see a company until you share again.'}
               </p>
               <button
+                className="text-link"
                 type="button"
                 disabled={view.busy}
                 onClick={() =>
@@ -768,6 +821,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                 Company sharing is on. Changes to your private profile are not automatically shared.
               </p>
               <button
+                className="text-link"
                 type="button"
                 disabled={view.busy}
                 onClick={() =>
@@ -819,12 +873,16 @@ function OwnSharing(props: Identity & { registrationId: string }) {
           {(after || d.nextLinkAfter) && (
             <div className="button-row">
               {after && (
-                <button type="button" onClick={() => setAfter(undefined)}>
+                <button className="text-link" type="button" onClick={() => setAfter(undefined)}>
                   First mission page
                 </button>
               )}
               {d.nextLinkAfter && (
-                <button type="button" onClick={() => setAfter(d.nextLinkAfter!)}>
+                <button
+                  className="text-link"
+                  type="button"
+                  onClick={() => setAfter(d.nextLinkAfter!)}
+                >
                   Next mission page
                 </button>
               )}

@@ -30,3 +30,16 @@
 .programme-refresh {
   margin-inline-start: var(--space-3);
 }
+
+/* The road's Invite step is a button inside a grid cell: keep it on the same left edge and baseline as the
+   other labels instead of stretching and centring (Wave 6, Q-07). It keeps the 44 px tap height of the room's
+   other controls; the negative block margins give back the extra height so the label stays level with the
+   plain labels. */
+.programme-room .mr-road-text > .text-link {
+  justify-self: start;
+  min-height: 44px;
+  margin: calc((1lh - 44px) / 2) 0;
+  padding: 0;
+  text-align: left;
+  line-height: inherit;
+}

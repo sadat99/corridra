@@ -647,3 +647,293 @@ for (const width of [390, 1440]) {
     }
   });
 }
+
+// Wave 6 on the organiser room (Q-01, Q-02, Q-05).
+test('Q-01 choosing a group moves focus to that group heading', async ({ page }) => {
+  await open(page, 'room=1&proj=1', none);
+  const room = page.getByRole('article', { name: programme.name });
+  for (const name of groups.slice(1)) {
+    await room.getByRole('button', { name, exact: true }).click();
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        tag: el?.tagName ?? '',
+        text: el?.textContent?.trim().slice(0, 50) ?? '',
+        inRoom: !!el?.closest('article.programme-room'),
+        visible: !!el && el.getBoundingClientRect().height > 0,
+      };
+    });
+    expect(['H2', 'H3', 'H4'], `${name}: focus is ${JSON.stringify(focused)}`).toContain(
+      focused.tag,
+    );
+    expect(focused.inRoom && focused.visible, `${name}: heading is in the open group`).toBe(true);
+  }
+});
+
+for (const width of [320, 640])
+  test(`Q-02 the room reflows at ${width} in every group with no sideways scroll`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'room=1&proj=1', {
+      state: 'AVAILABLE',
+      ...shared,
+      scheduled: 2,
+      qualifiedHeld: 1,
+    });
+    for (const name of groups) {
+      await groupText(page, name);
+      const over = await page.evaluate(() => ({
+        page: document.documentElement.scrollWidth - innerWidth,
+        cut: Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'article.programme-room a[href],article.programme-room button,article.programme-room input,article.programme-room select,article.programme-room textarea',
+          ),
+        )
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            return box.width > 0 && !el.closest('[hidden]') && box.right > innerWidth + 1;
+          })
+          .map((el) => `${el.tagName} ${el.textContent?.trim().slice(0, 40)}`),
+      }));
+      expect(over.page, `${name}: sideways scroll`).toBeLessThanOrEqual(0);
+      expect(over.cut, `${name}: actions cut off`).toEqual([]);
+    }
+  });
+
+const raw =
+  /unexpected|json|failed to fetch|networkerror|undefined|\bnull\b|\[object|syntax|load failed/i;
+const broken503 = {
+  status: 503,
+  contentType: 'text/html',
+  body: '<h1>Service Unavailable</h1>',
+};
+for (const [label, answer, says] of [
+  ['offline (the request is rejected)', 'abort', /connection|offline|try again/i],
+  ['409', { status: 409, json: {} }, /changed|refresh|try again/i],
+  ['a 503 page instead of data', broken503, /could not|unavailable|try again|refresh/i],
+] as const)
+  test(`Q-05 every group reads plain words when the room APIs answer ${label}, and Refresh is there`, async ({
+    page,
+  }) => {
+    await page.route('**/api/customer-programme-*', (route) =>
+      answer === 'abort' ? route.abort('internetdisconnected') : route.fulfill(answer),
+    );
+    await page.route('**/api/customer-programmes*', (route) =>
+      route.fulfill({
+        json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+      }),
+    );
+    await page.goto(`${origin}/?room=1&proj=1`);
+    await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+    const room = page.getByRole('article', { name: programme.name });
+    const said: string[] = [];
+    for (const name of groups) {
+      await room.getByRole('button', { name, exact: true }).click();
+      // Give the panel's own read time to answer.
+      await page.waitForTimeout(600);
+      said.push(
+        ...(await room.locator('[role="alert"]:visible, [role="status"]:visible').allInnerTexts()),
+      );
+    }
+    const words = said.map((text) => text.trim()).filter(Boolean);
+    expect(words.length, 'the room says something').toBeGreaterThan(0);
+    expect(
+      words.filter((text) => raw.test(text)),
+      'raw error text',
+    ).toEqual([]);
+    expect(words.join(' '), 'a plain line for this state').toMatch(says);
+    await expect(room.getByRole('button', { name: /^Refresh/ }).first()).toBeVisible();
+  });
+
+test('Q-05 the Results, companies and agenda views say wait and refresh on a 429, and Refresh works afterwards', async ({
+  page,
+}) => {
+  let limited = true;
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programme-projections**', (route) =>
+    limited ? route.fulfill({ status: 429, json: {} }) : route.fulfill({ json: projection(none) }),
+  );
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({
+      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+    }),
+  );
+  await page.goto(`${origin}/?room=1&proj=1`);
+  const room = page.getByRole('article', { name: programme.name });
+  await expect(room).toBeVisible();
+  await room.getByRole('button', { name: 'Results', exact: true }).click();
+  const results = page.locator(`[id="${section('results')}"]`);
+  await expect(results.getByRole('alert')).toContainText(/Wait a minute, then refresh/);
+  limited = false;
+  await results.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await expect(results.getByText(/^Not shared/)).toBeVisible();
+});
+
+// Q-06: the one action the organiser room list offers to create a programme. Disabled while the request is in
+// flight, one request for a double click, and the result is announced.
+test('Q-06 Save sample programme is busy while in flight, sends once for a double click and announces the result', async ({
+  page,
+}) => {
+  let posts = 0;
+  const created: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programmes*', async (route) => {
+    if (route.request().method() === 'POST') {
+      posts += 1;
+      const command = route.request().postDataJSON() as { name: string; reportingPurpose: string };
+      await new Promise((done) => setTimeout(done, 900));
+      const made = {
+        ...programme,
+        id: '00000000-0000-4000-8000-000000000003',
+        name: command.name,
+        reportingPurpose: command.reportingPurpose,
+      };
+      created.push(made);
+      return route.fulfill({ status: 201, json: made });
+    }
+    return route.fulfill({
+      json: { workspaceId, programmes: [programme, ...created], nextAfter: null, synthetic: true },
+    });
+  });
+  await page.goto(`${origin}/?room=1&proj=1`);
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+  await page.getByLabel('Programme name').fill('Fictional Dhaka garment delegation');
+  await page
+    .getByLabel('Purpose and intended outcomes')
+    .fill('Fictional purpose: meet fabric buyers in Shanghai.');
+  await page.getByLabel('I am using fictional information for sample planning only.').check();
+  const save = page.locator('form.operator-form .primary-link');
+  await expect(save).toHaveText('Save sample programme');
+  await save.dblclick();
+  await expect(save).toBeDisabled();
+  await expect(save, 'a first attempt in flight does not read as a retry').toHaveText('Saving…');
+  await expect(page.getByRole('status').filter({ hasText: 'is saved' })).toBeVisible();
+  expect(posts).toBe(1);
+});
+
+// Q-07 (GAP-049): screenshots of the organiser room, all five groups, at 390 and 1440, for the owner's named
+// art review. Not part of the normal run: `WAVE6_EVIDENCE=1` writes the files, so a normal run never rewrites
+// tracked images. The room is the real component with the real stylesheet over made-up data (notes in the Wave 6 receipt); panels whose
+// service is not mocked show their calm unavailable state. No self-approval: a named human reviews these.
+const evidenceDir = 'docs/design-system/evidence/revamp-wave6';
+const stamp = () => new Date(Date.now() + 3600000).toISOString();
+const sampleParticipants = {
+  workspaceId,
+  programmeId,
+  invitations: [
+    {
+      id: '00000000-0000-4000-8000-000000000101',
+      label: 'Synthetic participant invitation',
+      expiresAt: stamp(),
+      status: 'USED',
+    },
+    {
+      id: '00000000-0000-4000-8000-000000000102',
+      label: 'Synthetic participant invitation',
+      expiresAt: stamp(),
+      status: 'ISSUED',
+    },
+  ],
+  registrations: [
+    {
+      id: '00000000-0000-4000-8000-000000000201',
+      displayLabel: 'Synthetic participant label',
+      consentedAt: '2026-10-18T00:00:00Z',
+      status: 'REGISTERED',
+    },
+  ],
+  nextInvitationAfter: null,
+  nextRegistrationAfter: null,
+  synthetic: true,
+};
+for (const width of [390, 1440])
+  test(`Q-07 evidence: the five groups at ${width}`, async ({ browser }) => {
+    test.skip(!process.env.WAVE6_EVIDENCE, 'evidence is written only when WAVE6_EVIDENCE=1');
+    const context = await browser.newContext({
+      viewport: { width, height: 900 },
+      deviceScaleFactor: 2,
+    });
+    const page = await context.newPage();
+    await page.route('**/api/customer-programme-participants*', (route) =>
+      route.fulfill({ json: sampleParticipants }),
+    );
+    await open(page, 'room=1&proj=1', {
+      state: 'AVAILABLE',
+      ...shared,
+      scheduled: 2,
+      qualifiedHeld: 1,
+    });
+    const room = page.getByRole('article', { name: programme.name });
+    const slugs = ['overview', 'participants', 'programme', 'terms', 'results'];
+    for (const [index, name] of groups.entries()) {
+      await room.getByRole('button', { name, exact: true }).click();
+      await page.waitForTimeout(500);
+      await room.screenshot({ path: `${evidenceDir}/${slugs[index]}-${width}.png` });
+    }
+    await context.close();
+  });
+
+// Q-07 defects found by looking at the screenshots (AC/1): a button must not fall back to the browser's own
+// look, and the road's labels must line up.
+test('Q-07 no button in any group falls back to the browser default look', async ({ page }) => {
+  await page.route('**/api/customer-programme-participants*', (route) =>
+    route.fulfill({ json: sampleParticipants }),
+  );
+  await open(page, 'room=1&proj=1', {
+    state: 'AVAILABLE',
+    ...shared,
+    scheduled: 2,
+    qualifiedHeld: 1,
+  });
+  const room = page.getByRole('article', { name: programme.name });
+  for (const name of groups) {
+    await room.getByRole('button', { name, exact: true }).click();
+    await page.waitForTimeout(400);
+    const bare = await room.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('article.programme-room button'))
+        .filter((el) => el.getBoundingClientRect().height > 0 && !el.closest('[hidden]'))
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          // The browser's own button face, with its own border: nothing in the design system looks like it.
+          return style.backgroundColor === 'rgb(239, 239, 239)';
+        })
+        .map((el) => el.textContent?.trim()),
+    );
+    expect(bare, `${name}: buttons with the browser default look`).toEqual([]);
+  }
+});
+
+for (const width of [390, 1440])
+  test(`Q-07 the road labels line up at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'room=1&proj=1', none);
+    const boxes = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('.mr-road > li')).map((li) => {
+        // The label's own text, as a person sees it: a plain label, or the label inside the Invite button.
+        const label = li.querySelector<HTMLElement>('.mr-road-text b')!;
+        const state = li.querySelector<HTMLElement>('.mr-road-state')!;
+        const text = document.createRange();
+        text.selectNodeContents(label);
+        const a = text.getBoundingClientRect();
+        const b = state.getBoundingClientRect();
+        return { left: a.left - li.getBoundingClientRect().left, top: a.top, stateTop: b.top };
+      }),
+    );
+    expect(boxes.length).toBe(6);
+    // The Invite step is a button: it keeps the 44 px tap height the room's other controls have, even though
+    // its label sits level with the plain labels (review finding on PR 288).
+    const invite = await page.locator('.mr-road-text > button').boundingBox();
+    expect(invite?.height, 'Invite tap height').toBeGreaterThanOrEqual(43.5);
+    for (const box of boxes) {
+      expect(Math.abs(box.left - boxes[0].left), 'label left edge').toBeLessThanOrEqual(1);
+      if (width === 1440) {
+        expect(Math.abs(box.top - boxes[0].top), 'label top').toBeLessThanOrEqual(2);
+        expect(Math.abs(box.stateTop - boxes[0].stateTop), 'state top').toBeLessThanOrEqual(2);
+      }
+    }
+  });

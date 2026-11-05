@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { mrLabels } from '../../../components/mr/labels';
 import { emblemFor } from '../../../lib/room';
 import {
@@ -175,6 +175,11 @@ export function ProgrammeRoom({
   const [lens, setLens] = useState<RoomGroupKey>('overview');
   const [opened, setOpened] = useState<ReadonlySet<RoomGroupKey>>(new Set(['overview']));
   const [reads, setReads] = useState(0);
+  // Choosing a group moves focus to that group's heading (Wave 6, Q-01), so the person lands on what they chose.
+  const [arrived, setArrived] = useState<RoomGroupKey | null>(null);
+  useEffect(() => {
+    if (arrived) document.getElementById(`${programmeId}-${arrived}-title`)?.focus();
+  }, [arrived, programmeId]);
   const [onScreen, watch] = useOnScreen();
   // The room shows five groups. Each group holds the views it always held, mounted under their own section ids
   // (`${programmeId}-<view>`); a view that has no panel is not there, and a group with no view is not offered.
@@ -224,6 +229,7 @@ export function ProgrammeRoom({
   const onInvite = panels.people ? () => choose('people') : undefined;
   function choose(key: RoomGroupKey) {
     if (key !== lens) refresh();
+    if (key !== lens) setArrived(key);
     setLens(key);
     setOpened((current) => (current.has(key) ? current : new Set(current).add(key)));
   }
@@ -276,6 +282,13 @@ export function ProgrammeRoom({
               aria-label={item.label}
               hidden={lens !== item.key}
             >
+              <h4
+                id={`${programmeId}-${item.key}-title`}
+                className="room-group-title"
+                tabIndex={-1}
+              >
+                {item.label}
+              </h4>
               {item.key === 'overview' && !panels.overview
                 ? available.length > 1 && (
                     <p className="programme-note">Choose a view above to work on this programme.</p>
