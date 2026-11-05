@@ -1,0 +1,105 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Page lengths phase 3 on the four team routes: compact page heading and padding, a shared show-more list, and folded long lists. The guard stays report-only.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed.",
+  "sensitive": "no: presentation only. No auth, role, tenant, money, consent or token code changes; the server still decides every action.",
+  "changed": [
+    "apps/web/components/ux/team-compact.css (new) and a one-line import in team-frame.tsx: from 64rem up, a smaller team page heading (text-2xl) and tighter block padding, using existing spacing tokens only. Phone is unchanged.",
+    "apps/web/components/ux/show-more.tsx and show-more.css (new): ShowMoreList shows the first N items and keeps the rest in the page, hidden, behind 'Show all N <noun>'.",
+    "apps/web/app/operator/owner/page.tsx: Open gaps shows 4 of the open gaps, then 'Show all N open gaps'.",
+    "apps/web/app/operator/workspace-controls.tsx: the Available tools list is folded behind its summary at every width.",
+    "apps/web/app/operator/operations.tsx: the Deferred controls table shows 3 rows, then 'Show all 11 rows'.",
+    "tests: workspace.spec, zzz-owner-page.spec, ws-d team-control.spec and the openTools helper open the fold or click Show all before using what is inside; no assertion removed or loosened. New: tests/integration/ux-show-more.test.ts and tests/ux/show-more.spec.ts."
+  ],
+  "preserved": [
+    "Every gap card, tool, table row, id and action is still in the page; folded items stay in the HTML.",
+    "The owner page is still read only: the exemption in its check covers tab buttons and the show-more button only.",
+    "Phone layout rules are untouched."
+  ],
+  "unit": "screens (document height over viewport height), measured on the verification server with the seeded owner, before this PR is the 301 record",
+  "pageLengthByTab": [
+    {
+      "route": "/operator/controls",
+      "tab": "people",
+      "desktop": [1.82, 1.75],
+      "phone": [2.86, 2.86]
+    },
+    {
+      "route": "/operator/controls",
+      "tab": "invite",
+      "desktop": [1.38, 1.3],
+      "phone": [2.3, 2.3]
+    },
+    {
+      "route": "/operator/controls",
+      "tab": "tools",
+      "desktop": [2.03, 1.14],
+      "phone": [2.02, 2.02]
+    },
+    {
+      "route": "/operator/readiness",
+      "tab": "deferred",
+      "desktop": [1.97, 1.74],
+      "phone": [2.74, 2.58]
+    },
+    {
+      "route": "/operator/readiness",
+      "tab": "blocked",
+      "desktop": [1.33, 1.26],
+      "phone": [2.06, 2.06]
+    },
+    {
+      "route": "/operator/readiness",
+      "tab": "rules",
+      "desktop": [1.29, 1.19],
+      "phone": [2.31, 2.31]
+    },
+    {
+      "route": "/operator/delivery",
+      "tab": "programmes",
+      "desktop": [1.35, 1.28],
+      "phone": [2.14, 2.14]
+    },
+    {
+      "route": "/operator/delivery",
+      "tab": "publication",
+      "desktop": [1.35, 1.28],
+      "phone": [2.24, 2.24]
+    },
+    {
+      "route": "/operator/delivery",
+      "tab": "access",
+      "desktop": [1.44, 1.36],
+      "phone": [2.2, 2.2]
+    },
+    {
+      "route": "/operator/delivery",
+      "tab": "experience",
+      "desktop": [2.9, 2.79],
+      "phone": [2.19, 2.19]
+    },
+    {
+      "route": "/operator/owner",
+      "tab": "status",
+      "desktop": [1.33, 1.28],
+      "phone": [2.09, 2.09]
+    },
+    {
+      "route": "/operator/owner",
+      "tab": "gaps",
+      "desktop": [1.73, 1.13],
+      "phone": [3.93, 1.96]
+    },
+    {
+      "route": "/operator/owner",
+      "tab": "technical",
+      "desktop": [1.55, 1.5],
+      "phone": [1.95, 1.95]
+    }
+  ],
+  "pageLengthNote": "Each pair is [before, after]. No tab reaches the 1.0 desktop limit yet; the closest are owner Open gaps 1.13 and controls Available tools 1.14. On phone only owner Open gaps (3.93 to 1.96) and Technical details (1.95) are at or under the 2.0 hard limit; this PR changes phone only for those two and for readiness Deferred controls (2.74 to 2.58).",
+  "stillOver": "Desktop: every tab. Phone: every tab except owner Open gaps and Technical details, the closest being controls Available tools 2.02 and delivery Programmes 2.14. Remaining work: split delivery Experience (2.79 desktop) and owner Status into more tabs, drop the delivery Jump to list, and more folds on the longest panels. The frame change in PR 305 (fixed left bar, sticky header) will move every number and needs a re-measure after it merges.",
+  "nextAction": "Title Case button labels on staff, contributor and owner surfaces as its own PR, then re-measure after PR 305."
+}

@@ -4,6 +4,7 @@
 // from the "Sections" button in the header. Sign-in and recovery pages under /operator keep the plain
 // public frame. Owner: WS-E.
 import './shells.css';
+import './team-compact.css';
 import { usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { useLanguage } from '../language-provider';

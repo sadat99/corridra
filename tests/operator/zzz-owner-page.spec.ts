@@ -56,15 +56,21 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   await expect(
     page.getByRole('heading', { level: 2, name: 'Open gaps', exact: true }),
   ).toBeVisible();
+  // The register shows its first four and folds the rest behind one button; all 11 are still in the page.
+  await page.getByRole('button', { name: 'Show all 11 open gaps', exact: true }).click();
   await page.getByRole('tab', { name: 'Technical details', exact: true }).click();
   await expect(
     page.getByRole('heading', { level: 2, name: 'What is on and off', exact: true }),
   ).toBeVisible();
 
   // Read only: nothing on the page can change anything.
-  // The tabs are navigation only, so they are not counted as controls.
+  // The tabs and the show-all button only change what is shown, so they are not counted as controls.
   expect(
-    await page.locator('main button:not([role="tab"]), main form, main input, main select').count(),
+    await page
+      .locator(
+        'main button:not([role="tab"]):not(.ux-showmore-button), main form, main input, main select',
+      )
+      .count(),
   ).toBe(0);
 
   // States come from this deployment. The browser server turns these on and leaves the rest off.
