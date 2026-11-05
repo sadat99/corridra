@@ -383,6 +383,15 @@ test('Q-04 Arabic mirrors the team shell without overlap or clipped controls', a
       if (await sections.count()) await sections.first().click();
       const nav = page.locator('#workspace-navigation');
       await expect(nav).toBeVisible();
+      // The phone list is a drawer that slides in; measure it once it has come to rest.
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const panel = document.querySelector('.ux-leftnav-panel')!.getBoundingClientRect();
+            return panel.left >= -1 && panel.right <= innerWidth + 1;
+          }),
+        )
+        .toBe(true);
       const geometry = await page.evaluate(() => {
         // A link inside a closed group is not shown, though the browser still lays it out.
         const shown = (el: HTMLElement) =>
