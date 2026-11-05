@@ -72,7 +72,8 @@ describe('the pages and the report', () => {
   it('the report keeps its defaults, gains a trip section and never builds the trip from the whole page', () => {
     const report = read('apps/web/app/account/missions/saved-commercial-report.tsx');
     expect(report).toContain(
-      "export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip';",
+      // 'none' (approved work rooms, 5 Nov 2026): the room reads the report once and shows no part of it.
+      "export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip' | 'none';",
     );
     expect(report).toContain("section = 'all'");
     expect(report).toContain('lenses = false');

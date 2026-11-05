@@ -23,6 +23,7 @@ import { SavedCommercialReport, type ReportSection } from '../../missions/saved-
 import { useRoomDetail } from './room-data';
 import { TripList } from './trip-list';
 import './room-view.css';
+import './room-frame.css';
 
 type Lens = 'overview' | 'compare' | 'evidence' | 'trip';
 const lensKey: Record<Lens, MessageKey> = {

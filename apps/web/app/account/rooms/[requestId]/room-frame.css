@@ -1,0 +1,315 @@
+/* The work-room frame (approved work rooms, 5 Nov 2026), shared by the request rooms and the Programme Room.
+   It lives apart from room-view.css, which keeps only the lens and Trip rules. Tokens only. */
+/* The approved work rooms (owner, 5 Nov 2026): the request's journey and route, its title and stage, one next
+   step, the views as tabs, then the view. One desktop screen and two phone screens. Tokens only. */
+.room {
+  gap: var(--space-3);
+}
+.room-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-1) var(--space-8);
+}
+.room-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.room-tag,
+.room-route {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 22px;
+  padding: 0 var(--space-2);
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+.room-tag {
+  background: var(--selected-surface);
+  color: var(--brand);
+}
+.room-tag[data-journey='sell'] {
+  background: var(--positive-surface);
+  color: var(--positive);
+}
+.room-tag[data-journey='organise'] {
+  background: var(--caution-surface);
+  color: var(--ac-copper-ink);
+}
+.room-route {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--brand-deep);
+}
+.room .room-route .corridra-icon {
+  width: 14px;
+  height: 14px;
+}
+.room .room-head h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--brand-deep);
+}
+.room .room-head .room-meta {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.room-stage {
+  min-width: 0;
+}
+@media (min-width: 64rem) {
+  .room-head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
+  }
+  .room-head > :not(.room-stage) {
+    grid-column: 1;
+  }
+  .room-head > .room-stage {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: end;
+  }
+}
+
+.room-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--brand);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+.room-next-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--selected-surface);
+  color: var(--brand);
+}
+.room .room-next-mark .corridra-icon {
+  width: 20px;
+  height: 20px;
+}
+.room-next-words {
+  display: grid;
+  flex: 1 1 18rem;
+  min-width: 0;
+  line-height: 1.35;
+}
+.room-next-words small {
+  color: var(--brand);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+.room-next-words b {
+  font-size: var(--text-base);
+  font-weight: 650;
+}
+.room-next-words span {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.room-next-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.room-next-actions > * {
+  min-height: 44px;
+}
+
+/* The views as one row of tabs; each is still a toggle button, and its count is decorative. */
+.room-lenses {
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+}
+.room .room-lens {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: -1px;
+  padding-inline: var(--space-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-weight: 550;
+  white-space: nowrap;
+}
+.room .room-lens[aria-pressed='true'] {
+  border-bottom-color: var(--brand);
+  background: transparent;
+  color: var(--brand);
+  font-weight: 650;
+}
+.room-lens[data-count]::after {
+  content: attr(data-count);
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+.room-lens[aria-pressed='true'][data-count]::after {
+  background: var(--brand);
+  color: var(--paper);
+}
+.room-lens:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.room-compare {
+  display: grid;
+  gap: var(--space-3);
+}
+.room-full > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brand);
+  font-weight: 600;
+  cursor: pointer;
+}
+/* The page heading is said to assistive technology; the request's own title is the visible heading. */
+.ux-page-heading:has(> h1 > .sr-only:only-child) {
+  display: contents;
+}
+@media (max-width: 40rem) {
+  .room .room-head h2 {
+    font-size: var(--text-xl);
+  }
+  .room-next-actions,
+  .room-next-actions > .button {
+    width: 100%;
+  }
+  .room-next-actions > .button {
+    justify-content: center;
+  }
+}
+
+/* The room keeps the page's own padding small, as Home does, so a view fits one screen. */
+.ux-leftnav-page:has(.room) {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+.room {
+  row-gap: 10px;
+}
+.room-next {
+  padding-block: var(--space-2);
+}
+/* "Your next step" leads the same line as the step itself; the line below says why. */
+.room-next-words {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+.room-next-words > span {
+  flex: 1 0 100%;
+}
+/* Inside the Room the report's card is one view among others, so it keeps the room's spacing. The report page
+   itself is unchanged. */
+.room .room-report .delivery-card {
+  margin-block: var(--space-3);
+  padding: var(--space-4);
+}
+/* The page heading is said to assistive technology only, so the frame keeps no space for it above the room. */
+.ux-customer:has(> .room) {
+  padding-top: 0;
+  row-gap: 0;
+}
+.room .room-lens {
+  flex: none;
+}
+@media (max-width: 40rem) {
+  .room-next-mark {
+    display: none;
+  }
+}
+@media (max-width: 40rem) {
+  .room .room-lens {
+    padding-inline: var(--space-2);
+  }
+}
+@media (max-width: 23rem) {
+  /* On the smallest phones every view stays in sight: the tabs take a second line rather than scroll away. */
+  .room-lenses {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+/* Meetings and visits as compact rows on a wide screen (approved work rooms, 5 Nov 2026): the name and its
+   status, then when, then where, on one line. The labels stay for assistive technology. */
+@media (min-width: 64rem) {
+  .room .room-trip-list {
+    gap: var(--space-2);
+  }
+  .room .room-trip-list > li.room-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+    padding: var(--space-2) var(--space-4);
+  }
+  .room .room-trip-list > li.room-strip > :not(.room-trip-head) {
+    grid-column: 2;
+  }
+  .room .room-trip-list .room-trip-facts dt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 40rem) {
+  .room .room-trip-list > li.room-strip {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+@media (min-width: 64rem) {
+  .room .room-trip-list .room-trip-facts > div,
+  .room .room-trip-list .room-trip-facts > div:last-child {
+    flex: 0 1 auto;
+  }
+  .room .room-trip-list .room-trip-facts {
+    column-gap: var(--space-6);
+  }
+}
+@media (max-width: 63.99rem) {
+  /* Each fact on one line beside its label, so a meeting is a short card. */
+  .room .room-trip-list .room-trip-facts > div {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 0 var(--space-2);
+  }
+}
