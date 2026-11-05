@@ -4,14 +4,14 @@
 .guide-footer.guide-footer--compact {
   gap: var(--space-4);
   margin-top: var(--space-8);
-  padding: var(--space-5) var(--space-5) var(--space-12);
+  padding: var(--space-4) var(--space-5) var(--space-12);
 }
 .guide-footer--compact .guide-footer-top {
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 .guide-footer--compact .guide-footer-brand {
-  gap: var(--space-1);
+  gap: 0;
 }
 .guide-footer--compact .guide-footer-brand .brand {
   font-size: var(--text-xl);
@@ -58,7 +58,7 @@
   padding-bottom: var(--space-2);
 }
 .guide-footer--compact .guide-footer-bottom {
-  padding-top: var(--space-3);
+  padding-top: var(--space-2);
 }
 
 /* From 769 px the footer is one row: the brand, the two link groups (still collapsed, each opens to a full row
