@@ -1,0 +1,35 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "CRUD gap G3 (CRUD standard, owner scope of 5 Nov 2026): real-invoice payments and their reversals need a second staff person, and every reversal carries a reason. One additive migration; real invoicing stays closed until the owner opens it offline.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. This PR closes audit gap G3 in docs/revamp/crud/summary.md; the Conductor updates that record.",
+  "sensitive": "yes: real money (the real invoicing module), a database migration and staff commands. No auth, session, tenant-scope, consent, token or cookie code changes. Nothing is installed anywhere by this PR; the migration is additive and the owner merges. The ADR-064 amendment (payments and reversals) is written by the Conductor.",
+  "ownerDecision": "5 Nov 2026: 'Two people for both'. Recording a real payment and reversing one both need a second staff member's approval, and every reversal carries a reason, the same rule as invoices and credit notes. The Conductor confirmed: the second person follows the existing second-approver control, and the one-person payment command works only when that control says a second person is not required.",
+  "changed": [
+    "packages/db/customer-invoicing-real-migrations/0002_payment_approval_and_reversal.sql (new, additive): the proposal table also carries 'payment' and 'payment_reversal' (new nullable columns, new checks); a payment records the approved proposal it came from; table real_invoice_payment_reversal (append-only, one reversal per payment, reason in plain words of at least 10 characters, rewrite and delete refused, row security on, no runtime or auth access); a guard on payments and on reversals for every writer that requires an approved proposal of the right kind, invoice and payment whenever a second person is required; the command log accepts prepare_payment and prepare_payment_reversal; real_invoicing_paid, _position, _invoice_json, _emit, the payment guard, app.real_invoicing_staff_pending, _staff_view and _staff_command are replaced with the same signatures, so their grants stay.",
+    "packages/delivery/src/customer-invoicing-real-staff.ts: the staff command accepts prepare_payment and prepare_payment_reversal; approving a payment or a reversal is not treated as issuing a customer document, so the made-up-supplier guard does not block it (approving an invoice or a credit note is still blocked while supplier details are made up).",
+    "apps/web/app/operator/customer-real-invoicing.tsx: while a second person is required the payment form prepares the payment for approval; a Prepare Payment Reversal form; waiting payments and reversals appear in Waiting for approval with Approve and Reject; reversed payments stay in the list, marked, with the reason.",
+    "packages/auth/src/customer-invoicing-real.ts and apps/web/app/account/billing/real-invoices-section.tsx: customers see that a payment was reversed, never why.",
+    "tests: tests/integration/customer-invoicing-real.test.ts (new G3 test; the payment test and the credit-note test record payments through prepare and approve; migration history lists two files), tests/integration/ws-c-team-work.test.ts (the made-up-supplier guard), tests/operator/v3-real-invoicing-staff-ui.spec.ts and v3-real-invoicing-ui.spec.ts."
+  ],
+  "preserved": [
+    "Payments, credits and invoices stay append-only: a payment is never edited or deleted, and stays readable with its reversal.",
+    "Exact money: whole minor units as text; what is paid is derived, never stored; currencies are never added or converted.",
+    "Every existing command, guard, event kind and customer read behaves as before. Prepared payments run the same checks as before at preparation (amount, date, reference, position), and approval repeats them.",
+    "The real invoicing control is untouched and stays closed until the owner opens it offline; payments recorded before this change stay as they are.",
+    "Events carry ids, the number and a sequence only, never the amount, the date, the reference or the reason."
+  ],
+  "behaviour": {
+    "oneApprover": "A payment or reversal is prepared by one person and decided by another. The same person cannot approve it while a second person is required; the named finance approver, when the supplier details name one, is the only approver, as for invoices.",
+    "directPayment": "The one-person payment command is refused ('A payment needs a second person: prepare it for approval') while a second person is required. It works only when the owner has recorded that one person may do both.",
+    "afterReversal": "The reversed amount is owed again: paid goes down by it, outstanding goes up by it. A payment is reversed once, and one reversal of a payment can wait at a time.",
+    "stale": "Approval of a payment or reversal prepared against an older state of the invoice is refused ('prepare it again'), like a credit note."
+  },
+  "deliberateTestChanges": [
+    "The payment test and the credit-note test used the one-person payment command; they now prepare and approve (that is the decision).",
+    "The migration history test lists two applied files, each hash checked.",
+    "The customer payment list now carries reversed: false."
+  ],
+  "nextAction": "Owner decisions on the remaining CRUD gaps: G8 to G12 in my area, in the order the Conductor sets."
+}

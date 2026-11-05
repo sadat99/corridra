@@ -29,9 +29,16 @@ type Period = {
   priceMinor: string;
   currency: string;
 };
+type ProposalKind = 'invoice' | 'credit' | 'payment' | 'payment_reversal';
+const kindName: Record<ProposalKind, string> = {
+  invoice: 'invoice',
+  credit: 'credit note',
+  payment: 'payment',
+  payment_reversal: 'payment reversal',
+};
 type Proposal = {
   id: string;
-  kind: 'invoice' | 'credit';
+  kind: ProposalKind;
   workspaceName: string;
   periodStart: string | null;
   periodEnd: string | null;
@@ -41,6 +48,10 @@ type Proposal = {
   invoiceNumber: string | null;
   amountMinor: string | null;
   reason: string | null;
+  receivedOn?: string | null;
+  method?: string | null;
+  reference?: string | null;
+  paymentSeq?: number | null;
   preparedByYou: boolean;
   preview: {
     currency: string;
@@ -84,6 +95,8 @@ type Row = {
     receivedOn: string;
     method: string;
     reference: string;
+    reversed?: boolean;
+    reversal?: { seq: number; reason: string; reversedAt: string };
   }[];
   credits: { seq: number; number: string; amountMinor: string; issuedOn: string; reason: string }[];
 };
@@ -159,6 +172,8 @@ function Scoped({ tenant }: { tenant: string }) {
     [reference, setReference] = useState(''),
     [creditAmount, setCreditAmount] = useState(''),
     [reason, setReason] = useState(''),
+    [reverseSeq, setReverseSeq] = useState(''),
+    [reverseReason, setReverseReason] = useState(''),
     [rejectReason, setRejectReason] = useState('');
   const task = useRef<AbortController | null>(null);
   const endpoint =
@@ -274,6 +289,8 @@ function Scoped({ tenant }: { tenant: string }) {
     setCreditAmount('');
     setReference('');
     setReason('');
+    setReverseSeq('');
+    setReverseReason('');
     setRejectReason('');
     if (typeof saved?.invoice?.id === 'string') await open(saved.invoice.id);
     await loadAll();
@@ -317,7 +334,11 @@ function Scoped({ tenant }: { tenant: string }) {
       },
       p.kind === 'invoice'
         ? 'Approved. The invoice now has its number.'
-        : 'Approved. The credit note now has its number.',
+        : p.kind === 'credit'
+          ? 'Approved. The credit note now has its number.'
+          : p.kind === 'payment'
+            ? 'Approved. The payment is recorded.'
+            : 'Approved. The payment is reversed.',
     );
   }
   function submitReject(e: FormEvent) {
@@ -331,7 +352,9 @@ function Scoped({ tenant }: { tenant: string }) {
         decision: 'reject',
         reason: rejectReason.trim(),
       },
-      'Rejected. Nothing was issued.',
+      rejecting.kind === 'payment' || rejecting.kind === 'payment_reversal'
+        ? 'Rejected. Nothing was changed.'
+        : 'Rejected. Nothing was issued.',
     );
   }
   function submitPayment(e: FormEvent) {
@@ -339,7 +362,8 @@ function Scoped({ tenant }: { tenant: string }) {
     if (!detail) return;
     void send(
       pending ?? {
-        action: 'payment',
+        // While a second person is required, a payment is prepared here and approved by someone else.
+        action: data?.secondApproverRequired ? 'prepare_payment' : 'payment',
         commandId: crypto.randomUUID(),
         invoiceId: detail.invoice.id,
         expectedPosition: detail.invoice.position,
@@ -348,7 +372,26 @@ function Scoped({ tenant }: { tenant: string }) {
         method,
         reference: reference.trim(),
       },
-      'Payment recorded.',
+      data?.secondApproverRequired
+        ? 'Prepared. A second person now needs to approve the payment.'
+        : 'Payment recorded.',
+    );
+  }
+  function submitReversal(e: FormEvent) {
+    e.preventDefault();
+    if (!detail) return;
+    void send(
+      pending ?? {
+        action: 'prepare_payment_reversal',
+        commandId: crypto.randomUUID(),
+        invoiceId: detail.invoice.id,
+        expectedPosition: detail.invoice.position,
+        paymentSeq: Number(reverseSeq),
+        reason: reverseReason.trim(),
+      },
+      data?.secondApproverRequired
+        ? 'Prepared. A second person now needs to approve the reversal.'
+        : 'Prepared. Approve the reversal to reverse the payment.',
     );
   }
   function submitCredit(e: FormEvent) {
@@ -503,12 +546,21 @@ function Scoped({ tenant }: { tenant: string }) {
             <ul>
               {data.proposals.map((p) => (
                 <li key={p.id}>
-                  <strong>{p.kind === 'invoice' ? 'Invoice' : 'Credit note'}</strong> ·{' '}
-                  {p.workspaceName}
+                  <strong>
+                    {kindName[p.kind].charAt(0).toUpperCase() + kindName[p.kind].slice(1)}
+                  </strong>{' '}
+                  · {p.workspaceName}
                   {p.kind === 'invoice' && p.periodStart && p.periodEnd
                     ? ' · ' + displayDate(p.periodStart) + ' until ' + displayDate(p.periodEnd)
                     : ''}
-                  {p.kind === 'credit' && p.invoiceNumber ? ' · against ' + p.invoiceNumber : ''}
+                  {p.kind !== 'invoice' && p.invoiceNumber ? ' · against ' + p.invoiceNumber : ''}
+                  {p.kind === 'payment_reversal' && p.paymentSeq
+                    ? ' · payment ' + p.paymentSeq
+                    : ''}
+                  {p.kind === 'payment' && p.receivedOn
+                    ? ' · received ' + displayDate(p.receivedOn)
+                    : ''}
+                  {p.kind === 'payment' && p.reference ? ' · ' + p.reference : ''}
                   {p.preview
                     ? ' · fee ' +
                       money(p.preview.feeMinor, p.preview.currency) +
@@ -517,7 +569,9 @@ function Scoped({ tenant }: { tenant: string }) {
                       ', total ' +
                       money(p.preview.totalMinor, p.preview.currency)
                     : ''}
-                  {p.kind === 'credit' && p.amountMinor ? ' · amount ' + p.amountMinor : ''}
+                  {(p.kind === 'credit' || p.kind === 'payment') && p.amountMinor
+                    ? ' · amount ' + p.amountMinor
+                    : ''}
                   {p.billToName ? ' · bill to ' + p.billToName : ''}
                   {p.reason ? ' · ' + p.reason : ''}
                   {p.preparedByYou && data.secondApproverRequired ? (
@@ -531,8 +585,7 @@ function Scoped({ tenant }: { tenant: string }) {
                         disabled={busy}
                         onClick={() => approve(p)}
                       >
-                        Approve {p.kind === 'invoice' ? 'invoice' : 'credit note'} for{' '}
-                        {p.workspaceName}
+                        Approve {kindName[p.kind]} for {p.workspaceName}
                       </button>{' '}
                       <button
                         type="button"
@@ -558,7 +611,7 @@ function Scoped({ tenant }: { tenant: string }) {
         <form aria-label="Reject" onSubmit={submitReject}>
           <div className="field">
             <label htmlFor="real-reject-reason">
-              Why are you rejecting this {rejecting.kind === 'invoice' ? 'invoice' : 'credit note'}?
+              Why are you rejecting this {kindName[rejecting.kind]}?
             </label>
             <textarea
               id="real-reject-reason"
@@ -634,6 +687,13 @@ function Scoped({ tenant }: { tenant: string }) {
               <li key={'p' + p.seq}>
                 Payment {money(p.amountMinor, inv.currency)} · {displayDate(p.receivedOn)} ·{' '}
                 {p.method.replace('_', ' ')} · {p.reference}
+                {p.reversal && (
+                  <>
+                    {' '}
+                    · Reversed: {p.reversal.reason} (
+                    {displayDate(p.reversal.reversedAt.slice(0, 10))})
+                  </>
+                )}
               </li>
             ))}
             {inv.credits.map((c) => (
@@ -644,7 +704,10 @@ function Scoped({ tenant }: { tenant: string }) {
             ))}
           </ol>
           {can('payment') && (
-            <form aria-label="Record payment" onSubmit={submitPayment}>
+            <form
+              aria-label={data?.secondApproverRequired ? 'Prepare payment' : 'Record payment'}
+              onSubmit={submitPayment}
+            >
               <fieldset disabled={busy}>
                 <div className="field">
                   <label htmlFor="real-pay-amount">
@@ -698,7 +761,58 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
               </fieldset>
               <button type="submit" className="button" disabled={busy}>
-                {pending ? 'Send the Same Payment Again' : 'Record Payment'}
+                {pending
+                  ? 'Send the Same Payment Again'
+                  : data?.secondApproverRequired
+                    ? 'Prepare Payment for Approval'
+                    : 'Record Payment'}
+              </button>
+            </form>
+          )}
+          {can('reverse') && (
+            <form aria-label="Prepare payment reversal" onSubmit={submitReversal}>
+              <p>
+                A payment entered in error is reversed, not deleted. It stays on the invoice, marked
+                as reversed with the reason, and its amount is owed again.{' '}
+                {data?.secondApproverRequired ? 'A second person approves the reversal.' : ''}
+              </p>
+              <fieldset disabled={busy}>
+                <div className="field">
+                  <label htmlFor="real-reverse-payment">Payment to reverse</label>
+                  <select
+                    id="real-reverse-payment"
+                    required
+                    value={reverseSeq}
+                    onChange={(e) => change(() => setReverseSeq(e.target.value))}
+                  >
+                    <option value="">Choose a payment</option>
+                    {inv.payments
+                      .filter((p) => !p.reversed)
+                      .map((p) => (
+                        <option key={p.seq} value={String(p.seq)}>
+                          Payment {p.seq}: {money(p.amountMinor, inv.currency)} on{' '}
+                          {displayDate(p.receivedOn)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="real-reverse-reason">
+                    Why it is reversed (plain words, at least 10 characters)
+                  </label>
+                  <textarea
+                    id="real-reverse-reason"
+                    rows={2}
+                    required
+                    minLength={10}
+                    maxLength={500}
+                    value={reverseReason}
+                    onChange={(e) => change(() => setReverseReason(e.target.value))}
+                  />
+                </div>
+              </fieldset>
+              <button type="submit" className="button button-secondary" disabled={busy}>
+                {pending ? 'Send the Same Reversal Again' : 'Prepare Reversal for Approval'}
               </button>
             </form>
           )}

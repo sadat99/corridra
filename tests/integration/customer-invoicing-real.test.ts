@@ -135,6 +135,15 @@ const decide = (
     decision,
     ...(reason ? { reason } : {}),
   });
+// A real payment is prepared by one person and approved by a second, the same as an invoice or a credit note.
+const record = async (over: Record<string, unknown>) => {
+  const proposal = await staff.command(first(), {
+    action: 'prepare_payment',
+    commandId: randomUUID(),
+    ...over,
+  });
+  return decide(proposal.proposalId);
+};
 const pendingPeriods = async () => (await staff.pending(first())).periods;
 
 async function writePlanAndActivate(
@@ -243,7 +252,10 @@ test('installing is repeatable, refuses a changed history, leaves the control cl
   const applied = (
     await s.f.owner.query('SELECT name,sha256 FROM customer_invoicing_real_migrations.applied')
   ).rows;
-  expect(applied.map((r: { name: string }) => r.name)).toEqual(['0001_real_invoicing.sql']);
+  expect(applied.map((r: { name: string }) => r.name)).toEqual([
+    '0001_real_invoicing.sql',
+    '0002_payment_approval_and_reversal.sql',
+  ]);
   expect(
     (await s.f.owner.query('SELECT count(*)::int n FROM customer_private.real_invoicing_control'))
       .rows[0].n,
@@ -255,9 +267,11 @@ test('installing is repeatable, refuses a changed history, leaves the control cl
     createHash('sha256').update('x').digest('hex'),
   ]);
   await expect(migrateCustomerInvoicingReal(s.f.owner)).rejects.toThrow(/history mismatch/i);
-  await s.f.owner.query('UPDATE customer_invoicing_real_migrations.applied SET sha256=$1', [
-    applied[0].sha256,
-  ]);
+  for (const row of applied as { name: string; sha256: string }[])
+    await s.f.owner.query(
+      'UPDATE customer_invoicing_real_migrations.applied SET sha256=$1 WHERE name=$2',
+      [row.sha256, row.name],
+    );
   await migrateCustomerInvoicingReal(s.f.owner);
   // The sample module and its tables are untouched.
   expect(
@@ -459,30 +473,31 @@ test('a real owner or admin reads the invoice with exact money and no internal d
 test('payments are exact, in order, never above what is outstanding and never future dated; a stale screen is refused', async () => {
   const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
   const inv = listed[0];
+  // Every check runs when the payment is prepared; recording it needs a second person (see the next test).
+  const base = (over: Record<string, unknown>) => ({
+    invoiceId: inv.id,
+    expectedPosition: 0,
+    amountMinor: '4000',
+    receivedOn: utcToday(),
+    method: 'bank_transfer',
+    reference: 'Transfer received from Dhaka Imports',
+    ...over,
+  });
   const pay = (over: Record<string, unknown>) =>
-    staff.command(first(), {
-      action: 'payment',
-      commandId: randomUUID(),
-      invoiceId: inv.id,
-      expectedPosition: 0,
-      amountMinor: '4000',
-      receivedOn: utcToday(),
-      method: 'bank_transfer',
-      reference: 'Transfer received from Dhaka Imports',
-      ...over,
-    });
+    staff.command(first(), { action: 'prepare_payment', commandId: randomUUID(), ...base(over) });
+  const recorded = (over: Record<string, unknown>) => record(base(over));
   await expect(pay({ amountMinor: '10901' })).rejects.toThrow(/more than is still outstanding/i);
   await expect(pay({ receivedOn: days(3) })).rejects.toThrow(/future/i);
   await expect(pay({ reference: 'See https://example.test/receipt' })).rejects.toThrow();
   await expect(pay({ reference: 'Mail me@business.test' })).rejects.toThrow();
-  const first1 = await pay({});
+  const first1 = await recorded({});
   expect(first1.invoice).toMatchObject({
     status: 'partly_paid',
     paidMinor: '4000',
     outstandingMinor: '6900',
   });
   await expect(pay({ expectedPosition: 0 })).rejects.toThrow(/changed; reload/i);
-  const second1 = await pay({ expectedPosition: 1, amountMinor: '6900' });
+  const second1 = await recorded({ expectedPosition: 1, amountMinor: '6900' });
   expect(second1.invoice).toMatchObject({
     status: 'paid',
     paidMinor: '10900',
@@ -495,8 +510,20 @@ test('payments are exact, in order, never above what is outstanding and never fu
   const seen = await customer().overview({ workspaceId });
   expect(seen.invoices[0].status).toBe('paid');
   expect(seen.invoices[0].payments).toEqual([
-    { seq: 1, amountMinor: '4000', receivedOn: utcToday(), method: 'bank_transfer' },
-    { seq: 2, amountMinor: '6900', receivedOn: utcToday(), method: 'bank_transfer' },
+    {
+      seq: 1,
+      amountMinor: '4000',
+      receivedOn: utcToday(),
+      method: 'bank_transfer',
+      reversed: false,
+    },
+    {
+      seq: 2,
+      amountMinor: '6900',
+      receivedOn: utcToday(),
+      method: 'bank_transfer',
+      reversed: false,
+    },
   ]);
   expect(JSON.stringify(seen)).not.toContain('Transfer received');
 });
@@ -514,6 +541,199 @@ test('a credit note is prepared and approved the same way, numbered in its own s
       reason: 'Customer asked for a correction to the bill',
     }),
   ).rejects.toThrow(/more than is still unpaid/i);
+});
+
+test('real payments and their reversals need a second person, carry a reason, and the one-person payment command is refused while a second person is required', async () => {
+  const view = async () => {
+    const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+    return listed.find((i) => i.number === number('INV', 1))!;
+  };
+  const inv = await view();
+  expect(inv).toMatchObject({ status: 'paid', paidMinor: '10900' });
+  const payment = (over: Record<string, unknown> = {}) => ({
+    action: 'prepare_payment',
+    commandId: randomUUID(),
+    invoiceId: inv.id,
+    expectedPosition: inv.position,
+    amountMinor: '4000',
+    receivedOn: utcToday(),
+    method: 'bank_transfer',
+    reference: 'Transfer received from Dhaka Imports',
+    ...over,
+  });
+  const reversal = (over: Record<string, unknown> = {}) => ({
+    action: 'prepare_payment_reversal',
+    commandId: randomUUID(),
+    invoiceId: inv.id,
+    expectedPosition: inv.position,
+    paymentSeq: 2,
+    reason: 'The second payment was entered against the wrong invoice',
+    ...over,
+  });
+
+  // While a second person is required, one person cannot record a payment alone.
+  await expect(
+    staff.command(first(), {
+      action: 'payment',
+      commandId: randomUUID(),
+      invoiceId: inv.id,
+      expectedPosition: inv.position,
+      amountMinor: '1',
+      receivedOn: utcToday(),
+      method: 'cash',
+      reference: 'Cash handed over at the office',
+    }),
+  ).rejects.toThrow(/second person/i);
+
+  // A reversal needs a plain reason, an existing payment and the position the person saw.
+  await expect(staff.command(first(), reversal({ reason: 'Wrong' }))).rejects.toThrow();
+  await expect(
+    staff.command(first(), reversal({ reason: 'See https://example.test/why it is wrong' })),
+  ).rejects.toThrow();
+  await expect(staff.command(first(), reversal({ paymentSeq: 9 }))).rejects.toThrow(
+    /no such payment/i,
+  );
+  await expect(
+    staff.command(first(), reversal({ expectedPosition: inv.position + 1 })),
+  ).rejects.toThrow(/changed; reload/i);
+
+  const prepared = await staff.command(first(), reversal());
+  expect(prepared).toMatchObject({
+    kind: 'payment_reversal',
+    state: 'waiting_for_approval',
+    secondApproverRequired: true,
+  });
+  // Nothing changed yet; only one reversal of a payment can wait at a time.
+  expect(await view()).toMatchObject({ status: 'paid', paidMinor: '10900' });
+  await expect(staff.command(first(), reversal())).rejects.toThrow(/already waiting/i);
+  // The preparer cannot approve; a second person can.
+  await expect(decide(prepared.proposalId, 'approve', first())).rejects.toThrow(/second person/i);
+  const pending = (await staff.pending(first())).proposals as {
+    id: string;
+    kind: string;
+    paymentSeq: number;
+    reason: string;
+    preparedByYou: boolean;
+  }[];
+  expect(pending.find((x) => x.id === prepared.proposalId)).toMatchObject({
+    kind: 'payment_reversal',
+    paymentSeq: 2,
+    reason: 'The second payment was entered against the wrong invoice',
+    preparedByYou: true,
+  });
+  const reversed = await decide(prepared.proposalId);
+  expect(reversed).toMatchObject({ kind: 'payment_reversal', state: 'recorded' });
+  expect(reversed.invoice).toMatchObject({
+    status: 'partly_paid',
+    paidMinor: '4000',
+    outstandingMinor: '6900',
+  });
+  const after = await view();
+  expect(after.position).toBe(inv.position + 1);
+  expect(after.payments).toMatchObject([
+    { seq: 1, reversed: false },
+    { seq: 2, amountMinor: '6900', reversed: true },
+  ]);
+  // The original payment stays; the reason is for staff only.
+  expect(JSON.stringify(after.payments[1])).toContain('wrong invoice');
+  // A payment is reversed once.
+  await expect(
+    staff.command(first(), reversal({ expectedPosition: after.position })),
+  ).rejects.toThrow(/already reversed/i);
+
+  // The reversed amount can be paid again, again by two people, and the preparer's reference is kept.
+  await expect(
+    staff.command(first(), payment({ expectedPosition: after.position, amountMinor: '6901' })),
+  ).rejects.toThrow(/more than is still outstanding/i);
+  const again = await staff.command(
+    first(),
+    payment({ expectedPosition: after.position, amountMinor: '6900' }),
+  );
+  expect(again).toMatchObject({ kind: 'payment', state: 'waiting_for_approval' });
+  await expect(
+    staff.command(first(), payment({ expectedPosition: after.position, amountMinor: '100' })),
+  ).rejects.toThrow(/already waiting/i);
+  await expect(decide(again.proposalId, 'approve', first())).rejects.toThrow(/second person/i);
+  const paidAgain = await decide(again.proposalId);
+  expect(paidAgain).toMatchObject({ kind: 'payment', state: 'recorded' });
+  expect(paidAgain.invoice).toMatchObject({
+    status: 'paid',
+    paidMinor: '10900',
+    outstandingMinor: '0',
+  });
+
+  // A payment waiting while the invoice changes is refused at approval, and a rejection needs a reason.
+  const now = await view();
+  const waiting = await staff.command(
+    first(),
+    reversal({ expectedPosition: now.position, paymentSeq: 3 }),
+  );
+  const sneaky = await staff.command(
+    first(),
+    reversal({
+      expectedPosition: now.position,
+      paymentSeq: 1,
+      reason: 'The first payment was a duplicate',
+    }),
+  );
+  await decide(sneaky.proposalId);
+  await expect(decide(waiting.proposalId)).rejects.toThrow(
+    /changed after this reversal was prepared/i,
+  );
+  await expect(decide(waiting.proposalId, 'reject')).rejects.toThrow();
+  const rejected = await decide(
+    waiting.proposalId,
+    'reject',
+    second.ctx,
+    'The invoice changed, so this is withdrawn',
+  );
+  expect(rejected.state).toBe('rejected');
+
+  // Customers see that a payment was reversed, never why or the reference.
+  const seen = await customer().overview({ workspaceId });
+  const mine = seen.invoices.find((i) => i.number === number('INV', 1))!;
+  expect(mine.payments.map((x: { reversed: boolean }) => x.reversed)).toEqual([true, true, false]);
+  expect(JSON.stringify(seen)).not.toMatch(/duplicate|wrong invoice|Transfer received/i);
+
+  // Each step is one event with ids, the number and a sequence only: never the amount, the date, the reference or the reason.
+  const kinds = (
+    await s.f.owner.query(
+      `SELECT type,payload::text p FROM app.domain_event WHERE type LIKE 'customer.real_invoicing.payment%' ORDER BY occurred_at`,
+    )
+  ).rows as { type: string; p: string }[];
+  const types = new Set(kinds.map((e) => e.type));
+  for (const t of [
+    'customer.real_invoicing.payment.prepared',
+    'customer.real_invoicing.payment.recorded',
+    'customer.real_invoicing.payment_reversal.prepared',
+    'customer.real_invoicing.payment.reversed',
+    'customer.real_invoicing.payment_reversal.rejected',
+  ])
+    expect(types.has(t)).toBe(true);
+  for (const e of kinds)
+    expect(
+      e.p.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<id>'),
+    ).not.toMatch(
+      /wrong invoice|duplicate|Transfer received|6900|4000|reason|reference|amount|method/i,
+    );
+
+  // The rows are append-only, and the database repeats the second-person rule for every writer.
+  await expect(
+    s.f.owner.query(
+      "UPDATE customer_private.real_invoice_payment_reversal SET reason='Changed after the fact'",
+    ),
+  ).rejects.toThrow();
+  await expect(
+    s.f.owner.query('DELETE FROM customer_private.real_invoice_payment_reversal'),
+  ).rejects.toThrow();
+  await expect(
+    s.f.owner.query(
+      `INSERT INTO customer_private.real_invoice_payment(invoice_id,tenant_id,seq,amount_minor,received_on,method,reference,recorded_by,staff_tenant_id)
+       SELECT invoice_id,tenant_id,99,1,received_on,method,'Direct write without approval',recorded_by,staff_tenant_id
+       FROM customer_private.real_invoice_payment WHERE invoice_id=$1 LIMIT 1`,
+      [inv.id],
+    ),
+  ).rejects.toThrow();
 });
 
 test('a second invoice continues the legal number, rounding GST half up, with a tax-inclusive price keeping the total', async () => {
@@ -588,9 +808,7 @@ test('credit notes: prepared and approved like invoices, numbered in their own s
   });
   // A credit note waiting while the invoice changes is refused at approval, and the invoice is not touched.
   const stale = await credit('1000', inv.position + 1);
-  await staff.command(first(), {
-    action: 'payment',
-    commandId: randomUUID(),
+  await record({
     invoiceId: inv.id,
     expectedPosition: inv.position + 1,
     amountMinor: '8000',

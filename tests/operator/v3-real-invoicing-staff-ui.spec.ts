@@ -216,10 +216,16 @@ async function serve(
       return route.fulfill({
         json: {
           invoice: st.rows[0],
-          actions:
-            Number((st.rows[0] as { outstandingMinor: string }).outstandingMinor) > 0
+          actions: [
+            ...(Number((st.rows[0] as { outstandingMinor: string }).outstandingMinor) > 0
               ? ['payment', 'credit']
-              : [],
+              : []),
+            ...((st.rows[0] as { payments: { reversed?: boolean }[] }).payments.some(
+              (x) => !x.reversed,
+            )
+              ? ['reverse']
+              : []),
+          ],
           synthetic: false,
         },
       });
@@ -343,27 +349,29 @@ test('single approver mode lets the same person approve and says documents are s
   ).toBeVisible();
 });
 
-test('recording a payment and preparing a credit note, and an uncertain save is retried with the same command', async ({
+test('while a second person is required a payment is prepared, an uncertain save is retried with the same command, and a credit note is prepared too', async ({
   page,
 }) => {
   const seen: Seen[] = [];
   let calls = 0;
   await serve(page, fresh(), seen, () =>
-    ++calls === 1 ? { status: 502, json: {} } : { json: { state: 'recorded' } },
+    ++calls === 1 ? { status: 502, json: {} } : { json: { state: 'waiting_for_approval' } },
   );
   await page.goto(origin + '/');
   await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
   await page.getByLabel(/Amount received in SGD minor units/).fill('2000');
   await page.getByLabel('Bank reference (plain text)').fill('DBS transfer 8841');
-  await page.getByRole('button', { name: 'Record Payment' }).click();
+  await page.getByRole('button', { name: 'Prepare Payment for Approval' }).click();
   await expect(page.getByText(/Could not confirm that this was saved/)).toBeVisible();
   await page.getByRole('button', { name: 'Send the Same Payment Again' }).click();
-  await expect(page.getByText('Payment recorded.')).toBeVisible();
+  await expect(
+    page.getByText('Prepared. A second person now needs to approve the payment.'),
+  ).toBeVisible();
   const posts = seen.filter((s) => s.method === 'POST');
   expect(posts).toHaveLength(2);
   expect(posts[0]!.body).toEqual(posts[1]!.body);
   expect(posts[0]!.body).toMatchObject({
-    action: 'payment',
+    action: 'prepare_payment',
     invoiceId,
     expectedPosition: 0,
     amountMinor: '2000',
@@ -382,6 +390,146 @@ test('recording a payment and preparing a credit note, and an uncertain save is 
     amountMinor: '500',
     reason: 'Goodwill credit for a late start',
   });
+});
+
+test('when the owner has recorded that one person may do both, a payment is recorded at once', async ({
+  page,
+}) => {
+  const seen: Seen[] = [];
+  await serve(page, fresh({ second: false }), seen, () => ({ json: { state: 'recorded' } }));
+  await page.goto(origin + '/');
+  await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
+  await page.getByLabel(/Amount received in SGD minor units/).fill('2000');
+  await page.getByLabel('Bank reference (plain text)').fill('DBS transfer 8841');
+  await page.getByRole('button', { name: 'Record Payment' }).click();
+  await expect(page.getByText('Payment recorded.')).toBeVisible();
+  expect(seen.filter((s) => s.method === 'POST')[0]!.body).toMatchObject({
+    action: 'payment',
+    amountMinor: '2000',
+  });
+});
+
+const paidRow = (over: Record<string, unknown> = {}) =>
+  row({
+    status: 'paid',
+    paidMinor: '10900',
+    outstandingMinor: '0',
+    position: 2,
+    payments: [
+      {
+        seq: 1,
+        amountMinor: '4000',
+        receivedOn: '2026-10-25',
+        method: 'bank_transfer',
+        reference: 'DBS transfer 1001',
+        reversed: false,
+      },
+      {
+        seq: 2,
+        amountMinor: '6900',
+        receivedOn: '2026-10-26',
+        method: 'cash',
+        reference: 'Cash handover 1002',
+        reversed: true,
+        reversal: {
+          seq: 1,
+          reason: 'Entered against the wrong invoice',
+          reversedAt: '2026-10-27T09:00:00.000Z',
+        },
+      },
+    ],
+    ...over,
+  });
+
+test('a payment entered in error is reversed by preparing a reversal with a reason; the reversed payment is marked and cannot be chosen again', async ({
+  page,
+}) => {
+  const seen: Seen[] = [];
+  await serve(page, fresh({ rows: [paidRow()] }), seen, () => ({
+    json: { state: 'waiting_for_approval' },
+  }));
+  await page.goto(origin + '/');
+  await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
+  const detail = page.getByRole('region', { name: 'Invoice detail' });
+  await expect(detail.getByText(/Reversed: Entered against the wrong invoice/)).toBeVisible();
+  const form = page.getByRole('form', { name: 'Prepare payment reversal' });
+  // Only the payment that is still standing can be chosen.
+  await expect(form.getByLabel('Payment to reverse').locator('option')).toHaveCount(2);
+  await form.getByLabel('Payment to reverse').selectOption('1');
+  await form.getByLabel(/Why it is reversed/).fill('The transfer was a duplicate of another one');
+  expect(await axe(page)).toEqual([]);
+  await form.getByRole('button', { name: 'Prepare Reversal for Approval' }).click();
+  await expect(
+    page.getByText('Prepared. A second person now needs to approve the reversal.'),
+  ).toBeVisible();
+  expect(seen.filter((s) => s.method === 'POST')[0]!.body).toMatchObject({
+    action: 'prepare_payment_reversal',
+    invoiceId,
+    expectedPosition: 2,
+    paymentSeq: 1,
+    reason: 'The transfer was a duplicate of another one',
+  });
+});
+
+test('payments and reversals wait for another person: the preparer is told so and another person can approve or reject', async ({
+  page,
+}) => {
+  const seen: Seen[] = [];
+  const pay = proposal({
+    kind: 'payment',
+    periodStart: null,
+    periodEnd: null,
+    dueDate: null,
+    billToName: null,
+    billToAddress: null,
+    invoiceNumber: 'INV-2026-000001',
+    amountMinor: '2000',
+    receivedOn: '2026-10-28',
+    method: 'bank_transfer',
+    reference: 'DBS transfer 8841',
+    preparedByYou: true,
+    preview: null,
+  });
+  const rev = proposal({
+    kind: 'payment_reversal',
+    periodStart: null,
+    periodEnd: null,
+    dueDate: null,
+    billToName: null,
+    billToAddress: null,
+    invoiceNumber: 'INV-2026-000001',
+    paymentSeq: 1,
+    reason: 'The transfer was a duplicate of another one',
+    preparedByYou: false,
+    preview: null,
+  });
+  await serve(page, fresh({ proposals: [pay, rev] }), seen);
+  await page.goto(origin + '/');
+  const waiting = page.getByRole('region', { name: 'Waiting for approval' });
+  await expect(waiting.getByText(/Payment · Acme Apparel · against INV-2026-000001/)).toBeVisible();
+  await expect(
+    waiting.getByText(/You prepared this. Another person needs to approve/),
+  ).toBeVisible();
+  await expect(
+    waiting.getByText(/Payment reversal · Acme Apparel · against INV-2026-000001 · payment 1/),
+  ).toBeVisible();
+  expect(await axe(page)).toEqual([]);
+  await waiting.getByRole('button', { name: 'Approve payment reversal for Acme Apparel' }).click();
+  await expect(page.getByText('Approved. The payment is reversed.')).toBeVisible();
+  expect(seen.filter((s) => s.method === 'POST')[0]!.body).toMatchObject({
+    action: 'decide',
+    proposalId: (rev as { id: string }).id,
+    decision: 'approve',
+  });
+  await waiting.getByRole('button', { name: 'Reject for Acme Apparel' }).click();
+  await page
+    .getByLabel(/Why are you rejecting this payment reversal/)
+    .fill('It was not a duplicate');
+  await page
+    .getByRole('button', { name: /Reject/ })
+    .last()
+    .click();
+  await expect(page.getByText('Rejected. Nothing was changed.')).toBeVisible();
 });
 
 test('switched off shows nothing and an access refusal says what is needed', async ({ page }) => {

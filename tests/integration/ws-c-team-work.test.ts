@@ -23,10 +23,11 @@ import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap'
 // which reads happen; the service calls the guard before app.real_invoicing_staff_command and nothing else.
 const calls: string[] = [];
 let supplier: Record<string, unknown> = {};
+let proposals: { id: string; kind: string }[] = [];
 const db = {
   query: async (sql: string) => {
     calls.push(sql);
-    return { rows: [{ result: { supplier } }] };
+    return { rows: [{ result: { supplier, proposals } }] };
   },
 } as never;
 async function guard(input: Record<string, unknown>) {
@@ -122,6 +123,36 @@ describe('D3: real invoices stay blocked while supplier details are made up', ()
     supplier = realSupplier;
     await expect(guard(prepare())).resolves.toBeUndefined();
     expect(calls).toHaveLength(1);
+  });
+  test('approving a payment or a payment reversal puts no document before a customer, so it is not blocked; approving an invoice still is', async () => {
+    supplier = madeupSupplier;
+    const approve = (proposalId: string) => ({
+      action: 'decide',
+      commandId: randomUUID(),
+      proposalId,
+      decision: 'approve',
+    });
+    const payment = randomUUID();
+    const reversal = randomUUID();
+    const invoice = randomUUID();
+    proposals = [
+      { id: payment, kind: 'payment' },
+      { id: reversal, kind: 'payment_reversal' },
+      { id: invoice, kind: 'invoice' },
+    ];
+    try {
+      await expect(guard(approve(payment))).resolves.toBeUndefined();
+      await expect(guard(approve(reversal))).resolves.toBeUndefined();
+      await expect(guard(approve(invoice))).rejects.toMatchObject({
+        code: 'MADEUP_SUPPLIER_DETAILS',
+      });
+      // A proposal the list does not show is treated as a document.
+      await expect(guard(approve(randomUUID()))).rejects.toMatchObject({
+        code: 'MADEUP_SUPPLIER_DETAILS',
+      });
+    } finally {
+      proposals = [];
+    }
   });
   test('the service runs the guard before the command, in the same transaction', async () => {
     const { readFileSync } = await import('node:fs');

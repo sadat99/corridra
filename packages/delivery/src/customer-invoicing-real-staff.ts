@@ -56,6 +56,8 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       (v) => v.decision === 'approve' || v.reason !== undefined,
       'A rejection needs a reason',
     ),
+  // Recording a payment: the one-person command works only while the owner has recorded that a second person is not
+  // required. Otherwise a payment is prepared by one person and approved by another with `decide`.
   z
     .object({
       action: z.literal('payment'),
@@ -65,6 +67,27 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       receivedOn: day,
       method: z.enum(['bank_transfer', 'cash', 'other']),
       reference: plain(2, 120),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('prepare_payment'),
+      commandId: z.uuid(),
+      ...invoiceRef,
+      amountMinor: amount,
+      receivedOn: day,
+      method: z.enum(['bank_transfer', 'cash', 'other']),
+      reference: plain(2, 120),
+    })
+    .strict(),
+  // Reversing a payment entered in error: prepared with a reason, approved by a second person. The payment stays.
+  z
+    .object({
+      action: z.literal('prepare_payment_reversal'),
+      commandId: z.uuid(),
+      ...invoiceRef,
+      paymentSeq: z.number().int().min(1).max(500),
+      reason: plain(10, 500),
     })
     .strict(),
 ]);
@@ -114,7 +137,15 @@ export async function refuseMadeupIssue(
 ) {
   if (!issuing(action, payload)) return;
   const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
-    ?.result as { supplier?: SupplierDetails } | null;
+    ?.result as { supplier?: SupplierDetails; proposals?: { id: string; kind: string }[] } | null;
+  // Approving a payment or the reversal of one puts no document in front of a customer.
+  if (
+    action === 'decide' &&
+    pending?.proposals?.some(
+      (p) => p.id === payload.proposalId && (p.kind === 'payment' || p.kind === 'payment_reversal'),
+    )
+  )
+    return;
   if (madeupSupplierFields(pending?.supplier).length)
     throw new DomainError(madeupSupplierMessage, 409, 'MADEUP_SUPPLIER_DETAILS');
 }
