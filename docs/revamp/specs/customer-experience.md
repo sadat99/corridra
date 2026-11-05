@@ -46,7 +46,14 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
 | Account   | **A settings layout with sub-tabs:** Profile (name, email, verified state), Workspaces and team, Notifications, Plan and billing, and Security (sign out). **Tools and entry points:** "Plan a mission", "Check a request receipt", "Accept a team invitation", "Start page" and "Local helper tasks" move to "All tools", which stays reachable from the left bar.                                                                                                                                                                                                                                                          |
 
 **Home, role-aware (owner-approved role mockup, 5 Nov 2026; built in Phase 2).** A switch (All, Sourcing,
-Selling, Organising, each with its count, `?journey=`) filters what waits for the person. Each task carries its
+Selling, Organising, each with its count, `?journey=`) filters what waits for the person. The owner asked on 5 Nov 2026,
+verbatim: "separate home for each of the module , switching option? what about bd-china workflow ,where how". S1
+answered with one Home and the switch, hidden for a person with work in only one journey, remembering the last
+choice. The owner's next instruction included, verbatim: "I'll also add the single-journey Home and
+remember-last-choice refinement to PR 310 or a follow-up." The owner then approved, verbatim: "mockups approved. finishi and continue finishing of v3 revamp 100%
+correct in alighnment with the latest decision". So the switch is hidden when only one journey is present (it stays
+while a journey is shown, so All is one tap away). The last choice, or All, is kept in that browser per signed-in
+person and written back into the address as `?journey=`. An address with `?journey=` always wins. Each task carries its
 journey tag under All. Three tasks show first and the rest are behind one control. What others hold sits in the
 side column. One card per journey shows three numbers read from records the person can already open:
 
@@ -60,6 +67,41 @@ its own trust level. Read only. The places report is never called from Home beca
 read. With work on the page, the three shortcut tiles give way to the "Start a Request" link in the card head;
 "Check a Request Receipt" and "Open a Shared Mission" stay in All tools. Measured on 5 Nov 2026 with every role:
 1.00 desktop screen and 1.91 phone screens.
+
+Owner, 5 Nov 2026, approving the Source, Sell and Organise room mockups (desktop and phone), verbatim: "mockups
+approved. finishi and continue finishing of v3 revamp 100% correct in alighnment with the latest decision".
+
+**Work rooms (owner-approved mockups, 5 Nov 2026; Source built first in Wave 4).** Every room has the same
+four parts:
+
+1. A header: journey tag, route chip, title, received date and the named stage bar. The route chip is the
+   brief's company country to its market, such as "Bangladesh → China".
+2. One next step, with one main action.
+3. The journey's views as tabs.
+4. The open view.
+
+What each room shows:
+
+- **Source:** Overview, Compare Quotes, Evidence and Visit. Compare Quotes opens on the side-by-side
+  comparison: one column per supplier (one card each on a phone) and prices in the currency quoted, never
+  converted. The machinery obligations come first, and a missing term reads "Not stated". Each column shows
+  how the quote is backed and the comparison engine's own verdict with its reason. The requirement, the
+  shortlist, every offer, the cards and the original table stay one tap below.
+- **Sell:** buyers and meetings.
+- **Organise:** at a glance, plus what needs the organiser. The stage bar reads the invitations and consented
+  registrations only, and a stage with no record is plain grey. The one next step comes from those counts. "At a
+  glance" counts registered places, open invitations, ready participants (N of M), scheduled meetings and
+  qualified held meetings. A count that cannot be given says "Not measured yet", and meetings no participant
+  allowed to be counted say "Not shared", never zero. "Needs your attention" lists the projection's own flags:
+  overlapping activities, activities to review after a date change, and participants not ready yet. Each flag
+  opens the view that resolves it. The five groups of the programme consent spec (C-09) stay as the room's tabs.
+  With the room on, the delegations page has its own tabs (Programmes, Templates, Pricing, Series and Exports, New
+  Programme) and shows one programme at a time, chosen in a picker and kept in
+  `?programme=` (an old `#<programme id>-<view>` link opens that programme). Measured: 1.00 desktop screen and 1.66 phone screens on the Overview.
+
+The room reads the saved report once and adds no data. The page links stay on the Overview, and a stage with no
+record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop screen in every view and 1.13 to
+1.58 phone screens.
 
 ### Components (shared, in `components/ux/`, reused by every track)
 

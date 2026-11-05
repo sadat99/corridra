@@ -58,7 +58,18 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="REQUESTS" title="Plan delegations">
+    <CustomerShell
+      tab="work"
+      eyebrow="REQUESTS"
+      title={
+        // With the Organise room on, the programme's own title is the visible heading (approved work rooms).
+        uxSwitchOn('CORRIDRA_UX_PROGRAMME') ? (
+          <span className="sr-only">Plan delegations</span>
+        ) : (
+          'Plan delegations'
+        )
+      }
+    >
       {uxSwitchOn('CORRIDRA_UX_PROGRAMME') && <ProgrammeRoomStyles />}
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}
