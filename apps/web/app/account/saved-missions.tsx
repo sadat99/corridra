@@ -1,5 +1,6 @@
 'use client';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
+import { Dialog } from '../../components/ux/dialog';
 import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayDate } from '@corridra/domain/locale';
@@ -55,7 +56,9 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
   const [data, setData] = useState<Page | null>(null),
     [status, setStatus] = useState('loading'),
     [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    // The saved mission whose removal is being confirmed.
+    [asking, setAsking] = useState<string | null>(null);
   const [pending, setPending] = useState<{ commandId: string; token: string } | null>(null);
   const controller = useRef<AbortController | null>(null),
     form = useRef<HTMLFormElement>(null),
@@ -207,6 +210,10 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
       if (!task.signal.aborted) setBusy(false);
     }
   }
+  async function confirmRemove(id: string) {
+    await remove(id);
+    setAsking(null);
+  }
   async function remove(id: string) {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -311,7 +318,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
               type="button"
               className="text-link"
               disabled={busy}
-              onClick={() => void remove(m.id)}
+              onClick={() => setAsking(m.id)}
             >
               Remove From My Saved Missions
             </button>
@@ -370,6 +377,42 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
       <a className="text-link" href="/account#customer-missions">
         Open an original shared mission invitation
       </a>
+      <Dialog
+        open={!!asking}
+        onClose={() => setAsking(null)}
+        title="Remove From Saved Missions?"
+        locked={busy && !!asking}
+      >
+        {asking && (
+          <>
+            <p>
+              {data?.missions.find((m) => m.id === asking)?.title ?? 'This saved invitation'} stops
+              showing in this account. The underlying invitation and commercial records are not
+              cancelled. To see it here again, save the invitation again.
+            </p>
+            <div className="ux-dialog-actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                data-autofocus=""
+                disabled={busy}
+                onClick={() => setAsking(null)}
+              >
+                Keep Saved Mission
+              </button>
+              <button
+                type="button"
+                className="button button-secondary"
+                data-intent="destructive"
+                disabled={busy}
+                onClick={() => void confirmRemove(asking)}
+              >
+                {busy ? 'Please Wait…' : 'Remove Saved Mission'}
+              </button>
+            </div>
+          </>
+        )}
+      </Dialog>
     </section>
   );
 }

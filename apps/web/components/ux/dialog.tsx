@@ -41,6 +41,8 @@ export function Dialog({
       opener.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       dialog.showModal();
+      // A confirmation puts focus on its safe choice, not on the first control in the dialog.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     }
     if (!open && dialog.open) dialog.close();
   }, [open]);

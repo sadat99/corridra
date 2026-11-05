@@ -1,0 +1,29 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CRUD-A, the customer removals that had no step before them, under docs/revamp/specs/crud-standard.md (D-01, D-02, A-03, CRUD-4)",
+  "kind": "UI only. Three gaps from docs/revamp/crud/matrix.json (rows 'Decision card', 'Saved mission', 'Mission draft', all severity low) that need no schema change.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed in the findings register. No route, table, migration, switch, provider, payment or write is added; every request, command id and payload is unchanged.",
+  "status": "Built on branch revamp/customer over main 783b8259 (PR 307). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "changedFiles": [
+    "apps/web/app/account/missions/decision-card-panel.tsx: Withdraw opens a confirmation (title 'Withdraw This Link?') that names the link's expiry and open count and says anyone who has it loses access at once and that this cannot be undone. The safe choice (Keep Link) has focus; Withdraw Link sends the same command as before, and the dialog cannot be dismissed while it is out",
+    "apps/web/app/account/saved-missions.tsx: Remove From My Saved Missions opens a confirmation ('Remove From Saved Missions?') that says the underlying invitation and commercial records are not cancelled and that saving the invitation again brings it back; Keep Saved Mission has focus",
+    "apps/web/app/account/drafts/guided-request.tsx: discarded drafts are hidden from 'Your drafts' by default; 'Show Discarded Drafts (n)' (aria-pressed) shows them again. Open and sent drafts are listed as before, and nothing is removed",
+    "apps/web/components/ux/dialog.tsx and dialog.css: data-autofocus puts initial focus on a confirmation's safe choice; a footer row for the choices"
+  ],
+  "decisions": {
+    "tests": "tests/operator/v3-saved-commercial-ui.spec.ts: the existing remove case now clicks through the confirmation (same assertions, plus: nothing is sent before it, Keep sends nothing and returns focus, confirm sends one remove). No test was weakened, skipped or deleted.",
+    "undo": "D-01 asks for an Undo where the class allows it. A saved-mission removal and a decision-link withdrawal have no restore function today (a withdrawn link is a withdraw row; a removed binding comes back only by saving the invitation again), so this PR adds the D-02 confirmation and states the way back in the words. A real Undo needs a restore function and a migration and is in the schema PRs.",
+    "inbox": "Inbox paging and dismiss are left to the schema PR: the list is read with a fixed limit in packages/communications and a dismiss needs a column; both touch code shared with other tracks.",
+    "sensitive": "No. Each change only adds a confirmation in front of an action that already exists, and hides discarded drafts behind one button; no authority, data read or write changes."
+  },
+  "receipts": {
+    "operator": "tests/operator/revamp-crud-a.spec.ts (2) and v3-saved-commercial-ui.spec.ts written red first: dialog missing, and the drafts case failed on a fixture slip (wrong family name) that I fixed before the real red; then green. The decision, guided request, saved commercial, component and workspace dialog specs: 94 passed after the change.",
+    "integration": "title-case scan, decision-card owner, page and ux tests, teaching layer: 94 passed."
+  },
+  "notRun": [
+    "The three screens against the real database: they use the same components and requests as before.",
+    "A screen reader walk-through of the confirmations."
+  ],
+  "sensitive": "No."
+}
