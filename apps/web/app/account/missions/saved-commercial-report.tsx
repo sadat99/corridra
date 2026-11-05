@@ -15,6 +15,7 @@ import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '.
 import { DecisionHistory } from './decision-history';
 import { SpecificationConfirmation } from './specification-confirmation';
 import { BookDownloads, createPendingBooks } from './book-downloads';
+import { limitWords } from '../../../lib/account-limit';
 export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip';
 type Scope = SavedMissionScope & {
   resourceId: string;
@@ -268,7 +269,7 @@ function PrivateReport({
             );
           }
           setStatus(
-            error instanceof Error && ['denied', 'unavailable'].includes(error.message)
+            error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
               ? error.message
               : 'failed',
           );
@@ -445,6 +446,7 @@ function PrivateReport({
       {status === 'failed' && (
         <p role="alert">Your approved report could not be loaded. Try again.</p>
       )}
+      {status === 'limit' && <p role="alert">{limitWords}</p>}
       {data && status === 'ready' && (
         <>
           <p>

@@ -5,6 +5,7 @@ import type {
   ServiceRequestSummary,
   ServiceStatus,
 } from '@corridra/auth/customer-service-requests';
+import { limitWords } from '../../../lib/account-limit';
 
 export type { ServiceCatalogueEntry, ServiceRequestDetail, ServiceRequestSummary, ServiceStatus };
 export type Scope = { subject: string; issuer: string };
@@ -66,6 +67,7 @@ export function problemText(status: number | 'network' | 'malformed', doing: str
   if (status === 400)
     return 'Some details need another look. Every text field must start with the word Synthetic.';
   if (status === 503) return 'Paid-service requests are not switched on here.';
+  if (status === 429) return limitWords;
   return 'Could not ' + doing + '. Check your connection and try again.';
 }
 

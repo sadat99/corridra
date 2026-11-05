@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { displayDate } from '@corridra/domain/locale';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from './saved-missions';
+import { limitWords } from '../../lib/account-limit';
 const unavailable = z
   .object({ id: z.uuid(), requestId: z.uuid(), available: z.literal(false) })
   .strict();
@@ -74,7 +75,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
     setData(null);
     setBusy(false);
     setStatus(
-      error instanceof Error && ['denied', 'unavailable'].includes(error.message)
+      error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
         ? error.message
         : 'failed',
     );
@@ -208,9 +209,11 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
               ? 'This account cannot open these deliveries. Return to your account and check access.'
               : status === 'unavailable'
                 ? 'Account mission delivery is unavailable.'
-                : status === 'refresh'
-                  ? 'Private delivery details cleared. Refresh to check current access.'
-                  : 'Deliveries could not be checked. Try again.'}
+                : status === 'limit'
+                  ? limitWords
+                  : status === 'refresh'
+                    ? 'Private delivery details cleared. Refresh to check current access.'
+                    : 'Deliveries could not be checked. Try again.'}
         </p>
       )}
       {status === 'denied' && (

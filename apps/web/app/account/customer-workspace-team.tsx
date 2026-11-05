@@ -2,6 +2,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CustomerAccessPage, CustomerWorkspace } from '@corridra/auth/customer-workspaces';
+import { limitWords } from '../../lib/account-limit';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const validId = (v: unknown): v is string => typeof v === 'string' && uuid.test(v);
@@ -151,7 +152,12 @@ export function CustomerWorkspaceTeam({
       if (!alive.current || current !== sequence.current) return false;
       if (!response.ok) {
         if ([401, 403, 409, 503].includes(response.status)) denied(response.status);
-        else setMessage({ text: 'Team access could not be loaded. Try again.', error: true });
+        else
+          setMessage({
+            text:
+              response.status === 429 ? limitWords : 'Team access could not be loaded. Try again.',
+            error: true,
+          });
         return false;
       }
       const value: unknown = await response.json();

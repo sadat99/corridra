@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionCardPanel } from './decision-card-panel';
+import { limitWords } from '../../../lib/account-limit';
 const record = z
   .object({
     id: z.uuid(),
@@ -104,7 +105,7 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
         if (!task.signal.aborted) {
           setData(null);
           setStatus(
-            error instanceof Error && ['denied', 'unavailable'].includes(error.message)
+            error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
               ? error.message
               : 'failed',
           );
@@ -130,11 +131,13 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
               ? 'This account no longer has access. Return to your account and sign in again.'
               : status === 'unavailable'
                 ? 'Reviewed decision history is unavailable.'
-                : status === 'failed'
-                  ? 'Decision history could not be checked. Try again.'
-                  : status === 'refresh'
-                    ? 'Private details cleared. Refresh to check current access.'
-                    : 'Load the decisions explicitly approved for this report.'}
+                : status === 'limit'
+                  ? limitWords
+                  : status === 'failed'
+                    ? 'Decision history could not be checked. Try again.'
+                    : status === 'refresh'
+                      ? 'Private details cleared. Refresh to check current access.'
+                      : 'Load the decisions explicitly approved for this report.'}
         </p>
       )}
       <button type="button" onClick={load} disabled={status === 'loading'}>
