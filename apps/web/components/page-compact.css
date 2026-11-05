@@ -1,0 +1,48 @@
+/* The compact page hero (layout budget). The same hero as the other pages, with less space around it, so the
+   content comes into view sooner and a page can stay within its screen budget. Every element and word stays. */
+.guide-page-hero.guide-page-hero--compact {
+  gap: var(--space-4);
+  padding-block: var(--space-3) var(--space-2);
+}
+.guide-page-hero--compact > div {
+  gap: var(--space-1);
+}
+.guide-page-hero.guide-page-hero--compact h1 {
+  font-size: var(--text-h2);
+}
+.guide-page-hero.guide-page-hero--compact .guide-lead,
+.guide-page-hero.guide-page-hero--compact .guide-hint {
+  font-size: var(--text-base);
+  line-height: 1.45;
+}
+@media (min-width: 769px) {
+  .guide-page-hero--compact .guide-crumb a {
+    min-height: 1.75rem;
+  }
+  .guide-page-hero--compact > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* From 1000 px the heading block and the lead sit side by side. */
+@media (min-width: 1000px) {
+  .guide-page-hero.guide-page-hero--compact > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+  .guide-page-hero--compact > div > .guide-crumb,
+  .guide-page-hero--compact > div > .label,
+  .guide-page-hero--compact > div > h1 {
+    grid-column: 1;
+  }
+  .guide-page-hero--compact > div > .guide-lead {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-width: none;
+  }
+  .guide-page-hero--compact > div > .guide-hint {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}

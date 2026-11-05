@@ -1,0 +1,278 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Layout budget, Phase 1: compact footer and /privacy in sections",
+  "date": "2026-11-05",
+  "sensitive": false,
+  "spec": "docs/revamp/specs/layout-budget.md sections 2 and tests L-02, L-05",
+  "changed": [
+    "apps/web/components/site-footer-view.tsx and site-footer.css: the footer's two link groups are native details elements, collapsed by default; one row from 769 px, each group opening to a full row of its links. Every link, id and class the footer had is still there.",
+    "apps/web/app/privacy/page.tsx, privacy.css, whole-notice-toggle.tsx: the notice shows one section at a time (the one the link or address points at, or the first), the contents list is a left column from 1000 px and collapsed on a phone, and 'Show the whole notice' shows everything. Printing always shows the whole notice.",
+    "apps/web/components/page-compact.css: a compact variant of the page hero for the pages that follow."
+  ],
+  "wordsKept": {
+    "method": "textContent of every notice section fingerprinted (sha256) on main before the change and on the built page after it",
+    "sections": 16,
+    "words": 1591,
+    "identicalText": true,
+    "contentsLinksIdentical": true,
+    "alsoInTests": "tests/browser/layout-budget-public.spec.ts compares each section in the page with the same section in the server HTML"
+  },
+  "pageLength": {
+    "unit": "document height over viewport height (390x844 phone, 1440x900 desktop); hard limits 2.0 phone, 1.0 desktop",
+    "measuredOn": "production build, sample (not real-use) variant",
+    "routes": [
+      {
+        "route": "/",
+        "before": {
+          "phone": 7.86,
+          "desktop": 4.68
+        },
+        "after": {
+          "phone": 7.07,
+          "desktop": 4.2
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/plan",
+        "before": {
+          "phone": 3.66,
+          "desktop": 2.1
+        },
+        "after": {
+          "phone": 2.86,
+          "desktop": 1.61
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/about",
+        "before": {
+          "phone": 6.11,
+          "desktop": 3.39
+        },
+        "after": {
+          "phone": 5.33,
+          "desktop": 2.94
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/how-it-works",
+        "before": {
+          "phone": 4.45,
+          "desktop": 2.75
+        },
+        "after": {
+          "phone": 3.66,
+          "desktop": 2.27
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/network",
+        "before": {
+          "phone": 3.11,
+          "desktop": 1.99
+        },
+        "after": {
+          "phone": 2.31,
+          "desktop": 1.51
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/trust",
+        "before": {
+          "phone": 4.43,
+          "desktop": 2.49
+        },
+        "after": {
+          "phone": 3.64,
+          "desktop": 2.01
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/workspace",
+        "before": {
+          "phone": 3.35,
+          "desktop": 1.82
+        },
+        "after": {
+          "phone": 2.55,
+          "desktop": 1.34
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/sell",
+        "before": {
+          "phone": 4.17,
+          "desktop": 2.44
+        },
+        "after": {
+          "phone": 3.38,
+          "desktop": 1.96
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/machinery",
+        "before": {
+          "phone": 3.05,
+          "desktop": 1.95
+        },
+        "after": {
+          "phone": 2.26,
+          "desktop": 1.46
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/enter-market",
+        "before": {
+          "phone": 3.79,
+          "desktop": 2.24
+        },
+        "after": {
+          "phone": 3.0,
+          "desktop": 1.76
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/trade-missions",
+        "before": {
+          "phone": 3.84,
+          "desktop": 2.21
+        },
+        "after": {
+          "phone": 3.04,
+          "desktop": 1.73
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/business-trips",
+        "before": {
+          "phone": 2.95,
+          "desktop": 1.95
+        },
+        "after": {
+          "phone": 2.16,
+          "desktop": 1.46
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/corridors",
+        "before": {
+          "phone": 4.94,
+          "desktop": 2.82
+        },
+        "after": {
+          "phone": 4.15,
+          "desktop": 2.34
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/corridors/bangladesh-china",
+        "before": {
+          "phone": 3.74,
+          "desktop": 2.08
+        },
+        "after": {
+          "phone": 2.96,
+          "desktop": 1.63
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/programme",
+        "before": {
+          "phone": 2.05,
+          "desktop": 1.17
+        },
+        "after": {
+          "phone": 1.25,
+          "desktop": 1.0
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/institutions",
+        "before": {
+          "phone": 3.16,
+          "desktop": 1.99
+        },
+        "after": {
+          "phone": 2.36,
+          "desktop": 1.51
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/privacy",
+        "before": {
+          "phone": 13.03,
+          "desktop": 6.65
+        },
+        "after": {
+          "phone": 1.5,
+          "desktop": 1.0
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/source",
+        "before": {
+          "phone": 3.53,
+          "desktop": 2.17
+        },
+        "after": {
+          "phone": 2.73,
+          "desktop": 1.69
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/buyer",
+        "before": {
+          "phone": 1.89,
+          "desktop": 1.17
+        },
+        "after": {
+          "phone": 1.09,
+          "desktop": 1.0
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/client",
+        "before": {
+          "phone": 2.01,
+          "desktop": 1.12
+        },
+        "after": {
+          "phone": 1.22,
+          "desktop": 1.0
+        },
+        "withinHardLimits": true
+      }
+    ]
+  },
+  "testsAdded": [
+    "tests/browser/layout-budget-public.spec.ts: footer height and collapse on a phone and a desktop, every link kept, axe; /privacy within budget at both sizes, one section at first, every contents link and an old #id open their section, 'Show the whole notice' with every word, print shows all, axe in sections and in full"
+  ],
+  "pinnedTestsUpdated": [
+    "tests/browser/access-navigation.spec.ts, public-experience.spec.ts, ux06-presentation.spec.ts: the footer's link groups now start collapsed, so these open them before asserting the links. The 'equal link groups' test now asserts two groups of six links, collapsed by default, and no overlap when open. Intent kept: every footer link stays reachable."
+  ],
+  "stillOverBudget": "16 of 20 public pages remain over a hard limit (see routes); Phase 2 and the five worst pages need S2's tabs and disclosure components, which are not on main yet.",
+  "openRisks": [
+    "Desktop /privacy measures exactly 1.00 in the sample variant; the real-use variant has a shorter lead so has headroom, but the margin is thin.",
+    "The footer's desktop groups start collapsed; opening one adds a row (about 40 px). The links are in the server HTML either way."
+  ],
+  "closedGatesUntouched": true
+}

@@ -46,6 +46,8 @@ test('Privacy explains account data, private requests, retention and the deferre
   page,
 }, info) => {
   await page.goto('/privacy');
+  // The notice shows one section at a time (layout budget); this test reads the whole notice.
+  await page.getByRole('button', { name: 'Show the whole notice' }).click();
   for (const heading of [
     'Who is responsible',
     'Your account',

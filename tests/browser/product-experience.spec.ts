@@ -92,6 +92,9 @@ test('job-first navigation exposes machinery and commercial trips with real entr
   isMobile,
 }) => {
   await page.goto('/');
+  // The footer's link groups start collapsed (layout budget): open the group, then one tap.
+  for (const group of await page.locator('footer details.guide-footer-details').all())
+    await group.locator('summary').click();
   await page
     .getByRole('navigation', { name: 'Footer solutions' })
     .getByRole('link', { name: 'Procure machinery', exact: true })
