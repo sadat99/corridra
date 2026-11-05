@@ -21,7 +21,7 @@ async function settle(page: Page) {
   await page.waitForTimeout(800);
 }
 
-test('team page length is measured and recorded (report only)', async ({ page }) => {
+test('team page length is measured and recorded (report only)', async ({ page, browser }) => {
   test.setTimeout(900_000);
   await signInOwner(page);
   const tenant = qaSeed().tenantId;
@@ -59,9 +59,44 @@ test('team page length is measured and recorded (report only)', async ({ page })
       );
     }
   }
+  // The staff and contributor pages that open with no session, measured in a clean browser context. The
+  // two mute pages take a made-up request id: they render their form whatever the id.
+  const anonymous = await (
+    await browser.newContext({ baseURL: 'http://127.0.0.1:3300' })
+  ).newPage();
+  const noSession = [
+    { route: '/operator/signin', url: '/operator/signin', audience: 'staff' },
+    { route: '/operator/forgot-password', url: '/operator/forgot-password', audience: 'staff' },
+    { route: '/operator/reset-password', url: '/operator/reset-password', audience: 'staff' },
+    { route: '/operator/setup', url: '/operator/setup', audience: 'staff' },
+    { route: '/contributor/setup', url: '/contributor/setup', audience: 'contributor' },
+    {
+      route: '/mute/[requestId]',
+      url: '/mute/00000000-0000-4000-8000-000000000001',
+      audience: 'recipient or private link',
+    },
+    {
+      route: '/pulse/mute/[requestId]',
+      url: '/pulse/mute/00000000-0000-4000-8000-000000000001',
+      audience: 'recipient or private link',
+    },
+  ];
+  for (const address of noSession) {
+    for (const viewport of viewports) {
+      rows.push(
+        await measure(
+          anonymous,
+          { route: address.route, audience: address.audience },
+          address.url,
+          viewport,
+        ),
+      );
+    }
+  }
+  await anonymous.context().close();
   const summary = writeReport('team', rows);
   console.log(summary);
   test.info().annotations.push({ type: 'page-length', description: summary });
-  expect(rows.length).toBe(addresses.length * viewports.length);
+  expect(rows.length).toBe((addresses.length + noSession.length) * viewports.length);
   expect(rows.filter((row) => !row.measured && !row.reason)).toEqual([]);
 });
