@@ -68,6 +68,19 @@ describe('CX-04 the Reports tabs', () => {
 });
 
 describe('the Reports page uses the tabs and keeps every old id', () => {
+  // Codex review of PR 313: "My shared missions" and the invitation links go to #customer-missions, so that
+  // old address opens Shared With Me, where the invitation input lives, never Delivered.
+  it('sends #customer-missions to Shared With Me', async () => {
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(resolve('apps/web/app/account/reports-tabs.tsx'), 'utf8');
+    const tab = (id: string) => source.slice(source.indexOf(`id: '${id}'`)).split('});')[0]!;
+    expect(tab('shared')).toContain("aliases: ['customer-missions']");
+    expect(tab('delivered')).not.toContain('customer-missions');
+    for (const caller of ['saved-missions.tsx', 'missions/saved-commercial-report.tsx'])
+      expect(readFileSync(resolve(`apps/web/app/account/${caller}`), 'utf8')).toContain(
+        'href="/account#customer-missions"',
+      );
+  });
   it('wraps the three groups in ReportsTabs and keeps the results and customer-missions ids', async () => {
     const { readFileSync } = await import('node:fs');
     const page = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
