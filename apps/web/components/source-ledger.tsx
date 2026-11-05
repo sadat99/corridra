@@ -48,11 +48,17 @@ export function SourceLedger({
             ? ` ${ledger.earlier} earlier ${ledger.earlier === 1 ? 'quote is' : 'quotes are'} kept.`
             : ''}
         </p>
-        {ledger.earlier > 0 ? (
-          <button type="button" className="text-link" onClick={() => setIncludeEarlier(true)}>
-            Show Earlier Quotes
-          </button>
-        ) : null}
+        {/* The requirement and the shortlist stay one tap away before the first quote arrives (Codex, PR 314). */}
+        <div className="ledger-foot">
+          <span className="ledger-foot-actions">
+            {ledger.earlier > 0 ? (
+              <button type="button" className="text-link" onClick={() => setIncludeEarlier(true)}>
+                Show Earlier Quotes
+              </button>
+            ) : null}
+            {more}
+          </span>
+        </div>
       </section>
     );
   const keyRows = ledger.rows.filter((row) => row.key);

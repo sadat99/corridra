@@ -376,6 +376,26 @@ test('without the question link the next step does not ask the person to tell th
   await expect(next.getByRole('link', { name: 'Ask a Question' })).toHaveCount(0);
 });
 
+// Codex review of PR 314: before the first quote arrives, the requirement and shortlist stay one tap away.
+test('with no quotes yet the comparison says so and still opens the requirement and shortlist', async ({
+  page,
+}) => {
+  const body = reportBody();
+  body.report.missions[0].experience.quotations = [];
+  await open(
+    page,
+    {},
+    { body: detail({ original: { objective: 'Source suppliers', market: 'CN' } }) },
+    { body },
+  );
+  await lens(page, 'Compare Quotes').click();
+  await expect(page.getByText('No quotes on the current request yet.')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
+    .click();
+  await expect(page.getByText('Lantern Cutting Works').first()).toBeVisible();
+});
+
 // Guardian review of PR 314: with the Trip switch off there is no Meetings view, so the proposed meeting's step
 // points to the saved report, where the times are.
 test('a proposed meeting without the Meetings view points to the saved report', async ({
