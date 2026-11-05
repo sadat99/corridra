@@ -414,7 +414,12 @@ test('C-07 readiness shows N of M from the server, and not measured yet when it 
   await other.getByRole('button', { name: 'Results', exact: true }).click();
   const room = other.getByRole('article', { name: programme.name });
   await expect(room.locator('.programme-boarding')).toContainText('Not measured yet');
-  await expect(room.getByText(/^Not measured yet/).first()).toBeVisible();
+  await expect(
+    room
+      .getByText(/^Not measured yet/)
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible();
   expect(await room.innerText()).not.toMatch(/\d+ of \d+ active participants ready/);
 });
 
@@ -802,6 +807,8 @@ test('Q-06 Save sample programme is busy while in flight, sends once for a doubl
   });
   await page.goto(`${origin}/?room=1&proj=1`);
   await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+  // With the room on, the page's sections are tabs (approved work rooms, 5 Nov 2026): the form is one tab away.
+  await page.getByRole('tab', { name: 'New Sample Programme' }).click();
   await page.getByLabel('Programme name').fill('Fictional Dhaka garment delegation');
   await page
     .getByLabel('Purpose and intended outcomes')
@@ -909,31 +916,35 @@ test('Q-07 no button in any group falls back to the browser default look', async
 });
 
 for (const width of [390, 1440])
-  test(`Q-07 the road labels line up at ${width}`, async ({ page }) => {
+  test(`Q-07 the stage names line up at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, 'room=1&proj=1', none);
+    const steps = page.locator('.programme-stage .mr-stage > li');
+    await expect(steps).toHaveCount(6);
+    if (width === 390) {
+      // Phones: the names would crowd, so the line under the bar names the current stage (approved mockup).
+      await expect(page.locator('.programme-stage .mr-stage-name').first()).toBeHidden();
+      return;
+    }
     const boxes = await page.evaluate(() =>
-      Array.from(document.querySelectorAll<HTMLElement>('.mr-road > li')).map((li) => {
-        // The label's own text, as a person sees it: a plain label, or the label inside the Invite button.
-        const label = li.querySelector<HTMLElement>('.mr-road-text b')!;
-        const state = li.querySelector<HTMLElement>('.mr-road-state')!;
-        const text = document.createRange();
-        text.selectNodeContents(label);
-        const a = text.getBoundingClientRect();
-        const b = state.getBoundingClientRect();
-        return { left: a.left - li.getBoundingClientRect().left, top: a.top, stateTop: b.top };
-      }),
+      Array.from(document.querySelectorAll<HTMLElement>('.programme-stage .mr-stage > li')).map(
+        (li) => {
+          // The name's own text, as a person sees it: a plain name, or the name inside the Invite button.
+          const name = li.querySelector<HTMLElement>('.mr-stage-name')!;
+          const text = document.createRange();
+          text.selectNodeContents(name.firstChild ?? name);
+          const a = text.getBoundingClientRect();
+          return { left: a.left - li.getBoundingClientRect().left, top: a.top };
+        },
+      ),
     );
     expect(boxes.length).toBe(6);
-    // The Invite step is a button: it keeps the 44 px tap height the room's other controls have, even though
-    // its label sits level with the plain labels (review finding on PR 288).
-    const invite = await page.locator('.mr-road-text > button').boundingBox();
+    // The Invite stage is a button: it keeps the 44 px tap height the room's other controls have, even though
+    // its name sits level with the plain names (review finding on PR 288).
+    const invite = await page.locator('.programme-stage button.mr-stage-name').boundingBox();
     expect(invite?.height, 'Invite tap height').toBeGreaterThanOrEqual(43.5);
     for (const box of boxes) {
-      expect(Math.abs(box.left - boxes[0].left), 'label left edge').toBeLessThanOrEqual(1);
-      if (width === 1440) {
-        expect(Math.abs(box.top - boxes[0].top), 'label top').toBeLessThanOrEqual(2);
-        expect(Math.abs(box.stateTop - boxes[0].stateTop), 'state top').toBeLessThanOrEqual(2);
-      }
+      expect(Math.abs(box.left - boxes[0].left), 'name left edge').toBeLessThanOrEqual(1);
+      expect(Math.abs(box.top - boxes[0].top), 'name top').toBeLessThanOrEqual(2);
     }
   });

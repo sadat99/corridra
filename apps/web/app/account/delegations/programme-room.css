@@ -43,3 +43,356 @@
   text-align: left;
   line-height: inherit;
 }
+
+/* The Organise work room (owner-approved mockups, 5 Nov 2026): the same head, next step and tabs as the
+   request rooms, the programme's own stage bar, then "At a glance" beside "Needs your attention". */
+article.room.programme-room > header.room-head > h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--brand-deep);
+}
+.programme-room .room-head .room-meta,
+article.room.programme-room .programme-notes p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+article.room.programme-room > header.room-head > .programme-notes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+}
+article.room.programme-room > header.room-head > .programme-notes > p {
+  flex: 0 1 auto;
+  width: auto;
+  margin: 0;
+}
+article.room.programme-room > header.room-head > .programme-notes a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 0;
+  font-size: var(--text-sm);
+}
+/* The page kit spaces list items apart; the stage's segments sit in one row. */
+article.room.programme-room .programme-stage .mr-stage {
+  align-items: start;
+}
+article.room.programme-room .programme-stage .mr-stage > li {
+  margin: 0;
+}
+/* The Invite stage name is a button (CQ-85) that reads like the other names: no button frame, the same left
+   edge and top, and a 44 px tap height that reaches below the name without moving it. */
+article.room.programme-room .programme-stage .mr-stage > li > button.mr-stage-name.text-link {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-self: start;
+  width: auto;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0 0 calc(1.25em - 44px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--brand);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.programme-room .room-next .programme-boarding {
+  font-variant-numeric: tabular-nums;
+}
+article.room.programme-room .room-next .programme-boarding > .programme-refresh {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-height: 44px;
+  /* A 44 px tap height that does not make the boarding line taller. */
+  margin: calc((1lh - 44px) / 2) 0 calc((1lh - 44px) / 2) var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: var(--text-sm);
+  vertical-align: middle;
+}
+.programme-room .room-next .programme-boarding strong {
+  margin-inline-end: var(--space-1);
+  font-weight: 600;
+}
+.programme-room .room-next .programme-note {
+  margin: 0;
+}
+/* On the Overview the tab names the view and its two cards carry their own titles, so the group heading is said
+   to assistive technology only. It never changes size on focus, so nothing under it moves. */
+.programme-room > section[id$='-overview'] > .room-group-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* The Overview: "At a glance" and the Overview's own panel on the left, "Needs your attention" beside them. */
+.programme-room > section.programme-overview:not([hidden]) {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .programme-room > section.programme-overview:not([hidden]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .programme-room > section.programme-overview > * {
+    grid-column: 1;
+  }
+  .programme-room > section.programme-overview > .programme-attention-card {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+}
+article.room.programme-room .programme-card {
+  min-width: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+article.room.programme-room .programme-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 10px var(--space-4);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-base);
+  font-weight: 650;
+}
+.programme-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--brand);
+  color: var(--paper);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+article.room.programme-room .programme-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4) 0;
+}
+article.room.programme-room .programme-card-foot {
+  padding-block: var(--space-2);
+}
+article.room.programme-room .programme-tiles > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+article.room.programme-room .programme-tiles > div > dd {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 650;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+article.room.programme-room .programme-tiles > div > dd small {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+article.room.programme-room .programme-tiles > div[data-known='false'] > dd {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.6;
+}
+article.room.programme-room .programme-tiles > div > dt {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+article.room.programme-room .programme-card-foot,
+article.room.programme-room .programme-quiet {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+article.room.programme-room .programme-quiet {
+  font-size: var(--text-sm);
+}
+.programme-card-foot .corridra-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--positive);
+}
+.programme-attention {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+article.room.programme-room .programme-attention > li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.programme-attention > li:last-child {
+  border-bottom: 0;
+}
+.programme-attention-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--selected-surface);
+  color: var(--brand);
+}
+.programme-attention > li[data-tone='warning'] .programme-attention-mark {
+  background: var(--caution-surface);
+  color: var(--ac-copper-ink);
+}
+.programme-attention-mark .corridra-icon {
+  width: 18px;
+  height: 18px;
+}
+.programme-attention-words {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+}
+.programme-attention-words b {
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+.programme-attention-words span {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+article.room.programme-room .programme-attention > li > .button.button-secondary {
+  flex: none;
+  width: auto;
+  min-height: 44px;
+}
+@media (max-width: 40rem) {
+  article.room.programme-room > header.room-head > h3 {
+    font-size: var(--text-xl);
+  }
+  .programme-tiles {
+    padding-inline: var(--space-3);
+  }
+  .programme-tiles > div {
+    padding: var(--space-2);
+  }
+  .programme-attention > li {
+    flex-wrap: wrap;
+    padding-inline: var(--space-3);
+  }
+  article.room.programme-room .programme-attention > li > .button.button-secondary {
+    margin-inline-start: calc(36px + var(--space-3));
+  }
+}
+
+/* The delegations page with the Organise room on (approved work rooms, 5 Nov 2026): no card around the page,
+   the sections as tabs, one programme at a time, so a view fits one desktop screen. */
+.ux-customer > section.delivery-view.ux-saved-commercial-report.programme-page.programme-page {
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.ux-customer > section.delivery-view.ux-saved-commercial-report.programme-page.programme-page > * {
+  margin-block: 0;
+}
+.programme-page > .ux-back {
+  min-height: 44px;
+}
+.programme-page .programme-page-tabs > .ux-subtabs-panel {
+  padding-top: 0;
+}
+.ux-customer:has(> .programme-page) {
+  padding-top: 0;
+  row-gap: 0;
+}
+.programme-page .programme-picker {
+  max-width: 24rem;
+}
+.programme-page .programme-page-tabs ul:has(> li > .programme-room) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.programme-page .programme-page-tabs ul:has(> li > .programme-room) > li {
+  margin: 0;
+}
+.ux-customer section.delivery-view.programme-page .programme-page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-4);
+}
+.ux-customer section.delivery-view.programme-page .programme-page-foot > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+.ux-customer section.delivery-view.programme-page .programme-page-foot > button.text-link {
+  flex: none;
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: var(--text-sm);
+}
+@media (max-width: 40rem) {
+  /* Phones: the page tabs stay one row that scrolls sideways, the stage names give way to the stage line,
+     and a count that cannot be given is said in small type. */
+  .programme-page .programme-page-tabs > .ux-subtabs-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .programme-page .programme-page-tabs > .ux-subtabs-list > .ux-subtabs-tab {
+    flex: none;
+    white-space: nowrap;
+  }
+  .programme-room .programme-stage .mr-stage > li > button.mr-stage-name.text-link {
+    display: none;
+  }
+  article.room.programme-room .programme-tiles > div[data-known='false'] > dd {
+    font-size: var(--text-xs);
+    line-height: 1.35;
+  }
+}

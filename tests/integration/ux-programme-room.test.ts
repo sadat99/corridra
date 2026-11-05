@@ -4,8 +4,11 @@ import { describe, expect, it } from 'vitest';
 import {
   boardingCounts,
   boardingLine,
-  programmeRoadLegend,
+  programmeAttention,
+  programmeGlance,
+  programmeNextStep,
   programmeRoadSteps,
+  programmeStage,
   programmeRoadStates,
   roomLenses,
   type Boarding,
@@ -112,8 +115,31 @@ describe('the programme road', () => {
       ),
     ).toMatchObject({ invite: 'done', register: 'now' });
   });
-  it('has a legend that says what the room reads, not what a record is', () => {
-    expect(programmeRoadLegend).toContain("does not read that step's records");
+  // CX-06 and the approved Organise room (5 Nov 2026): a stage with no record is a plain grey segment.
+  it('draws a stage with no record as plain grey, with no "not tracked" words and no legend', () => {
+    const lib = read('apps/web/lib/programme-room.ts');
+    expect(lib).not.toMatch(/export const programmeRoadLegend/);
+    const room = read('apps/web/app/account/delegations/programme-room.tsx');
+    expect(room).not.toMatch(/not tracked|legend/i);
+    expect(programmeStage(null)).toEqual({
+      states: {
+        setup: 'done',
+        invite: 'grey',
+        register: 'grey',
+        plan: 'grey',
+        run: 'grey',
+        report: 'grey',
+      },
+      current: null,
+    });
+    expect(programmeStage(boardingCounts(boarding({}))).current).toBe('invite');
+    const partial = programmeStage(
+      boardingCounts(
+        boarding({ moreInvitations: true, invitations: [inv('USED')], registrations: [reg()] }),
+      ),
+    );
+    expect(partial.states).toMatchObject({ invite: 'done', register: 'grey' });
+    expect(partial.current).toBeNull();
   });
   it('never claims a step it does not read: the days, the run and the report stay not tracked', () => {
     for (const b of [
@@ -221,6 +247,88 @@ describe('every switch-off path', () => {
   it('the default is off', () => {
     expect(read('apps/web/app/account/delegations/customer-programmes.tsx')).toContain(
       'roomEnabled = false',
+    );
+  });
+});
+
+describe('the Organise room overview (approved work rooms, 5 Nov 2026)', () => {
+  const counts = (over: Partial<Boarding>) => boardingCounts(boarding(over));
+  const projection = (over: Record<string, unknown> = {}) => ({
+    readiness: { activeParticipants: 5, readyParticipants: 3 },
+    meetings: { state: 'AVAILABLE' as const, scheduled: 18, qualifiedHeld: 3 },
+    agenda: [{ needsReview: true }, { needsReview: false }, { needsReview: null }],
+    conflicts: [{ left: 'a', right: 'b' }],
+    ...over,
+  });
+  it('offers one next step read from the boarding counts, and opens the view that does it', () => {
+    expect(programmeNextStep(null)).toEqual({
+      title: 'See where your participants stand',
+      target: 'people',
+    });
+    expect(programmeNextStep(counts({})).title).toBe('Invite your participants');
+    expect(programmeNextStep(counts({ invitations: [inv('ISSUED')] })).title).toBe(
+      'Get the remaining participants registered',
+    );
+    expect(programmeNextStep(counts({ moreInvitations: true })).title).toBe(
+      'Review your participants',
+    );
+    expect(
+      programmeNextStep(counts({ invitations: [inv('USED')], registrations: [reg()] })),
+    ).toEqual({ title: 'Plan the days', target: 'plan' });
+  });
+  it('counts only what was read, and never shows a zero for a count it cannot give', () => {
+    const full = programmeGlance(
+      counts({ invitations: [inv('USED'), inv('ISSUED')], registrations: [reg()] }),
+      projection(),
+      true,
+    );
+    expect(full.map((t) => [t.key, t.value, t.of ?? ''])).toEqual([
+      ['registered', '1', ''],
+      ['open', '1', ''],
+      ['ready', '3', 'of 5'],
+      ['scheduled', '18', ''],
+      ['held', '3', ''],
+    ]);
+    const unknown = programmeGlance(counts({ moreRegistrations: true }), null, true);
+    expect(unknown.every((t) => !t.known && t.value === 'Not measured yet')).toBe(true);
+    const notShared = programmeGlance(
+      null,
+      projection({ meetings: { state: 'NOT_SHARED', scheduled: null, qualifiedHeld: null } }),
+      true,
+    );
+    expect(notShared.find((t) => t.key === 'scheduled')!.value).toBe('Not shared');
+    expect(notShared.find((t) => t.key === 'held')!.value).toBe('Not shared');
+    expect(programmeGlance(null, null, false).map((t) => t.key)).toEqual(['registered', 'open']);
+    for (const tiles of [unknown, notShared])
+      for (const t of tiles) if (!t.known) expect(t.value).not.toBe('0');
+  });
+  it('lists what needs the organiser from the projection flags, each with the view that resolves it', () => {
+    expect(programmeAttention(null)).toEqual([]);
+    expect(
+      programmeAttention(projection()).map((i) => [i.key, i.title, i.action, i.target]),
+    ).toEqual([
+      ['overlaps', '1 pair of activities overlaps', 'Open Schedule', 'plan'],
+      ['review', '1 activity needs review', 'Review', 'plan'],
+      ['readiness', '2 participants are not ready yet', 'Open Participants', 'people'],
+    ]);
+    expect(
+      programmeAttention(
+        projection({
+          conflicts: [],
+          agenda: [],
+          readiness: { activeParticipants: 2, readyParticipants: 2 },
+        }),
+      ),
+    ).toEqual([]);
+  });
+  it("the room reads the projection through the panels' own read, and nothing a participant wrote", () => {
+    const room = read('apps/web/app/account/delegations/programme-room.tsx');
+    expect(room).toContain('useProgrammeGlance');
+    expect(room).not.toMatch(/displayLabel|consentedAt|companies\.map|\.company\b/);
+    const list = read('apps/web/app/account/delegations/customer-programmes.tsx');
+    expect(list).toContain('projectionsEnabled={projectionsEnabled}');
+    expect(read('apps/web/app/account/delegations/programme-room-styles.tsx')).toContain(
+      "'../../../components/mr/stage-bar.css'",
     );
   });
 });

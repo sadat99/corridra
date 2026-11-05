@@ -221,6 +221,19 @@ function useProjection<T extends { expiresAt: string }>(identity: Identity, quer
   return { data, notice, busy, load, send, host, retry, canRetry, discard };
 }
 
+/**
+ * The organiser's projection for the Programme Room's Overview (approved work rooms, 5 Nov 2026): the same read,
+ * the same access rules, the same expiry and the same hiding as the panels below, and nothing it can write.
+ */
+export function useProgrammeGlance(identity: Identity, workspaceId: string, programmeId: string) {
+  const { data, notice, host } = useProjection<ProgrammeProjection>(identity, {
+    view: 'owner',
+    workspaceId,
+    programmeId,
+  });
+  return { data, notice, host };
+}
+
 export function ProgrammeProjectionPanel(
   props: Identity & {
     workspaceId: string;

@@ -78,7 +78,15 @@ What each room shows:
   how the quote is backed and the comparison engine's own verdict with its reason. The requirement, the
   shortlist, every offer, the cards and the original table stay one tap below.
 - **Sell:** buyers and meetings.
-- **Organise:** at a glance, plus what needs the organiser.
+- **Organise:** at a glance, plus what needs the organiser. The stage bar reads the invitations and consented
+  registrations only, and a stage with no record is plain grey. The one next step comes from those counts. "At a
+  glance" counts registered places, open invitations, ready participants (N of M), scheduled meetings and
+  qualified held meetings. A count that cannot be given says "Not measured yet", and meetings no participant
+  allowed to be counted say "Not shared", never zero. "Needs your attention" lists the projection's own flags:
+  overlapping activities, activities to review after a date change, and participants not ready yet. Each flag
+  opens the view that resolves it. With the room on, the delegations page has four tabs (Programmes, Templates,
+  Pricing, Series and Exports, New Programme) and shows one programme at a time, chosen in a picker and kept in
+  `?programme=`. Measured: 1.00 desktop screen and 1.66 phone screens on the Overview.
 
 The room reads the saved report once and adds no data. The page links stay on the Overview, and a stage with no
 record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop screen in every view and 1.13 to

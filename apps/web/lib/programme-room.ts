@@ -1,6 +1,7 @@
 // The Programme Room (Lane 10 of the UX update): pure rules, tested without a browser. The room only
-// regroups panels that already exist, so everything here is a reading of records the participants panel
-// already returns. A step is marked from a record or it is "not tracked yet"; nothing is estimated.
+// regroups panels that already exist, so everything here is a reading of records the participants panel and the
+// programme projection already return. A step is marked from a record or it is a plain grey segment; nothing is
+// estimated.
 export const programmeRoadSteps = [
   { key: 'setup', label: 'Set up' },
   { key: 'invite', label: 'Invite' },
@@ -91,9 +92,146 @@ export function programmeRoadStates(
   return states;
 }
 
-/** What "not tracked yet" means on the programme Road: the room reads only invitations and registrations. */
-export const programmeRoadLegend =
-  "Not tracked yet means this room does not read that step's records, or could not read them just now.";
+/**
+ * The stage bar (approved work rooms, 5 Nov 2026; CX-06). The same reading as `programmeRoadStates`, drawn the
+ * way every room draws a stage: a stage with a record is done or current, and any other stage is a plain grey
+ * segment with no words. It never says "not tracked yet" and never guesses a later stage.
+ */
+export type ProgrammeStageShown = 'done' | 'now' | 'grey';
+export function programmeStage(counts: BoardingCounts | null): {
+  states: Record<ProgrammeStepKey, ProgrammeStageShown>;
+  current: ProgrammeStepKey | null;
+} {
+  const road = programmeRoadStates(counts);
+  const states = {} as Record<ProgrammeStepKey, ProgrammeStageShown>;
+  let current: ProgrammeStepKey | null = null;
+  for (const step of programmeRoadSteps) {
+    const state = road[step.key];
+    states[step.key] = state === 'done' || state === 'now' ? state : 'grey';
+    if (state === 'now') current = step.key;
+  }
+  return { states, current };
+}
+
+/** The one next step the room offers, read from the boarding counts only. `target` is the view it opens. */
+export type ProgrammeNextStep = { title: string; target: 'people' | 'plan' };
+export function programmeNextStep(counts: BoardingCounts | null): ProgrammeNextStep {
+  if (!counts) return { title: 'See where your participants stand', target: 'people' };
+  if (!counts.complete) return { title: 'Review your participants', target: 'people' };
+  if (counts.invitations === 0) return { title: 'Invite your participants', target: 'people' };
+  if (counts.open > 0)
+    return { title: 'Get the remaining participants registered', target: 'people' };
+  if (counts.registered === 0)
+    return { title: 'Get your participants registered', target: 'people' };
+  return { title: 'Plan the days', target: 'plan' };
+}
+
+/** What the Overview's "At a glance" reads from the programme projection: counts only, never a record. */
+export type ProgrammeGlanceSource = {
+  readiness: { activeParticipants: number; readyParticipants: number };
+  meetings: {
+    state: 'NOT_SHARED' | 'UNAVAILABLE' | 'AVAILABLE' | 'PARTIAL';
+    scheduled: number | null;
+    qualifiedHeld: number | null;
+  };
+  agenda: { needsReview: boolean | null }[];
+  conflicts: unknown[];
+};
+export type GlanceTile = {
+  key: string;
+  /** The number as text, or the words for a count that cannot be given. Never a zero for an unknown. */
+  value: string;
+  known: boolean;
+  of?: string;
+  label: string;
+};
+const notMeasured = 'Not measured yet';
+
+/**
+ * The tiles of "At a glance". The boarding tiles come from the participants panel's read and say "Not measured
+ * yet" when that read was partial or failed. The readiness and meeting tiles come from the projection; they are
+ * left out where the projections are off, say "Not measured yet" while it cannot be read, and the meeting
+ * tiles say "Not shared" where no participant has allowed counts (C-02, C-07): never zero for an unknown.
+ */
+export function programmeGlance(
+  counts: BoardingCounts | null,
+  projection: ProgrammeGlanceSource | null,
+  projectionsOn: boolean,
+): GlanceTile[] {
+  const boarded = counts?.complete ? counts : null;
+  const count = (value: number | null | undefined, words = notMeasured) =>
+    value === null || value === undefined
+      ? { value: words, known: false }
+      : { value: String(value), known: true };
+  const tiles: GlanceTile[] = [
+    { key: 'registered', ...count(boarded?.registered), label: 'registered' },
+    { key: 'open', ...count(boarded?.open), label: 'invitations open' },
+  ];
+  if (!projectionsOn) return tiles;
+  const r = projection?.readiness;
+  tiles.push({
+    key: 'ready',
+    ...count(r?.readyParticipants),
+    of: r ? `of ${r.activeParticipants}` : undefined,
+    label: 'participants ready',
+  });
+  const m = projection?.meetings;
+  const meetingWords = m?.state === 'NOT_SHARED' ? 'Not shared' : notMeasured;
+  tiles.push(
+    { key: 'scheduled', ...count(m?.scheduled, meetingWords), label: 'meetings scheduled' },
+    { key: 'held', ...count(m?.qualifiedHeld, meetingWords), label: 'qualified meetings held' },
+  );
+  return tiles;
+}
+
+/** One thing that needs the organiser, with the view that resolves it. */
+export type AttentionItem = {
+  key: 'overlaps' | 'review' | 'readiness';
+  title: string;
+  detail: string;
+  action: string;
+  target: 'plan' | 'people';
+  tone: 'warning' | 'info';
+};
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+
+/** "Needs your attention", from the projection's own flags: overlaps, changed dates and readiness. */
+export function programmeAttention(projection: ProgrammeGlanceSource | null): AttentionItem[] {
+  if (!projection) return [];
+  const items: AttentionItem[] = [];
+  const overlaps = projection.conflicts.length;
+  if (overlaps > 0)
+    items.push({
+      key: 'overlaps',
+      title: `${overlaps} ${plural(overlaps, 'pair of activities overlaps', 'pairs of activities overlap')}`,
+      detail: 'The same attendee is in both at once.',
+      action: 'Open Schedule',
+      target: 'plan',
+      tone: 'warning',
+    });
+  const review = projection.agenda.filter((a) => a.needsReview === true).length;
+  if (review > 0)
+    items.push({
+      key: 'review',
+      title: `${review} ${plural(review, 'activity needs', 'activities need')} review`,
+      detail: 'The programme dates changed after it was planned.',
+      action: 'Review',
+      target: 'plan',
+      tone: 'info',
+    });
+  const { activeParticipants, readyParticipants } = projection.readiness;
+  const waiting = activeParticipants - readyParticipants;
+  if (waiting > 0)
+    items.push({
+      key: 'readiness',
+      title: `${waiting} ${plural(waiting, 'participant is', 'participants are')} not ready yet`,
+      detail: 'A place, eligibility, terms or a shared company profile is still needed.',
+      action: 'Open Participants',
+      target: 'people',
+      tone: 'info',
+    });
+  return items;
+}
 
 /** The views of a programme room, in order. A view appears only where its panel is on. */
 export const roomLenses = [
