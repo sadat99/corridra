@@ -32,7 +32,13 @@ export function CorridorMap({ company, market }: { company: string; market: stri
   const europeActive = market === 'ES' || market === 'EU' || company === 'ES';
   const arrow = reverse ? { markerStart: 'url(#map-arrow)' } : { markerEnd: 'url(#map-arrow)' };
   return (
-    <svg viewBox={g.viewBox} aria-hidden="true" className="ux-atlas-map" focusable="false">
+    <svg
+      viewBox={g.viewBox}
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      className="ux-atlas-map"
+      focusable="false"
+    >
       <defs>
         <marker
           id="map-arrow"

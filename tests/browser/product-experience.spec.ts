@@ -11,6 +11,7 @@ test('corridor pages explain the actual direction, status and geographic limits'
   ]) {
     await page.goto(`/corridors/${slug}`);
     await expect(page.getByText(name, { exact: true })).toBeVisible();
+    await page.getByRole('tab', { name: 'Current Availability' }).click(); // each card is a tab
     await expect(page.getByRole('heading', { name: 'Current availability' })).toBeVisible();
     await expect(page.getByText('Available now', { exact: true })).toBeVisible();
     await expect(page.getByText('What happens', { exact: true })).toBeVisible();
@@ -19,6 +20,7 @@ test('corridor pages explain the actual direction, status and geographic limits'
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.locator('body').innerText()).not.toContain('—');
   }
+  await page.getByRole('tab', { name: 'Where the Work Happens' }).click();
   await expect(
     page.getByText('The EU is a group of countries, not one market and not all of Europe.', {
       exact: false,

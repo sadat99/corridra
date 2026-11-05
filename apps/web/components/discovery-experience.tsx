@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
 import { WorldRouteMap } from './world-route-map';
+import { SubTabs } from './ux/sub-tabs';
 
 const directions = [
   ...Object.entries(corridorPages).map(([slug, content]) => ({
@@ -80,7 +81,7 @@ const exampleSteps = [
 ] as const;
 
 /** Educational selectors only. No identity, readiness decision, persisted mission or API call. */
-export function DiscoveryExperience() {
+export function DiscoveryExperience({ children }: { children?: ReactNode }) {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
   const [other, setOther] = useState({ company: '', market: '' });
@@ -148,271 +149,283 @@ export function DiscoveryExperience() {
   const briefUrl = `/plan?companyCountry=${route.company}&marketCode=${route.market}&job=${selectedJob.key}`;
   const fromValue = other.company || route.company;
   const toValue = other.market || route.market;
-  return (
-    <section className="ux-discovery guide-routes" aria-label="Explore a commercial objective">
-      <div className="guide-route-box">
-        <div className="guide-route-pick">
-          <h2>Pick your route</h2>
-          <div className="guide-route-field">
-            <label htmlFor="atlas-any-company">My company is in</label>
-            <select
-              id="atlas-any-company"
-              disabled={!mounted}
-              value={fromValue}
-              onChange={(e) => setOther({ company: e.target.value, market: toValue })}
-            >
-              {countryCodes.map((code) => (
-                <option key={code} value={code}>
-                  {mounted ? placeName(code) : code}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="guide-route-field">
-            <label htmlFor="atlas-any-market">I want to reach</label>
-            <select
-              id="atlas-any-market"
-              disabled={!mounted}
-              value={toValue}
-              onChange={(e) => setOther({ company: fromValue, market: e.target.value })}
-            >
-              <option value="EU">European Union (trade bloc)</option>
-              {countryCodes.map((code) => (
-                <option key={code} value={code}>
-                  {mounted ? placeName(code) : code}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="guide-route-quick" role="group" aria-label="Quick picks">
-            <p>Quick picks</p>
-            {directions.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                aria-pressed={route.key === item.key}
-                onClick={() => {
-                  setDirection(item.key);
-                  clearOther();
-                  setStep(0);
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-            {(other.company || other.market) && (
-              <button type="button" onClick={clearOther}>
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="ux-atlas" aria-label="Route map">
-          {custom && world ? (
-            <WorldRouteMap
-              world={world}
-              from={route.company}
-              to={route.market}
-              names={{ from: placeName(route.company), to: placeName(route.market) }}
-            />
-          ) : (
-            <CorridorMap company={route.company} market={route.market} />
-          )}
-          <div className="guide-route-result">
-            <h3>{route.label}</h3>
-            <p className="ux-atlas-note">{route.note}</p>
-            <div className="guide-route-actions">
-              <Link className="primary-link" href={briefUrl}>
-                Plan a Mission on This Route
-              </Link>
-              {route.slug && (
-                <Link className="button-secondary" href={`/corridors/${route.slug}`}>
-                  Read About This Route
-                </Link>
-              )}
-            </div>
-            <p className="guide-route-foot">
-              Business routes only, not shipping routes or a promise of local coverage.
-            </p>
-          </div>
-        </div>
-        <details id="commercial-objective" className="ux-fine-tune guide-fine">
-          <summary>Fine-Tune: Your Goal, Role and Route</summary>
-          <div className="ux-situations" role="group" aria-label="Choose your situation">
-            {situations.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="ux-situation"
-                aria-pressed={activeSituation === item.key}
-                onClick={() => {
-                  setRole(item.role);
-                  setJob(item.job);
-                  setDirection(item.direction);
-                  clearOther();
-                  setStep(0);
-                }}
-              >
-                <strong>{item.title}</strong>
-                <span>{item.text}</span>
-              </button>
-            ))}
-            <Link className="ux-situation" href="/network">
-              <strong>Help locally</strong>
-              <span>Do clear local tasks for a stated reward.</span>
-            </Link>
-          </div>
-          <div className="ux-fine-tune-fields">
-            <label className="field">
-              Your perspective
-              <select
-                value={role}
-                onChange={(e) => {
-                  setRole(e.target.value);
-                  setJob(
-                    e.target.value === 'institution'
-                      ? 'delegations'
-                      : e.target.value === 'exporter'
-                        ? 'buyers'
-                        : 'sourcing',
-                  );
-                }}
-              >
-                <option value="buyer">Buyer or importer</option>
-                <option value="exporter">Exporter or company</option>
-                <option value="institution">Institution or delegation</option>
-              </select>
-            </label>
-            <label className="field">
-              I&apos;m trying to
-              <select
-                value={job}
-                onChange={(e) => {
-                  setJob(e.target.value);
-                  setStep(0);
-                }}
-              >
-                {missionCatalogue.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Route
-              <select
-                value={direction}
-                onChange={(e) => {
-                  setDirection(e.target.value);
-                  clearOther();
-                  setStep(0);
-                }}
-              >
-                {directions.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <p className="guide-route-foot">
-            Perspective describes the example. It does not grant account or workspace access.
-          </p>
-        </details>
-      </div>
-      <section
-        id="mission-example"
-        tabIndex={-1}
-        className={`ux-example${example ? ' ux-example-open' : ''}`}
-        aria-label="Sample mission"
-      >
-        <div>
-          <p className="label">A 90-SECOND WALKTHROUGH</p>
-          <h2 ref={exampleHeading} tabIndex={-1}>
-            A mission, before anyone commits.
-          </h2>
-          <p>Illustration only. No company, evidence or record is created.</p>
-        </div>
-        {!example ? (
-          <button
-            ref={exampleTrigger}
-            className="text-link"
-            onClick={() => {
-              setExample(true);
-              setStep(0);
-              requestAnimationFrame(() => exampleHeading.current?.focus());
-            }}
+  const routePanel = (
+    <div className="guide-route-box">
+      <div className="guide-route-pick">
+        <h2>Pick your route</h2>
+        <div className="guide-route-field">
+          <label htmlFor="atlas-any-company">My company is in</label>
+          <select
+            id="atlas-any-company"
+            disabled={!mounted}
+            value={fromValue}
+            onChange={(e) => setOther({ company: e.target.value, market: toValue })}
           >
-            Open the Sample Mission
-          </button>
-        ) : (
-          <>
-            <p className="ux-example-scope">
-              {selectedJob.label} · {route.label} · Sample scenario
-            </p>
-            <nav className="ux-example-steps" aria-label="Example steps">
-              {exampleSteps.map((label, index) => (
-                <button
-                  key={label}
-                  onClick={() => setStep(index)}
-                  aria-current={index === step ? 'step' : undefined}
-                >
-                  {index + 1}. {label}
-                </button>
-              ))}
-            </nav>
-            <div className="ux-example-decision" role="status">
-              <h3>{exampleSteps[step]}</h3>
-              {step === 0 && (
-                <p>
-                  {job === 'delegations'
-                    ? 'Give each participant their own goal and private request. Attendance alone is not progress.'
-                    : sourcing
-                      ? 'Describe the product, the constraints and how you will decide. A proposed visit is not a confirmed meeting.'
-                      : 'Describe your offer and the customer or partner worth a conversation. A contact is not a qualified buyer.'}
-                </p>
-              )}
-              {step === 1 && (
-                <>
-                  <span className="guide-tag" data-tone="unknown">
-                    Evidence not established
-                  </span>
-                  <p>
-                    No independent source is supplied here, so a claim stays self-declared. Unknown
-                    terms stay unknown.
-                  </p>
-                </>
-              )}
-              {step === 2 && (
-                <p>
-                  {sourcing
-                    ? 'Ask for the missing specification, original quote terms and source. Keep each currency intact. Nothing is sent.'
-                    : 'Record the next question, who owns it and what evidence would answer it. A meeting, a commitment and cash are different events.'}
-                </p>
-              )}
-            </div>
-            <p>
-              {route.reverse
-                ? 'This route runs the other way and needs its own review. No operating offer is announced yet.'
-                : 'This is one of the routes we start with.'}
-            </p>
-            <Link className="text-link" href={briefUrl}>
-              Start a request on this route <Arrow />
-            </Link>
+            {countryCodes.map((code) => (
+              <option key={code} value={code}>
+                {mounted ? placeName(code) : code}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="guide-route-field">
+          <label htmlFor="atlas-any-market">I want to reach</label>
+          <select
+            id="atlas-any-market"
+            disabled={!mounted}
+            value={toValue}
+            onChange={(e) => setOther({ company: fromValue, market: e.target.value })}
+          >
+            <option value="EU">European Union (trade bloc)</option>
+            {countryCodes.map((code) => (
+              <option key={code} value={code}>
+                {mounted ? placeName(code) : code}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="guide-route-quick" role="group" aria-label="Quick picks">
+          <p>Quick picks</p>
+          {directions.map((item) => (
             <button
-              className="text-link"
+              key={item.key}
+              type="button"
+              aria-pressed={route.key === item.key}
               onClick={() => {
-                setExample(false);
-                requestAnimationFrame(() => exampleTrigger.current?.focus());
+                setDirection(item.key);
+                clearOther();
+                setStep(0);
               }}
             >
-              Close the Example
+              {item.label}
             </button>
-          </>
+          ))}
+          {(other.company || other.market) && (
+            <button type="button" onClick={clearOther}>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="ux-atlas" aria-label="Route map">
+        {custom && world ? (
+          <WorldRouteMap
+            world={world}
+            from={route.company}
+            to={route.market}
+            names={{ from: placeName(route.company), to: placeName(route.market) }}
+          />
+        ) : (
+          <CorridorMap company={route.company} market={route.market} />
         )}
-      </section>
+        <div className="guide-route-result">
+          <h3>{route.label}</h3>
+          <p className="ux-atlas-note">{route.note}</p>
+          <div className="guide-route-actions">
+            <Link className="primary-link" href={briefUrl}>
+              Plan a Mission on This Route
+            </Link>
+            {route.slug && (
+              <Link className="button-secondary" href={`/corridors/${route.slug}`}>
+                Read About This Route
+              </Link>
+            )}
+          </div>
+          <p className="guide-route-foot">
+            Business routes only, not shipping routes or a promise of local coverage.
+          </p>
+        </div>
+      </div>
+      <details id="commercial-objective" className="ux-fine-tune guide-fine">
+        <summary>Fine-Tune: Your Goal, Role and Route</summary>
+        <div className="ux-situations" role="group" aria-label="Choose your situation">
+          {situations.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="ux-situation"
+              aria-pressed={activeSituation === item.key}
+              onClick={() => {
+                setRole(item.role);
+                setJob(item.job);
+                setDirection(item.direction);
+                clearOther();
+                setStep(0);
+              }}
+            >
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </button>
+          ))}
+          <Link className="ux-situation" href="/network">
+            <strong>Help locally</strong>
+            <span>Do clear local tasks for a stated reward.</span>
+          </Link>
+        </div>
+        <div className="ux-fine-tune-fields">
+          <label className="field">
+            Your perspective
+            <select
+              value={role}
+              onChange={(e) => {
+                setRole(e.target.value);
+                setJob(
+                  e.target.value === 'institution'
+                    ? 'delegations'
+                    : e.target.value === 'exporter'
+                      ? 'buyers'
+                      : 'sourcing',
+                );
+              }}
+            >
+              <option value="buyer">Buyer or importer</option>
+              <option value="exporter">Exporter or company</option>
+              <option value="institution">Institution or delegation</option>
+            </select>
+          </label>
+          <label className="field">
+            I&apos;m trying to
+            <select
+              value={job}
+              onChange={(e) => {
+                setJob(e.target.value);
+                setStep(0);
+              }}
+            >
+              {missionCatalogue.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            Route
+            <select
+              value={direction}
+              onChange={(e) => {
+                setDirection(e.target.value);
+                clearOther();
+                setStep(0);
+              }}
+            >
+              {directions.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="guide-route-foot">
+          Perspective describes the example. It does not grant account or workspace access.
+        </p>
+      </details>
+    </div>
+  );
+  const samplePanel = (
+    <section
+      id="mission-example"
+      tabIndex={-1}
+      className={`ux-example${example ? ' ux-example-open' : ''}`}
+      aria-label="Sample mission"
+    >
+      <div>
+        <p className="label">A 90-SECOND WALKTHROUGH</p>
+        <h2 ref={exampleHeading} tabIndex={-1}>
+          A mission, before anyone commits.
+        </h2>
+        <p>Illustration only. No company, evidence or record is created.</p>
+      </div>
+      {!example ? (
+        <button
+          ref={exampleTrigger}
+          className="text-link"
+          onClick={() => {
+            setExample(true);
+            setStep(0);
+            requestAnimationFrame(() => exampleHeading.current?.focus());
+          }}
+        >
+          Open the Sample Mission
+        </button>
+      ) : (
+        <>
+          <p className="ux-example-scope">
+            {selectedJob.label} · {route.label} · Sample scenario
+          </p>
+          <nav className="ux-example-steps" aria-label="Example steps">
+            {exampleSteps.map((label, index) => (
+              <button
+                key={label}
+                onClick={() => setStep(index)}
+                aria-current={index === step ? 'step' : undefined}
+              >
+                {index + 1}. {label}
+              </button>
+            ))}
+          </nav>
+          <div className="ux-example-decision" role="status">
+            <h3>{exampleSteps[step]}</h3>
+            {step === 0 && (
+              <p>
+                {job === 'delegations'
+                  ? 'Give each participant their own goal and private request. Attendance alone is not progress.'
+                  : sourcing
+                    ? 'Describe the product, the constraints and how you will decide. A proposed visit is not a confirmed meeting.'
+                    : 'Describe your offer and the customer or partner worth a conversation. A contact is not a qualified buyer.'}
+              </p>
+            )}
+            {step === 1 && (
+              <>
+                <span className="guide-tag" data-tone="unknown">
+                  Evidence not established
+                </span>
+                <p>
+                  No independent source is supplied here, so a claim stays self-declared. Unknown
+                  terms stay unknown.
+                </p>
+              </>
+            )}
+            {step === 2 && (
+              <p>
+                {sourcing
+                  ? 'Ask for the missing specification, original quote terms and source. Keep each currency intact. Nothing is sent.'
+                  : 'Record the next question, who owns it and what evidence would answer it. A meeting, a commitment and cash are different events.'}
+              </p>
+            )}
+          </div>
+          <p>
+            {route.reverse
+              ? 'This route runs the other way and needs its own review. No operating offer is announced yet.'
+              : 'This is one of the routes we start with.'}
+          </p>
+          <Link className="text-link" href={briefUrl}>
+            Start a request on this route <Arrow />
+          </Link>
+          <button
+            className="text-link"
+            onClick={() => {
+              setExample(false);
+              requestAnimationFrame(() => exampleTrigger.current?.focus());
+            }}
+          >
+            Close the Example
+          </button>
+        </>
+      )}
+    </section>
+  );
+  return (
+    <section className="ux-discovery guide-routes" aria-label="Explore a commercial objective">
+      <SubTabs
+        label="Routes"
+        tabs={[
+          { id: 'route', label: 'Pick Your Route', panel: routePanel },
+          { id: 'sample', label: 'Sample Mission', panel: samplePanel },
+          ...(children ? [{ id: 'routes', label: 'Explore a Route', panel: children }] : []),
+        ]}
+      />
     </section>
   );
 }

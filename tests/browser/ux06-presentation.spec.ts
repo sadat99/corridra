@@ -82,6 +82,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
     'aria-current',
     'step',
   );
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('china-bangladesh');
   await expect(page.getByLabel('Route map', { exact: true })).toContainText('China → Bangladesh');
@@ -89,6 +90,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
     'href',
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',
   );
+  await page.getByRole('tab', { name: 'Sample Mission' }).click();
   await expect(example).toContainText('No operating offer is announced');
 });
 

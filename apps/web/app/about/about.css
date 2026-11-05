@@ -1,0 +1,28 @@
+/* About is cut into a few tabs so it fits the page budget (layout budget, Phase 2b). Each tab keeps the
+   notice-document look of the articles it holds; nothing is removed. */
+.guide-doc-tabs .guide-doc {
+  margin-bottom: 0;
+}
+.guide-doc-tabs {
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 700px) {
+  .guide-doc-tabs .guide-doc article {
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+  }
+  .guide-doc-tabs .guide-doc p {
+    line-height: 1.5;
+  }
+  .guide-doc-tabs .guide-doc article > div {
+    gap: var(--space-2);
+  }
+}
+
+/* A little less padding between the articles of a tab on a wide screen, so two articles fit one screen. */
+@media (min-width: 1000px) {
+  .guide-doc-tabs .guide-doc article {
+    padding-block: var(--space-4);
+  }
+}

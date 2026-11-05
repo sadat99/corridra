@@ -77,7 +77,13 @@ export function WorldRouteMap({
   const a = pointOf(world, from);
   const b = pointOf(world, to);
   return (
-    <svg viewBox={world.viewBox} aria-hidden="true" className="ux-atlas-map" focusable="false">
+    <svg
+      viewBox={world.viewBox}
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      className="ux-atlas-map"
+      focusable="false"
+    >
       <defs>
         <marker
           id="world-arrow"

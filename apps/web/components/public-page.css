@@ -46,3 +46,26 @@
     padding: var(--space-4) var(--space-6);
   }
 }
+
+/* The two phases of How it works are tabs, so one shows at a time (layout budget, Phase 2b). The tab label
+   names the phase; its heading stays in the page for assistive technology and search. */
+.guide-journey--tabs {
+  margin-top: 0;
+  padding-block: var(--space-2) 0;
+}
+.guide-journey--tabs .ux-subtabs-list {
+  margin-bottom: 0;
+}
+.guide-journey--tabs .guide-phase {
+  gap: var(--space-4);
+  padding: var(--space-2) 0 0;
+  border-top: 0;
+}
+.guide-journey--tabs .guide-phase header {
+  justify-content: flex-start;
+}
+@media (min-width: 1000px) {
+  .guide-journey--tabs .guide-phase ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

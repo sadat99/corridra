@@ -19,16 +19,18 @@ test('About explains the product, audience, process and commercial boundaries', 
   page,
 }, info) => {
   await page.goto('/about');
-  for (const heading of [
-    'Why Corridra exists',
-    'What a mission means',
-    'Who it is for',
-    'How the work progresses',
-    'Where we focus',
-    'What makes progress credible',
-    'Working with Corridra',
-  ])
-    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+  // The articles are in five tabs (layout budget); each heading shows once its tab is chosen.
+  for (const [tab, headings] of [
+    ['Why Corridra', ['Why Corridra exists', 'What a mission means']],
+    ['Who It Is For', ['Who it is for']],
+    ['How It Works', ['How the work progresses']],
+    ['Where We Focus', ['Where we focus', 'What makes progress credible']],
+    ['Working With Us', ['Working with Corridra']],
+  ] as const) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    for (const heading of headings)
+      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+  }
   await expect(
     page.getByRole('link', { name: 'Start a Request', exact: true }).first(),
   ).toHaveAttribute('href', '/plan');

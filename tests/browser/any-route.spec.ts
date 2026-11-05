@@ -71,6 +71,7 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
 
 test('the corridors page offers a third wing for any other route', async ({ page }) => {
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Explore a Route' }).click(); // the routes sit in their own tab
   await expect(page.getByRole('heading', { name: 'Any other route' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Plan a mission on another route' })).toHaveAttribute(
     'href',
