@@ -249,7 +249,6 @@ export function MoveView({
   const participant = !journey ? (facts?.participant ?? null) : null;
   // The latest request has its own card only when no journey card already shows it.
   const latestShown =
-    !participant &&
     model.latest &&
     !cards.some((card) => card.kind === 'request' && card.id === model.latest?.id) &&
     (!journey || latestItem?.journey === journey)

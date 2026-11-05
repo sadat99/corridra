@@ -199,7 +199,11 @@ export function ParticipantCard({ facts }: { facts: ParticipantFacts }) {
         </Private>
       </div>
       <footer className="move-journey-foot">
-        <span>{facts.registered === 1 ? 'Registered' : `Registered for ${facts.registered}`}</span>
+        <span>
+          {facts.registered === 1 && !facts.more
+            ? 'Registered'
+            : `Registered for ${facts.registered}${facts.more ? ' or more' : ''}`}
+        </span>
         <Link prefetch={false} className="move-card-link" href={facts.href}>
           <span>Open My Programmes</span>
           <CorridraIcon name="arrow" />

@@ -31,6 +31,8 @@ export type OrganiseFacts = {
 /** Taking part: the programmes the person is registered for, in the order the list gives them. */
 export type ParticipantFacts = {
   registered: number;
+  /** More registrations than the page read: the count is then "or more". */
+  more: boolean;
   name: string;
   consented: boolean;
   href: string;
@@ -55,6 +57,8 @@ export function experiencesOf(report: unknown): MissionExperience[] {
     );
 }
 
+// Two saved reports of one request show the same records (each report works out what is current when it is
+// read), so every quote, company, visit and meeting is counted once, by its own id.
 export function sourceFacts(experiences: MissionExperience[], at?: string): SourceFacts {
   const facts: SourceFacts = {
     quotes: 0,
@@ -63,10 +67,12 @@ export function sourceFacts(experiences: MissionExperience[], at?: string): Sour
     evidence: 0,
     selfDeclared: 0,
   };
+  const seen = new Set<string>();
   for (const e of experiences) {
     const verdicts = compareExperienceOffers(e, at);
     e.quotations.forEach((q, index) => {
-      if (!isCurrentOffer(e, q)) return;
+      if (!isCurrentOffer(e, q) || seen.has(q.id)) return;
+      seen.add(q.id);
       facts.quotes += 1;
       if (verdicts[index]?.status !== 'COMPARABLE ON SUPPLIED TERMS') facts.notComparable += 1;
       const trust = factNameFor(q.claimStatus);
@@ -79,20 +85,33 @@ export function sourceFacts(experiences: MissionExperience[], at?: string): Sour
 }
 
 export function sellFacts(experiences: MissionExperience[]): SellFacts {
-  const facts: SellFacts = { shortlisted: 0, proposed: 0, confirmed: 0, held: 0 };
+  const companies = new Set<string>();
+  const proposed = new Set<string>();
+  const confirmed = new Set<string>();
   const held = new Set<string>();
+  // An agenda item keeps its id across versions; only its newest version counts.
+  const newest = new Map<string, MissionExperience['agenda'][number]>();
   for (const e of experiences) {
-    facts.shortlisted += e.shortlist.length;
+    for (const target of e.shortlist) companies.add(target.id);
     for (const item of e.agenda) {
-      if (item.state === 'PROPOSED') facts.proposed += 1;
-      else if (item.state === 'CONFIRMED') facts.confirmed += 1;
-      // A meeting shared by two agenda items is one held meeting, as the report counts it.
-      for (const meeting of list<{ id?: unknown; status?: unknown }>(item.meetings))
-        if (meeting.status === 'HELD' && typeof meeting.id === 'string') held.add(meeting.id);
+      const key = item.itemId || item.id;
+      const known = newest.get(key);
+      if (!known || item.version > known.version) newest.set(key, item);
     }
   }
-  facts.held = held.size;
-  return facts;
+  for (const [key, item] of newest) {
+    if (item.state === 'PROPOSED') proposed.add(key);
+    else if (item.state === 'CONFIRMED') confirmed.add(key);
+    // A meeting shared by two agenda items is one held meeting, as the report counts it.
+    for (const meeting of list<{ id?: unknown; status?: unknown }>(item.meetings))
+      if (meeting.status === 'HELD' && typeof meeting.id === 'string') held.add(meeting.id);
+  }
+  return {
+    shortlisted: companies.size,
+    proposed: proposed.size,
+    confirmed: confirmed.size,
+    held: held.size,
+  };
 }
 
 type Projection = {
@@ -138,6 +157,7 @@ export function participantFacts(own: unknown): ParticipantFacts | null {
   if (!first) return null;
   return {
     registered: registered.length,
+    more: !!(own as { nextAfter?: unknown }).nextAfter,
     name: first.name as string,
     consented: typeof first.consentedAt === 'string' && first.consentedAt.length > 0,
     href: '/account/delegations',

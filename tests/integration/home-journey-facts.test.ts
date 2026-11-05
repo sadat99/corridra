@@ -111,9 +111,10 @@ describe('Sourcing numbers on Home', () => {
 describe('Selling numbers on Home', () => {
   it('counts shortlisted companies, proposed and confirmed visits, and each held meeting once', () => {
     const meeting = (id: string, status: string) => ({ id, status, scheduleChanged: false });
+    let n = 0;
     const item = (state: string, meetings: ReturnType<typeof meeting>[]) => ({
-      id: state,
-      itemId: state,
+      id: `${state}-${++n}`,
+      itemId: `visit-${n}`,
       version: 1,
       label: 'Visit',
       state,
@@ -141,6 +142,52 @@ describe('Selling numbers on Home', () => {
     expect(experiencesOf(null)).toEqual([]);
     expect(experiencesOf({ missions: [{ experience: { quotations: 'x' } }, {}] })).toEqual([]);
     expect(experiencesOf({ missions: [{ experience: experience({}) }] })).toHaveLength(1);
+  });
+});
+
+describe('two saved reports of one request (guardian review of PR 310)', () => {
+  it('counts each quote, company, visit and meeting once, and only the newest version of a visit', () => {
+    const meeting = (id: string, status: string) => ({ id, status, scheduleChanged: false });
+    const item = (
+      itemId: string,
+      version: number,
+      state: string,
+      meetings = [meeting('m1', 'HELD')],
+    ) => ({
+      id: `${itemId}-v${version}`,
+      itemId,
+      version,
+      label: 'Visit',
+      state,
+      nextAction: 'Prepare',
+      dueAt: at,
+      responsibility: 'Team',
+      meetings,
+    });
+    const first = experience({
+      quotations: [offer({ id: 'a' }), offer({ id: 'b', targetId: 't2' })],
+      shortlist: [{ id: 't1' }, { id: 't2' }] as MissionExperience['shortlist'],
+      agenda: [item('v1', 1, 'PROPOSED')],
+    });
+    const second = experience({
+      quotations: [offer({ id: 'a' }), offer({ id: 'b', targetId: 't2' })],
+      shortlist: [{ id: 't1' }, { id: 't2' }] as MissionExperience['shortlist'],
+      agenda: [item('v1', 2, 'CONFIRMED')],
+    });
+    expect(sourceFacts([first, second], at).quotes).toBe(sourceFacts([first], at).quotes);
+    expect(sellFacts([first, second])).toEqual({
+      shortlisted: 2,
+      proposed: 0,
+      confirmed: 1,
+      held: 1,
+    });
+  });
+
+  it('says "or more" for registrations beyond the page read', () => {
+    expect(
+      participantFacts({ registrations: [{ status: 'REGISTERED', name: 'Milan' }], nextAfter: 'x' })
+        ?.more,
+    ).toBe(true);
   });
 });
 
@@ -193,6 +240,7 @@ describe('Taking part on Home', () => {
       }),
     ).toEqual({
       registered: 1,
+      more: false,
       name: 'Milan delegation',
       consented: true,
       href: '/account/delegations',
