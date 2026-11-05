@@ -365,6 +365,17 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
   await expect(table.locator('thead th')).toHaveText(['Buyer', 'Fit', 'How it is backed']);
 });
 
+// Guardian review of PR 314: the next step asks only for what the room lets the person do.
+test('without the question link the next step does not ask the person to tell the team', async ({
+  page,
+}) => {
+  await open(page, { service: false });
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next).toBeVisible();
+  await expect(next).not.toContainText(/tell (us|the Corridra team)/i);
+  await expect(next.getByRole('link', { name: 'Ask a Question' })).toHaveCount(0);
+});
+
 test('keeps every original action one tap away', async ({ page }) => {
   await open(page);
   await expect(page.getByRole('link', { name: 'Open the saved request' })).toHaveAttribute(

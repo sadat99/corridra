@@ -167,6 +167,23 @@ describe('the Source room comparison', () => {
     expect(JSON.stringify(ledger)).not.toMatch(/best|cheapest|lowest|recommended/i);
   });
 
+  // Guardian review of PR 314: a stated total without a unit price is shown, never "Not stated".
+  it('shows a stated total when the supplier gave no unit price, and Not stated only when neither was given', () => {
+    const ledger = sourceLedger(
+      experience([
+        offer('qa', 't1', { terms: machine({ unitPriceMinor: undefined }) }),
+        offer('qb', 't2', {
+          terms: machine({ unitPriceMinor: undefined, totalPriceMinor: undefined }),
+        }),
+      ]),
+      { at },
+    );
+    const price = ledger.rows.find((r) => r.label === 'Original price')!;
+    expect(price.cells[0]!.value).toMatch(/^USD\s97,000\.00$/);
+    expect(price.cells[0]!.sub).toBe('Total for 2 sets; no unit price stated');
+    expect(price.cells[1]!.value).toBeNull();
+  });
+
   it('shows nothing when no offer is current, and says how many earlier ones are kept', () => {
     const ledger = sourceLedger(experience([offer('old', 't1', { superseded: true })]), { at });
     expect(ledger.columns).toEqual([]);

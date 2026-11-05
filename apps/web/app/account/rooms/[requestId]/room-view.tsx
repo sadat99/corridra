@@ -140,7 +140,10 @@ export function RoomView({
     lenses && board && board.proposed > 0
       ? {
           words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
-          small: 'Tell the Corridra team which times work for you.',
+          // Only ask for what the room lets the person do: the reply is the question link beside it.
+          small: serviceRequestsEnabled
+            ? 'See the proposed times, then tell the Corridra team which work for you.'
+            : 'See the proposed times in Meetings.',
           act: 'lens',
           lens: trip ? 'trip' : 'compare',
           label: trip ? 'See Meetings' : 'See Buyers',
@@ -148,7 +151,9 @@ export function RoomView({
       : lenses && board && board.shortlisted > 0
         ? {
             words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
-            small: 'See how each buyer fits and how it is backed, then tell us whom to meet.',
+            small: serviceRequestsEnabled
+              ? 'See how each buyer fits and how it is backed, then tell us whom to meet.'
+              : 'See how each buyer fits and how it is backed.',
             act: 'lens',
             lens: 'compare',
             label: 'See Buyers',
@@ -156,8 +161,9 @@ export function RoomView({
         : !sell && lenses && quotes.length > 0
           ? {
               words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
-              small:
-                'See how each supplier is backed and what is missing, then tell us which to visit.',
+              small: serviceRequestsEnabled
+                ? 'See how each supplier is backed and what is missing, then tell us which to visit.'
+                : 'See how each supplier is backed and what is missing.',
               act: 'compare',
             }
           : hasReport && !link.savedResourceId

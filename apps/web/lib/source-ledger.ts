@@ -72,13 +72,19 @@ export function sourceLedger(
     cells.length > 1 && new Set(cells.map((c) => `${c.value ?? ''}|${c.sub ?? ''}`)).size > 1;
 
   const rows: LedgerRow[] = [];
-  const priceCells = cards.map((card, i) => ({
-    value: card.unitPrice,
-    sub:
-      card.total !== null
-        ? `${card.total} for ${value(i, 'Quantity') ?? 'the quoted quantity'}`
-        : undefined,
-  }));
+  // Every amount exactly as the supplier stated it: the unit price with its total under it, or, where only a
+  // total was stated, the total itself (guardian review of PR 314). Only a quote with neither says Not stated.
+  const quantity = (i: number) => value(i, 'Quantity') ?? 'the quoted quantity';
+  const priceCells = cards.map((card, i) =>
+    card.unitPrice !== null
+      ? {
+          value: card.unitPrice,
+          sub: card.total !== null ? `${card.total} for ${quantity(i)}` : undefined,
+        }
+      : card.total !== null
+        ? { value: card.total, sub: `Total for ${quantity(i)}; no unit price stated` }
+        : { value: null },
+  );
   rows.push({
     label: 'Original price',
     cells: priceCells,
