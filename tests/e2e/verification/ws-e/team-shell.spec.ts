@@ -19,6 +19,13 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   const sidebar = page.getByRole('navigation', { name: 'Team sections' });
   const toggle = page.getByRole('button', { name: 'Sections', exact: true });
   const phone = info.project.name !== 'w1280';
+  // Open the drawer only if it is closed, so a click can never toggle an open drawer shut.
+  const openSections = async () => {
+    if (!phone) return;
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(sidebar).toBeVisible();
+  };
   if (phone) {
     await expect(sidebar).toBeHidden();
     await toggle.click();
@@ -99,14 +106,16 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   for (const other of ['#workspace-research', '#workspace-meetings', '#workspace-delivery'])
     await expect(page.locator(other)).toHaveCount(0);
   await expect(page.locator('.ux-overview')).toHaveCount(0);
-  // The group holding the page is open and its section is the current one.
-  if (phone && !(await sidebar.isVisible())) await toggle.click();
+  // The group holding the page is open and its section is the current one. A navigation closes the phone
+  // drawer with a short slide: wait until it reports closed before reopening, not while it is still sliding.
+  if (phone) await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await openSections();
   await expect(
     sidebar.getByRole('link', { name: 'Missions and requirements', exact: true }),
   ).toHaveAttribute('aria-current', 'page');
 
   // Companies holds Sources and claims; All tools and settings holds the rest and the Owner page.
-  if (phone && !(await sidebar.isVisible())) await toggle.click();
+  await openSections();
   await sidebar.locator('summary', { hasText: 'Companies' }).click();
   await expect(
     sidebar.getByRole('link', { name: 'Sources and claims', exact: true }),
