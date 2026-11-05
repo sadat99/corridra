@@ -98,6 +98,33 @@
     gap: 0;
   }
 }
+@media (max-width: 700px) {
+  /* Phones: the drawer button is the list icon, not the word. Its accessible name is still "Menu": the word
+     stays in the button at zero size, and the icon is the same line icon as the navigation list. */
+  .ux-customer-header .ux-leftnav-opener {
+    position: relative;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 0;
+  }
+  .ux-customer-header .ux-leftnav-opener::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: var(--ux-menu-icon) center / 20px 20px no-repeat;
+    mask: var(--ux-menu-icon) center / 20px 20px no-repeat;
+  }
+}
+.ux-customer-header {
+  /* corridra-icon "list": M4 5h12M4 10h12M4 15h8, 1.5 px stroke, square ends */
+  --ux-menu-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 5h12M4 10h12M4 15h8'/%3E%3C/svg%3E");
+}
 @media (max-width: 480px) {
   /* The wordmark text goes; the logo mark stays and the link keeps its name. */
   .ux-customer-header .brand span {
