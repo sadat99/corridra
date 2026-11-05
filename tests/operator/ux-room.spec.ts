@@ -276,6 +276,14 @@ async function open(page: Page, options: Options = {}, answer: Answer = {}, repo
 }
 const lens = (page: Page, name: string) =>
   page.locator('.room-lenses').getByRole('button', { name });
+// Approved work rooms (owner, 5 Nov 2026): the Compare view opens on the side-by-side comparison; the cards,
+// the original table and every offer in full are one tap below it, unchanged.
+async function openFull(page: Page) {
+  await lens(page, 'Compare').click();
+  await page
+    .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
+    .click();
+}
 
 test('shows who and what the request is, where it stands and what the team said', async ({
   page,
@@ -285,11 +293,13 @@ test('shows who and what the request is, where it stands and what the team said'
     page.getByRole('heading', { name: 'Automatic fabric cutting machine' }),
   ).toBeVisible();
   await expect(page.getByText('China · Received')).toBeVisible();
-  await expect(page.locator('.room-emblem')).toHaveText('AF');
-  // MEETINGS is Visit. A delivered report lights Compare; no decision is ever claimed.
-  const road = page.locator('.mr-road');
-  await expect(road.locator('[aria-current="step"]')).toContainText('Visit');
-  await expect(road.getByText('Not tracked yet')).toHaveCount(1);
+  // MEETINGS is Visit. A delivered report lights Compare; no decision is ever claimed, and a stage with no
+  // record is a plain grey segment, never "Not tracked yet" (CX-06).
+  const stage = page.locator('.room-stage .mr-stage');
+  await expect(stage.locator('[aria-current="step"]')).toContainText('Visit');
+  await expect(stage.locator('li')).toHaveCount(6);
+  await expect(page.locator('.room-stage').getByText('Stage 4 of 6:')).toBeVisible();
+  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
   await expect(page.getByText('Meetings are being arranged for November.')).toBeVisible();
   await expect(page.getByText('We have shortlisted three suppliers.')).toHaveCount(0);
   await page.getByRole('button', { name: /Read Every Reply/ }).click();
@@ -331,14 +341,33 @@ test('without lenses there is no lens control, and without a report the Road doe
     page.getByRole('heading', { name: 'Automatic fabric cutting machine' }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Compare' })).toHaveCount(0);
-  await expect(page.locator('.mr-road').getByText('Not tracked yet')).toHaveCount(2);
+  // Without a report Compare is not lit: only Define and Find, the stages before Visit, are done.
+  const stage = page.locator('.room-stage .mr-stage');
+  await expect(stage.locator('li[data-state="done"]')).toHaveCount(2);
+  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
 });
 
-test('the Compare lens puts the verdict first, in cards, with the table one tap away', async ({
+test('the Compare lens puts the suppliers side by side with the verdict, the cards and table one tap away', async ({
   page,
 }) => {
   await open(page);
   await lens(page, 'Compare').click();
+  // The side-by-side comparison first: one column per supplier, original currency, missing terms said.
+  const ledger = page.locator('.ledger-table');
+  await expect(ledger.getByRole('columnheader')).toHaveCount(2);
+  await expect(ledger.locator('thead b[lang="zh"]')).toHaveText('绿野机械有限公司');
+  await expect(ledger.getByRole('row', { name: /^Can be compared/ })).toContainText(
+    'Missing: Lead time, Payment terms.',
+  );
+  await expect(ledger.locator('.ledger-badge[data-ok="true"]')).toHaveCount(1);
+  await expect(ledger.locator('.ledger-badge[data-ok="false"]')).toHaveCount(1);
+  await expect(ledger).toContainText('USD');
+  await expect(ledger).toContainText('Self-declared');
+  await expect(ledger.getByText('Not stated').first()).toBeVisible();
+  await expect(page.locator('.mr-quote')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
+    .click();
   const cards = page.locator('.mr-quote');
   await expect(cards).toHaveCount(2);
   await expect(cards.nth(0)).toContainText('Comparable on supplied terms');
@@ -360,7 +389,7 @@ test('the table keeps every original commercial term and names missing obligatio
   page,
 }) => {
   await open(page);
-  await lens(page, 'Compare').click();
+  await openFull(page);
   await page.getByRole('button', { name: 'Table' }).click();
   const matrix = page.locator('table.ux-comparison-matrix');
   for (const label of [
@@ -416,6 +445,12 @@ for (const [name, firstTerms, secondTerms] of [
     );
     await page.reload();
     await lens(page, 'Compare').click();
+    // The comparison says so first, for both suppliers, and the cards agree.
+    await expect(page.locator('.ledger-table .ledger-badge[data-ok="false"]')).toHaveCount(2);
+    await expect(page.locator('.ledger-table .ledger-badge[data-ok="true"]')).toHaveCount(0);
+    await page
+      .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
+      .click();
     const cards = page.locator('.mr-quote');
     await expect(cards).toHaveCount(2);
     for (const card of await cards.all()) await expect(card).toContainText('Not comparable yet');
@@ -475,8 +510,12 @@ test('speaks Bangla and says which language the region is in', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Corridra টিমের উত্তর' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'সংরক্ষিত অনুরোধ খুলুন' })).toBeVisible();
   await lens(page, 'তুলনা').click();
-  await expect(page.locator('.mr-quote').first()).toBeVisible();
-  // The report itself is English, so its region says so.
+  await expect(page.locator('.ledger-table')).toBeVisible();
+  // The report itself is English, so its region says so: the comparison and the cards below it.
+  await expect(page.locator('div[lang="en"] .ledger-table')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
+    .click();
   await expect(page.locator('div[lang="en"] .mr-quote').first()).toBeVisible();
 });
 
@@ -488,19 +527,31 @@ for (const width of [320, 390, 768, 1440]) {
     await open(page);
     for (const [name, view] of [
       ['Overview', null],
+      ['Compare', null],
       ['Compare', 'Cards'],
       ['Compare', 'Table'],
       ['Evidence', null],
     ] as const) {
       await lens(page, name).click();
-      if (view) await page.getByRole('button', { name: view }).click();
+      if (view) {
+        const full = page.getByRole('button', {
+          name: 'Show the Requirement, Shortlist and Every Offer',
+        });
+        if (await full.count()) await full.click();
+        await page.getByRole('button', { name: view }).click();
+      }
       await page.waitForTimeout(150);
       const wide = await page.evaluate((limit) => {
         const out: string[] = [];
         for (const el of Array.from(document.querySelectorAll('main *'))) {
           const r = el.getBoundingClientRect();
-          // The comparison table scrolls inside its own region by design; nothing else may be wider than the screen.
-          if (r.width > 0 && r.right > limit + 1 && !el.closest('.ux-comparison-scroll'))
+          // The comparison table, and on a phone the supplier cards, scroll inside their own labelled, focusable
+          // region by design; nothing else may be wider than the screen.
+          if (
+            r.width > 0 &&
+            r.right > limit + 1 &&
+            !el.closest('.ux-comparison-scroll, .ledger-scroll, .ledger-cards-scroll')
+          )
             out.push(
               `${el.tagName.toLowerCase()}.${(el as HTMLElement).className} ${Math.round(r.right)}`,
             );
@@ -1021,7 +1072,7 @@ test('shows nothing but the meetings: no money, offers, contacts, outcomes, evid
   ).toHaveCount(0);
   // The other parts of the report are still where they were in the other lenses.
   await lens(page, 'Compare').click();
-  await expect(page.locator('.mr-quote').first()).toBeVisible();
+  await expect(page.locator('.ledger-table')).toBeVisible();
   await lens(page, 'Evidence').click();
   await expect(page.getByRole('heading', { name: 'Import licence number' })).toBeVisible();
 });
@@ -1034,7 +1085,7 @@ test('switching between lenses asks for the report once', async ({ page }) => {
   });
   await open(page, { trip: true });
   await lens(page, 'Compare').click();
-  await expect(page.locator('.mr-quote').first()).toBeVisible();
+  await expect(page.locator('.ledger-table')).toBeVisible();
   await lens(page, 'Trip').click();
   await expect(page.getByRole('heading', { name: 'Your meetings and visits' })).toBeVisible();
   await lens(page, 'Evidence').click();

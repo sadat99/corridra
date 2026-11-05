@@ -7,7 +7,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export type RoomDetail = {
   id: string;
   available: boolean;
-  original: { objective?: string; market?: string } | null;
+  original: {
+    objective?: string;
+    market?: string;
+    marketCode?: string;
+    /** Where the customer's company is, as they wrote it in the brief: the start of the route chip. */
+    companyCountry?: string;
+  } | null;
   progress: null | {
     status: string;
     receivedAt: string;

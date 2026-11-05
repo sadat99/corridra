@@ -1,18 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import type { DeliveryReport } from '@corridra/delivery/report';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { formatDateTime } from '../../../../lib/ux/format';
 import { placeName, requestTitle } from '../../request-words';
 import { FactLabel, factLabels } from '../../../../components/fact-label';
+import { CorridraIcon } from '../../../../components/corridra-icon';
 import { useLanguage } from '../../../../components/language-provider';
-import { ModeLabel, Road, mrLabelsFor } from '../../../../components/mr';
+import { ModeLabel, StageBar, mrLabelsFor } from '../../../../components/mr';
+import { SourceLedger } from '../../../../components/source-ledger';
 import { fill } from '../../../../lib/i18n/fill';
 import { localeMeta } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
-import { emblemFor, roadRecords, type RoomLink } from '../../../../lib/room';
-import { SavedCommercialReport } from '../../missions/saved-commercial-report';
+import { roadRecords, type RoomLink } from '../../../../lib/room';
+import { classifyObjective } from '../../../../lib/work-items/classify';
+import { isCurrentOffer } from '../../../../lib/experience-offers';
+import { SavedCommercialReport, type ReportSection } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
 import { TripList } from './trip-list';
 import './room-view.css';
@@ -24,11 +29,22 @@ const lensKey: Record<Lens, MessageKey> = {
   evidence: 'room.lens.evidence',
   trip: 'room.lens.trip',
 };
+// The approved Source room names its views for the sourcing job (owner, 5 Nov 2026). Launch language is
+// English only, so these words carry lang="en" in every locale.
+const sourceLensWords: Record<Lens, string> = {
+  overview: 'Overview',
+  compare: 'Compare Quotes',
+  evidence: 'Evidence',
+  trip: 'Visit',
+};
+const journeyWords = { SOURCE: 'Sourcing', SELL: 'Selling', ORGANISE: 'Organising' } as const;
+const journeyKey = { SOURCE: 'source', SELL: 'sell', ORGANISE: 'organise' } as const;
 
 /**
- * One request in one place: who and what it is, where it stands (the Road), what the Corridra team
- * has said, and the lenses onto the delivered report. It composes pages that already exist and adds
- * no data: every action of the saved request page and the saved mission page stays one tap away.
+ * One request in one place (the approved work rooms, 5 Nov 2026): who and what it is, where it stands, the
+ * one next step, the views of the delivered report, and what the Corridra team has said. It composes pages
+ * that already exist and adds no data: every action of the saved request page and the saved mission page
+ * stays one tap away.
  */
 export function RoomView({
   requestId,
@@ -57,23 +73,106 @@ export function RoomView({
   const labels = useMemo(() => mrLabelsFor(locale), [locale]);
   const { html, dir } = localeMeta[locale];
   const { detail, state, retry } = useRoomDetail(requestId, subject, issuer);
+  // One read of the saved report serves every view: the report component tells the Room what it read.
+  const [report, setReport] = useState<{ data: DeliveryReport | null; status: string }>({
+    data: null,
+    status: 'loading',
+  });
+  const onReport = useCallback(
+    (data: DeliveryReport | null, status: string) => setReport({ data, status }),
+    [],
+  );
   const [lens, setLens] = useState<Lens>('overview');
   const [showAll, setShowAll] = useState(false);
+  const [fullReport, setFullReport] = useState(false);
 
   const original = detail?.original ?? null;
   // CQ-23: the same plain title as the requests list ("Sell in Spain").
   const title = requestTitle(original) ?? (original?.objective?.trim() || '…');
   const day = (value: string) => formatDateTime(value, { locale });
-  const emblem = emblemFor(title);
+  const family = classifyObjective(original?.objective);
+  const journey = family === 'UNCLASSIFIED' ? null : family;
+  const source = family === 'SOURCE';
+  // The route is the customer's own brief: where their company is, and the market they chose.
+  const from = original?.companyCountry?.trim();
+  const to = (original?.market ?? original?.marketCode)?.trim();
+  const route = from && to ? `${placeName(from)} → ${placeName(to)}` : null;
   const replies = detail?.progress
     ? [...detail.progress.replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
   const shown = showAll ? replies : replies.slice(0, 1);
   const hasReport = link.reportAvailable;
   const reportHref = link.savedResourceId ? `/account/missions/${link.savedResourceId}` : null;
+  const helpHref = `/account/service-requests/new?kind=request&ref=${encodeURIComponent(requestId)}`;
+  const status = detail?.progress?.status ?? null;
+  const subline = status
+    ? (labels.road.sublines[status as keyof typeof labels.road.sublines] ?? null)
+    : null;
+
+  // The one next step, from records only: quotes to compare, a report to save, or what the team is doing.
+  const experience = report.data?.missions[0]?.experience ?? null;
+  const quotes = experience
+    ? experience.quotations.filter((q) => isCurrentOffer(experience, q))
+    : [];
+  const lensWords = (item: Lens) => (source ? sourceLensWords[item] : say(lensKey[item]));
+  const lensLang = (item: Lens) =>
+    (source || item === 'trip') && locale !== 'en' ? 'en' : undefined;
+  const next: { words: string; small: string; act: 'compare' | 'library' | 'help' | 'request' } =
+    lenses && quotes.length > 0
+      ? {
+          words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
+          small:
+            'See how each supplier is backed and what is missing, then tell us which to visit.',
+          act: 'compare',
+        }
+      : hasReport && !link.savedResourceId
+        ? {
+            words: 'Your report is ready',
+            small: 'Save it from your Library to read and compare it here.',
+            act: 'library',
+          }
+        : {
+            words: subline ?? 'The Corridra team is working on your request',
+            small: replies[0]
+              ? `Latest reply ${day(replies[0].createdAt)}.`
+              : 'The Corridra team will tell you here when something needs you.',
+            act: serviceRequestsEnabled ? 'help' : 'request',
+          };
+
+  // Everything the report page shows for the comparison stays one tap away: the requirement, the shortlist,
+  // every offer with its evidence lens, the cards and the original table.
+  const fullToggle = (
+    <button
+      type="button"
+      className="text-link room-full"
+      aria-expanded={fullReport}
+      onClick={() => setFullReport((v) => !v)}
+    >
+      {fullReport
+        ? 'Hide the Requirement, Shortlist and Every Offer'
+        : 'Show the Requirement, Shortlist and Every Offer'}
+    </button>
+  );
+  const reportSection: ReportSection =
+    lens === 'overview'
+      ? 'none'
+      : lens === 'compare'
+        ? fullReport || (report.status !== 'ready' && report.status !== 'loading')
+          ? 'compare'
+          : 'none'
+        : lens;
+
+  const lensItems: Lens[] = trip
+    ? ['overview', 'compare', 'evidence', 'trip']
+    : ['overview', 'compare', 'evidence'];
 
   return (
-    <div className="room" lang={html} dir={dir}>
+    <div
+      className="room"
+      lang={html}
+      dir={dir}
+      data-journey={journey ? journeyKey[journey] : undefined}
+    >
       {state === 'loading' && <p role="status">{say('room.loading')}</p>}
       {state === 'denied' && (
         <div role="alert">
@@ -96,65 +195,141 @@ export function RoomView({
       {state === 'ready' && detail?.available && detail.progress && (
         <>
           <header className="room-head">
-            <span className="room-emblem" data-tone={emblem.tone} aria-hidden="true">
-              {emblem.initials}
-            </span>
-            <div>
-              <h2>{title}</h2>
-              <p>
-                {original?.market ? `${placeName(original.market)} · ` : ''}
-                {fill(say('room.received'), {
-                  date: day(detail.progress.receivedAt),
-                })}
-              </p>
+            <div className="room-tags" lang="en">
+              {journey ? (
+                <span className="room-tag" data-journey={journeyKey[journey]}>
+                  {journeyWords[journey]}
+                </span>
+              ) : null}
+              {route ? (
+                <span className="room-route">
+                  <CorridraIcon name="globe" />
+                  {route}
+                </span>
+              ) : null}
               <ModeLabel real={realCustomerInput()} labels={labels.mode} />
+            </div>
+            <h2 dir="auto">{title}</h2>
+            <p className="room-meta">
+              {original?.market ? `${placeName(original.market)} · ` : ''}
+              {fill(say('room.received'), {
+                date: day(detail.progress.receivedAt),
+              })}
+            </p>
+            <div className="room-stage">
+              <StageBar
+                status={detail.progress.status}
+                records={roadRecords(link)}
+                labels={labels.road}
+                name={title}
+                named
+              />
             </div>
           </header>
 
-          <Road status={detail.progress.status} records={roadRecords(link)} labels={labels.road} />
-
-          <section className="room-strip" aria-label={say('room.replies.heading')}>
-            <h3>{say('room.replies.heading')}</h3>
-            {replies.length === 0 ? (
-              <p>{say('room.replies.none')}</p>
-            ) : (
-              shown.map((reply) => (
-                <div key={reply.createdAt + reply.body.slice(0, 12)}>
-                  <p lang="en" dir="ltr">
-                    {reply.body}
-                  </p>
-                  <time dateTime={reply.createdAt}>{day(reply.createdAt)}</time>
-                </div>
-              ))
-            )}
-            {replies.length > 1 && (
-              <button type="button" className="text-link" onClick={() => setShowAll((v) => !v)}>
-                {showAll ? '−' : '+'} {say('room.replies.all')}
-              </button>
-            )}
+          <section className="room-next" aria-label="Your next step" lang="en">
+            <span className="room-next-mark" aria-hidden="true">
+              <CorridraIcon name="arrow" />
+            </span>
+            <span className="room-next-words">
+              <small>Your next step</small>
+              <b>{next.words}</b>
+              <span>{next.small}</span>
+            </span>
+            <span className="room-next-actions">
+              {next.act === 'compare' && serviceRequestsEnabled ? (
+                <Link prefetch={false} className="text-link" href={helpHref}>
+                  Ask a Question
+                </Link>
+              ) : null}
+              {next.act === 'compare' ? (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  onClick={() => setLens('compare')}
+                >
+                  Compare Quotes
+                </button>
+              ) : next.act === 'library' ? (
+                <Link
+                  prefetch={false}
+                  className="button button-primary"
+                  href="/account?view=results"
+                >
+                  Open Your Library
+                </Link>
+              ) : next.act === 'help' ? (
+                <Link prefetch={false} className="button button-primary" href={helpHref}>
+                  Ask a Question
+                </Link>
+              ) : (
+                <Link
+                  prefetch={false}
+                  className="button button-primary"
+                  href={`/account/requests/${requestId}`}
+                >
+                  Open the Request
+                </Link>
+              )}
+            </span>
           </section>
 
           {lenses && (
             <div className="room-lenses" role="group" aria-label={say('room.lens.overview')}>
-              {(trip
-                ? (['overview', 'compare', 'evidence', 'trip'] as const)
-                : (['overview', 'compare', 'evidence'] as const)
-              ).map((item) => (
+              {lensItems.map((item) => (
                 <button
                   key={item}
                   type="button"
                   className="room-lens"
                   aria-pressed={lens === item}
+                  data-count={item === 'compare' && quotes.length > 0 ? quotes.length : undefined}
                   onClick={() => setLens(item)}
                 >
-                  {item === 'trip' && locale !== 'en' ? (
-                    // An English placeholder until native review (D16), marked so it is read as English.
-                    <span lang="en">{say(lensKey[item])}</span>
-                  ) : (
-                    say(lensKey[item])
-                  )}
+                  {/* An English word until native review (D16), marked so it is read as English. */}
+                  <span lang={lensLang(item)}>{lensWords(item)}</span>
                 </button>
               ))}
+            </div>
+          )}
+
+          {(!lenses || lens === 'overview') && (
+            <section className="room-strip" aria-label={say('room.replies.heading')}>
+              <h3>{say('room.replies.heading')}</h3>
+              {replies.length === 0 ? (
+                <p>{say('room.replies.none')}</p>
+              ) : (
+                shown.map((reply) => (
+                  <div key={reply.createdAt + reply.body.slice(0, 12)}>
+                    <p lang="en" dir="ltr">
+                      {reply.body}
+                    </p>
+                    <time dateTime={reply.createdAt}>{day(reply.createdAt)}</time>
+                  </div>
+                ))
+              )}
+              {replies.length > 1 && (
+                <button type="button" className="text-link" onClick={() => setShowAll((v) => !v)}>
+                  {showAll ? '−' : '+'} {say('room.replies.all')}
+                </button>
+              )}
+            </section>
+          )}
+
+          {lenses && lens === 'compare' && link.savedResourceId && (
+            <div className="room-compare" lang="en" dir="ltr">
+              {report.status === 'loading' && <p role="status">Opening your approved report…</p>}
+              {report.status === 'ready' &&
+                (experience ? (
+                  <SourceLedger experience={experience} language={locale} more={fullToggle} />
+                ) : (
+                  <>
+                    <p className="ux-empty" role="status">
+                      No company shortlist or supplier quotation has been approved for this report
+                      yet.
+                    </p>
+                    {fullToggle}
+                  </>
+                ))}
             </div>
           )}
 
@@ -173,50 +348,52 @@ export function RoomView({
             </section>
           )}
 
-          {lenses && lens !== 'overview' && (
-            <div lang="en" dir="ltr">
-              {link.savedResourceId ? (
-                <SavedCommercialReport
-                  resourceId={link.savedResourceId}
-                  subject={subject}
-                  issuer={issuer}
-                  decisionsEnabled={decisionsEnabled}
-                  specificationConfirmationsEnabled={specificationConfirmationsEnabled}
-                  lenses
-                  section={lens}
-                  renderTrip={(itinerary) => <TripList itinerary={itinerary} locale={locale} />}
-                />
-              ) : (
-                <p className="ux-empty" role="status">
-                  {say(lens === 'trip' ? 'room.trip.noReport' : 'room.lens.none')}
-                </p>
+          {/* One report component for every view, always in this place, so the report is read once and
+              anything typed in it survives a switch. The Overview and the comparison summary draw nothing
+              from it (section none); the full comparison, Evidence and Trip draw their own part. A report
+              that could not be read shows the report's own message in the comparison. */}
+          {lenses && link.savedResourceId ? (
+            <div lang="en" dir="ltr" className="room-report">
+              <SavedCommercialReport
+                resourceId={link.savedResourceId}
+                subject={subject}
+                issuer={issuer}
+                decisionsEnabled={decisionsEnabled}
+                specificationConfirmationsEnabled={specificationConfirmationsEnabled}
+                lenses
+                section={reportSection}
+                renderTrip={(itinerary) => <TripList itinerary={itinerary} locale={locale} />}
+                onReport={onReport}
+              />
+            </div>
+          ) : lenses && lens !== 'overview' ? (
+            <p className="ux-empty" role="status">
+              {say(lens === 'trip' ? 'room.trip.noReport' : 'room.lens.none')}
+            </p>
+          ) : null}
+
+          {/* The original pages, on the Overview: one tap away from every view. */}
+          {(!lenses || lens === 'overview') && (
+            <div className="room-actions">
+              <Link prefetch={false} className="text-link" href={`/account/requests/${requestId}`}>
+                {say('room.open.request')}
+              </Link>
+              {serviceRequestsEnabled && (
+                <Link prefetch={false} className="text-link" href={helpHref}>
+                  {say('room.open.help')}
+                </Link>
               )}
+              {reportHref ? (
+                <Link prefetch={false} className="text-link" href={reportHref}>
+                  {say('room.open.report')}
+                </Link>
+              ) : hasReport ? (
+                <Link prefetch={false} className="text-link" href="/account?view=results">
+                  {say('room.open.library')}
+                </Link>
+              ) : null}
             </div>
           )}
-
-          <div className="room-actions">
-            <Link prefetch={false} className="text-link" href={`/account/requests/${requestId}`}>
-              {say('room.open.request')}
-            </Link>
-            {serviceRequestsEnabled && (
-              <Link
-                prefetch={false}
-                className="text-link"
-                href={`/account/service-requests/new?kind=request&ref=${encodeURIComponent(requestId)}`}
-              >
-                {say('room.open.help')}
-              </Link>
-            )}
-            {reportHref ? (
-              <Link prefetch={false} className="text-link" href={reportHref}>
-                {say('room.open.report')}
-              </Link>
-            ) : hasReport ? (
-              <Link prefetch={false} className="text-link" href="/account?view=results">
-                {say('room.open.library')}
-              </Link>
-            ) : null}
-          </div>
         </>
       )}
     </div>

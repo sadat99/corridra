@@ -61,6 +61,29 @@ read. With work on the page, the three shortcut tiles give way to the "Start a R
 "Check a Request Receipt" and "Open a Shared Mission" stay in All tools. Measured on 5 Nov 2026 with every role:
 1.00 desktop screen and 1.91 phone screens.
 
+**Work rooms (owner-approved mockups, 5 Nov 2026; Source built first in Wave 4).** Every room has the same
+four parts:
+
+1. A header: journey tag, route chip, title, received date and the named stage bar. The route chip is the
+   brief's company country to its market, such as "Bangladesh → China".
+2. One next step, with one main action.
+3. The journey's views as tabs.
+4. The open view.
+
+What each room shows:
+
+- **Source:** Overview, Compare Quotes, Evidence and Visit. Compare Quotes opens on the side-by-side
+  comparison: one column per supplier (one card each on a phone) and prices in the currency quoted, never
+  converted. The machinery obligations come first, and a missing term reads "Not stated". Each column shows
+  how the quote is backed and the comparison engine's own verdict with its reason. The requirement, the
+  shortlist, every offer, the cards and the original table stay one tap below.
+- **Sell:** buyers and meetings.
+- **Organise:** at a glance, plus what needs the organiser.
+
+The room reads the saved report once and adds no data. The page links stay on the Overview, and a stage with no
+record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop screen in every view and 1.13 to
+1.58 phone screens.
+
 ### Components (shared, in `components/ux/`, reused by every track)
 
 - Row-link list and table: the whole row is the target, with a visible focus ring, 44 px minimum rows, and status as a badge (a capsule is allowed for status only).
