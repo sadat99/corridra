@@ -152,3 +152,27 @@ describe('CX-02: Move keeps every destination it had', () => {
     expect(html).toContain('>Open<');
   });
 });
+
+describe('Home summary never claims more than the page could read (Codex review of PR 305)', () => {
+  it('says all caught up only when every source was read in full', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('You are all caught up.');
+  });
+
+  it('does not say all caught up when a source could not be read, a list was cut short or workspaces were left unread', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    for (const extra of [{ unreadable: true }, { partial: true }, { skippedWorkspaces: 2 }]) {
+      const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan', ...extra });
+      expect(html).not.toContain('all caught up');
+      expect(html).toContain('This page may not show everything that needs you yet.');
+    }
+  });
+
+  it('does not say everything else is moving when the list is incomplete', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan', partial: true });
+    expect(html).not.toContain('Everything else is moving');
+    expect(html).toContain('so far. This page may not show everything yet.');
+  });
+});

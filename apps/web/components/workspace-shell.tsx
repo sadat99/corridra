@@ -14,7 +14,7 @@ export function WorkspaceShell({
   className?: string;
   /** A small label above the title. Customer pages show none (customer experience spec). */
   eyebrow?: string;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   compact?: boolean;
   /** Navigation shown under the heading, for example the customer tabs. */

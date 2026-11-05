@@ -27,6 +27,10 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
   - Inbox as an icon with an unread count;
   - an account menu holding name and email, language, "Corridra website", the privacy notice and Sign out.
   - No bordered text buttons in the header.
+- **Owner-approved frame, 5 November 2026 (supersedes the header placement above from 1024 px):**
+  - the left bar is fixed to the window edge with the brand at its top, the person's workspace card under it and, at its foot, Help and the signed-in person (initials, name, email) holding the same account menu;
+  - the slim header over the content shows the page path ("Workspace / Home"), Inbox with its count and the one primary "New Request";
+  - below 1024 px the header keeps the account menu and Help, and the bar is the drawer.
 - **Page header:** a Newsreader title, at most one line of description, and the page's one primary action on the right. No eyebrow.
 - **Privacy line:** "Your work stays private to the people given access" becomes a quiet line in the account menu and the footer, never an amber banner.
 - **Help dock:** stays, but never covers content. Reserve its space, or move Help into the account menu on wide screens.

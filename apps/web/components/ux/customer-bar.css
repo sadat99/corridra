@@ -44,6 +44,13 @@
   text-decoration: none;
   white-space: nowrap;
 }
+.ux-bar-primary {
+  gap: var(--space-2);
+}
+.ux-bar-primary-icon {
+  width: 18px;
+  height: 18px;
+}
 .ux-bar-primary:hover {
   background: var(--brand-hover);
 }
