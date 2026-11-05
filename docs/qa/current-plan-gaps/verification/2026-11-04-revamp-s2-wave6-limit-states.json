@@ -1,0 +1,60 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 6 second slice, the rate-limit state on every listed customer screen (Q-05) and the Q-01/Q-04/Q-08 notes",
+  "kind": "Every customer account screen that loads or sends a request now says plainly when the server reports too many requests (HTTP 429): \"The request limit was reached. Try again later.\" One failing test per screen first. No gap status is changed. No language work.",
+  "findings": [],
+  "findingsNote": "No row in docs/qa/current-plan-gaps/findings.json is changed.",
+  "status": "Built on branch revamp/customer over main after PR 285. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "defectsProvedAndFixed": [
+    "A 429 on first load showed the screen's general failure words (\"could not be loaded. Try again.\" and similar, which invite an immediate retry) on: saved missions, assigned missions (delivered to you), decision history, saved commercial report, specification confirmation, workspaces, team, request detail and the new service request screen. Nine tests, each failed first, each now passes with the limit line.",
+    "One fix point for five of them: savedMissionRead (saved-missions.tsx) now reads 429 as a distinct 'limit' reason; saved missions, assigned missions, decision history, saved commercial report and request detail show the limit line for it. specification-confirmation.tsx shows it on its load. Workspaces and team map 429 themselves.",
+    "One fix point for the service request screens: problemText (service-request-client.ts) returns the limit line for 429, so the new request, request detail, request list and the billing sections that use it share the wording. The new service request screen has a test; the others share the function and have no separate test.",
+    "Saving an invitation (saved-missions.tsx): a 429 on the save now shows the limit line and keeps the retry. Test failed first (confirmed by removing the fix and seeing it fail)."
+  ],
+  "foundNotFixed": [
+    "A 429 while sending from three actions still gets the general words: accepting a delivery (assigned-missions.tsx), answering a report (saved-commercial-report.tsx) and confirming a specification (specification-confirmation.tsx). Each needs a richer fixture than this slice built, so no failing test yet and no change; the general words there already tell the person to retry the same command, which is safe. Proposed as a small follow-up if the Conductor wants it.",
+    "problemText also serves list and detail service-request screens and the billing sections; only the new service request screen has its own 429 test.",
+    "Q-01 (keyboard, focus to heading, error summary): not swept screen by screen in this slice. Existing specs already press Tab and assert focus on the guided request, customer requests, workspaces and saved commercial report screens, and the leave and join controls move focus to their alert. No new finding.",
+    "Q-04 (right to left): the room and the move screens set lang and dir from the content language. tests/operator/ux-room.spec.ts asserts dir for every locale (rtl for Arabic) and tests/operator/ux-move.spec.ts asserts rtl. Overlap and clipping in right to left were not measured separately. No other customer screen renders translated content. No new test."
+  ],
+  "q08Performance": {
+    "recorded": "First-load uncompressed JavaScript bytes per customer route, read from the production build's own report (apps/web/.next/diagnostics/route-bundle-stats.json), build of head 3d15a0f (PR 285). This slice adds only strings and one small file, so it does not change these.",
+    "bytes": {
+      "/account/request/[workspaceId]": 985499,
+      "/account/rooms/[requestId]": 857841,
+      "/account": 856207,
+      "/account/missions/[resourceId]": 837849,
+      "/account/drafts/[workspaceId]": 795902,
+      "/account/billing/[workspaceId]": 789937,
+      "/account/requests/[requestId]": 778481,
+      "/account/profile/[workspaceId]": 777659,
+      "/account/service-requests/[workspaceId]/[requestId]": 776928,
+      "/account/notifications": 760396,
+      "/account/move": 651325,
+      "/account/service-requests/new": 645650,
+      "/account/service-requests/[workspaceId]": 642981,
+      "/account/companies": 642822,
+      "/account/all-tools": 634205,
+      "/account/billing": 634205,
+      "/account/profile": 634205,
+      "/account/service-requests": 634205
+    },
+    "notRecorded": "Time to the main heading and largest contentful paint at 390 with 4x CPU throttling: not measured. Every customer route needs a signed-in customer, and the production-build verification server (scripts/qa/verification-server.ts) signs in an operator only, so no customer route can be loaded and timed on a production build in this environment. No number was invented and no performance fix was made."
+  },
+  "changedFiles": [
+    "apps/web/app/account/saved-missions.tsx",
+    "apps/web/app/account/assigned-missions.tsx",
+    "apps/web/app/account/missions/decision-history.tsx",
+    "apps/web/app/account/missions/saved-commercial-report.tsx",
+    "apps/web/app/account/missions/specification-confirmation.tsx",
+    "apps/web/app/account/customer-workspaces.tsx",
+    "apps/web/app/account/customer-workspace-team.tsx",
+    "apps/web/app/account/requests/request-detail.tsx",
+    "apps/web/app/account/service-requests/service-request-client.ts",
+    "tests/operator/revamp-wave6-customer.spec.ts (10 cases added)"
+  ],
+  "receipts": {
+    "operator": "tests/operator/revamp-wave6-customer.spec.ts: 19 passed (9 from PR 285 plus 10 new). The 9 first-load cases failed first, each on the screen's old general words, after confirming each screen mounts and shows them. Existing specs for the touched components pass: specification-confirmation, customer decisions, customer delivery, customer request detail, customer workspaces, saved commercial, service requests, workspace team, workspace invitation and member roles (121 together with the new file at the time of the run)."
+  },
+  "notRun": ["Time to heading and largest contentful paint (Q-08).", "A deployed-build run."]
+}

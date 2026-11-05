@@ -3,6 +3,7 @@ import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode'
 import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayDate } from '@corridra/domain/locale';
+import { limitWords } from '../../lib/account-limit';
 export type SavedMissionScope = { subject: string; issuer: string };
 type Item = {
   id: string;
@@ -34,7 +35,9 @@ export async function savedMissionRead(response: Response) {
         ? 'denied'
         : response.status === 503
           ? 'unavailable'
-          : 'failed',
+          : response.status === 429
+            ? 'limit'
+            : 'failed',
     );
   return response.json() as Promise<unknown>;
 }
@@ -98,7 +101,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
             setBusy(false);
             setPending(null);
             setStatus(
-              error instanceof Error && ['denied', 'unavailable'].includes(error.message)
+              error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
                 ? error.message
                 : 'failed',
             );
@@ -194,7 +197,9 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
           setStatus('denied');
         } else
           setNotice(
-            'Saving could not be confirmed. Retry the same invitation or refresh your saved list before starting again.',
+            error instanceof Error && error.message === 'limit'
+              ? limitWords
+              : 'Saving could not be confirmed. Retry the same invitation or refresh your saved list before starting again.',
           );
       }
     } finally {
@@ -283,6 +288,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
       {status === 'failed' && (
         <p role="alert">Your saved commercial missions could not be loaded. Try again.</p>
       )}
+      {status === 'limit' && <p role="alert">{limitWords}</p>}
       {status === 'ready' && data?.missions.length === 0 && (
         <p className="ux-empty">No commercial mission invitations saved yet.</p>
       )}

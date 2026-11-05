@@ -9,6 +9,7 @@ import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode'
 import type { z } from 'zod';
 import { SpecificationFields } from '../../../components/specification-fields';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
+import { limitWords } from '../../../lib/account-limit';
 type Props = SavedMissionScope & { resourceId: string };
 export function SpecificationConfirmation(props: Props) {
   return (
@@ -87,7 +88,9 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
         setMessage(
           error instanceof Error && error.message === 'unavailable'
             ? 'Specification confirmation is not available yet.'
-            : 'Your current access could not be checked. Reload before confirming.',
+            : error instanceof Error && error.message === 'limit'
+              ? limitWords
+              : 'Your current access could not be checked. Reload before confirming.',
         );
     } finally {
       if (!task.signal.aborted) setBusy(false);

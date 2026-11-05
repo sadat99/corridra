@@ -14,6 +14,7 @@ import { StatusChip } from '../../../components/ux/status-chip';
 import { customerStatusLabel } from '../../../lib/ux/customer-road';
 import { formatDate, formatDateTime } from '../../../lib/ux/format';
 import { groupFields, placeName, requestTitle } from '../request-words';
+import { limitWords } from '../../../lib/account-limit';
 
 const displayDate = (value: string) => formatDateTime(value);
 
@@ -175,7 +176,9 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
               ? 'denied'
               : response.status === 503
                 ? 'unavailable'
-                : 'failed',
+                : response.status === 429
+                  ? 'limit'
+                  : 'failed',
           );
         const next = checked(await response.json(), requestId);
         if (!pending.signal.aborted) {
@@ -187,7 +190,7 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
         if (!pending.signal.aborted) {
           setDetail(null);
           setStatus(
-            error instanceof Error && ['denied', 'unavailable'].includes(error.message)
+            error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
               ? error.message
               : 'failed',
           );
@@ -251,6 +254,7 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
         </p>
       )}
       {status === 'failed' && <p role="alert">Your request could not be loaded. Try again.</p>}
+      {status === 'limit' && <p role="alert">{limitWords}</p>}
       {status === 'ready' &&
         detail &&
         (!detail.available ? (

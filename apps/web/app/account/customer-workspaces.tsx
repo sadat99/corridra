@@ -8,9 +8,11 @@ import { CustomerWorkspaceTeam } from './customer-workspace-team';
 import { RefreshButton } from './refresh-button';
 import { CustomerWorkspaceLeave } from './customer-workspace-leave';
 import { CompanyLinkLine, useCompanyLinkOverview } from './company-link-status';
+import { limitWords } from '../../lib/account-limit';
 
 type Draft = { version: 1; commandId: string; name: string };
-type Status = 'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'error';
+type Status =
+  'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'limit' | 'error';
 // UX-07: one primary action per workspace; the other actions sit in this "More" menu (44 px targets).
 const moreSummary = { minHeight: 44, cursor: 'pointer', listStyle: 'none' } as const;
 const moreList = {
@@ -65,13 +67,16 @@ function failure(status: number): Status {
         ? 'changed'
         : status === 503
           ? 'unavailable'
-          : 'error';
+          : status === 429
+            ? 'limit'
+            : 'error';
 }
 const messages: Record<Exclude<Status, 'loading' | 'ready'>, string> = {
   'signed-out': 'Sign in again to see your workspaces.',
   denied: 'This account cannot use workspaces yet.',
   changed: 'Your account or saved request changed. Reload your account before continuing.',
   unavailable: 'Workspaces are not available right now.',
+  limit: limitWords,
   error: 'Your workspaces could not be loaded. Try again.',
 };
 

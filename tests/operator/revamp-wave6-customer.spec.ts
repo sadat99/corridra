@@ -20,6 +20,15 @@ test.beforeAll(async () => {
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
       import{NotificationsForm}from ${JSON.stringify(resolve('apps/web/app/account/notifications/notifications-form.tsx'))};
+      import{SavedMissions}from ${JSON.stringify(resolve('apps/web/app/account/saved-missions.tsx'))};
+      import{AssignedMissions}from ${JSON.stringify(resolve('apps/web/app/account/assigned-missions.tsx'))};
+      import{DecisionHistory}from ${JSON.stringify(resolve('apps/web/app/account/missions/decision-history.tsx'))};
+      import{SavedCommercialReport}from ${JSON.stringify(resolve('apps/web/app/account/missions/saved-commercial-report.tsx'))};
+      import{SpecificationConfirmation}from ${JSON.stringify(resolve('apps/web/app/account/missions/specification-confirmation.tsx'))};
+      import{CustomerWorkspaces}from ${JSON.stringify(resolve('apps/web/app/account/customer-workspaces.tsx'))};
+      import{CustomerWorkspaceTeam}from ${JSON.stringify(resolve('apps/web/app/account/customer-workspace-team.tsx'))};
+      import{CustomerRequestDetail}from ${JSON.stringify(resolve('apps/web/app/account/requests/request-detail.tsx'))};
+      import{ServiceRequestNew}from ${JSON.stringify(resolve('apps/web/app/account/service-requests/service-request-new.tsx'))};
       import{CustomerWorkspaceInvitation}from ${JSON.stringify(resolve('apps/web/app/account/customer-workspace-invitation.tsx'))};
       import{CustomerWorkspaceLeave}from ${JSON.stringify(resolve('apps/web/app/account/customer-workspace-leave.tsx'))};
       const query=new URLSearchParams(location.search);
@@ -28,7 +37,16 @@ test.beforeAll(async () => {
       window.__events=[];
       createRoot(document.getElementById('fixture')).render(
         <main className="operator-page ux-workspace"><h1>Wave 6 fixture</h1>
-        {screen==='invite'
+        {screen==='saved'?<SavedMissions subject="synthetic-alice" issuer=${JSON.stringify(issuer)}/>
+          :screen==='assigned'?<AssignedMissions subject="synthetic-alice" issuer=${JSON.stringify(issuer)}/>
+          :screen==='history'?<DecisionHistory subject="synthetic-alice" issuer=${JSON.stringify(issuer)} resourceId="6f1d3a52-8c1e-4b3a-9d7e-2f4a5b6c7d8e"/>
+          :screen==='report'?<SavedCommercialReport subject="synthetic-alice" issuer=${JSON.stringify(issuer)} resourceId="6f1d3a52-8c1e-4b3a-9d7e-2f4a5b6c7d8e"/>
+          :screen==='spec'?<SpecificationConfirmation subject="synthetic-alice" issuer=${JSON.stringify(issuer)} resourceId="6f1d3a52-8c1e-4b3a-9d7e-2f4a5b6c7d8e"/>
+          :screen==='workspaces'?<CustomerWorkspaces subject="synthetic-alice" issuer=${JSON.stringify(issuer)}/>
+          :screen==='team'?<CustomerWorkspaceTeam workspace={props.workspace} subject="synthetic-alice" issuer=${JSON.stringify(issuer)} onDenied={(s)=>window.__events.push('denied:'+s)}/>
+          :screen==='request'?<CustomerRequestDetail subject="synthetic-alice" issuer=${JSON.stringify(issuer)} requestId="6f1d3a52-8c1e-4b3a-9d7e-2f4a5b6c7d8e"/>
+          :screen==='service-new'?<ServiceRequestNew subject="synthetic-alice" issuer=${JSON.stringify(issuer)} kind="request" contextRef="6f1d3a52-8c1e-4b3a-9d7e-2f4a5b6c7d8e" workspaceId={null}/>
+          :screen==='invite'
           ?<CustomerWorkspaceInvitation subject="synthetic-alice" issuer=${JSON.stringify(issuer)} onJoined={()=>window.__events.push('joined')} onDenied={(s)=>window.__events.push('denied:'+s)}/>
           :screen==='leave'
           ?<CustomerWorkspaceLeave workspace={props.workspace} subject="synthetic-alice" issuer=${JSON.stringify(issuer)} onLeft={(id)=>window.__events.push('left:'+id)} onDenied={(s)=>window.__events.push('denied:'+s)}/>
@@ -281,3 +299,57 @@ for (const width of [320, 390])
       }
     },
   );
+
+// Q-05 429 when a screen first loads: every listed screen says the limit was reached and to try later.
+const loads: { key: string; name: string; open?: string; role?: 'button' | 'text' }[] = [
+  { key: 'saved', name: 'saved missions' },
+  { key: 'assigned', name: 'assigned missions' },
+  { key: 'history', name: 'decision history', open: 'Load reviewed decisions', role: 'button' },
+  { key: 'report', name: 'saved commercial report' },
+  {
+    key: 'spec',
+    name: 'specification confirmation',
+    open: 'Review current requirements',
+    role: 'button',
+  },
+  { key: 'workspaces', name: 'workspaces' },
+  { key: 'team', name: 'team', open: 'Manage team', role: 'text' },
+  { key: 'request', name: 'request detail' },
+  { key: 'service-new', name: 'new service request' },
+];
+test.describe('Q-05 429 on first load', () => {
+  for (const { key, name, open, role } of loads)
+    test('Q-05 429: ' + name + ' says the limit was reached and to try later', async ({ page }) => {
+      await page.route('**/api/**', (route) =>
+        route.fulfill({ status: 429, contentType: 'application/json', body: '{}' }),
+      );
+      await page.goto(
+        `${origin}/?screen=${key}&props=${encodeURIComponent(JSON.stringify({ workspace: { ...member, role: 'owner' } }))}`,
+      );
+      if (open && role === 'button') await page.getByRole('button', { name: open }).click();
+      if (open && role === 'text') await page.getByText(open, { exact: true }).click();
+      await expect(page.getByText(limitLine).first()).toBeVisible({ timeout: 5000 });
+    });
+});
+
+test('Q-05 429: saving an invitation says the limit was reached and to try later, and keeps the retry', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-saved-missions**', (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 429, contentType: 'application/json', body: '{}' })
+      : route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ synthetic: true, missions: [], nextAfter: null }),
+        }),
+  );
+  await page.goto(`${origin}/?screen=saved`);
+  await page.getByText('Save an invitation', { exact: true }).click();
+  await page
+    .getByLabel('Private client mission invitation')
+    .fill(`${origin}/client#${'a'.repeat(64)}`);
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: /^Save/ }).last().click();
+  await expect(page.getByText(limitLine).first()).toBeVisible();
+});
