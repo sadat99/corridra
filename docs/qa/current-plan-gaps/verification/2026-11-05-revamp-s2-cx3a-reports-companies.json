@@ -1,0 +1,34 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 3a, Reports on the shared sub-tabs and Companies as an empty state and a list table",
+  "kind": "Reports and Companies to docs/revamp/specs/customer-experience.md (pages table); uses the shared SubTabs and EmptyState in components/ux (nothing forked).",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added.",
+  "status": "Built on branch revamp/customer over main d3c48c50 (PR 309). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/app/account/reports-tabs.tsx (Delivered, Saved Missions, Shared With Me; #customer-missions opens Delivered and #saved-commercial-missions opens Saved Missions; any element inside a panel opens its tab)",
+    "apps/web/app/account/companies/company-table.css",
+    "tests/integration/revamp-cx3a-reports.test.ts (4)",
+    "docs/design-system/evidence/revamp-cx3a (after screenshots of the five customer pages at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: the Reports view is ReportsTabs. Delivered holds the reports for the person's requests and the missions delivered to them; Saved Missions holds the saved missions and the Browse Approved Companies link; Shared With Me holds the shared missions. The ids results, customer-missions and saved-commercial-missions are kept",
+    "apps/web/app/account/companies/company-portfolio.tsx and page.tsx: with nothing approved the page is an empty state (icon, the existing sentence, one action: Manage Company Profiles when profiles are on) with no back link and no Refresh; with companies it is a table (company, country, approved reports, request help) and every report context stays openable in its row"
+  ],
+  "decisions": {
+    "tests": "tests/operator/v3-customer-companies-ui.spec.ts: the company name is now a row header, not a heading, so the same assertions use rowheader; the empty case also asserts the one action and the absence of the back link and Refresh. No assertion was weakened, skipped or deleted.",
+    "deferred": "The single 'Open an invitation' dialog that replaces the paste fields, and data that loads on open, are CX PR 3b; the Account settings tabs and moving 'Manage your work' are CX PR 3c.",
+    "emptyNote": "A report count that is unavailable still shows its one quiet line beside the empty state, because saying nothing would hide a gap."
+  },
+  "receipts": {
+    "integration": "revamp-cx3a-reports.test.ts written red first (module missing), then green; title-case, work-screen, requests-tabs and teaching-layer tests: 71 passed.",
+    "operator": "Companies spec written red first (two failures), then 9 passed including axe at the three widths; delivery, saved commercial, requests, requests tabs and CRUD-A specs pass.",
+    "length": "customer-page-length.spec.ts on a production build: Home 1.0, Requests 1.0, Reports 1.0 screens at 390 and 1440 (empty seed); Account stays reported (1.58 at 390, 1.18 at 1440) until CX PR 3c."
+  },
+  "notRun": [
+    "Reports tabs on a production build with real issuers: the verification seed has none, so the tabs are covered by the integration test and the shared sub-tabs tests.",
+    "Companies on a production build: the verification server has the companies switch off.",
+    "A screen reader walk-through."
+  ],
+  "sensitive": "No. Navigation and layout only; no authority, read or write changes."
+}

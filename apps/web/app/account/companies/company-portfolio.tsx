@@ -2,7 +2,9 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { EmptyState } from '../../../components/ux/empty-state';
+import './company-table.css';
 type Context = {
   resourceId: string;
   targetId: string;
@@ -26,7 +28,13 @@ type Page = {
   expiresAt: string | null;
   synthetic: boolean;
 };
-type Props = { subject: string; issuer: string; serviceRequestsEnabled?: boolean };
+type Props = {
+  subject: string;
+  issuer: string;
+  serviceRequestsEnabled?: boolean;
+  /** The one action of the empty state (the page passes a link to the company profiles when they are on). */
+  emptyAction?: ReactNode;
+};
 const uuid = (s: unknown): s is string =>
   typeof s === 'string' &&
   /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(s);
@@ -100,7 +108,7 @@ function validPage(value: unknown): value is Page {
 export function CompanyPortfolio(props: Props) {
   return <ScopedPortfolio key={props.issuer + ':' + props.subject} {...props} />;
 }
-function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Props) {
+function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, emptyAction }: Props) {
   const [rows, setRows] = useState<Company[]>([]),
     [next, setNext] = useState<string | null>(null),
     [scopes, setScopes] = useState(0),
@@ -255,14 +263,18 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
         .includes(search),
     ),
   );
+  // Nothing approved to list: the page shows an empty state and nothing to go back to or refresh.
+  const empty = status === 'ready' && rows.length === 0;
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
       aria-label="Your approved company portfolio"
     >
-      <a className="text-link ux-back" href="/account#saved-commercial-missions">
-        Back to my commercial missions
-      </a>
+      {!empty && (
+        <a className="text-link ux-back" href="/account#saved-commercial-missions">
+          Back to my commercial missions
+        </a>
+      )}
       <p>
         {realCustomerInput()
           ? 'Your submitted information. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'
@@ -285,11 +297,13 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
       )}
       {status === 'ready' && (
         <>
-          <p className="ux-summary">
-            {rows.length} approved {rows.length === 1 ? 'company' : 'companies'} from {scopes} saved
-            mission {scopes === 1 ? 'report' : 'reports'} checked.
-            {next ? ' More mission reports have not been loaded.' : ''}
-          </p>
+          {!empty && (
+            <p className="ux-summary">
+              {rows.length} approved {rows.length === 1 ? 'company' : 'companies'} from {scopes}{' '}
+              saved mission {scopes === 1 ? 'report' : 'reports'} checked.
+              {next ? ' More mission reports have not been loaded.' : ''}
+            </p>
+          )}
           {unavailable > 0 && (
             <p>
               {unavailable} saved {unavailable === 1 ? 'report is' : 'reports are'} unavailable. No
@@ -306,53 +320,76 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
               />
             </label>
           )}
-          {shown.length === 0 && (
-            <p className="ux-empty">
-              {rows.length
-                ? 'No loaded companies match this search.'
-                : 'No companies are approved in these saved mission reports yet.'}
-            </p>
+          {empty && (
+            <EmptyState icon="company" action={emptyAction}>
+              No companies are approved in these saved mission reports yet.
+            </EmptyState>
           )}
-          {shown.slice(0, 50).map((company) => (
-            <article className="detail-card" key={company.id}>
-              <h2>{company.contexts[0].company}</h2>
-              <p>
-                {company.contexts.length} approved{' '}
-                {company.contexts.length === 1 ? 'report context' : 'report contexts'}
-              </p>
-              {serviceRequestsEnabled && (
-                <p>
-                  <a
-                    className="text-link"
-                    href={
-                      '/account/service-requests/new?kind=company&ref=' +
-                      encodeURIComponent(company.id)
-                    }
-                  >
-                    Request help with this company
-                  </a>
-                </p>
-              )}
-              {company.contexts.map((context) => (
-                <details key={context.resourceId + ':' + context.targetId}>
-                  <summary>{context.missionTitle}</summary>
-                  <p>
-                    Approved name: {context.company} ({context.country})
-                  </p>
-                  <p>{context.objective}</p>
-                  <p>
-                    Fit: {context.fit.toLowerCase()} · {context.rationale}
-                  </p>
-                  <p>Uncertainty: {context.uncertainty}</p>
-                  <p>Evidence gaps: {context.gaps}</p>
-                  <p>{context.verification}</p>
-                  <a className="text-link" href={'/account/missions/' + context.resourceId}>
-                    Open approved commercial report
-                  </a>
-                </details>
-              ))}
-            </article>
-          ))}
+          {rows.length > 0 && shown.length === 0 && (
+            <p className="ux-empty">No loaded companies match this search.</p>
+          )}
+          {shown.length > 0 && (
+            <table className="ux-co-table">
+              <caption className="sr-only">Approved companies</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Company</th>
+                  <th scope="col">Country</th>
+                  <th scope="col">Approved Reports</th>
+                  {serviceRequestsEnabled && (
+                    <th scope="col">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {shown.slice(0, 50).map((company) => (
+                  <tr key={company.id}>
+                    <th scope="row">{company.contexts[0].company}</th>
+                    <td>{company.contexts[0].country}</td>
+                    <td>
+                      <p>
+                        {company.contexts.length} approved{' '}
+                        {company.contexts.length === 1 ? 'report context' : 'report contexts'}
+                      </p>
+                      {company.contexts.map((context) => (
+                        <details key={context.resourceId + ':' + context.targetId}>
+                          <summary>{context.missionTitle}</summary>
+                          <p>
+                            Approved name: {context.company} ({context.country})
+                          </p>
+                          <p>{context.objective}</p>
+                          <p>
+                            Fit: {context.fit.toLowerCase()} · {context.rationale}
+                          </p>
+                          <p>Uncertainty: {context.uncertainty}</p>
+                          <p>Evidence gaps: {context.gaps}</p>
+                          <p>{context.verification}</p>
+                          <a className="text-link" href={'/account/missions/' + context.resourceId}>
+                            Open approved commercial report
+                          </a>
+                        </details>
+                      ))}
+                    </td>
+                    {serviceRequestsEnabled && (
+                      <td className="ux-co-actions">
+                        <a
+                          className="text-link"
+                          href={
+                            '/account/service-requests/new?kind=company&ref=' +
+                            encodeURIComponent(company.id)
+                          }
+                        >
+                          Request help with this company
+                        </a>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
           {shown.length > 50 && (
             <p>Showing the first 50 matches. Narrow the search to find another loaded company.</p>
           )}
@@ -371,7 +408,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
           )}
         </>
       )}
-      {status !== 'loading' && (
+      {status !== 'loading' && !empty && (
         <button
           type="button"
           className="text-link"
