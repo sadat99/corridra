@@ -35,6 +35,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     const email = `ux02-${randomUUID()}@example.invalid`;
     await page.setViewportSize({ width: 390, height: 1000 });
     await page.goto('http://127.0.0.1:3450/corridors');
+    await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
     await openFineTune(page);
     await page
       .getByRole('combobox', { name: "I'm trying to" })
