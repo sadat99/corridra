@@ -445,11 +445,15 @@ export function ExecutionNetwork({
         <button
           className="text-link"
           disabled={busy}
-          onClick={() =>
+          aria-busy={busy}
+          onClick={() => {
+            if (busy) return;
+            setBusy(true);
             void request('network')
               .then(setData)
               .catch((e) => setMessage(e.message))
-          }
+              .finally(() => setBusy(false));
+          }}
         >
           Refresh execution work
         </button>

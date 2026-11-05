@@ -1,0 +1,47 @@
+{
+  "recordedOn": "2026-11-04",
+  "track": "Revamp S4 Staff, Contributor, Recipient (branch revamp/staff)",
+  "kind": "Wave 6 (docs/revamp/specs/wave6-quality.md, Q-01 to Q-06) on the team workspace, the Owner page and the contributor board. Written by S4; the Conductor folds it into the ledger and decides any gap status.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed and no status in findings.json is touched. GAP-050 (busy actions) has the evidence listed below; the Conductor decides.",
+  "sensitive": "no: presentation and copy only; no auth, session, tenant, money, consent, token or cookie code touched",
+  "tests": {
+    "newSpec": "tests/e2e/verification/ws-e/team-quality.spec.ts (10 tests, one owner sign-in, runs once at 1280 and switches widths itself)",
+    "Q-01": "Tab visits every control with a visible focus ring and never repeats an element, on Today, Missions, Access and audit and the Owner page; a view change by # link lands inside its section. Passed with no change.",
+    "Q-02": "No sideways scroll and no control beyond the edge at 320 and at 640 (1280 at 200 percent zoom) on Today, all 18 sections and the Owner page. Passed with no change. Contributor board: 320 added to the existing width loop of tests/operator/real-network-work.spec.ts (empty, assigned and submitted states, with axe).",
+    "Q-03": "axe wcag2a and wcag2aa clean at 390 and 1440 on Today, all 18 section addresses and the Owner page (40 page loads). Passed with no change. Contributor board axe at 320, 390 and 1440 in the existing spec.",
+    "Q-04": "With Arabic chosen the shell is dir=rtl, the sidebar mirrors to the right on wide screens, and nothing overlaps, leaves the screen or scrolls sideways at 390 and 1280. Only the sidebar renders translated words today; no new translated string. A first run reported overlaps that were links inside closed groups, which the browser still lays out; the check now ignores them (screenshot confirmed a clean mirrored layout).",
+    "Q-05": "Today, the workspace read and the Missions section each get honest words for 503, 403, 429 and an offline request, with a retry where one helps, plus a sweep that fails every section's data reads (no blank area, no false zero) and a click-to-load check for Access and audit and Workspace members. The contributor board is checked for 503, 429 and offline refresh wording in the existing flow, ending in a working refresh that clears the interruption.",
+    "Q-06": "9 read and load actions exercised by behaviour, each on a single and a double click with the request slowed (the double click must send what one click sends and the button must be disabled or aria-busy in flight): Refresh missions, Refresh research, Refresh AI review, Refresh invitations, Refresh execution work, Refresh operations, Refresh reviewed configuration, Load access and recent changes, Load workspace members. Static sweep: 27 direct mutation fetch sites in operator, contributor and network; 23 have a busy guard in view; the other 4 are shared request helpers (counterparties send, delivery action, evidence upload, missions missionRequest) whose callers guard through act() and busy."
+  },
+  "defectsProvedAndFixed": [
+    {
+      "where": "apps/web/app/operator/today.tsx",
+      "red": "On a failed missions read Today showed one line for 503, 403, 429 and offline, with no retry control, and claimed 'The mission list below still works', which is false when the missions read itself fails.",
+      "fix": "A shared helper (apps/web/app/operator/read-failure.ts) gives each cause its own words (role not allowed, too many requests so try again later, otherwise check the connection) and Today offers Retry except for the role case. The false sentence is removed."
+    },
+    {
+      "where": "apps/web/app/operator/missions.tsx",
+      "red": "A failed queue read showed the raw server or browser message ('Failed to fetch') and the same 'verify current access' line for a 429 and offline.",
+      "fix": "Same helper; the line now says to use Refresh missions."
+    },
+    {
+      "where": "apps/web/app/operator/missions.tsx, intelligence.tsx, network.tsx, review-settings.tsx, contributor-invitations.tsx",
+      "red": "Refresh missions, Refresh AI review, Refresh execution work and Refresh reviewed configuration carried disabled={busy} but their click handlers never set busy, so they stayed enabled in flight and a double click sent two sets of reads. Refresh invitations had no in-flight state at all.",
+      "fix": "Each handler now sets busy before the request, clears it when it settles, carries aria-busy and ignores a second click. Refresh invitations is busy while no data and no failure is shown, and stays usable after a failed read."
+    },
+    {
+      "where": "apps/web/app/contributor/task-board.tsx",
+      "red": "A failed task refresh showed the raw server or browser message ('Service unavailable', 'Failed to fetch').",
+      "fix": "Same helper for the initial read, the Refresh tasks button and the refresh after a submission. Submission rejections keep their server messages."
+    }
+  ],
+  "localReceipts": "See the PR for the preflight receipt on the exact head. Local runs: team-quality.spec.ts 10 of 10 at 1280; real-network-work.spec.ts 3 of 3.",
+  "notCovered": [
+    "Q-01: a failed check moving focus to the error summary was not tested on a staff form (the staff sign-in already focuses its error line).",
+    "Q-05: 409 stale or concurrent update, first use, partial data and gated or switched off were not exercised on the team screens; the Owner page states render on the server (Denied, access unavailable) and a browser route cannot simulate them. The contributor board 403 and 409 paths were not exercised.",
+    "Q-06: about 200 click and submit handlers exist across 33 files; only the 9 actions above were exercised by behaviour. Write actions with forms (create, save, invite) were not double-click tested; contributor submit forms are guarded by busy and an in-flight ref by reading, not by a new test.",
+    "Q-02 at 1280 with real 200 percent browser zoom was approximated by a 640 px viewport. No screen reader pass. No Q-08 performance numbers (the spec makes it a separate PR).",
+    "Supplier and counterparty response links were not touched (outside S4 paths)."
+  ]
+}

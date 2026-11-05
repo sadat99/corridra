@@ -372,11 +372,15 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       <button
         className="text-link"
         disabled={busy}
-        onClick={() =>
+        aria-busy={busy}
+        onClick={() => {
+          if (busy) return;
+          setBusy(true);
           void request('mission-catalogue')
             .then(setCatalogue)
             .catch((e) => setMessage(e.message))
-        }
+            .finally(() => setBusy(false));
+        }}
       >
         Refresh reviewed configuration
       </button>

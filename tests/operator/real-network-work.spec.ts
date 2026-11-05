@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { createRequire } from 'node:module';
@@ -230,7 +230,7 @@ test.afterAll(async () => {
   Reflect.deleteProperty(globalThis, '__networkFixtureServices');
 });
 async function inspect(page: Page, name: string) {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
@@ -311,6 +311,34 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   await worker.reload();
   await expect(worker.getByRole('button', { name: 'Accept the disclosed task' })).toBeVisible();
   await inspect(worker, 'contributor-assigned');
+  // Wave 6 Q-05: a refresh that cannot read says why in plain words, never a raw browser or server
+  // message, and the button stays for another try.
+  for (const [kind, apply, words] of [
+    [
+      '503',
+      (r: Route) => r.fulfill({ status: 503, json: { error: 'Service unavailable' } }),
+      /check your connection and try again/i,
+    ],
+    [
+      '429',
+      (r: Route) => r.fulfill({ status: 429, json: { error: 'Too many requests' } }),
+      /too many requests.*try again later/i,
+    ],
+    ['offline', (r: Route) => r.abort('failed'), /check your connection and try again/i],
+  ] as const) {
+    await worker.route('**/api/network/tasks**', apply);
+    await worker.getByRole('button', { name: 'Refresh tasks', exact: true }).click();
+    const status = worker.getByRole('status').first();
+    await expect(status, 'refresh failing with ' + kind).toHaveText(words);
+    expect(await status.innerText(), kind).not.toMatch(
+      /failed to fetch|service unavailable|too many requests$/i,
+    );
+    await worker.unroute('**/api/network/tasks**');
+    await expect(worker.getByRole('button', { name: 'Refresh tasks', exact: true })).toBeEnabled();
+  }
+  // One working refresh clears the interruption: the task forms are usable again.
+  await worker.getByRole('button', { name: 'Refresh tasks', exact: true }).click();
+  await expect(worker.getByRole('button', { name: 'Accept the disclosed task' })).toBeEnabled();
   expect(await worker.locator('body').innerText()).not.toContain(
     'network-request-owner@business.test',
   );
