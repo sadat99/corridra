@@ -45,3 +45,16 @@ test('the contributor shell has a left bar on wide screens and a drawer on phone
     await expect(menu).toBeFocused();
   }
 });
+
+test('Your tasks drops a workspace value that is not an id', async ({ page }, info) => {
+  // A valid id on /contributor needs a session (the page sends a signed-out visitor to sign in), so
+  // the keep-a-valid-id rule is covered by tests/integration/ux-left-nav-adoption.test.ts.
+  await page.goto('/contributor?workspace=not-an-id');
+  if (info.project.name !== 'w1280')
+    await page.getByRole('button', { name: 'Sections', exact: true }).click();
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Contributor sections' })
+      .getByRole('link', { name: 'Your tasks', exact: true }),
+  ).toHaveAttribute('href', '/contributor');
+});

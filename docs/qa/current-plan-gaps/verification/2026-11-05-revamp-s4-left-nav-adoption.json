@@ -12,7 +12,9 @@
     "apps/web/components/ux/left-nav.tsx (close, collapse and expand words may carry the lang mark)",
     "apps/web/components/ux/shells.css (the old team frame, rail and toggle rules removed; item styles kept)",
     "apps/web/lib/i18n/ws/ws-e.ts (five new keys, English placeholders in every language)",
-    "tests/integration/ux-left-nav-adoption.test.ts, tests/e2e/verification/ws-e/contributor-shell.spec.ts"
+    "tests/integration/ux-left-nav-adoption.test.ts, tests/e2e/verification/ws-e/contributor-shell.spec.ts",
+    "apps/web/lib/ux/contributor-nav.ts and contributor-frame.tsx: Your tasks keeps a valid workspace id from the address (Codex P2 on PR 292: /contributor shows the task board only with ?workspace=<id>); anything that is not an id is dropped",
+    "tests/e2e/verification/ws-e/team-quality.spec.ts: the Arabic mirroring spec waits for the phone drawer to settle before measuring"
   ],
   "preserved": [
     "Team sidebar: Signal Desk groups, role filtering, the 'Team sections' name, id workspace-navigation, 44px targets and aria-current are unchanged.",
@@ -21,7 +23,8 @@
   ],
   "verification": {
     "integration": "134 of 134 in the left-nav, signal-desk, staff-parity, team-sidebar-role and language-catalog files",
-    "browser": "contributor-shell.spec.ts and team-shell.spec.ts: 9 of 9 on the verification server at 1280, 768 and 390 (axe wcag2a and wcag2aa, drawer open and Escape, targets 44px, no sideways scroll)"
+    "browser": "contributor-shell.spec.ts and team-shell.spec.ts: 9 of 9 on the verification server at 1280, 768 and 390 (axe wcag2a and wcag2aa, drawer open and Escape, targets 44px, no sideways scroll)",
+    "codexFinding": "P2 on db3e09b verified real (the link dropped the workspace and a signed-in contributor would land on 'No tasks assigned yet'). Fixed with a pure function tested for valid ids, case, and injected values; the browser spec covers the invalid-id case because a valid id on /contributor needs a session."
   },
   "openItems": [
     "Guardian note from PR 289: if L-06 measures CLS above 0.1 on a wide route, read the saved icons-only choice before first paint. Not measured yet."
