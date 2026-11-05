@@ -34,9 +34,18 @@ test('S-03 the synthetic customer opens the signed-in account area', async ({ pa
   await expect(page.locator('main')).toBeVisible();
 });
 
-test('S-04 the same customer opens another customer page', async ({ page, context }) => {
+test('S-04 the same customer opens the Requests view, which a signed-out visitor cannot', async ({
+  page,
+  context,
+}) => {
+  // The Requests view is read on the server for the signed-in subject; it is a different page from S-03's.
+  await page.goto('/account?view=work');
+  await expect(page).toHaveURL(/\/signin/);
   await signInCustomer(context);
-  const response = await page.goto('/account/notifications');
-  expect([200, 404]).toContain(response?.status());
-  await expect(page).not.toHaveURL(/\/signin/);
+  const response = await page.goto('/account?view=work');
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(/\/account\?view=work/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Your requests and workspaces.' }),
+  ).toBeVisible();
 });
