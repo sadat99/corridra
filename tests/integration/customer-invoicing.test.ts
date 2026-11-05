@@ -358,7 +358,7 @@ test('installing the module on a populated database adds only new objects and ch
 
 test('the runtime and auth logins can reach only the five intended functions and none of the tables', async () => {
   for (const pool of [f.runtime, f.auth])
-    for (const t of ['invoice', 'payment', 'credit', 'command']) {
+    for (const t of ['invoice', 'payment', 'credit', 'command', 'payment_reversal']) {
       await expect(pool.query('SELECT * FROM customer_private.invoicing_' + t)).rejects.toThrow(
         /permission denied/i,
       );
@@ -741,18 +741,26 @@ test('a payment entered in error is reversed once, with a reason, and the invoic
       inv.id,
     ]),
   ).rejects.toThrow();
+  // Three separate refusals, each by its own rule: a reason that is too short, a payment reversed twice, a payment
+  // that does not exist.
   await expect(
     f.owner.query(
-      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,2,'Synthetic twice',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,1,'Synthetic short',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
       [inv.id],
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(/check constraint/i);
   await expect(
     f.owner.query(
-      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,7,'Synthetic no such payment',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,2,'Synthetic second reversal of the same payment',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
       [inv.id],
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(/duplicate key|unique/i);
+  await expect(
+    f.owner.query(
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,7,'Synthetic reversal of a payment that is not there',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      [inv.id],
+    ),
+  ).rejects.toThrow(/foreign key|no such payment/i);
 
   // Each reversal is one event with ids and a sequence only: never the amount, the date or the reason.
   const events = (
@@ -766,6 +774,25 @@ test('a payment entered in error is reversed once, with a reason, and the invoic
     expect(
       e.p.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<id>'),
     ).not.toMatch(/wrong|invoice\b.*reason|3390|2000|5390|reason|amount|date/i);
+});
+
+test('two people reversing the same payment at once: exactly one reversal is recorded', async () => {
+  const a = await held('example-organiser');
+  const inv = await issue(a.sub, { taxMinor: '490' });
+  await pay(inv.id, '2000');
+  const results = await Promise.allSettled([reverse(inv.id, 1), reverse(inv.id, 1)]);
+  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  const failed = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+  expect(String(failed.reason?.message ?? failed.reason)).toMatch(
+    /reload|conflicts|already reversed|changed/i,
+  );
+  const rows = await f.owner.query(
+    'SELECT payment_seq FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1',
+    [inv.id],
+  );
+  expect(rows.rows).toEqual([{ payment_seq: 1 }]);
+  const seen = await staff.view(staffCtx(), inv.id);
+  expect(seen.invoice).toMatchObject({ paidMinor: '0', outstandingMinor: '5390' });
 });
 
 test('an invoice is overdue only while something is unpaid after its due date', async () => {

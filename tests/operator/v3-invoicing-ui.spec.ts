@@ -690,8 +690,27 @@ test('a payment entered in error is reversed with a reason, a lost answer is ret
   const submit = form.getByRole('button', { name: 'Reverse Payment' });
   await expect(submit).toHaveAttribute('data-intent', 'destructive');
   await submit.click();
+  // An irreversible action asks once: the dialog names the payment, amount, date and invoice, says it cannot be
+  // undone, and focuses the safe choice. Keeping the payment sends nothing.
+  const ask = page.getByRole('dialog', { name: 'Reverse This Payment?' });
+  await expect(ask).toBeVisible();
+  await expect(ask).toContainText(
+    /Payment 2 of USD\s\d+\.\d\d received on .+ on invoice SAMPLE-INV-000001/,
+  );
+  await expect(ask).toContainText('This cannot be undone');
+  await expect(ask.getByRole('button', { name: 'Keep Payment' })).toBeFocused();
+  expect(await axe(page)).toEqual([]);
+  await ask.getByRole('button', { name: 'Keep Payment' }).click();
+  await expect(ask).toBeHidden();
+  expect(posts).toHaveLength(0);
+  await submit.click();
+  await ask.getByRole('button', { name: 'Confirm Reversal' }).click();
   await expect(page.getByRole('alert')).toContainText('Could not confirm that this was saved');
   await form.getByRole('button', { name: 'Send the Same Reversal Again' }).click();
+  await page
+    .getByRole('dialog', { name: 'Reverse This Payment?' })
+    .getByRole('button', { name: 'Confirm Reversal' })
+    .click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(2);
   expect(posts[1]!.commandId).toBe(posts[0]!.commandId);
