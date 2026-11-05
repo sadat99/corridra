@@ -4,6 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 // The platform is multi-corridor. Two routes are spotlighted, but any pair of countries works.
 async function openAnyRoute(page: import('@playwright/test').Page) {
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   return page.getByLabel('Route map', { exact: true });
 }
 

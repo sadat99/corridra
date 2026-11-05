@@ -18,7 +18,8 @@ import {
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { NotificationInbox } from './notification-inbox';
-import { MenuButton, MenuLink, MenuRadio, OverflowMenu } from './overflow-menu';
+import { MenuLink } from './menu-link';
+import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 
 export type Workspace = { id: string; name: string };
 type Item = { readAt: string | null };

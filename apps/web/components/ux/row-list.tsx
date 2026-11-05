@@ -62,13 +62,13 @@ export function RowLink({
   return (
     <li className="ux-row">
       <Link prefetch={false} className="ux-row-link" href={href}>
-        <span className="ux-row-title" lang={titleLang}>
+        <span className="ux-row-title" dir="auto" lang={titleLang}>
           {title}
         </span>
         {cells.map((cell) => (
-          <span key={cell.name} className="ux-row-cell" lang={cell.lang}>
+          <span key={cell.name} className="ux-row-cell">
             <span className="sr-only">{cell.name}: </span>
-            <span className="ux-row-value">
+            <span className="ux-row-value" dir={cell.lang ? 'auto' : undefined} lang={cell.lang}>
               {cell.status ? <span className="ux-badge">{cell.value}</span> : cell.value}
             </span>
           </span>

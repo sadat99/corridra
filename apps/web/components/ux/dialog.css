@@ -44,3 +44,15 @@
 .ux-dialog-body {
   padding: var(--space-2) var(--space-4) var(--space-4);
 }
+.ux-dialog-working {
+  margin-inline-start: auto;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-dialog-close:disabled {
+  color: var(--text-2);
+  cursor: not-allowed;
+}
+.ux-dialog-close:disabled:hover {
+  background: transparent;
+}

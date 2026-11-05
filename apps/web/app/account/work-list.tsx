@@ -15,6 +15,8 @@ import {
 } from '../../lib/work-items/view';
 import type { WorkItem, WorkList as WorkListData } from '../../lib/work-items/types';
 import { formatDate } from '../../lib/ux/format';
+import { RowLink } from '../../components/ux/row-list';
+import { WorkFilterBar } from './work-filter';
 import { WorkRows } from './work-rows';
 import './work-list.css';
 
@@ -44,23 +46,19 @@ function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
   const heading = item.title ?? kindWords[item.kind];
   const status = workStatusWords(item);
   const date = item.at ? formatDate(item.at) : '';
+  const workspace = names.get(item.workspaceId);
   return (
-    <li className="work-row">
-      <h3 dir="auto" lang={contentLang(heading)}>
-        {heading}
-      </h3>
-      <p className="work-meta">
-        <span>{kindWords[item.kind]}</span>
-        <span dir="auto" lang={contentLang(names.get(item.workspaceId) ?? '')}>
-          {names.get(item.workspaceId)}
-        </span>
-        <span>{status}</span>
-        <span className="work-date">{date && `${workDateWords(item)} ${date}`}</span>
-      </p>
-      <Link prefetch={false} className="text-link work-open" href={item.href}>
-        Open<span className="sr-only"> {heading}</span>
-      </Link>
-    </li>
+    <RowLink
+      href={item.href}
+      title={heading}
+      titleLang={contentLang(heading)}
+      cells={[
+        { name: 'Kind', value: kindWords[item.kind] },
+        { name: 'Workspace', value: workspace ?? '', lang: contentLang(workspace ?? '') },
+        { name: 'Status', value: status, status: true },
+        { name: 'Date', value: date && `${workDateWords(item)} ${date}` },
+      ]}
+    />
   );
 }
 
@@ -94,28 +92,39 @@ export function WorkListView({ list, filter }: { list: WorkListData; filter: Wor
       )}
       {(state === 'list' || state === 'filtered-empty') && (
         <>
-          <form method="get" action="/account" className="work-filter">
-            <input type="hidden" name="view" value="work" />
-            <fieldset>
-              <legend>Show</legend>
-              {workFilters.map((option) => (
-                <label key={option} className="work-choice">
-                  <input
-                    type="radio"
-                    name="work"
-                    value={option}
-                    defaultChecked={option === filter}
-                  />
-                  <span>
-                    {workFilterLabels[option]} <span className="work-count">{counts[option]}</span>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-            <button type="submit" className="work-apply">
-              Show
-            </button>
-          </form>
+          <WorkFilterBar
+            filter={filter}
+            options={workFilters.map((option) => ({
+              value: option,
+              label: workFilterLabels[option],
+              count: counts[option],
+            }))}
+          />
+          <noscript>
+            <form method="get" action="/account" className="work-filter">
+              <input type="hidden" name="view" value="work" />
+              <fieldset>
+                <legend>Show</legend>
+                {workFilters.map((option) => (
+                  <label key={option} className="work-choice">
+                    <input
+                      type="radio"
+                      name="work"
+                      value={option}
+                      defaultChecked={option === filter}
+                    />
+                    <span>
+                      {workFilterLabels[option]}{' '}
+                      <span className="work-count">{counts[option]}</span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+              <button type="submit" className="work-apply">
+                Show
+              </button>
+            </form>
+          </noscript>
           {state === 'filtered-empty' ? (
             <p className="work-note">
               No {workFilterLabels[filter]} work.{' '}

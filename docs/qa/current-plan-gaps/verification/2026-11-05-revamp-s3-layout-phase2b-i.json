@@ -1,0 +1,172 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Layout budget, Phase 2b-i: How it works, About, Routes and the route pages in tabs",
+  "date": "2026-11-05",
+  "sensitive": false,
+  "spec": "docs/revamp/specs/layout-budget.md section 2 and tests L-03; shared components/ux/sub-tabs.tsx (S4)",
+  "changed": [
+    "apps/web/components/public-page.tsx, public-page.css, content/public-pages.ts: the two phases of How it works are tabs (Before You Meet, Meet and Follow Up); each phase heading stays in the page.",
+    "apps/web/app/about/page.tsx, about.css: the seven articles are in five tabs (Why Corridra, Who It Is For, How It Works, Where We Focus, Working With Us); every article keeps its id.",
+    "apps/web/components/discovery-experience.tsx, app/corridors/page.tsx, corridors.css, corridor-map.tsx, world-route-map.tsx: Routes has three tabs (Explore a Route first, Pick Your Route, Sample Mission); on a wide screen the picker and fine-tune sit on the left and the map, cropped to its middle band, and the result on the right.",
+    "apps/web/app/corridors/[corridor]/page.tsx, corridor.css: each route page shows one of its three cards at a time (What We Help With, Current Availability, Where the Work Happens)."
+  ],
+  "preserved": [
+    "Every word, link, id and control stays in the server HTML; one panel is shown at a time and no rule overrides [hidden] (tested on every page).",
+    "P-06 old-address tests are unchanged and pass: Routes opens on the list of routes, so every route link and the /plan link are visible without a tap.",
+    "Old addresses open their tab: /about#why, #what, #for-whom, #how, #where, #standards, #working-together; /corridors#mission-example, #commercial-objective, #directions-title.",
+    "No component forked: the shared SubTabs is used as it is; a scoped padding override on the Routes tab labels is the only styling change around it."
+  ],
+  "pageLength": {
+    "unit": "document height over viewport height (390x844 phone, 1440x900 desktop); hard limits 2.0 phone, 1.0 desktop",
+    "measuredOn": "production build, every tab",
+    "routes": [
+      {
+        "route": "/how-it-works",
+        "before": {
+          "phone": 2.51,
+          "desktop": 1.32
+        },
+        "afterWorstTab": {
+          "phone": 1.87,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "before-you-meet": 1.84,
+            "meet-and-follow-up": 1.87
+          },
+          "desktop": {
+            "before-you-meet": 1,
+            "meet-and-follow-up": 1
+          }
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/about",
+        "before": {
+          "phone": 5.33,
+          "desktop": 2.94
+        },
+        "afterWorstTab": {
+          "phone": 1.98,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "why": 1.66,
+            "who": 1.72,
+            "how": 1.66,
+            "focus": 1.98,
+            "together": 1.81
+          },
+          "desktop": {
+            "why": 1,
+            "who": 1,
+            "how": 1,
+            "focus": 1,
+            "together": 1
+          }
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/corridors",
+        "before": {
+          "phone": 4.14,
+          "desktop": 2.34
+        },
+        "afterWorstTab": {
+          "phone": 1.98,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "routes": 1.98,
+            "route": 1.88,
+            "sample": 1.27
+          },
+          "desktop": {
+            "routes": 1,
+            "route": 1,
+            "sample": 1
+          }
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/corridors/bangladesh-china",
+        "before": {
+          "phone": 2.96,
+          "desktop": 1.63
+        },
+        "afterWorstTab": {
+          "phone": 1.95,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "help": 1.58,
+            "availability": 1.95,
+            "work": 1.61
+          },
+          "desktop": {
+            "help": 1,
+            "availability": 1,
+            "work": 1
+          }
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/corridors/bangladesh-spain",
+        "before": null,
+        "afterWorstTab": {
+          "phone": 1.92,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "help": 1.55,
+            "availability": 1.92,
+            "work": 1.59
+          },
+          "desktop": {
+            "help": 1,
+            "availability": 1,
+            "work": 1
+          }
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/corridors/bangladesh-eu",
+        "before": null,
+        "afterWorstTab": {
+          "phone": 1.92,
+          "desktop": 1
+        },
+        "tabs": {
+          "phone": {
+            "help": 1.55,
+            "availability": 1.92,
+            "work": 1.59
+          },
+          "desktop": {
+            "help": 1,
+            "availability": 1,
+            "work": 1
+          }
+        },
+        "withinHardLimits": true
+      }
+    ]
+  },
+  "tests": {
+    "added": [
+      "tests/browser/layout-budget-tabs.spec.ts (63 cases: budget per tab at both sizes, every word kept, one panel shown and no display override, ?tab= and arrow keys, every in-page link opens its tab, axe per tab, primary action above the fold, old addresses)"
+    ],
+    "updated": "tests that look at content now in another tab choose that tab first, same assertions: any-route, product-experience, real-use-content, ux02-discovery, ux06-presentation, verification ws-a public-copy (the six step names on How it works are in two tabs). P-06 tests untouched.",
+    "openPoint": "/corridors on a phone: its start link follows the cards, below the fold (a chooser page); it is above the fold on a wide screen."
+  }
+}

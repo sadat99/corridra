@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
@@ -6,6 +6,18 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
+
+// Managing a team is a row menu item that opens the team in a dialog.
+async function openTeam(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Actions for ' + name }).click();
+  await page.getByRole('menuitem', { name: 'Manage Team', exact: true }).click();
+}
+async function expectNoTeamControl(page: Page, name: string) {
+  const trigger = page.getByRole('button', { name: 'Actions for ' + name });
+  if (await trigger.count()) await trigger.click();
+  await expect(page.getByRole('menuitem', { name: 'Manage Team', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+}
 
 // Explicit UI protocol fixtures. Real restricted customer authority has separate DB acceptance.
 const issuer = 'https://ep-owner-ui-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
@@ -59,6 +71,7 @@ test.beforeAll(async () => {
       contents: `import {createRoot} from 'react-dom/client';
 import {CustomerWorkspaces} from ${JSON.stringify(resolve('apps/web/app/account/customer-workspaces.tsx'))};
 import {CustomerWorkspaces as Baseline} from 'v3-team-baseline';
+
 const q=new URLSearchParams(location.search),subject=q.get('subject')||'synthetic-alice',issuer=q.get('issuer')||${JSON.stringify(issuer)},Component=q.get('view')==='baseline'?Baseline:CustomerWorkspaces;
 createRoot(document.getElementById('fixture')).render(<Component key={issuer+':'+subject} subject={subject} issuer={issuer}/>);`,
       loader: 'tsx',
@@ -194,8 +207,7 @@ test('owner team UI issues one-time codes, confirms cancellation and revocation,
     await expect(page.getByText(owner.name, { exact: true })).toBeVisible();
     await page.screenshot({ path: `${folder}/before-${width}.png`, fullPage: true });
     await page.goto(origin);
-    await page.getByText('Manage team', { exact: true }).focus();
-    await page.keyboard.press('Enter');
+    await openTeam(page, owner.name);
     await expect(page.getByText('Synthetic existing invitation', { exact: true })).toBeVisible();
     await page.screenshot({ path: `${folder}/after-${width}.png`, fullPage: true });
     expect(
@@ -318,7 +330,7 @@ test('lost issuance retries after reload without recovering a secret, and a new 
     });
   });
   await page.goto(origin);
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, owner.name);
   let panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await panel.getByLabel('Sample invitation label', { exact: true }).fill('lost response');
   await panel.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
@@ -327,7 +339,7 @@ test('lost issuance retries after reload without recovering a secret, and a new 
     false,
   );
   await page.reload();
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, owner.name);
   panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await expect(panel.getByLabel('Sample invitation label', { exact: true })).toHaveValue(
     'lost response',
@@ -378,13 +390,13 @@ test('members and admins receive no owner controls; denied or malformed owner vi
   for (role of ['member', 'admin']) {
     await page.goto(origin);
     await expect(page.getByText(owner.name, { exact: true })).toBeVisible();
-    await expect(page.getByText('Manage team', { exact: true })).toHaveCount(0);
+    await expectNoTeamControl(page, owner.name);
   }
   expect(calls).toBe(0);
   role = 'owner';
   for (status of [401, 403, 409, 503]) {
     await page.goto(origin);
-    await page.getByText('Manage team', { exact: true }).click();
+    await openTeam(page, owner.name);
     await expect(page.getByText(owner.name, { exact: true })).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: 'Issue Sample Invitation', exact: true }),
@@ -400,7 +412,7 @@ test('members and admins receive no owner controls; denied or malformed owner vi
     { ...access(), memberships: [{ ...member('forged owner'), role: 'owner' }] },
   ]) {
     await page.goto(origin);
-    await page.getByText('Manage team', { exact: true }).click();
+    await openTeam(page, owner.name);
     const panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
     await expect(panel.getByRole('alert')).toContainText('Team access could not be loaded');
     await expect(
@@ -442,7 +454,7 @@ test('blocked browser storage sends no invitation, and malformed acknowledgement
     });
   });
   await page.goto(origin);
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, owner.name);
   const panel = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await panel.getByLabel('Sample invitation label', { exact: true }).fill('blocked request');
   await panel.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
@@ -510,11 +522,7 @@ test('independent history cursors and saved invitation requests remain scoped to
     return route.fulfill({ json: next });
   });
   await page.goto(origin);
-  await page
-    .getByRole('listitem')
-    .filter({ has: page.getByText(owner.name, { exact: true }) })
-    .getByText('Manage team', { exact: true })
-    .click();
+  await openTeam(page, owner.name);
   const first = page.getByRole('region', { name: 'Team for ' + owner.name, exact: true });
   await first.getByRole('button', { name: 'Next Invitations', exact: true }).click();
   await expect(first.getByText(inv2.label, { exact: true })).toBeVisible();
@@ -524,11 +532,8 @@ test('independent history cursors and saved invitation requests remain scoped to
   await first.getByLabel('Sample invitation label', { exact: true }).fill('Alice first pending');
   await first.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
   await expect(first.getByRole('alert')).toContainText('Issuing was not confirmed');
-  await page
-    .getByRole('listitem')
-    .filter({ has: page.getByText(other.name, { exact: true }) })
-    .getByText('Manage team', { exact: true })
-    .click();
+  await page.keyboard.press('Escape');
+  await openTeam(page, other.name);
   const second = page.getByRole('region', { name: 'Team for ' + other.name, exact: true });
   await second.getByLabel('Sample invitation label', { exact: true }).fill('Alice second pending');
   await second.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
@@ -543,7 +548,7 @@ test('independent history cursors and saved invitation requests remain scoped to
   await page.goto(
     origin + '?subject=' + currentSubject + '&issuer=' + encodeURIComponent(currentIssuer),
   );
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, bob.name);
   const next = page.getByRole('region', { name: 'Team for ' + bob.name, exact: true });
   await expect(next.getByLabel('Sample invitation label', { exact: true })).toBeEmpty();
   await expect(

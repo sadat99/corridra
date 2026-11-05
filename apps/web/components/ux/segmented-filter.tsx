@@ -2,7 +2,7 @@
 import { useId } from 'react';
 import './segmented-filter.css';
 
-export type SegmentOption<T extends string> = { value: T; label: string; count?: number };
+export type SegmentOption<T extends string> = { value: T; label: string; count?: number | string };
 
 /**
  * A radio group drawn as joined segments. It applies at once (no submit button), the arrow keys move
