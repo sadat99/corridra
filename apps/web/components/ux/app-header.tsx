@@ -17,6 +17,7 @@ import {
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
+import { CustomerBar } from './customer-bar';
 import { LeftNavMenuButton } from './left-nav';
 import { NotificationInbox } from './notification-inbox';
 
@@ -100,31 +101,48 @@ export function AppHeader({
         : tenant
           ? `/api/notifications?tenant=${encodeURIComponent(tenant)}`
           : null;
+  // The customer header is one slim row (the menu button of the left bar, the brand and the customer bar).
+  // Team and contributor output is unchanged, byte for byte (tests/integration/revamp-app-header-guard.test.ts).
+  const customer = kind === 'customer';
   return (
-    <header className="site-header ux-app-header" data-shell={kind} lang={meta.html} dir={meta.dir}>
+    <header
+      className={
+        customer ? 'site-header ux-app-header ux-customer-header' : 'site-header ux-app-header'
+      }
+      data-shell={kind}
+      lang={meta.html}
+      dir={meta.dir}
+    >
       {/* The menu button of the left navigation: nothing renders unless a left bar is on the page. */}
       <LeftNavMenuButton />
       <Link prefetch={false} className="brand" href={homes[kind]} aria-label={t(names[kind])}>
         {brandMark}
         <span>Corridra</span>
       </Link>
-      <span className="ux-app-name">{t(names[kind])}</span>
+      {customer ? null : <span className="ux-app-name">{t(names[kind])}</span>}
       {kind === 'team' ? (
         <span className="ux-app-status" data-live={live ? 'true' : 'false'}>
           <span className="sr-only">{t(shellWords.statusLabel)}: </span>
           {live ? t(shellWords.live) : t(shellWords.preview)}
         </span>
       ) : null}
-      <div className="ux-app-tools">
-        {notifications && inboxEndpoint ? (
-          <InboxButton key={`${kind}:${inboxEndpoint}`} endpoint={inboxEndpoint} />
-        ) : null}
-        <LanguageSwitcher />
-        <Link prefetch={false} className="ux-app-link" href="/">
-          {t(shellWords.website)}
-        </Link>
-        <CornerDock variant="header" />
-      </div>
+      {customer ? (
+        <>
+          <CustomerBar notifications={notifications} />
+          <CornerDock variant="header" />
+        </>
+      ) : (
+        <div className="ux-app-tools">
+          {notifications && inboxEndpoint ? (
+            <InboxButton key={`${kind}:${inboxEndpoint}`} endpoint={inboxEndpoint} />
+          ) : null}
+          <LanguageSwitcher />
+          <Link prefetch={false} className="ux-app-link" href="/">
+            {t(shellWords.website)}
+          </Link>
+          <CornerDock variant="header" />
+        </div>
+      )}
     </header>
   );
 }

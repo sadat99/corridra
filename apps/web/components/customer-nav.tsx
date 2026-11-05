@@ -6,7 +6,7 @@ import type { MessageKey } from '../lib/i18n/messages';
 
 export type CustomerTab = 'home' | 'move' | 'work' | 'companies' | 'results' | 'more';
 
-const icons: Record<CustomerTab, string> = {
+export const customerNavIcons: Record<CustomerTab, string> = {
   home: 'home',
   move: 'home',
   work: 'work',
@@ -14,6 +14,45 @@ const icons: Record<CustomerTab, string> = {
   results: 'progress',
   more: 'more',
 };
+
+export type CustomerNavItem = { tab: CustomerTab; label: string; href: string };
+
+/**
+ * The customer destinations in their locked order, shared by the top tab row below and the left bar
+ * (components/customer-shell.tsx), so both always list the same names and addresses. Companies appears only
+ * where the approved-companies module is on.
+ */
+export function customerNavItems({
+  companies = false,
+  plainNames = false,
+  move = false,
+}: {
+  companies?: boolean;
+  plainNames?: boolean;
+  move?: boolean;
+}): CustomerNavItem[] {
+  return plainNames
+    ? [
+        move
+          ? { tab: 'move', label: 'Home', href: '/account/move' }
+          : { tab: 'home', label: 'Home', href: '/account' },
+        { tab: 'work', label: 'Requests', href: '/account?view=work' },
+        ...(companies
+          ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
+          : []),
+        { tab: 'results', label: 'Reports', href: '/account?view=results' },
+        { tab: 'more', label: 'Account', href: '/account?view=more' },
+      ]
+    : [
+        { tab: 'home', label: 'Home', href: '/account' },
+        { tab: 'work', label: 'Requests', href: '/account?view=work' },
+        ...(companies
+          ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
+          : []),
+        { tab: 'results', label: 'Reports', href: '/account?view=results' },
+        { tab: 'more', label: 'Account', href: '/account?view=more' },
+      ];
+}
 
 /**
  * The customer navigation: Home, Requests, Companies, Reports, Account.
@@ -37,27 +76,7 @@ export function CustomerNav({
   /** `CORRIDRA_UX_MOVE` links Home to the Move page when `plainNames` is on. */
   move?: boolean;
 }) {
-  const items: { tab: CustomerTab; label: string; href: string }[] = plainNames
-    ? [
-        move
-          ? { tab: 'move', label: 'Home', href: '/account/move' }
-          : { tab: 'home', label: 'Home', href: '/account' },
-        { tab: 'work', label: 'Requests', href: '/account?view=work' },
-        ...(companies
-          ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
-          : []),
-        { tab: 'results', label: 'Reports', href: '/account?view=results' },
-        { tab: 'more', label: 'Account', href: '/account?view=more' },
-      ]
-    : [
-        { tab: 'home', label: 'Home', href: '/account' },
-        { tab: 'work', label: 'Requests', href: '/account?view=work' },
-        ...(companies
-          ? [{ tab: 'companies' as const, label: 'Companies', href: '/account/companies' }]
-          : []),
-        { tab: 'results', label: 'Reports', href: '/account?view=results' },
-        { tab: 'more', label: 'Account', href: '/account?view=more' },
-      ];
+  const items = customerNavItems({ companies, plainNames, move });
   // With Your Move as the first tab, the older Home view stays reachable by its address and is read as the same place.
   const here = plainNames && move && current === 'home' ? 'move' : current;
   const links = items.map((item) => (
@@ -67,8 +86,12 @@ export function CustomerNav({
       href={item.href}
       aria-current={item.tab === here ? 'page' : undefined}
     >
-      <CorridraIcon name={plainNames && item.tab === 'results' ? 'library' : icons[item.tab]} />
-      <span>{translated ? <T k={labelKeys[item.label] ?? 'wse.nav.more'} /> : item.label}</span>
+      <CorridraIcon
+        name={plainNames && item.tab === 'results' ? 'library' : customerNavIcons[item.tab]}
+      />
+      <span>
+        {translated ? <T k={customerNavLabelKeys[item.label] ?? 'wse.nav.more'} /> : item.label}
+      </span>
     </Link>
   ));
   // With the shells switch on the tabs follow the chosen language and direction (CQ-10).
@@ -85,7 +108,7 @@ export function CustomerNav({
   );
 }
 
-const labelKeys: Record<string, MessageKey> = {
+export const customerNavLabelKeys: Record<string, MessageKey> = {
   Home: 'wse.nav.home',
   Requests: 'wse.nav.work',
   Companies: 'wse.nav.companies',

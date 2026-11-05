@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 1, the customer shell",
+  "kind": "Shell built to docs/revamp/specs/customer-experience.md and layout-budget.md: the locked customer destinations as the shared left bar (a drawer below 1024 px), a slim one-row header, no amber banner, no eyebrow.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch or write is added.",
+  "status": "Built on branch revamp/customer over main 7a121c79. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/components/ux/customer-bar.tsx, customer-bar.css, customer-bar-store.ts, customer-bar-note.tsx, overflow-menu.tsx, overflow-menu.css",
+    "tests/e2e/verification/revamp-s2/customer-shell.spec.ts (21 cases over three widths: L-01, CX-02, CX-03, CX-06), cx-screenshots.spec.ts",
+    "tests/integration/revamp-app-header-guard.test.ts and fixtures/app-header-markup.json (team and contributor header markup byte-identical to main)",
+    "docs/design-system/evidence/revamp-cx1/before and after (five pages at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "apps/web/components/ux/app-header.tsx: customer-only branches behind kind === 'customer'; the team and contributor output is unchanged and guarded.",
+    "apps/web/components/customer-shell.tsx, workspace-shell.tsx, customer-nav.tsx, corridra-icon.tsx"
+  ],
+  "decisions": {
+    "destinations": "Same names, order and addresses as the old tabs, taken from the shared item list (customerNavItems) so the bar and the old tab row cannot drift. Companies and All tools appear only where their switches are on.",
+    "inbox": "The button keeps the exact name Inbox; the unread count is its accessible description. The count and the workspace list are read only on /account pages, so the request sequence pinned by the GAP-004 operator test is unchanged elsewhere.",
+    "switcher": "Shown only on pages that belong to one workspace and only with two or more workspaces, because Home and Requests aggregate across workspaces.",
+    "privacy": "The privacy or preview line moved from the amber banner into the account menu, with a Privacy notice link."
+  },
+  "receipts": {
+    "preflight": "node scripts/preflight.mjs standard on the final tree: exit 0 (an earlier run failed v3-saved-commercial-ui GAP-004 on the inbox name and extra requests; fixed in the header, the test unchanged).",
+    "verification": "playwright.verification.config.ts customer-shell.spec.ts: 21 passed on a fresh production build with the test-only customer sign-in."
+  },
+  "notRun": [
+    "Screen reader walk-through.",
+    "Workspace switcher with two real workspaces (the verification seed has one)."
+  ],
+  "sensitive": "No. The shell reads only what the signed-in header already read."
+}
