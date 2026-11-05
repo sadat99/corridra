@@ -396,7 +396,7 @@ export function AccountForm({
             if (emailInput.current?.reportValidity()) void perform(true);
           }}
         >
-          Request verification code
+          Request Verification Code
         </button>
       )}
       {mode === 'verify' && sent && codeRequested && (
