@@ -14,6 +14,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   await page.getByRole('combobox', { name: 'Your perspective' }).selectOption('institution');
   await expect(page.getByRole('combobox', { name: "I'm trying to" })).toHaveValue('delegations');
@@ -187,6 +188,7 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   const group = page.getByRole('group', { name: 'Choose your situation' });
   await expect(group.getByRole('button', { name: /Source From Suppliers/ })).toHaveAttribute(

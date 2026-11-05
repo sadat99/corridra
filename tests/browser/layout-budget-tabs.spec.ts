@@ -8,7 +8,7 @@ import { test, expect, type Page } from '@playwright/test';
 const tabbed = [
   { path: '/how-it-works', tabs: ['before-you-meet', 'meet-and-follow-up'] },
   { path: '/about', tabs: ['why', 'who', 'how', 'focus', 'together'] },
-  { path: '/corridors', tabs: ['route', 'sample', 'routes'] },
+  { path: '/corridors', tabs: ['routes', 'route', 'sample'] },
   { path: '/corridors/bangladesh-china', tabs: ['help', 'availability', 'work'] },
   { path: '/corridors/bangladesh-spain', tabs: ['help', 'availability', 'work'] },
   { path: '/corridors/bangladesh-eu', tabs: ['help', 'availability', 'work'] },
@@ -47,7 +47,13 @@ for (const { path, tabs } of tabbed) {
     const served = await (await page.request.get(path)).text();
     await page.goto(path);
     const same = await page.evaluate((html) => {
-      const text = (node: Element | null) => (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
+      // Country names in the route pickers are filled in by the browser's own locale data after the page loads
+      // (the server sends codes), so the options of a select are left out of the comparison.
+      const text = (node: Element | null) => {
+        const copy = node?.cloneNode(true) as Element | undefined;
+        copy?.querySelectorAll('select option').forEach((option) => option.remove());
+        return (copy?.textContent ?? '').replace(/\s+/g, ' ').trim();
+      };
       const sent = new DOMParser().parseFromString(html, 'text/html');
       return { page: text(document.querySelector('main')), sent: text(sent.querySelector('main')) };
     }, served);
@@ -111,12 +117,15 @@ for (const { path, tabs } of tabbed) {
 
   for (const [name, size] of Object.entries(sizes))
     test(`${path}: keeps its primary action above the fold at ${name}`, async ({ page }) => {
-      // Routes is a chooser: its one primary action appears once a route is chosen, so on a phone it follows
-      // the picker (it is above the fold on a wide screen).
+      // Routes is a chooser: on a phone the list of routes comes first and its start link follows the cards
+      // (it is above the fold on a wide screen).
       test.skip(path === '/corridors' && name === 'phone', 'the chooser comes first on a phone');
       await page.setViewportSize(size);
       await page.goto(path);
-      const action = page.locator('main a.primary-link').first();
+      // Routes opens on the list of routes, whose way to start a request is the /plan link.
+      const action = page
+        .locator(path === '/corridors' ? 'main a[href="/plan"]' : 'main a.primary-link')
+        .first();
       await expect(action).toBeVisible();
       const box = (await action.boundingBox())!;
       expect(box.y).toBeGreaterThanOrEqual(0);

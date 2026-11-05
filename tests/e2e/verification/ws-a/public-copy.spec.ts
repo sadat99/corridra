@@ -40,8 +40,18 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
   for (const path of ['/', '/how-it-works']) {
     await page.goto(path);
     const steps = page.locator(path === '/' ? '.ac1-steps' : '#main');
-    for (const name of ['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through'])
+    for (const name of ['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']) {
+      // On How it works the steps are in two tabs (layout budget): choose the tab that holds the step.
+      if (path === '/how-it-works')
+        await page
+          .getByRole('tab', {
+            name: ['Visit', 'Decide', 'Follow through'].includes(name)
+              ? 'Meet and Follow Up'
+              : 'Before You Meet',
+          })
+          .click();
       await expect(steps.getByText(name, { exact: true }).first(), `${path} ${name}`).toBeVisible();
+    }
   }
   // About uses the controller wording from the privacy notice exactly (D4).
   const controller =

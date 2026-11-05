@@ -33,6 +33,7 @@ test('global selector retains an unsupported operating direction and opens the a
   page,
 }, info) => {
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await page.getByRole('combobox', { name: 'My company is in', exact: true }).selectOption('JP');
   await page.getByRole('combobox', { name: 'I want to reach', exact: true }).selectOption('KE');
   await expect(page.getByLabel('Route map', { exact: true })).toContainText(

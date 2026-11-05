@@ -421,9 +421,11 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
       <SubTabs
         label="Routes"
         tabs={[
+          // The routes come first: the list of every route and the way to start a request is what the page
+          // opens on (P-06); the picker and the sample are one tap away.
+          ...(children ? [{ id: 'routes', label: 'Explore a Route', panel: children }] : []),
           { id: 'route', label: 'Pick Your Route', panel: routePanel },
           { id: 'sample', label: 'Sample Mission', panel: samplePanel },
-          ...(children ? [{ id: 'routes', label: 'Explore a Route', panel: children }] : []),
         ]}
       />
     </section>

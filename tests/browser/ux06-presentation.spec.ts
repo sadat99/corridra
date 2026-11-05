@@ -44,6 +44,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(page.locator('footer a[href="/corridors"]')).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
