@@ -16,7 +16,8 @@ import { DecisionHistory } from './decision-history';
 import { SpecificationConfirmation } from './specification-confirmation';
 import { BookDownloads, createPendingBooks } from './book-downloads';
 import { limitWords } from '../../../lib/account-limit';
-export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip';
+/** `none` reads and keeps the report without drawing it: the Room's Overview uses it for its summary. */
+export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip' | 'none';
 type Scope = SavedMissionScope & {
   resourceId: string;
   decisionsEnabled?: boolean;
@@ -31,6 +32,11 @@ type Scope = SavedMissionScope & {
   section?: ReportSection;
   /** The Room's Trip lens draws the reviewed itinerary itself, so this file imports no Room code. */
   renderTrip?: (itinerary: DeliveryReport['missions'][number]['itinerary']) => ReactNode;
+  /**
+   * The Room's summary (approved work rooms, 5 Nov 2026) is drawn from this same read, so the Room asks for the
+   * report once. It is told the report and the read state whenever either changes.
+   */
+  onReport?: (report: DeliveryReport | null, status: string) => void;
 };
 function date(value: unknown): value is string {
   return typeof value === 'string' && Number.isFinite(Date.parse(value));
@@ -214,6 +220,7 @@ function PrivateReport({
   lenses = false,
   section = 'all',
   renderTrip,
+  onReport,
 }: Scope) {
   const responsePrefix = useId();
   const [data, setData] = useState<DeliveryReport | null>(null),
@@ -307,6 +314,9 @@ function PrivateReport({
   useEffect(() => {
     if (bookDenial) bookAlert.current?.focus();
   }, [bookDenial]);
+  useEffect(() => {
+    onReport?.(data, status);
+  }, [onReport, data, status]);
   // A book download was refused because access is gone: the report and every local retry are cleared, as for any
   // other denial, and the reason is said once, in the alert that takes the focus.
   function bookDenied(message: string, signedOut: boolean) {
@@ -406,6 +416,7 @@ function PrivateReport({
   const showEvidence = section === 'all' || section === 'evidence';
   const showRest = section === 'all';
   const showTrip = section === 'trip';
+  if (section === 'none') return null;
   return (
     <section
       className="delivery-view ux-saved-commercial-report"

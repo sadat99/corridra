@@ -228,7 +228,7 @@ const targets = [
   [/^\/operator(\/|$)/, 'Signal Desk staff shell', 'Staff / execution', 'P1'],
   [/^\/contributor(\/|$)/, 'Assigned work and secure contribution', 'Contributor', 'P1'],
   [
-    /^\/(buyer|client|programme|mute|pulse)(\/|$)/,
+    /^\/(buyer|client|programme|mute|pulse|decision-card)(\/|$)/,
     'Restricted recipient experience',
     'Counterparty',
     'P1',

@@ -19,7 +19,9 @@ test('CX-02 Home keeps every destination and name it had, as rows and links', as
   );
   await expect(main.getByRole('link', { name: /Open a shared mission/ })).toHaveAttribute(
     'href',
-    '/account?view=results',
+    // The same page as before. It may also select the Shared With Me tab, where the invitation is (CX PR 3a;
+    // the new Home's own tile follows when that lands), so either address is the same destination.
+    /^\/account\?view=results(&tab=shared)?$/,
   );
   await expect(main.getByRole('link', { name: /Check a request receipt/ })).toHaveAttribute(
     'href',

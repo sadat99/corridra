@@ -240,3 +240,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** S3's local `node scripts/preflight.mjs` selected `y-ux05-governance.spec.ts` as affected, but not `workspace.spec.ts`, which creates the user it signs in as. The spec failed in the preflight, and passed when both ran in order (11 of 11) and in CI, which runs the whole operator suite in order.
 - **Cause:** the affected-spec selection does not follow the order dependencies between operator specs.
 - **Rule:** before treating a preflight-only operator failure as real, rerun the spec together with its setup spec in suite order. CI on the exact head is the verifier. Do not change a test because of it.
+
+### KI-39 A CI job's PostgreSQL service container did not start (5 November 2026)
+
+- **Observed:** on PR 310 one CI job failed before any test ran: "PostgreSQL container could not start". The other jobs on the same head passed. Re-running only the failed jobs on the same head turned them green, with no code change.
+- **Cause:** a transient runner or service-container start failure, not the change under test.
+- **Rule:** when a job fails at service start-up with no test output, re-run the failed jobs once on the exact head (`gh api -X POST repos/<owner>/<repo>/actions/runs/<run>/rerun-failed-jobs`) and say so in one PR comment. A second failure is treated as real. Never change a test because of it.

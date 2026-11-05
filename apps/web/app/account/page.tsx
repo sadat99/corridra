@@ -36,6 +36,7 @@ import { WorkList } from './work-list';
 import { HomeNextStep } from './home-next-step';
 import { HomeWork } from './home-work';
 import { RequestsTabs } from './requests-tabs';
+import { ReportsTabs } from './reports-tabs';
 import { parseWorkFilter } from '../../lib/work-items/view';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -151,7 +152,7 @@ export default async function Page({
                 </li>
               )}
               <li>
-                <Link prefetch={false} href="/account?view=results">
+                <Link prefetch={false} href="/account?view=results&tab=shared">
                   <strong>Open a shared mission</strong>
                   <span>Paste the private link you were sent.</span>
                 </Link>
@@ -276,23 +277,39 @@ export default async function Page({
       {view === 'results' && (
         <div id="results" tabIndex={-1} className="ux-account-groups">
           <div id="customer-missions" tabIndex={-1}>
-            {requestIssuer && <DeliveredReports subject={data.user.id} issuer={requestIssuer} />}
-            {savedMissionIssuer && (
-              <div id="saved-commercial-missions">
-                {customerDeliveryEnabled() && (
-                  <AssignedMissions subject={data.user.id} issuer={savedMissionIssuer} />
-                )}
-                <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
-                {customerCompaniesEnabled() && (
-                  <p>
-                    <Link className="text-link ux-action" href="/account/companies">
-                      Browse approved companies
-                    </Link>
-                  </p>
-                )}
-              </div>
-            )}
-            <CustomerMissions key={data.user.id} />
+            <ReportsTabs
+              delivered={
+                (requestIssuer || (savedMissionIssuer && customerDeliveryEnabled())) && (
+                  <>
+                    {requestIssuer && (
+                      <DeliveredReports
+                        subject={data.user.id}
+                        issuer={requestIssuer}
+                        showEmpty={!(savedMissionIssuer && customerDeliveryEnabled())}
+                      />
+                    )}
+                    {savedMissionIssuer && customerDeliveryEnabled() && (
+                      <AssignedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+                    )}
+                  </>
+                )
+              }
+              saved={
+                savedMissionIssuer && (
+                  <div id="saved-commercial-missions">
+                    <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+                    {customerCompaniesEnabled() && (
+                      <p>
+                        <Link className="text-link ux-action" href="/account/companies">
+                          Browse approved companies
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                )
+              }
+              shared={<CustomerMissions key={data.user.id} />}
+            />
           </div>
         </div>
       )}
