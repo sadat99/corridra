@@ -1,5 +1,5 @@
 import { operatorEvidence } from './operator-evidence';
-import { openSection } from './workspace-nav';
+import { openSection, openTab } from './workspace-nav';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -532,6 +532,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await db.end();
   }
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'Verify your authenticator again to continue',
@@ -541,6 +542,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(
     page
@@ -558,6 +560,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await expect(
     page
       .getByRole('article', { name: 'Research intake', exact: true })
@@ -574,6 +577,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     controls.getByRole('heading', { name: 'Workspace controls', exact: true }),
   ).toBeVisible();
   await expect(controls.getByRole('article')).toHaveCount(10);
+  await openTab(controls, 'People and access');
   await expect(
     controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
   ).toBeDisabled();
@@ -1469,6 +1473,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     .getByRole('button', { name: 'Review imported mission' })
     .first()
     .click();
+  await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Review client publication' }).click();
   await panel.getByLabel('Client title', { exact: true }).fill('Reviewed delivery progress');
   await panel.getByLabel('Approved company name').fill('Synthetic Browser Cohort');
@@ -1482,6 +1487,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('I reviewed this copy', { exact: false }).check();
   await panel.getByRole('button', { name: 'Approve publication', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await openTab(panel, 'Access and requests');
   await panel.locator('summary').filter({ hasText: 'Create evidence request' }).click();
   await panel.getByLabel('Request title', { exact: true }).fill('Confirm synthetic requirements');
   await panel
@@ -1490,6 +1496,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('Response deadline').fill(deadline);
   await panel.getByRole('button', { name: 'Create request', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
   await panel
     .getByRole('group', { name: 'Approved publications' })
@@ -1547,6 +1554,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await evidenceRetry).request().postDataJSON()).toEqual(evidenceFailed);
   await expect(client.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
   await page.reload();
+  await openTab(panel, 'Access and requests');
   const evidenceRequest = panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' });
   await expect(
     evidenceRequest.getByText('Self-declared response:', { exact: false }),
@@ -1610,6 +1618,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     programmeId,
   );
   await page.unroute(scopeRoute);
+  await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
   await panel
     .getByRole('group', { name: 'Approved publications' })
@@ -1663,6 +1672,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     expect(await replay.body()).toEqual(bytes);
   }
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
+  await openTab(panel, 'Access and requests');
   const institutionalAccess = panel.locator('li').filter({
     hasText: 'institution report · Synthetic programme outcome review',
   });

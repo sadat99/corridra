@@ -1,5 +1,6 @@
 'use client';
 
+import { SubTabs } from '../../components/ux/sub-tabs';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorIcon } from '../../components/operator-icon';
@@ -445,151 +446,204 @@ export function WorkspaceControls({
           check. <a href="#workspace-authenticator">Verify your authenticator</a>
         </p>
       </div>
-      <section className="ux-controls-members" aria-labelledby="workspace-members-heading">
-        <div className="ux-controls-section-heading">
-          <div>
-            <h3 id="workspace-members-heading">People and access</h3>
-            <p>Change the role or access of an existing member.</p>
-          </div>
-          <button type="button" className="text-link" disabled={busy} onClick={onLoadMembers}>
-            {busy
-              ? 'Please wait…'
-              : membersLoaded
-                ? 'Refresh workspace members'
-                : 'Load workspace members'}
-          </button>
-        </div>
-        <p className="ux-controls-hint" role="status">
-          {membersLoaded
-            ? members.length
-              ? `${members.length} workspace ${members.length === 1 ? 'member' : 'members'} loaded. Choose a member and the intended role.`
-              : 'No existing members were returned for this workspace.'
-            : 'Load workspace members to choose whose access to update.'}
-        </p>
-        <form
-          className="operator-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const form = new FormData(event.currentTarget);
-            onUpdateMember({
-              userId: String(form.get('user') ?? ''),
-              role: String(form.get('role') ?? ''),
-              revoked: form.get('revoked') === 'on',
-            });
-          }}
-        >
-          <label className="field">
-            Workspace member
-            <select name="user" required disabled={!members.length || busy} defaultValue="">
-              <option value="" disabled>
-                Select an existing member
-              </option>
-              {members.map((member) => (
-                <option key={member.user_id} value={member.user_id}>
-                  {member.name ?? 'Unnamed member'} · {roleNames[member.role ?? ''] ?? member.role}{' '}
-                  · {member.revoked_at ? 'Revoked' : 'Active'}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Role
-            <select name="role" required disabled={!members.length || busy} defaultValue="">
-              <option value="" disabled>
-                Select the intended role
-              </option>
-              {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((role) => (
-                <option key={role} value={role}>
-                  {role[0].toUpperCase() + role.slice(1)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ux-controls-revoke">
-            <input type="checkbox" name="revoked" disabled={!members.length || busy} />
-            <span>
-              Revoke membership<small>Remove this member’s access to this workspace.</small>
-            </span>
-          </label>
-          <button className="primary-link" disabled={busy || !members.length}>
-            {busy ? 'Please wait…' : 'Update membership'}
-          </button>
-        </form>
-        <details className="ux-controls-help">
-          <summary>Membership rules and recovery</summary>
-          <p>
-            Only the workspace owner can change these roles, send team invitations and reset an
-            authenticator. Clearing “Revoke membership” restores that existing membership; it does
-            not reactivate a suspended identity.
-          </p>
-        </details>
-        <AuthenticatorReset tenant={tenant} members={members} />
-      </section>
-      <TeamInvites tenant={tenant} workspaceName={workspaceName} />
-      <section className="ux-controls-features" aria-labelledby="workspace-tools-heading">
-        <div className="ux-controls-section-heading">
-          <div>
-            <h3 id="workspace-tools-heading">Available tools</h3>
-            <p>Each change saves a new version. Disabling a tool preserves its records.</p>
-          </div>
-        </div>
-        <div className="ux-controls-notice">
-          <p>
-            A workspace setting does not switch on a feature that is off for the whole deployment.
-            Provider approval, source rights and independent review stay separate. No setting here
-            starts automated outreach or payouts.
-          </p>
-        </div>
-        <PhoneFold
-          summary={`Show all ${groups.reduce((n, g) => n + g.items.length, 0)} tools (${groups.reduce(
-            (n, g) => n + g.items.filter((item) => enabled(item[0])).length,
-            0,
-          )} on)`}
-        >
-          <div className="ux-controls-groups">
-            {groups.map((group) => (
-              <section className="ux-controls-group" key={group.title} aria-label={group.title}>
-                <h4>
-                  <OperatorIcon name={group.icon} />
-                  {group.title}
-                </h4>
-                {group.items.map(([key, title, description]) => {
-                  const active = enabled(key);
-                  return (
-                    <article
-                      key={key}
-                      className="ux-controls-feature"
-                      data-feature={key}
-                      aria-label={title}
+      <SubTabs
+        label="Workspace controls sections"
+        tabs={[
+          {
+            id: 'people',
+            label: 'People and access',
+            panel: (
+              <>
+                <section
+                  className="ux-controls-members"
+                  aria-labelledby="workspace-members-heading"
+                >
+                  <div className="ux-controls-section-heading">
+                    <div>
+                      <h3 id="workspace-members-heading">People and access</h3>
+                      <p>Change the role or access of an existing member.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-link"
+                      disabled={busy}
+                      onClick={onLoadMembers}
                     >
-                      <div className="ux-controls-feature-copy">
-                        <h5>{title}</h5>
-                        <p>{description}</p>
-                      </div>
-                      <div className="ux-controls-feature-action">
-                        <span
-                          className={active ? 'ux-controls-state is-enabled' : 'ux-controls-state'}
+                      {busy
+                        ? 'Please wait…'
+                        : membersLoaded
+                          ? 'Refresh workspace members'
+                          : 'Load workspace members'}
+                    </button>
+                  </div>
+                  <p className="ux-controls-hint" role="status">
+                    {membersLoaded
+                      ? members.length
+                        ? `${members.length} workspace ${members.length === 1 ? 'member' : 'members'} loaded. Choose a member and the intended role.`
+                        : 'No existing members were returned for this workspace.'
+                      : 'Load workspace members to choose whose access to update.'}
+                  </p>
+                  <form
+                    className="operator-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const form = new FormData(event.currentTarget);
+                      onUpdateMember({
+                        userId: String(form.get('user') ?? ''),
+                        role: String(form.get('role') ?? ''),
+                        revoked: form.get('revoked') === 'on',
+                      });
+                    }}
+                  >
+                    <label className="field">
+                      Workspace member
+                      <select
+                        name="user"
+                        required
+                        disabled={!members.length || busy}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Select an existing member
+                        </option>
+                        {members.map((member) => (
+                          <option key={member.user_id} value={member.user_id}>
+                            {member.name ?? 'Unnamed member'} ·{' '}
+                            {roleNames[member.role ?? ''] ?? member.role} ·{' '}
+                            {member.revoked_at ? 'Revoked' : 'Active'}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      Role
+                      <select
+                        name="role"
+                        required
+                        disabled={!members.length || busy}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Select the intended role
+                        </option>
+                        {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((role) => (
+                          <option key={role} value={role}>
+                            {role[0].toUpperCase() + role.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="ux-controls-revoke">
+                      <input type="checkbox" name="revoked" disabled={!members.length || busy} />
+                      <span>
+                        Revoke membership
+                        <small>Remove this member’s access to this workspace.</small>
+                      </span>
+                    </label>
+                    <button className="primary-link" disabled={busy || !members.length}>
+                      {busy ? 'Please wait…' : 'Update membership'}
+                    </button>
+                  </form>
+                  <details className="ux-controls-help">
+                    <summary>Membership rules and recovery</summary>
+                    <p>
+                      Only the workspace owner can change these roles, send team invitations and
+                      reset an authenticator. Clearing “Revoke membership” restores that existing
+                      membership; it does not reactivate a suspended identity.
+                    </p>
+                  </details>
+                  <AuthenticatorReset tenant={tenant} members={members} />
+                </section>
+              </>
+            ),
+          },
+          {
+            id: 'invite',
+            label: 'Invite a team member',
+            panel: <TeamInvites tenant={tenant} workspaceName={workspaceName} />,
+          },
+          {
+            id: 'tools',
+            label: 'Available tools',
+            panel: (
+              <>
+                <section className="ux-controls-features" aria-labelledby="workspace-tools-heading">
+                  <div className="ux-controls-section-heading">
+                    <div>
+                      <h3 id="workspace-tools-heading">Available tools</h3>
+                      <p>
+                        Each change saves a new version. Disabling a tool preserves its records.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="ux-controls-notice">
+                    <p>
+                      A workspace setting does not switch on a feature that is off for the whole
+                      deployment. Provider approval, source rights and independent review stay
+                      separate. No setting here starts automated outreach or payouts.
+                    </p>
+                  </div>
+                  <PhoneFold
+                    summary={`Show all ${groups.reduce((n, g) => n + g.items.length, 0)} tools (${groups.reduce(
+                      (n, g) => n + g.items.filter((item) => enabled(item[0])).length,
+                      0,
+                    )} on)`}
+                  >
+                    <div className="ux-controls-groups">
+                      {groups.map((group) => (
+                        <section
+                          className="ux-controls-group"
+                          key={group.title}
+                          aria-label={group.title}
                         >
-                          {active ? 'Enabled' : 'Disabled'}
-                        </span>
-                        <button
-                          type="button"
-                          className="text-link"
-                          aria-label={`${active ? 'Disable' : 'Enable'} ${title.toLowerCase()}`}
-                          disabled={busy}
-                          onClick={() => onChangeFeature(key, !active)}
-                        >
-                          {active ? 'Disable' : 'Enable'}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </section>
-            ))}
-          </div>
-        </PhoneFold>
-      </section>
+                          <h4>
+                            <OperatorIcon name={group.icon} />
+                            {group.title}
+                          </h4>
+                          {group.items.map(([key, title, description]) => {
+                            const active = enabled(key);
+                            return (
+                              <article
+                                key={key}
+                                className="ux-controls-feature"
+                                data-feature={key}
+                                aria-label={title}
+                              >
+                                <div className="ux-controls-feature-copy">
+                                  <h5>{title}</h5>
+                                  <p>{description}</p>
+                                </div>
+                                <div className="ux-controls-feature-action">
+                                  <span
+                                    className={
+                                      active ? 'ux-controls-state is-enabled' : 'ux-controls-state'
+                                    }
+                                  >
+                                    {active ? 'Enabled' : 'Disabled'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="text-link"
+                                    aria-label={`${active ? 'Disable' : 'Enable'} ${title.toLowerCase()}`}
+                                    disabled={busy}
+                                    onClick={() => onChangeFeature(key, !active)}
+                                  >
+                                    {active ? 'Disable' : 'Enable'}
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </section>
+                      ))}
+                    </div>
+                  </PhoneFold>
+                </section>
+              </>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }

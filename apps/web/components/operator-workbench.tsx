@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState, type FormEvent } from 'react';
+import { revealInSubTabs } from './ux/sub-tabs';
 export function OperatorWorkbench({
   label,
   sections,
@@ -20,6 +21,8 @@ export function OperatorWorkbench({
       );
       return;
     }
+    // A heading inside a hidden tab: open its tab first so the jump lands on something shown.
+    revealInSubTabs(target);
     for (
       let parent = target.parentElement;
       parent && parent !== root;

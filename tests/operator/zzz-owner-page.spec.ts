@@ -49,17 +49,27 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   await expect(page.getByRole('heading', { level: 1, name: 'What is on and off.' })).toBeVisible();
   // The status board comes first; the setting tables sit under "Technical details" (UX-03).
   await expect(page.getByText('Live, small scale', { exact: true })).toBeVisible();
-  for (const name of ['Status', 'Waiting on the Corridra team', 'Blocked', 'Open gaps'])
+  for (const name of ['Status', 'Waiting on the Corridra team', 'Blocked'])
     await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible();
-  await page.getByText('Technical details', { exact: true }).click();
+  // Open gaps and Technical details are their own tabs (L-03), one choice away.
+  await page.getByRole('tab', { name: 'Open gaps', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Open gaps', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('tab', { name: 'Technical details', exact: true }).click();
   await expect(
     page.getByRole('heading', { level: 2, name: 'What is on and off', exact: true }),
   ).toBeVisible();
 
   // Read only: nothing on the page can change anything.
-  expect(await page.locator('main button, main form, main input, main select').count()).toBe(0);
+  // The tabs are navigation only, so they are not counted as controls.
+  expect(
+    await page.locator('main button:not([role="tab"]), main form, main input, main select').count(),
+  ).toBe(0);
 
   // States come from this deployment. The browser server turns these on and leaves the rest off.
+  // Each settings group is a closed disclosure in the Technical details tab; open them all.
+  for (const summary of await page.locator('.owner-group > summary').all()) await summary.click();
   const row = (name: string) => page.getByRole('row').filter({ hasText: name });
   await expect(row('CORRIDRA_NETWORK_ENABLED')).toContainText('On');
   await expect(row('CORRIDRA_DELIVERY_ENABLED')).toContainText('On');
@@ -75,6 +85,7 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   for (const figure of figures) expect(figure).toMatch(/^(\d+|Not measurable here yet)$/);
 
   // Open gaps are copied from the register and none is marked closed.
+  await page.getByRole('tab', { name: 'Open gaps', exact: true }).click();
   for (const id of ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D08'])
     await expect(page.getByRole('listitem').filter({ hasText: id }).first()).toContainText('Open');
   await expect(page.locator('main')).not.toContainText('Closed');

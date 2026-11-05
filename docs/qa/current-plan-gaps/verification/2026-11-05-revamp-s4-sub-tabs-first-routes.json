@@ -1,0 +1,120 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Page lengths phase 2, first routes on the shared sub-tabs (PR 298): /operator/controls, /operator/readiness, /operator/delivery, /operator/owner. The guard stays report-only.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed.",
+  "sensitive": "no: presentation of existing sections. No auth, role, tenant, money, consent or token code changes; each panel still renders only what its role may see and the server still decides every action.",
+  "changed": [
+    "apps/web/app/operator/workspace-controls.tsx: People and access, Invite a team member, Available tools",
+    "apps/web/app/operator/operations.tsx: Production readiness as Deferred controls, Blocked, Rules and runbook; the Deferred controls table shows 4 rows with Show all 11 rows",
+    "apps/web/app/operator/delivery.tsx and operator-overview.css: Programmes, Publication, Access and requests, Mission and delegation experience; the phone and desktop delivery rules now treat a tab panel like the delivery section",
+    "apps/web/app/operator/owner/page.tsx and owner-page.css: Status, Open gaps, Technical details; each settings group in Technical details is a closed disclosure",
+    "apps/web/components/operator-workbench.tsx: the Jump to buttons open the tab that holds their heading first",
+    "tests: operator and verification specs open the tab (and the settings groups) before using what is inside; no assertion removed or loosened (openTab helper in tests/operator/workspace-nav.ts)"
+  ],
+  "preserved": [
+    "Every section, form, table row, id and action is still in the page; hidden panels stay in the HTML, so entries survive a tab switch and every old #id lands on its tab.",
+    "A hash that is not inside the tabs is left alone (on the team workspace the hash names the section shown).",
+    "The Jump to list of the delivery workbench still reaches every heading.",
+    "The owner page is still read only: tabs and disclosures are navigation, and the read-only check now excludes only the tab buttons."
+  ],
+  "stillOverTheDesktopLimit": "Every tab above is still over the 1.0 desktop limit; this PR does not claim otherwise. The page frame alone is about 400 px at 1440x900 (header 72, footer 70, page heading 100, padding), so one screen leaves about 560 px for content.",
+  "nextAction": "Title Case button labels on staff, contributor and owner surfaces (owner rule of 5 November), then the next length PR above.",
+  "pageLengthByTab": {
+    "unit": "screens (document height over viewport height), 1440x900 desktop / 390x844 phone, measured on the verification server with the seeded owner",
+    "before": {
+      "/operator/controls": "3.31 / 3.91",
+      "/operator/readiness": "3.29 / 4.39",
+      "/operator/delivery": "3.18 / 2.45",
+      "/operator/owner": "2.65 / 5.47 (Technical details was a closed disclosure)"
+    },
+    "after": [
+      {
+        "route": "/operator/controls",
+        "tab": "people",
+        "desktop": 1.82,
+        "phone": 2.86
+      },
+      {
+        "route": "/operator/controls",
+        "tab": "invite",
+        "desktop": 1.38,
+        "phone": 2.3
+      },
+      {
+        "route": "/operator/controls",
+        "tab": "tools",
+        "desktop": 2.03,
+        "phone": 2.02
+      },
+      {
+        "route": "/operator/readiness",
+        "tab": "deferred",
+        "desktop": 1.97,
+        "phone": 2.74
+      },
+      {
+        "route": "/operator/readiness",
+        "tab": "blocked",
+        "desktop": 1.33,
+        "phone": 2.06
+      },
+      {
+        "route": "/operator/readiness",
+        "tab": "rules",
+        "desktop": 1.29,
+        "phone": 2.31
+      },
+      {
+        "route": "/operator/delivery",
+        "tab": "programmes",
+        "desktop": 1.35,
+        "phone": 2.14
+      },
+      {
+        "route": "/operator/delivery",
+        "tab": "publication",
+        "desktop": 1.35,
+        "phone": 2.24
+      },
+      {
+        "route": "/operator/delivery",
+        "tab": "access",
+        "desktop": 1.44,
+        "phone": 2.2
+      },
+      {
+        "route": "/operator/delivery",
+        "tab": "experience",
+        "desktop": 2.9,
+        "phone": 2.19
+      },
+      {
+        "route": "/operator/owner",
+        "tab": "status",
+        "desktop": 1.33,
+        "phone": 2.09
+      },
+      {
+        "route": "/operator/owner",
+        "tab": "gaps",
+        "desktop": 1.73,
+        "phone": 3.93
+      },
+      {
+        "route": "/operator/owner",
+        "tab": "technical",
+        "desktop": 1.55,
+        "phone": 1.95
+      }
+    ]
+  },
+  "nextPr": [
+    "Page heading and padding on staff pages: compact heading and tighter block spacing within the AC/1 scale (the largest shared saving, about 100 to 150 px per page).",
+    "Show-more after a fixed count: owner Open gaps (11 cards), controls Available tools (10 tools), delivery lists.",
+    "Split the heaviest panels into more tabs (five at most): delivery Mission and delegation experience (2.90), owner Status into Status and Waiting and blocked.",
+    "Drop the delivery Jump to list where its tabs already do the job.",
+    "Then re-measure; the guard stays report-only until the last track PR."
+  ]
+}
