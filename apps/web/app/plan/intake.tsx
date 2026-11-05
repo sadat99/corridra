@@ -260,27 +260,20 @@ export type PrivateIntakeSubmission = {
 };
 
 // Words for a send that did not come back as expected (Wave 6). The server's own sentence always wins. When
-// there is none (a proxy page, an empty body, a refused connection) the status says what to do next, so the
-// person never reads a raw error and never faces a blank area. The answers on the page are never lost.
-const sendWords = {
-  offline:
-    'The request did not reach Corridra. Check your connection, then send it again. Your answers are still here.',
-  limited:
-    'Too many requests just now. Wait a few minutes, then send it again. Your answers are still here.',
-  changed: 'This request changed while it was being sent. Check your answers, then try again.',
-  unavailable:
-    'Corridra could not save this right now. Your answers are still here. Try again in a moment.',
-};
-function wordsFor(status: number, said: unknown, fallback: string = sendWords.unavailable) {
+// there is none (a proxy page, an empty body) the status picks a sentence the form already has, so it is
+// translated like the rest and the person never reads a raw parser error or faces a blank area. A refused
+// connection keeps the browser's own words, which the form translates for the chosen language.
+function wordsFor(
+  status: number,
+  said: unknown,
+  fallback: string = formEn['form.message.intakeNotSaved'],
+) {
   if (typeof said === 'string' && said.trim()) return said;
-  return status === 429 ? sendWords.limited : status === 409 ? sendWords.changed : fallback;
-}
-async function reach(request: Promise<Response>) {
-  try {
-    return await request;
-  } catch {
-    throw new Error(sendWords.offline);
-  }
+  return status === 429
+    ? formEn['form.message.tooMany']
+    : status === 409
+      ? formEn['form.message.changed']
+      : fallback;
 }
 type Reply = {
   error?: string;
@@ -779,16 +772,14 @@ function IntakeForm({
         if (account && draft.email.trim().toLowerCase() !== account.email.trim().toLowerCase())
           throw new Error(formEn['form.message.emailMismatch']);
         if (!account && password.length < 14) throw new Error(formEn['form.message.passwordShort']);
-        const response = await reach(
-          fetch('/api/intake/pending', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              key: key.current,
-              brief: realBriefSchema.parse(canonicalDraft()),
-            }),
+        const response = await fetch('/api/intake/pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: key.current,
+            brief: realBriefSchema.parse(canonicalDraft()),
           }),
-        );
+        });
         const saved = await readReply(response);
         if (!response.ok)
           throw new Error(wordsFor(response.status, saved.error, formEn['form.message.notSaved']));
@@ -827,17 +818,15 @@ function IntakeForm({
         submitted.current = true;
         return;
       }
-      const r = await reach(
-        fetch('/api/intake', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            key: key.current,
-            brief: briefSchema.parse({ ...draft, experience: experience() }),
-            websiteCheck: '',
-          }),
+      const r = await fetch('/api/intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: key.current,
+          brief: briefSchema.parse({ ...draft, experience: experience() }),
+          websiteCheck: '',
         }),
-      );
+      });
       const data = await readReply(r);
       if (!r.ok) {
         setErrors(data.fields ?? {});
@@ -887,13 +876,11 @@ function IntakeForm({
     setBusy(true);
     setMessage('');
     try {
-      const r = await reach(
-        fetch('/api/intake/receipt', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ receipt: checkCode }),
-        }),
-      );
+      const r = await fetch('/api/intake/receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receipt: checkCode }),
+      });
       const data = (await readReply(r)) as {
         status: string;
         replies: { body: string; createdAt: string }[];

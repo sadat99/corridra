@@ -5,7 +5,7 @@
   "sensitive": false,
   "gapStatusChanges": "none; evidence only, the Conductor decides",
   "findingsFixedEachWithFailingTestFirst": [
-    "Q-05 /plan send: a proxy 503 page showed a raw 'Unexpected token' error; an empty JSON error on 503, 429 and 409 showed nothing; a rejected request showed 'Failed to fetch'. Now plain words, announced, same button retries. Tests: tests/e2e/verification/ws-a/wave6-plan-states.spec.ts",
+    "Q-05 /plan send: a proxy 503 page showed a raw parser error ('Unexpected token'); an empty JSON error on 503, 429 and 409 showed nothing. Now the form's own existing sentences (intakeNotSaved, tooMany, changed), which the form already translates; announced; the same button retries. Tests: tests/e2e/verification/ws-a/wave6-plan-states.spec.ts. No new string was added to any catalogue.",
     "Q-05 room projection panel: a rejected request showed 'Failed to fetch'; a 429 had no wait line. Now plain lines. Tests: Q-05 cases in tests/operator/revamp-programme-room.spec.ts",
     "Q-01 organiser room: choosing a group left focus on the button. Now a visible heading per group takes focus.",
     "Q-06 Save programme: while the first save was in flight the button read 'Retry same planning request'. Now 'Saving\u2026' while busy.",
@@ -173,6 +173,7 @@
     "note": "/programme LCP 784 ms against a 207 ms heading is the one outlier; no score invented and no code changed for Q-08"
   },
   "openRisks": [
+    "Guardian question: /plan offline (the request is rejected) still shows the browser's own words ('Failed to fetch' in English). Q-05 asks for honest words, but tests/operator/ux-plan-languages.spec.ts pins 'English keeps the browser words' and the form translates them per language. My first fix replaced them with a new English sentence and that test caught it, so I restored the pinned behaviour. Honest English words would mean a new catalogue string in every language, which is language work I was told not to do. Needs a decision; retry and non-blank are tested.",
     "429: only the projection panel (Results, companies, agenda views) says wait-and-refresh; the other room panels fall back to their existing plain 'could not be read, reload' lines for a 429, which is honest but not a later-retry line. Fixing each of about 20 handlers touches consent and terms panels; left for a decision",
     "Focus moves to the group heading on choosing a group, as Q-01 asks; a keyboard user returns to the group buttons with Shift+Tab",
     "Screenshots come from the synthetic fixture with fallback fonts; no visual acceptance on a real signed-in organiser room"
