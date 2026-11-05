@@ -1,0 +1,66 @@
+/* The workspaces table: tokens only. Compact rows, the actions in one overflow menu at the end of each row. */
+.ux-ws-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ux-ws-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ux-ws-table th,
+.ux-ws-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+}
+.ux-ws-table thead th {
+  color: var(--text-2);
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ux-ws-table tbody th {
+  font-weight: 650;
+}
+.ux-ws-table td {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-ws-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: end;
+}
+/* Phones: each row stacks, the menu stays at the end of the first line. */
+@media (max-width: 700px) {
+  .ux-ws-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ux-ws-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ux-ws-table th,
+  .ux-ws-table td {
+    padding: 0;
+    border: 0;
+  }
+  .ux-ws-table tbody th {
+    grid-column: 1;
+  }
+  .ux-ws-table .ux-ws-actions {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: start;
+  }
+}

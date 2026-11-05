@@ -10,14 +10,20 @@ export function CustomerWorkspaceLeave({
   issuer,
   onLeft,
   onDenied,
+  startAsking = false,
+  onCancel,
 }: {
   workspace: CustomerWorkspace;
   subject: string;
   issuer: string;
   onLeft: (workspaceId: string) => void;
   onDenied: (status: number) => void;
+  /** Opened from the workspaces table's menu: start on the question, not on the Leave link. */
+  startAsking?: boolean;
+  /** Called when the person chooses to keep their access, so a dialog around this can close. */
+  onCancel?: () => void;
 }) {
-  const [asking, setAsking] = useState(false),
+  const [asking, setAsking] = useState(startAsking),
     [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const command = useRef<string | null>(null);
@@ -116,6 +122,7 @@ export function CustomerWorkspaceLeave({
               setAsking(false);
               command.current = null;
               setMessage(null);
+              onCancel?.();
             }}
           >
             Keep My Access

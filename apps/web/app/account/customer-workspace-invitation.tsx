@@ -32,11 +32,14 @@ export function CustomerWorkspaceInvitation({
   issuer,
   onJoined,
   onDenied,
+  bare = false,
 }: {
   subject: string;
   issuer: string;
   onJoined: () => void;
   onDenied: (status: number) => void;
+  /** Inside a dialog: no disclosure of its own, the same form and the same behaviour. */
+  bare?: boolean;
 }) {
   const [code, setCode] = useState('');
   const [pending, setPending] = useState<{ commandId: string; token: string } | null>(null);
@@ -114,9 +117,10 @@ export function CustomerWorkspaceInvitation({
       if (mounted.current) setBusy(false);
     }
   }
+  const Root = (bare ? 'div' : 'details') as 'div';
   return (
-    <details className="ux-journey-disclosure">
-      <summary>Join a workspace</summary>
+    <Root className={bare ? undefined : 'ux-journey-disclosure'}>
+      {bare ? null : <summary>Join a workspace</summary>}
       <p>
         Use the invitation code from the workspace owner. Your account must already be allowed to
         join.
@@ -183,6 +187,6 @@ export function CustomerWorkspaceInvitation({
           {message}
         </p>
       )}
-    </details>
+    </Root>
   );
 }

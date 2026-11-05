@@ -9,19 +9,16 @@ import { RefreshButton } from './refresh-button';
 import { CustomerWorkspaceLeave } from './customer-workspace-leave';
 import { CompanyLinkLine, useCompanyLinkOverview } from './company-link-status';
 import { limitWords } from '../../lib/account-limit';
+import { CorridraIcon } from '../../components/corridra-icon';
+import { Dialog } from '../../components/ux/dialog';
+import { EmptyState } from '../../components/ux/empty-state';
+import { MenuButton, MenuLink, OverflowMenu } from '../../components/ux/overflow-menu';
+import './workspace-table.css';
 
 type Draft = { version: 1; commandId: string; name: string };
 type Status =
   'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'limit' | 'error';
-// UX-07: one primary action per workspace; the other actions sit in this "More" menu (44 px targets).
-const moreSummary = { minHeight: 44, cursor: 'pointer', listStyle: 'none' } as const;
-const moreList = {
-  listStyle: 'none',
-  padding: 0,
-  margin: '0.5rem 0 0',
-  display: 'grid',
-  gap: 4,
-} as const;
+type DialogKind = { kind: 'create' } | { kind: 'join' } | { kind: 'team' | 'leave'; id: string };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 function workspace(value: unknown): value is CustomerWorkspace {
   if (!value || typeof value !== 'object') return false;
@@ -130,6 +127,7 @@ export function CustomerWorkspaces({
   const [pending, setPending] = useState<Draft | null>(null);
   const [storageFailed, setStorageFailed] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<DialogKind | null>(null);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const linkOverview = useCompanyLinkOverview(
     linksEnabled && status === 'ready',
@@ -286,6 +284,7 @@ export function CustomerWorkspaces({
       }
       setPending(null);
       setName('');
+      setDialog(null);
       if (await reload()) setMessage({ text: 'Your workspace is confirmed.', error: false });
     } catch {
       if (mounted.current)
@@ -316,6 +315,16 @@ export function CustomerWorkspaces({
       });
     }
   }
+  const messageBlock = message && (
+    <p
+      ref={feedback}
+      tabIndex={-1}
+      role={message.error ? 'alert' : 'status'}
+      className={message.error ? 'ux-error-summary' : 'ux-draft-notice'}
+    >
+      {message.text}
+    </p>
+  );
   return (
     <section
       className="detail-card ux-account-missions"
@@ -325,7 +334,25 @@ export function CustomerWorkspaces({
       <div className="ux-section-head">
         <h2>Workspaces</h2>
         {status === 'ready' && (
-          <RefreshButton label="workspaces" disabled={creating} onClick={() => void reload()} />
+          <div className="ux-ws-head-actions">
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => setDialog({ kind: 'join' })}
+            >
+              Join a Workspace
+            </button>
+            {rows.length > 0 && (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => setDialog({ kind: 'create' })}
+              >
+                Create a Workspace
+              </button>
+            )}
+            <RefreshButton label="workspaces" disabled={creating} onClick={() => void reload()} />
+          </div>
         )}
       </div>
       <p>
@@ -356,119 +383,150 @@ export function CustomerWorkspaces({
       {status === 'ready' && (
         <>
           {rows.length === 0 ? (
-            <p className="ux-empty">No workspaces yet. Create your first one below.</p>
+            <EmptyState
+              icon="company"
+              action={
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={() => setDialog({ kind: 'create' })}
+                >
+                  Create a Workspace
+                </button>
+              }
+            >
+              No workspaces yet. Create your first one below.
+            </EmptyState>
           ) : (
-            <ul>
-              {rows.map((row) => (
-                <li key={row.id}>
-                  <p className="ux-row-title">
-                    <strong>{row.name}</strong>
-                    {/* CQ-56: a made-up example workspace says so in a live account. */}
-                    {realCustomerInput() && row.synthetic && !row.name.includes('(madeup)')
-                      ? ' (madeup)'
-                      : ''}{' '}
-                    · {row.role}
-                  </p>
-                  {linksEnabled && <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />}
-                  <div className="guide-actions-row">
-                    {draftsEnabled ? (
-                      <a className="primary-link" href={'/account/drafts/' + row.id}>
-                        New Request<span className="sr-only"> in {row.name}</span>
-                      </a>
-                    ) : requestsEnabled ? (
-                      <a className="primary-link" href={'/account/request/' + row.id}>
-                        New Request<span className="sr-only"> in {row.name}</span>
-                      </a>
-                    ) : null}
-                    {(profilesEnabled ||
-                      (programmesEnabled && ['owner', 'admin'].includes(row.role)) ||
-                      serviceRequestsEnabled ||
-                      billingEnabled ||
-                      (draftsEnabled && requestsEnabled)) && (
-                      <details className="ux-more-menu">
-                        <summary className="button button-secondary" style={moreSummary}>
-                          More<span className="sr-only"> for {row.name}</span>
-                        </summary>
-                        <ul style={moreList}>
-                          {draftsEnabled && (
-                            <li>
-                              <a className="text-link" href={'/account/drafts/' + row.id}>
-                                Continue a saved draft
-                              </a>
-                            </li>
-                          )}
-                          {draftsEnabled && requestsEnabled && (
-                            <li>
-                              <a className="text-link" href={'/account/request/' + row.id}>
-                                Send a private request
-                              </a>
-                            </li>
-                          )}
-                          {profilesEnabled && (
-                            <li>
-                              <a className="text-link" href={'/account/profile/' + row.id}>
-                                {['owner', 'admin'].includes(row.role)
-                                  ? 'Edit company profile'
-                                  : 'View company profile'}
-                              </a>
-                            </li>
-                          )}
-                          {programmesEnabled && ['owner', 'admin'].includes(row.role) && (
-                            <li>
-                              <a className="text-link" href={'/account/delegations/' + row.id}>
-                                Plan delegations
-                              </a>
-                            </li>
-                          )}
-                          {serviceRequestsEnabled && (
-                            <li>
-                              <a className="text-link" href={'/account/service-requests/' + row.id}>
-                                Paid-service requests
-                              </a>
-                            </li>
-                          )}
-                          {billingEnabled && (
-                            <li>
-                              <a className="text-link" href={'/account/billing/' + row.id}>
-                                Plan and billing
-                              </a>
-                            </li>
-                          )}
-                        </ul>
-                      </details>
-                    )}
-                  </div>
-                  {memberRolesEnabled && row.role !== 'owner' && (
-                    <CustomerWorkspaceLeave
-                      key={'leave:' + issuer + ':' + subject + ':' + row.id}
-                      workspace={row}
-                      subject={subject}
-                      issuer={issuer}
-                      onLeft={(id) => {
-                        setRows((current) => current.filter((r) => r.id !== id));
-                        setMessage({
-                          text: 'You have left the workspace. The owner can invite you again.',
-                          error: false,
-                        });
-                      }}
-                      onDenied={(status) => {
-                        setRows([]);
-                        setStatus(status === 403 ? 'changed' : failure(status));
-                        setMessage({
-                          text: 'Your access could not be confirmed. Reload your account before continuing.',
-                          error: true,
-                        });
-                      }}
-                    />
-                  )}
-                  {row.role === 'owner' && (
+            <table className="ux-ws-table">
+              <caption className="sr-only">Your workspaces</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Workspace</th>
+                  <th scope="col">Role</th>
+                  {linksEnabled && <th scope="col">Company link</th>}
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const admin = ['owner', 'admin'].includes(row.role);
+                  const start = draftsEnabled
+                    ? '/account/drafts/' + row.id
+                    : requestsEnabled
+                      ? '/account/request/' + row.id
+                      : null;
+                  const hasMenu =
+                    !!start ||
+                    profilesEnabled ||
+                    (programmesEnabled && admin) ||
+                    serviceRequestsEnabled ||
+                    billingEnabled ||
+                    row.role === 'owner' ||
+                    memberRolesEnabled;
+                  return (
+                    <tr key={row.id}>
+                      <th scope="row">
+                        <strong>{row.name}</strong>
+                        {/* CQ-56: a made-up example workspace says so in a live account. */}
+                        {realCustomerInput() && row.synthetic && !row.name.includes('(madeup)')
+                          ? ' (madeup)'
+                          : ''}
+                      </th>
+                      <td>{row.role}</td>
+                      {linksEnabled && (
+                        <td>
+                          <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />
+                        </td>
+                      )}
+                      <td className="ux-ws-actions">
+                        {hasMenu && (
+                          <OverflowMenu
+                            label={'Actions for ' + row.name}
+                            trigger={<CorridraIcon name="more" />}
+                            align="end"
+                          >
+                            {start && <MenuLink href={start}>New Request</MenuLink>}
+                            {draftsEnabled && (
+                              <MenuLink href={'/account/drafts/' + row.id}>
+                                Continue a Saved Draft
+                              </MenuLink>
+                            )}
+                            {draftsEnabled && requestsEnabled && (
+                              <MenuLink href={'/account/request/' + row.id}>
+                                Send a Private Request
+                              </MenuLink>
+                            )}
+                            {profilesEnabled && (
+                              <MenuLink href={'/account/profile/' + row.id}>
+                                {admin ? 'Edit Company Profile' : 'View Company Profile'}
+                              </MenuLink>
+                            )}
+                            {programmesEnabled && admin && (
+                              <MenuLink href={'/account/delegations/' + row.id}>
+                                Plan Delegations
+                              </MenuLink>
+                            )}
+                            {serviceRequestsEnabled && (
+                              <MenuLink href={'/account/service-requests/' + row.id}>
+                                Paid-Service Requests
+                              </MenuLink>
+                            )}
+                            {billingEnabled && (
+                              <MenuLink href={'/account/billing/' + row.id}>
+                                Plan and Billing
+                              </MenuLink>
+                            )}
+                            {row.role === 'owner' && (
+                              <MenuButton
+                                data-menu-close=""
+                                onClick={() => setDialog({ kind: 'team', id: row.id })}
+                              >
+                                Manage Team
+                              </MenuButton>
+                            )}
+                            {memberRolesEnabled && row.role !== 'owner' && (
+                              <MenuButton
+                                data-menu-close=""
+                                onClick={() => setDialog({ kind: 'leave', id: row.id })}
+                              >
+                                Leave Workspace
+                              </MenuButton>
+                            )}
+                          </OverflowMenu>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+          {rows.map((row) => {
+            const here = dialog && 'id' in dialog && dialog.id === row.id ? dialog.kind : null;
+            return (
+              <div key={'dialogs:' + row.id}>
+                {row.role === 'owner' && (
+                  <Dialog
+                    open={here === 'team'}
+                    onClose={() =>
+                      setDialog((d) => (d && 'id' in d && d.kind === 'team' ? null : d))
+                    }
+                    title={'Team for ' + row.name}
+                    keepMounted
+                  >
                     <CustomerWorkspaceTeam
                       key={issuer + ':' + subject + ':' + row.id}
                       workspace={row}
                       subject={subject}
                       issuer={issuer}
                       memberRolesEnabled={memberRolesEnabled}
+                      bare
+                      open={here === 'team'}
                       onDenied={(status) => {
+                        setDialog(null);
                         setRows([]);
                         setStatus(status === 403 ? 'changed' : failure(status));
                         setMessage({
@@ -477,92 +535,134 @@ export function CustomerWorkspaces({
                         });
                       }}
                     />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <CustomerWorkspaceInvitation
-            key={issuer + ':' + subject}
-            issuer={issuer}
-            subject={subject}
-            onJoined={() => {
-              void reload().then((loaded) => {
-                if (loaded)
-                  setMessage({
-                    text: 'You have joined the workspace.',
-                    error: false,
-                  });
-              });
-            }}
-            onDenied={(status) => {
-              setRows([]);
-              setStatus(status === 403 ? 'changed' : failure(status));
-              setMessage({
-                text: 'Joining was not confirmed. Reload your account and check the invitation.',
-                error: true,
-              });
-            }}
-          />
-          <form className="operator-form" aria-label="Create a workspace" onSubmit={create}>
-            <h3>Create a workspace</h3>
-            <div className="field">
-              <label htmlFor="workspace-name">Workspace name</label>
-              <input
-                id="workspace-name"
-                name="test-workspace-name"
-                aria-describedby="workspace-name-hint"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-                maxLength={realCustomerInput() ? 120 : 110}
-                autoComplete="off"
-                readOnly={!!pending}
-                disabled={creating || storageFailed}
-              />
-              <p id="workspace-name-hint" className="ux-hint">
-                {realCustomerInput()
-                  ? 'Use a name you and your team will recognise.'
-                  : 'Use a name you will recognise. This environment adds “Synthetic” in front.'}
-              </p>
-            </div>
-            {pending && (
-              <p>
-                The previous request may already have succeeded. Retry uses the same request and
-                keeps its original name.
-              </p>
-            )}
-            <button className="primary-link" disabled={creating || storageFailed}>
-              {creating
-                ? 'Please Wait…'
-                : pending
-                  ? 'Retry Workspace Creation'
-                  : 'Create Workspace'}
-            </button>
-          </form>
-          {(pending || storageFailed) && (
-            <>
-              <p>
-                Discarding retry details does not delete a workspace. Check the list before starting
-                another.
-              </p>
-              <button type="button" className="text-link" disabled={creating} onClick={discard}>
-                Discard Retry Details
+                  </Dialog>
+                )}
+                {memberRolesEnabled && row.role !== 'owner' && (
+                  <Dialog
+                    open={here === 'leave'}
+                    onClose={() =>
+                      setDialog((d) => (d && 'id' in d && d.kind === 'leave' ? null : d))
+                    }
+                    title={'Leave ' + row.name}
+                  >
+                    <CustomerWorkspaceLeave
+                      key={'leave:' + issuer + ':' + subject + ':' + row.id}
+                      workspace={row}
+                      subject={subject}
+                      issuer={issuer}
+                      startAsking
+                      onCancel={() => setDialog(null)}
+                      onLeft={(id) => {
+                        setDialog(null);
+                        setRows((current) => current.filter((r) => r.id !== id));
+                        setMessage({
+                          text: 'You have left the workspace. The owner can invite you again.',
+                          error: false,
+                        });
+                      }}
+                      onDenied={(status) => {
+                        setDialog(null);
+                        setRows([]);
+                        setStatus(status === 403 ? 'changed' : failure(status));
+                        setMessage({
+                          text: 'Your access could not be confirmed. Reload your account before continuing.',
+                          error: true,
+                        });
+                      }}
+                    />
+                  </Dialog>
+                )}
+              </div>
+            );
+          })}
+          <Dialog
+            open={dialog?.kind === 'join'}
+            onClose={() => setDialog((d) => (d?.kind === 'join' ? null : d))}
+            title="Join a Workspace"
+            keepMounted
+          >
+            <CustomerWorkspaceInvitation
+              key={issuer + ':' + subject}
+              issuer={issuer}
+              subject={subject}
+              bare
+              onJoined={() => {
+                setDialog(null);
+                void reload().then((loaded) => {
+                  if (loaded)
+                    setMessage({
+                      text: 'You have joined the workspace.',
+                      error: false,
+                    });
+                });
+              }}
+              onDenied={(status) => {
+                setDialog(null);
+                setRows([]);
+                setStatus(status === 403 ? 'changed' : failure(status));
+                setMessage({
+                  text: 'Joining was not confirmed. Reload your account and check the invitation.',
+                  error: true,
+                });
+              }}
+            />
+          </Dialog>
+          <Dialog
+            open={dialog?.kind === 'create'}
+            onClose={() => setDialog((d) => (d?.kind === 'create' ? null : d))}
+            title="Create a Workspace"
+          >
+            <form className="operator-form" aria-label="Create a workspace" onSubmit={create}>
+              <div className="field">
+                <label htmlFor="workspace-name">Workspace name</label>
+                <input
+                  id="workspace-name"
+                  name="test-workspace-name"
+                  aria-describedby="workspace-name-hint"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  required
+                  maxLength={realCustomerInput() ? 120 : 110}
+                  autoComplete="off"
+                  readOnly={!!pending}
+                  disabled={creating || storageFailed}
+                />
+                <p id="workspace-name-hint" className="ux-hint">
+                  {realCustomerInput()
+                    ? 'Use a name you and your team will recognise.'
+                    : 'Use a name you will recognise. This environment adds “Synthetic” in front.'}
+                </p>
+              </div>
+              {pending && (
+                <p>
+                  The previous request may already have succeeded. Retry uses the same request and
+                  keeps its original name.
+                </p>
+              )}
+              <button className="primary-link" disabled={creating || storageFailed}>
+                {creating
+                  ? 'Please Wait…'
+                  : pending
+                    ? 'Retry Workspace Creation'
+                    : 'Create Workspace'}
               </button>
-            </>
-          )}
+            </form>
+            {(pending || storageFailed) && (
+              <>
+                <p>
+                  Discarding retry details does not delete a workspace. Check the list before
+                  starting another.
+                </p>
+                <button type="button" className="text-link" disabled={creating} onClick={discard}>
+                  Discard Retry Details
+                </button>
+              </>
+            )}
+            {dialog?.kind === 'create' && messageBlock}
+          </Dialog>
         </>
       )}
-      {message && (
-        <p
-          ref={feedback}
-          tabIndex={-1}
-          role={message.error ? 'alert' : 'status'}
-          className={message.error ? 'ux-error-summary' : 'ux-draft-notice'}
-        >
-          {message.text}
-        </p>
-      )}
+      {dialog?.kind !== 'create' && messageBlock}
     </section>
   );
 }

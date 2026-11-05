@@ -11,12 +11,15 @@ export function Dialog({
   onClose,
   title,
   closeLabel = 'Close',
+  keepMounted = false,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   closeLabel?: string;
+  /** Keep the content in the page while the dialog is closed, so state inside it survives a close. */
+  keepMounted?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -74,7 +77,7 @@ export function Dialog({
           {closeLabel}
         </button>
       </div>
-      <div className="ux-dialog-body">{open ? children : null}</div>
+      <div className="ux-dialog-body">{open || keepMounted ? children : null}</div>
     </dialog>
   );
 }

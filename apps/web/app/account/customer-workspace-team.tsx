@@ -83,12 +83,17 @@ export function CustomerWorkspaceTeam({
   issuer,
   onDenied,
   memberRolesEnabled = false,
+  bare = false,
+  open = false,
 }: {
   workspace: CustomerWorkspace;
   subject: string;
   issuer: string;
   onDenied: (status: number) => void;
   memberRolesEnabled?: boolean;
+  /** Inside a dialog: no disclosure of its own. The team is read when `open` turns true. */
+  bare?: boolean;
+  open?: boolean;
 }) {
   const [page, setPage] = useState<CustomerAccessPage | null>(null);
   const [loading, setLoading] = useState(false),
@@ -493,14 +498,25 @@ export function CustomerWorkspaceTeam({
     setRoleChange(null);
     setMessage(null);
   }
+  // Opened from the workspaces table's menu: read the team when the dialog opens, as the disclosure did.
+  useEffect(() => {
+    if (bare && open && !page && !loading && !inFlight.current) void load();
+    // `load` is recreated on every render; only the opening matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bare, open]);
+  const Root = (bare ? 'div' : 'details') as 'details';
   return (
-    <details
-      className="ux-journey-disclosure"
-      onToggle={(event) => {
-        if (event.currentTarget.open && !page && !loading && !inFlight.current) void load();
-      }}
+    <Root
+      className={bare ? undefined : 'ux-journey-disclosure'}
+      onToggle={
+        bare
+          ? undefined
+          : (event) => {
+              if (event.currentTarget.open && !page && !loading && !inFlight.current) void load();
+            }
+      }
     >
-      <summary>Manage team</summary>
+      {bare ? null : <summary>Manage team</summary>}
       <section aria-label={'Team for ' + workspace.name} aria-busy={loading || busy}>
         <p>
           {realCustomerInput()
@@ -795,6 +811,6 @@ export function CustomerWorkspaceTeam({
           </p>
         )}
       </section>
-    </details>
+    </Root>
   );
 }
