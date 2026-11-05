@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { WorkspaceShell } from '../../components/workspace-shell';
+import './workspace.css';
 
 export const metadata = {
   title: 'Start here | Corridra',
@@ -31,46 +32,49 @@ export default function Page() {
         </section>
         <section className="ux-start-signin" aria-labelledby="signin-title">
           <h2 id="signin-title">Already working with us?</h2>
-          <ul>
-            <li>
-              <div>
-                <h3>Customer</h3>
-                <p>See your requests and missions.</p>
-              </div>
-              <Link className="primary-link" href="/account">
-                Open my account
-              </Link>
-            </li>
-            <li>
-              <div>
-                <h3>Corridra team</h3>
-                <p>
-                  Team accounts are by invitation. New team member? Open your invitation email, then
-                  set up your account.
-                </p>
-              </div>
-              <div className="ux-start-actions">
-                <Link className="primary-link" href="/operator">
-                  Team sign-in
+          <details className="ux-start-signin-details">
+            <summary>Already working with us?</summary>
+            <ul>
+              <li>
+                <div>
+                  <h3>Customer</h3>
+                  <p>See your requests and missions.</p>
+                </div>
+                <Link className="primary-link" href="/account">
+                  Open my account
                 </Link>
-                <Link className="text-link" href="/operator/setup">
-                  Set up your team account
+              </li>
+              <li>
+                <div>
+                  <h3>Corridra team</h3>
+                  <p>
+                    Team accounts are by invitation. New team member? Open your invitation email,
+                    then set up your account.
+                  </p>
+                </div>
+                <div className="ux-start-actions">
+                  <Link className="primary-link" href="/operator">
+                    Team sign-in
+                  </Link>
+                  <Link className="text-link" href="/operator/setup">
+                    Set up your team account
+                  </Link>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Supplier, programme member or local helper</h3>
+                  <p>
+                    Open the private link we sent you. It shows only what is shared with you. Local
+                    helpers can also sign in to see their tasks.
+                  </p>
+                </div>
+                <Link className="text-link" href="/contributor">
+                  Local helper sign-in
                 </Link>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h3>Supplier, programme member or local helper</h3>
-                <p>
-                  Open the private link we sent you. It shows only what is shared with you. Local
-                  helpers can also sign in to see their tasks.
-                </p>
-              </div>
-              <Link className="text-link" href="/contributor">
-                Local helper sign-in
-              </Link>
-            </li>
-          </ul>
+              </li>
+            </ul>
+          </details>
         </section>
         <nav className="ux-start-foot" aria-label="More">
           <Link className="text-link" href="/">

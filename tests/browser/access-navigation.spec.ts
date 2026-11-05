@@ -37,6 +37,9 @@ test('the start page offers three plain choices and links each kind of person to
     .click();
   await expect(page).toHaveURL(/\/workspace$/);
   await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
+  // On a phone the sign-in routes are a disclosure (layout budget); on a wide screen they are open.
+  const signIn = page.locator('details.ux-start-signin-details > summary');
+  if (await signIn.isVisible()) await signIn.click();
   const main = page.getByRole('main');
   await expect(main.getByRole('link', { name: 'Plan a mission', exact: true })).toHaveAttribute(
     'href',
@@ -87,6 +90,7 @@ test('protected access entries explain unavailable configuration and offer a way
 });
 test('invited network and private sharing help have connected recovery paths', async ({ page }) => {
   await page.goto('/network');
+  await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await page.getByRole('link', { name: 'Already invited? Open assigned-task access' }).click();
   await expect(page).toHaveURL(/\/contributor$/);
   await expect(page.getByRole('heading', { name: 'Your assigned tasks.' })).toBeVisible();

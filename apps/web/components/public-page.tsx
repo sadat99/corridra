@@ -4,6 +4,8 @@ import { CorridraIcon } from './corridra-icon';
 import { FactLabel } from './fact-label';
 import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
+import './page-compact.css';
+import './public-page.css';
 
 /** One sentence per line, so a headline never wraps in the middle of a thought. */
 export function Lines({ text }: { text: string }) {
@@ -43,7 +45,7 @@ function Steps({ content }: { content: PublicPageContent }) {
   const { sections, groups } = content;
   if (!groups) {
     return (
-      <section className="guide-page-steps" aria-label="The approach">
+      <section className="guide-page-steps guide-page-steps--compact" aria-label="The approach">
         <div>
           <ol data-count={sections.length}>
             {sections.map((section, index) => (
@@ -84,7 +86,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
   const labelled = content.sections.some((section) => section.tag);
   return (
     <PublicShell>
-      <section className="guide-page-hero">
+      <section className="guide-page-hero guide-page-hero--compact">
         <div>
           <nav className="guide-crumb" aria-label="Breadcrumb">
             <Link prefetch={false} href="/">
@@ -121,7 +123,10 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
         )}
       </section>
 
-      <section className={`guide-page-intro${labelled ? ' is-labelled' : ''}`} id="page-approach">
+      <section
+        className={`guide-page-intro guide-page-intro--compact${labelled ? ' is-labelled' : ''}`}
+        id="page-approach"
+      >
         <div>
           <h2>{content.introduction.title}</h2>
           <p>{content.introduction.text}</p>
@@ -140,101 +145,105 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
 
       {!labelled && <Steps content={content} />}
 
-      {content.reverse && (
-        <section className="guide-reverse" aria-labelledby="reverse-title">
-          <div>
-            <h2 id="reverse-title">{content.reverse.title}</h2>
-            <p>{content.reverse.text}</p>
-          </div>
-          <div className="guide-reverse-actions">
-            <Link prefetch={false} className="button-secondary" href={content.reverse.href}>
-              {content.reverse.cta} <Arrow />
-            </Link>
-            <Link prefetch={false} className="text-link" href={content.reverse.scopeHref}>
-              {content.reverse.scopeLabel}
-            </Link>
-          </div>
-        </section>
-      )}
+      {/* The sections after the approach stay in the page, behind one native disclosure (layout budget). */}
+      <details className="guide-more">
+        <summary>Show more</summary>
+        {content.reverse && (
+          <section className="guide-reverse" aria-labelledby="reverse-title">
+            <div>
+              <h2 id="reverse-title">{content.reverse.title}</h2>
+              <p>{content.reverse.text}</p>
+            </div>
+            <div className="guide-reverse-actions">
+              <Link prefetch={false} className="button-secondary" href={content.reverse.href}>
+                {content.reverse.cta} <Arrow />
+              </Link>
+              <Link prefetch={false} className="text-link" href={content.reverse.scopeHref}>
+                {content.reverse.scopeLabel}
+              </Link>
+            </div>
+          </section>
+        )}
 
-      {content.record && (
-        <section className="guide-record" aria-labelledby="record-title">
-          <div>
-            <p className="label">Your record</p>
-            <h2 id="record-title">{content.record.title}</h2>
-          </div>
-          <ul>
-            {content.record.items.map((item) => (
-              <li key={item}>
-                <CorridraIcon name="check" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        {content.record && (
+          <section className="guide-record" aria-labelledby="record-title">
+            <div>
+              <p className="label">Your record</p>
+              <h2 id="record-title">{content.record.title}</h2>
+            </div>
+            <ul>
+              {content.record.items.map((item) => (
+                <li key={item}>
+                  <CorridraIcon name="check" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {content.progress && (
-        <section className="guide-progress" aria-labelledby="outcomes-title">
-          <p className="label">{content.progress.label}</p>
-          <h2 id="outcomes-title">
-            <Lines text={content.progress.title.join(' ')} />
-          </h2>
-          <p className="guide-lead">{content.progress.text}</p>
-          <ol className="outcome-path" aria-label="Eleven commercial events in order">
-            {content.progress.steps.map((step, index) => (
-              <li key={step} data-final={index === content.progress!.steps.length - 1}>
-                <span aria-hidden="true">{index + 1}</span>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+        {content.progress && (
+          <section className="guide-progress" aria-labelledby="outcomes-title">
+            <p className="label">{content.progress.label}</p>
+            <h2 id="outcomes-title">
+              <Lines text={content.progress.title.join(' ')} />
+            </h2>
+            <p className="guide-lead">{content.progress.text}</p>
+            <ol className="outcome-path" aria-label="Eleven commercial events in order">
+              {content.progress.steps.map((step, index) => (
+                <li key={step} data-final={index === content.progress!.steps.length - 1}>
+                  <span aria-hidden="true">{index + 1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
-      {content.statements ? (
-        <section className="guide-statements" id="page-next" aria-labelledby="close-title">
-          <p className="label">What to expect</p>
-          <h2 id="close-title">{content.closing.title}</h2>
-          <p className="guide-lead">{content.closing.text}</p>
-          <ul>
-            {content.statements.map((statement) => (
-              <li key={statement}>{statement}</li>
-            ))}
-          </ul>
-          <Link prefetch={false} className="text-link" href={content.related.href}>
-            {content.related.label} <Arrow />
-          </Link>
-        </section>
-      ) : (
-        <section className="guide-band" id="page-next" aria-labelledby="close-title">
-          <div>
+        {content.statements ? (
+          <section className="guide-statements" id="page-next" aria-labelledby="close-title">
+            <p className="label">What to expect</p>
             <h2 id="close-title">{content.closing.title}</h2>
-            <p>{content.closing.text}</p>
-          </div>
-          <Link prefetch={false} className="primary-link" href={content.related.href}>
-            {content.related.label}
-          </Link>
-        </section>
-      )}
+            <p className="guide-lead">{content.closing.text}</p>
+            <ul>
+              {content.statements.map((statement) => (
+                <li key={statement}>{statement}</li>
+              ))}
+            </ul>
+            <Link prefetch={false} className="text-link" href={content.related.href}>
+              {content.related.label} <Arrow />
+            </Link>
+          </section>
+        ) : (
+          <section className="guide-band" id="page-next" aria-labelledby="close-title">
+            <div>
+              <h2 id="close-title">{content.closing.title}</h2>
+              <p>{content.closing.text}</p>
+            </div>
+            <Link prefetch={false} className="primary-link" href={content.related.href}>
+              {content.related.label}
+            </Link>
+          </section>
+        )}
 
-      {content.band && (
-        <section className="guide-band" aria-labelledby="band-title">
-          <div>
-            <h2 id="band-title">{content.band.title}</h2>
-            <p>{content.band.text}</p>
-          </div>
-          <Link
-            prefetch={false}
-            className="primary-link"
-            href={
-              content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
-            }
-          >
-            {content.cta ?? 'Start a request'}
-          </Link>
-        </section>
-      )}
+        {content.band && (
+          <section className="guide-band" aria-labelledby="band-title">
+            <div>
+              <h2 id="band-title">{content.band.title}</h2>
+              <p>{content.band.text}</p>
+            </div>
+            <Link
+              prefetch={false}
+              className="primary-link"
+              href={
+                content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
+              }
+            >
+              {content.cta ?? 'Start a request'}
+            </Link>
+          </section>
+        )}
+      </details>
     </PublicShell>
   );
 }

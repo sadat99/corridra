@@ -48,6 +48,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/trust');
+  await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await expect(
     page.getByRole('heading', { name: 'A meeting is not a sale. A contract is not cash.' }),
   ).toBeVisible();

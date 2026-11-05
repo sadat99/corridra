@@ -26,23 +26,28 @@
 
 /* From 1000 px the heading block and the lead sit side by side. */
 @media (min-width: 1000px) {
-  .guide-page-hero.guide-page-hero--compact > div {
+  .guide-page-hero.guide-page-hero--compact:not(:has(.guide-route)) > div {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
     column-gap: var(--space-8);
     align-items: start;
   }
-  .guide-page-hero--compact > div > .guide-crumb,
-  .guide-page-hero--compact > div > .label,
-  .guide-page-hero--compact > div > h1 {
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-crumb,
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .label,
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > h1 {
     grid-column: 1;
   }
-  .guide-page-hero--compact > div > .guide-lead {
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-lead {
     grid-column: 2;
     grid-row: 1 / span 2;
     max-width: none;
   }
-  .guide-page-hero--compact > div > .guide-hint {
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-hint,
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-page-actions {
     grid-column: 2;
     grid-row: 3;
   }
+}
+
+.guide-page-hero.guide-page-hero--compact .primary-link {
+  min-height: 3rem;
 }

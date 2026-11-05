@@ -1,0 +1,83 @@
+/* The start page within its screen budget (layout budget, Phase 2a). The two ways to begin keep their cards.
+   The sign-in routes are a native disclosure on a phone and three open columns on a wide screen, so a returning
+   person finds them either way. Nothing is removed; every link is in the server HTML. */
+.ux-start .ux-start-grid .detail-card {
+  padding: var(--space-5) var(--space-6);
+}
+.ux-start .ux-start-signin > h2 {
+  display: none;
+}
+.ux-start .ux-start-signin-details > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--brand);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.ux-start .ux-start-signin-details > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-start .ux-start-signin-details > summary::after {
+  content: '+';
+  margin-inline-start: var(--space-2);
+  font-family: var(--font-mono);
+}
+.ux-start .ux-start-signin-details[open] > summary::after {
+  content: '\2212';
+}
+@media (min-width: 1000px) {
+  .ux-workspace {
+    padding-block: var(--space-3);
+  }
+  .ux-workspace .ux-page-heading {
+    padding-bottom: var(--space-2);
+  }
+  .ux-start .ux-start-foot a {
+    min-height: 2rem;
+  }
+  .ux-workspace .ux-start {
+    gap: var(--space-3);
+    padding-bottom: 0;
+  }
+  .ux-start .ux-start-grid {
+    gap: var(--space-4);
+  }
+  .ux-start .ux-start-grid .detail-card {
+    padding: var(--space-4) var(--space-6);
+  }
+  .ux-start .ux-start-signin {
+    padding-block: var(--space-2);
+  }
+  .ux-start .ux-start-signin ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 var(--space-6);
+    margin-top: var(--space-1);
+    border-top: 0;
+  }
+  .ux-start .ux-start-signin li {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding-block: var(--space-1) var(--space-2);
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 0;
+  }
+}
+@supports selector(::details-content) {
+  @media (min-width: 1000px) {
+    .ux-start .ux-start-signin > h2 {
+      display: block;
+    }
+    .ux-start .ux-start-signin-details > summary {
+      display: none;
+    }
+    .ux-start .ux-start-signin-details::details-content {
+      content-visibility: visible;
+    }
+  }
+}

@@ -118,6 +118,7 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
   await page.goto('/machinery');
   await expect(page.locator('.ux-public-disclosure')).toHaveCount(0);
   await expect(page.locator('.guide-page-steps li p').first()).toBeVisible();
+  await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await page.locator('#page-next').scrollIntoViewIfNeeded();
   await expect(page.locator('#page-next')).toBeInViewport();
   for (const route of [
