@@ -17,6 +17,7 @@ import {
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
+import { LeftNavMenuButton } from './left-nav';
 import { NotificationInbox } from './notification-inbox';
 
 const homes: Record<SignedInShell, string> = {
@@ -101,6 +102,8 @@ export function AppHeader({
           : null;
   return (
     <header className="site-header ux-app-header" data-shell={kind} lang={meta.html} dir={meta.dir}>
+      {/* The menu button of the left navigation: nothing renders unless a left bar is on the page. */}
+      <LeftNavMenuButton />
       <Link prefetch={false} className="brand" href={homes[kind]} aria-label={t(names[kind])}>
         {brandMark}
         <span>Corridra</span>
