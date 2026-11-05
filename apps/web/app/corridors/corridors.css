@@ -6,7 +6,10 @@
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     grid-template-rows: auto 1fr;
     gap: var(--space-3) var(--space-6);
-    padding: var(--space-5) var(--space-6);
+    padding: var(--space-4) var(--space-6);
+  }
+  .guide-routes .guide-route-result {
+    gap: var(--space-2);
   }
   .guide-routes .guide-route-pick {
     grid-column: 1;
@@ -31,7 +34,7 @@
     align-self: start;
   }
   .guide-routes .ux-atlas-map {
-    height: 13.5rem;
+    height: 16rem;
     margin: 0;
   }
 }
@@ -89,7 +92,7 @@
     line-height: 1.25;
   }
   .guide-routes .ux-atlas-map {
-    height: 6.5rem;
+    height: 8rem;
   }
   .guide-routes .guide-directions {
     gap: var(--space-3);
@@ -126,4 +129,10 @@
   .guide-routes .ux-subtabs-tab {
     padding-inline: var(--space-2);
   }
+}
+
+/* The world map (any other route) is never cropped: the pair can be anywhere, so it keeps its whole frame. Only the
+   two fixed spotlight maps are cropped to their middle band. */
+.guide-routes .ux-atlas-map.ux-atlas-map-world {
+  height: auto;
 }

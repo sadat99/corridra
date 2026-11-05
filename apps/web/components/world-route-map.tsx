@@ -79,9 +79,8 @@ export function WorldRouteMap({
   return (
     <svg
       viewBox={world.viewBox}
-      preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
-      className="ux-atlas-map"
+      className="ux-atlas-map ux-atlas-map-world"
       focusable="false"
     >
       <defs>
