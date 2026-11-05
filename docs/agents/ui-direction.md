@@ -8,6 +8,13 @@ Owner, verbatim: "ensure we have navigation bar in the left side, and the rest a
 
 Owner, 5 November 2026, verbatim, with screenshots of the customer area: "improve the ux/ui here. no page(in desktop) should be more than 1x screen. also all other navigation links etc, pretty novice design, can u take these ux/ui to 100x better within our revamp process and branding-5lakhs". The desktop hard limit is therefore one screen. The customer redesign contract is [the customer experience spec](../revamp/specs/customer-experience.md).
 
+Owner, 5 November 2026, confirmed: "left bar only for signed in state." Public pages keep the top header.
+
+Owner, 5 November 2026, verbatim, with a screenshot of the live customer Home (`docs/revamp/evidence/owner-2026-11-05/8-home-after-shell.png`): "\"Start a Request\" Button should move little left to be aligned with the page's left side scale. Button's word should have first letter capital, same for the \"New Request\" on the top rigjt corner." Rules from this:
+
+1. **Button and action labels use Title Case** in English: every word capitalised except articles, short conjunctions and short prepositions (a, an, the, and, or, of, to, in, on, for, by, at), unless the word comes first. Examples: "Start a Request", "New Request", "Save Draft", "Open Request Details". This applies to buttons, button-styled links and menu items, not to body text, headings, notices or field labels. Write the text in Title Case; never use CSS `text-transform`. Other languages keep their own conventions.
+2. **Actions align to the content's left edge.** A button or action row never sits indented from the text column it belongs to.
+
 This supersedes, where they differ, the earlier rules on navigation placement (customer top row on desktop and bottom tab bar on phones), on whole-page length, and on the "no field moves between steps" decision in the revamp public-home spec. Navigation names, sets, roles, ids, addresses and payloads are unchanged. The build contract is [the layout budget spec](../revamp/specs/layout-budget.md).
 
 ## AC/1 Atlantic Cobalt brand and composition lock (owner decision, 22 October 2026)

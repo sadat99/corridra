@@ -53,6 +53,8 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
 
 ### Visual rules (AC/1)
 
+- Button and action labels in Title Case (owner, 5 November 2026; see the UI direction), and actions aligned to the content's left edge.
+
 - One primary (cobalt) action per view; secondary actions are quiet text or ghost buttons.
 - Fewer borders: surfaces separate by porcelain and white tiers and the spacing scale.
 - Mono only for references, ids and table heads, never for states.
