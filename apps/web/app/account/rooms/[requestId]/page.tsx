@@ -49,7 +49,11 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
     );
   const link = await loadRoomLink(parsed.data, session.subject, session.issuer);
   return (
-    <CustomerShell tab="work" eyebrow="ROOM" title="Your request, in one place.">
+    <CustomerShell
+      tab="work"
+      eyebrow="ROOM"
+      title={<span className="sr-only">Your request, in one place.</span>}
+    >
       <RoomView
         requestId={parsed.data}
         subject={session.subject}
