@@ -1,5 +1,7 @@
 import '../rooms/[requestId]/room-view.css';
+import '../rooms/[requestId]/room-frame.css';
 import '../../../components/mr/road.css';
+import '../../../components/mr/stage-bar.css';
 import '../../../components/mr/scripts.css';
 import './programme-room.css';
 

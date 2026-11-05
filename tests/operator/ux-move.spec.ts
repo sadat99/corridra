@@ -98,11 +98,12 @@ test.beforeAll(async () => {
       const offered=(q.get('offered')||'en').split(',').map(code=>({code,draft:code!=='en'}));
       const skipped=Number(q.get('skipped')||0);
       const partial=q.get('partial')==='1';
+      const journeys=JSON.parse(q.get('journeys')||'[]');
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={offered}>
           <WorkspaceShell eyebrow="YOUR MOVE" title="Here is what is waiting for you."
             nav={<CustomerNav current="move" plainNames move companies/>}>
-            <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped} partial={partial}/>
+            <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped} partial={partial} journeys={journeys}/>
           </WorkspaceShell>
         </LanguageProvider>);`,
       loader: 'tsx',
@@ -236,6 +237,54 @@ test('a new reply is kept on this device only, and can be marked read and forgot
     .click();
   await expect(page.getByText('Read the new reply from the Corridra team')).toBeVisible();
   expect(await page.evaluate(() => window.localStorage.getItem('corridra.move.seen'))).toBe('{}');
+});
+
+const journeyCard = (journey: 'source' | 'sell', id: string) => ({
+  journey,
+  id,
+  workspaceId: owner.id,
+  count: '1',
+  title: journey === 'sell' ? 'Knitwear buyers in Spain' : 'Spinning frames from China',
+  kind: 'request',
+  status: 'OUTREACH',
+  statusWords: 'Finding companies',
+  dateWords: '2 Oct 2026',
+  at: '2026-10-02T00:00:00Z',
+  href: `/account/rooms/${id}`,
+});
+// Owner-approved work rooms (5 Nov 2026): Home opens the journey last chosen in this browser, All is remembered
+// too, and a single-journey Home has no switch at all.
+test('opens the journey last chosen in this browser, and remembers All', async ({ page }) => {
+  const two = `&journeys=${encodeURIComponent(JSON.stringify([journeyCard('source', 'r-src'), journeyCard('sell', 'r-sell')]))}`;
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem('seeded')) {
+      localStorage.setItem('corridra.home.journey', 'sell');
+      sessionStorage.setItem('seeded', '1');
+    }
+  });
+  await open(page, 'full', two);
+  const nav = page.getByRole('navigation', { name: 'Show work for' });
+  await expect(nav.getByRole('link', { name: /^Selling/ })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Knitwear buyers in Spain')).toBeVisible();
+  await expect(page.getByText('Spinning frames from China')).toHaveCount(0);
+  // All is a plain link to /account/move; choosing it is remembered before the page changes.
+  await nav.getByRole('link', { name: /^All/ }).click();
+  await page.waitForURL(/\/account\/move$/);
+  expect(await page.evaluate(() => localStorage.getItem('corridra.home.journey'))).toBe('all');
+  await open(page, 'full', two);
+  await expect(nav.getByRole('link', { name: /^All/ })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Spinning frames from China')).toBeVisible();
+});
+
+test('a single-journey Home has no journey switch, whatever was remembered', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('corridra.home.journey', 'source'));
+  await open(
+    page,
+    'full',
+    `&journeys=${encodeURIComponent(JSON.stringify([journeyCard('sell', 'r-sell')]))}`,
+  );
+  await expect(page.getByText('Knitwear buyers in Spain')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Show work for' })).toHaveCount(0);
 });
 
 test('blocked storage does not break the page', async ({ page }) => {

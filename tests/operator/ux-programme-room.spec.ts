@@ -146,6 +146,8 @@ async function open(
     log?: string[];
     answer?: () => unknown;
     bare?: boolean;
+    /** Extra address words (query and hash), for the old-link and ?programme= cases. */
+    address?: string;
   } = { room: true },
 ) {
   // Any panel this spec does not exercise answers "unavailable", which each panel reads calmly.
@@ -180,7 +182,9 @@ async function open(
     >;
     return route.fulfill({ json: { ...body, programmeId: requested ?? body.programmeId } });
   });
-  await page.goto(`${origin}/?room=${options.room ? '1' : '0'}${options.bare ? '&bare=1' : ''}`);
+  await page.goto(
+    `${origin}/?room=${options.room ? '1' : '0'}${options.bare ? '&bare=1' : ''}${options.address ?? ''}`,
+  );
 }
 
 test('the room shows the programme, a road and a boarding line from what the panel reads', async ({
@@ -193,26 +197,35 @@ test('the room shows the programme, a road and a boarding line from what the pan
   await expect(room.getByText('Planning record only · Sample data')).toBeVisible();
   // One invitation used out of two, one registration, one invitation still open.
   await expect(room.getByText('1 of 2 invitations used')).toBeVisible();
-  const steps = room.locator('.mr-road li');
+  // The approved Organise room (CX-06): a stage with no record is a plain grey segment, with no words or legend.
+  const steps = room.locator('.programme-stage .mr-stage > li');
   await expect(steps).toHaveCount(6);
   await expect(steps.nth(0)).toHaveAttribute('data-state', 'done');
   await expect(steps.nth(1)).toHaveAttribute('data-state', 'done');
   await expect(steps.nth(2)).toHaveAttribute('data-state', 'now');
   await expect(steps.nth(2)).toHaveAttribute('aria-current', 'step');
   for (const index of [3, 4, 5])
-    await expect(steps.nth(index)).toHaveAttribute('data-state', 'notTracked');
+    await expect(steps.nth(index)).toHaveAttribute('data-state', 'grey');
   await expect(room.locator('[aria-current="step"]')).toHaveCount(1);
-  await expect(room.locator('.mr-road-legend')).toContainText("does not read that step's records");
+  await expect(room.locator('.programme-stage .mr-stage-line')).toHaveText(
+    'Stage 3 of 6: Register',
+  );
+  await expect(room.getByText(/not tracked/i)).toHaveCount(0);
+  await expect(room.locator('.mr-road-legend')).toHaveCount(0);
+  await expect(room.getByRole('region', { name: 'Your next step' })).toContainText(
+    'Get the remaining participants registered',
+  );
 });
 
 test('a programme with no invitations says invite is next, and a long list is not measured', async ({
   page,
 }) => {
   await open(page, { room: true, participants: manage([], []) });
-  const steps = page.locator('.mr-road li');
+  const steps = page.locator('.programme-stage .mr-stage > li');
   await expect(page.getByText('No invitations yet')).toBeVisible();
   await expect(steps.nth(1)).toHaveAttribute('data-state', 'now');
-  await expect(steps.nth(2)).toHaveAttribute('data-state', 'later');
+  await expect(steps.nth(2)).toHaveAttribute('data-state', 'grey');
+  await expect(page.getByText('Invite your participants')).toBeVisible();
   const other = await page.context().newPage();
   await open(other, {
     room: true,
@@ -221,9 +234,10 @@ test('a programme with no invitations says invite is next, and a long list is no
   await expect(other.getByText(/Not measured yet: there are more participants/)).toBeVisible();
   await expect(other.getByText(/\d of \d invitations used/)).toHaveCount(0);
   // Every invitation read was used and someone registered, but the list went on: Register is not done.
-  const steps2 = other.locator('.mr-road li');
+  const steps2 = other.locator('.programme-stage .mr-stage > li');
   await expect(steps2.nth(1)).toHaveAttribute('data-state', 'done');
-  await expect(steps2.nth(2)).toHaveAttribute('data-state', 'notTracked');
+  await expect(steps2.nth(2)).toHaveAttribute('data-state', 'grey');
+  await expect(other.locator('.programme-stage [aria-current="step"]')).toHaveCount(0);
 });
 
 test('Refresh counts reads again, and a changed list shows after it', async ({ page }) => {
@@ -243,18 +257,91 @@ test('Refresh counts reads again, and a changed list shows after it', async ({ p
   await expect(page.getByText('1 of 1 invitations used')).toBeVisible();
 });
 
-test('only the programmes on screen are read, and the rest are read when scrolled to', async ({
+// The approved Organise room (5 Nov 2026): one programme at a time, so the page fits one screen. Only the chosen
+// programme's room is on the page and read; choosing another reads that one, and the address keeps the choice.
+test('only the chosen programme is shown and read, and choosing another reads it', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const log: string[] = [];
   await open(page, { room: true, programmes: 8, log });
   await expect(page.getByText('1 of 2 invitations used').first()).toBeVisible();
-  expect(log).toContain(programmeIdAt(1));
-  expect(log).not.toContain(programmeIdAt(8));
-  expect(new Set(log).size).toBeLessThan(8);
-  await page.getByRole('article', { name: `${programme.name} 8` }).scrollIntoViewIfNeeded();
+  await expect(page.locator('.programme-room')).toHaveCount(1);
+  expect(new Set(log)).toEqual(new Set([programmeIdAt(1)]));
+  const picker = page.getByRole('combobox', { name: 'Programme', exact: true });
+  await expect(picker.locator('option')).toHaveCount(8);
+  await picker.selectOption({ label: `${programme.name} 8` });
+  await expect(page.getByRole('article', { name: `${programme.name} 8` })).toBeVisible();
   await expect.poll(() => log).toContain(programmeIdAt(8));
+  expect(new URL(page.url()).searchParams.get('programme')).toBe(programmeIdAt(8));
+  await expect(page.locator('.programme-room').filter({ visible: true })).toHaveCount(1);
+  // Codex review of PR 314: a programme once opened stays mounted, hidden, so what was typed survives a switch.
+  await picker.selectOption({ label: `${programme.name} 1` });
+  const first = page.getByRole('article', { name: `${programme.name} 1` });
+  await first.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
+  await first
+    .getByLabel(/invitation label/i)
+    .first()
+    .fill('Synthetic label kept across programmes');
+  await picker.selectOption({ label: `${programme.name} 8` });
+  await expect(first).toBeHidden();
+  await picker.selectOption({ label: `${programme.name} 1` });
+  await expect(first.getByLabel(/invitation label/i).first()).toHaveValue(
+    'Synthetic label kept across programmes',
+  );
+});
+
+// Guardian review of PR 314 (layout budget L-03, MUST PRESERVE 3 and 7): the chosen programme comes from
+// ?programme= or an old #<programme id>-<view> link, only ever from the workspace's own list, and an old link opens
+// the group that holds its section. The page's own tabs keep ?tab=.
+test('?programme= and an old section link open that programme, and a foreign id falls back to the first', async ({
+  page,
+}) => {
+  await open(page, { room: true, programmes: 8, address: `&programme=${programmeIdAt(8)}` });
+  await expect(page.getByRole('article', { name: `${programme.name} 8` })).toBeVisible();
+  const foreign = await page.context().newPage();
+  await open(foreign, {
+    room: true,
+    programmes: 8,
+    address: '&programme=00000000-0000-4000-8000-0000000009ff',
+  });
+  await expect(foreign.getByRole('article', { name: `${programme.name} 1` })).toBeVisible();
+  await expect(foreign.locator('.programme-room').filter({ visible: true })).toHaveCount(1);
+  const linked = await page.context().newPage();
+  await open(linked, { room: true, programmes: 8, address: `#${programmeIdAt(3)}-people` });
+  const room = linked.getByRole('article', { name: `${programme.name} 3` });
+  await expect(room).toBeVisible();
+  await expect(
+    room.getByRole('button', { name: 'Participants and eligibility', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(linked.locator(`[id="${programmeIdAt(3)}-people"]`)).toBeVisible();
+});
+
+test('the page tabs keep ?tab=, and the form is one tab away', async ({ page }) => {
+  await open(page, { room: true, address: '&tab=new' });
+  await expect(page.getByRole('tab', { name: 'New Sample Programme' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(page.getByLabel('Programme name')).toBeVisible();
+  await page.getByRole('tab', { name: 'Programmes' }).click();
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('programmes');
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+});
+
+test('on a phone the Invite stage is still named and Participants is one tap away', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page);
+  const invite = page.locator('.programme-stage .mr-stage > li').nth(1);
+  await expect(invite).toContainText('Invite');
+  await expect(invite.locator('button')).toBeHidden();
+  await page
+    .getByRole('region', { name: 'Your next step' })
+    .getByRole('button', { name: 'Open Participants' })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Invitations' })).toBeVisible();
 });
 
 test('a room with no other view does not tell the person to choose one', async ({ page }) => {
@@ -267,10 +354,10 @@ test('a room with no other view does not tell the person to choose one', async (
 test('with access denied the road marks nothing it cannot read', async ({ page }) => {
   await open(page, { room: true, denied: true });
   await expect(page.locator('.programme-boarding')).toContainText('Not measured yet');
-  const steps = page.locator('.mr-road li');
+  const steps = page.locator('.programme-stage .mr-stage > li');
   await expect(steps.nth(0)).toHaveAttribute('data-state', 'done');
-  await expect(steps.nth(1)).toHaveAttribute('data-state', 'notTracked');
-  await expect(steps.nth(2)).toHaveAttribute('data-state', 'notTracked');
+  await expect(steps.nth(1)).toHaveAttribute('data-state', 'grey');
+  await expect(steps.nth(2)).toHaveAttribute('data-state', 'grey');
 });
 
 test('every original panel is one view away and a view keeps what was typed when the person moves on', async ({
