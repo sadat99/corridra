@@ -337,15 +337,15 @@ test('staff explicitly reviews original request/report and retries an uncertain 
   await page
     .getByText('Deliver a reviewed mission to the customer account', { exact: true })
     .click();
-  await page.getByRole('button', { name: 'Load account delivery review' }).click();
+  await page.getByRole('button', { name: 'Load Account Delivery Review' }).click();
   await page.getByRole('radio', { name: /Original approved client report/ }).check();
   await page
     .getByLabel('Reason for account delivery')
     .fill('Explicit fictional creator-only delivery');
   await page.getByRole('checkbox', { name: /I reviewed the report scope/ }).check();
-  await page.getByRole('button', { name: 'Approve account delivery' }).click();
+  await page.getByRole('button', { name: 'Approve Account Delivery' }).click();
   await expect(page.getByText(/Delivery was not confirmed/)).toBeVisible();
-  await page.getByRole('button', { name: 'Retry the same delivery approval' }).click();
+  await page.getByRole('button', { name: 'Retry the Same Delivery Approval' }).click();
   await expect(
     page.getByText(/Reviewed report delivered to the original request creator account/),
   ).toBeVisible();
@@ -366,9 +366,9 @@ test('missing customer binding and gated staff review expose no fake approval fo
     await page
       .getByText('Deliver a reviewed mission to the customer account', { exact: true })
       .click();
-    await page.getByRole('button', { name: 'Load account delivery review' }).click();
+    await page.getByRole('button', { name: 'Load Account Delivery Review' }).click();
     await expect(page.getByText(message, { exact: false })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Approve account delivery' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Approve Account Delivery' })).toHaveCount(0);
     await page.unroute('**/api/workspace/customer-mission-delivery*');
   }
 });
@@ -386,7 +386,7 @@ test('both real components support keyboard,WCAG and mobile/tablet/desktop width
       await page
         .getByText('Deliver a reviewed mission to the customer account', { exact: true })
         .click();
-      await page.getByRole('button', { name: 'Load account delivery review' }).focus();
+      await page.getByRole('button', { name: 'Load Account Delivery Review' }).focus();
       await page.keyboard.press('Enter');
       await expect(page.getByLabel('Reason for account delivery')).toBeVisible();
     } else await expect(page.getByRole('heading', { name: item().title })).toBeVisible();

@@ -57,7 +57,7 @@ export function MuteForm({ requestId }: { requestId: string }) {
         still see it in your account.
       </p>
       <button className="primary-link" onClick={mute} disabled={stage === 'working'}>
-        Mute messages about this request
+        Mute Messages About This Request
       </button>
       {stage === 'refused' && <p role="alert">This link is not valid or has expired.</p>}
       {stage === 'failed' && (

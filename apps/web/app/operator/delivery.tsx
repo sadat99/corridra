@@ -439,7 +439,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
         {message}
       </p>
       <button disabled={busy} onClick={() => void act(async () => {})}>
-        Refresh delivery
+        Refresh Delivery
       </button>
       <label className="operator-select-field">
         Programme
@@ -471,13 +471,13 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           disabled={offset === 0 || busy}
           onClick={() => setOffset((v) => Math.max(0, v - 100))}
         >
-          Previous programmes
+          Previous Programmes
         </button>{' '}
         <button
           disabled={offset + 100 >= data.programmeTotal || busy}
           onClick={() => setOffset((v) => v + 100)}
         >
-          Next programmes
+          Next Programmes
         </button>
       </p>
       <SubTabs
@@ -500,7 +500,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                         Reporting purpose
                         <textarea name="reportingPurpose" minLength={10} maxLength={500} required />
                       </label>
-                      <button disabled={busy}>Create programme</button>
+                      <button disabled={busy}>Create Programme</button>
                     </form>
                   </details>
                 )}
@@ -518,7 +518,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                               openSubTab(event.currentTarget, 'publication');
                             }}
                           >
-                            Review mission
+                            Review Mission
                           </button>
                         </li>
                       ))}
@@ -549,7 +549,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                               }}
                             />
                           </label>
-                          <button disabled={busy}>Preview intake</button>
+                          <button disabled={busy}>Preview Intake</button>
                         </form>
                         {preview && (
                           <>
@@ -602,7 +602,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                                   accepted requests are self-declarations.
                                 </label>
                                 <button disabled={busy || !!preview.counts.errors}>
-                                  Confirm intake
+                                  Confirm Intake
                                 </button>
                               </form>
                             )}
@@ -618,7 +618,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                                           openSubTab(event.currentTarget, 'publication');
                                         }}
                                       >
-                                        Review imported mission
+                                        Review Imported Mission
                                       </button>
                                     )}
                                   </li>
@@ -666,13 +666,13 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                         disabled={missionOffset === 0 || busy}
                         onClick={() => setMissionOffset((v) => Math.max(0, v - 100))}
                       >
-                        Previous missions
+                        Previous Missions
                       </button>{' '}
                       <button
                         disabled={missionOffset + 100 >= missionTotal || busy}
                         onClick={() => setMissionOffset((v) => v + 100)}
                       >
-                        Next missions
+                        Next Missions
                       </button>
                     </p>
                     {missionId && (
@@ -800,7 +800,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                           margins and negotiations.
                         </label>
                         <button disabled={busy || optionsMission !== missionId}>
-                          Approve publication
+                          Approve Publication
                         </button>
                       </form>
                     )}
@@ -883,7 +883,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                           (audience === 'INSTITUTION_REPORT' && !programme)
                         }
                       >
-                        Create private link
+                        Create Private Link
                       </button>
                     </form>
                     {privateLink && (
@@ -941,7 +941,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                             })
                           }
                         >
-                          Revoke link
+                          Revoke Link
                         </button>
                       )}
                     </li>
@@ -965,7 +965,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                             })
                           }
                         >
-                          Withdraw publication
+                          Withdraw Publication
                         </button>
                       </li>
                     ))}
@@ -1004,7 +1004,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                         <textarea name="instructions" minLength={10} maxLength={1000} required />
                       </label>
                       <DueField label="Response deadline" name="dueAt" initial={weekAhead()} />
-                      <button disabled={busy}>Create request</button>
+                      <button disabled={busy}>Create Request</button>
                     </form>
                   </details>
                 )}
@@ -1029,7 +1029,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                               })
                             }
                           >
-                            Mark fulfilled
+                            Mark Fulfilled
                           </button>{' '}
                           <button
                             disabled={busy}
@@ -1043,7 +1043,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                               })
                             }
                           >
-                            Cancel request
+                            Cancel Request
                           </button>
                         </>
                       )}

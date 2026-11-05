@@ -168,7 +168,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     page.getByRole('alert').filter({ hasText: 'Workspace could not be loaded.' }),
   ).toBeVisible();
   await page.unroute('**/api/workspace/workspace**');
-  await page.getByRole('button', { name: 'Retry workspace' }).click();
+  await page.getByRole('button', { name: 'Retry Workspace' }).click();
   await expect(page.locator('.ux-overview')).toBeVisible();
 
   // The old # links keep working inside the shell.

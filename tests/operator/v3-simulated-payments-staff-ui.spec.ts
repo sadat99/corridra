@@ -208,9 +208,9 @@ test('a refund sends one command and an uncertain save is retried as the same co
   await page.getByRole('button', { name: 'Refund INV-2026-000001 (madeup)' }).click();
   await page.getByLabel(/Amount in SGD minor units/).fill('1000');
   await page.getByLabel(/Reason \(plain text/).fill('Made-up refund for a rehearsal of the flow');
-  await page.getByRole('button', { name: 'Record refund (madeup)' }).click();
+  await page.getByRole('button', { name: 'Record Refund (Madeup)' }).click();
   await expect(page.getByText(/Could not confirm that this was saved/)).toBeVisible();
-  await page.getByRole('button', { name: 'Send the same refund again' }).click();
+  await page.getByRole('button', { name: 'Send the Same Refund Again' }).click();
   await expect(page.getByText('Refund recorded (madeup). No money moved.')).toBeVisible();
   const posts = seen.filter((s) => s.method === 'POST');
   expect(posts).toHaveLength(2);
@@ -236,7 +236,7 @@ test('a refused refund says why in plain words; switched off shows nothing; acce
   await page.goto(origin + '/');
   await page.getByRole('button', { name: 'Refund INV-2026-000001 (madeup)' }).click();
   await page.getByLabel(/Reason \(plain text/).fill('Made-up refund for a rehearsal of the flow');
-  await page.getByRole('button', { name: 'Record refund (madeup)' }).click();
+  await page.getByRole('button', { name: 'Record Refund (Madeup)' }).click();
   await expect(page.getByRole('alert')).toContainText(
     /above what is left, the made-up window has passed/,
   );

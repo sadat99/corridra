@@ -158,8 +158,8 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
           : stage === 'password'
             ? 'Continue'
             : stage === 'enrol'
-              ? 'Set up authenticator'
-              : 'Verify and open workspace'}
+              ? 'Set Up Authenticator'
+              : 'Verify and Open Workspace'}
       </button>
     </form>
   );

@@ -235,7 +235,7 @@ function RoutePackForm({
             Reason for this pack
             <textarea name="reason" required minLength={3} maxLength={500} />
           </label>
-          <button className="primary-link">{busy ? 'Saving…' : 'Save route pack'}</button>
+          <button className="primary-link">{busy ? 'Saving…' : 'Save Route Pack'}</button>
           <ActionFeedback
             scope="route-pack"
             feedback={feedback.feedback}
@@ -382,7 +382,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             .finally(() => setBusy(false));
         }}
       >
-        Refresh reviewed configuration
+        Refresh Reviewed Configuration
       </button>
       {catalogue ? (
         <dl className="ux-settings-counts">
@@ -418,7 +418,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             className="text-link"
             onClick={() => void save('mission-templates', {}, '#workspace-missions')}
           >
-            Install missing mission templates
+            Install Missing Mission Templates
           </button>
         </details>
         <details>
@@ -465,7 +465,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
               coverage or legal approval.
             </p>
             <button disabled={busy} className="primary-link">
-              Create reviewed route
+              Create Reviewed Route
             </button>
           </form>
         </details>
@@ -520,7 +520,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
               dates and reason.
             </label>
             <button disabled={busy} className="primary-link">
-              Save reviewed configuration
+              Save Reviewed Configuration
             </button>
           </form>
         </details>

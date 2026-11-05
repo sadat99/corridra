@@ -247,7 +247,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                 className="primary-link"
                 disabled={busy || !data?.enabled || !data.countries.length}
               >
-                {busy ? 'Sending…' : 'Send contributor invitation'}
+                {busy ? 'Sending…' : 'Send Contributor Invitation'}
               </button>
               <ActionFeedback
                 scope="contributor-invite"
@@ -304,7 +304,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
               )
             }
           >
-            Copy contributor setup link
+            Copy Contributor Setup Link
           </button>
           <button
             className="text-link"
@@ -317,7 +317,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
               )
             }
           >
-            Copy assigned-task link
+            Copy Assigned-task Link
           </button>
           <Link className="text-link" href="/network">
             Network access and work overview
@@ -334,7 +334,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
               setRevision((n) => n + 1);
             }}
           >
-            Refresh invitations
+            Refresh Invitations
           </button>
         </div>
         {data?.installed && (
@@ -359,7 +359,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                       type="button"
                       onClick={() => void copy(item.principalId, 'Contributor reference')}
                     >
-                      Copy contributor reference for eligibility review
+                      Copy Contributor Reference for Eligibility Review
                     </button>
                     {['AWAITING_SETUP', 'EXPIRED'].includes(item.state) && (
                       <form
@@ -378,7 +378,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                           />
                         </label>
                         <button className="text-link" disabled={busy}>
-                          Cancel pending invitation
+                          Cancel Pending Invitation
                         </button>
                       </form>
                     )}
@@ -395,7 +395,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                     setPrevious(previous.slice(0, -1));
                   }}
                 >
-                  Previous invitations
+                  Previous Invitations
                 </button>
                 <button
                   className="text-link"
@@ -406,7 +406,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                     setCursor(data.next);
                   }}
                 >
-                  Next invitations
+                  Next Invitations
                 </button>
               </nav>
             </PhoneFold>

@@ -56,7 +56,7 @@ function panelParts(page: Page) {
   return {
     panel,
     field: panel.getByLabel('Current authenticator code', { exact: true }),
-    verify: panel.getByRole('button', { name: 'Verify again', exact: true }),
+    verify: panel.getByRole('button', { name: 'Verify Again', exact: true }),
     notice: page.locator('#workspace-authenticator-result'),
     back: panel.getByRole('link', { name: /^Back to / }),
     status: page.getByRole('status', { name: 'Workspace status' }),
@@ -112,7 +112,7 @@ test('the authenticator panel says each check result beside the field and keeps 
     await page.getByLabel('Password', { exact: true }).fill(seed.password);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
     await page.goto(workspaceUrl);
     await expect(page.getByText('Your access: owner', { exact: true })).toBeVisible();

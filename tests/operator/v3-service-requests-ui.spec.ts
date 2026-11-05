@@ -1035,7 +1035,7 @@ test('staff open a request, prepare a quote with every part, and the form sends 
     .fill('Synthetic assumption: both meetings are in one building');
   await form.getByLabel(/Delivery terms/).fill('Synthetic delivery terms: one agreed day');
   await form.getByLabel(/Payment terms/).fill('Synthetic payment terms are settled later');
-  const send = form.getByRole('button', { name: 'Send the quote to the customer' });
+  const send = form.getByRole('button', { name: 'Send the Quote to the Customer' });
   await expect(send).toBeDisabled();
   await form.getByLabel(/Valid until/).fill('2026-12-31');
   expect(await axe(page)).toEqual([]);
@@ -1148,7 +1148,7 @@ test('staff progress notes and internal notes are separate messages, and the cat
   await tell
     .getByLabel(/Note the customer will read/)
     .fill('Synthetic update: the coordinator is briefed and the day is booked');
-  await tell.getByRole('button', { name: 'Send to the customer' }).click();
+  await tell.getByRole('button', { name: 'Send to the Customer' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts[0]).toMatchObject({
     action: 'start',
@@ -1160,7 +1160,7 @@ test('staff progress notes and internal notes are separate messages, and the cat
   await note
     .getByLabel(/Note \(start with Synthetic\)/)
     .fill('Synthetic internal note: supplier gave a discount');
-  await note.getByRole('button', { name: 'Save internal note' }).click();
+  await note.getByRole('button', { name: 'Save Internal Note' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts[1]).toMatchObject({
     action: 'note',
@@ -1177,7 +1177,7 @@ test('staff progress notes and internal notes are separate messages, and the cat
   // Catalogue: a change names the version staff saw and has no customer-only wording.
   await page.getByRole('button', { name: 'Edit Interpreter day' }).click();
   await page.getByLabel('Plain title').fill('Interpreter day with briefing');
-  await page.getByRole('button', { name: 'Save service' }).click();
+  await page.getByRole('button', { name: 'Save Service' }).click();
   await expect(
     page.getByRole('region', { name: 'Paid-service catalogue' }).getByText('Saved.'),
   ).toBeVisible();
@@ -1361,7 +1361,7 @@ test('staff can prepare bundled supply terms without publishing acquisition cost
     .getByRole('textbox', { name: 'Private relationship and cost source' })
     .fill('Synthetic confidential source');
   await expect(form).toContainText('12000 minor units');
-  await form.getByRole('button', { name: 'Send the quote to the customer' }).click();
+  await form.getByRole('button', { name: 'Send the Quote to the Customer' }).click();
   await expect.poll(() => posts.length).toBe(1);
   expect(posts[0]).toMatchObject({
     commercialArrangement: {
@@ -1422,6 +1422,6 @@ test('uninstalled quote arrangements leave the existing itemised quote form unch
   await expect(form.getByText('Commercial arrangement (optional)', { exact: true })).toHaveCount(0);
   await expect(form.getByText(/Commercial arrangement terms are unavailable until/)).toHaveCount(0);
   await expect(
-    form.getByRole('button', { name: 'Send the quote to the customer', exact: true }),
+    form.getByRole('button', { name: 'Send the Quote to the Customer', exact: true }),
   ).toBeVisible();
 });

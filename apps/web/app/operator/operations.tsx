@@ -503,7 +503,7 @@ export function Operations({
           disabled={busy}
           onClick={() => void load(filters)}
         >
-          {busy ? 'Loading operations…' : dashboard ? 'Refresh operations' : 'Load operations'}
+          {busy ? 'Loading Operations…' : dashboard ? 'Refresh Operations' : 'Load Operations'}
         </button>
       </div>
       <OperatorWorkbench
@@ -555,7 +555,7 @@ export function Operations({
             if (original) void send(JSON.parse(original.fingerprint));
           }}
         >
-          Retry original operational command
+          Retry Original Operational Command
         </button>
       )}
       <section
@@ -643,7 +643,7 @@ export function Operations({
                 </select>
               </label>
               <button className="button" type="submit">
-                Apply filters
+                Apply Filters
               </button>
             </fieldset>
           </form>
@@ -852,7 +852,7 @@ export function Operations({
                 disabled={busy || dashboard.offset === 0}
                 onClick={() => void load(filters + `&offset=${Math.max(0, dashboard.offset - 50)}`)}
               >
-                Previous missions
+                Previous Missions
               </button>
               <button
                 className="button button-secondary"
@@ -863,7 +863,7 @@ export function Operations({
                 }
                 onClick={() => void load(filters + `&offset=${dashboard.offset + 50}`)}
               >
-                Next missions
+                Next Missions
               </button>
             </details>
             <details className="ops-notes-fold">
@@ -964,7 +964,7 @@ export function Operations({
                     disabled={busy || role !== 'owner'}
                     onClick={preparePack}
                   >
-                    Prepare next configuration version
+                    Prepare Next Configuration Version
                   </button>
                 </>
               )}
@@ -1002,7 +1002,7 @@ export function Operations({
                 disabled={busy || !packDraft}
                 onClick={() => void inspect()}
               >
-                Preview configuration effects
+                Preview Configuration Effects
               </button>
               {preview && (
                 <>
@@ -1023,7 +1023,7 @@ export function Operations({
                       })
                     }
                   >
-                    Submit configuration proposal
+                    Submit Configuration Proposal
                   </button>
                 </>
               )}
@@ -1060,7 +1060,7 @@ export function Operations({
                     })
                   }
                 >
-                  Approve and publish exact proposal
+                  Approve and Publish Exact Proposal
                 </button>
                 <button
                   className="button button-secondary"
@@ -1074,7 +1074,7 @@ export function Operations({
                     })
                   }
                 >
-                  Reject proposal
+                  Reject Proposal
                 </button>
               </article>
             ))}
@@ -1162,7 +1162,7 @@ export function Operations({
                     <input name="reason" minLength={3} maxLength={500} required />
                   </label>
                   <button className="button" type="submit">
-                    Record readiness
+                    Record Readiness
                   </button>
                 </fieldset>
               </form>
@@ -1182,21 +1182,21 @@ export function Operations({
                 disabled={busy}
                 onClick={() => release('SYNTHETIC_APPROVED')}
               >
-                Approve route readiness for limited use
+                Approve Route Readiness for Limited Use
               </button>
               <button
                 className="button button-secondary"
                 disabled={busy}
                 onClick={() => release('PAUSED')}
               >
-                Pause this route service
+                Pause This Route Service
               </button>
               <button
                 className="button button-secondary"
                 disabled={busy}
                 onClick={() => release('UNPUBLISHED')}
               >
-                Keep this route unpublished
+                Keep This Route Unpublished
               </button>
             </>
           )}
@@ -1259,7 +1259,7 @@ export function Operations({
                   }
                 }}
               >
-                Record reviewed operational command
+                Record Reviewed Operational Command
               </button>
             </div>
           </div>
@@ -1426,7 +1426,7 @@ export function Operations({
                     }
                   }}
                 >
-                  Retry eligible message {String(r.id)}
+                  Retry Eligible Message {String(r.id)}
                 </button>
               ))}
             <button
@@ -1446,7 +1446,7 @@ export function Operations({
                 }
               }}
             >
-              Start or recover eligible dispatch
+              Start or Recover Eligible Dispatch
             </button>
             <Table
               label="Task queue, first 100"

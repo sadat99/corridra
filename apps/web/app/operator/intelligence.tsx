@@ -222,7 +222,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
               .finally(() => setBusy(false));
           }}
         >
-          Refresh AI review
+          Refresh AI Review
         </button>
         <a href="#workspace-missions">Open missions</a>
         <a href="#workspace-sources">Open sources and claims</a>
@@ -287,7 +287,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           <input name="language" placeholder="bn" />
         </label>
         <button className="primary-link" disabled={busy || !data?.enabled}>
-          Prepare a draft
+          Prepare a Draft
         </button>
       </form>
       <h3>Recorded draft reviews</h3>
@@ -333,7 +333,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
                     .catch((e) => setMessage(e.message))
                 }
               >
-                Inspect original sources
+                Inspect Original Sources
               </button>
               {!draft.decision && (
                 <form className="operator-form" onSubmit={(e) => review(e, draft)}>
@@ -361,7 +361,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
                     <input name="reason" required minLength={3} maxLength={500} />
                   </label>
                   <button className="primary-link" disabled={busy}>
-                    Save human review
+                    Save Human Review
                   </button>
                 </form>
               )}
@@ -381,7 +381,7 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
             {JSON.stringify(sources, null, 2)}
           </pre>
           <button className="text-link" onClick={() => setSources(null)}>
-            Close source inspection
+            Close Source Inspection
           </button>
         </details>
       )}

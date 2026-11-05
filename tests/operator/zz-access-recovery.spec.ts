@@ -99,7 +99,7 @@ test('pending invitation guidance is conditional; operator recovery handles inte
   await page
     .getByLabel('Operator email', { exact: true })
     .fill('synthetic-recovery@example.invalid');
-  await page.getByRole('button', { name: 'Request operator reset email' }).click();
+  await page.getByRole('button', { name: 'Request Operator Reset Email' }).click();
   await expect.poll(() => requests.length).toBe(1);
   await expect(page.getByLabel('Operator email', { exact: true })).toBeDisabled();
   await page
@@ -114,7 +114,7 @@ test('pending invitation guidance is conditional; operator recovery handles inte
     'synthetic-recovery@example.invalid',
   );
   fail = false;
-  await page.getByRole('button', { name: 'Request operator reset email' }).click();
+  await page.getByRole('button', { name: 'Request Operator Reset Email' }).click();
   await expect(page.getByRole('main').getByRole('status')).toContainText('active operator account');
   expect(requests[0]).toEqual({
     path: '/api/operator-auth/request-password-reset',
@@ -142,13 +142,13 @@ test('pending invitation guidance is conditional; operator recovery handles inte
   await page
     .getByLabel('Confirm operator password', { exact: true })
     .fill('Synthetic mismatch only');
-  await page.getByRole('button', { name: 'Set new operator password' }).click();
+  await page.getByRole('button', { name: 'Set New Operator Password' }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('must match');
   expect(consumed).toBe(0);
   await page
     .getByLabel('Confirm operator password', { exact: true })
     .fill('Synthetic replacement only');
-  await page.getByRole('button', { name: 'Set new operator password' }).click();
+  await page.getByRole('button', { name: 'Set New Operator Password' }).click();
   await expect(page.getByRole('main').getByRole('status')).toContainText('existing authenticator');
   expect(consumed).toBe(1);
   await page.goto('/operator/forgot-password');

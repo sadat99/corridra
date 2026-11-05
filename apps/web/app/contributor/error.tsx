@@ -23,7 +23,7 @@ export default function ContributorError() {
           window.location.reload();
         }}
       >
-        Retry assigned work
+        Retry Assigned Work
       </a>
       <nav className="access-options" aria-label="Assigned work recovery">
         <Link className="text-link" href="/signin">

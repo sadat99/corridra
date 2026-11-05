@@ -35,7 +35,7 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   // Real server reads: the panel loads and shows seven counts (the owner can read meetings); the
   // commercial readiness Today adds accepted quotes not started and replies to review (CQ-34, CQ-73).

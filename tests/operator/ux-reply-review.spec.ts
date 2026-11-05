@@ -239,7 +239,7 @@ test('ask: the missing terms are chosen for the team, one decision is recorded, 
   page,
 }) => {
   const sent = await open(page);
-  await page.getByRole('button', { name: 'Ask for missing terms' }).click();
+  await page.getByRole('button', { name: 'Ask for Missing Terms' }).click();
   for (const term of [
     'Lead time',
     'Valid until',
@@ -261,7 +261,7 @@ test('ask: the missing terms are chosen for the team, one decision is recorded, 
   await expect(
     page.getByText(/Chinese opens only after a native reviewer is recorded/),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Record the request' }).click();
+  await page.getByRole('button', { name: 'Record the Request' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Decision recorded.' })).toBeVisible();
   expect(sent).toHaveLength(1);
   expect(sent[0]).toMatchObject({
@@ -277,14 +277,14 @@ test('ask: the missing terms are chosen for the team, one decision is recorded, 
     '&l=zh&ask=leadTime,validUntil,incoterm',
   );
   // An ask keeps the reply open for a later decision.
-  await expect(page.getByRole('button', { name: 'Publish: prepare as a quotation' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish: Prepare As a Quotation' })).toBeVisible();
 });
 
 test('publish records one decision and prepares the quotation for the existing form', async ({
   page,
 }) => {
   const sent = await open(page, { replies: 'complete' });
-  await page.getByRole('button', { name: 'Publish: prepare as a quotation' }).click();
+  await page.getByRole('button', { name: 'Publish: Prepare As a Quotation' }).click();
   await expect(
     page.getByText('Published: prepared as a mission quotation, not yet confirmed.'),
   ).toBeVisible();
@@ -295,7 +295,7 @@ test('publish records one decision and prepares the quotation for the existing f
   await expect(block).toContainText('tooling: 0.00');
   await expect(block).toContainText('validUntil: 2099-12-31T23:59:59Z');
   await expect(block).toContainText('source: supplier reply, self-declared');
-  await expect(page.getByRole('button', { name: 'Copy the prepared quotation' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
   // Final: no more decisions.
   await expect(page.getByRole('button', { name: 'Reject' })).toHaveCount(0);
 });
@@ -308,7 +308,7 @@ test('reject needs a reason, records it, and tells the team the customer never s
   await expect(page.getByText('The customer never sees a rejected reply.')).toBeVisible();
   await page.getByLabel('Reason').selectOption('PRICE_NOT_CREDIBLE');
   await page.getByLabel('Note for the team (optional)').fill('Price is far below cost');
-  await page.getByRole('button', { name: 'Record the rejection' }).click();
+  await page.getByRole('button', { name: 'Record the Rejection' }).click();
   await expect(page.getByText('Rejected: Price not credible.')).toBeVisible();
   expect(sent[0]).toMatchObject({
     decision: 'REJECT',
@@ -323,7 +323,7 @@ test('shows the database message when the team member must verify again', async 
   await open(page, {
     failWith: { status: 403, error: 'Verify your authenticator again to continue' },
   });
-  await page.getByRole('button', { name: 'Publish: prepare as a quotation' }).click();
+  await page.getByRole('button', { name: 'Publish: Prepare As a Quotation' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'Verify your authenticator again to continue' }),
   ).toBeVisible();
@@ -335,7 +335,7 @@ test('a role that cannot review, and a database that is not open, can read but n
 }) => {
   await open(page, { role: 'operator' });
   await expect(page.getByText('We can quote this. Terms follow.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Publish: prepare as a quotation' })).toHaveCount(
+  await expect(page.getByRole('button', { name: 'Publish: Prepare As a Quotation' })).toHaveCount(
     0,
   );
   const other = await page.context().newPage();
@@ -352,7 +352,7 @@ test('says so when the module is not installed, and shows nothing at all with th
   await expect(
     page.getByText('Reply review is not installed or not available here.'),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Publish: prepare as a quotation' })).toHaveCount(
+  await expect(page.getByRole('button', { name: 'Publish: Prepare As a Quotation' })).toHaveCount(
     0,
   );
   const off = await page.context().newPage();
@@ -386,13 +386,13 @@ for (const width of [320, 390, 768, 1440]) {
       expect(results.violations.map((v) => `${label} ${v.id}: ${v.nodes[0]?.html}`)).toEqual([]);
     };
     await check('awaiting');
-    await page.getByRole('button', { name: 'Ask for missing terms' }).click();
+    await page.getByRole('button', { name: 'Ask for Missing Terms' }).click();
     await check('ask form');
     await page.getByRole('button', { name: 'Cancel' }).click();
     await page.getByRole('button', { name: 'Reject', exact: true }).click();
     await check('reject form');
     await page.getByRole('button', { name: 'Cancel' }).click();
-    await page.getByRole('button', { name: 'Publish: prepare as a quotation' }).click();
+    await page.getByRole('button', { name: 'Publish: Prepare As a Quotation' }).click();
     await expect(
       page.getByText('Published: prepared as a mission quotation, not yet confirmed.'),
     ).toBeVisible();

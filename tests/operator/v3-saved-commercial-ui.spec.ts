@@ -724,7 +724,7 @@ test('GAP-006 commercial reload restores typed text without persisting loaded de
   });
   await page.goto(origin + '/?mode=commercial-draft');
   const open = () =>
-    page.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+    page.getByRole('button', { name: 'Review Requirements, Offers and Visits' }).click();
   await open();
   await page
     .getByRole('textbox', { name: 'Commercial objective', exact: true })

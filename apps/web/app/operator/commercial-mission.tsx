@@ -584,7 +584,7 @@ export function CommercialMission({
         ]}
       />
       <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-        Review requirements, offers and visits
+        Review Requirements, Offers and Visits
       </button>
       <p role="status">{message}</p>
       {data && (

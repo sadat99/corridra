@@ -111,14 +111,14 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Set up your authenticator' })).toBeVisible();
   expect(await (await page.request.get('/api/workspace/tenants')).json()).toEqual([]);
-  await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+  await page.getByRole('button', { name: 'Set Up Authenticator', exact: true }).click();
   await expect(page.getByLabel('Authenticator setup key')).toBeVisible();
   const secret = await page.getByLabel('Authenticator setup key').inputValue();
   await writeFile('.cache/part06-browser-authenticator.json', JSON.stringify({ secret }), {
     mode: 0o600,
   });
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await expect(page).toHaveURL(/\/operator#ops-gates$/);
   await expect(page.locator('#ops-gates')).toBeFocused();
@@ -185,7 +185,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   const operationNavigation = page.getByRole('navigation', { name: 'Operations sections' });
   await expect(operationNavigation.getByRole('link')).toHaveCount(4);
   await expect(
-    operations.getByRole('button', { name: 'Refresh operations', exact: true }),
+    operations.getByRole('button', { name: 'Refresh Operations', exact: true }),
   ).toBeVisible();
   await expect(
     operations.getByText(
@@ -217,7 +217,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await operations
     .getByRole('textbox', { name: 'Industry', exact: true })
     .fill('unrecorded synthetic sector');
-  await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await operations.getByRole('button', { name: 'Apply Filters', exact: true }).click();
   await expect(
     operations
       .locator('.operations-metrics > div')
@@ -228,9 +228,9 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     operations.locator('caption').filter({ hasText: 'Customer trade amounts' }),
   ).toHaveCount(0);
   await operations.getByRole('textbox', { name: 'Industry', exact: true }).fill('');
-  await operations.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await operations.getByRole('button', { name: 'Apply Filters', exact: true }).click();
   await expect(
-    operations.getByRole('button', { name: 'Refresh operations', exact: true }),
+    operations.getByRole('button', { name: 'Refresh Operations', exact: true }),
   ).toBeEnabled();
   expect(
     (await new AxeBuilder({ page }).include('#workspace-operations').analyze()).violations,
@@ -244,7 +244,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await settings.getByLabel('Demand-origin market').selectOption('JP');
   await settings.getByRole('combobox', { name: 'Target market', exact: true }).selectOption('KE');
   await settings.getByLabel('Route review reason').fill('Synthetic navigation route review');
-  await settings.getByRole('button', { name: 'Create reviewed route', exact: true }).click();
+  await settings.getByRole('button', { name: 'Create Reviewed Route', exact: true }).click();
   await expect(settings.getByRole('status')).toContainText('Saved reference:');
   await settings
     .getByText('Current route packs and definition references', { exact: true })
@@ -255,7 +255,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .click();
   await settings.getByLabel('Reviewed command JSON').fill('{');
   await settings.getByRole('checkbox').check();
-  await settings.getByRole('button', { name: 'Save reviewed configuration' }).click();
+  await settings.getByRole('button', { name: 'Save Reviewed Configuration' }).click();
   await expect(settings.getByRole('status')).toContainText('valid JSON object');
   await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
   await settings.getByLabel('Reviewed configuration action').selectOption('ai-rights');
@@ -264,13 +264,13 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
   await openSection(page, 'workspace-sources');
   await page.getByLabel('Source description').fill('Synthetic browser inspection');
-  await page.getByRole('button', { name: 'Record source', exact: true }).click();
+  await page.getByRole('button', { name: 'Record Source', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await page
     .getByRole('combobox', { name: 'Source', exact: true })
     .selectOption({ label: 'Synthetic browser inspection' });
   await page.getByRole('textbox', { name: 'Claim', exact: true }).fill('Synthetic browser claim');
-  await page.getByRole('button', { name: 'Record claim', exact: true }).click();
+  await page.getByRole('button', { name: 'Record Claim', exact: true }).click();
   await expect(page.getByText('Synthetic browser claim', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('No current verified facts.')).toBeVisible();
   await openSection(page, 'workspace-missions');
@@ -310,7 +310,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   for (const action of ['qualify', 'activate', 'pause', 'resume']) {
     await card.getByLabel('Mission action').selectOption(action);
     await card.getByLabel('Reason for change').fill(`Synthetic browser ${action} decision`);
-    await card.getByRole('button', { name: 'Save mission action' }).click();
+    await card.getByRole('button', { name: 'Save Mission Action' }).click();
     await expect(
       card.getByText(`Synthetic browser ${action} decision`, { exact: false }),
     ).toBeVisible();
@@ -318,7 +318,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await card
     .getByLabel('Reply visible on the private receipt')
     .fill('Please confirm the synthetic target requirements.');
-  await card.getByRole('button', { name: 'Post receipt reply' }).click();
+  await card.getByRole('button', { name: 'Post Receipt Reply' }).click();
   await expect(
     card.getByText('Please confirm the synthetic target requirements.', { exact: true }),
   ).toBeVisible();
@@ -336,7 +336,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research
     .getByLabel('Research source locator')
     .fill('https://example.invalid/browser-registry');
-  await research.getByRole('button', { name: 'Save research source', exact: true }).click();
+  await research.getByRole('button', { name: 'Save Research Source', exact: true }).click();
   await expect(research.getByRole('status')).toHaveText('Research saved.');
   await research
     .getByLabel('Public identity source')
@@ -348,7 +348,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research.getByLabel('Company domain (madeup)').fill('browser.example.invalid');
   await research.getByLabel('Public business address').fill('Synthetic Browser Business Park');
   await research.getByLabel('Country-scoped identifier').fill('BROWSER-A');
-  await research.getByRole('button', { name: 'Add company record', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Company Record', exact: true }).click();
   await expect(
     research.getByRole('button', { name: /Synthetic Browser Distributor A/ }),
   ).toBeVisible();
@@ -356,7 +356,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByLabel('Company name', { exact: true })
     .fill('Synthetic Browser Distributor B');
   await research.getByLabel('Country-scoped identifier').fill('BROWSER-B');
-  await research.getByRole('button', { name: 'Add company record', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Company Record', exact: true }).click();
   await expect(
     research.getByRole('button', { name: /Synthetic Browser Distributor B/ }),
   ).toBeVisible();
@@ -372,7 +372,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research
     .getByLabel('Relationship context')
     .fill('Synthetic hospitality buying relationship');
-  await research.getByRole('button', { name: 'Add private relationship', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Private Relationship', exact: true }).click();
   await expect(research.getByText('Shared with this workspace', { exact: true })).toBeVisible();
   await research
     .getByLabel('Contact relationship')
@@ -383,7 +383,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research.getByLabel('Contact name', { exact: true }).fill('Synthetic Buyer');
   await research.getByLabel('Contact job title').fill('Synthetic procurement manager');
   await research.getByLabel('Contact email (madeup)').fill('buyer@example.invalid');
-  await research.getByRole('button', { name: 'Add private contact', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Private Contact', exact: true }).click();
   await expect(research.getByText(/Synthetic Buyer.*buyer@example.invalid/)).toBeVisible();
   await research
     .getByLabel('Note relationship')
@@ -392,7 +392,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     .getByLabel('Private note source')
     .selectOption({ label: 'https://example.invalid/browser-registry' });
   await research.getByLabel('Private research note').fill('Synthetic private procurement context');
-  await research.getByRole('button', { name: 'Add private note', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Private Note', exact: true }).click();
   await expect(
     research.getByText(/Private note: Synthetic private procurement context/),
   ).toBeVisible();
@@ -407,18 +407,18 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research
     .getByLabel('Research claim statement')
     .fill('Synthetic distributor supplies hotel towels');
-  await research.getByRole('button', { name: 'Record research claim', exact: true }).click();
+  await research.getByRole('button', { name: 'Record Research Claim', exact: true }).click();
   await expect(research.getByRole('status')).toHaveText('Research saved.');
   await research.getByLabel('Company detail type').selectOption('capability');
   await research
     .getByLabel('Attach original claim')
     .selectOption({ label: 'Synthetic distributor supplies hotel towels' });
-  await research.getByRole('button', { name: 'Attach company detail', exact: true }).click();
+  await research.getByRole('button', { name: 'Attach Company Detail', exact: true }).click();
   await expect(
     research.getByText('SELF_DECLARED · Original claim: self_declared', { exact: true }),
   ).toBeVisible();
   await research
-    .getByRole('button', { name: 'Find deterministic candidates', exact: true })
+    .getByRole('button', { name: 'Find Deterministic Candidates', exact: true })
     .click();
   await expect(research.getByText(/Exact domain; may be shared by a group/)).toBeVisible();
   await research.getByLabel('Entity decision').selectOption('MERGE');
@@ -428,12 +428,12 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research
     .getByLabel('Entity review reason')
     .fill('Synthetic source review confirms duplicate attribution');
-  await research.getByRole('button', { name: 'Record entity decision', exact: true }).click();
+  await research.getByRole('button', { name: 'Record Entity Decision', exact: true }).click();
   await expect(research.getByText(/MERGE: Synthetic source review/)).toBeVisible();
   page.once('dialog', (dialog) =>
     dialog.accept('Synthetic new evidence confirms distinct entities'),
   );
-  await research.getByRole('button', { name: 'Reverse entity decision', exact: true }).click();
+  await research.getByRole('button', { name: 'Reverse Entity Decision', exact: true }).click();
   await expect(research.getByText(/REVERSE: Synthetic new evidence/)).toBeVisible();
   await research.getByText('Add this relationship to a mission shortlist', { exact: true }).click();
   await research
@@ -459,7 +459,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await research
     .getByLabel('Target next action', { exact: true })
     .fill('Request evidence and confirm synthetic interest');
-  await research.getByRole('button', { name: 'Add mission target', exact: true }).click();
+  await research.getByRole('button', { name: 'Add Mission Target', exact: true }).click();
   await expect(research.getByRole('status')).toHaveText('Research saved.');
   await research
     .getByLabel('Shortlist mission')
@@ -471,7 +471,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(targetCard.getByText(/Uncertainty: Buyer interest/)).toBeVisible();
   await targetCard.getByText('Revise fit assessment', { exact: true }).click();
   await targetCard.getByLabel('Fit judgment', { exact: true }).selectOption('STRONG');
-  await targetCard.getByRole('button', { name: 'Save fit assessment', exact: true }).click();
+  await targetCard.getByRole('button', { name: 'Save Fit Assessment', exact: true }).click();
   await expect(
     targetCard.getByText('Fit: STRONG · Assessment version 2', { exact: true }),
   ).toBeVisible();
@@ -500,7 +500,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByLabel('Show missions').selectOption('all');
   await card.getByLabel('Mission action').selectOption('cancel');
   await card.getByLabel('Reason for change').fill('Synthetic browser cancellation');
-  await card.getByRole('button', { name: 'Save mission action' }).click();
+  await card.getByRole('button', { name: 'Save Mission Action' }).click();
   await expect(
     card.locator('p.label').filter({ hasText: /^Cancelled · version \d+$/ }),
   ).toBeVisible();
@@ -539,7 +539,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   );
   await openSection(page, 'workspace-authenticator');
   await page.getByLabel('Current authenticator code').fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify again', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-controls');
   await openTools(page);
@@ -559,7 +559,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   ).toBeVisible();
   await openSection(page, 'workspace-evidence');
   await expect(
-    page.getByRole('button', { name: 'Submit for validation', exact: true }),
+    page.getByRole('button', { name: 'Submit for Validation', exact: true }),
   ).toBeDisabled();
   await openSection(page, 'workspace-controls');
   await openTools(page);
@@ -584,14 +584,14 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
   ).toBeDisabled();
   await expect(
-    controls.getByRole('button', { name: 'Update membership', exact: true }),
+    controls.getByRole('button', { name: 'Update Membership', exact: true }),
   ).toBeDisabled();
-  await controls.getByRole('button', { name: 'Load workspace members', exact: true }).click();
+  await controls.getByRole('button', { name: 'Load Workspace Members', exact: true }).click();
   await expect(
     controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
   ).toBeEnabled();
   await expect(
-    controls.getByRole('button', { name: 'Refresh workspace members', exact: true }),
+    controls.getByRole('button', { name: 'Refresh Workspace Members', exact: true }),
   ).toBeVisible();
   await controls.getByRole('combobox', { name: 'Role', exact: true }).selectOption('reviewer');
   await controls.getByRole('checkbox', { name: 'Revoke membership', exact: false }).check();
@@ -604,7 +604,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     (response) =>
       response.url().includes('/api/workspace/member?') && response.request().method() === 'POST',
   );
-  await controls.getByRole('button', { name: 'Update membership', exact: true }).click();
+  await controls.getByRole('button', { name: 'Update Membership', exact: true }).click();
   expect((await deniedMembership).status()).toBe(409);
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'The tenant must retain an active owner',
@@ -614,7 +614,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     (response) =>
       response.url().includes('/api/workspace/member?') && response.request().method() === 'POST',
   );
-  await controls.getByRole('button', { name: 'Update membership', exact: true }).click();
+  await controls.getByRole('button', { name: 'Update Membership', exact: true }).click();
   expect((await savedMembership).status()).toBe(201);
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   for (const width of [1440, 1024, 768, 390]) {
@@ -674,7 +674,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.reload();
   await openSection(page, 'main');
   await expect(page.getByText('Preview workspace', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(
     (await page.request.get(`/api/workspace/workspace?tenant=${seed.tenantId}`)).status(),
@@ -691,7 +691,7 @@ test('all 18 operator destinations render with scoped audit, working policy jump
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
   const workspace = page.getByRole('combobox', { name: 'Workspace', exact: true });
   if ((await workspace.inputValue()) !== seed.tenantId) await workspace.selectOption(seed.tenantId);
@@ -729,7 +729,7 @@ test('all 18 operator destinations render with scoped audit, working policy jump
   await openSection(page, 'workspace-audit');
   const audit = page.locator('#workspace-audit');
   await expect(audit.getByText('Review access when you need it', { exact: true })).toBeVisible();
-  await audit.getByRole('button', { name: 'Load access and recent changes', exact: true }).click();
+  await audit.getByRole('button', { name: 'Load Access and Recent Changes', exact: true }).click();
   await expect(audit.getByText('Synthetic Browser Operator', { exact: true })).toBeVisible();
   await expect(audit.getByText('Active membership', { exact: true })).toBeVisible();
   const event = audit.locator('.ux-audit-events > li').first();
@@ -739,9 +739,9 @@ test('all 18 operator destinations render with scoped audit, working policy jump
   await expect(event.locator('code').first()).not.toBeEmpty();
   const firstEvent = await event.getAttribute('data-event');
   await expect(audit.locator('.ux-audit-events > li')).toHaveCount(10);
-  await audit.getByRole('button', { name: 'Next changes', exact: true }).click();
+  await audit.getByRole('button', { name: 'Next Changes', exact: true }).click();
   await expect(event).not.toHaveAttribute('data-event', firstEvent!);
-  await audit.getByRole('button', { name: 'Previous changes', exact: true }).click();
+  await audit.getByRole('button', { name: 'Previous Changes', exact: true }).click();
   await expect(event).toHaveAttribute('data-event', firstEvent!);
   await event.getByText('Event references', { exact: true }).click();
 
@@ -816,7 +816,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   expect((await verification).ok()).toBe(true);
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   const cookieMetadata = (await page.context().cookies()).map(
@@ -912,17 +912,17 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await policy
     .getByLabel('Policy basis', { exact: true })
     .fill('Approved invented demonstration only. No real legal basis asserted.');
-  await policy.getByRole('button', { name: 'Approve policy', exact: true }).click();
+  await policy.getByRole('button', { name: 'Approve Policy', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
   const template = page.getByRole('form', { name: 'Approve communication template' });
   await template.getByLabel('Template name').fill('Part Six introduction');
   await template
     .getByLabel('Approved introduction text')
     .fill('Would a short conversation about hospitality requirements be useful?');
-  await template.getByRole('button', { name: 'Approve template', exact: true }).click();
+  await template.getByRole('button', { name: 'Approve Template', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
   await page.locator('summary', { hasText: 'Review and create a private introduction' }).click();
-  const form = page.getByRole('form', { name: 'Create private introduction' });
+  const form = page.getByRole('form', { name: 'Create Private Introduction' });
   await form.getByLabel('Introduction target').selectOption(target.id);
   await form.getByLabel('Introduction recipient').selectOption(detail.contacts[0].id);
   await form
@@ -944,10 +944,10 @@ test('controlled buyer response progresses through durable delivery, a held meet
   ])
     await form.getByLabel(label, { exact: true }).fill(value);
   await form.getByLabel('I reviewed this introduction', { exact: false }).check();
-  await form.getByRole('button', { name: 'Create private introduction', exact: true }).click();
+  await form.getByRole('button', { name: 'Create Private Introduction', exact: true }).click();
   await expect(page.getByLabel('New private buyer link')).toBeVisible();
   const buyerLink = await page.getByLabel('New private buyer link').inputValue();
-  await page.getByRole('button', { name: 'Dispatch pending introductions', exact: true }).click();
+  await page.getByRole('button', { name: 'Dispatch Pending Introductions', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Access status' })).toContainText(
     'Delivery work started',
   );
@@ -1041,9 +1041,9 @@ test('controlled buyer response progresses through durable delivery, a held meet
       })
     ).status(),
   ).toBe(403);
-  await page.getByRole('button', { name: 'Refresh access and meetings' }).click();
+  await page.getByRole('button', { name: 'Refresh Access and Meetings' }).click();
   await page.locator('summary', { hasText: 'Propose a meeting' }).click();
-  const proposal = page.getByRole('form', { name: 'Propose meeting' });
+  const proposal = page.getByRole('form', { name: 'Propose Meeting' });
   await proposal
     .getByRole('combobox', { name: 'Meeting introduction', exact: true })
     .selectOption({ label: 'Part Six Supplier (INTERESTED)' });
@@ -1060,7 +1060,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await proposal
     .getByLabel('Meeting command reason')
     .fill('Buyer expressed interest in the synthetic introduction');
-  await proposal.getByRole('button', { name: 'Propose meeting', exact: true }).click();
+  await proposal.getByRole('button', { name: 'Propose Meeting', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
   const card = page
     .locator('.meeting-card')
@@ -1068,7 +1068,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await card
     .getByLabel('Meeting command reason')
     .fill('Attribute acceptance to the recorded buyer response');
-  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await card.getByRole('button', { name: 'Record Meeting Change' }).click();
   await expect(card.getByText(/State: Accepted/)).toBeVisible();
   const start = new Date(Date.now() - 3600000);
   start.setUTCSeconds(0, 0);
@@ -1083,7 +1083,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await card.locator('[data-date-field="endsAt"]').fill(end.toISOString().slice(0, 16));
   await card.getByLabel('Meeting location').fill('Synthetic meeting room');
   await card.getByLabel('Meeting command reason').fill('Record the agreed synthetic schedule');
-  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await card.getByRole('button', { name: 'Record Meeting Change' }).click();
   await expect(card.getByText(/State: Scheduled/)).toBeVisible();
   await card.getByLabel('Next meeting state').selectOption('HELD');
   await card
@@ -1095,7 +1095,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await card
     .getByLabel('Meeting command reason')
     .fill('Record observed attendance and owned follow-up');
-  await card.getByRole('button', { name: 'Record meeting change' }).click();
+  await card.getByRole('button', { name: 'Record Meeting Change' }).click();
   await expect(card.getByText(/State: Held/)).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Send the agreed requirement summary', exact: true }),
@@ -1124,7 +1124,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   await expect(buyer.getByRole('status')).toContainText('Further introductions');
   await operatorEvidence(page, page.locator('#workspace-meetings'), 'meetings');
   await buyerContext.close();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect((await page.request.get(`/api/workspace/meetings?tenant=${seed.tenantId}`)).status()).toBe(
     401,
@@ -1145,7 +1145,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   expect((await verification).ok()).toBe(true);
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   expect((await page.request.get('/api/workspace/tenants')).status()).toBe(200);
@@ -1185,12 +1185,12 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await openSection(page, 'workspace-commercial');
   const section = page.getByRole('region', { name: 'Commercial progress' }),
     status = page.getByRole('status', { name: 'Commercial status' });
-  await page.getByRole('button', { name: 'Refresh commercial progress', exact: true }).click();
+  await page.getByRole('button', { name: 'Refresh Commercial Progress', exact: true }).click();
   await expect(
     section.getByText('Commercial commands are disabled.', { exact: false }),
   ).toHaveCount(0);
   await section.getByText('Create an opportunity from a held meeting', { exact: true }).click();
-  const create = section.getByRole('form', { name: 'Create commercial opportunity' });
+  const create = section.getByRole('form', { name: 'Create Commercial Opportunity' });
   await create.getByLabel('Opportunity origin meeting').selectOption(origin.meetingId);
   await create.getByLabel('Opportunity title').fill('Part Seven buyer opportunity');
   await create
@@ -1202,7 +1202,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await create
     .getByLabel('Commercial command reason')
     .fill('Record commercial follow-through from the held meeting');
-  await create.getByRole('button', { name: 'Create commercial opportunity', exact: true }).click();
+  await create.getByRole('button', { name: 'Create Commercial Opportunity', exact: true }).click();
   await expect(status).toHaveText('Commercial progress saved.');
   const card = section.getByRole('article', { name: 'Part Seven buyer opportunity' });
   await expect(card.getByText(/Opportunity state: LEAD/)).toBeVisible();
@@ -1216,7 +1216,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     await form
       .getByLabel('Commercial command reason')
       .fill('Progress using the recorded commercial evidence');
-    await form.getByRole('button', { name: 'Save opportunity change' }).click();
+    await form.getByRole('button', { name: 'Save Opportunity Change' }).click();
     await expect(card.getByText(`Opportunity state: ${state}`, { exact: false })).toBeVisible();
   }
   await advance('QUALIFIED_OPPORTUNITY');
@@ -1253,7 +1253,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     await record
       .getByLabel('Commercial command reason')
       .fill('Record invented evidence with source and date');
-    await record.getByRole('button', { name: 'Record commercial evidence', exact: true }).click();
+    await record.getByRole('button', { name: 'Record Commercial Evidence', exact: true }).click();
     await expect(card.getByLabel(reference, { exact: true })).toBeVisible();
     await expect(status).toHaveText('Commercial progress saved.');
   }
@@ -1285,7 +1285,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     await form
       .getByLabel('Commercial command reason')
       .fill('Confirm the separately observed accounting record');
-    await form.getByRole('button', { name: 'Confirm observed cash' }).click();
+    await form.getByRole('button', { name: 'Confirm Observed Cash' }).click();
     await expect(row.getByText(/Accounting confirmed:/)).toBeVisible();
   }
   await confirm('part07-cash');
@@ -1329,7 +1329,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await rebuild
     .getByLabel('Commercial command reason')
     .fill('Check deterministic replay of recorded outcomes');
-  await rebuild.getByRole('button', { name: 'Rebuild commercial reports', exact: true }).click();
+  await rebuild.getByRole('button', { name: 'Rebuild Commercial Reports', exact: true }).click();
   await expect(status).toHaveText('Commercial progress saved.');
   const after = await (
     await page.request.get(
@@ -1345,7 +1345,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await reverse
     .getByLabel('Commercial command reason')
     .fill('Correct the invented repeat receipt in full');
-  await reverse.getByRole('button', { name: 'Record full compensation' }).click();
+  await reverse.getByRole('button', { name: 'Record Full Compensation' }).click();
   await expect(second.getByText(/Compensation recorded/)).toBeVisible();
   await expect(totals.getByText('Confirmed cash: EUR 250.00', { exact: true })).toBeVisible();
   const report = await (
@@ -1371,7 +1371,7 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const oldState = await page.context().storageState();
   await operatorEvidence(page, page.locator('#workspace-commercial'), 'commercial-progress');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   const stale = await browser.newContext({ storageState: oldState });
   expect(
@@ -1435,7 +1435,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
       new URL(response.url()).searchParams.get('tenant') === seed.tenantId,
   );
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   const verified = await verification;
   if (!verified.ok())
     throw new Error(
@@ -1448,12 +1448,12 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   await openSection(page, 'workspace-delivery');
   const panel = page.locator('.delivery-ops');
-  await panel.locator('summary').filter({ hasText: 'Create programme' }).click();
+  await panel.locator('summary').filter({ hasText: 'Create Programme' }).click();
   await panel.getByLabel('Programme name', { exact: true }).fill('Part Eight Browser Programme');
   await panel
     .getByLabel('Reporting purpose', { exact: true })
     .fill('Synthetic programme outcome review');
-  await panel.getByRole('button', { name: 'Create programme', exact: true }).click();
+  await panel.getByRole('button', { name: 'Create Programme', exact: true }).click();
   await expect(panel.getByRole('combobox', { name: 'Programme', exact: true })).not.toHaveValue('');
   const programmeId = await panel
     .getByRole('combobox', { name: 'Programme', exact: true })
@@ -1464,15 +1464,15 @@ test('scoped delivery imports every row, serves client requests and downloads co
     mimeType: 'text/csv',
     buffer: Buffer.from(`${template[0]}\r\n${template[1]}\r\n\r\n${template[1]}\r\n`),
   });
-  await panel.getByRole('button', { name: 'Preview intake', exact: true }).click();
+  await panel.getByRole('button', { name: 'Preview Intake', exact: true }).click();
   await expect(panel.getByRole('table')).toBeVisible();
   await expect(panel.getByRole('table').locator('tbody tr')).toHaveCount(3);
   await panel.getByLabel('I reviewed every row', { exact: false }).check();
-  await panel.getByRole('button', { name: 'Confirm intake', exact: true }).click();
+  await panel.getByRole('button', { name: 'Confirm Intake', exact: true }).click();
   await expect(panel.getByLabel('Confirmed intake results').locator('li')).toHaveCount(3);
   await panel
     .getByLabel('Confirmed intake results')
-    .getByRole('button', { name: 'Review imported mission' })
+    .getByRole('button', { name: 'Review Imported Mission' })
     .first()
     .click();
   // Choosing a mission to review opens the Publication tab by itself, so the review form is on screen.
@@ -1491,7 +1491,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   const deadline = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
   await panel.getByLabel('Next action deadline').fill(deadline);
   await panel.getByLabel('I reviewed this copy', { exact: false }).check();
-  await panel.getByRole('button', { name: 'Approve publication', exact: true }).click();
+  await panel.getByRole('button', { name: 'Approve Publication', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
   await openTab(panel, 'Access and requests');
   await panel.locator('summary').filter({ hasText: 'Create evidence request' }).click();
@@ -1500,7 +1500,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     .getByLabel('Approved instructions')
     .fill('Describe the synthetic requirement. Documents follow operator collection and review.');
   await panel.getByLabel('Response deadline').fill(deadline);
-  await panel.getByRole('button', { name: 'Create request', exact: true }).click();
+  await panel.getByRole('button', { name: 'Create Request', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
   await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
@@ -1512,7 +1512,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('Approved sharing purpose').fill('Synthetic client mission progress');
   await panel.getByLabel('Link expiry', { exact: false }).fill(deadline);
   await panel.getByLabel('I approve this audience', { exact: false }).check();
-  await panel.getByRole('button', { name: 'Create private link', exact: true }).click();
+  await panel.getByRole('button', { name: 'Create Private Link', exact: true }).click();
   const clientLink = await panel.getByLabel('Private link', { exact: true }).inputValue();
   const clientContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const client = await clientContext.newPage();
@@ -1565,7 +1565,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await expect(
     evidenceRequest.getByText('Self-declared response:', { exact: false }),
   ).toBeVisible();
-  await evidenceRequest.getByRole('button', { name: 'Mark fulfilled', exact: true }).click();
+  await evidenceRequest.getByRole('button', { name: 'Mark Fulfilled', exact: true }).click();
   await expect(evidenceRequest).toContainText('completed');
   await panel
     .getByRole('navigation', { name: 'Publication and reporting sections' })
@@ -1638,7 +1638,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('Link expiry', { exact: false }).fill(deadline);
   await panel.getByLabel('Allow CSV and PDF reports', { exact: false }).check();
   await panel.getByLabel('I approve this audience', { exact: false }).check();
-  await panel.getByRole('button', { name: 'Create private link', exact: true }).click();
+  await panel.getByRole('button', { name: 'Create Private Link', exact: true }).click();
   const institutionLink = await panel.getByLabel('Private link', { exact: true }).inputValue();
   await client.goto(institutionLink);
   await expect(client.getByRole('button', { name: 'Download CSV', exact: true })).toBeVisible();
@@ -1688,7 +1688,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
       r.request().method() === 'POST' &&
       r.request().postDataJSON().action === 'revoke',
   );
-  await institutionalAccess.getByRole('button', { name: 'Revoke link', exact: true }).click();
+  await institutionalAccess.getByRole('button', { name: 'Revoke Link', exact: true }).click();
   expect((await revocation).ok()).toBe(true);
   await expect(institutionalAccess).toContainText('Revoked');
   await client.getByRole('button', { name: 'Refresh progress', exact: true }).click();
@@ -1697,7 +1697,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     client.getByRole('alert').filter({ hasText: 'This private link has expired or was replaced' }),
   ).toBeVisible();
   await clientContext.close();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect((await page.request.get(`/api/workspace/delivery?tenant=${seed.tenantId}`)).status()).toBe(
     401,
@@ -1725,7 +1725,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     .not.toBe(counter);
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   const verification = page.waitForResponse((r) => r.url().endsWith('/two-factor/verify-totp'));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   const verified = await verification;
   // Sign-in leaves with a full page load once the code is accepted (KI-30), which takes the response
   // body with it, so the body is read only for the failure message, when the form stays.
@@ -1905,7 +1905,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await page.getByRole('combobox', { name: 'Company country', exact: true }).selectOption('CN');
   await page.getByText('Record a research source and company', { exact: true }).click();
   await openSection(page, 'workspace-missions');
-  await card.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+  await card.getByRole('button', { name: 'Review Requirements, Offers and Visits' }).click();
   await expect(card.getByText('BD → CN', { exact: false })).toBeVisible();
   await card
     .getByRole('combobox', { name: 'Declared source', exact: true })
@@ -2027,7 +2027,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     .selectOption(claim.id);
   await card.getByRole('combobox', { name: 'Counterparty', exact: true }).selectOption(target.id);
   // The RFQ was appended through the same authenticated API; refresh the panel before selection.
-  await card.getByRole('button', { name: 'Review requirements, offers and visits' }).click();
+  await card.getByRole('button', { name: 'Review Requirements, Offers and Visits' }).click();
   await card.getByRole('combobox', { name: 'RFQ', exact: true }).selectOption(rfq.id);
   await card.getByLabel('unitPrice (original currency amount)', { exact: true }).fill('1200.00');
   await card
@@ -2420,7 +2420,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await clientPage.close();
   await recipientPage.close();
   await guestContext.close();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect(
     (
@@ -2457,11 +2457,11 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     .getByRole('heading', { name: 'Set up your authenticator' })
     .isVisible();
   if (firstEnrollment) {
-    await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+    await page.getByRole('button', { name: 'Set Up Authenticator', exact: true }).click();
     secret = await page.getByLabel('Authenticator setup key').inputValue();
   }
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
   const headers = { Origin: 'http://127.0.0.1:3200' },
     reason = 'Synthetic governed AI and network browser validation';
@@ -2691,12 +2691,12 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         await route.abort('connectionfailed');
       } else await route.continue();
     });
-    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await aiPanel.getByRole('button', { name: 'Prepare a Draft' }).click();
     await expect(aiPanel.getByRole('status')).toContainText('Receipt not confirmed.');
     await aiPanel
       .getByLabel('Approved public claim references, separated by commas')
       .fill(randomUUID());
-    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await aiPanel.getByRole('button', { name: 'Prepare a Draft' }).click();
     expect(aiSubmissions).toHaveLength(2);
     expect(aiSubmissions[1]).toEqual(aiSubmissions[0]);
     await page.unroute('**/api/workspace/ai-run?*');
@@ -2719,7 +2719,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       (r) =>
         new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
     );
-    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await aiPanel.getByRole('button', { name: 'Prepare a Draft' }).click();
     expect((await rejectedBeforeIntent).status()).toBe(403);
     await expect(aiPanel.getByRole('status')).not.toContainText('Receipt not confirmed.');
     const contactClaim = (
@@ -2736,7 +2736,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       (r) =>
         new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
     );
-    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await aiPanel.getByRole('button', { name: 'Prepare a Draft' }).click();
     expect((await contactDenied).status()).toBe(403);
     await expect(aiPanel.getByRole('status')).not.toContainText('Receipt not confirmed.');
     const largeClaims: string[] = [];
@@ -2751,7 +2751,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       (r) =>
         new URL(r.url()).pathname === '/api/workspace/ai-run' && r.request().method() === 'POST',
     );
-    await aiPanel.getByRole('button', { name: 'Prepare a draft' }).click();
+    await aiPanel.getByRole('button', { name: 'Prepare a Draft' }).click();
     expect((await oversizedAfterIntent).status()).toBe(413);
     await expect(aiPanel.getByRole('status')).toContainText('Request recorded.');
     expect(blockedCommands).toHaveLength(3);
@@ -2786,11 +2786,11 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     ).toBe(0);
     await page.unroute('**/api/workspace/ai-run?*');
     await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
-    await aiPanel.getByRole('button', { name: 'Inspect original sources' }).click();
+    await aiPanel.getByRole('button', { name: 'Inspect Original Sources' }).click();
     await expect(
       aiPanel.getByText('Authorized original source quotations and rights'),
     ).toBeVisible();
-    await aiPanel.getByRole('button', { name: 'Close source inspection' }).click();
+    await aiPanel.getByRole('button', { name: 'Close Source Inspection' }).click();
     await aiPanel.getByLabel('Review reason', { exact: true }).fill(reason);
     await page.route('**/api/workspace/intelligence?*', (route) =>
       route.fulfill({
@@ -2799,10 +2799,10 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         body: JSON.stringify({ error: 'Synthetic post-receipt refresh outage' }),
       }),
     );
-    await aiPanel.getByRole('button', { name: 'Save human review' }).click();
+    await aiPanel.getByRole('button', { name: 'Save Human Review' }).click();
     await expect(aiPanel.getByRole('status')).toContainText('Review received. Refresh failed');
     await page.unroute('**/api/workspace/intelligence?*');
-    await aiPanel.getByRole('button', { name: 'Refresh AI review', exact: true }).click();
+    await aiPanel.getByRole('button', { name: 'Refresh AI Review', exact: true }).click();
     await expect(aiPanel.getByText('SUCCEEDED · ACCEPT', { exact: false })).toBeVisible();
     const profileId = randomUUID();
     await post('network-profile', {
@@ -2880,10 +2880,10 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       await p.getByLabel('Email', { exact: true }).fill(email);
       await p.getByLabel('Password', { exact: true }).fill(password);
       await p.getByRole('button', { name: 'Continue', exact: true }).click();
-      await p.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+      await p.getByRole('button', { name: 'Set Up Authenticator', exact: true }).click();
       const secret = await p.getByLabel('Authenticator setup key').inputValue();
       await p.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-      await p.getByRole('button', { name: 'Verify and open workspace' }).click();
+      await p.getByRole('button', { name: 'Verify and Open Workspace' }).click();
       return secret;
     }
     const contributorPage = await contributorContext.newPage();
@@ -2913,7 +2913,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await contributorPage
       .getByLabel('Acceptance and relationship confirmation')
       .fill('I accept the disclosed synthetic task and relationship limits');
-    await contributorPage.getByRole('button', { name: 'Accept the disclosed task' }).click();
+    await contributorPage.getByRole('button', { name: 'Accept the Disclosed Task' }).click();
     await expect(contributorPage.getByLabel('Original work and evidence statement')).toBeVisible();
     await contributorPage
       .getByLabel('Original work and evidence statement')
@@ -2922,10 +2922,10 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .getByLabel('Submission context')
       .fill('Synthetic evidence submission, no independent verification');
     await contributorContext.setOffline(true);
-    await contributorPage.getByRole('button', { name: 'Submit for evidence review' }).click();
+    await contributorPage.getByRole('button', { name: 'Submit for Evidence Review' }).click();
     await expect(contributorPage.getByRole('status')).toContainText('Not received');
     await expect(
-      contributorPage.getByRole('button', { name: 'Sign out of assigned work' }),
+      contributorPage.getByRole('button', { name: 'Sign Out of Assigned Work' }),
     ).toBeDisabled();
     const verifyLink = contributorPage.getByRole('link', {
       name: 'Verify your authenticator again',
@@ -2951,14 +2951,14 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
           })
         : route.continue(),
     );
-    await contributorPage.getByRole('button', { name: 'Retry the same request' }).click();
+    await contributorPage.getByRole('button', { name: 'Retry the Same Request' }).click();
     await expect(contributorPage.getByRole('status')).toContainText('Received and saved');
     await expect(
-      contributorPage.getByRole('button', { name: 'Retry the same request' }),
+      contributorPage.getByRole('button', { name: 'Retry the Same Request' }),
     ).toHaveCount(0);
     await expect(contributorPage.getByLabel('Original work and evidence statement')).toBeDisabled();
     await contributorPage.unroute('**/api/network/tasks?*');
-    await contributorPage.getByRole('button', { name: 'Refresh tasks', exact: true }).click();
+    await contributorPage.getByRole('button', { name: 'Refresh Tasks', exact: true }).click();
     await expect(contributorPage.getByLabel('Dispute reason')).toBeVisible();
     expect(
       (
@@ -3000,11 +3000,11 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .fill('Original source-reported work preserved; no independent verification');
     await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
     await networkPanel
-      .getByRole('button', { name: 'Review original submitted declaration' })
+      .getByRole('button', { name: 'Review Original Submitted Declaration' })
       .click();
     await expect(networkPanel.getByText(/^REVIEW · version/)).toBeVisible();
     await expect(
-      networkPanel.getByRole('button', { name: 'Save independent decision' }),
+      networkPanel.getByRole('button', { name: 'Save Independent Decision' }),
     ).toBeVisible();
     await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
     await networkPanel.getByLabel('Evidence decision').selectOption('COMPLETE');
@@ -3016,7 +3016,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         await route.abort('connectionfailed');
       } else await route.continue();
     });
-    await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    await networkPanel.getByRole('button', { name: 'Save Independent Decision' }).click();
     // CQ-59: the message now appears next to the form that caused it (scoped feedback).
     await expect(
       reviewerPage
@@ -3028,15 +3028,15 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .getByLabel('Review reason', { exact: true })
       .first()
       .fill('Changed after original submission');
-    await networkPanel.getByRole('button', { name: 'Save independent decision' }).click();
+    await networkPanel.getByRole('button', { name: 'Save Independent Decision' }).click();
     expect(decisions).toHaveLength(2);
     expect(decisions[1]).toEqual(decisions[0]);
     await reviewerPage.unroute('**/api/workspace/network-event?*');
     await expect(
-      networkPanel.getByRole('button', { name: 'Assess contribution once' }),
+      networkPanel.getByRole('button', { name: 'Assess Contribution Once' }),
     ).toBeVisible();
     await networkPanel.getByLabel('Review reason', { exact: true }).first().fill(reason);
-    await networkPanel.getByRole('button', { name: 'Assess contribution once' }).click();
+    await networkPanel.getByRole('button', { name: 'Assess Contribution Once' }).click();
     await expect
       .poll(
         async () =>
@@ -3074,7 +3074,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         )
       ).rows[0].n,
     ).toBe(1);
-    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await contributorPage.getByRole('button', { name: 'Refresh Tasks' }).click();
     await expect(
       contributorPage.getByRole('heading', { name: 'Reviewed reward obligations' }),
     ).toBeVisible();
@@ -3096,7 +3096,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       sourceId: contribution.source_id,
       reason: 'Synthetic compensating reversal acceptance',
     });
-    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await contributorPage.getByRole('button', { name: 'Refresh Tasks' }).click();
     await expect(
       contributorPage.getByText('compensating reversal', { exact: false }),
     ).toBeVisible();
@@ -3117,13 +3117,13 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       expiresAt: until,
       reason: 'Synthetic access suspension after acceptance',
     });
-    await contributorPage.getByRole('button', { name: 'Refresh tasks' }).click();
+    await contributorPage.getByRole('button', { name: 'Refresh Tasks' }).click();
     await expect(contributorPage.getByText('You’re set up. No tasks assigned yet.')).toBeVisible();
 
     // A refused sign-out says so in place and can be tried again.
     const assignedTasks = contributorPage.getByRole('region', { name: 'Assigned tasks' });
     const signOutButton = contributorPage.getByRole('button', {
-      name: 'Sign out of assigned work',
+      name: 'Sign Out of Assigned Work',
     });
     const signOutRoute = '**/api/operator-auth/sign-out';
     await expect(assignedTasks).toBeVisible();
@@ -3154,7 +3154,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       // The button as the page is replaced, kept in this tab's session storage.
       window.addEventListener('pagehide', () => {
         const button = Array.from(document.querySelectorAll('button')).find(
-          (candidate) => candidate.textContent === 'Sign out of assigned work',
+          (candidate) => candidate.textContent === 'Sign Out of Assigned Work',
         );
         sessionStorage.setItem(
           'signOutButtonWhenLeaving',
@@ -3205,7 +3205,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .fill(totp(contributorSecret));
     contributorCounter = Math.floor(Date.now() / 30000);
     await contributorPage.evaluate(() => Object.assign(window, { beforeSignIn: true }));
-    await contributorPage.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await contributorPage.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(contributorPage).toHaveURL(
       `http://127.0.0.1:3200/contributor?workspace=${seed.tenantId}`,
     );
@@ -3232,7 +3232,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await contributorPage
       .getByLabel('Six-digit code', { exact: true })
       .fill(totp(contributorSecret));
-    await contributorPage.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await contributorPage.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(
       contributorPage.getByRole('heading', { name: 'Workspace access is unavailable.' }),
     ).toBeVisible();
@@ -3256,7 +3256,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
   await expect(page.locator('#workspace-missions')).toBeFocused();
   await page.getByLabel('Show missions').selectOption('all');
@@ -3361,7 +3361,7 @@ test('UX-01 scoped mission read preserves source truth, keyboard navigation and 
   );
   await expect(page.locator('.mission-card')).toHaveCount(0);
   await page.unroute('**/api/workspace/workspace?*');
-  await page.getByRole('button', { name: 'Retry workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Workspace', exact: true }).click();
   await openSection(page, 'main');
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
@@ -3433,7 +3433,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await page
     .getByLabel('Source description', { exact: true })
     .fill('Unsaved synthetic source draft');
@@ -3508,13 +3508,13 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
       body: JSON.stringify({ message: 'Synthetic interruption' }),
     }),
   );
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toContainText(
     'Sign-out could not be confirmed',
   );
   await expect(page.getByRole('region', { name: 'Workspace overview' })).toContainText('viewer');
   await page.unroute('**/api/operator-auth/sign-out');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/operator\/signin/);
   expect((await page.request.get(`/api/workspace/missions?tenant=${other}`)).status()).toBe(401);
 });

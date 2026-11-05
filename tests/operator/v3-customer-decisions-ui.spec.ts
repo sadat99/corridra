@@ -249,14 +249,14 @@ test('staff approval shows exact fields and retries the same command after uncer
   await page.goto(origin + '?staff=1');
   await page.getByText('Approve commercial decision disclosure', { exact: true }).click();
   await page.getByLabel('Reviewed publication').selectOption(publication);
-  await page.getByRole('button', { name: 'Load decision review' }).click();
+  await page.getByRole('button', { name: 'Load Decision Review' }).click();
   await expect(page.getByText(/Independent supplier evidence/)).toBeVisible();
   await page.getByRole('checkbox', { name: /NEED_INFORMATION/ }).check();
   await page.getByLabel('Reason for this disclosure revision').fill('Explicit synthetic review');
   await page.getByRole('checkbox', { name: /I reviewed every selected/ }).check();
-  await page.getByRole('button', { name: 'Approve disclosure revision' }).click();
+  await page.getByRole('button', { name: 'Approve Disclosure Revision' }).click();
   await expect(page.getByText(/Approval was not confirmed/)).toBeVisible();
-  await page.getByRole('button', { name: 'Retry the same approval' }).click();
+  await page.getByRole('button', { name: 'Retry the Same Approval' }).click();
   await expect(
     page.getByText('Disclosure revision 1 recorded. Reload to inspect current decisions.'),
   ).toBeVisible();
@@ -273,9 +273,9 @@ test('unavailable staff module renders a recovery message without invented revie
   await page.goto(origin + '?staff=1');
   await page.getByText('Approve commercial decision disclosure', { exact: true }).click();
   await page.getByLabel('Reviewed publication').selectOption(publication);
-  await page.getByRole('button', { name: 'Load decision review' }).click();
+  await page.getByRole('button', { name: 'Load Decision Review' }).click();
   await expect(page.getByText('Reviewed decision disclosure is unavailable.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Approve disclosure revision' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Approve Disclosure Revision' })).toHaveCount(0);
 });
 test('customer and staff review support keyboard,WCAG checks and four viewport widths', async ({
   page,
@@ -290,7 +290,7 @@ test('customer and staff review support keyboard,WCAG checks and four viewport w
     if (staff) {
       await page.getByText('Approve commercial decision disclosure', { exact: true }).click();
       await page.getByLabel('Reviewed publication').selectOption(publication);
-      await page.getByRole('button', { name: 'Load decision review' }).click();
+      await page.getByRole('button', { name: 'Load Decision Review' }).click();
       await expect(page.getByText(decision.rationale, { exact: false })).toBeVisible();
     } else {
       await page.getByRole('button', { name: 'Load reviewed decisions' }).focus();

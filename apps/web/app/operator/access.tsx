@@ -269,7 +269,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               .catch((e) => setMessage(e.message))
           }
         >
-          Retry this section
+          Retry This Section
         </button>
         <a href="#workspace-authenticator">Verify current access</a>
       </section>
@@ -292,7 +292,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         disabled={busy}
         onClick={() => void refresh().catch((e) => setMessage(e.message))}
       >
-        Refresh access and meetings
+        Refresh Access and Meetings
       </button>
       <p>
         Each introduction goes out through the channel its approved policy names. Manual handoff
@@ -366,7 +366,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 Enable this policy version
               </label>
               <button className="primary-link" disabled={busy}>
-                Approve policy
+                Approve Policy
               </button>
             </form>
             <form
@@ -392,7 +392,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <textarea name="body" required minLength={3} maxLength={1500} />
               </label>
               <button className="primary-link" disabled={busy}>
-                Approve template
+                Approve Template
               </button>
             </form>
           </div>
@@ -527,7 +527,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               displayed context for this recipient.
             </label>
             <button className="primary-link" disabled={busy}>
-              Create private introduction
+              Create Private Introduction
             </button>
           </form>
         </PhoneFold>
@@ -556,7 +556,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       )}
       {manage && (
         <button className="secondary-link" disabled={busy} onClick={() => void act('dispatch', {})}>
-          Dispatch pending introductions
+          Dispatch Pending Introductions
         </button>
       )}
       {comms.messages.map((m) => (
@@ -585,7 +585,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <input name="reason" required minLength={3} maxLength={500} />
               </label>
               <button data-intent="destructive" className="text-link" disabled={busy}>
-                Revoke buyer link
+                Revoke Buyer Link
               </button>
             </form>
           )}
@@ -602,7 +602,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <input name="reason" required minLength={3} maxLength={500} />
               </label>
               <button className="text-link" disabled={busy}>
-                Requeue failed delivery
+                Requeue Failed Delivery
               </button>
             </form>
           )}
@@ -653,7 +653,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               <input name="reason" required minLength={3} maxLength={500} />
             </label>
             <button className="text-link" disabled={busy}>
-              Record recipient opt-out
+              Record Recipient Opt-out
             </button>
           </form>
         )}
@@ -709,7 +709,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             </label>
             <Ownership owners={meetings.owners} />
             <button className="primary-link" disabled={busy}>
-              Propose meeting
+              Propose Meeting
             </button>
           </form>
         </PhoneFold>
@@ -769,7 +769,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <textarea name="reason" required minLength={3} maxLength={1000} />
               </label>
               <button className="secondary-link" disabled={busy}>
-                Record follow-up result
+                Record Follow-up Result
               </button>
             </form>
           )}
@@ -952,7 +952,7 @@ function MeetingCard({
             </label>
           )}
           <button className="primary-link" disabled={busy}>
-            Record meeting change
+            Record Meeting Change
           </button>
         </form>
       )}

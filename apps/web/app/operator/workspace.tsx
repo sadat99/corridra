@@ -319,7 +319,7 @@ function TenantWorkspace({
           <OperatorIcon name="help" /> All workspaces and access help
         </Link>
         <button className="text-link" disabled={busy} onClick={signOut}>
-          <OperatorIcon name="exit" /> Sign out
+          <OperatorIcon name="exit" /> Sign Out
         </button>
       </div>
       {data &&
@@ -343,7 +343,7 @@ function TenantWorkspace({
           <p>{message ? 'Workspace could not be loaded.' : 'Loading workspace…'}</p>
           {message && (
             <button className="text-link" disabled={busy} onClick={() => void retryRead()}>
-              Retry workspace
+              Retry Workspace
             </button>
           )}
           {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}

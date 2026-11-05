@@ -248,13 +248,13 @@ for (const [status, words] of [
     await page.goto(origin + '?staff');
     await page.getByText('Request customer specification confirmation', { exact: true }).click();
     await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
-    await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
+    await page.getByRole('button', { name: 'Load Reviewed Requirements' }).click();
     await expect(page.getByRole('status')).toHaveText(words);
     await expect(
-      page.getByRole('button', { name: 'Request confirmation', exact: true }),
+      page.getByRole('button', { name: 'Request Confirmation', exact: true }),
     ).toHaveCount(0);
     // Loading again stays possible, so a reload or a later try recovers without starting over.
-    await expect(page.getByRole('button', { name: 'Load reviewed requirements' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Load Reviewed Requirements' })).toBeEnabled();
   });
 for (const staffWidth of [320, 390, 768, 1440])
   test(`staff issues an exact reviewed requirement question at ${staffWidth}px`, async ({
@@ -304,7 +304,7 @@ for (const staffWidth of [320, 390, 768, 1440])
 
     await page.getByText('Request customer specification confirmation', { exact: true }).click();
     await page.getByRole('combobox', { name: 'Reviewed publication' }).selectOption(publicationId);
-    await page.getByRole('button', { name: 'Load reviewed requirements' }).click();
+    await page.getByRole('button', { name: 'Load Reviewed Requirements' }).click();
     await page.getByLabel('Response deadline').fill('2026-12-01T10:00');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       staffWidth,
@@ -323,7 +323,7 @@ for (const staffWidth of [320, 390, 768, 1440])
     });
 
     await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: 'Request confirmation', exact: true }).click();
+    await page.getByRole('button', { name: 'Request Confirmation', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Confirmation requested');
     expect(command).toMatchObject({
       publicationId,

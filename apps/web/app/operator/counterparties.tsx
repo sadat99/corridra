@@ -324,7 +324,7 @@ export function Counterparties({
           disabled={busy}
           onClick={() => void act(async () => {}, 'Research refreshed.')}
         >
-          Refresh research
+          Refresh Research
         </button>
       </form>
       {catalogue ? (
@@ -348,12 +348,12 @@ export function Counterparties({
               >
                 <strong>{o.name}</strong>
                 <span>
-                  {o.country} · {o.domain ?? 'No public identifier'} ·{' '}
+                  {o.country} · {o.domain ?? 'No Public Identifier'} ·{' '}
                   {o.identity_status === 'EXPIRED'
-                    ? 'Identity evidence expired'
+                    ? 'Identity Evidence Expired'
                     : o.identity_status === 'UNKNOWN'
-                      ? 'No identity source recorded'
-                      : 'Source-reported identity'}
+                      ? 'No Identity Source Recorded'
+                      : 'Source-reported Identity'}
                 </span>
                 {o.canonical_id !== o.id && <span>Merged attribution in this workspace</span>}
               </button>
@@ -361,13 +361,13 @@ export function Counterparties({
           </div>
           <div className="operator-toolbar">
             <button disabled={offset === 0 || busy} onClick={() => setOffset(offset - 50)}>
-              Previous companies
+              Previous Companies
             </button>
             <button
               disabled={offset + 50 >= catalogue.total || busy}
               onClick={() => setOffset(offset + 50)}
             >
-              Next companies
+              Next Companies
             </button>
           </div>
         </>
@@ -437,7 +437,7 @@ export function Counterparties({
                 Company ingestion accepts made-up public records with a https://example.invalid
                 source. No URL is fetched. AI use is denied.
               </p>
-              <button className="primary-link">Save research source</button>
+              <button className="primary-link">Save Research Source</button>
             </form>
             <form
               className="operator-form"
@@ -482,7 +482,7 @@ export function Counterparties({
                 Matching identifiers create candidates for review. They never merge companies
                 automatically.
               </p>
-              <button className="primary-link">Add company record</button>
+              <button className="primary-link">Add Company Record</button>
             </form>
           </fieldset>
         </details>
@@ -580,7 +580,7 @@ export function Counterparties({
                     >
                       <Select label="Research claim source" name="sourceId" rows={sources} />
                       <Field label="Research claim statement" name="statement" />
-                      <button>Record research claim</button>
+                      <button>Record Research Claim</button>
                     </form>
                     <form
                       className="operator-form"
@@ -616,7 +616,7 @@ export function Counterparties({
                         type="datetime-local"
                         defaultValue={validDefault}
                       />
-                      <button>Attach company detail</button>
+                      <button>Attach Company Detail</button>
                     </form>
                   </fieldset>
                 </details>
@@ -650,7 +650,7 @@ export function Counterparties({
                       )}
                       labelKey="statement"
                     />
-                    <button disabled={busy}>Publish reviewed public fact</button>
+                    <button disabled={busy}>Publish Reviewed Public Fact</button>
                   </form>
                 </details>
               )}
@@ -725,7 +725,7 @@ export function Counterparties({
                         </select>
                       </label>
                       <Field label="Relationship context" name="note" required={false} />
-                      <button>Add private relationship</button>
+                      <button>Add Private Relationship</button>
                     </form>
                     <form
                       className="operator-form"
@@ -757,7 +757,7 @@ export function Counterparties({
                         type="datetime-local"
                         defaultValue={validDefault}
                       />
-                      <button>Add private contact</button>
+                      <button>Add Private Contact</button>
                     </form>
                     <form
                       className="operator-form"
@@ -778,7 +778,7 @@ export function Counterparties({
                       />
                       <Select label="Private note source" name="sourceId" rows={sources} />
                       <Field label="Private research note" name="body" />
-                      <button>Add private note</button>
+                      <button>Add Private Note</button>
                     </form>
                   </fieldset>
                 </details>
@@ -793,7 +793,7 @@ export function Counterparties({
                     void act(() => send({ action: 'candidates', organisationId: selected }))
                   }
                 >
-                  Find deterministic candidates
+                  Find Deterministic Candidates
                 </button>
               )}
               {detail.candidates.length === 0 && (
@@ -830,7 +830,7 @@ export function Counterparties({
                               );
                           }}
                         >
-                          Reverse entity decision
+                          Reverse Entity Decision
                         </button>
                       ) : (
                         <form
@@ -870,7 +870,7 @@ export function Counterparties({
                             </select>
                           </label>
                           <Field label="Entity review reason" name="reason" />
-                          <button disabled={busy}>Record entity decision</button>
+                          <button disabled={busy}>Record Entity Decision</button>
                         </form>
                       ))}
                   </article>
@@ -920,7 +920,7 @@ export function Counterparties({
                         required={false}
                       />
                       <AssessmentFields attrs={attrs} validDefault={validDefault} />
-                      <button>Add mission target</button>
+                      <button>Add Mission Target</button>
                     </fieldset>
                   </form>
                 </details>
@@ -967,13 +967,13 @@ export function Counterparties({
                   disabled={busy || shortOffset === 0}
                   onClick={() => setShortOffset(shortOffset - 50)}
                 >
-                  Previous targets
+                  Previous Targets
                 </button>
                 <button
                   disabled={busy || shortOffset + 50 >= shortTotal}
                   onClick={() => setShortOffset(shortOffset + 50)}
                 >
-                  Next targets
+                  Next Targets
                 </button>
               </div>
             </>
@@ -1043,7 +1043,7 @@ export function Counterparties({
                           validDefault={validDefault}
                           initial={t}
                         />
-                        <button>Save fit assessment</button>
+                        <button>Save Fit Assessment</button>
                       </fieldset>
                     </form>
                   </details>

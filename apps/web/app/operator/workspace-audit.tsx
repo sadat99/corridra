@@ -76,10 +76,10 @@ export function WorkspaceAudit({
           }}
         >
           {busy
-            ? 'Loading access…'
+            ? 'Loading Access…'
             : loaded
-              ? 'Refresh access and recent changes'
-              : 'Load access and recent changes'}
+              ? 'Refresh Access and Recent Changes'
+              : 'Load Access and Recent Changes'}
         </button>
       </div>
       {!loaded && (
@@ -174,7 +174,7 @@ export function WorkspaceAudit({
                     disabled={busy || page === 0}
                     onClick={() => setRequestedPage(page - 1)}
                   >
-                    Previous changes
+                    Previous Changes
                   </button>
                   <button
                     type="button"
@@ -182,7 +182,7 @@ export function WorkspaceAudit({
                     disabled={busy || page === pageCount - 1}
                     onClick={() => setRequestedPage(page + 1)}
                   >
-                    Next changes
+                    Next Changes
                   </button>
                 </div>
               </nav>
