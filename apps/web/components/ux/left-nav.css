@@ -252,6 +252,20 @@
   .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-rail {
     width: var(--frame-rail, 4.25rem);
   }
+  /* Only the navigation list scrolls; the bar itself does not clip, so a menu or sheet that opens from the
+     bar (Help, the workspace card, the account) floats over the page at full width, even when collapsed. */
+  .ux-leftnav-rail {
+    overflow: visible;
+  }
+  .ux-leftnav-panel {
+    height: 100%;
+    min-height: 0;
+  }
+  .ux-leftnav-panel > nav {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
   .ux-leftnav-page {
     grid-column: 2;
   }
@@ -259,7 +273,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    min-height: 100%;
   }
   .ux-leftnav-panel .ux-leftnav-collapse {
     margin-top: auto;

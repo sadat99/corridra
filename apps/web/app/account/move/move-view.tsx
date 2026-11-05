@@ -215,11 +215,17 @@ export function MoveView({
   const ownerHolders = { ...labels.holder, third: say('move.wait.owner') };
 
   const count = items.length;
-  const lede = nothing
-    ? 'You are all caught up. Here is where your work stands.'
-    : count === 1
-      ? 'One thing needs you. Everything else is moving.'
-      : `${count} things need you. Everything else is moving.`;
+  // The summary never claims more than the page could read: an unreadable source, a list cut short or
+  // workspaces left unread make "all caught up" and "everything else is moving" unprovable.
+  const incomplete = unreadable || partial || skippedWorkspaces > 0;
+  const needs = count === 1 ? 'One thing needs you' : `${count} things need you`;
+  const lede = incomplete
+    ? nothing
+      ? 'This page may not show everything that needs you yet.'
+      : `${needs} so far. This page may not show everything yet.`
+    : nothing
+      ? 'You are all caught up. Here is where your work stands.'
+      : `${needs}. Everything else is moving.`;
 
   return (
     <div className="move-view" lang={html} dir={dir}>

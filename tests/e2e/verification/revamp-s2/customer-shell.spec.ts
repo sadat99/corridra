@@ -223,3 +223,36 @@ test('CX-03 on a phone the account menu stays in the header, with the same conte
   await expect(menu).toContainText('qa-customer@example.invalid');
   await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
 });
+
+test('the account menu and Help open from the foot of the bar unclipped, also when the bar is collapsed (Codex review of PR 305)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  for (const collapsed of [false, true]) {
+    if (collapsed) await page.getByRole('button', { name: 'Collapse menu' }).click();
+    const trigger = leftBar(page).getByRole('button', { name: 'Account menu' });
+    await trigger.click();
+    const menu = page.getByRole('menu', { name: 'Account menu' });
+    await expect(menu).toBeVisible();
+    // The whole menu is on screen and is the topmost element at its own centre and right edge: not clipped.
+    const box = (await menu.boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(15 * 16 - 1);
+    const hit = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x!, y!)?.closest('[role="menu"]') !== null,
+      [box.x + box.width - 8, box.y + box.height / 2],
+    );
+    expect(hit).toBe(true);
+    await page.keyboard.press('Escape');
+    await leftBar(page).getByRole('button', { name: 'Help', exact: true }).click();
+    const sheet = page.getByRole('dialog', { name: 'Need a hand?' });
+    await expect(sheet).toBeVisible();
+    const sheetBox = (await sheet.boundingBox())!;
+    const sheetHit = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x!, y!)?.closest('[role="dialog"]') !== null,
+      [sheetBox.x + sheetBox.width - 8, sheetBox.y + sheetBox.height / 2],
+    );
+    expect(sheetHit).toBe(true);
+    await page.keyboard.press('Escape');
+  }
+});
