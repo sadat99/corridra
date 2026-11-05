@@ -34,8 +34,8 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             <p>Account access is not available yet.</p>
             <Link className="text-link" href="/plan">
               {realUseEnabled()
-                ? 'Start a request without an account'
-                : 'Prepare an example request without an account'}
+                ? 'Start a Request Without an Account'
+                : 'Prepare an Example Request Without an Account'}
             </Link>
           </AccessState>
         )}
@@ -50,23 +50,23 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         )}
         {mode === 'signin' && (
           <details className="ux-journey-disclosure">
-            <summary>Not a customer?</summary>
+            <summary>Not a Customer?</summary>
             <nav className="access-options" aria-label="Other access routes">
               <p>
                 Team members sign in separately. For a shared mission, programme or task, use the
                 private link we sent you.
               </p>
               <Link className="text-link" href="/operator">
-                Team sign-in
+                Team Sign-in
               </Link>
               <Link className="text-link" href="/workspace">
-                Start page
+                Start Page
               </Link>
               <Link className="text-link" href="/contributor">
-                Local helper tasks
+                Local Helper Tasks
               </Link>
               <Link className="text-link" href="/plan">
-                Plan a mission
+                Plan a Mission
               </Link>
             </nav>
           </details>

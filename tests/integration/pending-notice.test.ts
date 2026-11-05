@@ -68,7 +68,7 @@ describe('the saved request notice', () => {
       if (where === 'account') {
         expect(links, where).toHaveLength(1);
         expect(html, where).toContain('href="/plan"');
-        expect(html, where).toContain('Open your request');
+        expect(html, where).toContain('Open Your Request');
       } else expect(links, where).toHaveLength(0);
     }
   });

@@ -62,10 +62,10 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
     await page.goto('http://127.0.0.1:3400/signin');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-access@example.invalid');
     await page.getByLabel('Password', { exact: true }).fill('Synthetic test password only');
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
     await started;
     await expect(page.getByLabel('Email', { exact: true })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Please wait…', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Please Wait…', exact: true })).toBeDisabled();
     await page
       .getByRole('form', { name: 'Account access' })
       .evaluate((form) =>
@@ -81,7 +81,7 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
     await expect(page.getByLabel('Email', { exact: true })).toHaveValue(
       'synthetic-access@example.invalid',
     );
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
     await expect.poll(() => submissions.length).toBe(2);
     expect(submissions[0]).toMatchObject({ path: '/api/auth/sign-in/email', method: 'POST' });
@@ -89,7 +89,7 @@ test('UX-02 customer access preserves SDK requests, interrupted retry, single su
     await page
       .getByLabel('New password', { exact: true })
       .fill('Synthetic replacement password only');
-    await page.getByRole('button', { name: 'Set new password', exact: true }).click();
+    await page.getByRole('button', { name: 'Set New Password', exact: true }).click();
     await expect(page.getByRole('main').getByRole('alert')).toContainText(
       'reset link is incomplete',
     );
@@ -166,17 +166,17 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     await page.getByLabel('Name', { exact: true }).fill('Synthetic Person');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-signup@example.invalid');
     await page.getByLabel('Password', { exact: true }).fill('too short');
-    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Account', exact: true }).click();
     expect(calls).toHaveLength(0);
     await page.getByLabel('Password', { exact: true }).fill('Synthetic long password only');
-    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Account', exact: true }).click();
     await expect(page).toHaveURL('http://127.0.0.1:3401/verify-email');
     expect(calls).toHaveLength(1);
     expect(calls[0].path).toContain('sign-up');
     // Reset request: the answer never says whether the address has an account.
     await page.goto('http://127.0.0.1:3401/forgot-password');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-reset@example.invalid');
-    await page.getByRole('button', { name: 'Request reset email', exact: true }).click();
+    await page.getByRole('button', { name: 'Request Reset Email', exact: true }).click();
     await expect(page.getByRole('status')).toContainText(
       'If an account uses this address, you will receive a password reset email.',
     );
@@ -186,25 +186,25 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     // Email verification: request a code, reject a malformed code, then verify a six-digit one.
     await page.goto('http://127.0.0.1:3401/verify-email');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-verify@example.invalid');
-    await page.getByRole('button', { name: 'Request verification code', exact: true }).click();
+    await page.getByRole('button', { name: 'Request Verification Code', exact: true }).click();
     await expect(page.getByRole('status')).toContainText(
       'If verification is needed for this account, a code will be sent to this address.',
     );
     expect(calls).toHaveLength(3);
     await page.getByLabel('Verification code', { exact: true }).fill('12345');
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     expect(calls).toHaveLength(3);
     await page.getByRole('button', { name: 'Request a new code' }).click();
     await expect(page.getByLabel('Verification code', { exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Request verification code', exact: true }).click();
+    await page.getByRole('button', { name: 'Request Verification Code', exact: true }).click();
     await page.getByLabel('Verification code', { exact: true }).fill('123456');
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     await expect(page).toHaveURL('http://127.0.0.1:3401/signin');
     expect(calls.filter((call) => call.path.includes('verify-email'))).toHaveLength(1);
     // Submission-first account access keeps a permitted destination across every identity stage.
     await page.goto('http://127.0.0.1:3401/signin?returnTo=%2Fplan');
-    await page.getByRole('link', { name: 'Create an account', exact: true }).click();
+    await page.getByRole('link', { name: 'Create an Account', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signup' && url.searchParams.get('returnTo') === '/plan',
     );
@@ -212,19 +212,19 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
     const requestPassword = 'Synthetic request account password';
     await page.getByLabel('Password', { exact: true }).fill(requestPassword);
-    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Account', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/verify-email' && url.searchParams.get('returnTo') === '/plan',
     );
     await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
     await page.getByLabel('Verification code', { exact: true }).fill('123456');
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
     );
     await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
     await page.getByLabel('Password', { exact: true }).fill(requestPassword);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(page).toHaveURL('http://127.0.0.1:3401/plan');
     const stored = await page.evaluate(() =>
       [localStorage, sessionStorage].flatMap((storage) =>
@@ -236,7 +236,7 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     // Recovery retains the destination, while consuming and removing the reset token.
     await page.goto('http://127.0.0.1:3401/forgot-password?returnTo=%2Fplan');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-request@example.invalid');
-    await page.getByRole('button', { name: 'Request reset email', exact: true }).click();
+    await page.getByRole('button', { name: 'Request Reset Email', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('If an account uses this address');
     const resetCall = calls.filter((call) => call.path.includes('request-password-reset')).at(-1);
     expect(JSON.parse(resetCall!.body).redirectTo).toBe(
@@ -246,7 +246,7 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
       'http://127.0.0.1:3401/reset-password?token=synthetic-reset-token&returnTo=%2Fplan',
     );
     await page.getByLabel('New password', { exact: true }).fill(requestPassword);
-    await page.getByRole('button', { name: 'Set new password', exact: true }).click();
+    await page.getByRole('button', { name: 'Set New Password', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Your password has been changed');
     await expect(page).toHaveURL(
       (url) =>
@@ -254,13 +254,13 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
         url.searchParams.get('returnTo') === '/plan' &&
         !url.searchParams.has('token'),
     );
-    await page.getByRole('link', { name: 'Back to sign-in', exact: true }).click();
+    await page.getByRole('link', { name: 'Back to Sign-in', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
     );
     await page.goto('http://127.0.0.1:3401/signin?returnTo=https%3A%2F%2Fexample.invalid');
     await expect(
-      page.getByRole('link', { name: 'Create an account', exact: true }),
+      page.getByRole('link', { name: 'Create an Account', exact: true }),
     ).toHaveAttribute('href', '/signup');
   } finally {
     server.kill('SIGTERM');

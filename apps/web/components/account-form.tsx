@@ -320,20 +320,20 @@ export function AccountForm({
       {!(sent && ['forgot', 'reset'].includes(mode)) && (
         <button className="primary-link" disabled={busy}>
           {busy
-            ? 'Please wait…'
+            ? 'Please Wait…'
             : codeEnabled && viaCode && !codeSent
-              ? 'Send code'
+              ? 'Send Code'
               : mode === 'signin'
-                ? 'Sign in'
+                ? 'Sign In'
                 : mode === 'signup'
-                  ? 'Create account'
+                  ? 'Create Account'
                   : mode === 'forgot'
-                    ? 'Request reset email'
+                    ? 'Request Reset Email'
                     : mode === 'reset'
-                      ? 'Set new password'
+                      ? 'Set New Password'
                       : sent
-                        ? 'Verify email'
-                        : 'Request verification code'}
+                        ? 'Verify Email'
+                        : 'Request Verification Code'}
         </button>
       )}
       {codeEnabled && !viaCode && (
@@ -349,7 +349,7 @@ export function AccountForm({
             setFailed(false);
           }}
         >
-          Sign in with a code
+          Sign In with a Code
         </button>
       )}
       {codeEnabled && viaCode && codeSent && (
@@ -362,7 +362,7 @@ export function AccountForm({
               if (emailInput.current?.reportValidity()) void perform(true);
             }}
           >
-            Send a new code
+            Send a New Code
           </button>
           {waitLeft > 0 && (
             <p>
@@ -384,7 +384,7 @@ export function AccountForm({
             setFailed(false);
           }}
         >
-          Use my password instead
+          Use My Password Instead
         </button>
       )}
       {mode === 'verify' && sent && !codeRequested && (
@@ -411,33 +411,33 @@ export function AccountForm({
             setFailed(false);
           }}
         >
-          Request a new code
+          Request a New Code
         </button>
       )}
       {mode === 'signin' && (
         <>
           <Link className="text-link" href={accessPath('/forgot-password')}>
-            Forgot your password?
+            Forgot Your Password?
           </Link>
           <Link className="text-link" href={accessPath('/signup')}>
-            Create an account
+            Create an Account
           </Link>
           <Link className="text-link" href={accessPath('/verify-email')}>
-            Verify your email
+            Verify Your Email
           </Link>
           <a className="text-link" href={operatorSignInPage}>
-            Invited operator sign-in
+            Invited Operator Sign-in
           </a>
         </>
       )}
       {(mode === 'signup' || mode === 'verify') && (
         <Link className="text-link" href={accessPath('/forgot-password')}>
-          Forgot your password?
+          Forgot Your Password?
         </Link>
       )}
       {mode !== 'signin' && (
         <Link className="text-link" href={accessPath('/signin')}>
-          Back to sign-in
+          Back to Sign-in
         </Link>
       )}
     </form>

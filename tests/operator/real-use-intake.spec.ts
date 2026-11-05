@@ -395,11 +395,11 @@ async function activate(page: Page, email: string, password: string) {
   await expect(page).toHaveURL(/\/verify-email\?returnTo=%2Fplan/);
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
-  await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
   await expect(page).toHaveURL(/\/signin\?returnTo=%2Fplan/);
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 }
 for (const width of [1366, 390])
   test(`guest request survives account activation and becomes privately owned at ${width}px`, async ({
@@ -460,7 +460,7 @@ test('standalone signup and activation can precede submission', async ({ page })
   await page.getByLabel('Name', { exact: true }).fill('Account first owner');
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Account', exact: true }).click();
   await activate(page, email, password);
   await expect(page).toHaveURL(origin + '/plan');
   await fillRequest(page, email);
@@ -622,7 +622,7 @@ test('de: signed in, an email other than the account is blocked and the form say
   await page.getByLabel('Name', { exact: true }).fill('Signed in owner');
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Account', exact: true }).click();
   await activate(page, email, password);
   await expect(page).toHaveURL(origin + '/plan');
   await chooseLanguage(page, 'de');
