@@ -22,6 +22,7 @@ export function StageBar({
   records = { compare: false, decide: false },
   labels = mrLabels.road,
   name,
+  named = false,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
@@ -29,6 +30,8 @@ export function StageBar({
   labels?: RoadLabels;
   /** What the bar is about, for assistive technology (for example the request title). */
   name?: string;
+  /** Show each stage's name under its segment (Home's request card). The bar is unchanged otherwise. */
+  named?: boolean;
 }) {
   const marker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -39,7 +42,7 @@ export function StageBar({
         : labels.asides[marker.reason]
       : null;
   return (
-    <div className="mr-stage-wrap">
+    <div className="mr-stage-wrap" data-named={named ? 'true' : undefined}>
       <ol className="mr-stage" aria-label={name ?? labels.title}>
         {roadSteps.map((step: RoadStep) => {
           const state = states[step];
@@ -48,6 +51,11 @@ export function StageBar({
             state === 'done' || state === 'now' ? state : state === 'later' ? 'later' : 'grey';
           return (
             <li key={step} data-state={shown} aria-current={state === 'now' ? 'step' : undefined}>
+              {named ? (
+                <span className="mr-stage-name" aria-hidden="true">
+                  {labels.steps[step]}
+                </span>
+              ) : null}
               <span className="sr-only">
                 {labels.steps[step]}
                 {state === 'done' || state === 'now' ? `, ${labels.states[state]}` : ''}
@@ -58,9 +66,16 @@ export function StageBar({
       </ol>
       <p className="mr-stage-line">
         {marker.kind === 'marker' ? (
-          <>
-            Stage: <b>{labels.steps[marker.step]}</b>
-          </>
+          named ? (
+            <>
+              Stage {roadSteps.indexOf(marker.step) + 1} of {roadSteps.length}:{' '}
+              <b>{labels.steps[marker.step]}</b>
+            </>
+          ) : (
+            <>
+              Stage: <b>{labels.steps[marker.step]}</b>
+            </>
+          )
         ) : (
           aside
         )}

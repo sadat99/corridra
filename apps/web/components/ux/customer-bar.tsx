@@ -21,7 +21,7 @@ import { NotificationInbox } from './notification-inbox';
 import { MenuLink } from './menu-link';
 import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 
-type Workspace = { id: string; name: string };
+export type Workspace = { id: string; name: string };
 type Item = { readAt: string | null };
 
 /** Pages that belong to one workspace: the section and the workspace id, so another workspace can be chosen. */
@@ -29,7 +29,7 @@ const scoped =
   /^\/account\/(request|drafts|billing|profile|delegations|service-requests)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
 
 /** Read only on the customer account pages, where New request and the switcher need them. */
-function useWorkspaces(active: boolean) {
+export function useWorkspaces(active: boolean) {
   const [list, setList] = useState<Workspace[] | null>(null);
   useEffect(() => {
     if (!active) return;
@@ -174,7 +174,7 @@ function CustomerInbox({ counted }: { counted: boolean }) {
   );
 }
 
-function AccountMenuBody() {
+export function AccountMenuBody() {
   const { locale, offered, choose, t } = useLanguage();
   const note = useSyncExternalStore(
     subscribeCustomerNote,
@@ -234,6 +234,17 @@ function AccountMenuBody() {
   );
 }
 
+/** Where the person is, in the left bar's words, for the header's path ("Aurora Textiles / Home"). */
+function pageName(pathname: string): string | null {
+  // "/account" serves several views by its query, which this header does not follow, so it shows no path there.
+  if (pathname === '/account/move') return 'Home';
+  if (pathname.startsWith('/account/companies')) return 'Companies';
+  if (pathname.startsWith('/account/all-tools')) return 'All tools';
+  if (pathname.startsWith('/account/requests') || pathname.startsWith('/account/rooms'))
+    return 'Requests';
+  return null;
+}
+
 export function CustomerBar({ notifications }: { notifications: boolean }) {
   const pathname = usePathname() ?? '';
   const onAccount = pathname === '/account' || pathname.startsWith('/account/');
@@ -242,11 +253,21 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
   // account Home does when requests are not switched on for them.
   const start =
     workspaces && workspaces.length > 0 ? '/account?view=work#customer-workspaces' : '/plan';
+  const page = pageName(pathname);
   return (
     <>
+      {page ? (
+        <p className="ux-bar-crumb">
+          {workspaces && workspaces.length === 1 ? (
+            <span className="ux-bar-crumb-parent">{workspaces[0]!.name} / </span>
+          ) : null}
+          <span>{page}</span>
+        </p>
+      ) : null}
       {workspaces ? <WorkspaceSwitcher workspaces={workspaces} /> : null}
       <div className="ux-bar-tools">
         <Link prefetch={false} className="ux-bar-primary" href={start}>
+          <CorridraIcon name="draft" className="ux-bar-primary-icon" />
           New Request
         </Link>
         {notifications ? <CustomerInbox counted={onAccount} /> : null}
