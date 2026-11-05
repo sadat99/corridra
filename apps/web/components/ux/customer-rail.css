@@ -191,3 +191,28 @@
     display: none;
   }
 }
+
+/* Order at the foot, as in the approved mockup: Help, then Collapse menu, then the person. */
+@media (min-width: 1024px) {
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot {
+    display: contents;
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot > .rail-help {
+    order: 1;
+    margin-top: auto;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-leftnav-collapse {
+    order: 2;
+    margin-top: 0;
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot > .ux-rail-account {
+    order: 3;
+  }
+}
+.rail-help .dock-button {
+  /* The same size as the bar's links, which take the page size. */
+  font-size: inherit;
+  font-weight: 500;
+}
