@@ -108,19 +108,21 @@ function useScrollHide(enabled: boolean) {
  * Listen, so nothing covers the page or right-to-left text (UX-15).
  */
 /** Not shown on a bare page. The check sits outside the dock so its hooks always run in the same order. */
-export function CornerDock({ variant = 'corner' }: { variant?: 'corner' | 'header' }) {
+export function CornerDock({ variant = 'corner' }: { variant?: 'corner' | 'header' | 'rail' }) {
   const pathname = usePathname();
   return isBarePublicPage(pathname) ? null : <CornerDockView variant={variant} />;
 }
 
-function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
+function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) {
   const supported = useSyncExternalStore(subscribe, canSpeak, () => false);
   const [speaking, setSpeaking] = useState(false);
   const [open, setOpen] = useState(false);
   const helpButton = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const sheetId = `help-sheet-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  const header = variant === 'header';
+  // 'rail': one Help item at the foot of the signed-in left bar; its sheet also offers Listen.
+  const rail = variant === 'rail';
+  const header = variant === 'header' || rail;
   const scrolledAway = useScrollHide(!header);
 
   // A reading belongs to the page and language it started on. When either changes it stops, so it is never left
@@ -169,7 +171,9 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
 
   return (
     <div
-      className={header ? 'corner-dock header-help' : 'corner-dock'}
+      className={
+        rail ? 'corner-dock rail-help' : header ? 'corner-dock header-help' : 'corner-dock'
+      }
       data-hidden={!header && scrolledAway && !open ? 'true' : undefined}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {
@@ -210,13 +214,14 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
         ref={helpButton}
         type="button"
         className="dock-button"
-        data-tip="Help"
+        data-tip={rail ? undefined : 'Help'}
         aria-label="Help"
         aria-expanded={open}
         aria-controls={open ? sheetId : undefined}
         onClick={() => setOpen(!open)}
       >
         <CorridraIcon name="help" />
+        {rail ? <span aria-hidden="true">Help</span> : null}
       </button>
       {supported && !header && (
         <button

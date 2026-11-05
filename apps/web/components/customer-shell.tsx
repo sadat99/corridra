@@ -12,6 +12,7 @@ import {
 import { T } from './language-provider';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
+import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
 
 const navId = 'customer-navigation';
@@ -35,12 +36,15 @@ export function CustomerShell({
   tab,
   eyebrow,
   title,
+  count,
   children,
 }: {
   tab: CustomerTab;
   /** Shown only while the shells switch is off; the left-bar frame has no eyebrow. */
   eyebrow?: string;
   title: ReactNode;
+  /** What waits for the person, shown as a small count beside Home in the left bar. */
+  count?: number;
   children: ReactNode;
 }) {
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');
@@ -84,6 +88,7 @@ export function CustomerShell({
     label: translated ? <T k={customerNavLabelKeys[item.label] ?? 'wse.nav.more'} /> : item.label,
     href: item.href,
     icon: plainNames && item.tab === 'results' ? 'library' : customerNavIcons[item.tab],
+    count: item.tab === here ? count : undefined,
   }));
   // "All tools" sits at the bottom of the bar wherever that page is on.
   if (plainNames)
@@ -93,6 +98,8 @@ export function CustomerShell({
       navId={navId}
       words={words}
       nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here} />}
+      top={<CustomerRailTop />}
+      foot={<CustomerRailFoot />}
     >
       <CustomerBarNote
         text={

@@ -52,7 +52,12 @@ export default async function Page() {
     ? '/account?view=work#customer-workspaces'
     : '/plan';
   return (
-    <CustomerShell tab="move" eyebrow="YOUR MOVE" title={<Greeting name={session.name} />}>
+    <CustomerShell
+      tab="move"
+      eyebrow="YOUR MOVE"
+      title={<Greeting name={session.name} />}
+      count={model.cards.length}
+    >
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
       {customerNotificationsEnabled() && <EmailNudge />}
