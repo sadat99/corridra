@@ -1,0 +1,37 @@
+/* The shared sub-tabs. Existing tokens only, no new colour. Tabs wrap on a narrow screen instead of
+   scrolling sideways, so every tab is visible and reachable. */
+.ux-subtabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.ux-subtabs-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--ink);
+  font: 600 var(--text-md) var(--font-ui);
+  cursor: pointer;
+}
+.ux-subtabs-tab:hover {
+  background: var(--surface-2);
+}
+.ux-subtabs-tab[aria-selected='true'] {
+  border-bottom-color: var(--selected);
+  background: var(--selected-surface);
+  color: var(--brand-deep);
+}
+.ux-subtabs-tab:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.ux-subtabs-panel[hidden] {
+  display: none;
+}
