@@ -100,6 +100,8 @@ test('CQ-53 the home examples row has working previous and next buttons on narro
     await expect(next).toBeHidden();
     return;
   }
+  // The results row is in the Results tab (layout budget): choose the tab first.
+  await page.getByRole('tab', { name: 'Results', exact: true }).click();
   const row = page.locator('#home-proofs');
   await row.scrollIntoViewIfNeeded();
   await expect(next).toBeVisible();
