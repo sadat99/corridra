@@ -49,7 +49,8 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
 Selling, Organising, each with its count, `?journey=`) filters what waits for the person. The owner asked on 5 Nov 2026,
 verbatim: "separate home for each of the module , switching option? what about bd-china workflow ,where how". S1
 answered with one Home and the switch, hidden for a person with work in only one journey, remembering the last
-choice. The owner then approved, verbatim: "mockups approved. finishi and continue finishing of v3 revamp 100%
+choice. The owner's next instruction included, verbatim: "I'll also add the single-journey Home and
+remember-last-choice refinement to PR 310 or a follow-up." The owner then approved, verbatim: "mockups approved. finishi and continue finishing of v3 revamp 100%
 correct in alighnment with the latest decision". So the switch is hidden when only one journey is present (it stays
 while a journey is shown, so All is one tap away). The last choice, or All, is kept in that browser per signed-in
 person and written back into the address as `?journey=`. An address with `?journey=` always wins. Each task carries its
