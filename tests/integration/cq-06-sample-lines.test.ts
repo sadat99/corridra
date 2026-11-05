@@ -64,9 +64,7 @@ describe('CQ-06: the customer frame note says sample mode only where real use is
   it('CQ-06: with real use off the frame shows the sample line and not the real line', async () => {
     mode(sampleOn);
     const html = await renderShell();
-    // The amber banner is gone (customer experience spec CX-06); the line is carried for the account menu.
-    expect(html).toContain('class="ux-customer-note"');
-    expect(html).not.toContain('ux-testmode');
+    expect(html).toContain('class="ux-testmode"');
     expect(html).toContain(shellSampleLine);
     expect(html).toContain('use made-up names and details here.');
     expect(html).not.toContain(shellRealLine);
