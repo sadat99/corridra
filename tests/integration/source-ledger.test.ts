@@ -143,6 +143,30 @@ describe('the Source room comparison', () => {
     expect(ledger.rows.some((r) => r.label === 'Payment terms' && !r.key)).toBe(true);
   });
 
+  // sourceledger-money.md M-03 and M-04: no ranking, no sum across currencies, an omission never reads cheaper.
+  it('keeps the suppliers in the order given, ranks none and never sums or converts across currencies', () => {
+    const cheaperButMissing = experience([
+      offer('qa', 't1'),
+      offer('qc', 't3', {
+        terms: machine({ unitPriceMinor: '100', totalPriceMinor: '200', installation: undefined }),
+      }),
+      offer('qb', 't2', { currency: 'CNY' }),
+    ]);
+    const ledger = sourceLedger(cheaperButMissing, { at });
+    expect(ledger.columns.map((c) => c.id)).toEqual(['qa', 'qc', 'qb']);
+    const cheap = ledger.columns[1]!;
+    expect(cheap.comparable).toBe(false);
+    expect(ledger.rows.find((r) => r.label === 'Installation')!.cells[1]!.value).toBeNull();
+    for (const row of ledger.rows)
+      for (const [index, cell] of row.cells.entries()) {
+        const text = `${cell.value ?? ''} ${cell.sub ?? ''}`;
+        const currency = cheaperButMissing.quotations[index]!.currency;
+        for (const other of ['USD', 'CNY'].filter((c) => c !== currency))
+          expect(text, `${row.label} ${index}`).not.toContain(other);
+      }
+    expect(JSON.stringify(ledger)).not.toMatch(/best|cheapest|lowest|recommended/i);
+  });
+
   it('shows nothing when no offer is current, and says how many earlier ones are kept', () => {
     const ledger = sourceLedger(experience([offer('old', 't1', { superseded: true })]), { at });
     expect(ledger.columns).toEqual([]);
