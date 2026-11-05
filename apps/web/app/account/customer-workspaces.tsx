@@ -12,7 +12,7 @@ import { limitWords } from '../../lib/account-limit';
 import { CorridraIcon } from '../../components/corridra-icon';
 import { Dialog } from '../../components/ux/dialog';
 import { EmptyState } from '../../components/ux/empty-state';
-import { MenuButton, MenuLink, OverflowMenu } from '../../components/ux/overflow-menu';
+import { MenuAnchor, MenuButton, OverflowMenu } from '../../components/ux/overflow-menu';
 import './workspace-table.css';
 
 type Draft = { version: 1; commandId: string; name: string };
@@ -448,36 +448,36 @@ export function CustomerWorkspaces({
                             trigger={<CorridraIcon name="more" />}
                             align="end"
                           >
-                            {start && <MenuLink href={start}>New Request</MenuLink>}
+                            {start && <MenuAnchor href={start}>New Request</MenuAnchor>}
                             {draftsEnabled && (
-                              <MenuLink href={'/account/drafts/' + row.id}>
+                              <MenuAnchor href={'/account/drafts/' + row.id}>
                                 Continue a Saved Draft
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {draftsEnabled && requestsEnabled && (
-                              <MenuLink href={'/account/request/' + row.id}>
+                              <MenuAnchor href={'/account/request/' + row.id}>
                                 Send a Private Request
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {profilesEnabled && (
-                              <MenuLink href={'/account/profile/' + row.id}>
+                              <MenuAnchor href={'/account/profile/' + row.id}>
                                 {admin ? 'Edit Company Profile' : 'View Company Profile'}
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {programmesEnabled && admin && (
-                              <MenuLink href={'/account/delegations/' + row.id}>
+                              <MenuAnchor href={'/account/delegations/' + row.id}>
                                 Plan Delegations
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {serviceRequestsEnabled && (
-                              <MenuLink href={'/account/service-requests/' + row.id}>
+                              <MenuAnchor href={'/account/service-requests/' + row.id}>
                                 Paid-Service Requests
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {billingEnabled && (
-                              <MenuLink href={'/account/billing/' + row.id}>
+                              <MenuAnchor href={'/account/billing/' + row.id}>
                                 Plan and Billing
-                              </MenuLink>
+                              </MenuAnchor>
                             )}
                             {row.role === 'owner' && (
                               <MenuButton
