@@ -1469,6 +1469,16 @@
       "use": "Spec pack 3: Wave 8 journeys J1 to J7 on fixtures and the release memo"
     },
     {
+      "path": "docs/revamp/specs/crud-standard.md",
+      "classification": "Current guide/contract",
+      "use": "Owner request (5 Nov 2026): one create, read, update and remove standard for every object, four lifecycle classes, rules C-01 to A-03 and tests CRUD-1 to CRUD-6"
+    },
+    {
+      "path": "docs/revamp/crud/summary.md",
+      "classification": "Current guide/contract",
+      "use": "CRUD audit of 5 Nov 2026: counts, stop-ship check, gaps G1 to G12 with owners, and the build order"
+    },
+    {
       "path": "docs/revamp/specs/layout-budget.md",
       "classification": "Current guide/contract",
       "use": "Owner decision 4 Nov 2026: left navigation, page length budget and 1 to 3 fields per form step (L-01 to L-06)"
