@@ -200,7 +200,7 @@ function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName:
               ))}
             </select>
           </label>
-          <button className="primary-link">{busy ? 'Sending…' : 'Send invitation'}</button>
+          <button className="primary-link">{busy ? 'Sending…' : 'Send Invitation'}</button>
           <ActionFeedback
             scope="team-invite"
             feedback={feedback.feedback}
@@ -243,7 +243,7 @@ function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName:
                   disabled={busy}
                   onClick={() => void change('cancel', item)}
                 >
-                  Cancel invitation
+                  Cancel Invitation
                 </button>
               </span>
             </li>
@@ -306,7 +306,7 @@ function AuthenticatorReset({ tenant, members }: { tenant: string; members: Memb
             ))}
           </select>
         </label>
-        <button className="primary-link">{busy ? 'Please wait…' : 'Reset authenticator'}</button>
+        <button className="primary-link">{busy ? 'Please Wait…' : 'Reset Authenticator'}</button>
         <ActionFeedback
           scope="authenticator-reset"
           feedback={feedback.feedback}
@@ -470,10 +470,10 @@ export function WorkspaceControls({
                       onClick={onLoadMembers}
                     >
                       {busy
-                        ? 'Please wait…'
+                        ? 'Please Wait…'
                         : membersLoaded
-                          ? 'Refresh workspace members'
-                          : 'Load workspace members'}
+                          ? 'Refresh Workspace Members'
+                          : 'Load Workspace Members'}
                     </button>
                   </div>
                   <p className="ux-controls-hint" role="status">
@@ -541,7 +541,7 @@ export function WorkspaceControls({
                       </span>
                     </label>
                     <button className="primary-link" disabled={busy || !members.length}>
-                      {busy ? 'Please wait…' : 'Update membership'}
+                      {busy ? 'Please Wait…' : 'Update Membership'}
                     </button>
                   </form>
                   <details className="ux-controls-help">

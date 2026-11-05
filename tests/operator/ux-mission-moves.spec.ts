@@ -161,7 +161,7 @@ test('sets Moves as one replacement, with the limits of the words on the form', 
   await page.getByLabel('Verb').selectOption('Confirm');
   await page.getByLabel('What, in a few words').fill('your visit dates');
   await page.getByLabel('Who holds it').selectOption('team');
-  await page.getByRole('button', { name: 'Set these Moves' }).click();
+  await page.getByRole('button', { name: 'Set These Moves' }).click();
   await expect(page.getByText('Moves set.')).toBeVisible();
   expect(sent).toHaveLength(1);
   expect(sent[0]).toMatchObject({
@@ -179,18 +179,18 @@ test('sets Moves as one replacement, with the limits of the words on the form', 
 test('offers at most five Moves in one set', async ({ page }) => {
   await open(page, []);
   for (let i = 0; i < 4; i += 1)
-    await page.getByRole('button', { name: 'Add another Move' }).click();
+    await page.getByRole('button', { name: 'Add Another Move' }).click();
   await expect(page.getByRole('group', { name: /Move \d/ })).toHaveCount(5);
-  await expect(page.getByRole('button', { name: 'Add another Move' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add Another Move' })).toHaveCount(0);
 });
 
 test('marks one done and clears all, each as its own command', async ({ page }) => {
   const first = row({ object: 'the first thing' });
   const sent = await open(page, [first, row({ object: 'the second thing', position: 2 })]);
-  await page.getByRole('button', { name: 'Mark done' }).first().click();
+  await page.getByRole('button', { name: 'Mark Done' }).first().click();
   await expect(page.getByText('Marked done.')).toBeVisible();
   expect(sent[0]).toMatchObject({ action: 'done', moveId: first.id, missionId: mission });
-  await page.getByRole('button', { name: 'Clear all open Moves' }).click();
+  await page.getByRole('button', { name: 'Clear All Open Moves' }).click();
   await expect(page.getByText('Moves cleared.')).toBeVisible();
   expect(sent[1]).toMatchObject({ action: 'clear', missionId: mission });
   expect(sent[0].commandId).not.toBe(sent[1].commandId);
@@ -199,7 +199,7 @@ test('marks one done and clears all, each as its own command', async ({ page }) 
 test('says the plain reason when a Move is refused, and keeps what was typed', async ({ page }) => {
   await open(page, [], { status: 401, error: 'Verify your authenticator again to continue' });
   await page.getByLabel('What, in a few words').fill('your visit dates');
-  await page.getByRole('button', { name: 'Set these Moves' }).click();
+  await page.getByRole('button', { name: 'Set These Moves' }).click();
   await expect(page.getByText('Verify your authenticator again to continue')).toBeVisible();
   await expect(page.getByLabel('What, in a few words')).toHaveValue('your visit dates');
 });

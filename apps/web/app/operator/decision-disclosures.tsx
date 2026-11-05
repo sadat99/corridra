@@ -203,7 +203,7 @@ function PrivateDisclosures({ tenant, publications }: Props) {
         </select>
       </label>
       <button type="button" disabled={!publication || busy} onClick={() => void load()}>
-        Load decision review
+        Load Decision Review
       </button>
       {message && <p role="status">{message}</p>}
       {data && (
@@ -245,7 +245,7 @@ function PrivateDisclosures({ tenant, publications }: Props) {
             </label>
           </fieldset>
           <button disabled={busy} type="submit">
-            {pending ? 'Retry the same approval' : 'Approve disclosure revision'}
+            {pending ? 'Retry the Same Approval' : 'Approve Disclosure Revision'}
           </button>
           <details>
             <summary>Previous disclosure revisions</summary>

@@ -110,7 +110,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
             setAttempt((value) => value + 1);
           }}
         >
-          Check invitation again
+          Check Invitation Again
         </button>
       )}
       {invite?.available && !done && (invite.role === 'contributor') !== contributor && (
@@ -163,7 +163,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
             />
           </label>
           <button className="primary-link" disabled={busy}>
-            {busy ? 'Setting up…' : `Set ${kind} password`}
+            {busy ? 'Setting Up…' : `Set ${contributor ? 'Contributor' : 'Operator'} Password`}
           </button>
         </form>
       )}
@@ -178,7 +178,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
               : '/operator/signin'
           }
         >
-          Sign in and set up authenticator
+          Sign in and Set Up Authenticator
         </a>
       )}
     </section>

@@ -161,7 +161,7 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
       )}
       {!form && (
         <button type="button" className="text-link" onClick={() => edit(null)}>
-          Add a service
+          Add a Service
         </button>
       )}
       {form && (
@@ -249,7 +249,7 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
             </label>
           </fieldset>
           <button type="submit" className="button" disabled={busy}>
-            {pending ? 'Save the same change again' : 'Save service'}
+            {pending ? 'Save the Same Change Again' : 'Save Service'}
           </button>{' '}
           <button type="button" className="text-link" onClick={() => setForm(null)}>
             Cancel

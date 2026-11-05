@@ -506,11 +506,11 @@ test.describe('the mute page', () => {
   }) => {
     const sent = await openMute(page, `#t=${token}`);
     await expect(
-      page.getByRole('button', { name: 'Mute messages about this request' }),
+      page.getByRole('button', { name: 'Mute Messages About This Request' }),
     ).toBeVisible();
     expect(sent).toEqual([]);
     expect(page.url()).not.toContain(token);
-    await page.getByRole('button', { name: 'Mute messages about this request' }).click();
+    await page.getByRole('button', { name: 'Mute Messages About This Request' }).click();
     await expect(page.getByRole('status')).toContainText(
       'We will not send more messages about this request',
     );
@@ -524,7 +524,7 @@ test.describe('the mute page', () => {
     await expect(page.getByRole('status')).toContainText('This link is incomplete');
     const other = await page.context().newPage();
     await openMute(other, `#t=${token}`, 400);
-    await other.getByRole('button', { name: 'Mute messages about this request' }).click();
+    await other.getByRole('button', { name: 'Mute Messages About This Request' }).click();
     await expect(other.getByRole('alert')).toHaveText('This link is not valid or has expired.');
   });
 });

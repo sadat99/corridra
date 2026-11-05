@@ -118,7 +118,7 @@ export async function signInOwner(page: Page, next = '/operator') {
   ).toBeVisible({ timeout: 20000 });
   let secret = saved?.secret ?? '';
   if (await page.getByRole('heading', { name: 'Set up your authenticator' }).isVisible()) {
-    await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+    await page.getByRole('button', { name: 'Set Up Authenticator', exact: true }).click();
     secret = await page.getByLabel('Authenticator setup key').inputValue();
   }
   if (!secret) throw new Error('No authenticator key for this run');
@@ -131,7 +131,7 @@ export async function signInOwner(page: Page, next = '/operator') {
     JSON.stringify({ tenantId: seed.tenantId, secret, lastWindow: window }),
     { mode: 0o600 },
   );
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await page.waitForURL((url) => !url.pathname.startsWith('/operator/signin'), { timeout: 20000 });
   return seed;
 }

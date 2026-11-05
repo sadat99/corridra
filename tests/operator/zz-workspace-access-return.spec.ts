@@ -88,7 +88,7 @@ test('Verify workspace access returns to the same workspace and section', async 
   const workspaceUrl = '/operator?workspace=' + tenant;
   const viewer = await viewerWorkspace(local.ownerPassword, seed.principalId);
   const link = page.getByRole('link', { name: 'Verify workspace access' });
-  const retry = page.getByRole('button', { name: 'Retry workspace' });
+  const retry = page.getByRole('button', { name: 'Retry Workspace' });
   const select = page.locator('#operator-workspace-select');
   const hydrationErrors: string[] = [];
   page.on('pageerror', (error) => hydrationErrors.push(error.message));
@@ -115,7 +115,7 @@ test('Verify workspace access returns to the same workspace and section', async 
     await page.getByLabel('Password', { exact: true }).fill(seed.password);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
 
     await test.step('the denied workspace links to sign-in with its workspace and section, with no hydration warning', async () => {
@@ -211,7 +211,7 @@ test('Verify workspace access returns to the same workspace and section', async 
       const code = page.getByLabel('Six-digit code', { exact: true });
       const current = totp(secret);
       await code.fill(String((Number(current) + 500000) % 1000000).padStart(6, '0'));
-      await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+      await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
       await expect(
         page.getByText('That code could not be verified. Try a current code.'),
       ).toBeVisible();
@@ -222,7 +222,7 @@ test('Verify workspace access returns to the same workspace and section', async 
         .toBeGreaterThan(signInCounter);
       await code.fill(totp(secret));
       await markPage(page);
-      await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+      await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
       await expect(page).toHaveURL(origin + workspaceUrl + '#workspace-sources');
       await expectNewDocument(page, select);
       expect(new URL(page.url()).hash).toBe('#workspace-sources');
@@ -295,7 +295,7 @@ test('Sign in again from a fresh authenticator load returns once to the panel', 
     await page.getByLabel('Password', { exact: true }).fill(seed.password);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
 
     // A fresh load straight onto the panel, so the address the page started from carries the section.
@@ -309,7 +309,7 @@ test('Sign in again from a fresh authenticator load returns once to the panel', 
       }),
     );
     await panel.getByLabel('Current authenticator code', { exact: true }).fill('123456');
-    await panel.getByRole('button', { name: 'Verify again', exact: true }).click();
+    await panel.getByRole('button', { name: 'Verify Again', exact: true }).click();
     await expect(panel.getByRole('alert')).toContainText('You are signed out.');
     const again = panel.getByRole('link', { name: 'Sign in again' });
     const target = signIn(workspaceUrl + '#workspace-authenticator');
@@ -329,7 +329,7 @@ test('Sign in again from a fresh authenticator load returns once to the panel', 
       .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
       .toBeGreaterThan(signInCounter);
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(page).toHaveURL(origin + workspaceUrl + '#workspace-authenticator');
     expect(new URL(page.url()).hash).toBe('#workspace-authenticator');
     await expect(panel).toBeVisible();
@@ -369,7 +369,7 @@ test('a soft entry into sign-in returns once, with a new document, to the addres
   const viewer = await viewerWorkspace(local.ownerPassword, seed.principalId);
   const select = page.locator('#operator-workspace-select');
   const code = page.getByLabel('Six-digit code', { exact: true });
-  const verify = page.getByRole('button', { name: 'Verify and open workspace' });
+  const verify = page.getByRole('button', { name: 'Verify and Open Workspace' });
   const verifyRoute = '**/api/operator-auth/two-factor/verify-totp';
   const wrongCode = 'That code could not be verified. Try a current code.';
   let usedCounter = 0;
@@ -627,7 +627,7 @@ test('signing out is a full page load and the next sign-in opens the overview, n
     await page.goto('/operator/signin');
     await enterPassword();
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
 
     // A fresh load with a section in the address, so the router has cached it with the #.
@@ -635,7 +635,7 @@ test('signing out is a full page load and the next sign-in opens the overview, n
     await page.goto('/operator#workspace-sources');
     await expect(page.locator('#workspace-sources')).toBeVisible();
     await markPage(page);
-    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
     await expect(page).toHaveURL(origin + '/operator/signin');
     await expectNewDocument(page);
     expect(
@@ -649,7 +649,7 @@ test('signing out is a full page load and the next sign-in opens the overview, n
       .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [1000] })
       .toBeGreaterThan(signInCounter);
     await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-    await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
     await expect.poll(() => new URL(page.url()).pathname).toBe('/operator');
     await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
     expect(new URL(page.url()).hash).toBe('');

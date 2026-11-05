@@ -72,7 +72,7 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
             : 'Your operator password has changed. Previous operator sessions have been signed out. Sign in with your new password and existing authenticator.'}
         </p>
         <a className="primary-link" href={operatorSignInPage}>
-          Return to operator sign-in
+          Return to Operator Sign-in
         </a>
         {mode === 'request' && (
           <Link className="text-link" href="/operator/setup">
@@ -89,7 +89,7 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
           browser.
         </p>
         <Link className="primary-link" href="/operator/forgot-password">
-          Request a new operator reset link
+          Request a New Operator Reset Link
         </Link>
       </div>
     );
@@ -144,10 +144,10 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
       )}
       <button className="primary-link" disabled={busy}>
         {busy
-          ? 'Please wait…'
+          ? 'Please Wait…'
           : mode === 'request'
-            ? 'Request operator reset email'
-            : 'Set new operator password'}
+            ? 'Request Operator Reset Email'
+            : 'Set New Operator Password'}
       </button>
     </form>
   );

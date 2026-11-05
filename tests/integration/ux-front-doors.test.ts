@@ -105,7 +105,7 @@ describe('the switch and every switch-off path', () => {
     const page = read('apps/web/app/contributor/page.tsx');
     expect(page).toContain("uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') ? (");
     for (const line of [
-      'Accept a reviewed contributor invitation',
+      'Accept a Reviewed Contributor Invitation',
       'How assigned work works',
       'Choose your sign-in route',
       'Back to Corridra',

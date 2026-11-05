@@ -297,7 +297,7 @@ function ReplyCard({
               }
             }}
           >
-            {copied ? 'Copied' : 'Copy the prepared quotation'}
+            {copied ? 'Copied' : 'Copy the Prepared Quotation'}
           </button>
         </div>
       )}
@@ -307,7 +307,7 @@ function ReplyCard({
           {mode === null && (
             <div className="reply-review-buttons">
               <button type="button" disabled={busy} onClick={() => void send('PUBLISH')}>
-                Publish: prepare as a quotation
+                Publish: Prepare As a Quotation
               </button>
               <button
                 type="button"
@@ -315,7 +315,7 @@ function ReplyCard({
                 disabled={busy}
                 onClick={() => setMode('ask')}
               >
-                Ask for missing terms
+                Ask for Missing Terms
               </button>
               <button
                 type="button"
@@ -375,7 +375,7 @@ function ReplyCard({
                   disabled={busy || asked.length === 0}
                   onClick={() => void send('ASK')}
                 >
-                  Record the request
+                  Record the Request
                 </button>
                 <button type="button" className="secondary-link" onClick={() => setMode(null)}>
                   Cancel
@@ -411,7 +411,7 @@ function ReplyCard({
               <p>The customer never sees a rejected reply.</p>
               <div className="reply-review-buttons">
                 <button type="button" disabled={busy} onClick={() => void send('REJECT')}>
-                  Record the rejection
+                  Record the Rejection
                 </button>
                 <button type="button" className="secondary-link" onClick={() => setMode(null)}>
                   Cancel

@@ -309,7 +309,7 @@ async function signIn(page: Page) {
   await page.getByLabel('Password', { exact: true }).fill(seed.password);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
   return '/operator?workspace=' + seed.tenantId + '#workspace-delivery';
 }
@@ -385,7 +385,7 @@ test('the staff billing panel reads in normal lines on phones and is unchanged f
 
       // Conflict: the result is said next to Activate, with the Status line in the same view.
       const activate = card.getByRole('form', { name: 'Activate' });
-      await activate.getByRole('button', { name: 'Activate this plan' }).click();
+      await activate.getByRole('button', { name: 'Activate This Plan' }).click();
       const notice = card.locator('.billing-notice');
       await expect(notice).toContainText('Reload and check.');
       expect(await notice.textContent()).toMatch(/^Problem\. \S/);
@@ -399,11 +399,11 @@ test('the staff billing panel reads in normal lines on phones and is unchanged f
 
       // A save that could not be confirmed, then one that is saved.
       mode.save = 'unconfirmed';
-      await activate.getByRole('button', { name: 'Activate this plan' }).click();
+      await activate.getByRole('button', { name: 'Activate This Plan' }).click();
       await expect(notice).toContainText('Could not confirm that this was saved.');
       await checkPhone(page, width, 'unconfirmed');
       mode.save = 'saved';
-      await activate.getByRole('button', { name: 'Activate this plan' }).click();
+      await activate.getByRole('button', { name: 'Activate This Plan' }).click();
       await expect(notice).toContainText('Saved. The plan is active for the period you set.');
       await expect(notice).toHaveAttribute('role', 'status');
       await expect(notice).toBeInViewport();
@@ -413,7 +413,7 @@ test('the staff billing panel reads in normal lines on phones and is unchanged f
 
       // The plan form with its price pair.
       await card.getByText('Plans on offer and plan versions').click();
-      await card.getByRole('button', { name: 'Add a new plan' }).click();
+      await card.getByRole('button', { name: 'Add a New Plan' }).click();
       await expect(card.getByRole('form', { name: 'Plan version' })).toBeVisible();
       await toTop(page, '#billing-plans .billing-pair');
       await capture(page, `billing-plan-form-${width}`);
@@ -474,7 +474,7 @@ test('the staff billing panel reads in normal lines on phones and is unchanged f
           .click();
         await card
           .getByRole('form', { name: 'Activate' })
-          .getByRole('button', { name: 'Activate this plan' })
+          .getByRole('button', { name: 'Activate This Plan' })
           .click();
         await expect(card.locator('.billing-notice')).toContainText('Reload and check.');
         await frameNotice(page, `${width} conflict`);
@@ -617,7 +617,7 @@ test('on phones the plan form selects show whole values and the jump bars keep w
     await serveBilling(page, { list: 'one', save: 'saved' });
     async function openPlanForm() {
       await card.getByText('Plans on offer and plan versions').click();
-      await card.getByRole('button', { name: 'Add a new plan' }).click();
+      await card.getByRole('button', { name: 'Add a New Plan' }).click();
       await expect(card.getByRole('form', { name: 'Plan version' })).toBeVisible();
     }
 

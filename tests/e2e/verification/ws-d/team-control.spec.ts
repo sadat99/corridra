@@ -60,7 +60,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     const sent = page.waitForResponse(
       (r) => r.url().includes('/api/team-control/invites') && r.request().method() === 'POST',
     );
-    await controls.getByRole('button', { name: 'Send invitation', exact: true }).click();
+    await controls.getByRole('button', { name: 'Send Invitation', exact: true }).click();
     const invitationResponse = await sent;
     expect(invitationResponse.status()).toBe(201);
     const invitationResult = await invitationResponse.json();
@@ -92,7 +92,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
       resendResult.notification.email === 'sent' ? 'email sent again' : 'Invitation renewed',
     );
     page.once('dialog', (dialog) => void dialog.accept());
-    await item.getByRole('button', { name: 'Cancel invitation', exact: true }).click();
+    await item.getByRole('button', { name: 'Cancel Invitation', exact: true }).click();
     await expect(controls.locator('[data-feedback-scope="team-invite-list"]')).toContainText(
       'cancelled',
     );
@@ -121,12 +121,12 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
 
     // V-03: the owner resets another member's authenticator with a fresh check.
     await controls.getByRole('tab', { name: 'People and access', exact: true }).click();
-    await controls.getByRole('button', { name: 'Load workspace members', exact: true }).click();
+    await controls.getByRole('button', { name: 'Load Workspace Members', exact: true }).click();
     await controls
       .getByRole('combobox', { name: 'Member to reset', exact: true })
       .selectOption(ws.reviewerId);
     page.once('dialog', (dialog) => void dialog.accept());
-    await controls.getByRole('button', { name: 'Reset authenticator', exact: true }).click();
+    await controls.getByRole('button', { name: 'Reset Authenticator', exact: true }).click();
     await expect(controls.locator('[data-feedback-scope="authenticator-reset"]')).toContainText(
       'Authenticator reset',
     );
@@ -147,7 +147,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     await page.goto(`/operator/settings?workspace=${tenant}`);
     const settings = page.locator('#workspace-settings');
     await settings.getByText('Prepare commercial mission templates', { exact: true }).click();
-    await settings.getByRole('button', { name: 'Install missing mission templates' }).click();
+    await settings.getByRole('button', { name: 'Install Missing Mission Templates' }).click();
     await expect(settings.getByRole('status').first()).toContainText(/templates|Saved/);
     await settings.getByText('Create a directional corridor route', { exact: true }).click();
     await settings.getByRole('combobox', { name: 'Demand-origin market' }).selectOption('BD');
@@ -155,7 +155,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     await settings
       .getByLabel('Route review reason')
       .fill('QA test (madeup) route for the pack form');
-    await settings.getByRole('button', { name: 'Create reviewed route' }).click();
+    await settings.getByRole('button', { name: 'Create Reviewed Route' }).click();
     await expect(settings.getByRole('status').first()).toContainText('Saved reference');
     await settings.getByText('Add route pack', { exact: true }).click();
     const route = settings.getByRole('combobox', { name: 'Route', exact: true });
@@ -166,7 +166,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     const packSaved = page.waitForResponse(
       (r) => r.url().includes('/api/team-control/route-pack') && r.request().method() === 'POST',
     );
-    await settings.getByRole('button', { name: 'Save route pack', exact: true }).click();
+    await settings.getByRole('button', { name: 'Save Route Pack', exact: true }).click();
     expect((await packSaved).status()).toBe(201);
     await expect(settings.locator('[data-feedback-scope="route-pack"]')).toContainText(
       'Route pack version 1 saved',

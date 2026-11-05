@@ -655,7 +655,7 @@ async function openStaff(
   });
   await page.goto(origin + '/?mode=staff');
   await page.getByText('Customer company link requests', { exact: true }).click();
-  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await page.getByRole('button', { name: 'Load Company Link Requests' }).click();
 }
 
 test('staff load the queue, review a request with matches, and send one exact decision', async ({
@@ -689,7 +689,7 @@ test('staff load the queue, review a request with matches, and send one exact de
     });
   });
   // The shared-link confirmation and a reason are required before anything is sent.
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   expect(posts).toHaveLength(0);
   await section
     .getByLabel('Reason the customer will read')
@@ -697,10 +697,10 @@ test('staff load the queue, review a request with matches, and send one exact de
   await section
     .getByLabel('Internal note (staff only, optional)')
     .fill('Checked the invented registry');
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   expect(posts).toHaveLength(0);
   await section.getByLabel(/I confirm both workspaces may be linked/).check();
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   await expect(page.getByRole('status')).toContainText('Decision recorded: Approved');
   expect(posts).toHaveLength(1);
   expect(Object.keys(posts[0]!).sort()).toEqual([
@@ -752,10 +752,10 @@ test('a staff decision that is not confirmed is retried with the same command id
   await section
     .getByLabel('Reason the customer will read')
     .fill('The evidence does not match any listed company');
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   await expect(page.getByRole('status')).toContainText('could not be completed');
   status = 200;
-  await section.getByRole('button', { name: 'Retry the same decision' }).click();
+  await section.getByRole('button', { name: 'Retry the Same Decision' }).click();
   await expect(page.getByRole('status')).toContainText('Decision recorded: Rejected');
   expect(ids).toHaveLength(2);
   expect(ids[0]).toBe(ids[1]);
@@ -777,29 +777,29 @@ test('a stale decision, a denied reviewer and an unavailable module show plain m
   await section
     .getByLabel('Reason the customer will read')
     .fill('The evidence does not match any listed company');
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   await expect(page.getByRole('status')).toContainText('changed or conflicts');
-  await expect(section.getByRole('button', { name: 'Record decision' })).toBeVisible();
+  await expect(section.getByRole('button', { name: 'Record Decision' })).toBeVisible();
   status = 403;
-  await section.getByRole('button', { name: 'Record decision' }).click();
+  await section.getByRole('button', { name: 'Record Decision' }).click();
   await expect(page.getByRole('status')).toContainText('Reviewer access');
 });
 
 test('the queue shows denied, unavailable and empty states', async ({ page }) => {
   await openStaff(page, { queueStatus: 403 });
   await expect(page.getByRole('status')).toContainText('Reviewer access');
-  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await page.getByRole('button', { name: 'Load Company Link Requests' }).click();
   await page.unroute('**/api/workspace/customer-organisation-links**');
   await page.route('**/api/workspace/customer-organisation-links**', (route) =>
     route.fulfill({ status: 503, json: { error: 'x' } }),
   );
-  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await page.getByRole('button', { name: 'Load Company Link Requests' }).click();
   await expect(page.getByRole('status')).toContainText('unavailable');
   await page.unroute('**/api/workspace/customer-organisation-links**');
   await page.route('**/api/workspace/customer-organisation-links**', (route) =>
     route.fulfill({ json: { scope: 'open', synthetic: true, nextAfter: null, items: [] } }),
   );
-  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await page.getByRole('button', { name: 'Load Company Link Requests' }).click();
   await expect(page.getByRole('status')).toContainText('No requests to show');
 });
 
@@ -809,7 +809,7 @@ test('a closed request offers no decision except ending an active link', async (
   await expect(
     page.getByText('This request is closed. No further decision is possible.'),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Record decision' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Record Decision' })).toHaveCount(0);
 });
 
 for (const width of [320, 390, 768, 1440])
@@ -911,11 +911,11 @@ test('staff can page through a queue that has more than one page', async ({ page
   });
   await page.goto(origin + '/?mode=staff');
   await page.getByText('Customer company link requests', { exact: true }).click();
-  await page.getByRole('button', { name: 'Load company link requests' }).click();
+  await page.getByRole('button', { name: 'Load Company Link Requests' }).click();
   await expect(page.getByText('Synthetic Dhaka Textiles Ltd', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Show more requests' }).click();
+  await page.getByRole('button', { name: 'Show More Requests' }).click();
   await expect(page.getByText('Synthetic Chattogram Mills Ltd', { exact: true })).toBeVisible();
   await expect(page.getByText('Synthetic Dhaka Textiles Ltd', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Show more requests' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show More Requests' })).toHaveCount(0);
   expect(afters).toEqual([null, queueItem.claimId]);
 });

@@ -215,7 +215,7 @@ export function DeliveryExperience(props: Props) {
               </label>
               {owner}
               {reason}
-              <button disabled={busy}>Record delegation context</button>
+              <button disabled={busy}>Record Delegation Context</button>
             </form>
             {data.contexts.map((c) => (
               <p key={c.version}>
@@ -293,7 +293,7 @@ export function DeliveryExperience(props: Props) {
                 Confirmation requires an actual scheduled or held meeting for every selected
                 participant. It never creates a booking.
               </p>
-              <button disabled={busy}>Record scoped agenda item</button>
+              <button disabled={busy}>Record Scoped Agenda Item</button>
             </form>
             {data.agenda.map((a) => (
               <p key={a.id}>
@@ -386,7 +386,7 @@ export function DeliveryExperience(props: Props) {
               quotations.
             </label>
             <button disabled={busy || !['owner', 'admin'].includes(props.role)}>
-              Approve scoped mission detail
+              Approve Scoped Mission Detail
             </button>
           </form>
         </details>
@@ -445,7 +445,7 @@ export function DeliveryExperience(props: Props) {
               not imply independent verification or workspace membership.
             </label>
             <button disabled={busy || !['owner', 'admin'].includes(props.role)}>
-              Approve participant organisation
+              Approve Participant Organisation
             </button>
           </form>
         </details>
@@ -518,7 +518,7 @@ export function DeliveryExperience(props: Props) {
             quotation or raw document is included.
           </label>
           <button disabled={busy || !['owner', 'admin'].includes(props.role)}>
-            Approve recipient disclosure
+            Approve Recipient Disclosure
           </button>
         </form>
       </details>

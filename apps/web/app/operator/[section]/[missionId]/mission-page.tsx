@@ -205,7 +205,7 @@ export function MissionPage({
                       aria-expanded={panel === 'action'}
                       onClick={(e) => openPanel('action', e.currentTarget)}
                     >
-                      Change stage, owner or next action
+                      Change Stage, Owner or Next Action
                     </button>
                   )}
                   {data.role === 'owner' && (
@@ -215,7 +215,7 @@ export function MissionPage({
                       aria-expanded={panel === 'route'}
                       onClick={(e) => openPanel('route', e.currentTarget)}
                     >
-                      Assign route
+                      Assign Route
                     </button>
                   )}
                   <button
@@ -224,7 +224,7 @@ export function MissionPage({
                     aria-expanded={panel === 'reply'}
                     onClick={(e) => openPanel('reply', e.currentTarget)}
                   >
-                    Reply on the receipt
+                    Reply on the Receipt
                   </button>
                   {moveRecords && (
                     <button
@@ -233,7 +233,7 @@ export function MissionPage({
                       aria-expanded={panel === 'move'}
                       onClick={(e) => openPanel('move', e.currentTarget)}
                     >
-                      Set the customer&apos;s next move
+                      Set the Customer&apos;s Next Move
                     </button>
                   )}
                 </div>
@@ -305,7 +305,7 @@ export function MissionPage({
                       : "Customer's next move"}
               </h3>
               <button type="button" className="text-link" onClick={closePanel}>
-                Close panel
+                Close Panel
               </button>
             </div>
             {feedback}
@@ -459,7 +459,7 @@ function AssignRoute({
         <textarea name="reason" required minLength={3} maxLength={500} />
       </label>
       <button className="primary-link" disabled={busy || !pack || !types.length}>
-        Assign route
+        Assign Route
       </button>
     </form>
   );
@@ -536,7 +536,7 @@ function Quotes({
         <p>No supplier offers recorded yet.</p>
       )}
       <button type="button" className="text-link" onClick={onRecord}>
-        Record or revise a supplier offer
+        Record or Revise a Supplier Offer
       </button>{' '}
       <SectionLink tenant={tenant} slug="commercial" label="Quotes and billing" />
     </>

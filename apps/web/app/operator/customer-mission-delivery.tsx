@@ -162,7 +162,7 @@ function PrivateDelivery({ tenant, mission }: Props) {
         Delivery to real customer accounts stays closed.
       </p>
       <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
-        Load account delivery review
+        Load Account Delivery Review
       </button>
       {message && <p role="status">{message}</p>}
       {data && !data.request && (
@@ -207,7 +207,7 @@ function PrivateDelivery({ tenant, mission }: Props) {
                 </label>
               </fieldset>
               <button className="primary-link" type="submit" disabled={busy}>
-                {pending ? 'Retry the same delivery approval' : 'Approve account delivery'}
+                {pending ? 'Retry the Same Delivery Approval' : 'Approve Account Delivery'}
               </button>
             </form>
           )}

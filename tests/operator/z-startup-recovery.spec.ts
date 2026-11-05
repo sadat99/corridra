@@ -90,7 +90,7 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
     await expect(
       page.getByRole('heading', { name: 'Assigned work is temporarily unavailable.' }),
     ).toBeVisible();
-    await page.getByRole('link', { name: 'Retry assigned work', exact: true }).click();
+    await page.getByRole('link', { name: 'Retry Assigned Work', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: 'Assigned work is temporarily unavailable.' }),
     ).toBeVisible();
@@ -101,11 +101,11 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
       name: 'The workspace is temporarily unavailable.',
     });
     await expect(heading).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Retry workspace', exact: true })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Retry Workspace', exact: true })).toHaveAttribute(
       'href',
       '',
     );
-    await page.getByRole('link', { name: 'Retry workspace', exact: true }).click();
+    await page.getByRole('link', { name: 'Retry Workspace', exact: true }).click();
     await expect(heading).toBeVisible();
     await expect(page.locator('.mission-card')).toHaveCount(0);
 
@@ -169,7 +169,7 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
     await expect(heading).toBeVisible();
     expect(hydrationErrors).toEqual([]);
     enabled = true;
-    await page.getByRole('link', { name: 'Retry workspace', exact: true }).click();
+    await page.getByRole('link', { name: 'Retry Workspace', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Sign in to your workspace.' })).toBeVisible();
     const destination = new URL(page.url());
     expect(destination.pathname).toBe('/operator/signin');

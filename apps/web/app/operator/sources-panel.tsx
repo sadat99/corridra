@@ -92,7 +92,7 @@ function CopyReference({ label, value }: { label: string; value: string }) {
             .catch(() => setCopied('Copy did not work. Select the reference and copy it.'));
         }}
       >
-        Copy reference
+        Copy Reference
       </button>
       <span role="status" aria-live="polite">
         {copied}
@@ -276,7 +276,7 @@ export function SourcesPanel({
                 </>
               )}
               <button className="primary-link" disabled={busy || saving}>
-                Record source
+                Record Source
               </button>
               <ActionFeedback
                 scope="sources"
@@ -319,7 +319,7 @@ export function SourcesPanel({
                 <textarea name="statement" required maxLength={2000} />
               </label>
               <button className="primary-link" disabled={busy}>
-                Record claim
+                Record Claim
               </button>
             </form>
           </PhoneFold>

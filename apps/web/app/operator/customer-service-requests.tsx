@@ -368,7 +368,7 @@ function Scoped({ tenant }: { tenant: string }) {
         </ul>
       )}
       <button type="button" className="text-link" onClick={() => void loadList()}>
-        Reload the list
+        Reload the List
       </button>
 
       {detail && (
@@ -561,7 +561,7 @@ function Scoped({ tenant }: { tenant: string }) {
                         className="text-link"
                         onClick={() => edit(() => setParts(parts.filter((_, i) => i !== index)))}
                       >
-                        Remove cost {index + 1}
+                        Remove Cost {index + 1}
                       </button>
                     )}
                   </fieldset>
@@ -572,7 +572,7 @@ function Scoped({ tenant }: { tenant: string }) {
                     className="text-link"
                     onClick={() => edit(() => setParts([...parts, emptyRow()]))}
                   >
-                    Add another cost
+                    Add Another Cost
                   </button>
                 )}
                 <label className="field">
@@ -648,7 +648,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 />
               )}
               <button type="submit" className="button" disabled={busy || !valid}>
-                {pending ? 'Send the same quote again' : 'Send the quote to the customer'}
+                {pending ? 'Send the Same Quote Again' : 'Send the Quote to the Customer'}
               </button>
             </form>
           )}
@@ -687,7 +687,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </label>
               </fieldset>
               <button type="submit" className="button" disabled={busy || !progress}>
-                Send to the customer
+                Send to the Customer
               </button>
             </form>
           )}
@@ -709,7 +709,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </label>
               </fieldset>
               <button type="submit" className="button button-secondary" disabled={busy}>
-                Save internal note
+                Save Internal Note
               </button>
             </form>
           )}

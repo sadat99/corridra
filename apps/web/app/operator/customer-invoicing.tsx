@@ -310,7 +310,7 @@ function Scoped({ tenant }: { tenant: string }) {
                   <strong>{p.planTitle}</strong> · {p.workspaceName} · {displayDate(p.periodStart)}{' '}
                   until {displayDate(p.periodEnd)} · {money(p.priceMinor, p.currency)}{' '}
                   <button type="button" className="text-link" onClick={() => prepare(p)}>
-                    Prepare invoice for {p.workspaceName}, {displayDate(p.periodStart)}
+                    Prepare Invoice for {p.workspaceName}, {displayDate(p.periodStart)}
                   </button>
                 </li>
               ))}
@@ -356,10 +356,10 @@ function Scoped({ tenant }: { tenant: string }) {
             </div>
           </fieldset>
           <button type="submit" className="button" disabled={busy}>
-            {pending ? 'Send the same invoice again' : 'Issue sample invoice'}
+            {pending ? 'Send the Same Invoice Again' : 'Issue Sample Invoice'}
           </button>{' '}
           <button type="button" className="text-link" onClick={() => setPreparing(null)}>
-            Not now
+            Not Now
           </button>
         </form>
       )}
@@ -481,7 +481,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
               </fieldset>
               <button type="submit" className="button" disabled={busy}>
-                {pending ? 'Send the same payment again' : 'Record payment'}
+                {pending ? 'Send the Same Payment Again' : 'Record Payment'}
               </button>
             </form>
           )}
@@ -522,7 +522,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 data-intent="destructive"
                 disabled={busy}
               >
-                {pending ? 'Send the same credit again' : 'Issue credit note'}
+                {pending ? 'Send the Same Credit Again' : 'Issue Credit Note'}
               </button>
             </form>
           )}

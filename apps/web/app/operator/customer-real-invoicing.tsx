@@ -432,7 +432,7 @@ function Scoped({ tenant }: { tenant: string }) {
                   <strong>{p.planTitle}</strong> · {p.workspaceName} · {displayDate(p.periodStart)}{' '}
                   until {displayDate(p.periodEnd)} · {money(p.priceMinor, p.currency)}{' '}
                   <button type="button" className="text-link" onClick={() => prepare(p)}>
-                    Prepare invoice for {p.workspaceName}, {displayDate(p.periodStart)}
+                    Prepare Invoice for {p.workspaceName}, {displayDate(p.periodStart)}
                   </button>
                 </li>
               ))}
@@ -487,10 +487,10 @@ function Scoped({ tenant }: { tenant: string }) {
             </div>
           </fieldset>
           <button type="submit" className="button" disabled={busy}>
-            {pending ? 'Send the same invoice again' : 'Prepare invoice for approval'}
+            {pending ? 'Send the Same Invoice Again' : 'Prepare Invoice for Approval'}
           </button>{' '}
           <button type="button" className="text-link" onClick={() => setPreparing(null)}>
-            Not now
+            Not Now
           </button>
         </form>
       )}
@@ -576,10 +576,10 @@ function Scoped({ tenant }: { tenant: string }) {
             data-intent="destructive"
             disabled={busy}
           >
-            {pending ? 'Send the same rejection again' : 'Reject'}
+            {pending ? 'Send the Same Rejection Again' : 'Reject'}
           </button>{' '}
           <button type="button" className="text-link" onClick={() => setRejecting(null)}>
-            Not now
+            Not Now
           </button>
         </form>
       )}
@@ -698,7 +698,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
               </fieldset>
               <button type="submit" className="button" disabled={busy}>
-                {pending ? 'Send the same payment again' : 'Record payment'}
+                {pending ? 'Send the Same Payment Again' : 'Record Payment'}
               </button>
             </form>
           )}
@@ -737,7 +737,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 data-intent="destructive"
                 disabled={busy}
               >
-                {pending ? 'Send the same credit again' : 'Prepare credit note for approval'}
+                {pending ? 'Send the Same Credit Again' : 'Prepare Credit Note for Approval'}
               </button>
             </form>
           )}

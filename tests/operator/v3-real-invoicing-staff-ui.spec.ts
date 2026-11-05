@@ -281,11 +281,11 @@ test('preparing an invoice sends one command and says a second person must appro
   await serve(page, fresh(), seen);
   await page.goto(origin + '/');
   await page
-    .getByRole('button', { name: /Prepare invoice for Acme Apparel, 24 October 2026/ })
+    .getByRole('button', { name: /Prepare Invoice for Acme Apparel, 24 October 2026/ })
     .click();
   await page.getByLabel('Bill to: company name').fill('Acme Apparel Pte Ltd');
   await page.getByLabel(/Bill to: address on one line/).fill('1 Raffles Place, Singapore 048616');
-  await page.getByRole('button', { name: 'Prepare invoice for approval' }).click();
+  await page.getByRole('button', { name: 'Prepare Invoice for Approval' }).click();
   await expect(page.getByText('Prepared. A second person now needs to approve it.')).toBeVisible();
   const post = seen.find((s) => s.method === 'POST')!;
   expect(post.body).toMatchObject({
@@ -355,9 +355,9 @@ test('recording a payment and preparing a credit note, and an uncertain save is 
   await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
   await page.getByLabel(/Amount received in SGD minor units/).fill('2000');
   await page.getByLabel('Bank reference (plain text)').fill('DBS transfer 8841');
-  await page.getByRole('button', { name: 'Record payment' }).click();
+  await page.getByRole('button', { name: 'Record Payment' }).click();
   await expect(page.getByText(/Could not confirm that this was saved/)).toBeVisible();
-  await page.getByRole('button', { name: 'Send the same payment again' }).click();
+  await page.getByRole('button', { name: 'Send the Same Payment Again' }).click();
   await expect(page.getByText('Payment recorded.')).toBeVisible();
   const posts = seen.filter((s) => s.method === 'POST');
   expect(posts).toHaveLength(2);
@@ -373,7 +373,7 @@ test('recording a payment and preparing a credit note, and an uncertain save is 
   await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
   await page.getByLabel(/Credit amount in SGD minor units/).fill('500');
   await page.getByLabel('Reason the customer reads').fill('Goodwill credit for a late start');
-  await page.getByRole('button', { name: 'Prepare credit note for approval' }).click();
+  await page.getByRole('button', { name: 'Prepare Credit Note for Approval' }).click();
   await expect(
     page.getByText('Prepared. A second person now needs to approve the credit note.'),
   ).toBeVisible();

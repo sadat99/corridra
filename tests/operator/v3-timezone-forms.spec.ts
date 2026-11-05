@@ -138,13 +138,13 @@ for (const [zone, wall, edited, zoneName] of [
       await expect(input).toHaveValue('2030-07-15T' + wall);
       await expect(page.getByText(new RegExp('Time zone:.*' + zoneName))).toBeVisible();
       await page.locator('textarea[name="reason"]').fill('Synthetic unchanged exact instant');
-      await page.getByRole('button', { name: 'Save mission action', exact: true }).click();
+      await page.getByRole('button', { name: 'Save Mission Action', exact: true }).click();
       await expect.poll(() => scenario.saved.length).toBe(1);
       expect(scenario.saved[0].dueAt).toBe(original);
       await expect(page.locator('textarea[name="reason"]')).toHaveValue('');
       await input.fill('2030-07-15T' + edited);
       await page.locator('textarea[name="reason"]').fill('Synthetic selected exact instant');
-      await page.getByRole('button', { name: 'Save mission action', exact: true }).click();
+      await page.getByRole('button', { name: 'Save Mission Action', exact: true }).click();
       await expect.poll(() => scenario.saved.length).toBe(2);
       expect(scenario.saved[1].dueAt).toBe(selected);
     } finally {
