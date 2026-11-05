@@ -59,7 +59,7 @@ test('V3 signup exposes the delivered-code input immediately and preserves verif
     await page.getByLabel('Name', { exact: true }).fill('Synthetic OTP walkthrough');
     await page.getByLabel('Email', { exact: true }).fill('synthetic-otp@example.invalid');
     await page.getByLabel('Password', { exact: true }).fill('Synthetic long password only');
-    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Account', exact: true }).click();
     await expect(page).toHaveURL(origin + '/verify-email');
     const code = page.getByLabel('Verification code', { exact: true });
     await expect(code).toBeVisible();
@@ -67,10 +67,10 @@ test('V3 signup exposes the delivered-code input immediately and preserves verif
     await page.getByLabel('Email', { exact: true }).fill('synthetic-otp@example.invalid');
     await expect(code).toBeVisible();
     await code.fill('12345');
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     expect(calls).toHaveLength(1);
     await code.fill('123456');
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     await expect(page.getByRole('main').getByRole('alert')).toContainText(
       'Synthetic invalid or expired code',
     );
@@ -82,7 +82,7 @@ test('V3 signup exposes the delivered-code input immediately and preserves verif
       body: { email: 'synthetic-otp@example.invalid', otp: '123456' },
     });
     rejectVerification = false;
-    await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+    await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
     await expect(page).toHaveURL(origin + '/signin');
     expect(calls).toHaveLength(3);
     expect(calls.some((call) => call.path.includes('send-verification-otp'))).toBe(false);
@@ -93,7 +93,7 @@ test('V3 signup exposes the delivered-code input immediately and preserves verif
     await expect(code).toBeVisible();
     await expect(code).toBeEmpty();
     await expect(page.getByLabel('Email', { exact: true })).toBeEmpty();
-    const request = page.getByRole('button', { name: 'Request verification code', exact: true });
+    const request = page.getByRole('button', { name: 'Request Verification Code', exact: true });
     await request.click();
     expect(calls).toHaveLength(3);
     await page.getByLabel('Email', { exact: true }).fill('synthetic-otp@example.invalid');

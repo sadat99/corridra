@@ -48,10 +48,10 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
           </p>
           <div className="guide-page-actions">
             <Link prefetch={false} className="primary-link" href="/plan">
-              Start a request without an account
+              Start a Request Without an Account
             </Link>
             <Link prefetch={false} className="button-secondary" href="/how-it-works">
-              See how Corridra works{' '}
+              See How Corridra Works{' '}
               <span aria-hidden="true">
                 <Arrow />
               </span>
@@ -61,10 +61,10 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
       </section>
       <nav className="guide-links" aria-label="Other ways in">
         <Link prefetch={false} className="text-link" href="/operator">
-          Team sign-in
+          Team Sign-in
         </Link>
         <Link prefetch={false} className="text-link" href="/contributor">
-          Local helper tasks
+          Local Helper Tasks
         </Link>
         <Link prefetch={false} className="text-link" href="/">
           Back to Corridra

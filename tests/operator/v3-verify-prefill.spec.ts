@@ -83,7 +83,7 @@ test('signing up remembers the address for this tab, and the password is not kep
   await page.getByLabel('Name', { exact: true }).fill('Test Person');
   await page.getByLabel('Email', { exact: true }).fill(stored);
   await page.getByLabel('Password', { exact: true }).fill('A long password for this test');
-  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Account', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as Fixture).__navigated))
     .toBe('/verify-email');
@@ -106,7 +106,7 @@ test('the verify page fills in the remembered address, asks only for the code an
   await expect(code).toBeFocused();
   await expect(page.getByText('Enter the six-digit code from your email.')).toBeVisible();
   await code.fill('123456');
-  await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as Fixture).__navigated))
     .toBe('/signin');
@@ -125,7 +125,7 @@ test('the address can still be changed before the code is used', async ({ page }
   await page.goto(`${origin}/verify`);
   await page.getByLabel('Email', { exact: true }).fill('other@example.invalid');
   await page.getByLabel('Verification code', { exact: true }).fill('654321');
-  await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as Fixture).__navigated))
     .toBe('/signin');
@@ -160,7 +160,7 @@ test('blocked storage changes nothing but the convenience', async ({ page }) => 
   await expect(page.getByLabel('Email', { exact: true })).toHaveValue('');
   await page.getByLabel('Email', { exact: true }).fill(stored);
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
-  await page.getByRole('button', { name: 'Verify email', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Email', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as Fixture).__navigated))
     .toBe('/signin');

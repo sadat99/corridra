@@ -43,7 +43,7 @@ export function SignupAccess() {
           <AccessState kind="unavailable">
             <p>Account access is not available yet.</p>
             <Link className="text-link" href="/plan">
-              Start a request without an account
+              Start a Request Without an Account
             </Link>
           </AccessState>
         )}

@@ -48,7 +48,7 @@ test('with the switch off the sign-in form has no code option at all', async ({ 
     await expect(form.getByLabel('Email', { exact: true })).toBeVisible();
     await expect(form.getByLabel('Password', { exact: true })).toBeVisible();
     await expect(form.getByRole('button')).toHaveCount(1);
-    await expect(form.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+    await expect(form.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
     await expect(page.getByText(/code/i)).toHaveCount(0);
     await expect(page.getByRole('button', { name: /sign in with a code/i })).toHaveCount(0);
   } finally {
@@ -93,18 +93,18 @@ test('with the switch on a person can sign in with an emailed code and keep the 
 
     // Password stays the default. The code route is one quiet extra button.
     await expect(form.getByLabel('Password', { exact: true })).toBeVisible();
-    await expect(form.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
-    const toggle = form.getByRole('button', { name: 'Sign in with a code', exact: true });
+    await expect(form.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
+    const toggle = form.getByRole('button', { name: 'Sign In with a Code', exact: true });
     await expect(toggle).toBeVisible();
 
     await toggle.click();
     await expect(form.getByLabel('Password', { exact: true })).toHaveCount(0);
-    await expect(form.getByRole('button', { name: 'Send code', exact: true })).toBeVisible();
+    await expect(form.getByRole('button', { name: 'Send Code', exact: true })).toBeVisible();
     await expect(form.getByLabel('Six-digit code')).toHaveCount(0);
 
     // The same words for an address that can sign in and one that cannot.
     await email.fill('known@example.invalid');
-    await form.getByRole('button', { name: 'Send code', exact: true }).click();
+    await form.getByRole('button', { name: 'Send Code', exact: true }).click();
     const status = form.getByRole('status');
     await expect(status).toHaveText('If this address can sign in, a code is on its way.');
     expect(calls[0]).toEqual({
@@ -117,7 +117,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     await expect(code).toHaveAttribute('inputmode', 'numeric');
 
     // A new code can be asked for only after a short wait.
-    const resend = form.getByRole('button', { name: 'Send a new code', exact: true });
+    const resend = form.getByRole('button', { name: 'Send a New Code', exact: true });
     await expect(resend).toBeDisabled();
     await expect(form).toContainText('You can ask for a new code in');
 
@@ -125,24 +125,24 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     await email.fill('unknown@example.invalid');
     await expect(code).toHaveCount(0);
     sendStatus = 400;
-    await form.getByRole('button', { name: 'Send code', exact: true }).click();
+    await form.getByRole('button', { name: 'Send Code', exact: true }).click();
     await expect(status).toHaveText('If this address can sign in, a code is on its way.');
     expect(calls[1].body).toEqual({ email: 'unknown@example.invalid', type: 'sign-in' });
 
     // Only a rate limit is said out loud.
     await email.fill('busy@example.invalid');
     sendStatus = 429;
-    await form.getByRole('button', { name: 'Send code', exact: true }).click();
+    await form.getByRole('button', { name: 'Send Code', exact: true }).click();
     await expect(form.getByRole('alert')).toHaveText(
       'Too many requests. Wait a minute, then try again.',
     );
     sendStatus = 200;
-    await form.getByRole('button', { name: 'Send code', exact: true }).click();
+    await form.getByRole('button', { name: 'Send Code', exact: true }).click();
     await expect(status).toHaveText('If this address can sign in, a code is on its way.');
 
     // Wrong, expired and over-tried codes get calm, plain messages and keep what was typed.
     await code.fill('123456');
-    await form.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await form.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(form.getByRole('alert')).toHaveText(
       'That code is wrong or has expired. Check it or ask for a new code.',
     );
@@ -152,7 +152,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
       status: 429,
       body: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many attempts' },
     };
-    await form.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await form.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(form.getByRole('alert')).toHaveText('Too many tries. Ask for a new code.');
     const attempts = calls.filter((c) => c.path === '/api/auth/sign-in/email-otp');
     expect(attempts[0].body).toEqual({ email: 'busy@example.invalid', otp: '123456' });
@@ -165,26 +165,26 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     const done = page.waitForRequest(
       (r) => new URL(r.url()).pathname === '/api/auth/sign-in/email-otp',
     );
-    await form.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await form.getByRole('button', { name: 'Sign In', exact: true }).click();
     await done;
     await expect(page).toHaveURL(origin + '/plan');
 
     // The password route is still there.
     await page.goto(origin + '/signin');
-    await form.getByRole('button', { name: 'Sign in with a code', exact: true }).click();
-    await form.getByRole('button', { name: 'Use my password instead', exact: true }).click();
+    await form.getByRole('button', { name: 'Sign In with a Code', exact: true }).click();
+    await form.getByRole('button', { name: 'Use My Password Instead', exact: true }).click();
     await expect(form.getByLabel('Password', { exact: true })).toBeVisible();
     await expect(
-      form.getByRole('button', { name: 'Sign in with a code', exact: true }),
+      form.getByRole('button', { name: 'Sign In with a Code', exact: true }),
     ).toBeVisible();
 
     // Both stages pass the accessibility check at phone, tablet and desktop widths.
     await mkdir('docs/design-system/evidence/code-signin/after', { recursive: true });
-    await form.getByRole('button', { name: 'Sign in with a code', exact: true }).click();
+    await form.getByRole('button', { name: 'Sign In with a Code', exact: true }).click();
     await email.fill('known@example.invalid');
     for (const stage of ['email', 'code'] as const) {
       if (stage === 'code') {
-        await form.getByRole('button', { name: 'Send code', exact: true }).click();
+        await form.getByRole('button', { name: 'Send Code', exact: true }).click();
         await expect(form.getByLabel('Six-digit code')).toBeVisible();
       }
       for (const width of [320, 390, 768, 1440]) {

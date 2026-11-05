@@ -131,16 +131,16 @@ test('the link opens sign-in on its code option, and the password route stays on
 }) => {
   await page.goto(origin + '/signin?method=code');
   const form = page.getByRole('form', { name: 'Account access' });
-  await expect(form.getByRole('button', { name: 'Send code', exact: true })).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Send Code', exact: true })).toBeVisible();
   await expect(form.getByLabel('Password', { exact: true })).toHaveCount(0);
-  await form.getByRole('button', { name: 'Use my password instead', exact: true }).click();
+  await form.getByRole('button', { name: 'Use My Password Instead', exact: true }).click();
   await expect(form.getByLabel('Password', { exact: true })).toBeVisible();
 
   // With the switch off the same address opens the password form: the parameter is ignored.
   await page.goto(origin + '/signin?method=code&switch=off');
   const off = page.getByRole('form', { name: 'Account access' });
   await expect(off.getByLabel('Password', { exact: true })).toBeVisible();
-  await expect(off.getByRole('button', { name: 'Send code', exact: true })).toHaveCount(0);
+  await expect(off.getByRole('button', { name: 'Send Code', exact: true })).toHaveCount(0);
 });
 
 test('a signed-in person is not offered the link', async ({ page }) => {

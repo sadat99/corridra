@@ -40,7 +40,7 @@ export function PendingRequestMessage({ where }: { where: PendingNoticeWhere }) 
       ))}
       {where === 'account' && (
         <Link className="text-link" href="/plan" prefetch={false}>
-          Open your request
+          Open Your Request
         </Link>
       )}
     </div>
