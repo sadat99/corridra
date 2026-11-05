@@ -110,7 +110,7 @@ function ScopedInvoices({ subject, issuer, workspaceId }: Props) {
           {state !== 'denied' && (
             <div className="ux-state-actions">
               <button type="button" className="button button-secondary" onClick={() => void load()}>
-                Try again
+                Try Again
               </button>
             </div>
           )}

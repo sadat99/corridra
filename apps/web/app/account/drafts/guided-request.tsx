@@ -619,7 +619,7 @@ function Guided(scope: Scope) {
             className="text-link ux-back"
             onClick={() => reset('Loading your drafts…') ?? void loadList()}
           >
-            Back to your drafts
+            Back to Your Drafts
           </button>
         </p>
       </section>
@@ -679,7 +679,7 @@ function Guided(scope: Scope) {
             </ul>
             {nextAfter && (
               <button type="button" className="text-link" onClick={() => void loadList(nextAfter)}>
-                Load more drafts
+                Load More Drafts
               </button>
             )}
           </section>
@@ -743,7 +743,7 @@ function Guided(scope: Scope) {
       {conflict && (
         <p>
           <button type="button" className="button" disabled={busy} onClick={() => void reload()}>
-            Reload the latest draft
+            Reload the Latest Draft
           </button>
         </p>
       )}
@@ -1051,7 +1051,7 @@ function Guided(scope: Scope) {
                     )
                   }
                 >
-                  Remove requirement {i + 1}
+                  Remove Requirement {i + 1}
                 </button>
               </div>
             ))}
@@ -1096,7 +1096,7 @@ function Guided(scope: Scope) {
                     ])
                   }
                 >
-                  Add my own line
+                  Add My Own Line
                 </button>
               </>
             )}
@@ -1151,7 +1151,7 @@ function Guided(scope: Scope) {
                 disabled={busy}
                 onClick={() => void fillFromProfile()}
               >
-                Use my saved company profile
+                Use My Saved Company Profile
               </button>
             </p>
           )}
@@ -1271,7 +1271,7 @@ function Guided(scope: Scope) {
               }
               onClick={() => void send()}
             >
-              {busy ? 'Working…' : 'Send request'}
+              {busy ? 'Working…' : 'Send Request'}
             </button>
           )}
         </section>
@@ -1305,7 +1305,7 @@ function Guided(scope: Scope) {
             disabled={busy || autosaving || conflict || (!dirty && draftId !== null)}
             onClick={() => void save()}
           >
-            Save draft
+            Save Draft
           </button>
         )}
         {!locked && draftId && (
@@ -1316,7 +1316,7 @@ function Guided(scope: Scope) {
             disabled={busy || autosaving}
             onClick={() => void discard()}
           >
-            Discard this draft
+            Discard This Draft
           </button>
         )}
         <button
@@ -1337,7 +1337,7 @@ function Guided(scope: Scope) {
             void loadList();
           }}
         >
-          Back to your drafts
+          Back to Your Drafts
         </button>
       </div>
       {!locked && (

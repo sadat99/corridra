@@ -172,8 +172,8 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   await open(page, 'full');
   await expect(page.getByRole('heading', { name: 'Waiting for you', exact: true })).toBeVisible();
   await expect(page.getByText('Send your draft request')).toBeVisible();
-  await expect(page.getByText('Add evidence for your company link')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Finish and send' })).toHaveAttribute(
+  await expect(page.getByText('Add Evidence for your company link')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Finish and Send' })).toHaveAttribute(
     'href',
     `/account/drafts/${owner.id}`,
   );
@@ -183,7 +183,8 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   ).toBeVisible();
   // A member's quote is never offered as an action.
   await expect(page.getByText('A quote is waiting for a workspace owner or admin')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Accept or decline' })).toHaveCount(0);
+  // The action link is exactly "Accept or Decline"; a waiting row's own sentence may contain the words.
+  await expect(page.getByRole('link', { name: 'Accept or Decline', exact: true })).toHaveCount(0);
   // The navigation names the five places.
   const tabs = page.getByRole('navigation', { name: 'Customer navigation' });
   await expect(tabs.getByRole('link')).toHaveText([
@@ -204,7 +205,7 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   await expect(card).toBeVisible();
   await expect(card).toContainText('You');
   await expect(card.locator('time')).toHaveText('5 Nov 2026');
-  await expect(card.getByRole('link', { name: 'Open the request' })).toHaveAttribute(
+  await expect(card.getByRole('link', { name: 'Open the Request' })).toHaveAttribute(
     'href',
     '/account/requests/r1',
   );
@@ -222,7 +223,7 @@ test('a new reply is kept on this device only, and can be marked read and forgot
 }) => {
   await open(page, 'full');
   await expect(page.getByText('Read the new reply from the Corridra team')).toBeVisible();
-  await page.getByRole('button', { name: 'Mark as read' }).click();
+  await page.getByRole('button', { name: 'Mark As Read' }).click();
   await expect(page.getByText('Read the new reply from the Corridra team')).toHaveCount(0);
   expect(await page.evaluate(() => window.localStorage.getItem('corridra.move.seen'))).toContain(
     '2026-10-09T10:00:00Z',
@@ -247,11 +248,11 @@ test('blocked storage does not break the page', async ({ page }) => {
   });
   await open(page, 'full');
   await expect(page.getByText('Read the new reply from the Corridra team')).toBeVisible();
-  await page.getByRole('button', { name: 'Mark as read' }).click();
+  await page.getByRole('button', { name: 'Mark As Read' }).click();
   await expect(page.getByText('Read the new reply from the Corridra team')).toHaveCount(0);
 });
 
-test('when nothing waits it says so, shows where the latest request stands and offers Start a request', async ({
+test('when nothing waits it says so, shows where the latest request stands and offers Start a Request', async ({
   page,
 }) => {
   await open(page, 'quiet');

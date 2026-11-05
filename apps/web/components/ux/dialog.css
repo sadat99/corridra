@@ -1,0 +1,46 @@
+/* The dialog: tokens only. A surface above a dimmed page; full width on a phone, a measured column on a desktop. */
+.ux-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--ink);
+  box-shadow: var(--shadow-3);
+}
+.ux-dialog::backdrop {
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.ux-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+.ux-dialog-head h2 {
+  margin: 0;
+  font-size: var(--text-lg, 1.25rem);
+}
+.ux-dialog-close {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand-deep);
+  font: 600 var(--text-md) var(--font-ui);
+  cursor: pointer;
+}
+.ux-dialog-close:hover {
+  background: var(--selected-surface);
+}
+.ux-dialog-close:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-dialog-body {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}

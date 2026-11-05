@@ -162,10 +162,10 @@ test('invitation UI preserves one command after lost acknowledgement, supports k
     ).toBe(true);
   }
   await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Join workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
   try {
     await expect.poll(() => posts.length).toBe(1);
-    await expect(page.getByRole('button', { name: 'Please wait…', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Please Wait…', exact: true })).toBeDisabled();
     await page
       .getByRole('form', { name: 'Accept a workspace invitation', exact: true })
       .evaluate((form) => {
@@ -186,7 +186,7 @@ test('invitation UI preserves one command after lost acknowledgement, supports k
       () => Object.keys(sessionStorage).length + Object.keys(localStorage).length,
     ),
   ).toBe(0);
-  await page.getByRole('button', { name: 'Retry joining workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Joining Workspace', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('You have joined the workspace.');
   expect(posts.length).toBe(2);
   expect(posts[0].commandId === posts[1].commandId).toBe(true);
@@ -213,7 +213,7 @@ test('invitation denial clears the code and stale workspace view without claimin
     await expect(page.getByText(workspace.name, { exact: true })).toBeVisible();
     await page.getByText('Join a workspace', { exact: true }).click();
     await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
-    await page.getByRole('button', { name: 'Join workspace', exact: true }).click();
+    await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
     await expect(page.getByText(workspace.name, { exact: true })).toHaveCount(0);
     await expect(page.getByLabel('Workspace invitation code', { exact: true })).toHaveCount(0);
     await expect(page.getByText('You have joined the workspace.', { exact: true })).toHaveCount(0);
@@ -249,11 +249,11 @@ test('malformed success never claims membership, and clearing an uncertain code 
     await page.goto(origin);
     await page.getByText('Join a workspace', { exact: true }).click();
     await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
-    await page.getByRole('button', { name: 'Join workspace', exact: true }).click();
+    await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Joining was not confirmed');
     await expect(page.getByText('You have joined the workspace.', { exact: true })).toHaveCount(0);
     const before = posts;
-    await page.getByRole('button', { name: 'Clear invitation code', exact: true }).click();
+    await page.getByRole('button', { name: 'Clear Invitation Code', exact: true }).click();
     await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeEmpty();
     await expect(page.getByRole('alert')).toContainText(
       'earlier request may already have succeeded',
@@ -284,14 +284,14 @@ test('reload requires code re-entry, preserves the existing grant and sends only
   await page.goto(origin);
   await page.getByText('Join a workspace', { exact: true }).click();
   await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Join workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Joining was not confirmed');
   await page.reload();
   await expect(page.getByText(workspace.name, { exact: true })).toHaveCount(1);
   await page.getByText('Join a workspace', { exact: true }).click();
   await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeEmpty();
   await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Join workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('You have joined the workspace.');
   expect(posts.length).toBe(2);
   expect(posts[0].commandId === posts[1].commandId).toBe(false);

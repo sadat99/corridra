@@ -129,7 +129,7 @@ test('CQ-52: each workspace card shows one primary action and keeps every other 
   // The primary action is the only link outside the More menu.
   await expect(actions.locator(':scope > a')).toHaveCount(1);
   await expect(actions.locator(':scope > a')).toHaveAttribute('href', '/account/drafts/' + ownerId);
-  await expect(actions.locator(':scope > a')).toHaveText('New request in Synthetic Dhaka Knits');
+  await expect(actions.locator(':scope > a')).toHaveText('New Request in Synthetic Dhaka Knits');
   const more = actions.locator('details.ux-more-menu');
   await expect(more).toHaveCount(1);
   await expect(more.locator('summary')).toHaveText('More for Synthetic Dhaka Knits');
@@ -258,7 +258,7 @@ test('CQ-70: an empty place blocks sending, the place is a closed list, and a ne
   const posts: Record<string, unknown>[] = [];
   await openNew(page, standardCatalogue, posts);
   const place = page.getByLabel('Where do you need it?');
-  const send = page.getByRole('button', { name: 'Send help request' });
+  const send = page.getByRole('button', { name: 'Send Help Request' });
   await page.getByRole('radio', { name: /Factory visit escort/ }).check();
   // A closed list: a select that requires a value, so there is no free-text place.
   await expect(place).toHaveJSProperty('tagName', 'SELECT');

@@ -389,7 +389,10 @@ function PrivateReport({
           setNotice(
             'Access or request state changed. Local response recovery was cleared for privacy.',
           );
-        } else
+        } else if (error instanceof Error && error.message === 'limit')
+          // Nothing was processed, so the same command stays ready to send again later.
+          setNotice(limitWords);
+        else
           setNotice(
             'Response delivery could not be confirmed. Retry the same response before changing it.',
           );
@@ -615,8 +618,8 @@ function PrivateReport({
                               disabled={busy || (!!pending && pending.requestId !== q.id)}
                             >
                               {pending?.requestId === q.id
-                                ? 'Retry same response'
-                                : 'Send response'}
+                                ? 'Retry Same Response'
+                                : 'Send Response'}
                             </button>
                             {pending?.requestId === q.id && (
                               <button
@@ -630,7 +633,7 @@ function PrivateReport({
                                   );
                                 }}
                               >
-                                Clear local response retry
+                                Clear Local Response Retry
                               </button>
                             )}
                           </form>
@@ -675,7 +678,7 @@ function PrivateReport({
             read();
           }}
         >
-          Refresh approved commercial report
+          Refresh Approved Commercial Report
         </button>
       )}
       {notice && <p role="status">{notice}</p>}

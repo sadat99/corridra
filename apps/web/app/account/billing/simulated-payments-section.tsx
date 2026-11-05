@@ -167,7 +167,7 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
           {state !== 'denied' && (
             <div className="ux-state-actions">
               <button type="button" className="button button-secondary" onClick={() => void load()}>
-                Try again
+                Try Again
               </button>
             </div>
           )}
@@ -201,7 +201,7 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
                 disabled={busy}
                 onClick={() => finish(live, 'succeeded')}
               >
-                {pending ? 'Send the same choice again' : 'Approve this payment (madeup)'}
+                {pending ? 'Send the Same Choice Again' : 'Approve This Payment (Madeup)'}
               </button>{' '}
               <button
                 type="button"
@@ -209,7 +209,7 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
                 disabled={busy}
                 onClick={() => finish(live, 'declined')}
               >
-                Decline this payment (madeup)
+                Decline This Payment (Madeup)
               </button>
             </section>
           )}
@@ -236,7 +236,7 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
                         setAmount(p.outstandingMinor);
                       }}
                     >
-                      Try paying {p.number} (madeup)
+                      Try Paying {p.number} (madeup)
                     </button>
                   </li>
                 ))}
@@ -262,10 +262,10 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
                     </div>
                   </fieldset>
                   <button type="submit" className="button" disabled={busy}>
-                    {pending ? 'Send the same checkout again' : 'Open simulated checkout (madeup)'}
+                    {pending ? 'Send the Same Checkout Again' : 'Open Simulated Checkout (Madeup)'}
                   </button>{' '}
                   <button type="button" className="text-link" onClick={() => setPicked(null)}>
-                    Not now
+                    Not Now
                   </button>
                 </form>
               )}

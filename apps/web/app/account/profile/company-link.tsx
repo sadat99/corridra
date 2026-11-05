@@ -472,7 +472,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                 </div>
               </fieldset>
               <button type="submit" className="button button-primary" disabled={busy}>
-                {pending?.action === 'add_evidence' ? 'Retry the same evidence' : 'Add evidence'}
+                {pending?.action === 'add_evidence' ? 'Retry the Same Evidence' : 'Add Evidence'}
               </button>
             </form>
           )}
@@ -489,7 +489,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
               disabled={busy}
               onClick={() => setConfirmWithdraw(true)}
             >
-              Withdraw this request
+              Withdraw This Request
             </button>
           )}
           {open && claim.canWithdraw && confirmWithdraw && (
@@ -502,7 +502,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                 disabled={busy}
                 onClick={withdraw}
               >
-                Confirm withdrawal
+                Confirm Withdrawal
               </button>{' '}
               <button
                 type="button"
@@ -510,13 +510,13 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                 disabled={busy}
                 onClick={() => setConfirmWithdraw(false)}
               >
-                Keep the request
+                Keep the Request
               </button>
             </div>
           )}
           {view.status === 'approved' && view.canEdit && view.canFile && !changing && (
             <button type="button" className="text-link" onClick={() => setChanging(true)}>
-              Request a different company link
+              Request a Different Company Link
             </button>
           )}
           {showForm && (
@@ -618,7 +618,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                   busy || view.currentProfileVersion < 1 || (kind === 'EXISTING' && !chosen)
                 }
               >
-                {pending?.action === 'file' ? 'Retry the same request' : 'Request company link'}
+                {pending?.action === 'file' ? 'Retry the Same Request' : 'Request Company Link'}
               </button>
             </form>
           )}
@@ -640,7 +640,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
       )}
       {!loading && !view && (
         <button type="button" className="text-link" disabled={busy} onClick={() => void send()}>
-          Reload company link
+          Reload Company Link
         </button>
       )}
     </section>

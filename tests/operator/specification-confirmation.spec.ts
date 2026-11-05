@@ -125,13 +125,13 @@ test('customer reviews exact fields and explicitly confirms only the displayed p
       body: JSON.stringify({ id: command.commandId, confirmed: true, replayed: false }),
     });
   });
-  await page.getByRole('button', { name: 'Review current requirements' }).focus();
+  await page.getByRole('button', { name: 'Review Current Requirements' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Synthetic cutting machine' })).toBeVisible();
   await expect(
     page.getByText('2.5 metre cutting bed, 380V three-phase', { exact: true }),
   ).toBeVisible();
-  const confirm = page.getByRole('button', { name: 'Confirm these requirements', exact: true });
+  const confirm = page.getByRole('button', { name: 'Confirm These Requirements', exact: true });
   await expect(confirm).toBeDisabled();
   await page.getByRole('checkbox').focus();
   await page.keyboard.press('Space');
@@ -149,6 +149,33 @@ test('customer reviews exact fields and explicitly confirms only the displayed p
   });
   await expect(page.getByRole('status')).toContainText('does not authorise a purchase');
 });
+const limitLine = 'The request limit was reached. Try again later.';
+test('a 429 on confirming says the limit was reached, not that the response was interrupted, and keeps the same command for later', async ({
+  page,
+}) => {
+  await open(page);
+  const commands: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-specification-confirmations', async (route) => {
+    const command = route.request().postDataJSON();
+    commands.push(command);
+    if (commands.length === 1)
+      await route.fulfill({ status: 429, contentType: 'application/json', body: '{}' });
+    else
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: command.commandId, confirmed: true, replayed: false }),
+      });
+  });
+  await page.getByRole('button', { name: 'Review Current Requirements' }).click();
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Confirm These Requirements', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText(limitLine);
+  await expect(page.getByText(/interrupted/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry Same Confirmation' }).click();
+  await expect(page.getByRole('status')).toContainText('confirmation was recorded');
+  expect(commands[1]).toEqual(commands[0]);
+});
 test('an interrupted confirmation retries the identical command and never invents success', async ({
   page,
 }) => {
@@ -165,11 +192,11 @@ test('an interrupted confirmation retries the identical command and never invent
         body: JSON.stringify({ id: command.commandId, confirmed: true, replayed: true }),
       });
   });
-  await page.getByRole('button', { name: 'Review current requirements' }).click();
+  await page.getByRole('button', { name: 'Review Current Requirements' }).click();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Confirm these requirements', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm These Requirements', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('interrupted');
-  await page.getByRole('button', { name: 'Retry same confirmation' }).click();
+  await page.getByRole('button', { name: 'Retry Same Confirmation' }).click();
   await expect(page.getByRole('status')).toContainText('confirmation was recorded');
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -181,16 +208,16 @@ test('stale scope or access denial clears the displayed requirements and asks fo
   await page.route('**/api/customer-specification-confirmations', (route) =>
     route.fulfill({ status: 409, body: '{}' }),
   );
-  await page.getByRole('button', { name: 'Review current requirements' }).click();
+  await page.getByRole('button', { name: 'Review Current Requirements' }).click();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Confirm these requirements', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm These Requirements', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Access or requirements changed');
   await expect(page.getByRole('heading', { name: 'Synthetic cutting machine' })).toHaveCount(0);
 });
 for (const state of ['CONFIRMED', 'RESPONDED', 'CANCELLED', 'REVIEW_REQUIRED'])
   test(`${state} cannot create a new typed confirmation`, async ({ page }) => {
     await open(page, state);
-    await page.getByRole('button', { name: 'Review current requirements' }).click();
+    await page.getByRole('button', { name: 'Review Current Requirements' }).click();
     await expect(
       page.getByRole('heading', {
         name:
@@ -198,12 +225,12 @@ for (const state of ['CONFIRMED', 'RESPONDED', 'CANCELLED', 'REVIEW_REQUIRED'])
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Confirm these requirements', exact: true }),
+      page.getByRole('button', { name: 'Confirm These Requirements', exact: true }),
     ).toHaveCount(0);
   });
 test('uninstalled module has an honest unavailable state', async ({ page }) => {
   await open(page, 'OPEN', 503);
-  await page.getByRole('button', { name: 'Review current requirements' }).click();
+  await page.getByRole('button', { name: 'Review Current Requirements' }).click();
   await expect(page.getByRole('status')).toContainText('not available yet');
   await expect(page.getByRole('checkbox')).toHaveCount(0);
 });
@@ -312,7 +339,7 @@ for (const width of [320, 390, 768, 1440])
   test(`customer review fits at ${width}px and passes axe`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page);
-    await page.getByRole('button', { name: 'Review current requirements' }).click();
+    await page.getByRole('button', { name: 'Review Current Requirements' }).click();
     await expect(page.getByRole('heading', { name: 'Synthetic cutting machine' })).toBeVisible();
     await expect(
       page.getByRole('region', { name: 'Confirm the commercial requirements' }),

@@ -172,7 +172,7 @@ describe('Your Move never says nothing is waiting when it could not look', () =>
     expect(html).toContain('Your work is safe.');
     expect(html).toMatch(/lang="en"[^>]*>|<div class="move-empty" role="status" lang="en">/);
     expect(html).toContain('href="/account/move"');
-    expect(html).toContain('Start a request');
+    expect(html).toContain('Start a Request');
   });
 
   it('a readable empty list keeps the honest empty words exactly as before', async () => {

@@ -219,10 +219,10 @@ function AccountMenuBody() {
           ))}
         </div>
       ) : null}
-      <MenuLink href="/">Corridra website</MenuLink>
-      <MenuLink href="/privacy">Privacy notice</MenuLink>
+      <MenuLink href="/">Corridra Website</MenuLink>
+      <MenuLink href="/privacy">Privacy Notice</MenuLink>
       <MenuButton disabled={busy} onClick={signOut}>
-        {busy ? 'Signing out…' : 'Sign out'}
+        {busy ? 'Signing Out…' : 'Sign Out'}
       </MenuButton>
       {message ? (
         <p role="alert" className="ux-menu-note">
@@ -246,7 +246,7 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
       {workspaces ? <WorkspaceSwitcher workspaces={workspaces} /> : null}
       <div className="ux-bar-tools">
         <Link prefetch={false} className="ux-bar-primary" href={start}>
-          New request
+          New Request
         </Link>
         {notifications ? <CustomerInbox counted={onAccount} /> : null}
         <OverflowMenu
