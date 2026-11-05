@@ -13,6 +13,7 @@ Specs the revamp track sessions build to. Written by the Conductor and Guardian 
 | [SourceLedger and money](sourceledger-money.md) | S2    | 4    | Quote comparison, money words and private markup confidentiality (M-01 to M-10)                               |
 | [Decision card screens](decision-card-ui.md)    | S2    | 4    | Owner panel and bare public page for the built card (D-01 to D-10)                                            |
 | [Organiser room consent](programme-consent.md)  | S3    | 5    | What an organiser may see, consent and revocation (C-01 to C-10)                                              |
+| [Customer experience](customer-experience.md)   | S2    | 6    | Owner 5 Nov: customer area redesign from screenshots, one desktop screen per page (CX-01 to CX-07)            |
 | [Layout budget](layout-budget.md)               | all   | 6    | Owner 4 Nov: left navigation, page length at most 2 phone screens, 1 to 3 fields per form step (L-01 to L-06) |
 | [Wave 6 quality](wave6-quality.md)              | all   | 6    | Keyboard, reflow, contrast, states, busy actions, performance (Q-01 to Q-08)                                  |
 | [Wave 7 cleanup](wave7-cleanup.md)              | S4,S1 | 7    | Usage graph, candidate report, proven deletions, docs consolidation (K-01 to K-04)                            |

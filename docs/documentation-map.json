@@ -1472,6 +1472,11 @@
       "path": "docs/revamp/specs/layout-budget.md",
       "classification": "Current guide/contract",
       "use": "Owner decision 4 Nov 2026: left navigation, page length budget and 1 to 3 fields per form step (L-01 to L-06)"
+    },
+    {
+      "path": "docs/revamp/specs/customer-experience.md",
+      "classification": "Current guide/contract",
+      "use": "Owner decision 5 Nov 2026: customer area redesign, one desktop screen per page (CX-01 to CX-07)"
     }
   ]
 }
