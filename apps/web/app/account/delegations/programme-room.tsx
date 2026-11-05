@@ -5,6 +5,7 @@ import { mrLabels } from '../../../components/mr/labels';
 import {
   boardingCounts,
   boardingLine,
+  meetingCoverage,
   programmeAttention,
   programmeGlance,
   programmeNextStep,
@@ -53,10 +54,22 @@ function Stage({ counts, onInvite }: { counts: BoardingCounts | null; onInvite?:
               aria-current={state === 'now' ? 'step' : undefined}
             >
               {step.key === 'invite' && onInvite ? (
-                <button type="button" className="mr-stage-name text-link" onClick={onInvite}>
-                  {step.label}
-                  <span className="sr-only">{said} (Open Participants)</span>
-                </button>
+                <>
+                  {/* The name and state are said on every width; the button is the wide-screen shortcut (CQ-85).
+                      On a phone the stage names give way to the stage line and the next step opens Participants. */}
+                  <span className="sr-only">
+                    {step.label}
+                    {said}
+                  </span>
+                  <button
+                    type="button"
+                    className="mr-stage-name text-link"
+                    onClick={onInvite}
+                    aria-label={`${step.label}: Open Participants`}
+                  >
+                    {step.label}
+                  </button>
+                </>
               ) : (
                 <>
                   <span className="mr-stage-name" aria-hidden="true">
@@ -140,6 +153,7 @@ function Glance({
   host?: (node: HTMLElement | null) => void;
 }) {
   const tiles = programmeGlance(counts, projection, projectionsOn);
+  const coverage = meetingCoverage(projection);
   const attention = programmeAttention(projection);
   return (
     <>
@@ -156,6 +170,7 @@ function Glance({
             </div>
           ))}
         </dl>
+        {coverage ? <p className="programme-card-note">{coverage}</p> : null}
         <p className="programme-card-foot">
           <CorridraIcon name="lock" />
           Counts only. Participants&apos; quotes, contacts and costs stay private to them.
@@ -296,13 +311,31 @@ export function ProgrammeRoom({
   scope: ParticipantScope;
   participantsEnabled: boolean;
   panels: RoomPanels;
-  /** True where fee schedules, pricing templates or series are on: they sit below the programme list. */
+  /** True where fee schedules, pricing templates or series are on: they sit in the page's own tabs. */
   sharedMoneyNote?: boolean;
   /** True where the programme projections are on: the Overview then reads readiness, meetings and flags. */
   projectionsEnabled?: boolean;
 }) {
-  const [lens, setLens] = useState<RoomGroupKey>('overview');
-  const [opened, setOpened] = useState<ReadonlySet<RoomGroupKey>>(new Set(['overview']));
+  // An old link to one of this programme's sections (#<programme id>-<view>) opens the group that holds it
+  // (layout budget L-03); the section is then scrolled to.
+  const [linked] = useState<RoomGroupKey | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const prefix = `#${programmeId}-`;
+    const hash = window.location.hash;
+    if (!hash.startsWith(prefix)) return null;
+    const view = hash.slice(prefix.length);
+    return (
+      roomGroups.find((group) => (group.members as readonly string[]).includes(view))?.key ?? null
+    );
+  });
+  const [lens, setLens] = useState<RoomGroupKey>(linked ?? 'overview');
+  const [opened, setOpened] = useState<ReadonlySet<RoomGroupKey>>(
+    () => new Set<RoomGroupKey>(['overview', ...(linked ? [linked] : [])]),
+  );
+  useEffect(() => {
+    if (!linked) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
+  }, [linked]);
   const [reads, setReads] = useState(0);
   // Choosing a group moves focus to that group's heading (Wave 6, Q-01), so the person lands on what they chose.
   const [arrived, setArrived] = useState<RoomGroupKey | null>(null);
@@ -325,13 +358,13 @@ export function ProgrammeRoom({
               {member === 'money' && sharedMoneyNote && (
                 <p className="programme-note">
                   Fee schedules, pricing templates and series are shared across your programmes and
-                  stay below the programme list, exactly as before.
+                  are in the Templates and Pricing, Series and Exports tabs of this page.
                 </p>
               )}
               {member === 'results' && sharedMoneyNote && (
                 <p className="programme-note">
-                  Programme exports are shared across your programmes and stay below the programme
-                  list, in Pricing, series and exports, exactly as before.
+                  Programme exports are shared across your programmes and are in the Pricing, Series
+                  and Exports tab of this page.
                 </p>
               )}
             </>
@@ -384,7 +417,14 @@ export function ProgrammeRoom({
         </div>
       </header>
       {reading ? <LiveStatus key={reads} scope={scope} onRead={onRead} /> : null}
-      <NextStep live={live} onOpen={onOpen} onRefresh={reading ? refresh : undefined} />
+      {participantsEnabled ? (
+        <NextStep live={live} onOpen={onOpen} onRefresh={reading ? refresh : undefined} />
+      ) : (
+        // Without the participants panel there is nothing to read or do next, so the room says only that.
+        <p className="programme-boarding">
+          <strong>Boarding</strong> {boardingLine(null)}
+        </p>
+      )}
       <div className="room-lenses" role="group" aria-label="Programme views">
         {available.map((item) => (
           <button

@@ -371,7 +371,9 @@ function ScopedProgrammes({
   };
   const programmeList = (
     <>
-      <h2 className={roomEnabled ? 'sr-only' : undefined}>Your planning programmes</h2>
+      <h2 className={roomEnabled && rows.length > 0 ? 'sr-only' : undefined}>
+        Your planning programmes
+      </h2>
       {rows.length === 0 ? (
         <p className="ux-empty">
           {' '}
@@ -883,6 +885,11 @@ function ScopedProgrammes({
         Back to my workspaces
       </a>
       {!roomEnabled && intro}
+      {/* With the room on the page heading is said to assistive technology only; when no programme can be shown
+          the page still has a visible heading. */}
+      {roomEnabled && status !== 'ready' && status !== 'loading' && (
+        <h2>{realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}</h2>
+      )}
       {status === 'loading' && <p role="status">Checking programme access…</p>}
       {status === 'denied' && (
         <p role="alert">

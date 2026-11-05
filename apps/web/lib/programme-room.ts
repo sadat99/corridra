@@ -133,6 +133,8 @@ export type ProgrammeGlanceSource = {
     state: 'NOT_SHARED' | 'UNAVAILABLE' | 'AVAILABLE' | 'PARTIAL';
     scheduled: number | null;
     qualifiedHeld: number | null;
+    /** How many active participants allowed their shared missions to be counted. */
+    participantsSharing?: number;
   };
   agenda: { needsReview: boolean | null }[];
   conflicts: unknown[];
@@ -195,6 +197,17 @@ export function programmeGlance(
   return tiles;
 }
 
+/**
+ * What the meeting tiles cover, said beside them as Results says it (ADR-075 §5): counts come only from missions
+ * participants chose to share and allowed to be counted, so they never stand for all private activity.
+ */
+export function meetingCoverage(projection: ProgrammeGlanceSource | null): string | null {
+  const m = projection?.meetings;
+  if (!projection || m?.state !== 'AVAILABLE' || m.participantsSharing === undefined) return null;
+  const of = projection.readiness.activeParticipants;
+  return `Meetings from ${m.participantsSharing} of ${of} participants who allowed counting; not all activity.`;
+}
+
 /** One thing that needs the organiser, with the view that resolves it. */
 export type AttentionItem = {
   key: 'overlaps' | 'review' | 'readiness';
@@ -216,7 +229,7 @@ export function programmeAttention(projection: ProgrammeGlanceSource | null): At
       key: 'overlaps',
       title: `${overlaps} ${plural(overlaps, 'pair of activities overlaps', 'pairs of activities overlap')}`,
       detail: 'The same attendee is in both at once.',
-      action: 'Open Schedule',
+      action: 'Open Programme and Meetings',
       target: 'plan',
       tone: 'warning',
     });

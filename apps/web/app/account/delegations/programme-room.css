@@ -172,7 +172,7 @@ article.room.programme-room .programme-card-title {
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  padding: 10px var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--line);
   font-size: var(--text-base);
   font-weight: 650;
@@ -199,12 +199,18 @@ article.room.programme-room .programme-tiles {
 article.room.programme-room .programme-card-foot {
   padding-block: var(--space-2);
 }
+article.room.programme-room .programme-card-note {
+  margin: var(--space-1) 0 0;
+  padding: 0 var(--space-4);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
 article.room.programme-room .programme-tiles > div {
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-end;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: 6px var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
@@ -391,7 +397,7 @@ article.room.programme-room .programme-attention > li > .button.button-secondary
     flex: none;
     white-space: nowrap;
   }
-  .programme-room .programme-stage .mr-stage > li > button.mr-stage-name.text-link {
+  article.room.programme-room .programme-stage .mr-stage > li > button.mr-stage-name.text-link {
     display: none;
   }
   article.room.programme-room .programme-tiles > div[data-known='false'] > dd {

@@ -244,6 +244,37 @@ test('C-10 with the projections switch off, companies, agenda conflicts and coun
   await expect(results).not.toContainText(/Scheduled meetings|Qualified held|: 0\b/);
 });
 
+// The approved Organise room (5 Nov 2026), Overview: the tiles never show 0 for a count that cannot be given, say
+// what the meeting numbers cover, and are absent with the projections off (C-02, C-04, C-07, C-10; ADR-075 §5/§6).
+test('C-07 C-10 the Overview tiles say Not shared or Not measured yet, never 0, and drop away with projections off', async ({
+  page,
+}) => {
+  await open(page, 'room=1&proj=1', none);
+  const glance = page.getByRole('region', { name: 'At a glance' });
+  await expect(glance.getByText('Not shared')).toHaveCount(2);
+  await expect(glance).not.toContainText(/^0$|\b0 meetings/);
+  await expect(page.getByRole('region', { name: 'Needs your attention' })).toBeVisible();
+  const counted = await page.context().newPage();
+  await open(counted, 'room=1&proj=1', {
+    state: 'AVAILABLE',
+    sharedLinks: 2,
+    unavailableLinks: 0,
+    participantsSharing: 1,
+    scheduled: 4,
+    qualifiedHeld: 1,
+  });
+  const tiles = counted.getByRole('region', { name: 'At a glance' });
+  await expect(
+    tiles.locator('dl > div').filter({ hasText: 'meetings scheduled' }).locator('dd'),
+  ).toHaveText('4');
+  await expect(tiles).toContainText('Meetings from 1 of 4 participants who allowed counting');
+  const off = await page.context().newPage();
+  await open(off, 'room=1&proj=0');
+  await expect(off.getByRole('region', { name: 'Needs your attention' })).toHaveCount(0);
+  const offTiles = off.getByRole('region', { name: 'At a glance' });
+  await expect(offTiles).not.toContainText(/meetings scheduled|participants ready/);
+});
+
 test('C-09 every original room view stays reachable under its section id, and no id or link is lost', async ({
   page,
 }) => {

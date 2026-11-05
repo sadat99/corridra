@@ -146,6 +146,8 @@ async function open(
     log?: string[];
     answer?: () => unknown;
     bare?: boolean;
+    /** Extra address words (query and hash), for the old-link and ?programme= cases. */
+    address?: string;
   } = { room: true },
 ) {
   // Any panel this spec does not exercise answers "unavailable", which each panel reads calmly.
@@ -180,7 +182,9 @@ async function open(
     >;
     return route.fulfill({ json: { ...body, programmeId: requested ?? body.programmeId } });
   });
-  await page.goto(`${origin}/?room=${options.room ? '1' : '0'}${options.bare ? '&bare=1' : ''}`);
+  await page.goto(
+    `${origin}/?room=${options.room ? '1' : '0'}${options.bare ? '&bare=1' : ''}${options.address ?? ''}`,
+  );
 }
 
 test('the room shows the programme, a road and a boarding line from what the panel reads', async ({
@@ -285,6 +289,59 @@ test('only the chosen programme is shown and read, and choosing another reads it
   await expect(first.getByLabel(/invitation label/i).first()).toHaveValue(
     'Synthetic label kept across programmes',
   );
+});
+
+// Guardian review of PR 314 (layout budget L-03, MUST PRESERVE 3 and 7): the chosen programme comes from
+// ?programme= or an old #<programme id>-<view> link, only ever from the workspace's own list, and an old link opens
+// the group that holds its section. The page's own tabs keep ?tab=.
+test('?programme= and an old section link open that programme, and a foreign id falls back to the first', async ({
+  page,
+}) => {
+  await open(page, { room: true, programmes: 8, address: `&programme=${programmeIdAt(8)}` });
+  await expect(page.getByRole('article', { name: `${programme.name} 8` })).toBeVisible();
+  const foreign = await page.context().newPage();
+  await open(foreign, {
+    room: true,
+    programmes: 8,
+    address: '&programme=00000000-0000-4000-8000-0000000009ff',
+  });
+  await expect(foreign.getByRole('article', { name: `${programme.name} 1` })).toBeVisible();
+  await expect(foreign.locator('.programme-room').filter({ visible: true })).toHaveCount(1);
+  const linked = await page.context().newPage();
+  await open(linked, { room: true, programmes: 8, address: `#${programmeIdAt(3)}-people` });
+  const room = linked.getByRole('article', { name: `${programme.name} 3` });
+  await expect(room).toBeVisible();
+  await expect(
+    room.getByRole('button', { name: 'Participants and eligibility', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(linked.locator(`[id="${programmeIdAt(3)}-people"]`)).toBeVisible();
+});
+
+test('the page tabs keep ?tab=, and the form is one tab away', async ({ page }) => {
+  await open(page, { room: true, address: '&tab=new' });
+  await expect(page.getByRole('tab', { name: 'New Sample Programme' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(page.getByLabel('Programme name')).toBeVisible();
+  await page.getByRole('tab', { name: 'Programmes' }).click();
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('programmes');
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+});
+
+test('on a phone the Invite stage is still named and Participants is one tap away', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page);
+  const invite = page.locator('.programme-stage .mr-stage > li').nth(1);
+  await expect(invite).toContainText('Invite');
+  await expect(invite.locator('button')).toBeHidden();
+  await page
+    .getByRole('region', { name: 'Your next step' })
+    .getByRole('button', { name: 'Open Participants' })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Invitations' })).toBeVisible();
 });
 
 test('a room with no other view does not tell the person to choose one', async ({ page }) => {

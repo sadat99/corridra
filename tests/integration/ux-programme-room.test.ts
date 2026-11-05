@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   boardingCounts,
   boardingLine,
+  meetingCoverage,
   programmeAttention,
   programmeGlance,
   programmeNextStep,
@@ -314,11 +315,26 @@ describe('the Organise room overview (approved work rooms, 5 Nov 2026)', () => {
       for (const t of tiles) if (!t.known) expect(t.value).not.toBe('0');
   });
   it('lists what needs the organiser from the projection flags, each with the view that resolves it', () => {
+    // Guardian review of PR 314: the meeting numbers say what they cover, as Results does (ADR-075 §5).
+    expect(
+      meetingCoverage(
+        projection({
+          meetings: { state: 'AVAILABLE', scheduled: 4, qualifiedHeld: 1, participantsSharing: 1 },
+        }),
+      ),
+    ).toBe('Meetings from 1 of 5 participants who allowed counting; not all activity.');
+    expect(
+      meetingCoverage(
+        projection({
+          meetings: { state: 'PARTIAL', scheduled: 4, qualifiedHeld: 1, participantsSharing: 1 },
+        }),
+      ),
+    ).toBeNull();
     expect(programmeAttention(null)).toEqual([]);
     expect(
       programmeAttention(projection()).map((i) => [i.key, i.title, i.action, i.target]),
     ).toEqual([
-      ['overlaps', '1 pair of activities overlaps', 'Open Schedule', 'plan'],
+      ['overlaps', '1 pair of activities overlaps', 'Open Programme and Meetings', 'plan'],
       ['review', '1 activity needs review', 'Review', 'plan'],
       ['readiness', '2 participants are not ready yet', 'Open Participants', 'people'],
     ]);

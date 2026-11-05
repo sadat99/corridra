@@ -249,10 +249,15 @@ describe('Home summary never claims more than the page could read (Codex review 
 
   it('remembers the last journey in this browser only, and an address with ?journey= wins', async () => {
     const { readFileSync } = await import('node:fs');
-    const view = readFileSync(resolve('apps/web/app/account/move/move-view.tsx'), 'utf8');
+    const read = (path: string) => readFileSync(resolve(path), 'utf8');
+    const view = read('apps/web/app/account/move/move-view.tsx');
     expect(view).toContain("const journeyKey = 'corridra.home.journey';");
-    expect(view).toContain("onClick={() => rememberJourney('all')}");
-    expect(view).toContain('onClick={() => rememberJourney(j)}');
+    expect(view).toContain("onClick={() => remember('all')}");
+    expect(view).toContain('onClick={() => remember(j)}');
+    // Per signed-in person on a shared browser, and written back into the address (guardian review of PR 314).
+    expect(view).toContain('const memoryKey = viewer ? `${journeyKey}:${viewer}` : journeyKey;');
+    expect(view).toContain("url.searchParams.set('journey', journey);");
+    expect(read('apps/web/app/account/move/page.tsx')).toContain('viewer={session.subject}');
     // The remembered journey applies only while the person still has it and has more than one.
     expect(view).toMatch(
       /asked \?\?\s*\(present\.length > 1 && isJourney\(remembered\) && present\.includes\(remembered\)/,

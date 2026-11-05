@@ -46,7 +46,13 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
 | Account   | **A settings layout with sub-tabs:** Profile (name, email, verified state), Workspaces and team, Notifications, Plan and billing, and Security (sign out). **Tools and entry points:** "Plan a mission", "Check a request receipt", "Accept a team invitation", "Start page" and "Local helper tasks" move to "All tools", which stays reachable from the left bar.                                                                                                                                                                                                                                                          |
 
 **Home, role-aware (owner-approved role mockup, 5 Nov 2026; built in Phase 2).** A switch (All, Sourcing,
-Selling, Organising, each with its count, `?journey=`) filters what waits for the person. Each task carries its
+Selling, Organising, each with its count, `?journey=`) filters what waits for the person. The owner asked on 5 Nov 2026,
+verbatim: "separate home for each of the module , switching option? what about bd-china workflow ,where how". S1
+answered with one Home and the switch, hidden for a person with work in only one journey, remembering the last
+choice. The owner then approved, verbatim: "mockups approved. finishi and continue finishing of v3 revamp 100%
+correct in alighnment with the latest decision". So the switch is hidden when only one journey is present (it stays
+while a journey is shown, so All is one tap away). The last choice, or All, is kept in that browser per signed-in
+person and written back into the address as `?journey=`. An address with `?journey=` always wins. Each task carries its
 journey tag under All. Three tasks show first and the rest are behind one control. What others hold sits in the
 side column. One card per journey shows three numbers read from records the person can already open:
 

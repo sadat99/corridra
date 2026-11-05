@@ -78,15 +78,18 @@ function commit(value: Record<string, string>) {
   listeners.forEach((listener) => listener());
 }
 
-// The journey the person last chose on Home ("all" for All), in this browser only, so Home opens where they left
-// it (owner-approved work rooms, 5 Nov 2026). A ?journey= in the address always wins and is remembered.
+// The journey the person last chose on Home ("all" for All), in this browser only and per signed-in person, so Home
+// opens where they left it (owner, 5 Nov 2026: one Home with the switch, auto-hidden for single-journey users and
+// remembering the last choice). A ?journey= in the address always wins and is remembered; a remembered journey is
+// written back into the address, so the address always says which journey is shown.
 const journeyKey = 'corridra.home.journey';
-let journeyMemory: string | null = null;
+const journeyMemory = new Map<string, string>();
 const journeyListeners = new Set<() => void>();
-function journeySnapshot(): string {
-  if (journeyMemory !== null) return journeyMemory;
+function journeySnapshot(key: string): string {
+  const kept = journeyMemory.get(key);
+  if (kept !== undefined) return kept;
   try {
-    return window.localStorage.getItem(journeyKey) ?? '';
+    return window.localStorage.getItem(key) ?? '';
   } catch {
     return '';
   }
@@ -94,7 +97,8 @@ function journeySnapshot(): string {
 function subscribeJourney(listener: () => void) {
   journeyListeners.add(listener);
   const onStorage = (event: StorageEvent) => {
-    if (event.key === null || event.key === journeyKey) journeyMemory = null;
+    if (event.key === null) journeyMemory.clear();
+    else journeyMemory.delete(event.key);
     listener();
   };
   window.addEventListener('storage', onStorage);
@@ -103,10 +107,10 @@ function subscribeJourney(listener: () => void) {
     window.removeEventListener('storage', onStorage);
   };
 }
-function rememberJourney(value: Journey | 'all') {
-  journeyMemory = value;
+function rememberJourney(key: string, value: Journey | 'all') {
+  journeyMemory.set(key, value);
   try {
-    window.localStorage.setItem(journeyKey, value);
+    window.localStorage.setItem(key, value);
   } catch {
     /* The choice still applies to this visit. */
   }
@@ -165,6 +169,7 @@ export function MoveView({
   journey: asked = null,
   taskJourneys = {},
   sortIncomplete = false,
+  viewer,
 }: {
   model: MoveModel;
   startHref: string;
@@ -185,6 +190,8 @@ export function MoveView({
   taskJourneys?: Record<string, Journey>;
   /** The work list that sorts tasks into journeys was not read in full, so a journey view may miss some. */
   sortIncomplete?: boolean;
+  /** The signed-in person, so a journey remembered on a shared browser is theirs alone. */
+  viewer?: string;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -212,15 +219,28 @@ export function MoveView({
     (j) => perJourney[j] > 0 || journeys.some((card) => card.journey === j),
   );
   // An address without ?journey= opens the journey last chosen in this browser, while it is still one of theirs.
-  const remembered = useSyncExternalStore(subscribeJourney, journeySnapshot, () => null);
+  const memoryKey = viewer ? `${journeyKey}:${viewer}` : journeyKey;
+  const remembered = useSyncExternalStore(
+    subscribeJourney,
+    () => journeySnapshot(memoryKey),
+    () => null,
+  );
   const journey: Journey | null =
     asked ??
     (present.length > 1 && isJourney(remembered) && present.includes(remembered)
       ? remembered
       : null);
+  const remember = (value: Journey | 'all') => rememberJourney(memoryKey, value);
   useEffect(() => {
-    if (asked) rememberJourney(asked);
-  }, [asked]);
+    if (asked) rememberJourney(memoryKey, asked);
+  }, [asked, memoryKey]);
+  // A remembered journey is written into the address, so the page says which journey it shows and a reload keeps it.
+  useEffect(() => {
+    if (asked || !journey) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('journey', journey);
+    window.history.replaceState(window.history.state, '', url);
+  }, [asked, journey]);
 
   // Under All each task says which journey it belongs to; under one journey the tag would only repeat it.
   const tag = (id: string) => {
@@ -360,7 +380,7 @@ export function MoveView({
               prefetch={false}
               href="/account/move"
               aria-current={journey ? undefined : 'page'}
-              onClick={() => rememberJourney('all')}
+              onClick={() => remember('all')}
             >
               All <em>{allItems.length}</em>
             </Link>
@@ -370,7 +390,7 @@ export function MoveView({
                 prefetch={false}
                 href={`/account/move?journey=${j}`}
                 aria-current={journey === j ? 'page' : undefined}
-                onClick={() => rememberJourney(j)}
+                onClick={() => remember(j)}
               >
                 {journeyWords[j]} <em>{perJourney[j]}</em>
               </Link>
