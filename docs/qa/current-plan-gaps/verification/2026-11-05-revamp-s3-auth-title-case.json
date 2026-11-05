@@ -1,0 +1,24 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Title Case for the customer sign-in, create-account, forgot and reset password and verify-email buttons and links",
+  "date": "2026-11-05",
+  "sensitive": true,
+  "spec": "Owner rule of 5 November 2026: English button, link and menu labels in Title Case, actions aligned left",
+  "changed": [
+    "apps/web/components/account-form.tsx: Sign In, Create Account, Send Code, Request Reset Email, Set New Password, Verify Email, Request Verification Code (both buttons), Sign In with a Code, Send a New Code, Use My Password Instead, Request a New Code, Please Wait, and the links Forgot Your Password?, Create an Account, Verify Your Email, Invited Operator Sign-in, Back to Sign-in.",
+    "apps/web/components/account-access.tsx, app/signin/page.tsx, app/signup/signup-access.tsx: Start a Request Without an Account, Prepare an Example Request Without an Account, See How Corridra Works, Not a Customer?, Team Sign-in, Start Page, Local Helper Tasks, Plan a Mission, Back to Corridra.",
+    "apps/web/components/pending-request-notice.tsx: Open Your Request.",
+    "Tests: exact-name matches in six operator specs, one integration source test and the pending notice test follow the new text; same assertions."
+  ],
+  "preserved": [
+    "Label text only: no form field, handler, route, href, id, name, payload or authentication logic changed. Closed gates untouched.",
+    "Header Sign in link, headings, hints and sentences are unchanged; the intake catalogue string for Open your request is unchanged (other languages unaffected)."
+  ],
+  "verification": {
+    "preflight": "READY TO PUSH: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e, ux-gate, operator-affected all PASS",
+    "extra": "verification ws-a access (6), browser any-route and ux02-discovery (22), operator auth specs (17) pass"
+  },
+  "openRisks": [
+    "Sensitive: yes because the pages are sign-in and account creation; the change is text only and needs a Guardian pass."
+  ]
+}
