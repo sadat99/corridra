@@ -131,7 +131,7 @@ export function AuthenticatorCheck({
           Enter the six-digit code. Your existing form entries stay in their workspace tabs.
         </p>
         <button className="primary-link" disabled={busy}>
-          Verify again
+          Verify Again
         </button>
         {checking ? (
           <p key="checking" className="billing-notice">

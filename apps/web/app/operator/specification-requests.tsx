@@ -155,7 +155,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
         </select>
       </label>
       <button type="button" disabled={busy || !publication} onClick={() => void load()}>
-        Load reviewed requirements
+        Load Reviewed Requirements
       </button>
       {message && <p role="status">{message}</p>}
       {data && !data.requirement && (
@@ -194,7 +194,7 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
             <input type="checkbox" required disabled={busy || !!pending} /> I reviewed the exact
             specification and its approved customer scope.
           </label>
-          <button disabled={busy}>{pending ? 'Retry same request' : 'Request confirmation'}</button>
+          <button disabled={busy}>{pending ? 'Retry Same Request' : 'Request Confirmation'}</button>
         </form>
       )}
       {data?.requests.map((r) => (

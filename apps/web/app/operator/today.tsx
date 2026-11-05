@@ -200,7 +200,7 @@ export function TodayPanel({ tenant, revision }: { tenant: string; revision: num
                 setAttempt((n) => n + 1);
               }}
             >
-              Retry Today&apos;s list
+              Retry Today&apos;s List
             </button>
           )}
         </div>

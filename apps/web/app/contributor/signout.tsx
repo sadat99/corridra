@@ -25,7 +25,7 @@ export function ContributorSignout({ disabled = false }: { disabled?: boolean })
           }
         }}
       >
-        Sign out of assigned work
+        Sign Out of Assigned Work
       </button>
       {message && <p role="alert">{message}</p>}
     </>

@@ -189,11 +189,11 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
             });
         }}
       >
-        Refresh tasks
+        Refresh Tasks
       </button>
       {pending && (
         <button className="text-link" disabled={busy} onClick={() => void send(pending)}>
-          Retry the same request
+          Retry the Same Request
         </button>
       )}
       {pending && (
@@ -213,7 +213,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
             );
           }}
         >
-          Clear pending request
+          Clear Pending Request
         </button>
       )}
       <ContributorSignout disabled={busy || !!pending} />
@@ -285,7 +285,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
                   <input name="reason" required minLength={3} maxLength={500} />
                 </label>
                 <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
-                  Accept the disclosed task
+                  Accept the Disclosed Task
                 </button>
               </fieldset>
             </form>
@@ -303,7 +303,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
                   <input name="reason" required minLength={3} maxLength={500} />
                 </label>
                 <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
-                  Submit for evidence review
+                  Submit for Evidence Review
                 </button>
               </fieldset>
             </form>
@@ -317,7 +317,7 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
                   <textarea name="reason" required minLength={3} maxLength={500} />
                 </label>
                 <button className="text-link" disabled={busy || !!pending || readInterrupted}>
-                  Request dispute review
+                  Request Dispute Review
                 </button>
               </fieldset>
             </form>

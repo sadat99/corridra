@@ -10,7 +10,7 @@ let server: Server, origin: string;
 test.beforeAll(async () => {
   const result = await build({
     stdin: {
-      contents: `import {createRoot} from 'react-dom/client';import {CompanyPortfolio} from ${JSON.stringify(resolve('apps/web/app/account/companies/company-portfolio.tsx'))};const root=createRoot(document.getElementById('fixture'));const props={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)}};root.render(<CompanyPortfolio {...props}/>);window.addEventListener('fixture-customer-change',event=>root.render(<CompanyPortfolio {...props} {...event.detail}/>));`,
+      contents: `import {createRoot} from 'react-dom/client';import {CompanyPortfolio} from ${JSON.stringify(resolve('apps/web/app/account/companies/company-portfolio.tsx'))};const root=createRoot(document.getElementById('fixture'));const props={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)},emptyAction:<a className="button button-secondary" href="/account/profile">Manage Company Profiles</a>};root.render(<CompanyPortfolio {...props}/>);window.addEventListener('fixture-customer-change',event=>root.render(<CompanyPortfolio {...props} {...event.detail}/>));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -130,7 +130,9 @@ test('approved company context preserves original qualification and opens the ex
     return route.fulfill({ json: pageData() });
   });
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(1);
+  // A list table: the company is the row header, each report context stays openable in its row.
+  await expect(page.getByRole('table', { name: 'Approved companies' })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(1);
   await page.getByText(context.missionTitle, { exact: true }).click();
   await expect(page.getByText('Uncertainty: ' + context.uncertainty)).toBeVisible();
   await expect(page.getByText('Evidence gaps: ' + context.gaps)).toBeVisible();
@@ -167,7 +169,7 @@ test('pagination merges canonical company references while retaining separate re
     page.getByText('More mission reports have not been loaded.', { exact: false }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Load companies from more missions' }).click();
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(1);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(1);
   await expect(page.getByText('2 approved report contexts', { exact: true })).toBeVisible();
   await page.getByText(second.missionTitle, { exact: true }).click();
   await expect(page.getByText(second.objective, { exact: true })).toBeVisible();
@@ -185,9 +187,9 @@ test('search is explicitly limited to loaded companies and does not manufacture 
   const search = page.getByLabel('Search loaded companies', { exact: true });
   await search.fill('not in this loaded scope');
   await expect(page.getByText('No loaded companies match this search.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(0);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
   await search.fill('বাংলা');
-  await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Load companies from more missions' }),
   ).toBeVisible();
@@ -203,7 +205,7 @@ test('account/issuer changes and denied refresh clear previous company and searc
     ),
   );
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
   await page.getByLabel('Search loaded companies').fill('Synthetic');
   await page.evaluate(() =>
     window.dispatchEvent(
@@ -222,9 +224,9 @@ test('page interruption clears private company details and restoration requires 
     route.fulfill(allowed ? { json: pageData() } : { status: 403, json: { error: 'denied' } }),
   );
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(0);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
   allowed = false;
   await page.evaluate(() =>
     window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })),
@@ -257,12 +259,18 @@ test('malformed,unavailable and empty original scopes have honest recovery with 
   await expect(page.getByRole('status')).toContainText('unavailable');
   await page.getByRole('button', { name: 'Refresh approved companies' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be loaded');
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(0);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
   await page.getByRole('button', { name: 'Refresh approved companies' }).click();
   await expect(
     page.getByText('No companies are approved in these saved mission reports yet.'),
   ).toBeVisible();
   await expect(page.getByText('1 saved report is unavailable.', { exact: false })).toBeVisible();
+  // The empty state is an icon, one sentence and one action: no back link and no Refresh in it.
+  await expect(
+    page.getByRole('link', { name: 'Manage Company Profiles', exact: true }),
+  ).toHaveAttribute('href', '/account/profile');
+  await expect(page.getByRole('link', { name: 'Back to my commercial missions' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Refresh approved companies' })).toHaveCount(0);
 });
 test('scope expiry clears loaded content without polling or retaining private browser state', async ({
   page,
@@ -270,10 +278,10 @@ test('scope expiry clears loaded content without polling or retaining private br
   await page.clock.install({ time: new Date('2026-10-18T00:00:00Z') });
   await page.route('**/api/customer-companies*', (route) => route.fulfill({ json: pageData() }));
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
   await page.clock.fastForward(60001);
   await expect(page.getByRole('status')).toContainText('Earlier details have been cleared');
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(0);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
   await expect(page.getByLabel('Search loaded companies')).toHaveCount(0);
 });
 test('malformed pagination cannot silently repeat the same scoped page', async ({ page }) => {
@@ -281,10 +289,10 @@ test('malformed pagination cannot silently repeat the same scoped page', async (
     route.fulfill({ json: pageData([company], resource) }),
   );
   await page.goto(origin);
-  await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
   await page.getByRole('button', { name: 'Load companies from more missions' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be loaded');
-  await expect(page.getByRole('heading', { name: context.company })).toHaveCount(0);
+  await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
 });
 test('company continuity supports keyboard,axe and original script at mobile,tablet and desktop widths', async ({
   page,
@@ -294,7 +302,7 @@ test('company continuity supports keyboard,axe and original script at mobile,tab
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(origin);
-    await expect(page.getByRole('heading', { name: context.company })).toBeVisible();
+    await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
     await page.getByText(context.missionTitle, { exact: true }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByText(context.verification, { exact: true })).toBeVisible();

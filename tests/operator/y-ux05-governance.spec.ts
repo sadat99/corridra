@@ -44,7 +44,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   expect((await signIn).status()).toBe(200);
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify and open workspace' }).click();
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
   await openSection(page, 'workspace-navigation');
   await page
@@ -52,7 +52,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     .getByRole('link', { name: 'Global operations', exact: true })
     .click();
   const ops = page.locator('#workspace-operations');
-  await expect(ops.getByRole('button', { name: 'Refresh operations', exact: true })).toBeVisible();
+  await expect(ops.getByRole('button', { name: 'Refresh Operations', exact: true })).toBeVisible();
   async function post(action: string, data: unknown) {
     const response = await page.request.post(`/api/workspace/${action}?tenant=${seed.tenantId}`, {
       headers: { Origin: 'http://127.0.0.1:3200' },
@@ -96,7 +96,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     configuration: initialRouteConfiguration(initialRoutes[2]),
     reason,
   });
-  await ops.getByRole('button', { name: 'Refresh operations', exact: true }).click();
+  await ops.getByRole('button', { name: 'Refresh Operations', exact: true }).click();
   await openSection(page, 'ops-center');
   await ops
     .getByRole('combobox', { name: 'Control Center route', exact: true })
@@ -110,7 +110,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       new URL(r.url()).pathname === '/api/workspace/operations' && r.request().method() === 'POST',
   );
   await ops
-    .getByRole('button', { name: 'Approve route readiness for limited use', exact: true })
+    .getByRole('button', { name: 'Approve Route Readiness for Limited Use', exact: true })
     .click();
   expect((await missingEvidence).status()).toBe(409);
   await expect(ops.getByRole('status')).toContainText('Reference:');
@@ -136,19 +136,19 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   const until = validUntil.toISOString();
   await ops.getByLabel('Readiness valid until', { exact: true }).fill(until.slice(0, 19));
   await ops.getByLabel('Readiness rationale', { exact: true }).fill(reason);
-  await ops.getByRole('button', { name: 'Record readiness', exact: true }).click();
+  await ops.getByRole('button', { name: 'Record Readiness', exact: true }).click();
   await expect(ops.getByRole('status')).toContainText('Recorded.');
   const offer = readiness.getByRole('row').filter({ hasText: 'Commercial offer and pricing' });
   await expect(offer.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(2);
   await expect
     .poll(() => Date.now(), { timeout: 15000, intervals: [1000] })
     .toBeGreaterThan(Date.parse(until));
-  await ops.getByRole('button', { name: 'Refresh operations', exact: true }).click();
+  await ops.getByRole('button', { name: 'Refresh Operations', exact: true }).click();
   await expect(offer.getByRole('cell', { name: 'Blocked', exact: true })).toHaveCount(1);
   await expect(offer.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(1);
   await expect(offer).toContainText('Evidence expired or configuration changed');
   await ops
-    .getByRole('button', { name: 'Prepare next configuration version', exact: true })
+    .getByRole('button', { name: 'Prepare Next Configuration Version', exact: true })
     .click();
   const draft = await ops
     .getByRole('textbox', { name: 'Configuration draft', exact: true })
@@ -174,17 +174,17 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       ops.getByRole('combobox', { name: 'Control Center route', exact: true }),
     ).toHaveValue(routeId);
   }
-  await ops.getByRole('button', { name: 'Preview configuration effects', exact: true }).click();
+  await ops.getByRole('button', { name: 'Preview Configuration Effects', exact: true }).click();
   await expect(ops).toContainText('Public operational activation: No.');
-  await ops.getByRole('button', { name: 'Submit configuration proposal', exact: true }).click();
+  await ops.getByRole('button', { name: 'Submit Configuration Proposal', exact: true }).click();
   const proposal = ops
     .getByRole('article')
     .filter({
-      has: page.getByRole('button', { name: 'Approve and publish exact proposal', exact: true }),
+      has: page.getByRole('button', { name: 'Approve and Publish Exact Proposal', exact: true }),
     })
     .first();
   await proposal
-    .getByRole('button', { name: 'Approve and publish exact proposal', exact: true })
+    .getByRole('button', { name: 'Approve and Publish Exact Proposal', exact: true })
     .click();
   await expect(ops.getByRole('status')).toContainText(/independent/i);
   const caseKey = 'ux05-recovery-' + randomUUID();
@@ -217,7 +217,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     } else await route.continue();
   });
   await ops
-    .getByRole('button', { name: 'Record reviewed operational command', exact: true })
+    .getByRole('button', { name: 'Record Reviewed Operational Command', exact: true })
     .click();
   await expect(ops.getByRole('status')).toContainText(/retry/i);
   await ops
@@ -243,12 +243,12 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       new URL(r.url()).pathname === '/api/workspace/operations' && r.request().method() === 'POST',
   );
   await ops
-    .getByRole('button', { name: 'Retry original operational command', exact: true })
+    .getByRole('button', { name: 'Retry Original Operational Command', exact: true })
     .click();
   expect((await staleMfa).status()).toBe(401);
   await expect(ops.getByRole('status')).toContainText('Verify your authenticator again');
   await expect(
-    ops.getByRole('button', { name: 'Retry original operational command', exact: true }),
+    ops.getByRole('button', { name: 'Retry Original Operational Command', exact: true }),
   ).toBeEnabled();
   const nextCounter = (Math.floor(Date.now() / 30000) + 1) * 30000;
   await expect
@@ -256,11 +256,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     .toBeGreaterThanOrEqual(nextCounter);
   await openSection(page, 'workspace-authenticator');
   await page.getByLabel('Current authenticator code', { exact: true }).fill(totp(secret));
-  await page.getByRole('button', { name: 'Verify again', exact: true }).click();
+  await page.getByRole('button', { name: 'Verify Again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-operations');
   await ops
-    .getByRole('button', { name: 'Retry original operational command', exact: true })
+    .getByRole('button', { name: 'Retry Original Operational Command', exact: true })
     .click();
   await expect(ops.getByRole('status')).toContainText('Recorded.');
   expect(sent).toHaveLength(3);
@@ -280,7 +280,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       new URL(r.url()).pathname === '/api/workspace/operations' && r.request().method() === 'POST',
   );
   await ops
-    .getByRole('button', { name: 'Record reviewed operational command', exact: true })
+    .getByRole('button', { name: 'Record Reviewed Operational Command', exact: true })
     .click();
   expect((await missingClosureSource).status()).toBe(409);
   await expect(ops.getByRole('status')).toContainText('Reference:');
@@ -295,7 +295,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     .getByRole('textbox', { name: 'Operational command JSON', exact: true })
     .fill(JSON.stringify({ ...command, version: 2, state: 'RESOLVED', sourceId: source }));
   await ops
-    .getByRole('button', { name: 'Record reviewed operational command', exact: true })
+    .getByRole('button', { name: 'Record Reviewed Operational Command', exact: true })
     .click();
   await expect(ops.getByRole('status')).toContainText('Recorded.');
   const dashboard = await (
@@ -308,7 +308,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       .getByRole('textbox', { name: 'Operational command JSON', exact: true })
       .fill(JSON.stringify(input));
     await ops
-      .getByRole('button', { name: 'Record reviewed operational command', exact: true })
+      .getByRole('button', { name: 'Record Reviewed Operational Command', exact: true })
       .click();
     await expect(ops.getByRole('status')).toContainText('Recorded.');
     await openSection(page, 'ops-dashboard');
@@ -386,7 +386,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     await openSection(page, id);
     if (id === 'workspace-audit')
       await page
-        .getByRole('button', { name: 'Load access and recent changes', exact: true })
+        .getByRole('button', { name: 'Load Access and Recent Changes', exact: true })
         .click();
     await governanceEvidence(page, page.locator('#' + id), label);
   }
@@ -430,7 +430,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     .locator('#workspace-navigation')
     .getByRole('link', { name: 'Global operations', exact: true })
     .click();
-  await expect(ops.getByRole('button', { name: 'Refresh operations', exact: true })).toBeVisible();
+  await expect(ops.getByRole('button', { name: 'Refresh Operations', exact: true })).toBeVisible();
   await expect(ops.locator('#ops-center')).toHaveCount(0);
   await expect(page.locator('#workspace-audit')).toHaveCount(0);
   await expect(page.locator('#workspace-settings')).toHaveCount(0);

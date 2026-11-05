@@ -117,7 +117,7 @@ test('UX-01 invitation outage can be retried without collecting credentials or c
   const request = page.waitForResponse((response) =>
     response.url().endsWith('/api/operator-setup'),
   );
-  await invitation.getByRole('button', { name: 'Check invitation again' }).click();
+  await invitation.getByRole('button', { name: 'Check Invitation Again' }).click();
   expect((await request).request().method()).toBe('GET');
   await expect(invitation.getByRole('alert')).toContainText('unavailable');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

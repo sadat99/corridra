@@ -27,7 +27,7 @@ test('the mute page is private, not indexed, and does nothing until the button i
   );
   // The token is read once and then removed from the address.
   await expect(
-    page.getByRole('button', { name: 'Mute messages about this request' }),
+    page.getByRole('button', { name: 'Mute Messages About This Request' }),
   ).toBeVisible();
   expect(page.url()).toBe(`${origin}/mute/${request}`);
   // Opening the page, like a link scanner would, muted nothing.
@@ -39,7 +39,7 @@ test('the mute page is private, not indexed, and does nothing until the button i
       width,
     );
   }
-  await page.getByRole('button', { name: 'Mute messages about this request' }).click();
+  await page.getByRole('button', { name: 'Mute Messages About This Request' }).click();
   await expect(page.getByRole('status')).toContainText(
     'We will not send more messages about this request.',
   );
@@ -56,14 +56,14 @@ test('a refused or failed answer says so plainly and keeps the button', async ({
     route.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"x"}' }),
   );
   await page.goto(`/mute/${request}#t=${token}`);
-  await page.getByRole('button', { name: 'Mute messages about this request' }).click();
+  await page.getByRole('button', { name: 'Mute Messages About This Request' }).click();
   await expect(area().getByRole('alert')).toHaveText('This link is not valid or has expired.');
   await page.unroute('**/api/mission-mail/mute');
   await page.route('**/api/mission-mail/mute', (route) => route.abort());
-  await page.getByRole('button', { name: 'Mute messages about this request' }).click();
+  await page.getByRole('button', { name: 'Mute Messages About This Request' }).click();
   await expect(area().getByRole('alert')).toContainText('We could not do that just now.');
   await expect(
-    page.getByRole('button', { name: 'Mute messages about this request' }),
+    page.getByRole('button', { name: 'Mute Messages About This Request' }),
   ).toBeEnabled();
 });
 

@@ -345,7 +345,7 @@ function RecordForm({
       </p>
       <Reason />
       <button className="primary-link" disabled={busy}>
-        Record commercial evidence
+        Record Commercial Evidence
       </button>
     </form>
   );
@@ -488,7 +488,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
               .catch((e) => setMessage(e.message))
           }
         >
-          Retry this section
+          Retry This Section
         </button>
         <a href="#workspace-authenticator">Verify current access</a>
       </section>
@@ -545,7 +545,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
               .finally(() => setBusy(false));
           }}
         >
-          Refresh commercial progress
+          Refresh Commercial Progress
         </button>
       </div>
       <h3>Mission yield</h3>
@@ -683,7 +683,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             <Ownership owners={data.owners} defaultDue={defaults.due} />
             <Reason />
             <button className="primary-link" disabled={busy}>
-              Create sourcing opportunity
+              Create Sourcing Opportunity
             </button>
           </form>
         </details>
@@ -726,7 +726,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             <Ownership owners={data.owners} defaultDue={defaults.due} />
             <Reason />
             <button className="primary-link" disabled={busy}>
-              Create commercial opportunity
+              Create Commercial Opportunity
             </button>
           </form>
         </details>
@@ -740,10 +740,10 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
       )}
       <div className="hero-actions">
         <button disabled={busy || offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))}>
-          Previous opportunities
+          Previous Opportunities
         </button>
         <button disabled={busy || offset + 50 >= data.total} onClick={() => setOffset(offset + 50)}>
-          Next opportunities
+          Next Opportunities
         </button>
       </div>
       {data.opportunities.map((o) => {
@@ -795,7 +795,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                     <Ownership owners={data.owners} opportunity={o} defaultDue={defaults.due} />
                     <Reason />
                     <button className="primary-link" disabled={busy}>
-                      Save opportunity change
+                      Save Opportunity Change
                     </button>
                   </form>
                 </details>
@@ -819,7 +819,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             {records.length <
               (data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0) && (
               <button disabled={busy} onClick={() => void moreRecords(o.id)}>
-                Load more evidence for {o.title}
+                Load More Evidence for {o.title}
               </button>
             )}
             {records.length === 0 ? (
@@ -894,7 +894,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                               </label>
                               <Reason />
                               <button className="primary-link" disabled={busy}>
-                                Confirm observed cash
+                                Confirm Observed Cash
                               </button>
                             </form>
                           </details>
@@ -923,7 +923,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                             <Observation sources={data.sources} defaultDate={defaults.observed} />
                             <Reason />
                             <button className="primary-link" disabled={busy}>
-                              Record full compensation
+                              Record Full Compensation
                             </button>
                           </form>
                         </details>
@@ -963,7 +963,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             </p>
             <Reason />
             <button className="primary-link" disabled={busy}>
-              Rebuild commercial reports
+              Rebuild Commercial Reports
             </button>
           </form>
         </details>

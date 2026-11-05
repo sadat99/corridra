@@ -1,0 +1,44 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Layout budget, Phase 2b-ii: the home page is a compact first screen with the example, steps, results, facts and routes in tabs",
+  "date": "2026-11-05",
+  "sensitive": false,
+  "spec": "docs/revamp/specs/layout-budget.md section 2 and tests L-03; shared components/ux/sub-tabs.tsx (S4)",
+  "changed": [
+    "apps/web/app/page.tsx, components/home-compact.css: the first screen holds only the heading, lead, three start links, quiet link and the calm facts row; the example record, steps, results, fact labels and routes are five tabs (Example, Steps, Results, Facts, Routes). Tab labels are English literals; no new translated keys.",
+    "On phones the jobs kicker and section eyebrows are visually hidden (still in the HTML and read by screen readers). All text is at least 12px and the quiet link is a 44px target.",
+    "Tests choose the tab first, same assertions: public-experience, ux06-presentation, ws-a public-copy; layout-budget-tabs now covers the home."
+  ],
+  "preserved": [
+    "Every word, link, id, control and payload stays in the server HTML; one panel at a time, no rule overrides [hidden].",
+    "P-11 payload and P-06/P-07 old-address tests unchanged. Closed gates untouched.",
+    "Home translations follow the same keys; the home language operator spec (51 tests) passes unchanged."
+  ],
+  "pageLength": {
+    "desktop1440ContentPx": {
+      "example": 867,
+      "steps": 771,
+      "results": 872,
+      "facts": 707,
+      "routes": 832,
+      "limit": 900
+    },
+    "phone390Px": {
+      "example": 1659,
+      "steps": 1522,
+      "results": 1660,
+      "facts": 1476,
+      "routes": 1648,
+      "limit": 1688
+    }
+  },
+  "verification": {
+    "preflight": "READY TO PUSH on the merged head: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e, ux-gate, operator-affected all PASS",
+    "layoutBudgetTabs": "72 passed at desktop",
+    "homeOperatorSpec": "51 passed"
+  },
+  "openRisks": [
+    "Widths between 1000 and 1439 can exceed 900px on some tabs (not gated).",
+    "Phone margins are about 28-40px under the limit; CI fonts render slightly differently."
+  ]
+}

@@ -19,10 +19,12 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(
     page.getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link'),
   ).toHaveCount(3);
-  // The six road steps (D5): Define, Find, Compare, Visit, Decide, Follow through.
+  // The six road steps (D5): Define, Find, Compare, Visit, Decide, Follow through (the Steps tab).
+  await page.getByRole('tab', { name: 'Steps', exact: true }).click();
   await expect(page.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
     6,
   );
+  await page.getByRole('tab', { name: 'Facts', exact: true }).click();
   await expect(page.getByRole('link', { name: 'How we label facts' })).toHaveAttribute(
     'href',
     '/trust',

@@ -379,7 +379,7 @@ function Reviewer({ tenant }: Props) {
         </select>
       </label>
       <button className="text-link" type="button" disabled={busy} onClick={() => void loadQueue()}>
-        Load company link requests
+        Load Company Link Requests
       </button>
       {message && <p role="status">{message}</p>}
       {queue && queue.items.length > 0 && !review && (
@@ -405,7 +405,7 @@ function Reviewer({ tenant }: Props) {
       )}
       {queue?.nextAfter && !review && (
         <button className="text-link" type="button" disabled={busy} onClick={() => void loadMore()}>
-          Show more requests
+          Show More Requests
         </button>
       )}
       {review && (
@@ -568,7 +568,7 @@ function Reviewer({ tenant }: Props) {
                 </label>
               </fieldset>
               <button className="primary-link" type="submit" disabled={busy || !decision}>
-                {pending ? 'Retry the same decision' : 'Record decision'}
+                {pending ? 'Retry the Same Decision' : 'Record Decision'}
               </button>
             </form>
           )}
@@ -581,7 +581,7 @@ function Reviewer({ tenant }: Props) {
               setPending(null);
             }}
           >
-            Back to the list
+            Back to the List
           </button>
         </section>
       )}

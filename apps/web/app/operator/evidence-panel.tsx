@@ -101,7 +101,7 @@ export function EvidencePanel({
               data.scanMode === 'required')) &&
             data.role !== 'viewer' && (
               <button onClick={() => act(() => request('scan', { id: r.id }))} disabled={busy}>
-                Run validation
+                Run Validation
               </button>
             )}
         </div>
@@ -147,7 +147,7 @@ export function EvidencePanel({
               !flags.some((f) => f.key === 'evidence.uploads' && f.value?.enabled)
             }
           >
-            Submit for validation
+            Submit for Validation
           </button>
         </form>
       )}
@@ -206,7 +206,7 @@ export function EvidencePanel({
               busy || !flags.some((f) => f.key === 'evidence.verification' && f.value?.enabled)
             }
           >
-            Record decision
+            Record Decision
           </button>
         </form>
       )}

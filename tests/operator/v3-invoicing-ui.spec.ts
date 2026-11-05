@@ -420,7 +420,7 @@ test('staff prepare an invoice for a period and send the exact amounts once, wit
   await expect(page.getByText('No invoice has been issued.')).toBeVisible();
   await page
     .getByRole('button', {
-      name: 'Prepare invoice for Synthetic invoicing workspace, 23 October 2026',
+      name: 'Prepare Invoice for Synthetic invoicing workspace, 23 October 2026',
     })
     .click();
   const form = page.getByRole('form', { name: 'Issue invoice' });
@@ -431,7 +431,7 @@ test('staff prepare an invoice for a period and send the exact amounts once, wit
   await form.getByLabel(/Tax amount in USD minor units/).fill('490');
   await form.getByLabel(/Due on/).fill('2026-11-06');
   expect(await axe(page)).toEqual([]);
-  await form.getByRole('button', { name: 'Issue sample invoice' }).click();
+  await form.getByRole('button', { name: 'Issue Sample Invoice' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(1);
   expect(posts[0]).toMatchObject({
@@ -475,11 +475,11 @@ test('a plan whose tax is to be confirmed has no tax field and sends no tax amou
     },
   });
   await page.goto(origin + '/?view=staff');
-  await page.getByRole('button', { name: /Prepare invoice for/ }).click();
+  await page.getByRole('button', { name: /Prepare Invoice for/ }).click();
   const form = page.getByRole('form', { name: 'Issue invoice' });
   await expect(form.getByLabel(/Tax amount/)).toHaveCount(0);
   await expect(form.getByText(/tax is to be confirmed, so no tax amount is stated/)).toBeVisible();
-  await form.getByRole('button', { name: 'Issue sample invoice' }).click();
+  await form.getByRole('button', { name: 'Issue Sample Invoice' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts[0]).toMatchObject({ planFeeMinor: '480000', taxMinor: null });
 });
@@ -505,7 +505,7 @@ test('staff record a payment naming the position they saw, and a lost answer is 
   const detail = page.getByRole('region', { name: 'Invoice detail' });
   await expect(detail.getByText(/Payment USD\s10\.00/)).toBeVisible();
   await expect(detail.getByText(/Synthetic transfer reference 0001/)).toBeVisible();
-  const form = page.getByRole('form', { name: 'Record payment' });
+  const form = page.getByRole('form', { name: 'Record Payment' });
   await form.getByLabel(/Amount received/).fill('2000');
   const received = new Date().toISOString().slice(0, 10);
   await form.getByLabel('Received on').fill(received);
@@ -515,9 +515,9 @@ test('staff record a payment naming the position they saw, and a lost answer is 
   await expect(page.getByLabel(/Credit amount/)).toHaveValue('');
   await expect(page.getByLabel(/Reason the customer reads/)).toHaveValue('Synthetic ');
   expect(await axe(page)).toEqual([]);
-  await form.getByRole('button', { name: 'Record payment' }).click();
+  await form.getByRole('button', { name: 'Record Payment' }).click();
   await expect(page.getByRole('alert')).toContainText('Could not confirm that this was saved');
-  await form.getByRole('button', { name: 'Send the same payment again' }).click();
+  await form.getByRole('button', { name: 'Send the Same Payment Again' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(2);
   expect(posts[1]!.commandId).toBe(posts[0]!.commandId);
@@ -546,12 +546,12 @@ test('a credit note asks for a reason, is marked destructive, and a settled invo
   });
   await page.goto(origin + '/?view=staff');
   await page.getByRole('button', { name: 'Open SAMPLE-INV-000001' }).click();
-  const form = page.getByRole('form', { name: 'Issue credit note' });
+  const form = page.getByRole('form', { name: 'Issue Credit Note' });
   await form.getByLabel(/Credit amount/).fill('300');
   await form
     .getByLabel(/Reason the customer reads/)
     .fill('Synthetic credit for a rehearsal correction');
-  const submit = form.getByRole('button', { name: 'Issue credit note' });
+  const submit = form.getByRole('button', { name: 'Issue Credit Note' });
   await expect(submit).toHaveAttribute('data-intent', 'destructive');
   await submit.click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
@@ -577,8 +577,8 @@ test('a credit note asks for a reason, is marked destructive, and a settled invo
   await expect(
     page.getByText('Nothing is outstanding, so no payment or credit can be added.'),
   ).toBeVisible();
-  await expect(page.getByRole('form', { name: 'Record payment' })).toHaveCount(0);
-  await expect(page.getByRole('form', { name: 'Issue credit note' })).toHaveCount(0);
+  await expect(page.getByRole('form', { name: 'Record Payment' })).toHaveCount(0);
+  await expect(page.getByRole('form', { name: 'Issue Credit Note' })).toHaveCount(0);
 });
 
 test('staff denial is plain and an unavailable module leaves no panel', async ({ page }) => {

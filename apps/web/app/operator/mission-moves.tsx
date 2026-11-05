@@ -111,7 +111,7 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
                   )
                 }
               >
-                Mark done
+                Mark Done
               </button>
             </li>
           ))}
@@ -209,11 +209,11 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
               disabled={busy}
               onClick={() => setDrafts((all) => [...all, blank()])}
             >
-              Add another Move
+              Add Another Move
             </button>
           )}
           <button className="primary-link" disabled={busy}>
-            Set these Moves
+            Set These Moves
           </button>
           {open.length > 0 && (
             <button
@@ -224,7 +224,7 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
                 void send({ action: 'clear', commandId: crypto.randomUUID() }, 'Moves cleared.')
               }
             >
-              Clear all open Moves
+              Clear All Open Moves
             </button>
           )}
         </div>

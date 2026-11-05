@@ -259,7 +259,7 @@ export function MissionActionForm({
         <textarea name="reason" required minLength={3} maxLength={500} />
       </label>
       <button className="primary-link" disabled={busy}>
-        Save mission action
+        Save Mission Action
       </button>
     </form>
   );
@@ -317,7 +317,7 @@ export function ReplyForm({
         <textarea name="body" required minLength={3} maxLength={2000} />
       </label>
       <button className="primary-link" disabled={busy}>
-        Post receipt reply
+        Post Receipt Reply
       </button>
     </form>
   );
@@ -555,7 +555,7 @@ export function Missions({
               if (confirmChange()) setOffset((v) => Math.max(0, v - 100));
             }}
           >
-            Previous missions
+            Previous Missions
           </button>
           <button
             type="button"
@@ -565,7 +565,7 @@ export function Missions({
               if (confirmChange()) setOffset((v) => v + 100);
             }}
           >
-            Next missions
+            Next Missions
           </button>
         </div>
       )}

@@ -1,0 +1,57 @@
+/* The approved companies table: tokens only. Phones stack each row. */
+.ux-co-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ux-co-table th,
+.ux-co-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.ux-co-table thead th {
+  color: var(--text-2);
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ux-co-table tbody th {
+  color: var(--ink);
+  font: 650 var(--text-base) var(--font-ui);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.ux-co-table td {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-co-table td p {
+  margin: 0 0 var(--space-1);
+}
+.ux-co-actions {
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .ux-co-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ux-co-table tr {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ux-co-table th,
+  .ux-co-table td {
+    padding: 0;
+    border: 0;
+  }
+  .ux-co-actions {
+    white-space: normal;
+  }
+}

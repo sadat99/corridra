@@ -78,7 +78,7 @@ export default async function Page({
         ) : (
           <>
             <Link className="primary-link" href="/contributor/setup">
-              Accept a reviewed contributor invitation
+              Accept a Reviewed Contributor Invitation
             </Link>
             <Link className="text-link" href="/network">
               How assigned work works

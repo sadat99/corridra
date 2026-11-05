@@ -513,7 +513,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
               </fieldset>
               <button type="submit" className="button" disabled={busy}>
-                Activate this plan
+                Activate This Plan
               </button>
             </form>
           )}
@@ -538,7 +538,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 />
               </div>
               <button type="submit" className="button button-secondary" disabled={busy}>
-                Renew for the next period
+                Renew for the Next Period
               </button>
             </form>
           )}
@@ -570,7 +570,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 data-intent="destructive"
                 disabled={busy}
               >
-                {can('decline') ? 'Decline this request' : 'End this plan'}
+                {can('decline') ? 'Decline This Request' : 'End This Plan'}
               </button>
             </form>
           )}
@@ -596,7 +596,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 />
               </div>
               <button type="submit" className="button button-secondary" disabled={busy}>
-                Save internal note
+                Save Internal Note
               </button>
             </form>
           )}
@@ -635,13 +635,13 @@ function Scoped({ tenant }: { tenant: string }) {
                     Version {p.version} · {money(p.priceMinor, p.currency)} per {p.interval}
                   </p>
                   <button type="button" className="text-link" onClick={() => edit(p)}>
-                    New version of {p.title}
+                    New Version of {p.title}
                   </button>
                 </li>
               ))}
             </ul>
             <button type="button" className="button button-secondary" onClick={() => edit(null)}>
-              Add a new plan
+              Add a New Plan
             </button>
           </>
         )}
@@ -851,7 +851,7 @@ function Scoped({ tenant }: { tenant: string }) {
             </fieldset>
             <div className="billing-actions">
               <button type="submit" className="button" disabled={busy}>
-                {busy ? 'Saving…' : 'Save as a new version'}
+                {busy ? 'Saving…' : 'Save As a New Version'}
               </button>
               <button
                 type="button"

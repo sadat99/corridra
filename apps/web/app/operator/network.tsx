@@ -416,7 +416,7 @@ export function ExecutionNetwork({
           </p>
           {onChooseWorkspace && (
             <button className="text-link" type="button" onClick={onChooseWorkspace}>
-              Choose workspace
+              Choose Workspace
             </button>
           )}
         </aside>
@@ -455,7 +455,7 @@ export function ExecutionNetwork({
               .finally(() => setBusy(false));
           }}
         >
-          Refresh execution work
+          Refresh Execution Work
         </button>
         <a href="#workspace-missions">Open missions</a>
         <a href="#workspace-sources">Open sources and claims</a>
@@ -509,7 +509,7 @@ export function ExecutionNetwork({
               </select>
             </label>
             <button className="primary-link" disabled={busy}>
-              Save reviewed invitation profile
+              Save Reviewed Invitation Profile
             </button>
           </form>
         </details>
@@ -559,7 +559,7 @@ export function ExecutionNetwork({
               </label>
             </details>
             <button className="primary-link" disabled={busy || !data?.enabled}>
-              Create task for reviewed assignment
+              Create Task for Reviewed Assignment
             </button>
           </form>
         </details>
@@ -631,7 +631,7 @@ export function ExecutionNetwork({
                 </label>
                 <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
-                  Approve exact assignment
+                  Approve Exact Assignment
                 </button>
               </form>
             )}
@@ -651,7 +651,7 @@ export function ExecutionNetwork({
                 </label>
                 <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
-                  Review original submitted declaration
+                  Review Original Submitted Declaration
                 </button>
               </form>
             )}
@@ -685,7 +685,7 @@ export function ExecutionNetwork({
                 )}
                 <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
-                  Save independent decision
+                  Save Independent Decision
                 </button>
               </form>
             )}
@@ -706,7 +706,7 @@ export function ExecutionNetwork({
               >
                 <Fields tenant={tenant} names={['reason']} />
                 <button className="primary-link" disabled={busy || !data.enabled}>
-                  Assess contribution once
+                  Assess Contribution Once
                 </button>
               </form>
             )}
@@ -781,7 +781,7 @@ export function ExecutionNetwork({
                 </label>
                 <Fields tenant={tenant} names={['reason']} />
                 <button className="text-link" disabled={busy}>
-                  Append status review
+                  Append Status Review
                 </button>
               </form>
             ))}
@@ -818,7 +818,7 @@ export function ExecutionNetwork({
             <PickerField name="sourceId" tenant={tenant} />
             <Fields tenant={tenant} names={['reason']} />
             <button className="primary-link" disabled={busy || !data?.enabled}>
-              Record independently approved obligation
+              Record Independently Approved Obligation
             </button>
           </form>
         </details>
@@ -854,7 +854,7 @@ export function ExecutionNetwork({
             <PickerField name="sourceId" tenant={tenant} />
             <Fields tenant={tenant} names={['reason']} />
             <button className="primary-link" disabled={busy || !data?.enabled}>
-              Record compensating obligation
+              Record Compensating Obligation
             </button>
           </form>
         </details>

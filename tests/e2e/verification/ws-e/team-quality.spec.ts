@@ -261,8 +261,8 @@ test('Q-05 a failed load on click says so and keeps the button for another try',
   test.setTimeout(200000);
   await page.setViewportSize({ width: 1280, height: 900 });
   const loads = [
-    { slug: 'audit', name: 'Load access and recent changes' },
-    { slug: 'controls', name: 'Load workspace members' },
+    { slug: 'audit', name: 'Load Access and Recent Changes' },
+    { slug: 'controls', name: 'Load Workspace Members' },
   ];
   for (const load of loads) {
     await open(`/operator/${load.slug}?workspace=${tenant}`);
@@ -296,14 +296,14 @@ test('Q-05 a failed load on click says so and keeps the button for another try',
 // seeded data never changes; the request is slowed so the in-flight window can be seen.
 const busyActions = [
   { slug: 'missions', name: 'Refresh missions' },
-  { slug: 'research', name: 'Refresh research' },
-  { slug: 'assistance', name: 'Refresh AI review' },
-  { slug: 'network', name: 'Refresh invitations' },
-  { slug: 'network', name: 'Refresh execution work' },
-  { slug: 'health', name: 'Refresh operations' },
-  { slug: 'settings', name: 'Refresh reviewed configuration' },
-  { slug: 'audit', name: 'Load access and recent changes' },
-  { slug: 'controls', name: 'Load workspace members' },
+  { slug: 'research', name: 'Refresh Research' },
+  { slug: 'assistance', name: 'Refresh AI Review' },
+  { slug: 'network', name: 'Refresh Invitations' },
+  { slug: 'network', name: 'Refresh Execution Work' },
+  { slug: 'health', name: 'Refresh Operations' },
+  { slug: 'settings', name: 'Refresh Reviewed Configuration' },
+  { slug: 'audit', name: 'Load Access and Recent Changes' },
+  { slug: 'controls', name: 'Load Workspace Members' },
 ];
 test('Q-06 busy actions: a double click sends what one click sends, disabled or busy in flight', async () => {
   test.setTimeout(600000);

@@ -36,7 +36,7 @@ export default function WorkspaceError() {
           window.location.reload();
         }}
       >
-        Retry workspace
+        Retry Workspace
       </a>
       <nav className="access-options" aria-label="Workspace recovery">
         <a

@@ -648,7 +648,7 @@ test('staff open a request, see the plan and the note rules, and activate with a
   await form.getByLabel('Period starts on').fill('2026-10-23');
   await form.getByLabel(/Note the customer reads/).fill('Synthetic note: your plan starts today');
   expect(await axe(page)).toEqual([]);
-  await form.getByRole('button', { name: 'Activate this plan' }).click();
+  await form.getByRole('button', { name: 'Activate This Plan' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(1);
   expect(Object.keys(posts[0]!).sort()).toEqual([
@@ -696,13 +696,13 @@ test('staff decline with a reason, keep internal notes apart and retry a lost sa
   await decline
     .getByLabel(/Reason the customer reads/)
     .fill('Synthetic reason: not available for this team yet');
-  await decline.getByRole('button', { name: 'Decline this request' }).click();
+  await decline.getByRole('button', { name: 'Decline This Request' }).click();
   await expect(page.getByRole('alert')).toContainText('Could not confirm');
   // The bold lead is followed by one real space, so it reads "Problem. Could not..." aloud too.
   const problem = page.locator('.billing-notice[data-tone="error"]');
   expect(await problem.textContent()).toMatch(/^Problem\. \S/);
   await expect(problem.locator('strong')).toHaveCSS('margin-right', '0px');
-  await decline.getByRole('button', { name: 'Decline this request' }).click();
+  await decline.getByRole('button', { name: 'Decline This Request' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts).toHaveLength(2);
   expect(posts[1]!.commandId).toBe(posts[0]!.commandId);
@@ -749,7 +749,7 @@ test('staff add a plan version with every limit stated once', async ({ page }) =
   await page.goto(origin + '/?view=staff');
   await expect(page.getByText('No customer has asked for a plan.')).toBeVisible();
   await page.getByText('Plans on offer and plan versions').click();
-  await page.getByRole('button', { name: 'Add a new plan' }).click();
+  await page.getByRole('button', { name: 'Add a New Plan' }).click();
   const form = page.getByRole('form', { name: 'Plan version' });
   await form.getByLabel(/Plan key/).fill('example-yearly');
   await form.getByLabel(/Title/).fill('Yearly team (sample plan)');
@@ -768,7 +768,7 @@ test('staff add a plan version with every limit stated once', async ({ page }) =
   ])
     await form.getByLabel(label, { exact: true }).selectOption('unlimited');
   expect(await axe(page)).toEqual([]);
-  await form.getByRole('button', { name: 'Save as a new version' }).click();
+  await form.getByRole('button', { name: 'Save As a New Version' }).click();
   // The result is said inside the plans section, next to the form that was used, and the saved plan is marked.
   const fold = page.locator('details', { hasText: 'Plans on offer and plan versions' });
   await expect(fold.getByRole('status').filter({ hasText: 'Saved.' })).toContainText(

@@ -248,10 +248,10 @@ function Scoped({ tenant }: { tenant: string }) {
             </div>
           </fieldset>
           <button type="submit" className="button button-secondary" disabled={busy}>
-            {pending ? 'Send the same refund again' : 'Record refund (madeup)'}
+            {pending ? 'Send the Same Refund Again' : 'Record Refund (Madeup)'}
           </button>{' '}
           <button type="button" className="text-link" onClick={() => setRefunding(null)}>
-            Not now
+            Not Now
           </button>
         </form>
       )}
