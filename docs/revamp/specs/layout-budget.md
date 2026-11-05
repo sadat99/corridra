@@ -20,10 +20,10 @@ This is the build contract for the owner's decision of 4 November 2026, recorded
 
 Measured as the full document height (header, content and footer) divided by the viewport height:
 
-| Viewport   | Target      | Hard limit  |
-| ---------- | ----------- | ----------- |
-| 390 × 844  | 1.5 screens | 2.0 screens |
-| 1440 × 900 | 1.0 screen  | 1.5 screens |
+| Viewport   | Target      | Hard limit                     |
+| ---------- | ----------- | ------------------------------ |
+| 390 × 844  | 1.5 screens | 2.0 screens                    |
+| 1440 × 900 | 1.0 screen  | 1.0 screen (owner, 5 Nov 2026) |
 
 - A page over the hard limit fails. Fix it with tabs, progressive disclosure ("Show more", accordions), a compact mobile footer (collapsed link groups) or tighter spacing within the AC/1 scale. Content is never removed.
 - Statutory and legal text (privacy, terms) keeps every word. It is split into sections with an in-page contents list or tabs, plus a "Show the whole notice" option for reading and printing in full.

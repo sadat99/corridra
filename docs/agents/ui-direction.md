@@ -6,6 +6,8 @@ Read [the product vision v2.1](../product/corridra-product-vision-v2.1.md) and i
 
 Owner, verbatim: "ensure we have navigation bar in the left side, and the rest as sub-tab on the page if required .no page should be more than 2 or 1.5 mobile screen. in case of forms they must come as 1-3 fields at a time a time, following all the MAANG GRADE global standards for ux/ui along with this entire revamp plan."
 
+Owner, 5 November 2026, verbatim, with screenshots of the customer area: "improve the ux/ui here. no page(in desktop) should be more than 1x screen. also all other navigation links etc, pretty novice design, can u take these ux/ui to 100x better within our revamp process and branding-5lakhs". The desktop hard limit is therefore one screen. The customer redesign contract is [the customer experience spec](../revamp/specs/customer-experience.md).
+
 This supersedes, where they differ, the earlier rules on navigation placement (customer top row on desktop and bottom tab bar on phones), on whole-page length, and on the "no field moves between steps" decision in the revamp public-home spec. Navigation names, sets, roles, ids, addresses and payloads are unchanged. The build contract is [the layout budget spec](../revamp/specs/layout-budget.md).
 
 ## AC/1 Atlantic Cobalt brand and composition lock (owner decision, 22 October 2026)
