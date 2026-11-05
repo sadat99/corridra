@@ -33,7 +33,7 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
 // Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
-const baseline = '4419fb47e07bfc3f13328899b6882a03c01be919';
+const baseline = '335cd394d90dd1a544de94fc58520133c0f9c8a3';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
