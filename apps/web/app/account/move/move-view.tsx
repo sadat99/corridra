@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { MoveCard, StageBar, mrLabelsFor, type MoveVerb } from '../../../components/mr';
 import { RowLink, RowList } from '../../../components/ux/row-list';
 import { CorridraIcon } from '../../../components/corridra-icon';
@@ -18,6 +18,7 @@ import {
   type WaitingRow,
 } from '../../../lib/move-cards';
 import {
+  isJourney,
   journeys as journeyOrder,
   journeyWords,
   type Journey,
@@ -77,6 +78,41 @@ function commit(value: Record<string, string>) {
   listeners.forEach((listener) => listener());
 }
 
+// The journey the person last chose on Home ("all" for All), in this browser only, so Home opens where they left
+// it (owner-approved work rooms, 5 Nov 2026). A ?journey= in the address always wins and is remembered.
+const journeyKey = 'corridra.home.journey';
+let journeyMemory: string | null = null;
+const journeyListeners = new Set<() => void>();
+function journeySnapshot(): string {
+  if (journeyMemory !== null) return journeyMemory;
+  try {
+    return window.localStorage.getItem(journeyKey) ?? '';
+  } catch {
+    return '';
+  }
+}
+function subscribeJourney(listener: () => void) {
+  journeyListeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === null || event.key === journeyKey) journeyMemory = null;
+    listener();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    journeyListeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+function rememberJourney(value: Journey | 'all') {
+  journeyMemory = value;
+  try {
+    window.localStorage.setItem(journeyKey, value);
+  } catch {
+    /* The choice still applies to this visit. */
+  }
+  journeyListeners.forEach((listener) => listener());
+}
+
 const verbOf: Record<Exclude<MoveCardData['kind'], 'move'>, MoveVerb> = {
   draft: 'Send',
   quote: 'Answer',
@@ -126,7 +162,7 @@ export function MoveView({
   latestItem = null,
   journeys = [],
   facts = null,
-  journey = null,
+  journey: asked = null,
   taskJourneys = {},
   sortIncomplete = false,
 }: {
@@ -162,6 +198,29 @@ export function MoveView({
   const mark = (requestId: string, latestReplyAt: string) =>
     commit({ ...(seen ?? {}), [requestId]: latestReplyAt });
   const forget = () => commit({});
+
+  // The switch counts what needs the person in each journey; it appears once the person has two journeys (a
+  // single-journey Home has nothing to switch between), or while a journey is being shown, so All is one tap away.
+  const itemIds = [
+    ...unread.map((reply) => `reply:${reply.requestId}`),
+    ...model.cards.map((card) => card.id),
+  ];
+  const perJourney = Object.fromEntries(
+    journeyOrder.map((j) => [j, itemIds.filter((id) => taskJourneys[id] === j).length]),
+  ) as Record<Journey, number>;
+  const present = journeyOrder.filter(
+    (j) => perJourney[j] > 0 || journeys.some((card) => card.journey === j),
+  );
+  // An address without ?journey= opens the journey last chosen in this browser, while it is still one of theirs.
+  const remembered = useSyncExternalStore(subscribeJourney, journeySnapshot, () => null);
+  const journey: Journey | null =
+    asked ??
+    (present.length > 1 && isJourney(remembered) && present.includes(remembered)
+      ? remembered
+      : null);
+  useEffect(() => {
+    if (asked) rememberJourney(asked);
+  }, [asked]);
 
   // Under All each task says which journey it belongs to; under one journey the tag would only repeat it.
   const tag = (id: string) => {
@@ -237,16 +296,6 @@ export function MoveView({
   ];
   const items = allItems.filter((item) => shown(String(item.key)));
   const nothing = items.length === 0;
-  // The switch counts what needs the person in each journey; it appears once any task or card has one.
-  const perJourney = Object.fromEntries(
-    journeyOrder.map((j) => [
-      j,
-      allItems.filter((item) => taskJourneys[String(item.key)] === j).length,
-    ]),
-  ) as Record<Journey, number>;
-  const present = journeyOrder.filter(
-    (j) => perJourney[j] > 0 || journeys.some((card) => card.journey === j),
-  );
   const cards = journey ? journeys.filter((card) => card.journey === journey) : journeys;
   const waiting = model.waiting.filter((row) => shown(row.id));
   const participant = !journey ? (facts?.participant ?? null) : null;
@@ -305,9 +354,14 @@ export function MoveView({
         <p className="move-lede" lang="en">
           {lede}
         </p>
-        {present.length > 0 ? (
+        {present.length > 1 || journey ? (
           <nav className="move-seg" aria-label="Show work for" lang="en">
-            <Link prefetch={false} href="/account/move" aria-current={journey ? undefined : 'page'}>
+            <Link
+              prefetch={false}
+              href="/account/move"
+              aria-current={journey ? undefined : 'page'}
+              onClick={() => rememberJourney('all')}
+            >
               All <em>{allItems.length}</em>
             </Link>
             {present.map((j) => (
@@ -316,6 +370,7 @@ export function MoveView({
                 prefetch={false}
                 href={`/account/move?journey=${j}`}
                 aria-current={journey === j ? 'page' : undefined}
+                onClick={() => rememberJourney(j)}
               >
                 {journeyWords[j]} <em>{perJourney[j]}</em>
               </Link>

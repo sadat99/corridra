@@ -202,4 +202,61 @@ describe('Home summary never claims more than the page could read (Codex review 
     expect(sorted).toContain('Nothing in this journey needs you right now.');
     expect(sorted).toContain('href="/account/move"');
   });
+
+  // Owner-approved work rooms (5 Nov 2026): a single-journey Home has nothing to switch between, so the switch
+  // is hidden; with two journeys it is there; and while one journey is shown All stays one tap away.
+  it('hides the journey switch for a single-journey Home and shows it for two', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const ids = busy.cards.map((card) => card.id);
+    const one = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      taskJourneys: Object.fromEntries(ids.map((id) => [id, 'sell'])),
+    });
+    expect(one).not.toContain('aria-label="Show work for"');
+    // A journey with no task yet still counts once the person has work in it (its journey card).
+    const card = {
+      journey: 'source',
+      id: 'r1',
+      workspaceId: owner.id,
+      count: '1',
+      title: 'Spinning frames',
+      kind: 'request',
+      status: 'OUTREACH',
+      statusWords: 'Finding companies',
+      dateWords: '2 Oct 2026',
+      at: '2026-10-02T00:00:00Z',
+      href: '/account/rooms/r1',
+    };
+    const two = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      taskJourneys: Object.fromEntries(ids.map((id) => [id, 'sell'])),
+      journeys: [card],
+    });
+    expect(two).toContain('aria-label="Show work for"');
+    expect(two).toContain('href="/account/move?journey=sell"');
+    expect(two).toContain('href="/account/move?journey=source"');
+    const shown = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      journey: 'sell',
+      taskJourneys: Object.fromEntries(ids.map((id) => [id, 'sell'])),
+    });
+    expect(shown).toContain('aria-label="Show work for"');
+    expect(shown).toContain('href="/account/move"');
+  });
+
+  it('remembers the last journey in this browser only, and an address with ?journey= wins', async () => {
+    const { readFileSync } = await import('node:fs');
+    const view = readFileSync(resolve('apps/web/app/account/move/move-view.tsx'), 'utf8');
+    expect(view).toContain("const journeyKey = 'corridra.home.journey';");
+    expect(view).toContain("onClick={() => rememberJourney('all')}");
+    expect(view).toContain('onClick={() => rememberJourney(j)}');
+    // The remembered journey applies only while the person still has it and has more than one.
+    expect(view).toMatch(
+      /asked \?\?\s*\(present\.length > 1 && isJourney\(remembered\) && present\.includes\(remembered\)/,
+    );
+    expect(view).not.toMatch(/document\.cookie|fetch\(/);
+  });
 });
