@@ -282,7 +282,11 @@ export default async function Page({
                 (requestIssuer || (savedMissionIssuer && customerDeliveryEnabled())) && (
                   <>
                     {requestIssuer && (
-                      <DeliveredReports subject={data.user.id} issuer={requestIssuer} />
+                      <DeliveredReports
+                        subject={data.user.id}
+                        issuer={requestIssuer}
+                        showEmpty={!(savedMissionIssuer && customerDeliveryEnabled())}
+                      />
                     )}
                     {savedMissionIssuer && customerDeliveryEnabled() && (
                       <AssignedMissions subject={data.user.id} issuer={savedMissionIssuer} />

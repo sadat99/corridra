@@ -21,6 +21,7 @@ vi.doMock(web.resolve('next/navigation'), () => ({
   usePathname: () => '/account',
   useSearchParams: () => new URLSearchParams('view=results'),
 }));
+vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => null }));
 const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
 
 const panels = (extra: Record<string, unknown> = {}) => ({
@@ -97,5 +98,23 @@ describe('the Reports page uses the tabs and keeps every old id', () => {
       'href="/account/companies"',
     ])
       expect(reports).toContain(needle);
+  });
+});
+
+describe('a Delivered tab is never a blank panel', () => {
+  it('says plainly that nothing has been delivered when there is nothing else in the tab', async () => {
+    const { DeliveredReports } = await load('app/account/delivered-reports');
+    const props = { subject: 'u', issuer: 'https://issuer.invalid' };
+    const withNote = render(await DeliveredReports({ ...props, showEmpty: true }));
+    expect(withNote).toContain('No reports have been delivered to you yet.');
+    // Beside the delivered-to-you list, which has its own words, it stays silent as before.
+    expect(render(await DeliveredReports(props))).toBe('');
+  });
+
+  it('asks for the note only when the Delivered tab holds nothing else', async () => {
+    const { readFileSync } = await import('node:fs');
+    const page = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
+    const reports = page.slice(page.indexOf("view === 'results'"), page.indexOf("view === 'more'"));
+    expect(reports).toMatch(/<DeliveredReports[^>]*showEmpty=\{[^}]*customerDeliveryEnabled\(\)/);
   });
 });
