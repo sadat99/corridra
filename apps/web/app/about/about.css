@@ -12,7 +12,10 @@
     gap: var(--space-2);
     padding-block: var(--space-3);
   }
-  .guide-doc-tabs .guide-doc p {
+  .guide-doc-tabs .guide-doc p,
+  .guide-doc-tabs .guide-doc dd,
+  .guide-doc-tabs .guide-doc li {
+    font-size: var(--text-sm);
     line-height: 1.5;
   }
   .guide-doc-tabs .guide-doc article > div {
