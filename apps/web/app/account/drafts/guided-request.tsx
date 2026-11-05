@@ -160,6 +160,7 @@ const autosaveDelay = 2000;
 function Guided(scope: Scope) {
   const id = useId();
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [showDiscarded, setShowDiscarded] = useState(false);
   const [nextAfter, setNextAfter] = useState<string | null>(null);
   const [form, setForm] = useState<DraftFormValues | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -625,6 +626,10 @@ function Guided(scope: Scope) {
       </section>
     );
 
+  // A discarded draft is read-only history: it stays reachable, but not in the way (D-01, CRUD-4).
+  const discarded = rows?.filter((row) => row.status === 'DISCARDED').length ?? 0;
+  const listed = (rows ?? []).filter((row) => showDiscarded || row.status !== 'DISCARDED');
+
   if (!form)
     return (
       <section aria-label="Guided request drafts">
@@ -655,8 +660,19 @@ function Guided(scope: Scope) {
         {rows && rows.length > 0 && (
           <section aria-label="Your drafts">
             <h2>Your drafts</h2>
+            {discarded > 0 && (
+              <button
+                type="button"
+                className="text-link"
+                aria-pressed={showDiscarded}
+                onClick={() => setShowDiscarded((value) => !value)}
+              >
+                {showDiscarded ? 'Hide' : 'Show'} Discarded Drafts ({discarded})
+              </button>
+            )}
+            {listed.length === 0 && <p>Only discarded drafts are saved here.</p>}
             <ul>
-              {rows.map((row) => (
+              {listed.map((row) => (
                 <li key={row.id}>
                   <strong>{row.title}</strong> ·{' '}
                   {row.status === 'OPEN'

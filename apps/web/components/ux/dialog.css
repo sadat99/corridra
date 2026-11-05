@@ -56,3 +56,10 @@
 .ux-dialog-close:disabled:hover {
   background: transparent;
 }
+/* The choices at the foot of a confirmation: the safe one first, then the destructive one. */
+.ux-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
