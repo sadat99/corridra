@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { Dialog } from '../../../components/ux/dialog';
 import {
   canCreate,
   canPreview,
@@ -229,6 +230,8 @@ export function DecisionCardPanel({
   synthetic: boolean;
 }) {
   const [panel, dispatch] = useReducer(panelReducer, initialPanel);
+  // The card whose withdrawal is being confirmed.
+  const [asking, setAsking] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   const scope = { subject, issuer };
   useEffect(() => {
@@ -305,21 +308,65 @@ export function DecisionCardPanel({
     copy: () => {
       if (panel.link) void navigator.clipboard?.writeText(panel.link).catch(() => undefined);
     },
-    withdraw: (cardId) =>
-      void run(async (signal) => {
-        // One command per card: a retry after a lost answer is the same command.
-        const commandId = nextWithdrawCommand(panel, cardId, crypto.randomUUID());
-        dispatch({ type: 'withdrawStarted', cardId, commandId });
-        await send(requestBodies({ resourceId, commandId }).withdraw(cardId), scope, signal);
-        dispatch({ type: 'withdrawn', cardId });
-      }),
+    // Withdrawing ends a live public link and cannot be undone, so the button only asks (D-02).
+    withdraw: (cardId) => setAsking(cardId),
   };
+  async function confirmWithdraw(cardId: string) {
+    await run(async (signal) => {
+      // One command per card: a retry after a lost answer is the same command.
+      const commandId = nextWithdrawCommand(panel, cardId, crypto.randomUUID());
+      dispatch({ type: 'withdrawStarted', cardId, commandId });
+      await send(requestBodies({ resourceId, commandId }).withdraw(cardId), scope, signal);
+      dispatch({ type: 'withdrawn', cardId });
+    });
+    setAsking(null);
+  }
+  const asked = panel.cards.find((card) => card.id === asking);
   return (
-    <DecisionCardPanelView
-      panel={panel}
-      decisions={decisions}
-      handlers={handlers}
-      real={!synthetic}
-    />
+    <>
+      <DecisionCardPanelView
+        panel={panel}
+        decisions={decisions}
+        handlers={handlers}
+        real={!synthetic}
+      />
+      <Dialog
+        open={!!asked}
+        onClose={() => setAsking(null)}
+        title="Withdraw This Link?"
+        locked={panel.busy}
+      >
+        {asked && (
+          <>
+            <p>
+              This link works until {formatDateTime(asked.expiresAt)} and has been opened{' '}
+              {asked.opens} {asked.opens === 1 ? 'time' : 'times'}. Anyone who has this link loses
+              access at once. This cannot be undone; you can make a new link for the report.
+            </p>
+            {panel.notice && <p role="status">{panel.notice}</p>}
+            <div className="ux-dialog-actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                data-autofocus=""
+                disabled={panel.busy}
+                onClick={() => setAsking(null)}
+              >
+                Keep Link
+              </button>
+              <button
+                type="button"
+                className="button button-secondary"
+                data-intent="destructive"
+                disabled={panel.busy}
+                onClick={() => void confirmWithdraw(asked.id)}
+              >
+                {panel.busy ? 'Please Wait…' : 'Withdraw Link'}
+              </button>
+            </div>
+          </>
+        )}
+      </Dialog>
+    </>
   );
 }

@@ -223,7 +223,8 @@ test('explicitly saves and removes an invitation with scoped headers and no brow
   page,
 }) => {
   let stored = false,
-    saves = 0;
+    saves = 0,
+    removes = 0;
   await page.route('**/api/customer-saved-missions', async (route) => {
     expect(route.request().headers()['x-corridra-customer-subject']).toBe('synthetic-alice');
     expect(route.request().headers()['x-corridra-customer-issuer']).toBe(issuer);
@@ -237,6 +238,7 @@ test('explicitly saves and removes an invitation with scoped headers and no brow
       await route.fulfill({ json: metadata });
     } else {
       expect(body).toMatchObject({ action: 'remove', resourceId: id });
+      removes++;
       stored = false;
       await route.fulfill({ json: { id, removed: true } });
     }
@@ -254,9 +256,24 @@ test('explicitly saves and removes an invitation with scoped headers and no brow
   await expect(page.getByRole('button', { name: 'Save Invitation to This Account' })).toBeEnabled();
   expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
   expect(saves).toBe(1);
-  await page.getByRole('button', { name: 'Remove From My Saved Missions' }).click();
+  // D-02: removing asks first, names what it does and does not do, and focuses the safe choice.
+  const remove = page.getByRole('button', { name: 'Remove From My Saved Missions' });
+  await remove.click();
+  const dialog = page.getByRole('dialog', { name: 'Remove From Saved Missions?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('not cancelled');
+  await expect(
+    dialog.getByRole('button', { name: 'Keep Saved Mission', exact: true }),
+  ).toBeFocused();
+  await dialog.getByRole('button', { name: 'Keep Saved Mission', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(remove).toBeFocused();
+  expect(removes).toBe(0);
+  await remove.click();
+  await dialog.getByRole('button', { name: 'Remove Saved Mission', exact: true }).click();
   await expect(page.getByText('No commercial mission invitations saved yet.')).toBeVisible();
   await expect(page.getByText(/were not cancelled/)).toBeVisible();
+  expect(removes).toBe(1);
 });
 test('lost save response freezes the exact command and retries without claiming success', async ({
   page,
